@@ -8,6 +8,7 @@ Restore Command
 #include <time.h>
 #include <unistd.h>
 
+#include "command/restore/file.h"
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
 #include "common/crypto/cipherBlock.h"
@@ -1914,14 +1915,58 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
     ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
 
-    // If the size differs then that's enough to determine order
-    if (file1.size < file2.size)
-        FUNCTION_TEST_RETURN(-1);
-    else if (file1.size > file2.size)
+    // Zero length files should be ordered at the end
+    if (file1.size == 0)
+    {
+        if (file2.size != 0)
+            FUNCTION_TEST_RETURN(-1);
+    }
+    else if (file2.size == 0)
         FUNCTION_TEST_RETURN(1);
 
-    // If size is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
+    // If the bundle id differs that is enough to determine order
+    if (file1.bundleId < file2.bundleId)
+        FUNCTION_TEST_RETURN(1);
+    else if (file1.bundleId > file2.bundleId)
+        FUNCTION_TEST_RETURN(-1);
+
+    // If the bundle ids are 0
+    if (file1.bundleId == 0)
+    {
+        // If the size differs then that's enough to determine order
+        if (file1.size < file2.size)
+            FUNCTION_TEST_RETURN(-1);
+        else if (file1.size > file2.size)
+            FUNCTION_TEST_RETURN(1);
+
+        // If size is the same then use name to generate a deterministic ordering (names must be unique)
+        ASSERT(!strEq(file1.name, file2.name));
+        FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
+    }
+
+    // If the reference differs that is enough to determine order
+    if (file1.reference == NULL)
+    {
+        if (file2.reference != NULL)
+            FUNCTION_TEST_RETURN(-1);
+    }
+    else if (file2.reference == NULL)
+        FUNCTION_TEST_RETURN(1);
+    else
+    {
+        const int backupLabelCmp = strCmp(file1.reference, file2.reference) * -1;
+
+        if (backupLabelCmp != 0)
+            FUNCTION_TEST_RETURN(backupLabelCmp);
+    }
+
+    // Finally order by bundle offset
+    ASSERT(file1.bundleOffset != file2.bundleOffset);
+
+    if (file1.bundleOffset < file2.bundleOffset)
+        FUNCTION_TEST_RETURN(1);
+
+    FUNCTION_TEST_RETURN(-1);
 }
 
 static uint64_t
@@ -2062,56 +2107,77 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const ManifestFile file = manifestFileFind(manifest, varStr(protocolParallelJobKey(job)));
-            bool zeroed = restoreFileZeroed(file.name, zeroExp);
-            bool copy = pckReadBoolP(protocolParallelJobResult(job));
+            PackRead *const jobResult = protocolParallelJobResult(job);
 
-            String *log = strCatZ(strNew(), "restore");
-
-            // Note if file was zeroed (i.e. selective restore)
-            if (zeroed)
-                strCatZ(log, " zeroed");
-
-            // Add filename
-            strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file.name)));
-
-            // If not copied and not zeroed add details to explain why it was not copied
-            if (!copy && !zeroed)
+            while (!pckReadNullP(jobResult))
             {
-                strCatZ(log, " - ");
+                const ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
+                const bool zeroed = restoreFileZeroed(file.name, zeroExp);
+                const RestoreResult result = (RestoreResult)pckReadU32P(jobResult);
 
-                // On force we match on size and modification time
-                if (cfgOptionBool(cfgOptForce))
-                {
-                    strCatFmt(
-                        log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file.size,
-                        (uint64_t)file.timestamp);
-                }
-                // Else a checksum delta or file is zero-length
-                else
-                {
-                    strCatZ(log, "exists and ");
+                String *log = strCatZ(strNew(), "restore");
 
-                    // No need to copy zero-length files
-                    if (file.size == 0)
+                // Note if file was zeroed (i.e. selective restore)
+                if (zeroed)
+                    strCatZ(log, " zeroed");
+
+                // Add filename
+                strCatFmt(log, " file %s", strZ(restoreFilePgPath(manifest, file.name)));
+
+                // If preserved add details to explain why it was not copied or zeroed
+                if (result == restoreResultPreserve)
+                {
+                    strCatZ(log, " - ");
+
+                    // On force we match on size and modification time
+                    if (cfgOptionBool(cfgOptForce))
                     {
-                        strCatZ(log, "is zero size");
+                        strCatFmt(
+                            log, "exists and matches size %" PRIu64 " and modification time %" PRIu64, file.size,
+                            (uint64_t)file.timestamp);
                     }
-                    // The file matched the manifest checksum so did not need to be copied
+                    // Else a checksum delta or file is zero-length
                     else
-                        strCatZ(log, "matches backup");
+                    {
+                        strCatZ(log, "exists and ");
+
+                        // No need to copy zero-length files
+                        if (file.size == 0)
+                        {
+                            strCatZ(log, "is zero size");
+                        }
+                        // The file matched the manifest checksum so did not need to be copied
+                        else
+                            strCatZ(log, "matches backup");
+                    }
                 }
+
+
+                // Add bundle info
+                strCatZ(log, " (");
+
+                if (file.bundleId != 0)
+                {
+                    ASSERT(varUInt64(protocolParallelJobKey(job)) == file.bundleId);
+
+                    strCatZ(log, "bundle ");
+
+                    if (file.reference != NULL)
+                        strCatFmt(log, "%s/", strZ(file.reference));
+
+                    strCatFmt(log, "%" PRIu64 "/%" PRIu64 ", ", file.bundleId, file.bundleOffset);
+                }
+
+                // Add size and percent complete
+                sizeRestored += file.size;
+                strCatFmt(log, "%s, %.2lf%%)", strZ(strSizeFormat(file.size)), (double)sizeRestored * 100.00 / (double)sizeTotal);
+
+                // If not zero-length add the checksum
+                if (file.size != 0 && !zeroed)
+                    strCatFmt(log, " checksum %s", file.checksumSha1);
+
+                LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
             }
-
-            // Add size and percent complete
-            sizeRestored += file.size;
-            strCatFmt(log, " (%s, %.2lf%%)", strZ(strSizeFormat(file.size)), (double)sizeRestored * 100.00 / (double)sizeTotal);
-
-            // If not zero-length add the checksum
-            if (file.size != 0 && !zeroed)
-                strCatFmt(log, " checksum %s", file.checksumSha1);
-
-            LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -2179,68 +2245,100 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
         RestoreJobData *jobData = data;
 
         // Determine where to begin scanning the queue (we'll stop when we get back here)
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
+        PackWrite *param = NULL;
         int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
         int queueEnd = queueIdx;
 
+        // Create restore job
         do
         {
             List *queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx);
+            bool fileAdded = false;
+            const String *fileName = NULL;
+            uint64_t bundleId = 0;
+            const String *reference = NULL;
 
-            if (!lstEmpty(queue))
+            while (!lstEmpty(queue))
             {
                 const ManifestFile file = manifestFileUnpack(jobData->manifest, *(ManifestFilePack **)lstGet(queue, 0));
 
-                // Create restore job
-                ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
-                PackWrite *const param = protocolCommandParam(command);
+                // Break if bundled files have already been added and 1) the bundleId has changed or 2) the reference has changed
+                if (fileAdded && (bundleId != file.bundleId || !strEq(reference, file.reference)))
+                    break;
 
-                const String *const repoPath = strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/",
-                    strZ(file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel));
+                // Add common parameters before first file
+                if (param == NULL)
+                {
+                    param = protocolCommandParam(command);
+
+                    const String *const repoPath = strNewFmt(
+                        STORAGE_REPO_BACKUP "/%s/",
+                        strZ(file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel));
+
+                    if (file.bundleId != 0)
+                    {
+                        pckWriteStrP(param, strNewFmt("%s" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(repoPath), file.bundleId));
+                        bundleId = file.bundleId;
+                        reference = file.reference;
+                    }
+                    else
+                    {
+                        pckWriteStrP(
+                            param,
+                            strNewFmt(
+                                "%s%s%s", strZ(repoPath), strZ(file.name),
+                                strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
+                        fileName = file.name;
+                    }
+
+                    pckWriteU32P(param, jobData->repoIdx);
+                    pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
+                    pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
+                    pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
+                    pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
+                    pckWriteStrP(param, jobData->cipherSubPass);
+
+                    fileAdded = true;
+                }
+
+                pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
+                pckWriteStrP(param, STR(file.checksumSha1));
+                pckWriteU64P(param, file.size);
+                pckWriteTimeP(param, file.timestamp);
+                pckWriteModeP(param, file.mode);
+                pckWriteBoolP(param, restoreFileZeroed(file.name, jobData->zeroExp));
+                pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
+                pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
 
                 if (file.bundleId != 0)
                 {
-                    pckWriteStrP(param, strNewFmt("%s" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(repoPath), file.bundleId));
                     pckWriteBoolP(param, true);
                     pckWriteU64P(param, file.bundleOffset);
                     pckWriteU64P(param, file.sizeRepo);
                 }
                 else
-                {
-                    pckWriteStrP(
-                        param,
-                        strNewFmt(
-                            "%s%s%s", strZ(repoPath), strZ(file.name),
-                            strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
                     pckWriteBoolP(param, false);
-                }
 
-                pckWriteU32P(param, jobData->repoIdx);
-                pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
-                pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
-                pckWriteStrP(param, STR(file.checksumSha1));
-                pckWriteBoolP(param, restoreFileZeroed(file.name, jobData->zeroExp));
-                pckWriteU64P(param, file.size);
-                pckWriteTimeP(param, file.timestamp);
-                pckWriteModeP(param, file.mode);
-                pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
-                pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
-                pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
-                pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
-                pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
-                pckWriteStrP(param, jobData->cipherSubPass);
+                pckWriteStrP(param, file.name);
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, 0);
 
+                // Break if the file is not bundled
+                if (bundleId == 0)
+                    break;
+            }
+
+            if (fileAdded)
+            {
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = protocolParallelJobNew(VARSTR(file.name), command);
+                    result = protocolParallelJobNew(bundleId != 0 ? VARUINT64(bundleId) : VARSTR(fileName), command);
                 }
                 MEM_CONTEXT_PRIOR_END();
 
-                // Break out of the loop early since we found a job
                 break;
             }
 

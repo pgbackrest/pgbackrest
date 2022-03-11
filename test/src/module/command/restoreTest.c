@@ -178,11 +178,26 @@ testRun(void)
             "acefile", .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpass",
             .comment = "create a compressed encrypted repo file");
 
+        List *fileList = lstNewP(sizeof(RestoreFile));
+
+        RestoreFile file =
+        {
+            .name = STRDEF("normal"),
+            .checksum = STRDEF("ffffffffffffffffffffffffffffffffffffffff"),
+            .size = 7,
+            .timeModified = 1557432154,
+            .mode = 0600,
+            .zero = false,
+            .user = NULL,
+            .group = NULL,
+        };
+
+        lstAdd(fileList, &file);
+
         TEST_ERROR(
             restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, 0, NULL,
-                compressTypeGz, STRDEF("normal"), STRDEF("ffffffffffffffffffffffffffffffffffffffff"), false, 7, 1557432154, 0600,
-                TEST_USER_STR, TEST_GROUP_STR, 0, false, false, STRDEF("badpass")),
+                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
+                0, false, false, STRDEF("badpass"), fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -2220,7 +2235,8 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, [PCT]) checksum"
                 " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, [PCT]) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, [PCT]) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, [PCT]) checksum"
+                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, [PCT])"
                 " checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
@@ -2279,6 +2295,9 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "pg_xact=../xact");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
+        #define TEST_LABEL_FULL                                     "20161219-212741F"
+        #define TEST_LABEL_DIFF                                     "20161219-212741F_20161219-212800D"
+        #define TEST_LABEL_INCR                                     "20161219-212741F_20161219-212900I"
         #define TEST_LABEL                                          "20161219-212741F_20161219-212918I"
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
@@ -2290,7 +2309,7 @@ testRun(void)
             manifest->pub.data.backupLabel = STRDEF(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_10;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
-            manifest->pub.data.backupType = backupTypeFull;
+            manifest->pub.data.backupType = backupTypeIncr;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
             // Data directory
@@ -2319,6 +2338,15 @@ testRun(void)
                     .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908"});
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, fileBuffer);
 
+            // global/888
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/888"), .size = 0, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/888");
+
             // global/999
             manifestFileAdd(
                 manifest,
@@ -2334,9 +2362,28 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
-                    .reference = STRDEF(TEST_LABEL), .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .reference = NULL, .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "yyy"), .size = 3, .sizeRepo = 3, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 8,
+                    .reference = NULL, .checksumSha1 = "186154712b2d5f6791d85b9a0987b98fa231779c"});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "xxxxx"), .size = 5, .sizeRepo = 5, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 11,
+                    .reference = NULL, .checksumSha1 = "9addbf544119efa4a64223b649750a510f0d463f"});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "zz"), .size = 2, .sizeRepo = 2, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 17,
+                    .reference = NULL, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7"});
             HRN_STORAGE_PUT_Z(
-                storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1", PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\n");
+                storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
+                PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\nyyyxxxxxAzzA");
 
             // base directory
             manifestPathAdd(
@@ -2370,6 +2417,51 @@ testRun(void)
                     .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/1/2", fileBuffer);
+
+            // base/1/10
+            fileBuffer = bufNew(8194);
+            memset(bufPtr(fileBuffer), 10, bufSize(fileBuffer));
+            bufPtr(fileBuffer)[0] = 0xFF;
+            bufPtr(fileBuffer)[8193] = 0xFF;
+            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/10"), .size = 8192, .sizeRepo = 8192, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 1,
+                    .reference = STRDEF(TEST_LABEL_FULL), .checksumSha1 = "28757c756c03c37aca13692cb719c18d1510c190"});
+            HRN_STORAGE_PUT(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL_FULL "/bundle/1", fileBuffer);
+
+            // base/1/20 and base/1/21
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/20"), .size = 1, .sizeRepo = 1, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 2, .bundleOffset = 1,
+                    .reference = STRDEF(TEST_LABEL_DIFF), .checksumSha1 = "c032adc1ff629c9b66f22749ad667e6beadf144b"});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/21"), .size = 1, .sizeRepo = 1, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 2, .bundleOffset = 2,
+                    .reference = STRDEF(TEST_LABEL_DIFF), .checksumSha1 = "e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98"});
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL_DIFF "/bundle/2", "aXb");
+
+            // base/1/30 and base/1/31
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/30"), .size = 1, .sizeRepo = 1, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 2, .bundleOffset = 1,
+                    .reference = STRDEF(TEST_LABEL_INCR), .checksumSha1 = "c032adc1ff629c9b66f22749ad667e6beadf144b"});
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/31"), .size = 1, .sizeRepo = 1, .timestamp = 1482182860,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 2, .bundleOffset = 2,
+                    .reference = STRDEF(TEST_LABEL_INCR), .checksumSha1 = "e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98"});
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL_INCR "/bundle/2", "aXb");
 
             // system db name
             manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
@@ -2532,6 +2624,9 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "bogus1/bogus2");
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_GLOBAL "/bogus3");
 
+        // Create yyy file so it is not copied
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "yyy", "yyy", .modeFile = 0600);
+
         // Add a few bogus links to be deleted
         THROW_ON_SYS_ERROR(
             symlink("../wal", strZ(strNewFmt("%s/pg_wal2", strZ(pgPath)))) == -1, FileOpenError,
@@ -2578,10 +2673,28 @@ testRun(void)
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (4B, [PCT]) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (bundle 20161219-212741F/1/1, 8KB, [PCT])"
+                " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (bundle 1/0, 4B, [PCT]) checksum"
                 " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, [PCT]) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 4B, [PCT]) checksum"
+                " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
+                " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx (bundle 1/11, 5B, [PCT]) checksum"
+                " 9addbf544119efa4a64223b649750a510f0d463f\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/zz (bundle 1/17, 2B, [PCT]) checksum"
+                " d7dacae2c968388960bf8970080a980ed5c5dcb7\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/20 (bundle 20161219-212741F_20161219-212800D/2/1, 1B, [PCT]) checksum"
+                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/21 (bundle 20161219-212741F_20161219-212800D/2/2, 1B, [PCT]) checksum"
+                " e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/30 (bundle 20161219-212741F_20161219-212900I/2/1, 1B, [PCT]) checksum"
+                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/31 (bundle 20161219-212741F_20161219-212900I/2/2, 1B, [PCT]) checksum"
+                " e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/888 (0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2595,7 +2708,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 11");
+            "P00   INFO: restore size = [SIZE], file total = 20");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2603,7 +2716,12 @@ testRun(void)
             "PG_VERSION {file, s=4, t=1482182860}\n"
             "base {path}\n"
             "base/1 {path}\n"
+            "base/1/10 {file, s=8192, t=1482182860}\n"
             "base/1/2 {file, s=8192, t=1482182860}\n"
+            "base/1/20 {file, s=1, t=1482182860}\n"
+            "base/1/21 {file, s=1, t=1482182860}\n"
+            "base/1/30 {file, s=1, t=1482182860}\n"
+            "base/1/31 {file, s=1, t=1482182860}\n"
             "base/1/PG_VERSION {file, s=4, t=1482182860}\n"
             "base/16384 {path}\n"
             "base/16384/16385 {file, s=16384, t=1482182860}\n"
@@ -2612,6 +2730,7 @@ testRun(void)
             "base/32768/32769 {file, s=32768, t=1482182860}\n"
             "base/32768/PG_VERSION {file, s=4, t=1482182860}\n"
             "global {path}\n"
+            "global/888 {file, s=0, t=1482182860}\n"
             "global/999 {file, s=0, t=1482182860}\n"
             "global/pg_control {file, s=8192, t=1482182860}\n"
             "pg_hba.conf {link, d=../config/pg_hba.conf}\n"
@@ -2619,7 +2738,10 @@ testRun(void)
             "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
             "pg_wal {link, d=../wal}\n"
             "pg_xact {link, d=../xact}\n"
-            "postgresql.conf {link, d=../config/postgresql.conf}\n");
+            "postgresql.conf {link, d=../config/postgresql.conf}\n"
+            "xxxxx {file, s=5, t=1482182860}\n"
+            "yyy {file, s=3, t=1482182860}\n"
+            "zz {file, s=2, t=1482182860}\n");
 
         testRestoreCompare(
             storagePg(), STRDEF("pg_tblspc/1"), manifest,
@@ -2726,11 +2848,28 @@ testRun(void)
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (4B, [PCT])"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (bundle 20161219-212741F/1/1, 8KB,"
+                " [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (bundle 1/0, 4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (4B, [PCT])"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 4B, [PCT])"
                 " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
+                " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx - exists and matches backup (bundle 1/11, 5B, [PCT]) checksum"
+                " 9addbf544119efa4a64223b649750a510f0d463f\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/zz - exists and matches backup (bundle 1/17, 2B, [PCT]) checksum"
+                " d7dacae2c968388960bf8970080a980ed5c5dcb7\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/20 - exists and matches backup (bundle"
+                " 20161219-212741F_20161219-212800D/2/1, 1B, [PCT]) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/21 - exists and matches backup (bundle"
+                " 20161219-212741F_20161219-212800D/2/2, 1B, [PCT]) checksum e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/30 - exists and matches backup (bundle"
+                " 20161219-212741F_20161219-212900I/2/1, 1B, [PCT]) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/31 - exists and matches backup (bundle"
+                " 20161219-212741F_20161219-212900I/2/2, 1B, [PCT]) checksum e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/global/888 - exists and is zero size (0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2744,7 +2883,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 11");
+            "P00   INFO: restore size = [SIZE], file total = 20");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
