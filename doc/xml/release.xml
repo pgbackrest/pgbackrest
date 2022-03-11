@@ -40,6 +40,19 @@
 
                         <p>Improve <cmd>stop</cmd> command to honor <br-option>stanza</br-option> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1686"/>
+                        <github-pull-request id="1688"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="seth.daniel"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve error message for invalid <br-option>repo-azure-key</br-option>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -11484,6 +11497,11 @@
         <contributor id="sebastien.lardiere">
             <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
             <contributor-id type="github">slardiere</contributor-id>
+        </contributor>
+
+        <contributor id="seth.daniel">
+            <contributor-name-display>Seth Daniel</contributor-name-display>
+            <contributor-id type="github">sethdaniel</contributor-id>
         </contributor>
 
         <contributor id="slava.moudry">
