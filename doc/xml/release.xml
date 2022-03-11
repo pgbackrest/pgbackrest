@@ -46,9 +46,16 @@
                     <release-item>
                         <commit subject="Remove redundant restoreFile() test and improve coverage."/>
                         <commit subject="Add limit parameter to ioCopyP()."/>
+                        <commit subject="Optimize restore command for file bundling.">
+                            <github-issue id="1149"/>
+                            <github-pull-request id="1683"/>
+                        </commit>
+                        <commit subject="Add bundle logging to backup command."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
