@@ -43,16 +43,34 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
             uriStyle = storageAzureUriStylePath;
     }
 
+    // Ensure the key is valid base64 when key type is shared
+    const StorageAzureKeyType keyType = (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx);
+    const String *const key = cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx);
+
+    if (keyType == storageAzureKeyTypeShared)
+    {
+        TRY_BEGIN()
+        {
+            bufNewDecode(encodeBase64, key);
+        }
+        CATCH(FormatError)
+        {
+            THROW_FMT(
+                OptionInvalidValueError, "invalid value for '%s' option: %s\n"
+                "HINT: value must be valid base64 when '%s = " CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED_Z "'.",
+                cfgOptionIdxName(cfgOptRepoAzureKey, repoIdx), errorMessage(), cfgOptionIdxName(cfgOptRepoAzureKeyType, repoIdx));
+        }
+        TRY_END();
+    }
+
     // If port was specified, overwrite the parsed/default port
     if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
         port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
     Storage *const result = storageAzureNew(
         cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
-        cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx),
-        (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx),
-        cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx), STORAGE_AZURE_BLOCKSIZE_MIN, endpoint, uriStyle,
-        port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
+        cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx), keyType, key,
+        STORAGE_AZURE_BLOCKSIZE_MIN, endpoint, uriStyle, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
         cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
 
     FUNCTION_LOG_RETURN(STORAGE, result);
