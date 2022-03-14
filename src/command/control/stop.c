@@ -19,6 +19,11 @@ Stop Command
 #include "storage/storage.h"
 #include "storage/storage.intern.h"
 
+/***********************************************************************************************************************************
+Read contents of lock file. ??? This should be merged into the lock code.
+***********************************************************************************************************************************/
+LockData lockReadDataFile(const String *lockFile, int fd);
+
 /**********************************************************************************************************************************/
 void
 cmdStop(void)
@@ -85,7 +90,7 @@ cmdStop(void)
                     }
 
                     // The file is locked so that means there is a running process - read the process id and send it a term signal
-                    const pid_t processId = lockReadDataP(.lockFile = lockFile, .fd = fd).processId;
+                    const pid_t processId = lockReadDataFile(lockFile, fd).processId;
 
                     // If the process id is defined then assume this is a valid lock file
                     if (processId != 0)

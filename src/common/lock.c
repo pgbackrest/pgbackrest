@@ -84,7 +84,7 @@ If a seek is required to get to the beginning of the data, that must be done bef
 #define LOCK_BUFFER_SIZE                                            128
 
 // Helper to read data
-static LockData
+LockData
 lockReadDataFile(const String *const lockFile, const int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -139,26 +139,6 @@ lockReadDataFile(const String *const lockFile, const int fd)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_STRUCT(result);
-}
-
-/***********************************************************************************************************************************
-Read contents of lock file
-***********************************************************************************************************************************/
-LockData
-lockReadData(LockReadDataParam param)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, param.lockFile);
-        FUNCTION_LOG_PARAM(INT, param.fd);
-    FUNCTION_LOG_END();
-
-    ASSERT(param.lockFile != NULL);
-    ASSERT(param.fd != -1);
-
-    THROW_ON_SYS_ERROR_FMT(
-        lseek(param.fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(param.lockFile));
-
-    FUNCTION_LOG_RETURN_STRUCT(lockReadDataFile(param.lockFile, param.fd));
 }
 
 /***********************************************************************************************************************************
@@ -261,9 +241,6 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 
                     TRY_BEGIN()
                     {
-                        THROW_ON_SYS_ERROR_FMT(
-                            lseek(result, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(lockFile));
-
                         execId = lockReadDataFile(lockFile, result).execId;
                     }
                     FINALLY()

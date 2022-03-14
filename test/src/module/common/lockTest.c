@@ -183,6 +183,7 @@ testRun(void)
         lockLocal.execId = STRDEF("2-test");
 
         TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
+
         TEST_ERROR(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeBackup, 0, true), LockAcquireError,
             strZ(strNewFmt(
@@ -223,9 +224,6 @@ testRun(void)
         lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
         TEST_RESULT_DOUBLE(
             *lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 88.88,
-            "verify percentComplete");
-        TEST_RESULT_DOUBLE(
-            *lockReadDataP(.lockFile = backupLockFile, .fd = lockLocal.file[lockTypeBackup].fd).percentComplete, 88.88,
             "verify percentComplete");
 
         TEST_ERROR(
