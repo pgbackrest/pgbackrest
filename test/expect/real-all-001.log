@@ -30,8 +30,6 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -45,6 +43,9 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -64,8 +65,6 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -79,6 +78,9 @@ log-path=[TEST_PATH]/db-standby/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -112,8 +114,6 @@ pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -127,6 +127,9 @@ log-path=[TEST_PATH]/backup/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-path=[TEST_PATH]/backup/repo
 repo2-path=[TEST_PATH]/backup/repo2
 
@@ -147,8 +150,6 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -162,6 +163,9 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -181,8 +185,6 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -196,6 +198,9 @@ log-path=[TEST_PATH]/db-standby/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -229,8 +234,6 @@ pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -244,6 +247,9 @@ log-path=[TEST_PATH]/backup/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-path=[TEST_PATH]/backup/repo
 repo2-path=[TEST_PATH]/backup/repo2
 
@@ -264,8 +270,6 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -279,6 +283,9 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -298,8 +305,6 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -313,6 +318,9 @@ log-path=[TEST_PATH]/db-standby/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -346,8 +354,6 @@ pg256-port=6544
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -361,6 +367,9 @@ log-path=[TEST_PATH]/backup/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-path=[TEST_PATH]/backup/repo
 repo2-path=[TEST_PATH]/backup/repo2
 
@@ -400,8 +409,6 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -415,6 +422,9 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -436,8 +446,6 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -451,6 +459,9 @@ log-path=[TEST_PATH]/db-standby/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -485,8 +496,6 @@ pg256-port=6544
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -500,6 +509,9 @@ log-path=[TEST_PATH]/backup/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-path=[TEST_PATH]/backup/repo
 repo2-path=[TEST_PATH]/backup/repo2
 
@@ -524,8 +536,6 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -539,6 +549,9 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -560,8 +573,6 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -575,6 +586,9 @@ log-path=[TEST_PATH]/db-standby/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -609,8 +623,6 @@ pg256-port=6544
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -624,6 +636,9 @@ log-path=[TEST_PATH]/backup/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-path=[TEST_PATH]/backup/repo
 repo2-path=[TEST_PATH]/backup/repo2
 
@@ -664,8 +679,6 @@ pg1-socket-path=[TEST_PATH]/db-primary/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -679,6 +692,9 @@ log-path=[TEST_PATH]/db-primary/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -700,8 +716,6 @@ pg1-socket-path=[TEST_PATH]/db-standby/db
 
 [global]
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -715,6 +729,9 @@ log-path=[TEST_PATH]/db-standby/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-host=backup
 repo1-host-cmd=[BACKREST-BIN]
 repo1-host-config=[TEST_PATH]/backup/pgbackrest.conf
@@ -749,8 +766,6 @@ pg256-port=6544
 [global]
 archive-async=y
 buffer-size=[BUFFER-SIZE]
-bundle=y
-bundle-size=1MiB
 compress-level=3
 compress-level-network=1
 compress-type=none
@@ -764,6 +779,9 @@ log-path=[TEST_PATH]/backup/log
 log-subprocess=[LOG-SUBPROCESS]
 log-timestamp=n
 protocol-timeout=60
+repo1-bundle=y
+repo1-bundle-limit=64KiB
+repo1-bundle-size=1MiB
 repo1-path=[TEST_PATH]/backup/repo
 repo2-path=[TEST_PATH]/backup/repo2
 

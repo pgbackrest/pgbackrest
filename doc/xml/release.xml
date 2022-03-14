@@ -64,11 +64,15 @@
                             <github-pull-request id="1683"/>
                         </commit>
                         <commit subject="Add bundle logging to backup command."/>
+                        <commit subject="Rename bundle-* options to repo-bundle-*.">
+                            <github-pull-request id="1694"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="reid.thompson"/>
                             <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="chris.bandy"/>
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
