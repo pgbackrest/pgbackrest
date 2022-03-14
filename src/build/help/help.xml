@@ -544,7 +544,7 @@
                         <text>
                             <p>Size limit for files that will be included in bundles. Files larger than this size will be stored separately.</p>
 
-                            <p>Bundled files are removed when a backup is resumed, so this option controls the files that can be resumed, i.e. higher values result in fewer resumable files.</p>
+                            <p>Bundled files cannot be used when a backup is resumed, so this option controls the files that can be resumed, i.e. higher values result in fewer resumable files.</p>
                         </text>
 
                         <example>10MiB</example>
