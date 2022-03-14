@@ -1197,10 +1197,17 @@ backupJobResult(
                 const String *const fileName = storagePathP(storagePg, manifestPathPg(file.name));
                 const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
 
-                // Format log strings
-                const String *const logProgress = strNewFmt(
-                    "%s, %.2lf%%", strZ(strSizeFormat(copySize)),
+                // Format log progress
+                String *const logProgress = strNew();
+
+                if (bundleId != 0)
+                    strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
+
+                strCatFmt(
+                    logProgress, "%s, %.2lf%%", strZ(strSizeFormat(copySize)),
                     sizeTotal == 0 ? 100.00 : (double)*sizeProgress * 100.0 / (double)sizeTotal);
+
+                // Format log checksum
                 const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
 
                 // If the file is in a prior backup and nothing changed, just log it
