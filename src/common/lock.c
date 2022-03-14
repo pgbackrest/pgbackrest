@@ -109,20 +109,23 @@ lockReadDataFile(const String *const lockFile, const int fd)
         // Parse the file
         const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
 
-        MEM_CONTEXT_PRIOR_BEGIN()
+        // Parse process id
+        if (!strEmpty(strTrim(strLstGet(parse, 0))))
+            result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+
+        // Populate result if the data exists
+        if (strLstSize(parse) == 3)
         {
-            if (!strEmpty(strTrim(strLstGet(parse, 0))))
-                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+            // Convert json to key value store
+            KeyValue *kv = jsonToKv(strLstGet(parse, 1));
 
-            if (strLstSize(parse) == 3)
+            // Get percentComplete if it exists
+            const String *percentCompleteStr = varStr(kvGet(kv, PERCENT_COMPLETE_VAR));
+
+            // Populate result
+            MEM_CONTEXT_PRIOR_BEGIN()
             {
-                // Convert json to key value store and populate LockData
-                KeyValue *kv = jsonToKv(strLstGet(parse, 1));
-
                 result.execId = strDup(varStr(kvGet(kv, EXEC_ID_VAR)));
-
-                // Convert decimal string back to int for percentComplete
-                const String *percentCompleteStr = varStr(kvGet(kv, PERCENT_COMPLETE_VAR));
 
                 if (percentCompleteStr != NULL)
                 {
@@ -130,8 +133,8 @@ lockReadDataFile(const String *const lockFile, const int fd)
                     *result.percentComplete = cvtZToDouble(strZ(percentCompleteStr));
                 }
             }
+            MEM_CONTEXT_PRIOR_END();
         }
-        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
