@@ -123,8 +123,12 @@ lockReadDataFile(const String *const lockFile, const int fd)
 
                 // Convert decimal string back to int for percentComplete
                 const String *percentCompleteStr = varStr(kvGet(kv, PERCENT_COMPLETE_VAR));
+
                 if (percentCompleteStr != NULL)
-                    result.percentComplete = (int)(cvtZToDouble(strZ(percentCompleteStr)) * 100);
+                {
+                    result.percentComplete = memNew(sizeof(double));
+                    *result.percentComplete = cvtZToDouble(strZ(percentCompleteStr));
+                }
             }
         }
         MEM_CONTEXT_PRIOR_END();
@@ -148,18 +152,10 @@ lockReadData(LockReadDataParam param)
     ASSERT(param.lockFile != NULL);
     ASSERT(param.fd != -1);
 
-    LockData result = {0};
+    THROW_ON_SYS_ERROR_FMT(
+        lseek(param.fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(param.lockFile));
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        THROW_ON_SYS_ERROR_FMT(
-            lseek(param.fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(param.lockFile));
-
-        result = lockReadDataFile(param.lockFile, param.fd);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_STRUCT(result);
+    FUNCTION_LOG_RETURN_STRUCT(lockReadDataFile(param.lockFile, param.fd));
 }
 
 /***********************************************************************************************************************************
@@ -170,7 +166,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
-        FUNCTION_LOG_PARAM(INT, param.percentComplete);
+        FUNCTION_LOG_PARAM_P(DOUBLE, param.percentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -182,8 +178,9 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         // Build key value store for second line json
         KeyValue *keyValue = kvNew();
         kvPut(keyValue, EXEC_ID_VAR, varNewStr(lockLocal.execId));
-        if (param.percentComplete > 0)
-            kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(strNewFmt("%.2f", param.percentComplete / 100.0)));
+
+        if (param.percentComplete != NULL)
+            kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(strNewFmt("%.2f", *param.percentComplete)));
 
         if (lockType == lockTypeBackup && lockLocal.held != lockTypeNone)
         {

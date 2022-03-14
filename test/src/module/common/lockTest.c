@@ -205,17 +205,29 @@ testRun(void)
         lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
         TEST_RESULT_STR(
             lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).execId, STRDEF("1-test"), "verify execId");
-        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = 5432), "write lock data");
+
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup), "write lock data");
         lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
-        TEST_RESULT_INT(
-            lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 5432, "verify percentComplete");
-        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = 8432), "write lock data");
+        TEST_RESULT_PTR(
+            lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, NULL, "verify percentComplete");
+
+        double percentComplete = 55.55;
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
         lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
-        TEST_RESULT_INT(
-            lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 8432, "verify percentComplete");
-        TEST_RESULT_INT(
-            lockReadDataP(.lockFile = backupLockFile, .fd = lockLocal.file[lockTypeBackup].fd).percentComplete, 8432,
+        TEST_RESULT_DOUBLE(
+            *lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 55.55,
             "verify percentComplete");
+
+        percentComplete = 88.88;
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
+        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        TEST_RESULT_DOUBLE(
+            *lockReadDataFile(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 88.88,
+            "verify percentComplete");
+        TEST_RESULT_DOUBLE(
+            *lockReadDataP(.lockFile = backupLockFile, .fd = lockLocal.file[lockTypeBackup].fd).percentComplete, 88.88,
+            "verify percentComplete");
+
         TEST_ERROR(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, false), AssertError,
             "assertion 'failOnNoLock || lockType != lockTypeAll' failed");
