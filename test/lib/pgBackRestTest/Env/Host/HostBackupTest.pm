@@ -180,7 +180,7 @@ sub new
     $self->{strLockPath} = $self->testPath() . '/' . HOST_PATH_LOCK;
 
     # Set conf file
-    $self->{strBackRestConfig} =  $self->testPath() . '/' . PROJECT_CONF;
+    $self->{strBackRestConfig} = $self->testPath() . '/' . PROJECT_CONF;
 
     # Set LogTest object
     $self->{oLogTest} = $$oParam{oLogTest};

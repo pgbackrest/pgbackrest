@@ -165,7 +165,7 @@ sub run
 
         # Perform a successful stanza upgrade noting additional history lines in info files for new version of the database
         #--------------------------------------------------------------------------------------------------------------------------
-        #  Save a pre-upgrade copy of archive info for testing db-id mismatch
+        # Save a pre-upgrade copy of archive info for testing db-id mismatch
         forceStorageMove(storageRepo(), $strArchiveInfoCopyFile, $strArchiveInfoCopyOldFile, {bRecurse => false});
 
         $oHostBackup->stanzaUpgrade('successful upgrade creates additional history', {strOptionalParam => '--no-online'});
@@ -214,7 +214,7 @@ sub run
         forceStorageRemove(storageRepo(), $strArchiveInfoCopyFile, {bRecurse => false});
         forceStorageMove(storageRepo(), $strArchiveInfoCopyOldFile, $strArchiveInfoFile, {bRecurse => false});
 
-        #  Confirm versions
+        # Confirm versions
         my $oArchiveInfo = new pgBackRestTest::Env::ArchiveInfo($oHostBackup->repoArchivePath());
         my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
         $self->testResult(sub {$oArchiveInfo->test(INFO_ARCHIVE_SECTION_DB, INFO_ARCHIVE_KEY_DB_VERSION, undef,

@@ -1431,7 +1431,7 @@ infoRender(void)
         if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
             // Process any stanza directories
-            if  (!varLstEmpty(infoList))
+            if (!varLstEmpty(infoList))
             {
                 for (unsigned int stanzaIdx = 0; stanzaIdx < varLstSize(infoList); stanzaIdx++)
                 {
