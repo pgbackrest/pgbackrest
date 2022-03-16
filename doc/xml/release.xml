@@ -16,6 +16,20 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.39dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1685"/>
+                        <github-pull-request id="1691"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="nuno.pires"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <proper>AWS</proper> <proper>IMDSv2</proper> support.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-pull-request id="1679"/>
@@ -11421,6 +11435,11 @@
         <contributor id="nj.baliyan">
             <contributor-name-display>Nj Baliyan</contributor-name-display>
             <contributor-id type="github">nj3110</contributor-id>
+        </contributor>
+
+        <contributor id="nuno.pires">
+            <contributor-name-display>Nuno Pires</contributor-name-display>
+            <contributor-id type="github">nunopi</contributor-id>
         </contributor>
 
         <contributor id="patrick.mclaughlin">
