@@ -810,7 +810,7 @@ sub end
         if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && $self->{bProfile})
         {
             executeTest(
-                ($self->{oTest}->{&TEST_VM} ne VM_NONE  ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                     "gprof $self->{strGCovPath}/test.bin $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.txt");
 
             $self->{oStorageTest}->pathCreate(

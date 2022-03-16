@@ -2163,7 +2163,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 MEM_CONTEXT_END();
 
                                 // If a numeric type check that the value is valid
-                                if (optionType == cfgOptTypeInteger ||  optionType == cfgOptTypeSize ||
+                                if (optionType == cfgOptTypeInteger || optionType == cfgOptTypeSize ||
                                     optionType == cfgOptTypeTime)
                                 {
                                     // Check that the value can be converted

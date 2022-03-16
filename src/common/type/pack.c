@@ -35,7 +35,7 @@ Integer types (packTypeMapData[type].valueMultiBit) when an unsigned value is <=
             1 0 0 1 - the low-order bit is 1 so the "ID delta low order bit" is set.
     04 = since the low order bit of the internal ID delta was already set in bit 0 of the tag byte, then the remain bits are shifted
         right by one and represented in this second byte as 4. To get the ID delta for 04, shift the 4 back to the left one and then
-        add back the "ID delta low order bit" to give a binary representation of  1 0 0 1 = 9. Add back the 1 which is never
+        add back the "ID delta low order bit" to give a binary representation of 1 0 0 1 = 9. Add back the 1 which is never
         recorded and the ID gap is 10.
 
 Integer types (packTypeMapData[type].valueMultiBit) when an unsigned value is > 1 or a signed value is < -1 or > 0:
@@ -81,7 +81,7 @@ Array and object types:
 0-2 - ID delta low order bits
   Note: arrays and objects are merely containers for the other pack types.
 
-  Example: 1801  (container begin)
+  Example: 1801 (container begin)
     1 = array type
     8 = "more ID delta indicator bit" - there exists a gap (i.e. NULLs are not stored so there is a gap between the stored IDs)
     01 = since there are three "ID delta low order bits", the 01 will be shifted left by 3 with zeros, resulting in 8. Add back

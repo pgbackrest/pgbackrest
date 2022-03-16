@@ -178,7 +178,7 @@ List *restoreFile(
                     }
 
                     // Create and open the repo file
-                    repoFileRead =  storageNewReadP(
+                    repoFileRead = storageNewReadP(
                         storageRepoIdx(repoIdx), repoFile,
                         .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL, .offset = file->offset,
                         .limit = repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL);

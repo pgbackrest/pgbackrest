@@ -813,7 +813,7 @@ protocolKeepAlive(void)
 
     if (protocolHelper.memContext != NULL)
     {
-        for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
         {
             if (protocolHelper.clientRemote[clientIdx].client != NULL)
                 protocolClientNoOp(protocolHelper.clientRemote[clientIdx].client);
