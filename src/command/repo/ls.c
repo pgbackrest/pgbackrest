@@ -5,6 +5,7 @@ Repository List Command
 
 #include <unistd.h>
 
+#include "command/repo/common.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/log.h"
@@ -124,14 +125,9 @@ storageListRender(IoWrite *write)
     // Get path
     const String *path = NULL;
 
+    // Get and validate if path is valid for repo
     if (strLstSize(cfgCommandParam()) == 1)
-    {
-        path = strLstGet(cfgCommandParam(), 0);
-
-        // Make sure the path does not end with a slash unless it is only /
-        if (strEndsWith(path, FSLASH_STR) && strSize(path) > 1)
-            path = strPath(path);
-    }
+        path = storageIsValidRepoPath(strLstGet(cfgCommandParam(), 0));
     else if (strLstSize(cfgCommandParam()) > 1)
         THROW(ParamInvalidError, "only one path may be specified");
 

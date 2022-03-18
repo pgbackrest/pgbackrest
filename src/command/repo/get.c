@@ -5,6 +5,7 @@ Repository Get Command
 
 #include <unistd.h>
 
+#include "command/repo/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
@@ -40,20 +41,8 @@ storageGetProcess(IoWrite *destination)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // If the source path is absolute then get the relative part of the file
-        if (strBeginsWith(file, FSLASH_STR))
-        {
-            // Check that the file path begins with the repo path
-            if (!strBeginsWith(file, cfgOptionStr(cfgOptRepoPath)))
-            {
-                THROW_FMT(
-                    OptionInvalidValueError, "absolute path '%s' is not in base path '%s'", strZ(file),
-                    strZ(cfgOptionDisplay(cfgOptRepoPath)));
-            }
-
-            // Get the relative part of the file
-            file = strSub(file, strEq(cfgOptionStr(cfgOptRepoPath), FSLASH_STR) ? 1 : strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
-        }
+        // Is path valid for repo
+        file = storageIsValidRepoPath(file);
 
         // Create new file read
         IoRead *source = storageReadIo(storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));

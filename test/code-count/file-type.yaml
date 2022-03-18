@@ -447,6 +447,14 @@ src/command/remote/remote.h:
   class: core
   type: c/h
 
+src/command/repo/common.c:
+  class: core
+  type: c
+
+src/command/repo/common.h:
+  class: core
+  type: c/h
+
 src/command/repo/create.c:
   class: core
   type: c
