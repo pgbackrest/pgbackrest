@@ -2266,7 +2266,6 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
-            hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
