@@ -127,7 +127,7 @@ storageListRender(IoWrite *write)
 
     // Get and validate if path is valid for repo
     if (strLstSize(cfgCommandParam()) == 1)
-        path = storageIsValidRepoPath(strLstGet(cfgCommandParam(), 0));
+        path = repoPathIsValid(strLstGet(cfgCommandParam(), 0));
     else if (strLstSize(cfgCommandParam()) > 1)
         THROW(ParamInvalidError, "only one path may be specified");
 

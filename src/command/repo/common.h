@@ -10,6 +10,6 @@ Repo Command Common
 Functions and Definitions
 ***********************************************************************************************************************************/
 // Path cannot contain //. Strip trailing /. Absolute path must fall under repo path. Throw error or return validated relative path.
-String * storageIsValidRepoPath(const String *path);
+String *repoPathIsValid(const String *path);
 
 #endif

@@ -35,8 +35,8 @@ storagePutProcess(IoRead *source)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Is path valid for repo
-        file = storageIsValidRepoPath(file);
+        // Is path valid for repo?
+        file = repoPathIsValid(file);
 
         StorageWrite *destination = storageNewWriteP(storageRepoWrite(), file);
 

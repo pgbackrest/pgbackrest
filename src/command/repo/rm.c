@@ -26,9 +26,9 @@ cmdStorageRemove(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Is path valid for repo
+        // Is path valid for repo?
         if (path != NULL)
-            path = storageIsValidRepoPath(path);
+            path = repoPathIsValid(path);
 
         // Check if this is a file
         StorageInfo info = storageInfoP(storageRepo(), path, .ignoreMissing = true);

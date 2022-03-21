@@ -822,11 +822,11 @@ unit:
         total: 4
 
         coverage:
+          - command/repo/common
           - command/repo/get
           - command/repo/ls
           - command/repo/put
           - command/repo/rm
-          - command/repo/common
 
         include:
           # command/repo/create is currently for testing purposes only so coverage is not provided except in integration.  In the

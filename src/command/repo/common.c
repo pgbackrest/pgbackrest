@@ -9,7 +9,7 @@ Common Functions and Definitions for Repo Commands
 
 /**********************************************************************************************************************************/
 String *
-storageIsValidRepoPath(const String *path)
+repoPathIsValid(const String *path)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);

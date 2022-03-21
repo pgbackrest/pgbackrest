@@ -41,8 +41,8 @@ storageGetProcess(IoWrite *destination)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Is path valid for repo
-        file = storageIsValidRepoPath(file);
+        // Is path valid for repo?
+        file = repoPathIsValid(file);
 
         // Create new file read
         IoRead *source = storageReadIo(storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
