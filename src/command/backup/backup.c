@@ -405,17 +405,6 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                         cfgOptCompressLevel, cfgSourceParam, VARINT64(varUInt(manifestPriorData->backupOptionCompressLevel)));
                 }
 
-                // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
-                // is guaranteed to contain a real file -- like references.  Also annoying that if the full backup was not
-                // hardlinked then an diff/incr can't be used because we need more testing.
-                if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
-                {
-                    LOG_WARN_FMT(
-                        "%s backup cannot alter hardlink option to '%s', reset to value in %s",
-                        strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptRepoHardlink)), strZ(backupLabelPrior));
-                    cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
-                }
-
                 // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
                 // checksum-page to false and move on without a warning.  Page checksums will start on the next full backup.
                 if (manifestData(result)->backupOptionChecksumPage == NULL)

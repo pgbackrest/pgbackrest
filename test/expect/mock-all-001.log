@@ -2187,7 +2187,6 @@ P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-t
             HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the maximum.
 P00   INFO: last backup label = [BACKUP-FULL-2], version = [VERSION-1]
 P00   WARN: diff backup cannot alter compress-type option to 'zst', reset to value in [BACKUP-FULL-2]
-P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [BACKUP-FULL-2]
 P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from [BACKUP-FULL-2]
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/33001 (64KB, 36.35%) checksum 6bf316f11d28c28914ea9be92c00de9bea6d9a6b
 P01 DETAIL: match file from prior backup [TEST_PATH]/db-primary/db/base-2/base/32768/44000_init (32KB, 54.52%) checksum 1d73a0052828531770e7c155aeb22338e017e196
