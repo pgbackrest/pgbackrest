@@ -43,6 +43,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1697"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve path validation for <cmd>repo-*</cmd> commands.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1608"/>
                         <github-pull-request id="1676"/>
 
