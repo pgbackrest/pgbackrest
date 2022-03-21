@@ -16,6 +16,20 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.39dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1685"/>
+                        <github-pull-request id="1691"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="nuno.pires"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <proper>AWS</proper> <proper>IMDSv2</proper> support.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-pull-request id="1679"/>
@@ -40,6 +54,19 @@
 
                         <p>Improve <cmd>stop</cmd> command to honor <br-option>stanza</br-option> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1686"/>
+                        <github-pull-request id="1688"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="seth.daniel"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve error message for invalid <br-option>repo-azure-key</br-option>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -51,11 +78,15 @@
                             <github-pull-request id="1683"/>
                         </commit>
                         <commit subject="Add bundle logging to backup command."/>
+                        <commit subject="Rename bundle-* options to repo-bundle-*.">
+                            <github-pull-request id="1694"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="reid.thompson"/>
                             <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="chris.bandy"/>
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
@@ -11406,6 +11437,11 @@
             <contributor-id type="github">nj3110</contributor-id>
         </contributor>
 
+        <contributor id="nuno.pires">
+            <contributor-name-display>Nuno Pires</contributor-name-display>
+            <contributor-id type="github">nunopi</contributor-id>
+        </contributor>
+
         <contributor id="patrick.mclaughlin">
             <contributor-name-display>Patrick McLaughlin</contributor-name-display>
             <contributor-id type="github">hitech73</contributor-id>
@@ -11484,6 +11520,11 @@
         <contributor id="sebastien.lardiere">
             <contributor-name-display>Lardi&amp;egrave;re S&amp;eacute;bastien</contributor-name-display>
             <contributor-id type="github">slardiere</contributor-id>
+        </contributor>
+
+        <contributor id="seth.daniel">
+            <contributor-name-display>Seth Daniel</contributor-name-display>
+            <contributor-id type="github">sethdaniel</contributor-id>
         </contributor>
 
         <contributor id="slava.moudry">

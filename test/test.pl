@@ -695,7 +695,7 @@ eval
                     my $strCFlags =
                         (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
                         ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
-                    my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace  ? '-lbacktrace' : '';
+                    my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace ? '-lbacktrace' : '';
                     my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
                     my $strBuildFlags = "CFLAGS_EXTRA=${strCFlags}\nLDFLAGS_EXTRA=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
                     my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";

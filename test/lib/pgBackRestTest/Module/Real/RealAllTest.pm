@@ -507,7 +507,7 @@ sub run
         $oHostDbPrimary->sqlWalRotate();
 
         # Get the SHA1 and path of the table for the database that will not be restored
-        $strDb1TablePath =  $oHostDbPrimary->dbBasePath(). "/base/" .
+        $strDb1TablePath = $oHostDbPrimary->dbBasePath(). "/base/" .
             $oHostDbPrimary->sqlSelectOne("select oid from pg_database where datname='test1'") . "/" .
             $oHostDbPrimary->sqlSelectOne("select relfilenode from pg_class where relname='test1_zeroed'", {strDb => 'test1'});
         $strDb1TableSha1 = storageTest()->hashSize($strDb1TablePath);

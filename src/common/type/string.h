@@ -5,7 +5,7 @@ Strings are lightweight objects in that they do not have their own memory contex
 which they are instantiated. If a string is needed outside the current memory context, the memory context must be switched to the
 old context and then back. Below is a simplified example:
 
-    String *result = NULL;     <--- is created in the current memory context  (referred to as "old context" below)
+    String *result = NULL;     <--- is created in the current memory context (referred to as "old context" below)
     MEM_CONTEXT_TEMP_BEGIN()   <--- begins a new temporary context
     {
         String *resultStr = strNewZN("myNewStr"); <--- creates a string in the temporary memory context

@@ -101,7 +101,7 @@ cmdServerSigChild(const int signalType, siginfo_t *signalInfo, void *context)
     ASSERT(signalInfo->si_code == CLD_EXITED);
 
     // Find the process and remove it
-    for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
+    for (unsigned int processIdx = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
     {
         if (*(int *)lstGet(serverLocal.processList, processIdx) == signalInfo->si_pid)
             lstRemoveIdx(serverLocal.processList, processIdx);
@@ -200,7 +200,7 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     {
         sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
 
-        for (unsigned int processIdx  = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
+        for (unsigned int processIdx = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
         {
             pid_t pid = *(int *)lstGet(serverLocal.processList, processIdx);
 

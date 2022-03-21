@@ -694,7 +694,7 @@ restoreManifestOwnerReplace(const String *const owner, const String *const owner
         {                                                                                                                          \
             const String *owner = strLstGet(type##List, ownerIdx);                                                                 \
                                                                                                                                    \
-            if (type##Name() == NULL ||  !strEq(type##Name(), owner))                                                              \
+            if (type##Name() == NULL || !strEq(type##Name(), owner))                                                              \
                 LOG_WARN_FMT("unknown " #type " '%s' in backup manifest mapped to current " #type, strZ(owner));                   \
         }                                                                                                                          \
     }                                                                                                                              \
@@ -1254,7 +1254,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                 const String *pgPath = storagePathP(storagePg(), manifestPathPg(path->name));
                 StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-                // Create the path if it is missing  If it exists it should already have the correct ownership and mode.
+                // Create the path if it is missing. If it exists it should already have the correct ownership and mode.
                 if (!pathInfo.exists)
                 {
                     LOG_DETAIL_FMT("create path '%s'", strZ(pgPath));
