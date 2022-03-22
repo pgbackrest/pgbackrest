@@ -960,10 +960,12 @@ sub run
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'compress-type' => $strCompressType}});
         }
 
-        # Enable hardlinks (except for s3) to ensure a warning is raised
+        # Enable hardlinks (except for s3) to show they can be enabled after a full backup
         if ($strStorage eq POSIX)
         {
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'repo1-hardlink' => 'y'}});
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::true;
+            $oHostBackup->{bHardLink} = true;
         }
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
@@ -987,15 +989,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
 
-        # Now the compression and hardlink changes will take effect
+        # Now the compression changes will take effect
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE} = $strCompressType;
-
-        if ($strStorage eq POSIX)
-        {
-            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::true;
-            $oHostBackup->{bHardLink} = true;
-        }
 
         $oHostDbPrimary->manifestReference(\%oManifest);
 
