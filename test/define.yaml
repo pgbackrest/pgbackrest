@@ -822,6 +822,7 @@ unit:
         total: 4
 
         coverage:
+          - command/repo/common
           - command/repo/get
           - command/repo/ls
           - command/repo/put
