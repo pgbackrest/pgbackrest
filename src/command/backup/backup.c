@@ -190,6 +190,10 @@ backupInit(const InfoBackup *infoBackup)
         cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
+    // If hardlink is not set (because bundles are enabled) then set to false
+    if (!cfgOptionTest(cfgOptRepoHardlink))
+        cfgOptionSet(cfgOptRepoHardlink, cfgSourceDefault, BOOL_FALSE_VAR);
+
     // Get database info when online
     PgControl pgControl = {0};
 

@@ -1840,6 +1840,10 @@ option:
       backup: {}
     command-role:
       main: {}
+    depend:
+      option: repo-bundle
+      list:
+        - false
     deprecate:
       hardlink: {}
 

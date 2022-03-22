@@ -103,6 +103,7 @@
                         <commit subject="Rename bundle-* options to repo-bundle-*.">
                             <github-pull-request id="1694"/>
                         </commit>
+                        <commit subject="Disable repo-hardlink option when repo-bundle option is enabled."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
