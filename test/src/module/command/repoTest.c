@@ -165,7 +165,18 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
 
         TEST_ERROR(
-            storageListRender(ioBufferWriteNew(output)), AssertError, "absolute path '/' is not in base path '" TEST_PATH "/repo'");
+            storageListRender(ioBufferWriteNew(output)), ParamInvalidError,
+            "absolute path '/' is not in base path '" TEST_PATH "/repo'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on //");
+
+        argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "bbb//");
+        HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
+
+        TEST_ERROR(
+            storageListRender(ioBufferWriteNew(output)), ParamInvalidError, "path 'bbb//' cannot contain //");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("subdirectory");
@@ -594,7 +605,7 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_ERROR(
-            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
+            storageGetProcess(ioBufferWriteNew(writeBuffer)), ParamInvalidError,
             "absolute path '/somewhere/" INFO_ARCHIVE_FILE "' is not in base path '" TEST_PATH "/repo'");
 
         // -------------------------------------------------------------------------------------------------------------------------
