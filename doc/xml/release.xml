@@ -104,6 +104,7 @@
                             <github-pull-request id="1694"/>
                         </commit>
                         <commit subject="Disable repo-hardlink option when repo-bundle option is enabled."/>
+                        <commit subject="Allow files that become zero-length after the backup manifest is built."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

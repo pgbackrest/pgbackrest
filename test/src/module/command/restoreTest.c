@@ -2375,6 +2375,13 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "xxxxx"), .size = 5, .sizeRepo = 5, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 11,
                     .reference = NULL, .checksumSha1 = "9addbf544119efa4a64223b649750a510f0d463f"});
+            // Set bogus sizeRepo and checksumSha1 to ensure this is not handled as a regular file
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "zero-length"), .size = 0, .sizeRepo = 1, .timestamp = 1482182866,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 16,
+                    .reference = NULL, .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
@@ -2695,6 +2702,7 @@ testRun(void)
                 " e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/888 (0B, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/zero-length (bundle 1/16, 0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2708,7 +2716,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 20");
+            "P00   INFO: restore size = [SIZE], file total = 21");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2741,6 +2749,7 @@ testRun(void)
             "postgresql.conf {link, d=../config/postgresql.conf}\n"
             "xxxxx {file, s=5, t=1482182860}\n"
             "yyy {file, s=3, t=1482182860}\n"
+            "zero-length {file, s=0, t=1482182866}\n"
             "zz {file, s=2, t=1482182860}\n");
 
         testRestoreCompare(
@@ -2870,6 +2879,7 @@ testRun(void)
                 " 20161219-212741F_20161219-212900I/2/2, 1B, [PCT]) checksum e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/888 - exists and is zero size (0B, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/zero-length - exists and is zero size (bundle 1/16, 0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2883,7 +2893,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 20");
+            "P00   INFO: restore size = [SIZE], file total = 21");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
