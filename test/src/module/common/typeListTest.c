@@ -153,7 +153,10 @@ testRun(void)
     {
         List *list = lstNewP(sizeof(int));
         lstComparatorSet(list, testComparator);
-        int value;
+        int value = 0;
+
+        TEST_RESULT_PTR(lstSort(list, sortOrderAsc), list, "list sort asc");
+        TEST_RESULT_PTR(lstFind(list, &value), NULL, "unable to find in empty list");
 
         value = 3; lstAdd(list, &value);
         value = 5; lstAdd(list, &value);
