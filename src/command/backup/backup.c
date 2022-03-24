@@ -675,7 +675,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 // Resumable backups must have backup.manifest.copy
                 if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                 {
-                    reason = STRDEF("resume is disabled");
+                    reason = strNewZ("resume is disabled");
 
                     // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
                     // occurs then the backup will be considered unusable and a resume will not be attempted.

@@ -1748,7 +1748,7 @@ testRun(void)
             manifestResume = manifestNewInternal();
             manifestResume->pub.info = infoNew(NULL);
             manifestResume->pub.data.backupType = backupTypeFull;
-            manifestResume->pub.data.backupLabel = STRDEF("20191003-105320F");
+            manifestResume->pub.data.backupLabel = strNewZ("20191003-105320F");
             manifestResume->pub.data.pgVersion = PG_VERSION_12;
         }
         OBJ_NEW_END();

@@ -1062,7 +1062,7 @@ testRun(void)
         OBJ_NEW_BEGIN(Manifest)
         {
             manifestPrior = manifestNewInternal();
-            manifestPrior->pub.data.backupLabel = STRDEF("20190101-010101F");
+            manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");
 
             manifestFileAdd(
                 manifestPrior,

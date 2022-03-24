@@ -1900,7 +1900,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
-            manifest->pub.data.backupLabel = STRDEF(TEST_LABEL);
+            manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_90;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_90);
             manifest->pub.data.backupType = backupTypeFull;
@@ -2306,7 +2306,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
-            manifest->pub.data.backupLabel = STRDEF(TEST_LABEL);
+            manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_10;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeIncr;
