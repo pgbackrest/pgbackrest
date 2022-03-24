@@ -2820,7 +2820,10 @@ manifestFileUpdate(
 
     // Update checksum if set
     if (checksumSha1 != NULL)
+    {
+        ASSERT(strlen(checksumSha1) == HASH_TYPE_SHA1_SIZE_HEX);
         memcpy(file.checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+    }
 
     // Update repo size
     file.size = size;

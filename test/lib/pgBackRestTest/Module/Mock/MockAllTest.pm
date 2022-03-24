@@ -784,7 +784,8 @@ sub run
             $oHostBackup->manifestMunge(
                 basename($strResumePath),
                 {&MANIFEST_SECTION_TARGET_FILE =>
-                    {(&MANIFEST_TARGET_PGDATA . '/badchecksum.txt') => {&MANIFEST_SUBKEY_CHECKSUM => BOGUS}}},
+                    {(&MANIFEST_TARGET_PGDATA . '/badchecksum.txt') =>
+                        {&MANIFEST_SUBKEY_CHECKSUM => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}},
                 false);
         }
         # Change contents of resumed file without changing size so it will throw a nasty error about the repo having been corrupted
