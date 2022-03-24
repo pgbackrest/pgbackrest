@@ -112,7 +112,10 @@ bufDup(const Buffer *buffer)
 
     // Create object and copy data
     Buffer *this = bufNew(bufUsed(buffer));
-    memcpy(this->pub.buffer, buffer->pub.buffer, bufSize(this));
+
+    if (bufUsed(buffer) != 0)
+        memcpy(this->pub.buffer, buffer->pub.buffer, bufSize(this));
+
     this->pub.used = bufSize(this);
 
     FUNCTION_TEST_RETURN(this);
