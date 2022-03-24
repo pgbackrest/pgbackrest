@@ -122,6 +122,15 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="abubakar.mohammed"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect reference to <id>stanza-update</id> in the user guide.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
@@ -10806,6 +10815,11 @@
         </contributor>
 
         <!-- The order of other contributors is alpha by name -->
+        <contributor id="abubakar.mohammed">
+            <contributor-name-display>Abubakar Mohammed</contributor-name-display>
+            <contributor-id type="github">abubakarm94</contributor-id>
+        </contributor>
+
         <contributor id="adam.brusselback">
             <contributor-name-display>Adam Brusselback</contributor-name-display>
             <contributor-id type="github">Tostino</contributor-id>
