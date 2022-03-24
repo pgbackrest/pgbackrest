@@ -315,16 +315,18 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     }
 
     // Allocate memory for the file pack
+    const size_t nameSize = strSize(file->name) + 1;
+
     uint8_t *const result = memNew(
-        sizeof(StringPub) + strSize(file->name) + 1 + bufferPos + (file->checksumPageErrorList != NULL ?
-            sizeof(StringPub) + strSize(file->checksumPageErrorList) + 1 : 0));
+        sizeof(StringPub) + nameSize + bufferPos + (file->checksumPageErrorList != NULL ?
+            ALIGN_OFFSET(StringPub, nameSize + bufferPos) + sizeof(StringPub) + strSize(file->checksumPageErrorList) + 1 : 0));
 
     // Create string object for the file name
     *(StringPub *)result = (StringPub){.size = (unsigned int)strSize(file->name), .buffer = (char *)result + sizeof(StringPub)};
     size_t resultPos = sizeof(StringPub);
 
-    memcpy(result + resultPos, (uint8_t *)strZ(file->name), strSize(file->name) + 1);
-    resultPos += strSize(file->name) + 1;
+    memcpy(result + resultPos, (uint8_t *)strZ(file->name), nameSize);
+    resultPos += nameSize;
 
     // Copy pack data
     memcpy(result + resultPos, buffer, bufferPos);
@@ -332,7 +334,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     // Create string object for the checksum error list
     if (file->checksumPageErrorList != NULL)
     {
-        resultPos += bufferPos;
+        resultPos += bufferPos + ALIGN_OFFSET(StringPub, nameSize + bufferPos);
 
         *(StringPub *)(result + resultPos) = (StringPub)
             {.size = (unsigned int)strSize(file->checksumPageErrorList), .buffer = (char *)result + resultPos + sizeof(StringPub)};
@@ -414,7 +416,7 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     result.checksumPageError = flag & (1 << manifestFilePackFlagChecksumPageError) ? true : false;
 
     if (flag & (1 << manifestFilePackFlagChecksumPageErrorList))
-        result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + bufferPos);
+        result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + bufferPos + ALIGN_OFFSET(StringPub, bufferPos));
 
     FUNCTION_TEST_RETURN(result);
 }
