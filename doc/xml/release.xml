@@ -136,6 +136,14 @@
 
                         <p>Fix example for <br-option>repo-gcs-key-type</br-option> option in configuration reference.</p>
                     </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <br-option>tls-server-auth</br-option> example and add clarifications.</p>
+                    </release-item>
                 </release-bug-list>
             </release-doc-list>
         </release>
