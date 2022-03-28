@@ -241,11 +241,14 @@ restoreBackupSet(void)
         // set that satisfies the time condition, else we will use the backup provided
         const String *backupSetRequested = NULL;
         time_t timeTargetEpoch = 0;
+        uint64_t lsnTarget = 0;
 
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
             if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_TIME)
                 timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
+            else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_LSN)
+                lsnTarget = pgLsnFromStr(cfgOptionStr(cfgOptTarget));
         }
         else
             backupSetRequested = cfgOptionStr(cfgOptSet);
@@ -289,8 +292,8 @@ restoreBackupSet(void)
                 // Get the latest backup
                 InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
-                // If the recovery type is time, attempt to determine the backup set
-                if (timeTargetEpoch != 0)
+                // If the recovery type is time or lsn, attempt to determine the backup set
+                if (timeTargetEpoch != 0 || lsnTarget != 0)
                 {
                     bool found = false;
 
@@ -300,13 +303,13 @@ restoreBackupSet(void)
                         // Get the backup data
                         InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
 
-                        // If the end of the backup is before the target time, then select this backup
-                        if (backupData.backupTimestampStop < timeTargetEpoch)
+                        // If the end of the backup is before the target time or target lsn, then select this backup
+                        if (backupData.backupTimestampStop < timeTargetEpoch ||
+                            (backupData.backupLsnStop && pgLsnFromStr(backupData.backupLsnStop) < lsnTarget))
                         {
                             found = true;
 
-                            result = restoreBackupData(
-                                backupData.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
+                            result = restoreBackupData(backupData.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                             break;
                         }
                     }
