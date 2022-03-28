@@ -348,10 +348,10 @@ restoreBackupSet(void)
         {
             if (backupSetRequested != NULL)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
-            else if (timeTargetEpoch != 0)
+            else if (timeTargetEpoch != 0 || lsnTarget != 0)
             {
                 THROW_FMT(
-                    BackupSetInvalidError, "unable to find backup set with stop time less than '%s'",
+                    BackupSetInvalidError, "unable to find backup set with %s less than '%s'", lsnTarget != 0 ? "lsn" : "stop time",
                     strZ(cfgOptionDisplay(cfgOptTarget)));
             }
             else

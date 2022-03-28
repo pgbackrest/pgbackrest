@@ -53,11 +53,11 @@ Test data for backup.info
     "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
     "\"backup-archive-start\":null,\"backup-archive-stop\":null,"                                                                  \
     "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
-    "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","          \
-    "\"20161219-212741F_20161219-212803D\"],"                                                                                      \
-    "\"backup-timestamp-start\":1482182884,\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,"             \
-    "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"                                 \
-    "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+    "\"backup-lsn-stop\":\"0/1E000101\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803D\"],\"backup-timestamp-start\":1482182884,"     \
+    "\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,\"option-archive-check\":true,"                     \
+    "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
+    "\"option-hardlink\":false,\"option-online\":true}\n"
 
 /***********************************************************************************************************************************
 Test restores to be sure they match the manifest
@@ -521,7 +521,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn (1)");
-        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212803D", "backup set found");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "backup set found");
         TEST_RESULT_UINT(backupData.repoIdx, 0, "backup set found, repo1");
 
         // No backup found to restore
@@ -534,7 +534,7 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "no backup set found to restore");
+        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1A000102'");
     }
 
     // *****************************************************************************************************************************
