@@ -531,7 +531,7 @@ testRun(void)
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
         HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
-        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn");
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn 0/1C000102");
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F", "backup set found");
         TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
         TEST_RESULT_LOG("P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore");
@@ -547,23 +547,12 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn (1)");
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn 0/1E000105");
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "backup set found");
         TEST_RESULT_UINT(backupData.repoIdx, 0, "backup set found, repo1");
 
-        // No backup found to restore
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
-        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
-        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
-        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1A000102");
-
-        HRN_CFG_LOAD(cfgCmdRestore, argList);
-
-        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1A000102'");
-
-        // Warn if missing/null backup-lsn-stop is found before finding a match
+        // Log warning if missing backup-lsn-stop is found before finding a match
+        // Missing backup-lsn-stop in repo1, no backups in repo2, no qualifying auto-selectable backup in either repo
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
@@ -582,6 +571,46 @@ testRun(void)
             "P00   WARN: repo1 reached backup from prior version missing required LSN content before finding a match.\n"
             "            auto-select of backup has been disabled for this repo.\n"
             "            HINT: you may specify a particular backup to restore using the --set option.\n"
+            "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
+
+        // Log warning if missing backup-lsn-stop is found before finding a match
+        // Missing backup-lsn-stop in repo1, qualifying auto-selectable backup set in repo2
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000102");
+
+        // Write repo2 information with data required to find backup
+        HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn 0/1C000102");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F", "backup set found");
+        TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
+        TEST_RESULT_LOG(
+            "P00   WARN: repo1 reached backup from prior version missing required LSN content before finding a match.\n"
+            "            auto-select of backup has been disabled for this repo.\n"
+            "            HINT: you may specify a particular backup to restore using the --set option.");
+
+        // No backups to search for qualifying backup set
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1A000102");
+
+        // Write repo info with no current backups
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1A000102'");
+        TEST_RESULT_LOG(
             "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
     }
 
