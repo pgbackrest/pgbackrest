@@ -59,6 +59,33 @@ Test data for backup.info
     "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
     "\"option-hardlink\":false,\"option-online\":true}\n"
 
+// To verify handling of missing backup-lsn-stop for --type=lsn --target=<lsn> backup
+#define TEST_RESTORE_BACKUP_INFO1                                                                                                  \
+    "[backup:current]\n"                                                                                                           \
+    "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                                       \
+    "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","                  \
+    "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"                     \
+    "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,"              \
+    "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"                            \
+    "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"           \
+    "\"option-online\":true}\n"                                                                                                    \
+    "20161219-212741F_20161219-212803D={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
+    "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","                  \
+    "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
+    "\"backup-info-size-delta\":163866,\"backup-lsn-stop\":\"0/1E000101\",\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-reference\":[\"20161219-212741F\"],\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,"      \
+    "\"backup-type\":\"diff\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"                            \
+    "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"           \
+    "\"option-online\":true}\n"                                                                                                    \
+    "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
+    "\"backup-archive-start\":null,\"backup-archive-stop\":null,"                                                                  \
+    "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
+    "\"backup-lsn-stop\":\"0/1E000101\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803D\"],\"backup-timestamp-start\":1482182884,"     \
+    "\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,\"option-archive-check\":true,"                     \
+    "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
+    "\"option-hardlink\":false,\"option-online\":true}\n"
+
 /***********************************************************************************************************************************
 Test restores to be sure they match the manifest
 ***********************************************************************************************************************************/
@@ -535,6 +562,27 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1A000102'");
+
+        // Warn if missing/null backup-lsn-stop is found before finding a match
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000102");
+
+        // Re-write repo information with set missing backup-lsn-stop
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO1 "\n" TEST_RESTORE_BACKUP_INFO_DB);
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1C000102'");
+        TEST_RESULT_LOG(
+            "P00   WARN: repo1 reached backup from prior version missing required LSN content before finding a match.\n"
+            "            auto-select of backup has been disabled for this repo.\n"
+            "            HINT: you may specify a particular backup to restore using the --set option.\n"
+            "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
     }
 
     // *****************************************************************************************************************************

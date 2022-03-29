@@ -303,9 +303,21 @@ restoreBackupSet(void)
                         // Get the backup data
                         InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
 
+                        // If target is lsn and no backupLsnStop exists, exit this repo and log that backup may be manually selected
+                        if (lsnTarget != 0 && !backupData.backupLsnStop)
+                        {
+                            LOG_WARN_FMT(
+                                "%s reached backup from prior version missing required LSN content before finding a match.\n"
+                                "auto-select of backup has been disabled for this repo.\n"
+                                "HINT: you may specify a particular backup to restore using the --set option.",
+                                cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
+
+                            break;
+                        }
+
                         // If the end of the backup is before the target time or target lsn, then select this backup
                         if (backupData.backupTimestampStop < timeTargetEpoch ||
-                            (backupData.backupLsnStop && pgLsnFromStr(backupData.backupLsnStop) < lsnTarget))
+                            (lsnTarget != 0 && pgLsnFromStr(backupData.backupLsnStop) < lsnTarget))
                         {
                             found = true;
 
