@@ -186,6 +186,22 @@ Types from src/include/catalog/catversion.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_15
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ */
+
+/*							yyyymmddN */
+#define CATALOG_VERSION_NO	202203301
+
+// Allow the catalog version to float during the PostgreSQL 15 beta/rc period
+#define CATALOG_VERSION_NO_MAX
+
 #elif PG_VERSION >= PG_VERSION_14
 
 /*
@@ -1955,6 +1971,10 @@ Types from src/include/access/xlog_internal.h
 // XLOG_PAGE_MAGIC define
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_15
+
+#define XLOG_PAGE_MAGIC 0xD10F	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_14
 

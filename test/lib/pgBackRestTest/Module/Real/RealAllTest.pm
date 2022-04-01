@@ -64,6 +64,7 @@ sub run
         {pg =>  '12', repoDest =>     HOST_BACKUP, tls => 0, storage =>    S3, encrypt => 1, compress =>  LZ4, repo => 1, bnd => 0},
         {pg =>  '13', repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>  ZST, repo => 1, bnd => 1},
         {pg =>  '14', repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 2, bnd => 0},
+#        {pg =>  '15', repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 2, bnd => 0},
     )
     {
         # Only run tests for this pg version
