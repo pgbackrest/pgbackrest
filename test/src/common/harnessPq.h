@@ -378,7 +378,9 @@ Macros for defining groups of functions that implement various queries and comma
 #define HRNPQ_MACRO_DATABASE_LIST_1(sessionParam, databaseNameParam)                                                               \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
-        .param = "[\"select oid::oid, datname::text, datlastsysoid::oid from pg_catalog.pg_database\"]",                           \
+        .param =                                                                                                                   \
+            "[\"select oid::oid, datname::text, (select oid::oid from pg_catalog.pg_database where datname = 'template0')"         \
+            " as datlastsysoid from pg_catalog.pg_database\"]",                                                                    \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRNPQ_CONSUMEINPUT},                                                                     \
     {.session = sessionParam, .function = HRNPQ_ISBUSY},                                                                           \

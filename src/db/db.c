@@ -565,14 +565,13 @@ dbList(Db *this)
         FUNCTION_LOG_PARAM(DB, this);
     FUNCTION_LOG_END();
 
-    String *const query = strCatZ(strNew(), "select oid::oid, datname::text, ");
-
-    if (dbPgVersion(this) >= PG_VERSION_15)
-        strCatZ(query, "16383::oid as datlastsysoid");
-    else
-        strCatZ(query, "datlastsysoid::oid");
-
-    FUNCTION_LOG_RETURN(VARIANT_LIST, dbQuery(this, strCatZ(query, " from pg_catalog.pg_database")));
+    FUNCTION_LOG_RETURN(
+        VARIANT_LIST,
+        dbQuery(
+            this,
+            STRDEF(
+                "select oid::oid, datname::text, (select oid::oid from pg_catalog.pg_database where datname = 'template0')"
+                    " as datlastsysoid from pg_catalog.pg_database")));
 }
 
 /**********************************************************************************************************************************/
