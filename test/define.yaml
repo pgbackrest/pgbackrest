@@ -401,6 +401,7 @@ unit:
           - postgres/interface/v120
           - postgres/interface/v130
           - postgres/interface/v140
+          - postgres/interface/v150
           - protocol/client
           - protocol/command
           - protocol/helper

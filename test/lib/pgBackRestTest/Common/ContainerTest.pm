@@ -51,7 +51,7 @@ use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE
 ####################################################################################################################################
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
-use constant CONTAINER_DEBUG                                        => false;
+use constant CONTAINER_DEBUG                                        => true;
 
 ####################################################################################################################################
 # Store cache container checksums
@@ -397,6 +397,11 @@ sub containerBuild
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg";
 
+            if ($strOS eq VM_U20)
+            {
+                $strScript .= " lsb-release";
+            }
+
             # This package is required to build valgrind on 32-bit
             if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
             {
@@ -498,9 +503,13 @@ sub containerBuild
                 $strScript .=
                     "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
                     $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                    ($strOS eq VM_U20 ?
+                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg-testing main 15\"" .
+                            " >> /etc/apt/sources.list.d/pgdg.list && \\\n" : '') .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
-                    "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
+                    "    apt-get install -y --no-install-recommends" .
+                        ($strOS eq VM_U20 ? " -t \$(lsb_release -s -c)-pgdg-testing" : '') . " postgresql-common libpq-dev && \\\n" .
                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
@@ -516,7 +525,9 @@ sub containerBuild
                 }
                 else
                 {
-                    $strScript .= "    apt-get install -y --no-install-recommends";
+                    $strScript .=
+                        "    apt-get install -y --no-install-recommends" .
+                        ($strOS eq VM_U20 ? " -t \$(lsb_release -s -c)-pgdg-testing" : '');
                 }
 
                 # Construct list of databases to install
