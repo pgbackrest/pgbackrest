@@ -317,7 +317,7 @@ restoreBackupSet(void)
 
                         // If the end of the backup is before the target time or target lsn, then select this backup
                         if (backupData.backupTimestampStop < timeTargetEpoch ||
-                            (lsnTarget != 0 && pgLsnFromStr(backupData.backupLsnStop) < lsnTarget))
+                            (lsnTarget != 0 && pgLsnFromStr(backupData.backupLsnStop) <= lsnTarget))
                         {
                             found = true;
 
