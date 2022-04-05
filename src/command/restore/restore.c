@@ -241,15 +241,19 @@ restoreBackupSet(void)
         // satisfies the target condition, else we will use the backup provided
         const String *backupSetRequested = NULL;
         const StringId targetType = cfgOptionStrId(cfgOptType);
-        time_t targetTime = 0;
-        uint64_t targetLsn = 0;
+
+        union
+        {
+            time_t time;
+            uint64_t lsn;
+        } target = {0};
 
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
             if (targetType == CFGOPTVAL_TYPE_TIME)
-                targetTime = getEpoch(cfgOptionStr(cfgOptTarget));
+                target.time = getEpoch(cfgOptionStr(cfgOptTarget));
             else if (targetType == CFGOPTVAL_TYPE_LSN)
-                targetLsn = pgLsnFromStr(cfgOptionStr(cfgOptTarget));
+                target.lsn = pgLsnFromStr(cfgOptionStr(cfgOptTarget));
         }
         else
             backupSetRequested = cfgOptionStr(cfgOptSet);
@@ -317,8 +321,8 @@ restoreBackupSet(void)
                         }
 
                         // If the end of the backup is before the target time or target lsn, then select this backup
-                        if ((targetType == CFGOPTVAL_TYPE_TIME && backupData.backupTimestampStop < targetTime) ||
-                            (targetType == CFGOPTVAL_TYPE_LSN && pgLsnFromStr(backupData.backupLsnStop) <= targetLsn))
+                        if ((targetType == CFGOPTVAL_TYPE_TIME && backupData.backupTimestampStop < target.time) ||
+                            (targetType == CFGOPTVAL_TYPE_LSN && pgLsnFromStr(backupData.backupLsnStop) <= target.lsn))
                         {
                             found = true;
 
