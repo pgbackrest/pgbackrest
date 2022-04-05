@@ -1748,7 +1748,7 @@ testRun(void)
             manifestResume = manifestNewInternal();
             manifestResume->pub.info = infoNew(NULL);
             manifestResume->pub.data.backupType = backupTypeFull;
-            manifestResume->pub.data.backupLabel = STRDEF("20191003-105320F");
+            manifestResume->pub.data.backupLabel = strNewZ("20191003-105320F");
             manifestResume->pub.data.pgVersion = PG_VERSION_12;
         }
         OBJ_NEW_END();
@@ -1978,7 +1978,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
         hrnCfgArgRawBool(argList, cfgOptCompress, true);
-        hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -1986,8 +1985,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
-            "P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [FULL-1]");
+            "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("offline incr backup to test unresumable backup");
@@ -2268,7 +2266,6 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
-            hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 

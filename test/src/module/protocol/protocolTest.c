@@ -285,7 +285,7 @@ testRun(void)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
             *protocolHelperClient.client = (ProtocolClient){
-                .name = STRDEF("test"), .state = protocolClientStateIdle, .write = write};
+                .name = strNewZ("test"), .state = protocolClientStateIdle, .write = write};
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
         }
         OBJ_NEW_END();
@@ -293,7 +293,7 @@ testRun(void)
         OBJ_NEW_BEGIN(Exec)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
-            *protocolHelperClient.exec = (Exec){.name = STRDEF("test"), .command = strNewZ("test"), .processId = INT_MAX};
+            *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};
             memContextCallbackSet(memContextCurrent(), execFreeResource, protocolHelperClient.exec);
         }
         OBJ_NEW_END();

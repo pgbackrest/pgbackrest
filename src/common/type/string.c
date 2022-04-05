@@ -173,7 +173,9 @@ strNewBuf(const Buffer *buffer)
     String *this = strNewFixed(bufUsed(buffer));
 
     // Assign string
-    memcpy(this->pub.buffer, bufPtrConst(buffer), strSize(this));
+    if (strSize(this) != 0)
+        memcpy(this->pub.buffer, bufPtrConst(buffer), strSize(this));
+
     this->pub.buffer[strSize(this)] = 0;
 
     FUNCTION_TEST_RETURN(this);

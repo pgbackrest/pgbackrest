@@ -111,8 +111,11 @@ bufDup(const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     // Create object and copy data
-    Buffer *this = bufNew(buffer->pub.used);
-    memcpy(this->pub.buffer, buffer->pub.buffer, bufSize(this));
+    Buffer *this = bufNew(bufUsed(buffer));
+
+    if (bufUsed(buffer) != 0)
+        memcpy(this->pub.buffer, buffer->pub.buffer, bufSize(this));
+
     this->pub.used = bufSize(this);
 
     FUNCTION_TEST_RETURN(this);
@@ -130,7 +133,7 @@ bufCat(Buffer *this, const Buffer *cat)
     ASSERT(this != NULL);
 
     if (cat != NULL)
-        bufCatC(this, cat->pub.buffer, 0, cat->pub.used);
+        bufCatC(this, cat->pub.buffer, 0, bufUsed(cat));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -179,8 +182,8 @@ bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
 
     if (cat != NULL)
     {
-        ASSERT(catOffset <= cat->pub.used);
-        ASSERT(catSize <= cat->pub.used - catOffset);
+        ASSERT(catOffset <= bufUsed(cat));
+        ASSERT(catSize <= bufUsed(cat) - catOffset);
 
         bufCatC(this, cat->pub.buffer, catOffset, catSize);
     }

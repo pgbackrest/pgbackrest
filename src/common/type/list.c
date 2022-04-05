@@ -168,21 +168,24 @@ lstFind(const List *this, const void *item)
     ASSERT(this->comparator != NULL);
     ASSERT(item != NULL);
 
-    if (this->sortOrder == sortOrderAsc)
-        FUNCTION_TEST_RETURN(bsearch(item, this->list, lstSize(this), this->itemSize, this->comparator));
-    else if (this->sortOrder == sortOrderDesc)
+    if (this->list != NULL)
     {
-        // Assign the list for the descending comparator to use
-        comparatorDescList = this;
+        if (this->sortOrder == sortOrderAsc)
+            FUNCTION_TEST_RETURN(bsearch(item, this->list, lstSize(this), this->itemSize, this->comparator));
+        else if (this->sortOrder == sortOrderDesc)
+        {
+            // Assign the list for the descending comparator to use
+            comparatorDescList = this;
 
-        FUNCTION_TEST_RETURN(bsearch(item, this->list, lstSize(this), this->itemSize, lstComparatorDesc));
-    }
+            FUNCTION_TEST_RETURN(bsearch(item, this->list, lstSize(this), this->itemSize, lstComparatorDesc));
+        }
 
-    // Fall back on an iterative search
-    for (unsigned int listIdx = 0; listIdx < lstSize(this); listIdx++)
-    {
-        if (this->comparator(item, lstGet(this, listIdx)) == 0)
-            FUNCTION_TEST_RETURN(lstGet(this, listIdx));
+        // Fall back on an iterative search
+        for (unsigned int listIdx = 0; listIdx < lstSize(this); listIdx++)
+        {
+            if (this->comparator(item, lstGet(this, listIdx)) == 0)
+                FUNCTION_TEST_RETURN(lstGet(this, listIdx));
+        }
     }
 
     FUNCTION_TEST_RETURN(NULL);
@@ -383,23 +386,26 @@ lstSort(List *this, SortOrder sortOrder)
     ASSERT(this != NULL);
     ASSERT(this->comparator != NULL);
 
-    switch (sortOrder)
+    if (this->list != NULL)
     {
-        case sortOrderAsc:
-            qsort(this->list, lstSize(this), this->itemSize, this->comparator);
-            break;
-
-        case sortOrderDesc:
+        switch (sortOrder)
         {
-            // Assign the list that will be sorted for the comparator function to use
-            comparatorDescList = this;
+            case sortOrderAsc:
+                qsort(this->list, lstSize(this), this->itemSize, this->comparator);
+                break;
 
-            qsort(this->list, lstSize(this), this->itemSize, lstComparatorDesc);
-            break;
+            case sortOrderDesc:
+            {
+                // Assign the list that will be sorted for the comparator function to use
+                comparatorDescList = this;
+
+                qsort(this->list, lstSize(this), this->itemSize, lstComparatorDesc);
+                break;
+            }
+
+            case sortOrderNone:
+                break;
         }
-
-        case sortOrderNone:
-            break;
     }
 
     this->sortOrder = sortOrder;

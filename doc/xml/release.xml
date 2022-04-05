@@ -32,6 +32,17 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-pull-request id="1699"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <br-option>repo-hardlink</br-option> option to be changed after full backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1679"/>
 
                         <release-item-contributor-list>
@@ -40,6 +51,17 @@
                         </release-item-contributor-list>
 
                         <p>Increase precision of percent complete logging for <cmd>backup</cmd> and <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1697"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve path validation for <cmd>repo-*</cmd> commands.</p>
                     </release-item>
 
                     <release-item>
@@ -81,6 +103,8 @@
                         <commit subject="Rename bundle-* options to repo-bundle-*.">
                             <github-pull-request id="1694"/>
                         </commit>
+                        <commit subject="Disable repo-hardlink option when repo-bundle option is enabled."/>
+                        <commit subject="Allow files that become zero-length after the backup manifest is built."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -98,10 +122,27 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="abubakar.mohammed"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect reference to <id>stanza-update</id> in the user guide.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Fix example for <br-option>repo-gcs-key-type</br-option> option in configuration reference.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <br-option>tls-server-auth</br-option> example and add clarifications.</p>
                     </release-item>
                 </release-bug-list>
             </release-doc-list>
@@ -10782,6 +10823,11 @@
         </contributor>
 
         <!-- The order of other contributors is alpha by name -->
+        <contributor id="abubakar.mohammed">
+            <contributor-name-display>Abubakar Mohammed</contributor-name-display>
+            <contributor-id type="github">abubakarm94</contributor-id>
+        </contributor>
+
         <contributor id="adam.brusselback">
             <contributor-name-display>Adam Brusselback</contributor-name-display>
             <contributor-id type="github">Tostino</contributor-id>

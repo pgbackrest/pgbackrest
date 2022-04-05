@@ -399,7 +399,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
                 strLstInsert(paramList, 0, cfgExe());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
 
-                // Error if the client is authorized for the requested stanza
+                // Error if the client is not authorized for the requested stanza
                 if (!protocolServerAuthorize(clientAuthList, cfgOptionStrNull(cfgOptStanza)))
                     THROW(AccessError, "access denied");
             }

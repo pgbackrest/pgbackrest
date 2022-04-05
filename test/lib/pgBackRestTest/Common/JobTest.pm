@@ -722,12 +722,14 @@ sub run
                         '') .
                     $self->{strMakeCmd} . " -j $self->{iBuildMax} -s 2>&1 && \\\n" .
                     "rm ${strBuildProcessingFile} && \\\n" .
+                    # Allow stderr to be copied to stderr and stdout
+                    "exec 3>&1 && \\\n" .
                     # Test with valgrind when requested
                     ($self->{bValgrindUnit} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
                         'valgrind -q --gen-suppressions=all' .
                         ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
                         " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
-                        "./test.bin 2>&1" .
+                        "./test.bin 2>&1 1>&3 | tee /dev/stderr" .
                     ($self->{oTest}->{&TEST_VM} ne VM_NONE ? "'" : '');
             }
             else
@@ -833,20 +835,20 @@ sub end
         my $fTestElapsedTime = ceil((gettimeofday() - $self->{oProcess}{start_time}) * 100) / 100;
 
         # Output error
-        if ($iExitStatus != 0)
+        if ($iExitStatus != 0 || (defined($oExecDone->{strErrorLog}) && $oExecDone->{strErrorLog} ne ''))
         {
             # Get stdout
             my $strOutput = trim($oExecDone->{strOutLog}) ? "STDOUT:\n" . trim($oExecDone->{strOutLog}) : '';
 
             # Get stderr
-            if (trim($oExecDone->{strSuppressedErrorLog}) ne '')
+            if (defined($oExecDone->{strErrorLog}) && trim($oExecDone->{strErrorLog}) ne '')
             {
                 if ($strOutput ne '')
                 {
                     $strOutput .= "\n";
                 }
 
-                $strOutput .= "STDERR:\n" . trim($oExecDone->{strSuppressedErrorLog});
+                $strOutput .= "STDERR:\n" . trim($oExecDone->{strErrorLog});
             }
 
             # If no stdout or stderr output something rather than a blank line

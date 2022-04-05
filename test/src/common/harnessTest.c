@@ -131,6 +131,14 @@ testBegin(const char *name)
             // Make sure there is nothing untested left in the log
             harnessLogFinal();
 
+            // It is possible the test left the cwd in a weird place
+            if (chdir(testPath()) != 0)
+            {
+                fprintf(stderr, "ERROR: unable to chdir to test path '%s'\n", testPath());
+                fflush(stderr);
+                exit(255);
+            }
+
             // Clear out the test directory so the next test starts clean
             char buffer[2048];
             snprintf(

@@ -544,6 +544,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
         hrnCfgArgRawZ(argList, cfgOptLogPath, "/bogus");
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "info");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
         strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for backup");
         lockRelease(true);
@@ -563,6 +564,7 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
         strLstAddZ(argList, CFGCMD_EXPIRE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");

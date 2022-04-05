@@ -49,6 +49,8 @@ testRun(void)
         TEST_RESULT_UINT(strlen(strZ(string)), 13, "check size with strlen()");
         TEST_RESULT_INT(strZNull(string)[2], 'a', "check character");
 
+        TEST_RESULT_UINT(strSize(strNewBuf(bufNew(0))), 0, "new string from empty buffer");
+
         TEST_RESULT_VOID(strFree(string), "free string");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -190,6 +190,10 @@ backupInit(const InfoBackup *infoBackup)
         cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
+    // If hardlink is not set (because bundles are enabled) then set to false
+    if (!cfgOptionTest(cfgOptRepoHardlink))
+        cfgOptionSet(cfgOptRepoHardlink, cfgSourceDefault, BOOL_FALSE_VAR);
+
     // Get database info when online
     PgControl pgControl = {0};
 
@@ -403,17 +407,6 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     // Set the compression level back to whatever was in the prior backup
                     cfgOptionSet(
                         cfgOptCompressLevel, cfgSourceParam, VARINT64(varUInt(manifestPriorData->backupOptionCompressLevel)));
-                }
-
-                // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
-                // is guaranteed to contain a real file -- like references.  Also annoying that if the full backup was not
-                // hardlinked then an diff/incr can't be used because we need more testing.
-                if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
-                {
-                    LOG_WARN_FMT(
-                        "%s backup cannot alter hardlink option to '%s', reset to value in %s",
-                        strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptRepoHardlink)), strZ(backupLabelPrior));
-                    cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
                 }
 
                 // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
@@ -682,7 +675,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 // Resumable backups must have backup.manifest.copy
                 if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                 {
-                    reason = STRDEF("resume is disabled");
+                    reason = strNewZ("resume is disabled");
 
                     // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
                     // occurs then the backup will be considered unusable and a resume will not be attempted.

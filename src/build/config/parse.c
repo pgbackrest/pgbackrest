@@ -506,7 +506,7 @@ bldCfgParseDependReconcile(const BldCfgOptionDependRaw *const optDependRaw, cons
 static List *
 bldCfgParseOptionDeprecate(Yaml *const yaml)
 {
-    List *result = lstNewP(sizeof(BldCfgOptionCommandRaw), .comparator = lstComparatorStr);
+    List *result = lstNewP(sizeof(BldCfgOptionDeprecateRaw), .comparator = lstComparatorStr);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

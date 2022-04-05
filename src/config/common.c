@@ -101,7 +101,12 @@ cfgParseSize(const String *const value)
         }
 
         // Convert string to bytes
-        FUNCTION_TEST_RETURN(cvtZToInt64(strZ(valueLower)) * multiplier);
+        const int64_t valueInt = cvtZToInt64(strZ(valueLower));
+
+        if (valueInt > INT64_MAX / multiplier)
+            THROW_FMT(FormatError, "value '%s' is out of range", strZ(value));
+
+        FUNCTION_TEST_RETURN(valueInt * multiplier);
     }
 
     THROW_FMT(FormatError, "value '%s' is not valid", strZ(value));

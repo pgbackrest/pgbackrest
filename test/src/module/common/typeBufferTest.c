@@ -29,6 +29,8 @@ testRun(void)
         TEST_ASSIGN(buffer, bufNewC("TEST-STR", sizeof("TEST-STR") - 1), "new buffer from string");
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), "TEST-STR", 8) == 0, true, "check buffer");
 
+        TEST_RESULT_UINT(bufSize(bufDup(bufNew(0))), 0, "duplicate empty buffer");
+
         TEST_RESULT_VOID(bufFree(buffer), "free buffer");
         TEST_RESULT_VOID(bufFree(bufNew(0)), "free empty buffer");
 
