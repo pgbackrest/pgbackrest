@@ -566,11 +566,12 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1C000101'");
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than or equal to '0/1C000101'");
         TEST_RESULT_LOG(
-            "P00   WARN: repo1 reached backup from prior version missing required LSN content before finding a match.\n"
-            "            auto-select of backup has been disabled for this repo.\n"
-            "            HINT: you may specify a particular backup to restore using the --set option.\n"
+            "P00   WARN: repo1 reached backup from prior version missing required LSN info before finding a match -- backup"
+                " auto-select has been disabled for this repo\n"
+            "            HINT: you may specify a backup to restore using the --set option.\n"
             "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
 
         // Log warning if missing backup-lsn-stop is found before finding a match
@@ -592,9 +593,9 @@ testRun(void)
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F", "backup set found");
         TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
         TEST_RESULT_LOG(
-            "P00   WARN: repo1 reached backup from prior version missing required LSN content before finding a match.\n"
-            "            auto-select of backup has been disabled for this repo.\n"
-            "            HINT: you may specify a particular backup to restore using the --set option.");
+            "P00   WARN: repo1 reached backup from prior version missing required LSN info before finding a match -- backup"
+                " auto-select has been disabled for this repo\n"
+            "            HINT: you may specify a backup to restore using the --set option.");
 
         // No backups to search for qualifying backup set
         argList = strLstNew();
@@ -609,7 +610,8 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1A000102'");
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than or equal to '0/1A000102'");
         TEST_RESULT_LOG(
             "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
     }

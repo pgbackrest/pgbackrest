@@ -297,7 +297,7 @@ restoreBackupSet(void)
                 // Get the latest backup
                 InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
-                // If the recovery type is time, attempt to determine the backup set
+                // If a target was requested, attempt to determine the backup set
                 if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
                 {
                     bool found = false;
@@ -312,15 +312,15 @@ restoreBackupSet(void)
                         if (targetType == CFGOPTVAL_TYPE_LSN && !backupData.backupLsnStop)
                         {
                             LOG_WARN_FMT(
-                                "%s reached backup from prior version missing required LSN content before finding a match.\n"
-                                "auto-select of backup has been disabled for this repo.\n"
-                                "HINT: you may specify a particular backup to restore using the --set option.",
+                                "%s reached backup from prior version missing required LSN info before finding a match -- backup"
+                                    " auto-select has been disabled for this repo\n"
+                                "HINT: you may specify a backup to restore using the --set option.",
                                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
                             break;
                         }
 
-                        // If the end of the backup is before the target time or target lsn, then select this backup
+                        // If the end of the backup is valid for the target, then select this backup
                         if ((targetType == CFGOPTVAL_TYPE_TIME && backupData.backupTimestampStop < target.time) ||
                             (targetType == CFGOPTVAL_TYPE_LSN && pgLsnFromStr(backupData.backupLsnStop) <= target.lsn))
                         {
@@ -368,8 +368,9 @@ restoreBackupSet(void)
             else if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
             {
                 THROW_FMT(
-                    BackupSetInvalidError, "unable to find backup set with %s less than '%s'",
-                    targetType == CFGOPTVAL_TYPE_LSN ? "lsn" : "stop time", strZ(cfgOptionDisplay(cfgOptTarget)));
+                    BackupSetInvalidError, "unable to find backup set with %s '%s'",
+                    targetType == CFGOPTVAL_TYPE_LSN ? "lsn less than or equal to" : "stop time less than",
+                    strZ(cfgOptionDisplay(cfgOptTarget)));
             }
             else
                 THROW(BackupSetInvalidError, "no backup set found to restore");
