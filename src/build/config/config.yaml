@@ -1072,6 +1072,7 @@ option:
       backup:
         depend:
           option: online
+          default: false
           list:
             - true
       check: {}
@@ -1086,6 +1087,7 @@ option:
       backup:
         depend:
           option: archive-check
+          default: false
           list:
             - true
     command-role:
@@ -1102,6 +1104,7 @@ option:
       main: {}
     depend:
       option: archive-check
+      default: false
       list:
         - true
 
@@ -1842,6 +1845,7 @@ option:
       main: {}
     depend:
       option: repo-bundle
+      default: false
       list:
         - false
     deprecate:

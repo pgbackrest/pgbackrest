@@ -190,10 +190,6 @@ backupInit(const InfoBackup *infoBackup)
         cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
-    // If hardlink is not set (because bundles are enabled) then set to false
-    if (!cfgOptionTest(cfgOptRepoHardlink))
-        cfgOptionSet(cfgOptRepoHardlink, cfgSourceDefault, BOOL_FALSE_VAR);
-
     // Get database info when online
     PgControl pgControl = {0};
 
@@ -268,7 +264,7 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get archive info
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
+    if (cfgOptionBool(cfgOptArchiveCheck))
     {
         result->archiveInfo = infoArchiveLoadFile(
                 storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
@@ -1984,7 +1980,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
     // If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
     // archive logs are going to a different server.  Be careful of disabling this option because there is no way to verify that the
     // backup will be consistent - at least not here.
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
+    if (cfgOptionBool(cfgOptArchiveCheck))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -2264,10 +2260,9 @@ cmdBackup(void)
         manifestBuildComplete(
             manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupStopResult.timestamp,
             backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
-            cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
-            !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
-            cfgOptionUInt(cfgOptBufferSize), cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork),
-            cfgOptionBool(cfgOptRepoHardlink), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
+            cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
+            cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
+            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
 
         // The primary db object won't be used anymore so free it
         dbFree(backupData->dbPrimary);
