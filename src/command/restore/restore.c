@@ -240,12 +240,13 @@ restoreBackupSet(void)
         // If the set option was not provided by the user but a time to recover was set, then we will need to search for a backup
         // set that satisfies the time condition, else we will use the backup provided
         const String *backupSetRequested = NULL;
-        time_t timeTargetEpoch = 0;
+        const StringId targetType = cfgOptionStrId(cfgOptType);
+        time_t targetTime = 0;
 
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
-            if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_TIME)
-                timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
+            if (targetType == CFGOPTVAL_TYPE_TIME)
+                targetTime = getEpoch(cfgOptionStr(cfgOptTarget));
         }
         else
             backupSetRequested = cfgOptionStr(cfgOptSet);
@@ -290,7 +291,7 @@ restoreBackupSet(void)
                 InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
                 // If the recovery type is time, attempt to determine the backup set
-                if (timeTargetEpoch != 0)
+                if (targetType == CFGOPTVAL_TYPE_TIME)
                 {
                     bool found = false;
 
@@ -301,7 +302,7 @@ restoreBackupSet(void)
                         InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
 
                         // If the end of the backup is before the target time, then select this backup
-                        if (backupData.backupTimestampStop < timeTargetEpoch)
+                        if (backupData.backupTimestampStop < targetTime)
                         {
                             found = true;
 
@@ -345,7 +346,7 @@ restoreBackupSet(void)
         {
             if (backupSetRequested != NULL)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
-            else if (timeTargetEpoch != 0)
+            else if (targetType == CFGOPTVAL_TYPE_TIME)
             {
                 THROW_FMT(
                     BackupSetInvalidError, "unable to find backup set with stop time less than '%s'",
