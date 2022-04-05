@@ -150,7 +150,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -354,7 +354,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -590,7 +590,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -802,7 +802,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -1022,7 +1022,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -1259,7 +1259,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -1476,7 +1476,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -1696,7 +1696,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -1917,7 +1917,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=true
@@ -2131,7 +2131,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=false
@@ -2352,7 +2352,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=false
@@ -2608,7 +2608,7 @@ db-version="9.4"
 
 [backup:option]
 option-archive-check=false
-option-archive-copy=true
+option-archive-copy=false
 option-backup-standby=false
 option-buffer-size=[BUFFER-SIZE]
 option-checksum-page=false

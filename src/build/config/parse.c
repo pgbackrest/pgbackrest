@@ -433,14 +433,10 @@ bldCfgParseDepend(Yaml *const yaml, const List *const optList)
                     YamlEvent dependDefVal = yamlEventNext(yaml);
                     yamlEventCheck(dependDefVal, yamlEventTypeScalar);
 
-                    if (strEqZ(dependDef.value, "default")) // {uncovered - !!!}
-                    {
-                        optDependRaw.defaultValue = dependDefVal.value; // {uncovered - !!!}
-                    }
+                    if (strEqZ(dependDef.value, "default"))
+                        optDependRaw.defaultValue = dependDefVal.value;
                     else if (strEqZ(dependDef.value, "option"))
-                    {
                         optDependRaw.option = dependDefVal.value;
-                    }
                     else
                         THROW_FMT(FormatError, "unknown depend definition '%s'", strZ(dependDef.value));
                 }
@@ -492,8 +488,8 @@ bldCfgParseDependReconcile(
 
     if (optDependRaw != NULL)
     {
-        if (optDependRaw->defaultValue != NULL && !strEq(optRaw->type, OPT_TYPE_BOOLEAN_STR)) // {uncovered - !!!}
-            THROW_FMT(FormatError, "dependency default invalid for option '%s'", strZ(optRaw->name)); // {uncovered - !!!}
+        if (optDependRaw->defaultValue != NULL && !strEq(optRaw->type, OPT_TYPE_BOOLEAN_STR))
+            THROW_FMT(FormatError, "dependency default invalid for non-boolean option '%s'", strZ(optRaw->name));
 
         const BldCfgOption *const optDepend = lstFind(optList, &optDependRaw->option);
 

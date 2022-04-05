@@ -417,7 +417,7 @@ bldCfgRenderValid(const BldCfgOptionDepend *const depend)
     {
         strCatFmt(
             result,
-            "                    %s,\n",
+            "                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(%s),\n",
             strZ(bldCfgRenderScalar(depend->defaultValue, OPT_TYPE_BOOLEAN_STR)));
     }
 

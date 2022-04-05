@@ -760,7 +760,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEPEND
                 (
-                    PARSE_RULE_VAL_BOOL_FALSE,
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),
                     PARSE_RULE_VAL_OPT(cfgOptOnline),
                     PARSE_RULE_VAL_BOOL_TRUE,
                 ),
@@ -807,7 +807,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEPEND
                 (
-                    PARSE_RULE_VAL_BOOL_FALSE,
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),
                     PARSE_RULE_VAL_OPT(cfgOptArchiveCheck),
                     PARSE_RULE_VAL_BOOL_TRUE,
                 ),
@@ -980,7 +980,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (
                 PARSE_RULE_OPTIONAL_DEPEND
                 (
-                    PARSE_RULE_VAL_BOOL_FALSE,
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),
                     PARSE_RULE_VAL_OPT(cfgOptArchiveCheck),
                     PARSE_RULE_VAL_BOOL_TRUE,
                 ),
@@ -5471,7 +5471,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (
                 PARSE_RULE_OPTIONAL_DEPEND
                 (
-                    PARSE_RULE_VAL_BOOL_FALSE,
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),
                     PARSE_RULE_VAL_OPT(cfgOptRepoBundle),
                     PARSE_RULE_VAL_BOOL_FALSE,
                 ),

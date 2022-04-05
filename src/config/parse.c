@@ -240,6 +240,7 @@ typedef enum
 
 #define PARSE_RULE_OPTIONAL_DEPEND(...)                                                                                            \
     PARSE_RULE_U32_1(parseRuleOptionalTypeValid), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
+#define PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(value)                   value
 #define PARSE_RULE_OPTIONAL_ALLOW_LIST(...)                                                                                        \
     PARSE_RULE_U32_1(parseRuleOptionalTypeAllowList), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
 #define PARSE_RULE_OPTIONAL_ALLOW_RANGE(...)                                                                                       \
@@ -752,7 +753,7 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
 
     CfgParseOptionalFilterDependResult result = {.valid = false};
 
-    // !!!
+    // Default when the dependency is not resolved, if it exists
     pckReadNext(filter);
 
     if (pckReadType(filter) == pckTypeBool)
@@ -2359,7 +2360,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             }
                         }
                     }
-                    // !!!
+                    // Else apply the default for the unresolved dependency, if it exists
                     else if (dependResult.defaultExists)
                     {
                         configOptionValue->set = true;
