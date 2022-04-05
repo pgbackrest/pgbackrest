@@ -25,6 +25,7 @@
 
                         <release-item-contributor-list>
                             <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
                             <release-item-reviewer id="david.steele"/>
                         </release-item-contributor-list>
 
