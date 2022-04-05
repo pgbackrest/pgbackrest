@@ -53,7 +53,7 @@ Test data for backup.info
     "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
     "\"backup-archive-start\":null,\"backup-archive-stop\":null,"                                                                  \
     "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
-    "\"backup-lsn-stop\":\"0/1E000101\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-lsn-stop\":\"0/1E000105\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803D\"],\"backup-timestamp-start\":1482182884,"     \
     "\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,\"option-archive-check\":true,"                     \
     "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
@@ -80,7 +80,7 @@ Test data for backup.info
     "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
     "\"backup-archive-start\":null,\"backup-archive-stop\":null,"                                                                  \
     "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
-    "\"backup-lsn-stop\":\"0/1E000101\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-lsn-stop\":\"0/1E000105\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803D\"],\"backup-timestamp-start\":1482182884,"     \
     "\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,\"option-archive-check\":true,"                     \
     "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
@@ -523,7 +523,7 @@ testRun(void)
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
         hrnCfgArgRawZ(argList, cfgOptType, "lsn");
-        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000102");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000101");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
@@ -531,7 +531,7 @@ testRun(void)
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
         HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
-        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn 0/1C000102");
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn 0/1C000101");
         TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F", "backup set found");
         TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
         TEST_RESULT_LOG("P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore");
@@ -559,14 +559,14 @@ testRun(void)
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
         hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
         hrnCfgArgRawZ(argList, cfgOptType, "lsn");
-        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000102");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000101");
 
         // Re-write repo information with set missing backup-lsn-stop
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO1 "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1C000102'");
+        TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than '0/1C000101'");
         TEST_RESULT_LOG(
             "P00   WARN: repo1 reached backup from prior version missing required LSN content before finding a match.\n"
             "            auto-select of backup has been disabled for this repo.\n"
