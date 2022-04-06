@@ -130,6 +130,21 @@
 
                         <p>Improve small file support.</p>
                     </release-item>
+
+                    <release-item>
+                        <commit subject="Set option-archive-copy flag in backup.manifest to false when offline."/>
+                        <commit subject="Move cfgParseOptionalFilterDepend() and add comment block."/>
+                        <commit subject="Add default for boolean options with unresolved dependencies.">
+                            <github-pull-request id="1710"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add default for boolean options with unresolved dependencies.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

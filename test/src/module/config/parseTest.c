@@ -174,8 +174,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "pg1-path is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "delta not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "delta is source config");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "archive-check is not set");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "archive-copy is not set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptArchiveCheck), false, "archive-check is false");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptArchiveCopy), false, "archive-copy is false");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "repo-hardlink is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
@@ -1695,8 +1695,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "delta not set");
         TEST_RESULT_BOOL(varBool(cfgOptionVar(cfgOptDelta)), true, "delta as variant");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "delta is source config");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "archive-check is not set");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "archive-copy is not set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptArchiveCheck), false, "archive-check is false");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptArchiveCopy), false, "archive-copy is false");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "repo-hardlink is set");
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptRepoHardlink), "true", "repo-hardlink display is true");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");

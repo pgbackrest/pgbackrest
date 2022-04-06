@@ -90,6 +90,7 @@ typedef struct BldCfgOption BldCfgOption;                           // Forward d
 typedef struct BldCfgOptionDepend
 {
     const BldCfgOption *const option;                               // Option dependency is on
+    const String *const defaultValue;                               // Default value, if any, when dependency is not resolved
     const StringList *const valueList;                              // Allowed value list
 } BldCfgOptionDepend;
 

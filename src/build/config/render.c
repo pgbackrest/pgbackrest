@@ -408,10 +408,21 @@ bldCfgRenderValid(const BldCfgOptionDepend *const depend)
 
     String *const result = strNew();
 
-    strCatFmt(
+    strCatZ(
         result,
         "                PARSE_RULE_OPTIONAL_DEPEND\n"
-        "                (\n"
+        "                (\n");
+
+    if (depend->defaultValue != NULL)
+    {
+        strCatFmt(
+            result,
+            "                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(%s),\n",
+            strZ(bldCfgRenderScalar(depend->defaultValue, OPT_TYPE_BOOLEAN_STR)));
+    }
+
+    strCatFmt(
+        result,
         "                    PARSE_RULE_VAL_OPT(%s),\n",
         strZ(bldEnum("cfgOpt", depend->option->name)));
 

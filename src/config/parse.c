@@ -240,6 +240,7 @@ typedef enum
 
 #define PARSE_RULE_OPTIONAL_DEPEND(...)                                                                                            \
     PARSE_RULE_U32_1(parseRuleOptionalTypeValid), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
+#define PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(value)                   value
 #define PARSE_RULE_OPTIONAL_ALLOW_LIST(...)                                                                                        \
     PARSE_RULE_U32_1(parseRuleOptionalTypeAllowList), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
 #define PARSE_RULE_OPTIONAL_ALLOW_RANGE(...)                                                                                       \
@@ -962,7 +963,14 @@ cfgParseOptionalRule(
 /***********************************************************************************************************************************
 Resolve an option dependency
 ***********************************************************************************************************************************/
-static bool
+typedef struct CfgParseOptionalFilterDependResult
+{
+    bool valid;
+    bool defaultExists;
+    bool defaultValue;
+} CfgParseOptionalFilterDependResult;
+
+static CfgParseOptionalFilterDependResult
 cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config, const unsigned int optionListIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -971,14 +979,23 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
         FUNCTION_TEST_PARAM(UINT, optionListIdx);
     FUNCTION_TEST_END();
 
+    CfgParseOptionalFilterDependResult result = {.valid = false};
+
+    // Default when the dependency is not resolved, if it exists
+    pckReadNext(filter);
+
+    if (pckReadType(filter) == pckTypeBool)
+    {
+        result.defaultExists = true;
+        result.defaultValue = pckReadBoolP(filter);
+    }
+
     // Get the depend option value
     const ConfigOption dependId = (ConfigOption)pckReadU32P(filter);
     ASSERT(config->option[dependId].index != NULL);
     const ConfigOptionValue *const dependValue = &config->option[dependId].index[optionListIdx];
 
     // Is the dependency resolved?
-    bool result = false;
-
     if (dependValue->set)
     {
         // If a depend list exists, make sure the value is in the list
@@ -989,7 +1006,7 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
                 switch (cfgParseOptionDataType(dependId))
                 {
                     case cfgOptDataTypeBoolean:
-                        result = pckReadBoolP(filter) == dependValue->value.boolean;
+                        result.valid = pckReadBoolP(filter) == dependValue->value.boolean;
                         break;
 
                     default:
@@ -997,7 +1014,7 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
                         ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
 
                         if (parseRuleValueStrId[pckReadU32P(filter)] == dependValue->value.stringId)
-                            result = true;
+                            result.valid = true;
                         break;
                     }
                 }
@@ -1005,7 +1022,7 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
             while (pckReadNext(filter));
         }
         else
-            result = true;
+            result.valid = true;
     }
 
     FUNCTION_TEST_RETURN(result);
@@ -2025,19 +2042,19 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     *configOptionValue = (ConfigOptionValue){.negate = parseOptionValue->negate, .reset = parseOptionValue->reset};
 
                     // Is the option valid?
-                    bool valid = true;
                     CfgParseOptionalRuleState optionalRules = {0};
+                    CfgParseOptionalFilterDependResult dependResult = {.valid = true};
 
                     if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeValid, config->command, optionId))
                     {
                         PackRead *filter = pckReadNewC(optionalRules.valid, optionalRules.validSize);
-                        valid = cfgParseOptionalFilterDepend(filter, config, optionListIdx);
+                        dependResult = cfgParseOptionalFilterDepend(filter, config, optionListIdx);
 
                         // If depend not resolved and option value is set on the command-line then error. It is OK to have
                         // unresolved options in the config file because they may be there for another command. For instance,
                         // spool-path is only loaded for the archive-push command when archive-async=y, and the presence of
                         // spool-path in the config file should not cause an error here, it will just end up null.
-                        if (!valid && optionSet && parseOptionValue->source == cfgSourceParam)
+                        if (!dependResult.valid && optionSet && parseOptionValue->source == cfgSourceParam)
                         {
                             PackRead *filter = pckReadNewC(optionalRules.valid, optionalRules.validSize);
                             ConfigOption dependId = pckReadU32P(filter);
@@ -2105,7 +2122,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         pckReadFree(filter);
                     }
 
-                    if (valid)
+                    if (dependResult.valid)
                     {
                         // Is the option set?
                         if (optionSet)
@@ -2345,6 +2362,12 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 }
                             }
                         }
+                    }
+                    // Else apply the default for the unresolved dependency, if it exists
+                    else if (dependResult.defaultExists)
+                    {
+                        configOptionValue->set = true;
+                        configOptionValue->value.boolean = dependResult.defaultValue;
                     }
 
                     pckReadFree(optionalRules.pack);
