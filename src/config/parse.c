@@ -735,71 +735,6 @@ typedef struct CfgParseOptionalRuleState
     bool required;
 } CfgParseOptionalRuleState;
 
-typedef struct CfgParseOptionalFilterDependResult
-{
-    bool valid;
-    bool defaultExists;
-    bool defaultValue;
-} CfgParseOptionalFilterDependResult;
-
-static CfgParseOptionalFilterDependResult
-cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config, const unsigned int optionListIdx)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, filter);
-        FUNCTION_TEST_PARAM_P(VOID, config);
-        FUNCTION_TEST_PARAM(UINT, optionListIdx);
-    FUNCTION_TEST_END();
-
-    CfgParseOptionalFilterDependResult result = {.valid = false};
-
-    // Default when the dependency is not resolved, if it exists
-    pckReadNext(filter);
-
-    if (pckReadType(filter) == pckTypeBool)
-    {
-        result.defaultExists = true;
-        result.defaultValue = pckReadBoolP(filter);
-    }
-
-    // Get the depend option value
-    const ConfigOption dependId = (ConfigOption)pckReadU32P(filter);
-    ASSERT(config->option[dependId].index != NULL);
-    const ConfigOptionValue *const dependValue = &config->option[dependId].index[optionListIdx];
-
-    // Is the dependency resolved?
-    if (dependValue->set)
-    {
-        // If a depend list exists, make sure the value is in the list
-        if (pckReadNext(filter))
-        {
-            do
-            {
-                switch (cfgParseOptionDataType(dependId))
-                {
-                    case cfgOptDataTypeBoolean:
-                        result.valid = pckReadBoolP(filter) == dependValue->value.boolean;
-                        break;
-
-                    default:
-                    {
-                        ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
-
-                        if (parseRuleValueStrId[pckReadU32P(filter)] == dependValue->value.stringId)
-                            result.valid = true;
-                        break;
-                    }
-                }
-            }
-            while (pckReadNext(filter));
-        }
-        else
-            result.valid = true;
-    }
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 static bool
 cfgParseOptionalRule(
     CfgParseOptionalRuleState *optionalRules, ParseRuleOptionalType optionalRuleType, ConfigCommand commandId,
@@ -1020,6 +955,74 @@ cfgParseOptionalRule(
             optionalRules->typeNext = 0;
         }
         while (!result);
+    }
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Resolve an option dependency
+***********************************************************************************************************************************/
+typedef struct CfgParseOptionalFilterDependResult
+{
+    bool valid;
+    bool defaultExists;
+    bool defaultValue;
+} CfgParseOptionalFilterDependResult;
+
+static CfgParseOptionalFilterDependResult
+cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config, const unsigned int optionListIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, filter);
+        FUNCTION_TEST_PARAM_P(VOID, config);
+        FUNCTION_TEST_PARAM(UINT, optionListIdx);
+    FUNCTION_TEST_END();
+
+    CfgParseOptionalFilterDependResult result = {.valid = false};
+
+    // Default when the dependency is not resolved, if it exists
+    pckReadNext(filter);
+
+    if (pckReadType(filter) == pckTypeBool)
+    {
+        result.defaultExists = true;
+        result.defaultValue = pckReadBoolP(filter);
+    }
+
+    // Get the depend option value
+    const ConfigOption dependId = (ConfigOption)pckReadU32P(filter);
+    ASSERT(config->option[dependId].index != NULL);
+    const ConfigOptionValue *const dependValue = &config->option[dependId].index[optionListIdx];
+
+    // Is the dependency resolved?
+    if (dependValue->set)
+    {
+        // If a depend list exists, make sure the value is in the list
+        if (pckReadNext(filter))
+        {
+            do
+            {
+                switch (cfgParseOptionDataType(dependId))
+                {
+                    case cfgOptDataTypeBoolean:
+                        result.valid = pckReadBoolP(filter) == dependValue->value.boolean;
+                        break;
+
+                    default:
+                    {
+                        ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
+
+                        if (parseRuleValueStrId[pckReadU32P(filter)] == dependValue->value.stringId)
+                            result.valid = true;
+                        break;
+                    }
+                }
+            }
+            while (pckReadNext(filter));
+        }
+        else
+            result.valid = true;
     }
 
     FUNCTION_TEST_RETURN(result);

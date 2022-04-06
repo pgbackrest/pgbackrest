@@ -233,6 +233,9 @@ optionGroup:
 #   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
 #   dependent option(s).
 #
+#   'default' may be specified to be set when the dependency does not resolve. This can, and probably should be, different than
+#   the standard default for the option.
+#
 #   'list' further defines the allowable settings for the depended option.
 #
 # allow-list:
