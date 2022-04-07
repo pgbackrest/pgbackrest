@@ -121,6 +121,93 @@ lockReadDataFile(const String *const lockFile, const int fd)
     FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
+/**********************************************************************************************************************************/
+LockReadFileResult
+lockReadFile(const String *const lockFile, const LockReadFileParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
+        FUNCTION_LOG_PARAM(BOOL, param.remove);
+    FUNCTION_LOG_END();
+
+    ASSERT(lockFile != NULL);
+
+    LockReadFileResult result = {.status = lockReadFileStatusValid};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If we cannot open the lock file for any reason then warn and continue to next file
+        int fd = -1;
+
+        if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)
+        {
+            result.status = lockReadFileStatusMissing;
+        }
+        else
+        {
+            // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing the lock
+            if (flock(fd, LOCK_EX | LOCK_NB) == 0)
+            {
+                result.status = lockReadFileStatusUnlocked;
+            }
+            // Else attempt to read the file
+            else
+            {
+                TRY_BEGIN()
+                {
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        result.processId = lockReadDataFile(lockFile, fd).processId;
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
+                CATCH_ANY()
+                {
+                    result.status = lockReadFileStatusInvalid;
+                }
+                TRY_END();
+            }
+
+            // Remove lock file if requested but do not report failures
+            if (param.remove)
+                unlink(strZ(lockFile));
+
+            // Close after unlinking to prevent a race condition where another process creates the file as we remove it
+            close(fd);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/**********************************************************************************************************************************/
+LockReadFileResult
+lockRead(const String *const lockPath, const String *const stanza, const LockType lockType)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, lockPath);
+        FUNCTION_LOG_PARAM(STRING, stanza);
+        FUNCTION_LOG_PARAM(ENUM, lockType);
+    FUNCTION_LOG_END();
+
+    LockReadFileResult result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFileName(stanza, lockType)));
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = lockReadFileP(lockFile);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
 /***********************************************************************************************************************************
 Write contents of lock file
 ***********************************************************************************************************************************/

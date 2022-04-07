@@ -42,6 +42,35 @@ bool lockAcquire(
 // Release a lock
 bool lockRelease(bool failOnNoLock);
 
+// !!!
+typedef enum
+{
+    lockReadFileStatusMissing,                                      // File is missing
+    lockReadFileStatusUnlocked,                                     // File is not locked
+    lockReadFileStatusInvalid,                                      // File contents are invalid
+    lockReadFileStatusValid,                                        // File is locked and contexts are valid
+} LockReadFileStatus;
+
+typedef struct LockReadFileResult
+{
+    LockReadFileStatus status;                                      // Status of file read
+    pid_t processId;                                                // Process id
+} LockReadFileResult;
+
+typedef struct LockReadFileParam
+{
+    VAR_PARAM_HEADER;
+    bool remove;                                                    // Remove the lock file after locking/reading
+} LockReadFileParam;
+
+#define lockReadFileP(lockFile, ...)                                                                                               \
+    lockReadFile(lockFile, (LockReadFileParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+LockReadFileResult lockReadFile(const String *lockFile, LockReadFileParam param);
+
+// !!!
+LockReadFileResult lockRead(const String *lockPath, const String *stanza, LockType lockType);
+
 // Build lock file name
 String *lockFileName(const String *stanza, LockType lockType);
 

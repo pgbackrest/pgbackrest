@@ -1189,12 +1189,10 @@ infoUpdateStanza(
                 // If a backup lock check has not already been performed, then do so
                 if (!stanzaRepo->backupLockChecked)
                 {
-                    // Try to acquire a lock. If not possible, assume another backup or expire is already running.
-                    stanzaRepo->backupLockHeld = !lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
+                    // !!! Try to acquire a lock. If not possible, assume another backup or expire is already running.
+                    stanzaRepo->backupLockHeld = lockRead(
+                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).status == lockReadFileStatusValid;
 
-                    // Immediately release the lock acquired
-                    lockRelease(!stanzaRepo->backupLockHeld);
                     stanzaRepo->backupLockChecked = true;
                 }
             }
