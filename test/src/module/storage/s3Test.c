@@ -99,9 +99,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     if (s3 != NULL)
     {
         if (driver->uriStyle == storageS3UriStyleHost)
-            strCatFmt(request, "host:bucket." S3_TEST_HOST "\r\n");
+            strCatZ(request, "host:bucket." S3_TEST_HOST "\r\n");
         else
-            strCatFmt(request, "host:" S3_TEST_HOST "\r\n");
+            strCatZ(request, "host:" S3_TEST_HOST "\r\n");
     }
     else
         strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));

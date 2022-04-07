@@ -373,7 +373,7 @@ cfgLoadLogFile(void)
             if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
             {
                 if (cfgOptionValid(cfgOptArchiveAsync) && cfgOptionBool(cfgOptArchiveAsync))
-                    strCatFmt(logFile, "-async");
+                    strCatZ(logFile, "-async");
             }
 
             // Add command role if it is not main

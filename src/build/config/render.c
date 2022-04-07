@@ -408,10 +408,21 @@ bldCfgRenderValid(const BldCfgOptionDepend *const depend)
 
     String *const result = strNew();
 
-    strCatFmt(
+    strCatZ(
         result,
         "                PARSE_RULE_OPTIONAL_DEPEND\n"
-        "                (\n"
+        "                (\n");
+
+    if (depend->defaultValue != NULL)
+    {
+        strCatFmt(
+            result,
+            "                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(%s),\n",
+            strZ(bldCfgRenderScalar(depend->defaultValue, OPT_TYPE_BOOLEAN_STR)));
+    }
+
+    strCatFmt(
+        result,
         "                    PARSE_RULE_VAL_OPT(%s),\n",
         strZ(bldEnum("cfgOpt", depend->option->name)));
 
@@ -541,7 +552,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
     // Command parse rules
     // -----------------------------------------------------------------------------------------------------------------------------
-    strCatFmt(
+    strCatZ(
         config,
         "\n"
         COMMENT_BLOCK_BEGIN "\n"
@@ -555,7 +566,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 STRDEF("PARSE_RULE_VAL_CMD(value)"),
                 strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(lstSize(bldCfg.cmdList) - 1)))));
 
-    strCatFmt(
+    strCatZ(
         config,
         "\n"
         "static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =\n"
@@ -591,7 +602,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         if (cmd->parameterAllowed)
             strCatZ(config, "        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),\n");
 
-        strCatFmt(
+        strCatZ(
             config,
             "\n"
             "        PARSE_RULE_COMMAND_ROLE_VALID_LIST\n"
@@ -617,7 +628,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
     // Option group rules
     // -----------------------------------------------------------------------------------------------------------------------------
-    strCatFmt(
+    strCatZ(
         config,
         "\n"
         COMMENT_BLOCK_BEGIN "\n"
@@ -648,7 +659,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
     // Option rules
     // -----------------------------------------------------------------------------------------------------------------------------
-    strCatFmt(
+    strCatZ(
         config,
         "\n"
         COMMENT_BLOCK_BEGIN "\n"
@@ -662,7 +673,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 STRDEF("PARSE_RULE_VAL_OPT(value)"),
                 strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(lstSize(bldCfg.optList) - 1)))));
 
-    strCatFmt(
+    strCatZ(
         config,
         "\n"
         "static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =\n"
@@ -1068,7 +1079,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
     // Order for option parse resolution
     // -----------------------------------------------------------------------------------------------------------------------------
-    strCatFmt(
+    strCatZ(
         config,
         "\n"
         COMMENT_BLOCK_BEGIN "\n"
@@ -1093,7 +1104,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
     strLstSort(ruleStrList, sortOrderAsc);
 
-    strCatFmt(
+    strCatZ(
         configVal,
         "\n"
         COMMENT_BLOCK_BEGIN "\n"
@@ -1107,7 +1118,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 STRDEF("PARSE_RULE_VAL_STR(value)"),
                 strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(strLstSize(ruleStrList) - 1)))));
 
-    strCatFmt(
+    strCatZ(
         configVal,
         "\n"
         "static const StringPub parseRuleValueStr[] =\n"
@@ -1137,7 +1148,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
     // -----------------------------------------------------------------------------------------------------------------------------
     strLstSort(ruleStrIdList, sortOrderAsc);
 
-    strCatFmt(
+    strCatZ(
         configVal,
         "\n"
         COMMENT_BLOCK_BEGIN "\n"
@@ -1151,7 +1162,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 STRDEF("PARSE_RULE_VAL_STRID(value)"),
                 strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(strLstSize(ruleStrIdList) - 1)))));
 
-    strCatFmt(
+    strCatZ(
         configVal,
         "\n"
         "static const StringId parseRuleValueStrId[] =\n"
@@ -1177,7 +1188,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
     // -----------------------------------------------------------------------------------------------------------------------------
     strLstSort(ruleIntList, sortOrderAsc);
 
-    strCatFmt(
+    strCatZ(
         configVal,
         "\n"
         COMMENT_BLOCK_BEGIN "\n"
@@ -1191,7 +1202,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                 STRDEF("PARSE_RULE_VAL_INT(value)"),
                 strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(strLstSize(ruleIntList) - 1)))));
 
-    strCatFmt(
+    strCatZ(
         configVal,
         "\n"
         "static const int64_t parseRuleValueInt[] =\n"

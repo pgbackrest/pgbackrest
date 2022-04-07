@@ -18,6 +18,21 @@
             <release-core-list>
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Refactor target type checking for clarity in restore module."/>
+                        <commit subject="Auto-select backup for restore command --type=lsn.">
+                            <github-pull-request id="1706"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Auto-select backup for <cmd>restore</cmd> command <br-option>--type=lsn</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1685"/>
                         <github-pull-request id="1691"/>
 
@@ -114,6 +129,21 @@
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Set option-archive-copy flag in backup.manifest to false when offline."/>
+                        <commit subject="Move cfgParseOptionalFilterDepend() and add comment block."/>
+                        <commit subject="Add default for boolean options with unresolved dependencies.">
+                            <github-pull-request id="1710"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add default for boolean options with unresolved dependencies.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>

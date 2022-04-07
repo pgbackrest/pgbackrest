@@ -269,6 +269,7 @@ Parse option list
 typedef struct BldCfgOptionDependRaw
 {
     const String *option;                                           // See BldCfgOptionDepend for comments
+    const String *defaultValue;
     const StringList *valueList;
 } BldCfgOptionDependRaw;
 
@@ -432,10 +433,10 @@ bldCfgParseDepend(Yaml *const yaml, const List *const optList)
                     YamlEvent dependDefVal = yamlEventNext(yaml);
                     yamlEventCheck(dependDefVal, yamlEventTypeScalar);
 
-                    if (strEqZ(dependDef.value, "option"))
-                    {
+                    if (strEqZ(dependDef.value, "default"))
+                        optDependRaw.defaultValue = dependDefVal.value;
+                    else if (strEqZ(dependDef.value, "option"))
                         optDependRaw.option = dependDefVal.value;
-                    }
                     else
                         THROW_FMT(FormatError, "unknown depend definition '%s'", strZ(dependDef.value));
                 }
@@ -451,6 +452,7 @@ bldCfgParseDepend(Yaml *const yaml, const List *const optList)
                 *optDepend = (BldCfgOptionDependRaw)
                 {
                     .option = strDup(optDependRaw.option),
+                    .defaultValue = strDup(optDependRaw.defaultValue),
                     .valueList = strLstDup(optDependRaw.valueList)
                 };
 
@@ -475,17 +477,20 @@ bldCfgParseDepend(Yaml *const yaml, const List *const optList)
     MEM_CONTEXT_TEMP_END();
 
     return result;
-
 }
 
 // Helper to reconcile depend
 static const BldCfgOptionDepend *
-bldCfgParseDependReconcile(const BldCfgOptionDependRaw *const optDependRaw, const List *const optList)
+bldCfgParseDependReconcile(
+    const BldCfgOptionRaw *const optRaw, const BldCfgOptionDependRaw *const optDependRaw, const List *const optList)
 {
     BldCfgOptionDepend *result = NULL;
 
     if (optDependRaw != NULL)
     {
+        if (optDependRaw->defaultValue != NULL && !strEq(optRaw->type, OPT_TYPE_BOOLEAN_STR))
+            THROW_FMT(FormatError, "dependency default invalid for non-boolean option '%s'", strZ(optRaw->name));
+
         const BldCfgOption *const optDepend = lstFind(optList, &optDependRaw->option);
 
         if (optDepend == NULL)
@@ -495,7 +500,9 @@ bldCfgParseDependReconcile(const BldCfgOptionDependRaw *const optDependRaw, cons
 
         memcpy(
             result,
-            &(BldCfgOptionDepend){.option = optDepend, .valueList = strLstDup(optDependRaw->valueList)},
+            &(BldCfgOptionDepend){
+                .option = optDepend, .defaultValue = strDup(optDependRaw->defaultValue),
+                .valueList = strLstDup(optDependRaw->valueList)},
             sizeof(BldCfgOptionDepend));
     }
 
@@ -983,7 +990,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                             .internal = varBool(optCmd.internal),
                             .required = varBool(optCmd.required),
                             .defaultValue = strDup(optCmd.defaultValue),
-                            .depend = bldCfgParseDependReconcile(optCmd.depend, result),
+                            .depend = bldCfgParseDependReconcile(optRaw, optCmd.depend, result),
                             .allowList = strLstDup(optCmd.allowList),
                             .roleList = strLstDup(optCmd.roleList),
                         });
@@ -1000,7 +1007,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
             MEM_CONTEXT_BEGIN(lstMemContext(result))
             {
                 *((List **)&opt->cmdList) = lstMove(cmdOptList, memContextCurrent());
-                *((const BldCfgOptionDepend **)&opt->depend) = bldCfgParseDependReconcile(optRaw->depend, result);
+                *((const BldCfgOptionDepend **)&opt->depend) = bldCfgParseDependReconcile(optRaw, optRaw->depend, result);
             }
             MEM_CONTEXT_END();
         }

@@ -1440,7 +1440,7 @@ infoRender(void)
 
                     // Add a carriage return between stanzas
                     if (stanzaIdx > 0)
-                        strCatFmt(resultStr, "\n");
+                        strCatZ(resultStr, "\n");
 
                     // Stanza name and status
                     strCatFmt(resultStr, "stanza: %s\n    status: ", strZ(stanzaName));

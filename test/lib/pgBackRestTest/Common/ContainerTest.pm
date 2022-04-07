@@ -131,9 +131,10 @@ sub containerWrite
 
     # Write the image
     $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
-    executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
-                " -f ${strTempPath}/${strImage} -t ${strTag} ${strTempPath}",
-                {bSuppressStdErr => true});
+    executeTest(
+        'docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
+            $oStorageDocker->pathGet('test'),
+        {bSuppressStdErr => true, bShowOutputAsync => (logLevel())[1] eq DETAIL});
 }
 
 ####################################################################################################################################
