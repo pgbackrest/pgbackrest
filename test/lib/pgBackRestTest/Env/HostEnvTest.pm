@@ -254,7 +254,7 @@ sub dbCatalogVersion
         &PG_VERSION_12 => 201909212,
         &PG_VERSION_13 => 202007201,
         &PG_VERSION_14 => 202105121,
-        &PG_VERSION_15 => 202203301,
+        &PG_VERSION_15 => 202204062,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
