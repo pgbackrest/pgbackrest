@@ -29,6 +29,7 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
         // Read parameters
         const String *const walSource = pckReadStrP(param);
         const bool headerCheck = pckReadBoolP(param);
+        const bool modeCheck = pckReadBoolP(param);
         const unsigned int pgVersion = pckReadU32P(param);
         const uint64_t pgSystemId = pckReadU64P(param);
         const String *const archiveFile = pckReadStrP(param);
@@ -58,7 +59,8 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Push file
         const ArchivePushFileResult fileResult = archivePushFile(
-            walSource, headerCheck, pgVersion, pgSystemId, archiveFile, compressType, compressLevel, repoList, priorErrorList);
+            walSource, headerCheck, pgVersion, pgSystemId, archiveFile, compressType, compressLevel, repoList, priorErrorList,
+            modeCheck);
 
         // Return result
         protocolServerDataPut(server, pckWriteStrLstP(protocolPackNew(), fileResult.warnList));

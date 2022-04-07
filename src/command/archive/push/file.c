@@ -94,8 +94,9 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
 /**********************************************************************************************************************************/
 ArchivePushFileResult
 archivePushFile(
-    const String *walSource, bool headerCheck, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
-    CompressType compressType, int compressLevel, const List *const repoList, const StringList *const priorErrorList)
+    const String *walSource, const bool headerCheck, const unsigned int pgVersion, const uint64_t pgSystemId,
+    const String *archiveFile, CompressType compressType, const int compressLevel, const List *const repoList,
+    const StringList *const priorErrorList, const bool modeCheck)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
@@ -107,6 +108,7 @@ archivePushFile(
         FUNCTION_LOG_PARAM(INT, compressLevel);
         FUNCTION_LOG_PARAM_P(VOID, repoList);
         FUNCTION_LOG_PARAM(STRING_LIST, priorErrorList);
+        FUNCTION_LOG_PARAM(BOOL, modeCheck);
     FUNCTION_LOG_END();
 
     ASSERT(walSource != NULL);
@@ -190,20 +192,24 @@ archivePushFile(
                 {
                     String *walSegmentRepoChecksum = strSubN(walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
-                    // If the checksums are the same then succeed but warn in case this is a symptom of some other issue
+                    // If the checksums are the same then succeed but warn if archive-mode-check is enabled in case this is a
+                    // symptom of some other issue
                     if (strEq(walSegmentChecksum, walSegmentRepoChecksum))
                     {
-                        MEM_CONTEXT_PRIOR_BEGIN()
+                        if (modeCheck)
                         {
-                            // Add warning to the result that will be returned to the main process
-                            strLstAdd(
-                                result.warnList,
-                                strNewFmt(
-                                    "WAL file '%s' already exists in the %s archive with the same checksum"
-                                    "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                    strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx)));
+                            MEM_CONTEXT_PRIOR_BEGIN()
+                            {
+                                // Add warning to the result that will be returned to the main process
+                                strLstAdd(
+                                    result.warnList,
+                                    strNewFmt(
+                                        "WAL file '%s' already exists in the %s archive with the same checksum"
+                                        "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
+                                        strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx)));
+                            }
+                            MEM_CONTEXT_PRIOR_END();
                         }
-                        MEM_CONTEXT_PRIOR_END();
 
                         // No need to copy to this repo
                         destinationCopy[repoListIdx] = false;
