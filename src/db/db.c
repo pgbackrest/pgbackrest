@@ -330,18 +330,18 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
     // Start backup after immediate checkpoint
     if (startFast)
     {
-        strCatFmt(result, ", " TRUE_Z);
+        strCatZ(result, ", " TRUE_Z);
     }
     // Else start backup at the next scheduled checkpoint
     else
-        strCatFmt(result, ", " FALSE_Z);
+        strCatZ(result, ", " FALSE_Z);
 
     // Use non-exclusive backup mode when available
     if (pgVersion >= PG_VERSION_96)
-        strCatFmt(result, ", " FALSE_Z);
+        strCatZ(result, ", " FALSE_Z);
 
     // Complete query
-    strCatFmt(result, ") as lsn");
+    strCatZ(result, ") as lsn");
 
     FUNCTION_TEST_RETURN(result);
 }
@@ -501,17 +501,17 @@ dbBackupStopQuery(unsigned int pgVersion)
 
     // Use non-exclusive backup mode when available
     if (pgVersion >= PG_VERSION_96)
-        strCatFmt(result, FALSE_Z);
+        strCatZ(result, FALSE_Z);
 
     // Disable archive checking in pg_stop_backup() since we do this elsewhere
     if (pgVersion >= PG_VERSION_10)
-        strCatFmt(result, ", " FALSE_Z);
+        strCatZ(result, ", " FALSE_Z);
 
     // Complete query
-    strCatFmt(result, ")");
+    strCatZ(result, ")");
 
     if (pgVersion < PG_VERSION_96)
-        strCatFmt(result, " as lsn");
+        strCatZ(result, " as lsn");
 
     FUNCTION_TEST_RETURN(result);
 }
