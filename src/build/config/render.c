@@ -857,7 +857,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             // Add defaults
             if (varLstSize(kvKeyList(optionalCmdRuleType)) > 0)
             {
-                for (unsigned int ruleIdx = 0; ruleIdx < sizeof(ruleList) / sizeof(Variant *); ruleIdx++)
+                for (unsigned int ruleIdx = 0; ruleIdx < LENGTH_OF(ruleList); ruleIdx++)
                 {
                     if (kvKeyExists(optionalCmdRuleType, ruleList[ruleIdx]))
                         kvAdd(optionalCmdRule, VARSTR(optCmd->name), kvGet(optionalCmdRuleType, ruleList[ruleIdx]));

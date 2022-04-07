@@ -173,7 +173,7 @@ hrnPgInterfaceVersion(unsigned int pgVersion)
 
     const HrnPgInterface *result = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < sizeof(hrnPgInterface) / sizeof(HrnPgInterface); interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(hrnPgInterface); interfaceIdx++)
     {
         if (hrnPgInterface[interfaceIdx].version == pgVersion)
         {

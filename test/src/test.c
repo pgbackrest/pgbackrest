@@ -25,6 +25,7 @@ The test code is included directly so it can freely interact with the included C
 
 #ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
+    #include "common/macro.h"
 #endif
 
 #ifdef HRN_FEATURE_DEBUG
@@ -162,7 +163,7 @@ main(int argListSize, const char *argList[])
 #endif
     };
 
-    errorHandlerSet(handlerList, sizeof(handlerList) / sizeof(ErrorHandlerFunction));
+    errorHandlerSet(handlerList, LENGTH_OF(handlerList));
 #endif
 
     // Initialize statistics
