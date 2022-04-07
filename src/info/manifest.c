@@ -938,7 +938,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 }
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
-                // created there
+                // created there !!! NEED TO CHECK THIS AGAINST 6f0cf87872ab2f AND AT LEAST UPDATE COMMENT
                 if (strEqZ(info->name, PG_PATH_PGSTATTMP))
                 {
                     FUNCTION_TEST_RETURN_VOID();

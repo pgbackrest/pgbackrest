@@ -197,7 +197,7 @@ Types from src/include/catalog/catversion.h
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	202203301
+#define CATALOG_VERSION_NO	202204062
 
 // Allow the catalog version to float during the PostgreSQL 15 beta/rc period
 #define CATALOG_VERSION_NO_MAX
@@ -811,9 +811,7 @@ typedef struct ControlFileData
 	 *
 	 * If backupEndRequired is true, we know for sure that we're restoring
 	 * from a backup, and must see a backup-end record before we can safely
-	 * start up. If it's false, but backupStartPoint is set, a backup_label
-	 * file was found at startup but it may have been a leftover from a stray
-	 * pg_start_backup() call, not accompanied by pg_stop_backup().
+	 * start up.
 	 */
 	XLogRecPtr	minRecoveryPoint;
 	TimeLineID	minRecoveryPointTLI;
@@ -1974,7 +1972,7 @@ Types from src/include/access/xlog_internal.h
 
 #elif PG_VERSION >= PG_VERSION_15
 
-#define XLOG_PAGE_MAGIC 0xD10F	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD110	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_14
 
