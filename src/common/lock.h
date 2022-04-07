@@ -42,7 +42,10 @@ bool lockAcquire(
 // Release a lock
 bool lockRelease(bool failOnNoLock);
 
-// !!!
+// Build lock file name
+String *lockFileName(const String *stanza, LockType lockType);
+
+// Read a lock file held by another process to get information about what the process is doing
 typedef enum
 {
     lockReadFileStatusMissing,                                      // File is missing
@@ -54,7 +57,7 @@ typedef enum
 typedef struct LockReadFileResult
 {
     LockReadFileStatus status;                                      // Status of file read
-    pid_t processId;                                                // Process id
+    LockData data;                                                  // Lock data
 } LockReadFileResult;
 
 typedef struct LockReadFileParam
@@ -68,10 +71,7 @@ typedef struct LockReadFileParam
 
 LockReadFileResult lockReadFile(const String *lockFile, LockReadFileParam param);
 
-// !!!
+// Wrapper that generates the lock filename before calling lockReadFile()
 LockReadFileResult lockRead(const String *lockPath, const String *stanza, LockType lockType);
-
-// Build lock file name
-String *lockFileName(const String *stanza, LockType lockType);
 
 #endif

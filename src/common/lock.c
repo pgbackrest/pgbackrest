@@ -157,7 +157,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
                 {
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        result.processId = lockReadDataFile(lockFile, fd).processId;
+                        result.data = lockReadDataFile(lockFile, fd);
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }

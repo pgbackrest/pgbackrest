@@ -67,22 +67,22 @@ cmdStop(void)
 
                     // Read the lock file
                     lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFile));
-                    LockReadFileResult lockReadResult = lockReadFileP(lockFile, .remove = true);
+                    LockReadFileResult lockRead = lockReadFileP(lockFile, .remove = true);
 
                     // If we cannot open the lock file for any reason then warn and continue to next file
-                    if (lockReadResult.status != lockReadFileStatusValid && lockReadResult.status != lockReadFileStatusUnlocked)
+                    if (lockRead.status != lockReadFileStatusValid && lockRead.status != lockReadFileStatusUnlocked)
                     {
                         LOG_WARN_FMT("unable to open lock file %s", strZ(lockFile));
                         continue;
                     }
 
                     // The file is locked so that means there is a running process -- send a term signal to the process
-                    if (lockReadResult.processId != 0)
+                    if (lockRead.data.processId != 0)
                     {
-                        if (kill(lockReadResult.processId, SIGTERM) != 0)
-                            LOG_WARN_FMT("unable to send term signal to process %d", lockReadResult.processId);
+                        if (kill(lockRead.data.processId, SIGTERM) != 0)
+                            LOG_WARN_FMT("unable to send term signal to process %d", lockRead.data.processId);
                         else
-                            LOG_INFO_FMT("sent term signal to process %d", lockReadResult.processId);
+                            LOG_INFO_FMT("sent term signal to process %d", lockRead.data.processId);
                     }
                 }
             }
