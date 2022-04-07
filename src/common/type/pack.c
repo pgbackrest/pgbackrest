@@ -210,8 +210,6 @@ static const PackTypeMapData packTypeMapData[] =
     },
 };
 
-#define PACK_TYPE_MAP_SIZE                                          (sizeof(packTypeMapData) / sizeof(PackTypeMapData))
-
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
@@ -549,7 +547,7 @@ pckReadTagNext(PackRead *this)
             this->tagNextTypeMap = (unsigned int)pckReadU64Internal(this) + 0xF;
 
         CHECK(
-            FormatError, this->tagNextTypeMap < PACK_TYPE_MAP_SIZE && packTypeMapData[this->tagNextTypeMap].type != 0,
+            FormatError, this->tagNextTypeMap < LENGTH_OF(packTypeMapData) && packTypeMapData[this->tagNextTypeMap].type != 0,
             "invalid tag type");
 
         // If the value can contain multiple bits (e.g. integer)

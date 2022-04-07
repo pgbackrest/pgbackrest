@@ -101,9 +101,6 @@ static const struct CompressHelperLocal
     },
 };
 
-#define COMPRESS_LIST_SIZE                                                                                                         \
-    (sizeof(compressHelperLocal) / sizeof(struct CompressHelperLocal))
-
 /**********************************************************************************************************************************/
 CompressType
 compressTypeEnum(const StringId type)
@@ -116,13 +113,13 @@ compressTypeEnum(const StringId type)
 
     CompressType result = compressTypeNone;
 
-    for (; result < COMPRESS_LIST_SIZE; result++)
+    for (; result < LENGTH_OF(compressHelperLocal); result++)
     {
         if (type == compressHelperLocal[result].typeId)
             break;
     }
 
-    if (result == COMPRESS_LIST_SIZE)
+    if (result == LENGTH_OF(compressHelperLocal))
         THROW_FMT(AssertError, "invalid compression type '%s'", strZ(strIdToStr(type)));
 
     FUNCTION_TEST_RETURN(result);
@@ -136,7 +133,7 @@ compressTypePresent(CompressType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
 
     if (type != compressTypeNone && compressHelperLocal[type].compressNew == NULL)
         THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not compiled with %s support", strZ(compressHelperLocal[type].type));
@@ -152,7 +149,7 @@ compressTypeStr(CompressType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
 
     FUNCTION_TEST_RETURN(compressHelperLocal[type].type);
 }
@@ -167,13 +164,13 @@ compressTypeFromName(const String *name)
 
     CompressType result = compressTypeNone + 1;
 
-    for (; result < COMPRESS_LIST_SIZE; result++)
+    for (; result < LENGTH_OF(compressHelperLocal); result++)
     {
         if (strEndsWith(name, compressHelperLocal[result].ext))
             break;
     }
 
-    if (result == COMPRESS_LIST_SIZE)
+    if (result == LENGTH_OF(compressHelperLocal))
         result = compressTypeNone;
 
     FUNCTION_TEST_RETURN(result);
@@ -187,7 +184,7 @@ compressLevelDefault(CompressType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
     compressTypePresent(type);
 
     FUNCTION_TEST_RETURN(compressHelperLocal[type].levelDefault);
@@ -202,7 +199,7 @@ compressFilter(CompressType type, int level)
         FUNCTION_TEST_PARAM(INT, level);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
     ASSERT(type != compressTypeNone);
     compressTypePresent(type);
 
@@ -224,7 +221,7 @@ compressFilterPack(const StringId filterType, const Pack *const filterParam)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        for (CompressType compressIdx = compressTypeNone + 1; compressIdx < COMPRESS_LIST_SIZE; compressIdx++)
+        for (CompressType compressIdx = compressTypeNone + 1; compressIdx < LENGTH_OF(compressHelperLocal); compressIdx++)
         {
             const struct CompressHelperLocal *compress = &compressHelperLocal[compressIdx];
 
@@ -255,7 +252,7 @@ decompressFilter(CompressType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
     ASSERT(type != compressTypeNone);
     compressTypePresent(type);
 
@@ -270,7 +267,7 @@ compressExtStr(CompressType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    ASSERT(type < COMPRESS_LIST_SIZE);
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
 
     FUNCTION_TEST_RETURN(compressHelperLocal[type].ext);
 }
