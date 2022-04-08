@@ -108,10 +108,10 @@ lockReadFileData(const String *const lockFile, const int fd)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
-
                 if (strLstSize(parse) == 3)
                     result.execId = strDup(strLstGet(parse, 1));
+
+                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
             }
             MEM_CONTEXT_PRIOR_END();
         }
