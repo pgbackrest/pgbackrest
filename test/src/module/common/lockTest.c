@@ -289,7 +289,7 @@ testRun(void)
         HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("invalid locked file");
+        TEST_TITLE("valid locked file");
 
         HRN_FORK_BEGIN()
         {
