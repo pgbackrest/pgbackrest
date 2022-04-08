@@ -411,9 +411,9 @@ cmdArchivePush(void)
 
                 // Push the file to the archive
                 ArchivePushFileResult fileResult = archivePushFile(
-                    walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
-                    compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList,
-                    archiveInfo.errorList);
+                    walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), cfgOptionBool(cfgOptArchiveModeCheck), archiveInfo.pgVersion,
+                    archiveInfo.pgSystemId, archiveFile, compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
+                    cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList, archiveInfo.errorList);
 
                 // If a warning was returned then log it
                 for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
@@ -468,6 +468,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
 
             pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
             pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
+            pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveModeCheck));
             pckWriteU32P(param, jobData->archiveInfo.pgVersion);
             pckWriteU64P(param, jobData->archiveInfo.pgSystemId);
             pckWriteStrP(param, walFile);
