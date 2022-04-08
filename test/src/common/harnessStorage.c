@@ -301,11 +301,11 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
                 if (info->type == storageTypePath)
                 {
                     storagePathRemoveP(
-                        storage, strNewFmt("%s/%s", path, strZ(info->name)), .errorOnMissing = true, .recurse = true);
+                        storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)), .errorOnMissing = true, .recurse = true);
                 }
                 // Remove file, link, or special
                 else
-                    storageRemoveP(storage, strNewFmt("%s/%s", path, strZ(info->name)), .errorOnMissing = true);
+                    storageRemoveP(storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)), .errorOnMissing = true);
             }
         }
     }
