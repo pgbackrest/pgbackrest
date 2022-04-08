@@ -5,6 +5,7 @@ Test Lock Handler
 #include "storage/posix/storage.h"
 
 #include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -226,6 +227,104 @@ testRun(void)
 
         // Release lock manually
         lockReleaseFile(lockFdTest, lockFileTest);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("lockRead*()"))
+    {
+        TEST_TITLE("missing lock file");
+
+        TEST_RESULT_UINT(lockReadFileP(STRDEF(TEST_PATH "/missing.lock")).status, lockReadFileStatusMissing, "lock read");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unlocked file");
+
+        HRN_STORAGE_PUT_EMPTY(storageTest, "unlocked.lock");
+        TEST_RESULT_UINT(lockReadFileP(STRDEF(TEST_PATH "/unlocked.lock")).status, lockReadFileStatusUnlocked, "lock read");
+        TEST_STORAGE_LIST(storageTest, NULL, "unlocked.lock\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid locked file");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                TEST_RESULT_BOOL(
+                    lockAcquire(TEST_PATH_STR, STRDEF("test"), STRDEF("test"), lockTypeBackup, 0, true), true, "acquire lock");
+
+                // Overwrite lock file with bogus data
+                THROW_ON_SYS_ERROR_FMT(
+                    lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
+                    (uint64_t)0, strZ(lockLocal.file[lockTypeBackup].name));
+
+                IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockTypeBackup].name, lockLocal.file[lockTypeBackup].fd, 0);
+
+                ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("BOGUS")), write);
+                ioWriteClose(write);
+
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+
+                TEST_RESULT_UINT(
+                    lockReadFileP(STRDEF(TEST_PATH "/test-backup.lock"), .remove = true).status, lockReadFileStatusInvalid,
+                    "lock read");
+                TEST_STORAGE_LIST(storageTest, NULL, NULL);
+
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid locked file");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                TEST_RESULT_BOOL(
+                    lockAcquire(TEST_PATH_STR, STRDEF("test"), STRDEF("test"), lockTypeBackup, 0, true), true, "acquire lock");
+
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+
+                LockReadFileResult result = {0};
+                TEST_ASSIGN(result, lockRead(TEST_PATH_STR, STRDEF("test"), lockTypeBackup), "lock read");
+
+                TEST_RESULT_BOOL(result.data.processId != 0, true, "check processId");
+                TEST_RESULT_STR_Z(result.data.execId, "test", "check execId");
+
+                TEST_STORAGE_LIST(storageTest, NULL, "test-backup.lock\n");
+
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
