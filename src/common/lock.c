@@ -74,15 +74,13 @@ lockFileName(const String *const stanza, const LockType lockType)
 Read contents of lock file
 
 If a seek is required to get to the beginning of the data, that must be done before calling this function.
-
-??? This function should not be extern'd, but need to fix dependency in cmdStop().
 ***********************************************************************************************************************************/
 // Size of initial buffer used to load lock file
 #define LOCK_BUFFER_SIZE                                            128
 
 // Helper to read data
-LockData
-lockReadDataFile(const String *const lockFile, const int fd)
+static LockData
+lockReadFileData(const String *const lockFile, const int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, lockFile);
@@ -157,7 +155,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
                 {
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        result.data = lockReadDataFile(lockFile, fd);
+                        result.data = lockReadFileData(lockFile, fd);
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
@@ -286,7 +284,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 
                     TRY_BEGIN()
                     {
-                        execId = lockReadDataFile(lockFile, result).execId;
+                        execId = lockReadFileData(lockFile, result).execId;
                     }
                     FINALLY()
                     {
