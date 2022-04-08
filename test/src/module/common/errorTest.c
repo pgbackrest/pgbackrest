@@ -134,7 +134,7 @@ testRun(void)
         TEST_TITLE("set error handler");
 
         static const ErrorHandlerFunction testErrorHandlerList[] = {testErrorHandler};
-        errorHandlerSet(testErrorHandlerList, sizeof(testErrorHandlerList) / sizeof(ErrorHandlerFunction));
+        errorHandlerSet(testErrorHandlerList, LENGTH_OF(testErrorHandlerList));
 
         assert(errorContext.handlerList[0] == testErrorHandler);
         assert(errorContext.handlerTotal == 1);

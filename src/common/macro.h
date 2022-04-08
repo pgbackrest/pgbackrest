@@ -99,4 +99,17 @@ This is useful for determining how to correctly align a type in a buffer that is
 ***********************************************************************************************************************************/
 #define ALIGN_OFFSET(type, bytes) (ALIGN_OF(type) - ((bytes) % ALIGN_OF(type)))
 
+/***********************************************************************************************************************************
+Determine the length of an array that can be determined at compile time
+
+For this macro to work correctly the array must be declared like:
+
+int intList[] = {0, 1};
+
+It will not work for an array declared like:
+
+int *intList;
+***********************************************************************************************************************************/
+#define LENGTH_OF(array) (sizeof(array) / sizeof((array)[0]))
+
 #endif

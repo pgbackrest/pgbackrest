@@ -200,9 +200,6 @@ static const PgInterface pgInterface[] =
     },
 };
 
-// Total PostgreSQL versions in pgInterface
-#define PG_INTERFACE_SIZE                                           (sizeof(pgInterface) / sizeof(PgInterface))
-
 /***********************************************************************************************************************************
 These pg_control fields are common to all versions of PostgreSQL, so we can use them to generate error messages when the pg_control
 version cannot be found.
@@ -226,7 +223,7 @@ pgInterfaceVersion(unsigned int pgVersion)
 
     const PgInterface *result = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
     {
         if (pgInterface[interfaceIdx].version == pgVersion)
         {
@@ -276,7 +273,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     // Search for the version of PostgreSQL that uses this control file
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
     {
         if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
         {
@@ -375,7 +372,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
     // Search for the version of PostgreSQL that uses this WAL magic
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
     {
         if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
         {

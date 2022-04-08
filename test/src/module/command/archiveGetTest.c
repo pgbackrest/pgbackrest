@@ -110,7 +110,7 @@ testRun(void)
 
         // Install local command handler shim
         static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST};
-        hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+        hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
         // Arguments that must be included
         StringList *argBaseList = strLstNew();

@@ -292,16 +292,16 @@ varBoolForce(const Variant *this)
             const char *string = strZ(varStr(this));
             unsigned int boolIdx;
 
-            for (boolIdx = 0; boolIdx < sizeof(boolString) / sizeof(char *); boolIdx++)
+            for (boolIdx = 0; boolIdx < LENGTH_OF(boolString); boolIdx++)
                 if (strcasecmp(string, boolString[boolIdx]) == 0)
                     break;
 
             // If string was not found then not a boolean
-            if (boolIdx == sizeof(boolString) / sizeof(char *))
+            if (boolIdx == LENGTH_OF(boolString))
                 THROW_FMT(FormatError, "unable to convert str '%s' to bool", string);
 
             // False if in first half of list, true if in second half
-            result = boolIdx / (sizeof(boolString) / sizeof(char *) / 2);
+            result = boolIdx / (LENGTH_OF(boolString) / 2);
 
             break;
         }

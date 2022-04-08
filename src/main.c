@@ -58,7 +58,7 @@ main(int argListSize, const char *argList[])
 {
     // Set stack trace and mem context error cleanup handlers
     static const ErrorHandlerFunction errorHandlerList[] = {stackTraceClean, memContextClean};
-    errorHandlerSet(errorHandlerList, sizeof(errorHandlerList) / sizeof(ErrorHandlerFunction));
+    errorHandlerSet(errorHandlerList, LENGTH_OF(errorHandlerList));
 
     // Set storage helpers
     static const StorageHelper storageHelperList[] =

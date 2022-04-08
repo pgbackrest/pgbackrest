@@ -614,7 +614,7 @@ testRun(void)
         TEST_TITLE("option resolve list contains an entry for every option");
 
         TEST_RESULT_INT(
-            sizeof(optionResolveOrder) / sizeof(ConfigOption), CFG_OPTION_TOTAL,
+            LENGTH_OF(optionResolveOrder), CFG_OPTION_TOTAL,
             "check that the option resolve list contains an entry for every option");
 
         // -------------------------------------------------------------------------------------------------------------------------

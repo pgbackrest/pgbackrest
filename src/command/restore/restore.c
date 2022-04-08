@@ -1825,7 +1825,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                 }
             }
 
-            strCatFmt(content, "%s", strZ(restoreRecoveryConf(pgVersion, restoreLabel)));
+            strCat(content, restoreRecoveryConf(pgVersion, restoreLabel));
         }
 
         LOG_INFO_FMT(

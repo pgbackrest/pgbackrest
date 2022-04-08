@@ -32,13 +32,13 @@ httpDateToTime(const String *lastModified)
         const char *month = strZ(strSubN(lastModified, 8, 3));
         unsigned int monthIdx = 0;
 
-        for (; monthIdx < sizeof(httpCommonMonthList) / sizeof(char *); monthIdx++)
+        for (; monthIdx < LENGTH_OF(httpCommonMonthList); monthIdx++)
         {
             if (strcmp(month, httpCommonMonthList[monthIdx]) == 0)
                 break;
         }
 
-        if (monthIdx == sizeof(httpCommonMonthList) / sizeof(char *))
+        if (monthIdx == LENGTH_OF(httpCommonMonthList))
             THROW_FMT(FormatError, "invalid month '%s'", month);
 
         // Convert to time_t
