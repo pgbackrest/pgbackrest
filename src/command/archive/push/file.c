@@ -94,9 +94,9 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
 /**********************************************************************************************************************************/
 ArchivePushFileResult
 archivePushFile(
-    const String *walSource, const bool headerCheck, const bool modeCheck, const unsigned int pgVersion, const uint64_t pgSystemId,
-    const String *archiveFile, CompressType compressType, const int compressLevel, const List *const repoList,
-    const StringList *const priorErrorList)
+    const String *const walSource, const bool headerCheck, const bool modeCheck, const unsigned int pgVersion,
+    const uint64_t pgSystemId, const String *const archiveFile, const CompressType compressType, const int compressLevel,
+    const List *const repoList, const StringList *const priorErrorList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
