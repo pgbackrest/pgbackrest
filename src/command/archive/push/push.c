@@ -411,9 +411,9 @@ cmdArchivePush(void)
 
                 // Push the file to the archive
                 ArchivePushFileResult fileResult = archivePushFile(
-                    walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), archiveInfo.pgVersion, archiveInfo.pgSystemId, archiveFile,
-                    compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList,
-                    archiveInfo.errorList, cfgOptionBool(cfgOptArchiveModeCheck));
+                    walFile, cfgOptionBool(cfgOptArchiveHeaderCheck), cfgOptionBool(cfgOptArchiveModeCheck), archiveInfo.pgVersion,
+                    archiveInfo.pgSystemId, archiveFile, compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
+                    cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList, archiveInfo.errorList);
 
                 // If a warning was returned then log it
                 for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)

@@ -59,8 +59,8 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Push file
         const ArchivePushFileResult fileResult = archivePushFile(
-            walSource, headerCheck, pgVersion, pgSystemId, archiveFile, compressType, compressLevel, repoList, priorErrorList,
-            modeCheck);
+            walSource, headerCheck, modeCheck, pgVersion, pgSystemId, archiveFile, compressType, compressLevel, repoList,
+            priorErrorList);
 
         // Return result
         protocolServerDataPut(server, pckWriteStrLstP(protocolPackNew(), fileResult.warnList));
