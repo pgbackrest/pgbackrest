@@ -156,6 +156,17 @@
 
                         <p>Add default for boolean options with unresolved dependencies.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1712"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>lockRead*()</code> functions for reading locks from another process.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
