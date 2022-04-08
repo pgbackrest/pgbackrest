@@ -234,13 +234,13 @@ testRun(void)
     {
         TEST_TITLE("missing lock file");
 
-        TEST_RESULT_UINT(lockReadFileP(STRDEF(TEST_PATH "/missing.lock")).status, lockReadFileStatusMissing, "lock read");
+        TEST_RESULT_UINT(lockReadFileP(STRDEF(TEST_PATH "/missing.lock")).status, lockReadStatusMissing, "lock read");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("unlocked file");
 
         HRN_STORAGE_PUT_EMPTY(storageTest, "unlocked.lock");
-        TEST_RESULT_UINT(lockReadFileP(STRDEF(TEST_PATH "/unlocked.lock")).status, lockReadFileStatusUnlocked, "lock read");
+        TEST_RESULT_UINT(lockReadFileP(STRDEF(TEST_PATH "/unlocked.lock")).status, lockReadStatusUnlocked, "lock read");
         TEST_STORAGE_LIST(storageTest, NULL, "unlocked.lock\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -277,7 +277,7 @@ testRun(void)
                 HRN_FORK_PARENT_NOTIFY_GET(0);
 
                 TEST_RESULT_UINT(
-                    lockReadFileP(STRDEF(TEST_PATH "/test-backup.lock"), .remove = true).status, lockReadFileStatusInvalid,
+                    lockReadFileP(STRDEF(TEST_PATH "/test-backup.lock"), .remove = true).status, lockReadStatusInvalid,
                     "lock read");
                 TEST_STORAGE_LIST(storageTest, NULL, NULL);
 
@@ -311,7 +311,7 @@ testRun(void)
                 // Wait for child to acquire lock
                 HRN_FORK_PARENT_NOTIFY_GET(0);
 
-                LockReadFileResult result = {0};
+                LockReadResult result = {0};
                 TEST_ASSIGN(result, lockRead(TEST_PATH_STR, STRDEF("test"), lockTypeBackup), "lock read");
 
                 TEST_RESULT_BOOL(result.data.processId != 0, true, "check processId");

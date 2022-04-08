@@ -45,20 +45,21 @@ bool lockRelease(bool failOnNoLock);
 // Build lock file name
 String *lockFileName(const String *stanza, LockType lockType);
 
-// Read a lock file held by another process to get information about what the process is doing
+// Read a lock file held by another process to get information about what the process is doing. This is a lower-level version to use
+// when the lock file name is already known and the lock file may need to be removed.
 typedef enum
 {
-    lockReadFileStatusMissing,                                      // File is missing
-    lockReadFileStatusUnlocked,                                     // File is not locked
-    lockReadFileStatusInvalid,                                      // File contents are invalid
-    lockReadFileStatusValid,                                        // File is locked and contexts are valid
-} LockReadFileStatus;
+    lockReadStatusMissing,                                          // File is missing
+    lockReadStatusUnlocked,                                         // File is not locked
+    lockReadStatusInvalid,                                          // File contents are invalid
+    lockReadStatusValid,                                            // File is locked and contexts are valid
+} LockReadStatus;
 
-typedef struct LockReadFileResult
+typedef struct LockReadResult
 {
-    LockReadFileStatus status;                                      // Status of file read
+    LockReadStatus status;                                          // Status of file read
     LockData data;                                                  // Lock data
-} LockReadFileResult;
+} LockReadResult;
 
 typedef struct LockReadFileParam
 {
@@ -69,9 +70,9 @@ typedef struct LockReadFileParam
 #define lockReadFileP(lockFile, ...)                                                                                               \
     lockReadFile(lockFile, (LockReadFileParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-LockReadFileResult lockReadFile(const String *lockFile, LockReadFileParam param);
+LockReadResult lockReadFile(const String *lockFile, LockReadFileParam param);
 
 // Wrapper that generates the lock filename before calling lockReadFile()
-LockReadFileResult lockRead(const String *lockPath, const String *stanza, LockType lockType);
+LockReadResult lockRead(const String *lockPath, const String *stanza, LockType lockType);
 
 #endif

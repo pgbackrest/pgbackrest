@@ -122,7 +122,7 @@ lockReadDataFile(const String *const lockFile, const int fd)
 }
 
 /**********************************************************************************************************************************/
-LockReadFileResult
+LockReadResult
 lockReadFile(const String *const lockFile, const LockReadFileParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -132,7 +132,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
 
     ASSERT(lockFile != NULL);
 
-    LockReadFileResult result = {.status = lockReadFileStatusValid};
+    LockReadResult result = {.status = lockReadStatusValid};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -141,14 +141,14 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
 
         if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)
         {
-            result.status = lockReadFileStatusMissing;
+            result.status = lockReadStatusMissing;
         }
         else
         {
             // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing the lock
             if (flock(fd, LOCK_EX | LOCK_NB) == 0)
             {
-                result.status = lockReadFileStatusUnlocked;
+                result.status = lockReadStatusUnlocked;
             }
             // Else attempt to read the file
             else
@@ -163,7 +163,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
                 }
                 CATCH_ANY()
                 {
-                    result.status = lockReadFileStatusInvalid;
+                    result.status = lockReadStatusInvalid;
                 }
                 TRY_END();
             }
@@ -182,7 +182,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
 }
 
 /**********************************************************************************************************************************/
-LockReadFileResult
+LockReadResult
 lockRead(const String *const lockPath, const String *const stanza, const LockType lockType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -191,7 +191,7 @@ lockRead(const String *const lockPath, const String *const stanza, const LockTyp
         FUNCTION_LOG_PARAM(ENUM, lockType);
     FUNCTION_LOG_END();
 
-    LockReadFileResult result = {0};
+    LockReadResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

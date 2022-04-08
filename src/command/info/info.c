@@ -1191,7 +1191,7 @@ infoUpdateStanza(
                 {
                     // If there is a valid backup lock for this stanza then backup/expire must be running
                     stanzaRepo->backupLockHeld = lockRead(
-                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).status == lockReadFileStatusValid;
+                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).status == lockReadStatusValid;
                     stanzaRepo->backupLockChecked = true;
                 }
             }
