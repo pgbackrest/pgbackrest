@@ -241,8 +241,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
             JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-            jsonWriteKey(json, INFO_KEY_FORMAT_STR);
-            jsonWriteUInt(json, backupData.backrestFormat);
+            jsonWriteUInt(jsonWriteKey(json, INFO_KEY_FORMAT_STR), backupData.backrestFormat);
             jsonWriteKey(json, INFO_KEY_VERSION_STR);
             jsonWriteStr(json, backupData.backrestVersion);
 

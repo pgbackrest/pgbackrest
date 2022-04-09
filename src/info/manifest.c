@@ -2421,26 +2421,25 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
                 const ManifestTarget *target = manifestTarget(manifest, targetIdx);
-                KeyValue *targetKv = kvNew();
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 if (target->file != NULL)
-                    kvPut(targetKv, MANIFEST_KEY_FILE_VAR, VARSTR(target->file));
+                    jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_FILE), target->file);
 
-                kvPut(targetKv, MANIFEST_KEY_PATH_VAR, VARSTR(target->path));
+                jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_PATH), target->path);
 
                 if (target->tablespaceId != 0)
-                    kvPut(targetKv, MANIFEST_KEY_TABLESPACE_ID_VAR, VARSTR(strNewFmt("%u", target->tablespaceId)));
+                    jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_TABLESPACE_ID), strNewFmt("%u", target->tablespaceId));
 
                 if (target->tablespaceName != NULL)
-                    kvPut(targetKv, MANIFEST_KEY_TABLESPACE_NAME_VAR, VARSTR(target->tablespaceName));
+                    jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_TABLESPACE_NAME), target->tablespaceName);
 
-                kvPut(
-                    targetKv, MANIFEST_KEY_TYPE_VAR,
-                    VARSTR(
-                        target->type == manifestTargetTypePath ?
-                            MANIFEST_TARGET_TYPE_PATH_STR : MANIFEST_TARGET_TYPE_LINK_STR));
+                jsonWriteStr(
+                    jsonWriteKeyZ(json, MANIFEST_KEY_TYPE),
+                    target->type == manifestTargetTypePath ? MANIFEST_TARGET_TYPE_PATH_STR : MANIFEST_TARGET_TYPE_LINK_STR);
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetKv));
+                infoSaveValueBuf(
+                    infoSaveData, MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2456,12 +2455,12 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
             {
                 const ManifestDb *db = manifestDb(manifest, dbIdx);
-                KeyValue *dbKv = kvNew();
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-                kvPut(dbKv, MANIFEST_KEY_DB_ID_VAR, VARUINT(db->id));
-                kvPut(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR, VARUINT(db->lastSystemId));
+                jsonWriteUInt(jsonWriteKeyZ(json, MANIFEST_KEY_DB_ID), db->id);
+                jsonWriteUInt(jsonWriteKeyZ(json, MANIFEST_KEY_DB_LAST_SYSTEM_ID), db->lastSystemId);
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_DB_STR, db->name, jsonFromKv(dbKv));
+                infoSaveValueBuf(infoSaveData, MANIFEST_SECTION_DB_STR, db->name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
