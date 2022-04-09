@@ -56,12 +56,16 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
         // Send the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            KeyValue *greetingKv = kvNew();
-            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_NAME_STR), VARSTRZ(PROJECT_NAME));
-            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_SERVICE_STR), VARSTR(service));
-            kvPut(greetingKv, VARSTR(PROTOCOL_GREETING_VERSION_STR), VARSTRZ(PROJECT_VERSION));
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-            ioWriteStrLine(this->write, jsonFromKv(greetingKv));
+            jsonWriteKey(json, PROTOCOL_GREETING_NAME_STR);
+            jsonWriteZ(json, PROJECT_NAME);
+            jsonWriteKey(json, PROTOCOL_GREETING_SERVICE_STR);
+            jsonWriteStr(json, service);
+            jsonWriteKey(json, PROTOCOL_GREETING_VERSION_STR);
+            jsonWriteZ(json, PROJECT_VERSION);
+
+            ioWriteLine(this->write, jsonWriteResult(jsonWriteObjectEnd(json)));
             ioWriteFlush(this->write);
         }
         MEM_CONTEXT_TEMP_END();

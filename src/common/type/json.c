@@ -611,6 +611,27 @@ jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
 }
 
 /**********************************************************************************************************************************/
+JsonWrite *
+jsonWriteZ(JsonWrite *const this, const char *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonTypePush(this, jsonTypeString, false);
+
+    if (value == NULL)
+        jsonWriteBuffer(this, BUFSTRDEF("null"));
+    else
+        jsonWriteStrInternal(this, STR(value));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
 const Buffer *
 jsonWriteResult(JsonWrite *const this)
 {
@@ -1727,5 +1748,5 @@ jsonFromVar(const Variant *var)
 String *
 jsonWriteToLog(const JsonWrite *this)
 {
-    return strNewFmt("{depth: %u}", this->stack != NULL ? lstSize(this->stack) : this->complete ? 1 : 0);
+    return strNewFmt("{depth: %u}", this->stack != NULL ? lstSize(this->stack) : (unsigned int)(this->complete ? 1 : 0));
 }

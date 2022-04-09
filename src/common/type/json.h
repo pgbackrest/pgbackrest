@@ -68,6 +68,9 @@ JsonWrite *jsonWriteStrLst(JsonWrite *this, const StringList *value);
 JsonWrite *jsonWriteUInt(JsonWrite *this, unsigned int value);
 JsonWrite *jsonWriteUInt64(JsonWrite *this, uint64_t value);
 
+// !!!
+JsonWrite *jsonWriteZ(JsonWrite *this, const char *value);
+
 /***********************************************************************************************************************************
 Write Getters/Setters
 ***********************************************************************************************************************************/
