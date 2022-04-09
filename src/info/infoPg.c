@@ -318,23 +318,38 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
         // Set the db history section in reverse so oldest history is first instead of last to be consistent with load
         for (unsigned int pgDataIdx = infoPgDataTotal(saveData->infoPg) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
         {
-            InfoPgData pgData = infoPgData(saveData->infoPg, pgDataIdx);
+            const InfoPgData pgData = infoPgData(saveData->infoPg, pgDataIdx);
+            JsonWrite *const json = jsonWriteNewP();
 
-            KeyValue *pgDataKv = kvNew();
-            kvPut(pgDataKv, INFO_KEY_DB_VERSION_VAR, VARSTR(pgVersionToStr(pgData.version)));
+            jsonWriteObjectBegin(json);
+
+            // These need to be saved because older pgBackRest versions expect them
+            if (saveData->infoPg->type == infoPgBackup)
+            {
+                jsonWriteKey(json, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR));
+                jsonWriteUInt(json, pgData.catalogVersion);
+                jsonWriteKey(json, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR));
+                jsonWriteUInt(json, pgControlVersion(pgData.version));
+            }
+
+            if (saveData->infoPg->type == infoPgArchive)
+            {
+                jsonWriteKey(json, varStr(INFO_KEY_DB_ID_VAR));
+                jsonWriteUInt64(json, pgData.systemId);
+            }
 
             if (saveData->infoPg->type == infoPgBackup)
             {
-                kvPut(pgDataKv, INFO_KEY_DB_SYSTEM_ID_VAR, VARUINT64(pgData.systemId));
-
-                // These need to be saved because older pgBackRest versions expect them
-                kvPut(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR, VARUINT(pgData.catalogVersion));
-                kvPut(pgDataKv, INFO_KEY_DB_CONTROL_VERSION_VAR, VARUINT(pgControlVersion(pgData.version)));
+                jsonWriteKey(json, varStr(INFO_KEY_DB_SYSTEM_ID_VAR));
+                jsonWriteUInt64(json, pgData.systemId);
             }
-            else
-                kvPut(pgDataKv, INFO_KEY_DB_ID_VAR, VARUINT64(pgData.systemId));
 
-            infoSaveValue(infoSaveData, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)), jsonFromKv(pgDataKv));
+            jsonWriteKey(json, varStr(INFO_KEY_DB_VERSION_VAR));
+            jsonWriteStr(json, pgVersionToStr(pgData.version));
+
+            jsonWriteObjectEnd(json);
+
+            infoSaveValueBuf(infoSaveData, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)), jsonWriteResult(json));
         }
     }
 

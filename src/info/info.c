@@ -86,7 +86,7 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_KEY_VALUE_END_BUF, ":");
     {                                                                                                                              \
         ioFilterProcessIn(checksum, BUFSTR(jsonFromStr(key)));                                                                     \
         ioFilterProcessIn(checksum, INFO_CHECKSUM_KEY_VALUE_END_BUF);                                                              \
-        ioFilterProcessIn(checksum, BUFSTR(value));                                                                                \
+        ioFilterProcessIn(checksum, value);                                                                                        \
     }                                                                                                                              \
     while (0)
 
@@ -198,7 +198,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
         else
             INFO_CHECKSUM_KEY_VALUE_NEXT(loadData->checksumActual);
 
-        INFO_CHECKSUM_KEY_VALUE(loadData->checksumActual, key, value);
+        INFO_CHECKSUM_KEY_VALUE(loadData->checksumActual, key, BUFSTR(value));
     }
 
     // Process backrest section
@@ -335,22 +335,22 @@ infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sec
 
 /**********************************************************************************************************************************/
 void
-infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue)
+infoSaveValueBuf(InfoSave *const infoSaveData, const String *const section, const String *const key, const Buffer *const jsonValue)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, jsonValue);
+        FUNCTION_TEST_PARAM(BUFFER, jsonValue);
     FUNCTION_TEST_END();
 
     ASSERT(infoSaveData != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
     ASSERT(jsonValue != NULL);
-    ASSERT(strSize(jsonValue) != 0);
+    ASSERT(bufUsed(jsonValue) != 0);
     // The JSON value must not be an array because this may be confused with a section in the ini file
-    ASSERT(strZ(jsonValue)[0] != '[');
+    ASSERT(bufPtrConst(jsonValue)[0] != '[');
 
     // Save section
     if (infoSaveData->sectionLast == NULL || !strEq(section, infoSaveData->sectionLast))
@@ -381,7 +381,22 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
 
     ioWrite(infoSaveData->write, BUFSTR(key));
     ioWrite(infoSaveData->write, EQ_BUF);
-    ioWriteLine(infoSaveData->write, BUFSTR(jsonValue));
+    ioWriteLine(infoSaveData->write, jsonValue);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+void
+infoSaveValue(InfoSave *const infoSaveData, const String *const section, const String *const key, const String *const jsonValue)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRING, jsonValue);
+    FUNCTION_TEST_END();
+
+    infoSaveValueBuf(infoSaveData, section, key, BUFSTR(jsonValue));
 
     FUNCTION_TEST_RETURN_VOID();
 }

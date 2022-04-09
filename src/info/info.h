@@ -77,6 +77,7 @@ void infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, vo
 bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext);
 
 // Save a JSON formatted value and update checksum
+void infoSaveValueBuf(InfoSave *infoSaveData, const String *section, const String *key, const Buffer *jsonValue);
 void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue);
 
 /***********************************************************************************************************************************

@@ -310,5 +310,36 @@ testRun(void)
         TEST_RESULT_STR_Z(jsonFromVar(varNewStrZ("test \" string")), "\"test \\\" string\"", "string variant");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("JsonRead and JsonWrite"))
+    {
+        JsonWrite *write = NULL;
+
+        TEST_ASSIGN(write, jsonWriteNewP(), "new write");
+
+        TEST_RESULT_VOID(jsonWriteArrayBegin(write), "write array begin");
+        TEST_RESULT_VOID(jsonWriteBool(write, true), "write bool true");
+        TEST_RESULT_VOID(jsonWriteInt(write, 55), "write int 55");
+        TEST_RESULT_VOID(jsonWriteStr(write, STRDEF("two\nlines")), "write str with two lines");
+
+        TEST_RESULT_VOID(jsonWriteObjectBegin(write), "write object begin");
+        TEST_ERROR(jsonWriteBool(write, false), FormatError, "key has not been defined");
+        TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("flag")), "write key 'flag'");
+        TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), FormatError, "key has already been defined");
+        TEST_RESULT_VOID(jsonWriteBool(write, false), "write bool false");
+        TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("val")), "write key 'val'");
+        TEST_RESULT_VOID(jsonWriteUInt64(write, UINT64_MAX), "write uint64 max");
+        TEST_RESULT_VOID(jsonWriteObjectEnd(write), "write object end");
+
+        TEST_RESULT_VOID(jsonWriteUInt(write, 66), "write int 66");
+        TEST_RESULT_VOID(jsonWriteArrayEnd(write), "write array end");
+
+        TEST_ERROR(jsonWriteUInt(write, 66), FormatError, "JSON is complete and nothing more may be added");
+
+        TEST_RESULT_STR_Z(
+            strNewBuf(jsonWriteResult(write)), "[true,55,\"two\\nlines\",{\"flag\":false,\"val\":18446744073709551615},66]",
+            "json result");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
