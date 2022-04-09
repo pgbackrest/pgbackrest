@@ -503,6 +503,9 @@ jsonWriteKeyZ(JsonWrite *const this, const char *const key)
         FUNCTION_TEST_PARAM(STRING, key);
     FUNCTION_TEST_END();
 
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
     FUNCTION_TEST_RETURN(jsonWriteKey(this, STR(key)));
 }
 

@@ -366,9 +366,12 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_POST, .noBucket = true, .content = "{\"name\":\"bucket\"}");
                 testResponseP(service);
 
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+                jsonWriteStr(jsonWriteKeyZ(json, GCS_JSON_NAME), STRDEF("bucket"));
+
                 storageGcsRequestP(
                     (StorageGcs *)storageDriver(storage), HTTP_VERB_POST_STR, .noBucket = true,
-                    .content = BUFSTR(jsonFromKv(kvPut(kvNew(), GCS_JSON_NAME_VAR, VARSTRDEF("bucket")))));
+                    .content = jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("auth error");
