@@ -30,12 +30,11 @@ cmdRepoCreate(void)
                 break;
 
             case STORAGE_GCS_TYPE:
-        {
-                const KeyValue *const kvContent = kvPut(kvNew(), GCS_JSON_NAME_VAR, VARSTR(cfgOptionStr(cfgOptRepoGcsBucket)));
-
-            storageGcsRequestP(
-                (StorageGcs *)storageDriver(storageRepoWrite()), HTTP_VERB_POST_STR, .noBucket = true,
-                .content = BUFSTR(jsonFromKv(kvContent)));
+            {
+                storageGcsRequestP(
+                    (StorageGcs *)storageDriver(storageRepoWrite()), HTTP_VERB_POST_STR, .noBucket = true,
+                    .content = jsonWriteResult(
+                        jsonWriteStr(jsonWriteKeyZ(jsonWriteNewP(), GCS_JSON_NAME), cfgOptionStr(cfgOptRepoGcsBucket))));
 
                 break;
             }

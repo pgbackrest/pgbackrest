@@ -485,6 +485,7 @@ jsonWriteKey(JsonWrite *const this, const String *const key)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(key != NULL);
 
     jsonTypePush(this, jsonTypeString, key);
 
@@ -492,6 +493,17 @@ jsonWriteKey(JsonWrite *const this, const String *const key)
     jsonWriteBuffer(this, BUFSTRDEF(":"));
 
     FUNCTION_TEST_RETURN(this);
+}
+
+JsonWrite *
+jsonWriteKeyZ(JsonWrite *const this, const char *const key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+        FUNCTION_TEST_PARAM(STRING, key);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(jsonWriteKey(this, STR(key)));
 }
 
 /**********************************************************************************************************************************/
