@@ -319,9 +319,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
         for (unsigned int pgDataIdx = infoPgDataTotal(saveData->infoPg) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
         {
             const InfoPgData pgData = infoPgData(saveData->infoPg, pgDataIdx);
-            JsonWrite *const json = jsonWriteNewP();
-
-            jsonWriteObjectBegin(json);
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
             // These need to be saved because older pgBackRest versions expect them
             if (saveData->infoPg->type == infoPgBackup)
@@ -347,9 +345,9 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
             jsonWriteKey(json, varStr(INFO_KEY_DB_VERSION_VAR));
             jsonWriteStr(json, pgVersionToStr(pgData.version));
 
-            jsonWriteObjectEnd(json);
-
-            infoSaveValueBuf(infoSaveData, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)), jsonWriteResult(json));
+            infoSaveValueBuf(
+                infoSaveData, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)),
+                jsonWriteResult(jsonWriteObjectEnd(json)));
         }
     }
 

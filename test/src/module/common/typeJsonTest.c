@@ -329,6 +329,7 @@ testRun(void)
         TEST_RESULT_VOID(jsonWriteBool(write, false), "write bool false");
         TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("val")), "write key 'val'");
         TEST_RESULT_VOID(jsonWriteUInt64(write, UINT64_MAX), "write uint64 max");
+        TEST_ERROR(jsonWriteKey(write, STRDEF("a")), FormatError, "key 'a' is not after prior key 'val'");
         TEST_RESULT_VOID(jsonWriteObjectEnd(write), "write object end");
 
         TEST_RESULT_VOID(jsonWriteUInt(write, 66), "write int 66");
