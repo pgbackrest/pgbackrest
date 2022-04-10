@@ -6,12 +6,8 @@ Statistics Collector
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "common/stat.h"
+#include "common/type/json.h"
 #include "common/type/list.h"
-
-/***********************************************************************************************************************************
-Stat output constants
-***********************************************************************************************************************************/
-VARIANT_STRDEF_EXTERN(STAT_VALUE_TOTAL_VAR,                         STAT_VALUE_TOTAL);
 
 /***********************************************************************************************************************************
 Cumulative statistics
@@ -106,21 +102,39 @@ statInc(const String *key)
 }
 
 /**********************************************************************************************************************************/
-KeyValue *
-statToKv(void)
+String *
+statToJson(void)
 {
     FUNCTION_TEST_VOID();
 
     ASSERT(statLocalData.memContext != NULL);
 
-    KeyValue *result = kvNew();
+    String *result = NULL;
 
-    for (unsigned int statIdx = 0; statIdx < lstSize(statLocalData.stat); statIdx++)
+    if (!lstEmpty(statLocalData.stat))
     {
-        Stat *stat = lstGet(statLocalData.stat, statIdx);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-        KeyValue *statKv = kvPutKv(result, VARSTR(stat->key));
-        kvPut(statKv, STAT_VALUE_TOTAL_VAR, VARUINT64(stat->total));
+            for (unsigned int statIdx = 0; statIdx < lstSize(statLocalData.stat); statIdx++)
+            {
+                const Stat *const stat = lstGet(statLocalData.stat, statIdx);
+
+                jsonWriteObjectBegin(jsonWriteKey(json, stat->key));
+                jsonWriteUInt64(jsonWriteKeyZ(json, "total"), stat->total);
+                jsonWriteObjectEnd(json);
+            }
+
+            jsonWriteObjectEnd(json);
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = strNewBuf(jsonWriteResult(json));
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_TEST_RETURN(result);
