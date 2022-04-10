@@ -210,7 +210,7 @@ cmdEnd(int code, const String *errorMessage)
             const KeyValue *statKv = statToKv();
 
             if (!varLstEmpty(kvKeyList(statKv)))
-                LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromVar(varNewKv(statKv))));
+                LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromVar(varNewKv(kvDup(statKv)))));
 
             // Basic info on command end
             String *info = strCatFmt(strNew(), "%s command end: ", strZ(cfgCommandRoleName()));

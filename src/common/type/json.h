@@ -114,20 +114,36 @@ VariantList *jsonToVarLst(const String *json);
 // Convert a boolean to JSON
 const String *jsonFromBool(bool value);
 
-// Convert various integer types to JSON
-String *jsonFromInt(int number);
-String *jsonFromInt64(int64_t number);
-String *jsonFromUInt(unsigned int number);
-String *jsonFromUInt64(uint64_t number);
+// Convert Variant to JSON
+String *jsonFromVar(const Variant *value);
 
-// Convert KeyValue to JSON
-String *jsonFromKv(const KeyValue *kv);
+// Convert various integer types to JSON
+__attribute__((always_inline)) static inline String *
+jsonFromInt(const int value)
+{
+    return jsonFromVar(VARINT(value));
+}
+
+__attribute__((always_inline)) static inline String *
+jsonFromInt64(const int64_t value)
+{
+    return jsonFromVar(VARINT64(value));
+}
+
+__attribute__((always_inline)) static inline String *
+jsonFromUInt(const unsigned int value)
+{
+    return jsonFromVar(VARUINT(value));
+}
+
+__attribute__((always_inline)) static inline String *
+jsonFromUInt64(const uint64_t value)
+{
+    return jsonFromVar(VARUINT64(value));
+}
 
 // Convert a String to JSON
 String *jsonFromStr(const String *string);
-
-// Convert Variant to JSON
-String *jsonFromVar(const Variant *value);
 
 /***********************************************************************************************************************************
 Macros for function logging
