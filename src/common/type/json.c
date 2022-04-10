@@ -351,9 +351,7 @@ jsonWriteInt(JsonWrite *const this, const int value)
     jsonTypePush(this, jsonTypeNumber, false);
 
     char working[CVT_BASE10_BUFFER_SIZE];
-    cvtIntToZ(value, working, sizeof(working));
-
-    jsonWriteBuffer(this, BUFSTRZ(working));
+    jsonWriteBuffer(this, BUF(working, cvtIntToZ(value, working, sizeof(working))));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -372,9 +370,7 @@ jsonWriteInt64(JsonWrite *const this, const int64_t value)
     jsonTypePush(this, jsonTypeNumber, false);
 
     char working[CVT_BASE10_BUFFER_SIZE];
-    cvtInt64ToZ(value, working, sizeof(working));
-
-    jsonWriteBuffer(this, BUFSTRZ(working));
+    jsonWriteBuffer(this, BUF(working, cvtInt64ToZ(value, working, sizeof(working))));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -650,9 +646,7 @@ jsonWriteUInt(JsonWrite *const this, const unsigned int value)
     jsonTypePush(this, jsonTypeNumber, false);
 
     char working[CVT_BASE10_BUFFER_SIZE];
-    cvtUIntToZ(value, working, sizeof(working));
-
-    jsonWriteBuffer(this, BUFSTRZ(working));
+    jsonWriteBuffer(this, BUF(working, cvtUIntToZ(value, working, sizeof(working))));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -671,9 +665,7 @@ jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
     jsonTypePush(this, jsonTypeNumber, false);
 
     char working[CVT_BASE10_BUFFER_SIZE];
-    cvtUInt64ToZ(value, working, sizeof(working));
-
-    jsonWriteBuffer(this, BUFSTRZ(working));
+    jsonWriteBuffer(this, BUF(working, cvtUInt64ToZ(value, working, sizeof(working))));
 
     FUNCTION_TEST_RETURN(this);
 }
