@@ -241,82 +241,49 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
             JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-            jsonWriteUInt(jsonWriteKey(json, INFO_KEY_FORMAT_STR), backupData.backrestFormat);
-            jsonWriteKey(json, INFO_KEY_VERSION_STR);
-            jsonWriteStr(json, backupData.backrestVersion);
+            jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_FORMAT), backupData.backrestFormat);
+            jsonWriteStr(jsonWriteKeyZ(json, INFO_KEY_VERSION), backupData.backrestVersion);
 
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR));
-            jsonWriteStr(json, backupData.backupArchiveStart);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR));
-            jsonWriteStr(json, backupData.backupArchiveStop);
+            jsonWriteStr(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR)), backupData.backupArchiveStart);
+            jsonWriteStr(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR)), backupData.backupArchiveStop);
 
             // Do not save backup-error if it was not loaded. This prevents backups that were added before the backup-error flag
             // was introduced from being saved with an incorrect value.
             if (backupData.backupError != NULL)
-            {
-                jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_ERROR_VAR));
-                jsonWriteBool(json, varBool(backupData.backupError));
-            }
+                jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_ERROR_VAR)), varBool(backupData.backupError));
 
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR));
-            jsonWriteUInt64(json, backupData.backupInfoRepoSize);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR));
-            jsonWriteUInt64(json, backupData.backupInfoRepoSizeDelta);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR));
-            jsonWriteUInt64(json, backupData.backupInfoSize);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR));
-            jsonWriteUInt64(json, backupData.backupInfoSizeDelta);
+            jsonWriteUInt64(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR)), backupData.backupInfoRepoSize);
+            jsonWriteUInt64(
+                jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR)), backupData.backupInfoRepoSizeDelta);
+            jsonWriteUInt64(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR)), backupData.backupInfoSize);
+            jsonWriteUInt64(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR)), backupData.backupInfoSizeDelta);
 
             if (backupData.backupLsnStart != NULL)
-            {
-                jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_LSN_START_VAR));
-                jsonWriteStr(json, backupData.backupLsnStart);
-            }
+                jsonWriteStr(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_LSN_START_VAR)), backupData.backupLsnStart);
 
             if (backupData.backupLsnStop != NULL)
-            {
-                jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR));
-                jsonWriteStr(json, backupData.backupLsnStop);
-            }
+                jsonWriteStr(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR)), backupData.backupLsnStop);
 
             if (backupData.backupPrior != NULL)
-            {
-                jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_PRIOR_VAR));
-                jsonWriteStr(json, backupData.backupPrior);
-            }
+                jsonWriteStr(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_PRIOR_VAR)), backupData.backupPrior);
 
             if (backupData.backupReference != NULL)
-            {
-                jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR));
-                jsonWriteStrLst(json, backupData.backupReference);
-            }
+                jsonWriteStrLst(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR)), backupData.backupReference);
 
             // When storing time_t treat as signed int to avoid casting
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR));
-            jsonWriteInt64(json, backupData.backupTimestampStart);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR));
-            jsonWriteInt64(json, backupData.backupTimestampStop);
+            jsonWriteInt64(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)), backupData.backupTimestampStart);
+            jsonWriteInt64(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR)), backupData.backupTimestampStop);
 
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_TYPE_VAR));
-            jsonWriteStr(json, strIdToStr(backupData.backupType));
+            jsonWriteStr(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_TYPE_VAR)), strIdToStr(backupData.backupType));
+            jsonWriteUInt(jsonWriteKey(json, varStr(INFO_KEY_DB_ID_VAR)), backupData.backupPgId);
 
-            jsonWriteKey(json, varStr(INFO_KEY_DB_ID_VAR));
-            jsonWriteUInt(json, backupData.backupPgId);
-
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR));
-            jsonWriteBool(json, backupData.optionArchiveCheck);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR));
-            jsonWriteBool(json, backupData.optionArchiveCopy);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR));
-            jsonWriteBool(json, backupData.optionBackupStandby);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR));
-            jsonWriteBool(json, backupData.optionChecksumPage);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_COMPRESS_VAR));
-            jsonWriteBool(json, backupData.optionCompress);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_HARDLINK_VAR));
-            jsonWriteBool(json, backupData.optionHardlink);
-            jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ONLINE_VAR));
-            jsonWriteBool(json, backupData.optionOnline);
+            jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)), backupData.optionArchiveCheck);
+            jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR)), backupData.optionArchiveCopy);
+            jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR)), backupData.optionBackupStandby);
+            jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR)), backupData.optionChecksumPage);
+            jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_COMPRESS_VAR)), backupData.optionCompress);
+            jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_HARDLINK_VAR)), backupData.optionHardlink);
+            jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ONLINE_VAR)), backupData.optionOnline);
 
             infoSaveValueBuf(
                 infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel,

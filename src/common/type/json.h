@@ -63,11 +63,17 @@ JsonWrite *jsonWriteObjectEnd(JsonWrite *this);
 JsonWrite *jsonWriteStr(JsonWrite *this, const String *value);
 
 // !!!
+JsonWrite *jsonWriteStrFmt(JsonWrite *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+
+// !!!
 JsonWrite *jsonWriteStrLst(JsonWrite *this, const StringList *value);
 
 // !!!
 JsonWrite *jsonWriteUInt(JsonWrite *this, unsigned int value);
 JsonWrite *jsonWriteUInt64(JsonWrite *this, uint64_t value);
+
+// !!!
+JsonWrite *jsonWriteVar(JsonWrite *this, const Variant *value);
 
 // !!!
 JsonWrite *jsonWriteZ(JsonWrite *this, const char *value);
@@ -118,7 +124,7 @@ String *jsonFromKv(const KeyValue *kv);
 String *jsonFromStr(const String *string);
 
 // Convert Variant to JSON
-String *jsonFromVar(const Variant *var);
+String *jsonFromVar(const Variant *value);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -2429,7 +2429,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_PATH), target->path);
 
                 if (target->tablespaceId != 0)
-                    jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_TABLESPACE_ID), strNewFmt("%u", target->tablespaceId));
+                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_TABLESPACE_ID), "%u", target->tablespaceId);
 
                 if (target->tablespaceName != NULL)
                     jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_TABLESPACE_NAME), target->tablespaceName);
@@ -2548,17 +2548,18 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
             {
                 const ManifestLink *link = manifestLink(manifest, linkIdx);
-                KeyValue *linkKv = kvNew();
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-                if (!varEq(manifestOwnerVar(link->user), saveData->userDefault))
-                    kvPut(linkKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(link->user));
+                jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_DESTINATION), link->destination);
 
                 if (!varEq(manifestOwnerVar(link->group), saveData->groupDefault))
-                    kvPut(linkKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(link->group));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(link->group));
 
-                kvPut(linkKv, MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
+                if (!varEq(manifestOwnerVar(link->user), saveData->userDefault))
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(link->user));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkKv));
+                infoSaveValueBuf(
+                    infoSaveData, MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2588,18 +2589,19 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
             {
                 const ManifestPath *path = manifestPath(manifest, pathIdx);
-                KeyValue *pathKv = kvNew();
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 if (!varEq(manifestOwnerVar(path->group), saveData->groupDefault))
-                    kvPut(pathKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(path->group));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(path->group));
 
                 if (path->mode != saveData->pathModeDefault)
-                    kvPut(pathKv, MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
+                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", path->mode);
 
                 if (!varEq(manifestOwnerVar(path->user), saveData->userDefault))
-                    kvPut(pathKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(path->user));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(path->user));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathKv));
+                infoSaveValueBuf(
+                    infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }

@@ -4,6 +4,8 @@ Convert JSON to/from KeyValue
 #include "build.auto.h"
 
 #include <ctype.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "common/debug.h"
@@ -563,6 +565,39 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
 
 /**********************************************************************************************************************************/
 JsonWrite *
+jsonWriteStrFmt(JsonWrite *const this, const char *const format, ...)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+    FUNCTION_TEST_END();
+
+    jsonTypePush(this, jsonTypeString, false);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Determine how long the allocated string needs to be
+        va_list argumentList;
+        va_start(argumentList, format);
+        const size_t size = (size_t)vsnprintf(NULL, 0, format, argumentList);
+        va_end(argumentList);
+
+        // Format string
+        va_start(argumentList, format);
+        char *const buffer = memNew(size + 1);
+        vsnprintf(buffer, size + 1, format, argumentList);
+        va_end(argumentList);
+
+        // Write as JSON
+        jsonWriteStrInternal(this, STR_SIZE(buffer, size));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+JsonWrite *
 jsonWriteStrLst(JsonWrite *const this, const StringList *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -621,6 +656,39 @@ jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
     cvtUInt64ToZ(value, working, sizeof(working));
 
     jsonWriteBuffer(this, BUFSTRZ(working));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+JsonWrite *
+jsonWriteVar(JsonWrite *const this, const Variant *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (value == NULL)
+        jsonWriteStr(this, NULL);
+    else
+    {
+        switch (varType(value))
+        {
+            case varTypeBool:
+                jsonWriteBool(this, varBool(value));
+                break;
+
+            case varTypeString:
+                jsonWriteStr(this, varStr(value));
+                break;
+
+            default:
+                THROW(AssertError, "unsupported type");
+        }
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
