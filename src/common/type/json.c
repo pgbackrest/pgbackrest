@@ -14,11 +14,6 @@ Convert JSON to/from KeyValue
 #include "common/type/json.h"
 
 /***********************************************************************************************************************************
-Prototypes
-***********************************************************************************************************************************/
-static Variant *jsonToVarInternal(const char *json, unsigned int *jsonPos);
-
-/***********************************************************************************************************************************
 JSON types
 ***********************************************************************************************************************************/
 typedef enum
@@ -406,6 +401,7 @@ jsonWriteJson(JsonWrite *const this, const String *const value)
 }
 
 /**********************************************************************************************************************************/
+// Write String to JSON
 static void
 jsonWriteStrInternal(JsonWrite *const this, const String *const value)
 {
@@ -683,6 +679,110 @@ jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
 }
 
 /**********************************************************************************************************************************/
+// Write a Variant to JSON
+static void
+jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+        FUNCTION_TEST_PARAM(VARIANT, value);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If VariantList then process each item in the array. Currently the list must be KeyValue types.
+        if (value == NULL)
+        {
+            jsonWriteBuffer(this, BUFSTRDEF("null"));
+        }
+        else
+        {
+            switch (varType(value))
+            {
+                case varTypeBool:
+                case varTypeInt:
+                case varTypeInt64:
+                case varTypeUInt:
+                case varTypeUInt64:
+                    jsonWriteBuffer(this, BUFSTR(varStrForce(value)));
+                    break;
+
+                case varTypeKeyValue:
+                {
+                    const KeyValue *const keyValue = varKv(value);
+
+                    if (keyValue == NULL)
+                        jsonWriteBuffer(this, BUFSTRDEF("null"));
+                    else
+                    {
+                        const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(keyValue)), sortOrderAsc);
+
+                        jsonWriteBuffer(this, BRACEL_BUF);
+
+                        for (unsigned int keyListIdx = 0; keyListIdx < strLstSize(keyList); keyListIdx++)
+                        {
+                            // Add common after first key/value
+                            if (keyListIdx > 0)
+                                jsonWriteBuffer(this, COMMA_BUF);
+
+                            // Write key
+                            const String *const key = strLstGet(keyList, keyListIdx);
+
+                            jsonWriteStrInternal(this, key);
+                            jsonWriteBuffer(this, BUFSTRDEF(":"));
+
+                            // Write value
+                            jsonWriteVarInternal(this, kvGet(keyValue, VARSTR(key)));
+                        }
+
+                        jsonWriteBuffer(this, BRACER_BUF);
+                    }
+
+                    break;
+                }
+
+                case varTypeString:
+                {
+                    if (varStr(value) == NULL)
+                        jsonWriteBuffer(this, BUFSTRDEF("null"));
+                    else
+                        jsonWriteStrInternal(this, varStr(value));
+
+                    break;
+                }
+
+                default:
+                {
+                    ASSERT(varType(value) == varTypeVariantList);
+
+                    const VariantList *const valueList = varVarLst(value);
+
+                    if (valueList == NULL)
+                        jsonWriteBuffer(this, BUFSTRDEF("null"));
+                    else
+                    {
+                        jsonWriteBuffer(this, BRACKETL_BUF);
+
+                        for (unsigned int valueListIdx = 0; valueListIdx < varLstSize(valueList); valueListIdx++)
+                        {
+                            // Add common after first value
+                            if (valueListIdx > 0)
+                                jsonWriteBuffer(this, COMMA_BUF);
+
+                            jsonWriteVarInternal(this, varLstGet(valueList, valueListIdx));
+                        }
+
+                        jsonWriteBuffer(this, BRACKETR_BUF);
+                    }
+                }
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 JsonWrite *
 jsonWriteVar(JsonWrite *const this, const Variant *const value)
 {
@@ -693,24 +793,8 @@ jsonWriteVar(JsonWrite *const this, const Variant *const value)
 
     ASSERT(this != NULL);
 
-    if (value == NULL)
-        jsonWriteStr(this, NULL);
-    else
-    {
-        switch (varType(value))
-        {
-            case varTypeBool:
-                jsonWriteBool(this, varBool(value));
-                break;
-
-            case varTypeString:
-                jsonWriteStr(this, varStr(value));
-                break;
-
-            default:
-                THROW(AssertError, "unsupported type");
-        }
-    }
+    jsonTypePush(this, jsonTypeJson, false);
+    jsonWriteVarInternal(this, value);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1104,6 +1188,8 @@ jsonToStr(const String *json)
 }
 
 /**********************************************************************************************************************************/
+static Variant *jsonToVarInternal(const char *json, unsigned int *jsonPos);
+
 static KeyValue *
 jsonToKvInternal(const char *json, unsigned int *jsonPos)
 {
@@ -1459,109 +1545,6 @@ jsonFromUInt64(const uint64_t value)
     FUNCTION_TEST_RETURN(result);
 }
 
-/**********************************************************************************************************************************/
-static void
-jsonFromStrInternal(String *json, const String *string)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, json);
-        FUNCTION_TEST_PARAM(STRING, string);
-    FUNCTION_TEST_END();
-
-    ASSERT(json != NULL);
-
-    // If string is null
-    if (string == NULL)
-    {
-        strCat(json, NULL_STR);
-    }
-    // Else escape and output string
-    else
-    {
-        strCatChr(json, '"');
-
-        // Track portion of string with no escapes
-        const char *stringPtr = strZ(string);
-        const char *noEscape = NULL;
-        size_t noEscapeSize = 0;
-
-        for (unsigned int stringIdx = 0; stringIdx < strSize(string); stringIdx++)
-        {
-            switch (*stringPtr)
-            {
-                case '"':
-                case '\\':
-                case '\n':
-                case '\r':
-                case '\t':
-                case '\b':
-                case '\f':
-                {
-                    // Copy portion of string without escapes
-                    if (noEscapeSize > 0)
-                    {
-                        strCatZN(json, noEscape, noEscapeSize);
-                        noEscapeSize = 0;
-                    }
-
-                    switch (*stringPtr)
-                    {
-                        case '"':
-                            strCatZ(json, "\\\"");
-                            break;
-
-                        case '\\':
-                            strCatZ(json, "\\\\");
-                            break;
-
-                        case '\n':
-                            strCatZ(json, "\\n");
-                            break;
-
-                        case '\r':
-                            strCatZ(json, "\\r");
-                            break;
-
-                        case '\t':
-                            strCatZ(json, "\\t");
-                            break;
-
-                        case '\b':
-                            strCatZ(json, "\\b");
-                            break;
-
-                        case '\f':
-                            strCatZ(json, "\\f");
-                            break;
-                    }
-
-                    break;
-                }
-
-                default:
-                {
-                    // If escape string is zero size then start it
-                    if (noEscapeSize == 0)
-                        noEscape = stringPtr;
-
-                    noEscapeSize++;
-                    break;
-                }
-            }
-
-            stringPtr++;
-        }
-
-        // Copy portion of string without escapes
-        if (noEscapeSize > 0)
-            strCatZN(json, noEscape, noEscapeSize);
-
-        strCatChr(json, '"');
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 String *
 jsonFromStr(const String *const value)
 {
@@ -1586,267 +1569,29 @@ jsonFromStr(const String *const value)
     FUNCTION_TEST_RETURN(result);
 }
 
-/***********************************************************************************************************************************
-Internal recursive function to walk a KeyValue and return a json string
-***********************************************************************************************************************************/
-static String *
-jsonFromKvInternal(const KeyValue *kv)
+/**********************************************************************************************************************************/
+String *
+jsonFromVar(const Variant *const value)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(KEY_VALUE, kv);
+        FUNCTION_TEST_PARAM(VARIANT, value);
     FUNCTION_TEST_END();
 
-    ASSERT(kv != NULL);
-
-    String *result = strCatZ(strNew(), "{");
+    String *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const StringList *keyList = strLstSort(strLstNewVarLst(kvKeyList(kv)), sortOrderAsc);
+        JsonWrite *const write = jsonWriteVar(jsonWriteNewP(), value);
 
-        for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+        MEM_CONTEXT_PRIOR_BEGIN()
         {
-            String *key = strLstGet(keyList, keyIdx);
-            const Variant *value = kvGet(kv, VARSTR(key));
-
-            // If going to add another key, prepend a comma
-            if (keyIdx > 0)
-                strCatZ(result, ",");
-
-            // Keys are always strings in the output, so add starting quote and colon.
-            strCatFmt(result, "\"%s\":", strZ(key));
-
-            // NULL value
-            if (value == NULL)
-                strCat(result, NULL_STR);
-            else
-            {
-                switch (varType(value))
-                {
-                    case varTypeKeyValue:
-                        strCat(result, jsonFromKvInternal(kvDup(varKv(value))));
-                        break;
-
-                    case varTypeVariantList:
-                    {
-                        // If the array is empty, then do not add formatting, else process the array.
-                        if (varVarLst(value) == NULL)
-                            strCat(result, NULL_STR);
-                        else if (varLstEmpty(varVarLst(value)))
-                            strCatZ(result, "[]");
-                        else
-                        {
-                            strCatZ(result, "[");
-
-                            for (unsigned int arrayIdx = 0; arrayIdx < varLstSize(varVarLst(value)); arrayIdx++)
-                            {
-                                Variant *arrayValue = varLstGet(varVarLst(value), arrayIdx);
-
-                                // If going to add another element, add a comma
-                                if (arrayIdx > 0)
-                                    strCatZ(result, ",");
-
-                                // If array value is null
-                                if (arrayValue == NULL)
-                                {
-                                    strCat(result, NULL_STR);
-                                }
-                                // If the type is a string, add leading and trailing double quotes
-                                else if (varType(arrayValue) == varTypeString)
-                                {
-                                    jsonFromStrInternal(result, varStr(arrayValue));
-                                }
-                                else if (varType(arrayValue) == varTypeKeyValue)
-                                {
-                                    strCat(result, jsonFromKvInternal(kvDup(varKv(arrayValue))));
-                                }
-                                else if (varType(arrayValue) == varTypeVariantList)
-                                {
-                                    strCat(result, jsonFromVar(arrayValue));
-                                }
-                                // Numeric, Boolean or other type
-                                else
-                                    strCat(result, varStrForce(arrayValue));
-                            }
-
-                            strCatZ(result, "]");
-                        }
-
-                        break;
-                    }
-
-                    // String
-                    case varTypeString:
-                        jsonFromStrInternal(result, varStr(value));
-                        break;
-
-                    default:
-                        strCat(result, varStrForce(value));
-                        break;
-                }
-            }
+            result = strNewBuf(jsonWriteResult(write));
         }
-
-        result = strCatZ(result, "}");
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/***********************************************************************************************************************************
-Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
-needed.  Since this function is only intended to read internally-generated JSON it is assumed to be well-formed with no extraneous
-whitespace.
-***********************************************************************************************************************************/
-String *
-jsonFromKv(const KeyValue *kv)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(KEY_VALUE, kv);
-    FUNCTION_LOG_END();
-
-    ASSERT(kv != NULL);
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *jsonStr = jsonFromKvInternal(kv);
-
-        // Duplicate the string into the prior context
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strDup(jsonStr);
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/***********************************************************************************************************************************
-Currently this function is only intended to convert the limited types that are included in info files.  More types will be added as
-needed.
-***********************************************************************************************************************************/
-String *
-jsonFromVar(const Variant *var)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(VARIANT, var);
-    FUNCTION_LOG_END();
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        String *jsonStr = strNew();
-
-        // If VariantList then process each item in the array. Currently the list must be KeyValue types.
-        if (var == NULL)
-        {
-            strCat(jsonStr, NULL_STR);
-        }
-        else if (varType(var) == varTypeBool)
-        {
-            strCat(jsonStr, jsonFromBool(varBool(var)));
-        }
-        else if (varType(var) == varTypeUInt)
-        {
-            strCat(jsonStr, jsonFromUInt(varUInt(var)));
-        }
-        else if (varType(var) == varTypeUInt64)
-        {
-            strCat(jsonStr, jsonFromUInt64(varUInt64(var)));
-        }
-        else if (varType(var) == varTypeString)
-        {
-            jsonFromStrInternal(jsonStr, varStr(var));
-        }
-        else if (varType(var) == varTypeVariantList)
-        {
-            const VariantList *vl = varVarLst(var);
-
-            // If null
-            if (vl == NULL)
-            {
-                strCat(jsonStr, NULL_STR);
-            }
-            // Else if not an empty array
-            else if (!varLstEmpty(vl))
-            {
-                strCatZ(jsonStr, "[");
-
-                // Currently only KeyValue and String lists are supported
-                for (unsigned int vlIdx = 0; vlIdx < varLstSize(vl); vlIdx++)
-                {
-                    // If going to add another key, append a comma
-                    if (vlIdx > 0)
-                        strCatZ(jsonStr, ",");
-
-                    Variant *varSub = varLstGet(vl, vlIdx);
-
-                    if (varSub == NULL)
-                    {
-                        strCat(jsonStr, NULL_STR);
-                    }
-                    else if (varType(varSub) == varTypeBool)
-                    {
-                        strCat(jsonStr, jsonFromBool(varBool(varSub)));
-                    }
-                    else if (varType(varSub) == varTypeKeyValue)
-                    {
-                        strCat(jsonStr, jsonFromKvInternal(varKv(varSub)));
-                    }
-                    else if (varType(varSub) == varTypeVariantList)
-                    {
-                        strCat(jsonStr, jsonFromVar(varSub));
-                    }
-                    else if (varType(varSub) == varTypeInt)
-                    {
-                        strCat(jsonStr, jsonFromInt(varInt(varSub)));
-                    }
-                    else if (varType(varSub) == varTypeInt64)
-                    {
-                        strCat(jsonStr, jsonFromInt64(varInt64(varSub)));
-                    }
-                    else if (varType(varSub) == varTypeUInt)
-                    {
-                        strCat(jsonStr, jsonFromUInt(varUInt(varSub)));
-                    }
-                    else if (varType(varSub) == varTypeUInt64)
-                    {
-                        strCat(jsonStr, jsonFromUInt64(varUInt64(varSub)));
-                    }
-                    else
-                        jsonFromStrInternal(jsonStr, varStr(varSub));
-                }
-
-                // Close the array
-                strCatZ(jsonStr, "]");
-            }
-            // Else empty array
-            else
-                strCatZ(jsonStr, "[]");
-        }
-        else if (varType(var) == varTypeKeyValue)
-        {
-            strCat(jsonStr, jsonFromKvInternal(varKv(var)));
-        }
-        else
-            THROW(JsonFormatError, "variant type is invalid");
-
-        // Duplicate the string into the prior context
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strDup(jsonStr);
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
