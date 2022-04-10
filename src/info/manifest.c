@@ -2476,49 +2476,50 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
                 const ManifestFile file = manifestFile(manifest, fileIdx);
-                KeyValue *fileKv = kvNew();
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 // Bundle info
                 if (file.bundleId != 0)
                 {
-                    kvPut(fileKv, MANIFEST_KEY_BUNDLE_ID_VAR, VARUINT64(file.bundleId));
+                    jsonWriteUInt64(jsonWriteKeyZ(json, MANIFEST_KEY_BUNDLE_ID), file.bundleId);
 
                     if (file.bundleOffset != 0)
-                        kvPut(fileKv, MANIFEST_KEY_BUNDLE_OFFSET_VAR, VARUINT64(file.bundleOffset));
+                        jsonWriteUInt64(jsonWriteKeyZ(json, MANIFEST_KEY_BUNDLE_OFFSET), file.bundleOffset);
                 }
 
                 // Save if the file size is not zero and the checksum exists.  The checksum might not exist if this is a partial
                 // save performed during a backup.
                 if (file.size != 0 && file.checksumSha1[0] != 0)
-                    kvPut(fileKv, MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file.checksumSha1));
+                    jsonWriteZ(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM), file.checksumSha1);
 
                 if (file.checksumPage)
                 {
-                    kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_VAR, VARBOOL(!file.checksumPageError));
+                    jsonWriteBool(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE), !file.checksumPageError);
 
                     if (file.checksumPageErrorList != NULL)
-                        kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, jsonToVar(file.checksumPageErrorList));
+                        jsonWriteJson(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR), file.checksumPageErrorList);
                 }
 
                 if (!varEq(manifestOwnerVar(file.group), saveData->groupDefault))
-                    kvPut(fileKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(file.group));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(file.group));
 
                 if (file.mode != saveData->fileModeDefault)
-                    kvPut(fileKv, MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", file.mode)));
+                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", file.mode);
 
                 if (file.reference != NULL)
-                    kvPut(fileKv, MANIFEST_KEY_REFERENCE_VAR, VARSTR(file.reference));
+                    jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_REFERENCE), file.reference);
 
                 if (file.sizeRepo != file.size)
-                    kvPut(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.sizeRepo));
+                    jsonWriteUInt64(jsonWriteKeyZ(json, MANIFEST_KEY_SIZE_REPO), file.sizeRepo);
 
-                kvPut(fileKv, MANIFEST_KEY_SIZE_VAR, VARUINT64(file.size));
-                kvPut(fileKv, MANIFEST_KEY_TIMESTAMP_VAR, VARUINT64((uint64_t)file.timestamp));
+                jsonWriteUInt64(jsonWriteKeyZ(json, MANIFEST_KEY_SIZE), file.size);
+                jsonWriteUInt64(jsonWriteKeyZ(json, MANIFEST_KEY_TIMESTAMP), (uint64_t)file.timestamp);
 
                 if (!varEq(manifestOwnerVar(file.user), saveData->userDefault))
-                    kvPut(fileKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(file.user));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(file.user));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file.name, jsonFromKv(fileKv));
+                infoSaveValueBuf(
+                    infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file.name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }

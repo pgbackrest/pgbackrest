@@ -52,6 +52,9 @@ JsonWrite *jsonWriteInt(JsonWrite *this, int value);
 JsonWrite *jsonWriteInt64(JsonWrite *this, int64_t value);
 
 // !!!
+JsonWrite *jsonWriteJson(JsonWrite *this, const String *value);
+
+// !!!
 JsonWrite *jsonWriteKey(JsonWrite *this, const String *key);
 JsonWrite *jsonWriteKeyZ(JsonWrite *this, const char *key);
 

@@ -25,9 +25,10 @@ typedef enum
 {
     jsonTypeArray = 0,
     jsonTypeObject = 1,
-    jsonTypeString,
-    jsonTypeNumber,
     jsonTypeBool,
+    jsonTypeJson,
+    jsonTypeNumber,
+    jsonTypeString,
 } JsonType;
 
 __attribute__((always_inline)) static inline bool
@@ -379,6 +380,27 @@ jsonWriteInt64(JsonWrite *const this, const int64_t value)
     cvtInt64ToZ(value, working, sizeof(working));
 
     jsonWriteBuffer(this, BUFSTRZ(working));
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+JsonWrite *
+jsonWriteJson(JsonWrite *const this, const String *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonTypePush(this, jsonTypeJson, false);
+
+    if (value == NULL)
+        jsonWriteBuffer(this, BUFSTRDEF("null"));
+    else
+        jsonWriteBuffer(this, BUFSTR(value));
 
     FUNCTION_TEST_RETURN(this);
 }
