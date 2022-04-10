@@ -26,7 +26,9 @@ testRun(void)
         TEST_RESULT_VOID(statInc(statHttpSession), "inc http.session");
         TEST_RESULT_UINT(lstSize(statLocalData.stat), 2, "stat list has two stats");
 
-        TEST_RESULT_STR_Z(jsonFromKv(statToKv()), "{\"http.session\":{\"total\":1},\"tls.client\":{\"total\":2}}", "stat output");
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewKv(kvDup(statToKv()))), "{\"http.session\":{\"total\":1},\"tls.client\":{\"total\":2}}",
+            "stat output");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

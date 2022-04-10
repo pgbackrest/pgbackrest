@@ -840,6 +840,38 @@ jsonWriteResult(JsonWrite *const this)
     FUNCTION_TEST_RETURN(result);
 }
 
+/**********************************************************************************************************************************/
+String *
+jsonFromVar(const Variant *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT, value);
+    FUNCTION_TEST_END();
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        JsonWrite *const write = jsonWriteVar(jsonWriteNewP(), value);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strNewBuf(jsonWriteResult(write));
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+String *
+jsonWriteToLog(const JsonWrite *const this)
+{
+    return strNewFmt("{depth: %u}", this->stack != NULL ? lstSize(this->stack) : (unsigned int)(this->complete ? 1 : 0));
+}
+
 /***********************************************************************************************************************************
 Consume whitespace
 ***********************************************************************************************************************************/
@@ -1421,85 +1453,4 @@ jsonToVar(const String *json)
         THROW_FMT(JsonFormatError, "unexpected characters after JSON at '%s'", strZ(json) + jsonPos);
 
     FUNCTION_LOG_RETURN(VARIANT, result);
-}
-
-/**********************************************************************************************************************************/
-const String *
-jsonFromBool(const bool value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BOOL, value);
-    FUNCTION_TEST_END();
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        JsonWrite *const write = jsonWriteBool(jsonWriteNewP(), value);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strNewBuf(jsonWriteResult(write));
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-String *
-jsonFromStr(const String *const value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, value);
-    FUNCTION_TEST_END();
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        JsonWrite *const write = jsonWriteStr(jsonWriteNewP(), value);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strNewBuf(jsonWriteResult(write));
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-String *
-jsonFromVar(const Variant *const value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, value);
-    FUNCTION_TEST_END();
-
-    String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        JsonWrite *const write = jsonWriteVar(jsonWriteNewP(), value);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strNewBuf(jsonWriteResult(write));
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-String *
-jsonWriteToLog(const JsonWrite *this)
-{
-    return strNewFmt("{depth: %u}", this->stack != NULL ? lstSize(this->stack) : (unsigned int)(this->complete ? 1 : 0));
 }

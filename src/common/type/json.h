@@ -88,36 +88,28 @@ Write Getters/Setters
 const Buffer *jsonWriteResult(JsonWrite *const this);
 
 /***********************************************************************************************************************************
-Functions
+Write Destructor
 ***********************************************************************************************************************************/
-// Convert a json string to a bool
-bool jsonToBool(const String *json);
+__attribute__((always_inline)) static inline void
+jsonWriteFree(JsonWrite *const this)
+{
+    objFree(this);
+}
 
-// Convert a json number to various integer types
-int jsonToInt(const String *json);
-int64_t jsonToInt64(const String *json);
-unsigned int jsonToUInt(const String *json);
-uint64_t jsonToUInt64(const String *json);
-
-// Convert a json object to a KeyValue
-KeyValue *jsonToKv(const String *json);
-
-// Convert a json string to a String
-String *jsonToStr(const String *json);
-
-// Convert JSON to a variant
-Variant *jsonToVar(const String *json);
-
-// Convert a json array to a VariantList
-VariantList *jsonToVarLst(const String *json);
-
-// Convert a boolean to JSON
-const String *jsonFromBool(bool value);
-
+/***********************************************************************************************************************************
+Write Helper Functions
+***********************************************************************************************************************************/
 // Convert Variant to JSON
 String *jsonFromVar(const Variant *value);
 
-// Convert various integer types to JSON
+// Convert bool to JSON
+__attribute__((always_inline)) static inline String *
+jsonFromBool(const bool value)
+{
+    return jsonFromVar(VARBOOL(value));
+}
+
+// Convert integers to JSON
 __attribute__((always_inline)) static inline String *
 jsonFromInt(const int value)
 {
@@ -142,8 +134,36 @@ jsonFromUInt64(const uint64_t value)
     return jsonFromVar(VARUINT64(value));
 }
 
-// Convert a String to JSON
-String *jsonFromStr(const String *string);
+// Convert String to JSON
+__attribute__((always_inline)) static inline String *
+jsonFromStr(const String *const value)
+{
+    return jsonFromVar(VARSTR(value));
+}
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Convert a json string to a bool
+bool jsonToBool(const String *json);
+
+// Convert a json number to various integer types
+int jsonToInt(const String *json);
+int64_t jsonToInt64(const String *json);
+unsigned int jsonToUInt(const String *json);
+uint64_t jsonToUInt64(const String *json);
+
+// Convert a json object to a KeyValue
+KeyValue *jsonToKv(const String *json);
+
+// Convert a json string to a String
+String *jsonToStr(const String *json);
+
+// Convert JSON to a variant
+Variant *jsonToVar(const String *json);
+
+// Convert a json array to a VariantList
+VariantList *jsonToVarLst(const String *json);
 
 /***********************************************************************************************************************************
 Macros for function logging

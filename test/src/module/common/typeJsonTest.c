@@ -269,6 +269,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewBuf(jsonWriteResult(write)), "[true,55,\"two\\nlines\",{\"flag\":false,\"val\":18446744073709551615},66]",
             "json result");
+
+        TEST_RESULT_VOID(jsonWriteFree(write), "free");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
