@@ -7,9 +7,27 @@ Convert JSON to/from KeyValue
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
+JSON types
+***********************************************************************************************************************************/
+typedef enum
+{
+    jsonTypeArray = 0,                                              // !!!
+    jsonTypeObject = 1,
+    jsonTypeBool,
+    jsonTypeNumber,
+    jsonTypeString,
+} JsonType;
+
+/***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
+typedef struct JsonRead JsonRead;
 typedef struct JsonWrite JsonWrite;
+
+/***********************************************************************************************************************************
+Read Constructors
+***********************************************************************************************************************************/
+JsonRead *jsonReadNew(const String *string);
 
 /***********************************************************************************************************************************
 Write Constructors
@@ -132,6 +150,21 @@ jsonFromStr(const String *const value)
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+__attribute__((always_inline)) static inline bool
+jsonTypeContainer(const JsonType jsonType)
+{
+    return jsonType <= jsonTypeObject;
+}
+
+__attribute__((always_inline)) static inline bool
+jsonTypeScalar(const JsonType jsonType)
+{
+    return jsonType > jsonTypeObject;
+}
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
 // Convert a json string to a bool
 bool jsonToBool(const String *json);
 
@@ -156,6 +189,13 @@ VariantList *jsonToVarLst(const String *json);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+String *jsonReadToLog(const JsonRead *this);
+
+#define FUNCTION_LOG_JSON_READ_TYPE                                                                                                \
+    JsonRead *
+#define FUNCTION_LOG_JSON_READ_FORMAT(value, buffer, bufferSize)                                                                   \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, jsonReadToLog, buffer, bufferSize)
+
 String *jsonWriteToLog(const JsonWrite *this);
 
 #define FUNCTION_LOG_JSON_WRITE_TYPE                                                                                               \

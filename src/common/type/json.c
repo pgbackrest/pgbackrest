@@ -14,31 +14,6 @@ Convert JSON to/from KeyValue
 #include "common/type/json.h"
 
 /***********************************************************************************************************************************
-JSON types
-***********************************************************************************************************************************/
-typedef enum
-{
-    jsonTypeArray = 0,
-    jsonTypeObject = 1,
-    jsonTypeBool,
-    jsonTypeJson,
-    jsonTypeNumber,
-    jsonTypeString,
-} JsonType;
-
-static bool
-jsonTypeContainer(const JsonType jsonType)
-{
-    return jsonType <= jsonTypeObject;
-}
-
-static bool
-jsonTypeScalar(const JsonType jsonType)
-{
-    return jsonType > jsonTypeObject;
-}
-
-/***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
 typedef struct JsonStack
@@ -56,6 +31,152 @@ struct JsonWrite
     bool complete;                                                  // JSON is complete an nothing more can be written
     List *stack;                                                    // Stack of object/array tags
 };
+
+struct JsonRead
+{
+    const char *json;                                               // JSON string
+};
+
+/**********************************************************************************************************************************/
+JsonRead *
+jsonReadNew(const String *const string)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, string);
+    FUNCTION_TEST_END();
+
+    JsonRead *this = NULL;
+
+    OBJ_NEW_BEGIN(JsonRead)
+    {
+        this = OBJ_NEW_ALLOC();
+
+        *this = (JsonRead)
+        {
+            .json = strZ(string),
+        };
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/***********************************************************************************************************************************
+Consume whitespace
+***********************************************************************************************************************************/
+static void
+jsonReadConsumeWhiteSpace(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    bool whitespace = true;
+
+    do
+    {
+        switch (*this->json)
+        {
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+                this->json++;
+                break;
+
+            default:
+                whitespace = false;
+                break;
+        }
+    }
+    while (whitespace);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+JsonType
+jsonReadTypeNext(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadConsumeWhiteSpace(this);
+
+    // There should be some data
+    if (*this->json == '\0')
+        THROW(JsonFormatError, "expected data");
+
+    // Determine data type
+    JsonType result;
+
+    switch (*this->json)
+    {
+        // String
+        case '"':
+            result = jsonTypeString;
+            // result = varNewStr(jsonToStrInternal(json, jsonPos));
+            break;
+
+        // Integer
+        case '-':
+        case '0' ... '9':
+            result = jsonTypeNumber;
+            // result = jsonToNumberInternal(json, jsonPos);
+            break;
+
+        // Boolean
+        case 't':
+        case 'f':
+            result = jsonTypeBool;
+            // result = varNewBool(jsonToBoolInternal(json, jsonPos));
+            break;
+
+        // Null
+        case 'n':
+        {
+            result = jsonTypeString; // !!! THIS IS NOT RIGHT
+            // if (strncmp(json + *jsonPos, NULL_Z, 4) == 0)
+            //     *jsonPos += 4;
+            // else
+            //     THROW_FMT(JsonFormatError, "expected null at '%s'", json + *jsonPos);
+
+            break;
+        }
+
+        // Array
+        case '[':
+            result = jsonTypeArray;
+            // result = varNewVarLst(jsonToVarLstInternal(json, jsonPos));
+            break;
+
+        // Object
+        case '{':
+            result = jsonTypeObject;
+            // result = varNewKv(jsonToKvInternal(json, jsonPos));
+            break;
+
+        // Invalid type
+        default:
+            THROW_FMT(JsonFormatError, "invalid type at '%s'", this->json);
+            break;
+    }
+
+    jsonReadConsumeWhiteSpace(this);
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+String *
+jsonReadToLog(const JsonRead *const this)
+{
+    // !!! MAKE THIS REAL
+    return strNewFmt("{json: %s}", this->json);
+}
 
 /**********************************************************************************************************************************/
 JsonWrite *
@@ -295,7 +416,7 @@ jsonWriteJson(JsonWrite *const this, const String *const value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeJson, false);
+    jsonTypePush(this, jsonTypeString, false);
 
     if (value == NULL)
         strCat(this->string, NULL_STR);
@@ -692,7 +813,7 @@ jsonWriteVar(JsonWrite *const this, const Variant *const value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeJson, false);
+    jsonTypePush(this, jsonTypeString, false);
     jsonWriteVarInternal(this, value);
 
     FUNCTION_TEST_RETURN(this);
