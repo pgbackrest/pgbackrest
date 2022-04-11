@@ -20,7 +20,6 @@ typedef struct JsonStack
 {
     JsonType type;                                                  // Container type
     bool first;                                                     // First element added
-    bool key;                                                       // Is a key set for an object value
     String *keyLast;                                                // Last key set for an object value
 } JsonStack;
 
@@ -28,13 +27,16 @@ struct JsonWrite
 {
     String *string;                                                 // JSON string
 
-    bool complete;                                                  // JSON is complete an nothing more can be written
     List *stack;                                                    // Stack of object/array tags
+    bool key;                                                       // Is a key set for an object value?
+
+    bool complete;                                                  // JSON is complete an nothing more can be written
 };
 
 struct JsonRead
 {
     const char *json;                                               // JSON string
+    List *stack;                                                    // Stack of object/array tags
 };
 
 /**********************************************************************************************************************************/
@@ -247,7 +249,7 @@ jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const
 
             if (key != NULL)
             {
-                if (item->key)
+                if (this->key)
                     THROW_FMT(FormatError, "key has already been defined");
 
                 if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
@@ -260,16 +262,16 @@ jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const
                 }
                 MEM_CONTEXT_END();
 
-                item->key = true;
+                this->key = true;
             }
             else
             {
                 if (item->type == jsonTypeObject)
                 {
-                    if (!item->key)
+                    if (!this->key)
                         THROW_FMT(FormatError, "key has not been defined");
 
-                    item->key = false;
+                    this->key = false;
                 }
             }
 
@@ -300,7 +302,7 @@ jsonTypePop(JsonWrite *const this, const JsonType type)
     ASSERT(jsonTypeContainer(type));
     ASSERT_DECLARE(const JsonStack *const container = lstGetLast(this->stack));
     ASSERT(container->type == type);
-    ASSERT(container->type != jsonTypeObject || container->key == false);
+    ASSERT(container->type != jsonTypeObject || this->key == false);
 
     if (type == jsonTypeObject)
     {
