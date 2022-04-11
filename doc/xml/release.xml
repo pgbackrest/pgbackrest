@@ -158,14 +158,19 @@
                     </release-item>
 
                     <release-item>
-                        <github-pull-request id="1712"/>
+                        <commit subject="Add lockRead*() functions for reading locks from another process.">
+                            <github-pull-request id="1712"/>
+                        </commit>
+                        <commit subject="Throw error when unable to read process from lock file.">
+                            <github-pull-request id="1715"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="reid.thompson"/>
                         </release-item-contributor-list>
 
-                        <p>Add <code>lockRead*()</code> functions for reading locks from another process.</p>
+                        <p>Lock module refactoring.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
