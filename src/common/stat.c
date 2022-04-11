@@ -109,10 +109,12 @@ statToJson(void)
 
     ASSERT(statLocalData.memContext != NULL);
 
-    String *const result = strNew();
+    String *result = NULL;
 
     if (!lstEmpty(statLocalData.stat))
     {
+        result = strNew();
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
             JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP(.string = result));
