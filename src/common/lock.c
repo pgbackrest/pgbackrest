@@ -92,29 +92,36 @@ lockReadFileData(const String *const lockFile, const int fd)
 
     LockData result = {0};
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    TRY_BEGIN()
     {
-        // Read contents of file
-        Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
-        IoWrite *const write = ioBufferWriteNewOpen(buffer);
-
-        ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
-        ioWriteClose(write);
-
-        // Parse the file
-        const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            if (!strEmpty(strTrim(strLstGet(parse, 0))))
-                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+            // Read contents of file
+            Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
+            IoWrite *const write = ioBufferWriteNewOpen(buffer);
 
-            if (strLstSize(parse) == 3)
-                result.execId = strDup(strLstGet(parse, 1));
+            ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
+            ioWriteClose(write);
+
+            // Parse the file
+            const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                if (strLstSize(parse) == 3)
+                    result.execId = strDup(strLstGet(parse, 1));
+
+                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+            }
+            MEM_CONTEXT_PRIOR_END();
         }
-        MEM_CONTEXT_PRIOR_END();
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
+    CATCH_ANY()
+    {
+        THROWP_FMT(errorType(), "unable to read lock file '%s': %s", strZ(lockFile), errorMessage());
+    }
+    TRY_END();
 
     FUNCTION_LOG_RETURN_STRUCT(result);
 }
@@ -285,6 +292,13 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     TRY_BEGIN()
                     {
                         execId = lockReadFileData(lockFile, result).execId;
+                    }
+                    CATCH_ANY()
+                    {
+                        // Any errors will be reported as unable to acquire a lock. If a process is trying to get a lock but is not
+                        // synchronized with the process holding the actual lock, it is possible that it could see a short read or
+                        // have some other problem reading. Reporting the error will likely be misleading when the actual problem is
+                        // that another process owns the lock file.
                     }
                     FINALLY()
                     {

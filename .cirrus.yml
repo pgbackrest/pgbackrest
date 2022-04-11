@@ -29,19 +29,19 @@ arm64_task:
 
 # FreeBSD 12
 # ----------------------------------------------------------------------------------------------------------------------------------
-freebsd_12_task:
-  freebsd_instance:
-    image_family: freebsd-12-2
-    cpu: 4
-    memory: 4G
+# freebsd_12_task:
+#   freebsd_instance:
+#     image_family: freebsd-12-2
+#     cpu: 4
+#     memory: 4G
 
-  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync
+#   install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync
 
-  script:
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+#   script:
+#     - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
-  debug_script:
-    - ls -lah ${CIRRUS_WORKING_DIR}
+#   debug_script:
+#     - ls -lah ${CIRRUS_WORKING_DIR}
 
 # MacOS Catalina
 # ----------------------------------------------------------------------------------------------------------------------------------

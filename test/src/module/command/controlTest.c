@@ -136,14 +136,14 @@ testRun(void)
         TEST_STORAGE_EXISTS(hrnStorage, "lock/db" STOP_FILE_EXT, .remove = true, .comment = "stanza stop file created, remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("unable to open lock file");
+        TEST_TITLE("unable to read lock file");
 
         HRN_STORAGE_PUT_EMPTY(
             hrnStorage, "lock/db-archive" LOCK_FILE_EXT, .modeFile = 0222,
             .comment = "create a lock file that cannot be opened");
-        TEST_RESULT_VOID(cmdStop(), "stanza, create stop file but unable to open lock file");
+        TEST_RESULT_VOID(cmdStop(), "stanza, create stop file but unable to read lock file");
         TEST_STORAGE_EXISTS(hrnStorage, "lock/db" STOP_FILE_EXT, .comment = "stanza stop file created");
-        TEST_RESULT_LOG("P00   WARN: unable to open lock file " HRN_PATH "/lock/db-archive" LOCK_FILE_EXT);
+        TEST_RESULT_LOG("P00   WARN: unable to read lock file " HRN_PATH "/lock/db-archive" LOCK_FILE_EXT);
         HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -154,6 +154,8 @@ testRun(void)
         TEST_STORAGE_LIST(
             hrnStorage, "lock", "db" STOP_FILE_EXT "\n",
             .comment = "stanza stop file created, no other process lock, lock file was removed");
+
+        TEST_RESULT_LOG_FMT("P00   WARN: unable to read lock file " HRN_PATH "/lock/db-backup.lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("empty lock file with another process lock, processId == NULL");
@@ -192,6 +194,8 @@ testRun(void)
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
+
+                TEST_RESULT_LOG_FMT("P00   WARN: unable to read lock file " HRN_PATH "/lock/db-backup.lock");
             }
             HRN_FORK_PARENT_END();
         }
@@ -234,6 +238,8 @@ testRun(void)
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
+
+                TEST_RESULT_LOG_FMT("P00   WARN: unable to read lock file " HRN_PATH "/lock/db-backup.lock");
             }
             HRN_FORK_PARENT_END();
         }
@@ -336,8 +342,12 @@ testRun(void)
         TEST_STORAGE_EXISTS(hrnStorage, "lock/all" STOP_FILE_EXT, .comment = "stanza stop file created");
         TEST_STORAGE_LIST(
             hrnStorage, "lock", "all" STOP_FILE_EXT "\n" "db-junk.txt\n", .comment = "stop file created, all lock files processed");
-        TEST_RESULT_LOG("");
         HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
+
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unable to read lock file " HRN_PATH "/lock/db-archive.lock\n"
+            "P00   WARN: unable to read lock file " HRN_PATH "/lock/db-backup.lock\n"
+            "P00   WARN: unable to read lock file " HRN_PATH "/lock/db1-backup.lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza, force stop = process only stanza lock files, ignore other stanza lock files and other files");
@@ -355,8 +365,11 @@ testRun(void)
         TEST_STORAGE_LIST(
             hrnStorage, "lock", "db-junk.txt\ndb" STOP_FILE_EXT "\n" "db1-backup" LOCK_FILE_EXT "\n",
             .comment = "stop file created, stanza lock file was removed, other stanza lock and other files remain");
-        TEST_RESULT_LOG("");
         HRN_STORAGE_PATH_REMOVE(hrnStorage, "lock", .recurse = true, .errorOnMissing = true, .comment = "remove the lock path");
+
+        TEST_RESULT_LOG_FMT(
+            "P00   WARN: unable to read lock file " HRN_PATH "/lock/db-archive.lock\n"
+            "P00   WARN: unable to read lock file " HRN_PATH "/lock/db-backup.lock");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
