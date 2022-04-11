@@ -69,7 +69,7 @@ cmdStop(void)
                     lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFile));
                     LockReadResult lockRead = lockReadFileP(lockFile, .remove = true);
 
-                    // If we cannot open the lock file for any reason then warn and continue to next file
+                    // If we cannot read the lock file for any reason then warn and continue to next file
                     if (lockRead.status != lockReadStatusValid)
                     {
                         LOG_WARN_FMT("unable to read lock file %s", strZ(lockFile));
