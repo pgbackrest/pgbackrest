@@ -263,7 +263,7 @@ strIdToZN(StringId strId, char *const buffer)
         case stringIdBit5:
         {
             // Map to convert encoding to characters
-            const char map[32] = "!abcdefghijklmnopqrstuvwxyz-256!";
+            static const char map[32] = "!abcdefghijklmnopqrstuvwxyz-256!";
 
             // Macro to decode all but the last character
             #define STR5ID_TO_ZN_IDX(idx)                                                                                          \
@@ -306,7 +306,7 @@ strIdToZN(StringId strId, char *const buffer)
             ASSERT(bit == stringIdBit6);
 
             // Map to convert encoding to characters
-            const char map[64] = "!abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            static const char map[64] = "!abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
             // Macro to decode all but the last character
             #define STR6ID_TO_ZN_IDX(idx)                                                                                          \
