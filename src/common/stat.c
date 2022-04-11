@@ -109,13 +109,13 @@ statToJson(void)
 
     ASSERT(statLocalData.memContext != NULL);
 
-    String *result = NULL;
+    String *const result = strNew();
 
     if (!lstEmpty(statLocalData.stat))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP(.string = result));
 
             for (unsigned int statIdx = 0; statIdx < lstSize(statLocalData.stat); statIdx++)
             {
@@ -127,12 +127,6 @@ statToJson(void)
             }
 
             jsonWriteObjectEnd(json);
-
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                result = strNewBuf(jsonWriteResult(json));
-            }
-            MEM_CONTEXT_PRIOR_END();
         }
         MEM_CONTEXT_TEMP_END();
     }

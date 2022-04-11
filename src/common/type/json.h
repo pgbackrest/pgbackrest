@@ -4,7 +4,7 @@ Convert JSON to/from KeyValue
 #ifndef COMMON_TYPE_JSON_H
 #define COMMON_TYPE_JSON_H
 
-#include "common/type/keyValue.h"
+#include "common/type/variant.h"
 
 /***********************************************************************************************************************************
 Minimum number of extra bytes to allocate for json that is growing or likely to grow
@@ -18,8 +18,6 @@ Object types
 ***********************************************************************************************************************************/
 typedef struct JsonWrite JsonWrite;
 
-#include "common/io/write.h"
-
 /***********************************************************************************************************************************
 Write Constructors
 ***********************************************************************************************************************************/
@@ -27,16 +25,13 @@ Write Constructors
 typedef struct JsonWriteNewParam
 {
     VAR_PARAM_HEADER;
-    size_t size;
+    String *string;
 } JsonWriteNewParam;
 
 #define jsonWriteNewP(...)                                                                                                          \
     jsonWriteNew((JsonWriteNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 JsonWrite *jsonWriteNew(JsonWriteNewParam param);
-
-// !!!
-JsonWrite *jsonWriteNewIo(IoWrite *write);
 
 /***********************************************************************************************************************************
 Write Functions
@@ -85,7 +80,7 @@ JsonWrite *jsonWriteZ(JsonWrite *this, const char *value);
 Write Getters/Setters
 ***********************************************************************************************************************************/
 // !!!
-const Buffer *jsonWriteResult(JsonWrite *const this);
+const String *jsonWriteResult(JsonWrite *const this);
 
 /***********************************************************************************************************************************
 Write Destructor

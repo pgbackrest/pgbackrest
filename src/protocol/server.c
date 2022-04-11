@@ -65,7 +65,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
             jsonWriteKey(json, PROTOCOL_GREETING_VERSION_STR);
             jsonWriteZ(json, PROJECT_VERSION);
 
-            ioWriteLine(this->write, jsonWriteResult(jsonWriteObjectEnd(json)));
+            ioWriteStrLine(this->write, jsonWriteResult(jsonWriteObjectEnd(json)));
             ioWriteFlush(this->write);
         }
         MEM_CONTEXT_TEMP_END();

@@ -26,13 +26,13 @@ typedef enum
     jsonTypeString,
 } JsonType;
 
-__attribute__((always_inline)) static inline bool
+static bool
 jsonTypeContainer(const JsonType jsonType)
 {
     return jsonType <= jsonTypeObject;
 }
 
-__attribute__((always_inline)) static inline bool
+static bool
 jsonTypeScalar(const JsonType jsonType)
 {
     return jsonType > jsonTypeObject;
@@ -51,19 +51,19 @@ typedef struct JsonStack
 
 struct JsonWrite
 {
-    IoWrite *write;                                                 // Write pack to
-    Buffer *buffer;                                                 // Buffer to contain write data
+    String *string;                                                 // JSON string
 
     bool complete;                                                  // JSON is complete an nothing more can be written
     List *stack;                                                    // Stack of object/array tags
 };
 
 /**********************************************************************************************************************************/
-// Helper to create common data
-static JsonWrite *
-jsonWriteNewInternal(void)
+JsonWrite *
+jsonWriteNew(JsonWriteNewParam param)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, param.string);
+    FUNCTION_TEST_END();
 
     JsonWrite *this = NULL;
 
@@ -73,103 +73,12 @@ jsonWriteNewInternal(void)
 
         *this = (JsonWrite)
         {
-            .complete = false,
+            .string = param.string == NULL ? strNew() : param.string,
         };
     }
     OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(this);
-}
-
-JsonWrite *
-jsonWriteNew(const JsonWriteNewParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(SIZE, param.size);
-    FUNCTION_TEST_END();
-
-    JsonWrite *this = jsonWriteNewInternal();
-
-    MEM_CONTEXT_BEGIN(objMemContext(this))
-    {
-        this->buffer = bufNew(param.size == 0 ? JSON_EXTRA_MIN : param.size);
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-JsonWrite *
-jsonWriteNewIo(IoWrite *const write)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_WRITE, write);
-    FUNCTION_TEST_END();
-
-    ASSERT(write != NULL);
-
-    JsonWrite *this = jsonWriteNewInternal();
-
-    MEM_CONTEXT_BEGIN(objMemContext(this))
-    {
-        this->write = write;
-        this->buffer = bufNew(ioBufferSize());
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN(this);
-}
-
-/***********************************************************************************************************************************
-Write to io or buffer
-***********************************************************************************************************************************/
-static void
-jsonWriteBuffer(JsonWrite *const this, const Buffer *const buffer)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(JSON_WRITE, this);
-        FUNCTION_TEST_PARAM(BUFFER, buffer);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    // If writing directly to a buffer
-    if (this->write == NULL)
-    {
-        // Add space in the buffer to write and add extra space so future writes won't always need to resize the buffer
-        if (bufRemains(this->buffer) < bufUsed(buffer))
-            bufResize(this->buffer, (bufSizeAlloc(this->buffer) + bufUsed(buffer)) + PACK_EXTRA_MIN);
-
-        // Write to the buffer
-        bufCat(this->buffer, buffer);
-    }
-    // Else writing to io
-    else
-    {
-        // If there's enough space to write to the internal buffer then do that
-        if (bufRemains(this->buffer) >= bufUsed(buffer))
-            bufCat(this->buffer, buffer);
-        else
-        {
-            // Flush the internal buffer if it has data
-            if (!bufEmpty(this->buffer))
-            {
-                ioWrite(this->write, this->buffer);
-                bufUsedZero(this->buffer);
-            }
-
-            // If there's enough space to write to the internal buffer then do that
-            if (bufRemains(this->buffer) >= bufUsed(buffer))
-            {
-                bufCat(this->buffer, buffer);
-            }
-            // Else write directly to io
-            else
-                ioWrite(this->write, buffer);
-        }
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
@@ -244,7 +153,7 @@ jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const
             }
 
             if (item->first && (item->type != jsonTypeObject || key != NULL))
-                jsonWriteBuffer(this, COMMA_BUF);
+                strCatChr(this->string, ',');
             else
                 item->first = true;
         }
@@ -300,7 +209,7 @@ jsonWriteArrayBegin(JsonWrite *const this)
     ASSERT(this != NULL);
 
     jsonTypePush(this, jsonTypeArray, false);
-    jsonWriteBuffer(this, BRACKETL_BUF);
+    strCatChr(this->string, '[');
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -315,7 +224,7 @@ jsonWriteArrayEnd(JsonWrite *const this)
     ASSERT(this != NULL);
 
     jsonTypePop(this, jsonTypeArray);
-    jsonWriteBuffer(this, BRACKETR_BUF);
+    strCatChr(this->string, ']');
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -332,7 +241,7 @@ jsonWriteBool(JsonWrite *const this, const bool value)
     ASSERT(this != NULL);
 
     jsonTypePush(this, jsonTypeBool, false);
-    jsonWriteBuffer(this, value ? BUFSTRDEF("true") : BUFSTRDEF("false"));
+    strCat(this->string, value ? TRUE_STR : FALSE_STR);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -351,7 +260,7 @@ jsonWriteInt(JsonWrite *const this, const int value)
     jsonTypePush(this, jsonTypeNumber, false);
 
     char working[CVT_BASE10_BUFFER_SIZE];
-    jsonWriteBuffer(this, BUF(working, cvtIntToZ(value, working, sizeof(working))));
+    strCatZN(this->string, working, cvtIntToZ(value, working, sizeof(working)));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -370,7 +279,7 @@ jsonWriteInt64(JsonWrite *const this, const int64_t value)
     jsonTypePush(this, jsonTypeNumber, false);
 
     char working[CVT_BASE10_BUFFER_SIZE];
-    jsonWriteBuffer(this, BUF(working, cvtInt64ToZ(value, working, sizeof(working))));
+    strCatZN(this->string, working, cvtInt64ToZ(value, working, sizeof(working)));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -389,9 +298,9 @@ jsonWriteJson(JsonWrite *const this, const String *const value)
     jsonTypePush(this, jsonTypeJson, false);
 
     if (value == NULL)
-        jsonWriteBuffer(this, BUFSTRDEF("null"));
+        strCat(this->string, NULL_STR);
     else
-        jsonWriteBuffer(this, BUFSTR(value));
+        strCat(this->string, value);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -409,7 +318,7 @@ jsonWriteStrInternal(JsonWrite *const this, const String *const value)
     ASSERT(this != NULL);
     ASSERT(value != NULL);
 
-    jsonWriteBuffer(this, QUOTED_BUF);
+    strCatChr(this->string, '"');
 
     // Track portion of string with no escapes
     const char *valuePtr = strZ(value);
@@ -431,38 +340,38 @@ jsonWriteStrInternal(JsonWrite *const this, const String *const value)
                 // Copy portion of string without escapes
                 if (noEscapeSize > 0)
                 {
-                    jsonWriteBuffer(this, BUF(noEscape, noEscapeSize));
+                    strCatZN(this->string, noEscape, noEscapeSize);
                     noEscapeSize = 0;
                 }
 
                 switch (*valuePtr)
                 {
                     case '"':
-                        jsonWriteBuffer(this, BUFSTRDEF("\\\""));
+                        strCatZ(this->string, "\\\"");
                         break;
 
                     case '\\':
-                        jsonWriteBuffer(this, BUFSTRDEF("\\\\"));
+                        strCatZ(this->string, "\\\\");
                         break;
 
                     case '\n':
-                        jsonWriteBuffer(this, BUFSTRDEF("\\n"));
+                        strCatZ(this->string, "\\n");
                         break;
 
                     case '\r':
-                        jsonWriteBuffer(this, BUFSTRDEF("\\r"));
+                        strCatZ(this->string, "\\r");
                         break;
 
                     case '\t':
-                        jsonWriteBuffer(this, BUFSTRDEF("\\t"));
+                        strCatZ(this->string, "\\t");
                         break;
 
                     case '\b':
-                        jsonWriteBuffer(this, BUFSTRDEF("\\b"));
+                        strCatZ(this->string, "\\b");
                         break;
 
                     case '\f':
-                        jsonWriteBuffer(this, BUFSTRDEF("\\f"));
+                        strCatZ(this->string, "\\f");
                         break;
                 }
 
@@ -485,9 +394,9 @@ jsonWriteStrInternal(JsonWrite *const this, const String *const value)
 
     // Copy portion of string without escapes
     if (noEscapeSize > 0)
-        jsonWriteBuffer(this, BUF(noEscape, noEscapeSize));
+        strCatZN(this->string, noEscape, noEscapeSize);
 
-    jsonWriteBuffer(this, QUOTED_BUF);
+    strCatChr(this->string, '"');
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -506,7 +415,7 @@ jsonWriteKey(JsonWrite *const this, const String *const key)
     jsonTypePush(this, jsonTypeString, key);
 
     jsonWriteStrInternal(this, key);
-    jsonWriteBuffer(this, BUFSTRDEF(":"));
+    strCatChr(this->string, ':');
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -536,7 +445,7 @@ jsonWriteObjectBegin(JsonWrite *const this)
     ASSERT(this != NULL);
 
     jsonTypePush(this, jsonTypeObject, false);
-    jsonWriteBuffer(this, BRACEL_BUF);
+    strCatChr(this->string, '{');
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -551,7 +460,7 @@ jsonWriteObjectEnd(JsonWrite *const this)
     ASSERT(this != NULL);
 
     jsonTypePop(this, jsonTypeObject);
-    jsonWriteBuffer(this, BRACER_BUF);
+    strCatChr(this->string, '}');
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -570,7 +479,7 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
     jsonTypePush(this, jsonTypeString, false);
 
     if (value == NULL)
-        jsonWriteBuffer(this, BUFSTRDEF("null"));
+        strCat(this->string, NULL_STR);
     else
         jsonWriteStrInternal(this, value);
 
@@ -646,7 +555,7 @@ jsonWriteUInt(JsonWrite *const this, const unsigned int value)
     jsonTypePush(this, jsonTypeNumber, false);
 
     char working[CVT_BASE10_BUFFER_SIZE];
-    jsonWriteBuffer(this, BUF(working, cvtUIntToZ(value, working, sizeof(working))));
+    strCatZN(this->string, working, cvtUIntToZ(value, working, sizeof(working)));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -665,7 +574,7 @@ jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
     jsonTypePush(this, jsonTypeNumber, false);
 
     char working[CVT_BASE10_BUFFER_SIZE];
-    jsonWriteBuffer(this, BUF(working, cvtUInt64ToZ(value, working, sizeof(working))));
+    strCatZN(this->string, working, cvtUInt64ToZ(value, working, sizeof(working)));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -684,9 +593,7 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
     {
         // If VariantList then process each item in the array. Currently the list must be KeyValue types.
         if (value == NULL)
-        {
-            jsonWriteBuffer(this, BUFSTRDEF("null"));
-        }
+            strCat(this->string, NULL_STR);
         else
         {
             switch (varType(value))
@@ -696,7 +603,7 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
                 case varTypeInt64:
                 case varTypeUInt:
                 case varTypeUInt64:
-                    jsonWriteBuffer(this, BUFSTR(varStrForce(value)));
+                    strCat(this->string, varStrForce(value));
                     break;
 
                 case varTypeKeyValue:
@@ -704,30 +611,30 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
                     const KeyValue *const keyValue = varKv(value);
 
                     if (keyValue == NULL)
-                        jsonWriteBuffer(this, BUFSTRDEF("null"));
+                        strCat(this->string, NULL_STR);
                     else
                     {
                         const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(keyValue)), sortOrderAsc);
 
-                        jsonWriteBuffer(this, BRACEL_BUF);
+                        strCatChr(this->string, '{');
 
                         for (unsigned int keyListIdx = 0; keyListIdx < strLstSize(keyList); keyListIdx++)
                         {
                             // Add common after first key/value
                             if (keyListIdx > 0)
-                                jsonWriteBuffer(this, COMMA_BUF);
+                                strCatChr(this->string, ',');
 
                             // Write key
                             const String *const key = strLstGet(keyList, keyListIdx);
 
                             jsonWriteStrInternal(this, key);
-                            jsonWriteBuffer(this, BUFSTRDEF(":"));
+                            strCatChr(this->string, ':');
 
                             // Write value
                             jsonWriteVarInternal(this, kvGet(keyValue, VARSTR(key)));
                         }
 
-                        jsonWriteBuffer(this, BRACER_BUF);
+                        strCatChr(this->string, '}');
                     }
 
                     break;
@@ -736,7 +643,7 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
                 case varTypeString:
                 {
                     if (varStr(value) == NULL)
-                        jsonWriteBuffer(this, BUFSTRDEF("null"));
+                        strCat(this->string, NULL_STR);
                     else
                         jsonWriteStrInternal(this, varStr(value));
 
@@ -750,21 +657,21 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
                     const VariantList *const valueList = varVarLst(value);
 
                     if (valueList == NULL)
-                        jsonWriteBuffer(this, BUFSTRDEF("null"));
+                        strCat(this->string, NULL_STR);
                     else
                     {
-                        jsonWriteBuffer(this, BRACKETL_BUF);
+                        strCatChr(this->string, '[');
 
                         for (unsigned int valueListIdx = 0; valueListIdx < varLstSize(valueList); valueListIdx++)
                         {
                             // Add common after first value
                             if (valueListIdx > 0)
-                                jsonWriteBuffer(this, COMMA_BUF);
+                                strCatChr(this->string, ',');
 
                             jsonWriteVarInternal(this, varLstGet(valueList, valueListIdx));
                         }
 
-                        jsonWriteBuffer(this, BRACKETR_BUF);
+                        strCatChr(this->string, ']');
                     }
                 }
             }
@@ -805,7 +712,7 @@ jsonWriteZ(JsonWrite *const this, const char *const value)
     jsonTypePush(this, jsonTypeString, false);
 
     if (value == NULL)
-        jsonWriteBuffer(this, BUFSTRDEF("null"));
+        strCat(this->string, NULL_STR);
     else
         jsonWriteStrInternal(this, STR(value));
 
@@ -813,23 +720,20 @@ jsonWriteZ(JsonWrite *const this, const char *const value)
 }
 
 /**********************************************************************************************************************************/
-const Buffer *
+const String *
 jsonWriteResult(JsonWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
     FUNCTION_TEST_END();
 
-    Buffer *result = NULL;
-
     if (this != NULL)
     {
-        // ASSERT(this->tagStack.top == NULL);
-
-        result = this->buffer;
+        ASSERT(this->complete);
+        FUNCTION_TEST_RETURN(this->string);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(NULL);
 }
 
 /**********************************************************************************************************************************/
@@ -840,17 +744,11 @@ jsonFromVar(const Variant *const value)
         FUNCTION_TEST_PARAM(VARIANT, value);
     FUNCTION_TEST_END();
 
-    String *result = NULL;
+    String *const result = strNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        JsonWrite *const write = jsonWriteVar(jsonWriteNewP(), value);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strNewBuf(jsonWriteResult(write));
-        }
-        MEM_CONTEXT_PRIOR_END();
+        jsonWriteVar(jsonWriteNewP(.string = result), value);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -285,7 +285,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_HARDLINK_VAR)), backupData.optionHardlink);
             jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ONLINE_VAR)), backupData.optionOnline);
 
-            infoSaveValueBuf(
+            infoSaveValue(
                 infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel,
                 jsonWriteResult(jsonWriteObjectEnd(json)));
         }

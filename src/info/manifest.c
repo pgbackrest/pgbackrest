@@ -2438,7 +2438,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                     jsonWriteKeyZ(json, MANIFEST_KEY_TYPE),
                     target->type == manifestTargetTypePath ? MANIFEST_TARGET_TYPE_PATH_STR : MANIFEST_TARGET_TYPE_LINK_STR);
 
-                infoSaveValueBuf(
+                infoSaveValue(
                     infoSaveData, MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
@@ -2460,7 +2460,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 jsonWriteUInt(jsonWriteKeyZ(json, MANIFEST_KEY_DB_ID), db->id);
                 jsonWriteUInt(jsonWriteKeyZ(json, MANIFEST_KEY_DB_LAST_SYSTEM_ID), db->lastSystemId);
 
-                infoSaveValueBuf(infoSaveData, MANIFEST_SECTION_DB_STR, db->name, jsonWriteResult(jsonWriteObjectEnd(json)));
+                infoSaveValue(infoSaveData, MANIFEST_SECTION_DB_STR, db->name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2518,8 +2518,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 if (!varEq(manifestOwnerVar(file.user), saveData->userDefault))
                     jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(file.user));
 
-                infoSaveValueBuf(
-                    infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file.name, jsonWriteResult(jsonWriteObjectEnd(json)));
+                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file.name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2559,7 +2558,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 if (!varEq(manifestOwnerVar(link->user), saveData->userDefault))
                     jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(link->user));
 
-                infoSaveValueBuf(
+                infoSaveValue(
                     infoSaveData, MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
@@ -2601,7 +2600,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
                 if (!varEq(manifestOwnerVar(path->user), saveData->userDefault))
                     jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(path->user));
 
-                infoSaveValueBuf(
+                infoSaveValue(
                     infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);

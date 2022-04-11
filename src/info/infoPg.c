@@ -345,7 +345,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
             jsonWriteKey(json, varStr(INFO_KEY_DB_VERSION_VAR));
             jsonWriteStr(json, pgVersionToStr(pgData.version));
 
-            infoSaveValueBuf(
+            infoSaveValue(
                 infoSaveData, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)),
                 jsonWriteResult(jsonWriteObjectEnd(json)));
         }

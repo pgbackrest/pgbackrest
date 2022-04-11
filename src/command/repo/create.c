@@ -36,11 +36,13 @@ cmdRepoCreate(void)
             {
                 storageGcsRequestP(
                     (StorageGcs *)storageDriver(storageRepoWrite()), HTTP_VERB_POST_STR, .noBucket = true,
-                    .content = jsonWriteResult(
-                        jsonWriteObjectEnd(
-                            jsonWriteStr(
-                                jsonWriteKeyZ(
-                                    jsonWriteObjectBegin(jsonWriteNewP()), GCS_JSON_NAME), cfgOptionStr(cfgOptRepoGcsBucket)))));
+                    .content = BUFSTR(
+                        jsonWriteResult(
+                            jsonWriteObjectEnd(
+                                jsonWriteStr(
+                                    jsonWriteKeyZ(
+                                        jsonWriteObjectBegin(
+                                            jsonWriteNewP()), GCS_JSON_NAME), cfgOptionStr(cfgOptRepoGcsBucket))))));
 
                 break;
             }
