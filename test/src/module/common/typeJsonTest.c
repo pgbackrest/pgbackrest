@@ -244,10 +244,22 @@ testRun(void)
     {
         JsonRead *read = NULL;
 
-        const String *json = STRDEF("\t\r\n [ ]]");
+        const String *json = STRDEF("\t\r\n [\t{\r}, 123, 18446744073709551615, -1, -9223372036854775807, true, false\n]]");
         TEST_ASSIGN(read, jsonReadNew(json), "new read");
 
         TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
+        TEST_ERROR(jsonReadArrayEnd(read), FormatError, "expected ] but found {");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
+
+        TEST_RESULT_UINT(jsonReadUInt(read), 123, "uint");
+        TEST_RESULT_UINT(jsonReadUInt64(read), 18446744073709551615U, "uint64");
+        TEST_RESULT_INT(jsonReadInt(read), -1, "int");
+        TEST_RESULT_INT(jsonReadInt64(read), -9223372036854775807L, "int64");
+        TEST_RESULT_BOOL(jsonReadBool(read), true, "bool true");
+        TEST_RESULT_BOOL(jsonReadBool(read), false, "bool false");
+
         TEST_RESULT_VOID(jsonReadArrayEnd(read), "array end");
         TEST_ERROR(jsonReadArrayEnd(read), FormatError, "JSON read is complete");
 

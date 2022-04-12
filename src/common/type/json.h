@@ -37,11 +37,30 @@ JsonRead *jsonReadNew(const String *string);
 Read Functions
 ***********************************************************************************************************************************/
 // !!!
-JsonType jsonReadTypeNext(JsonRead *const this);
+JsonType jsonReadTypeNext(JsonRead *this);
 
 // !!!
-void jsonReadArrayBegin(JsonRead *const this);
-void jsonReadArrayEnd(JsonRead *const this);
+void jsonReadArrayBegin(JsonRead *this);
+void jsonReadArrayEnd(JsonRead *this);
+
+// !!!
+bool jsonReadBool(JsonRead *this);
+
+// !!!
+int jsonReadInt(JsonRead *this);
+
+// !!!
+int64_t jsonReadInt64(JsonRead *this);
+
+// !!!
+void jsonReadObjectBegin(JsonRead *this);
+void jsonReadObjectEnd(JsonRead *this);
+
+// !!!
+unsigned int jsonReadUInt(JsonRead *this);
+
+// !!!
+uint64_t jsonReadUInt64(JsonRead *this);
 
 /***********************************************************************************************************************************
 Read Destructor

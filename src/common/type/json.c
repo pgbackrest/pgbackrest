@@ -19,7 +19,7 @@ Object types
 typedef struct JsonWriteStack
 {
     JsonType type;                                                  // Container type
-    bool first;                                                     // First element added
+    bool first;                                                     // First element has been written
     String *keyLast;                                                // Last key set for an object value
 } JsonWriteStack;
 
@@ -36,6 +36,7 @@ struct JsonWrite
 typedef struct JsonReadStack
 {
     JsonType type;                                                  // Container type
+    bool first;                                                     // First element has been read
 } JsonReadStack;
 
 struct JsonRead
@@ -205,9 +206,6 @@ jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
 
     ASSERT(this != NULL);
 
-    if (jsonReadTypeNext(this) != type)
-        THROW_FMT(FormatError, "expected !!!TYPE but found '%s'", this->json);
-
     // !!!
     if (this->stack == NULL)
     {
@@ -229,47 +227,57 @@ jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
     {
         ASSERT((jsonTypeContainer(type) && key == NULL) || !lstEmpty(this->stack));
 
-        // if (!lstEmpty(this->stack))
-        // {
-        //     JsonWriteStack *const item = lstGetLast(this->stack);
+        if (!lstEmpty(this->stack))
+        {
+            JsonWriteStack *const item = lstGetLast(this->stack);
 
-        //     if (key != NULL)
-        //     {
-        //         if (this->key)
-        //             THROW_FMT(FormatError, "key has already been defined");
+            // if (key != NULL)
+            // {
+            //     if (this->key)
+            //         THROW_FMT(FormatError, "key has already been defined");
 
-        //         // if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
-        //         //     THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
+            //     if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
+            //         THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
 
-        //         // MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
-        //         // {
-        //         //     strFree(item->keyLast);
-        //         //     item->keyLast = strDup(key);
-        //         // }
-        //         // MEM_CONTEXT_END();
+            //     MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
+            //     {
+            //         strFree(item->keyLast);
+            //         item->keyLast = strDup(key);
+            //     }
+            //     MEM_CONTEXT_END();
 
-        //         this->key = true;
-        //     }
-        //     else
-        //     {
-        //         if (item->type == jsonTypeObjectBegin)
-        //         {
-        //             if (!this->key)
-        //                 THROW_FMT(FormatError, "key has not been defined");
+            //     this->key = true;
+            // }
+            // else
+            // {
+            //     if (item->type == jsonTypeObjectBegin)
+            //     {
+            //         if (!this->key)
+            //             THROW_FMT(FormatError, "key has not been defined");
 
-        //             this->key = false;
-        //         }
-        //     }
+            //         this->key = false;
+            //     }
+            // }
 
-        //     if (item->first && (item->type != jsonTypeObjectBegin || key != NULL))
-        //         strCatChr(this->string, ',');
-        //     else
-        //         item->first = true;
-        // }
+            if (item->first /*&& (item->type != jsonTypeObjectBegin || key != NULL)*/)
+            {
+                jsonReadConsumeWhiteSpace(this);
+
+                if (*this->json != ',')
+                    THROW(FormatError, "missing comma");
+
+                this->json++;
+            }
+            else
+                item->first = true;
+        }
 
         if (jsonTypeContainer(type))
             lstAdd(this->stack, &(JsonReadStack){.type = type});
     }
+
+    if (jsonReadTypeNext(this) != type)
+        THROW_FMT(FormatError, "expected !!!TYPE but found '%s'", this->json);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -282,26 +290,34 @@ jsonReadPop(JsonRead *const this, const JsonType type)
         FUNCTION_TEST_PARAM(ENUM, type);
     FUNCTION_TEST_END();
 
-    // Cannot write after complete
+    ASSERT(this != NULL);
+    ASSERT(jsonTypeContainer(type));
+
+    // Cannot read after complete
     if (this->complete)
         THROW(FormatError, "JSON read is complete");
 
-    ASSERT(this != NULL);
     ASSERT(this->stack != NULL);
     ASSERT(!lstEmpty(this->stack));
-    ASSERT(jsonTypeContainer(type));
     ASSERT_DECLARE(const JsonReadStack *const container = lstGetLast(this->stack));
-    ASSERT(container->type == type);
-    // ASSERT(container->type != jsonTypeObjectEnd || this->key == false);
+    ASSERT(
+        (container->type == jsonTypeArrayBegin && type == jsonTypeArrayEnd) ||
+        (container->type == jsonTypeObjectBegin && type == jsonTypeObjectEnd));
 
-    // if (type == jsonTypeObjectEnd)
-    // {
-    //     MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
-    //     {
-    //         strFree(((JsonWriteStack *)lstGetLast(this->stack))->keyLast);
-    //     }
-    //     MEM_CONTEXT_END();
-    // }
+    if (jsonReadTypeNext(this) != type)
+        THROW_FMT(FormatError, "expected %c but found %c", type == jsonTypeArrayEnd ? ']' : '}', *this->json);
+
+    // ASSERT(container->type == type);
+    // ASSERT(container->type != jsonTypeObjectBegin || this->key == false);
+
+    if (type == jsonTypeObjectEnd)
+    {
+        // MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
+        // {
+        //     strFree(((JsonWriteStack *)lstGetLast(this->stack))->keyLast);
+        // }
+        // MEM_CONTEXT_END();
+    }
 
     lstRemoveLast(this->stack);
 
@@ -327,7 +343,6 @@ jsonReadArrayBegin(JsonRead *const this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
 void
 jsonReadArrayEnd(JsonRead *const this)
 {
@@ -337,10 +352,224 @@ jsonReadArrayEnd(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPop(this, jsonTypeArrayBegin);
+    jsonReadPop(this, jsonTypeArrayEnd);
     this->json++;
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+bool
+jsonReadBool(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeBool, NULL);
+
+    if (strncmp(this->json, TRUE_Z, sizeof(TRUE_Z) - 1) == 0)
+    {
+        this->json += sizeof(TRUE_Z) - 1;
+
+        FUNCTION_TEST_RETURN(true);
+    }
+
+    if (strncmp(this->json, FALSE_Z, sizeof(FALSE_Z) - 1) == 0)
+    {
+        this->json += sizeof(FALSE_Z) - 1;
+
+        FUNCTION_TEST_RETURN(false);
+    }
+
+    THROW(JsonFormatError, "expected boolean");
+}
+
+/**********************************************************************************************************************************/
+typedef enum
+{
+    jsonNumberTypeU64,
+    jsonNumberTypeI64,
+} JsonNumberType;
+
+typedef struct JsonReadNumberResult
+{
+    JsonNumberType type;
+
+    union
+    {
+        int64_t i64;
+        uint64_t u64;
+    } value;
+} JsonReadNumberResult;
+
+static JsonReadNumberResult
+jsonReadNumber(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    // Consume the - when present
+    bool intSigned = false;
+
+    if (*this->json == '-')
+    {
+        intSigned = true;
+        this->json++;
+    }
+
+    // Consume all digits
+    size_t digits = 0;
+
+    while (isdigit(this->json[digits]))
+        digits++;
+
+    // Invalid if no digits were found
+    if (digits == 0)
+        THROW(JsonFormatError, "no digits found");
+
+    // Copy to buffer
+    if (digits >= CVT_BASE10_BUFFER_SIZE)
+        THROW(JsonFormatError, "buffer overflow");
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+    strncpy(working, this->json - intSigned, digits + intSigned);
+    working[digits + intSigned] = '\0';
+
+    this->json += digits;
+
+    JsonReadNumberResult result;
+
+    if (intSigned)
+        result = (JsonReadNumberResult){.type = jsonNumberTypeI64, .value = {.i64 = cvtZToInt64(working)}};
+    else
+        result = (JsonReadNumberResult){.type = jsonNumberTypeU64, .value = {.u64 = cvtZToUInt64(working)}};
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+int
+jsonReadInt(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeNumber, NULL);
+
+    JsonReadNumberResult number = jsonReadNumber(this);
+
+    if (number.type == jsonNumberTypeU64)
+    {
+        if (number.value.u64 > INT_MAX)
+            THROW(FormatError, "number is out of range for int");
+
+        FUNCTION_TEST_RETURN((int)number.value.u64);
+    }
+
+    if (number.value.i64 > INT_MAX || number.value.i64 < INT_MIN)
+        THROW(FormatError, "number is out of range for int");
+
+    FUNCTION_TEST_RETURN((int)number.value.i64);
+}
+
+/**********************************************************************************************************************************/
+int64_t
+jsonReadInt64(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeNumber, NULL);
+
+    JsonReadNumberResult number = jsonReadNumber(this);
+
+    if (number.type == jsonNumberTypeI64)
+        FUNCTION_TEST_RETURN(number.value.i64);
+
+    if (number.value.u64 > INT64_MAX)
+        THROW(FormatError, "number is out of range for int64");
+
+    FUNCTION_TEST_RETURN((int64_t)number.value.u64);
+}
+
+/**********************************************************************************************************************************/
+void
+jsonReadObjectBegin(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeObjectBegin, NULL);
+    this->json++;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+void
+jsonReadObjectEnd(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPop(this, jsonTypeObjectEnd);
+    this->json++;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+jsonReadUInt(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeNumber, NULL);
+
+    JsonReadNumberResult number = jsonReadNumber(this);
+
+    if (number.type != jsonNumberTypeU64 || number.value.u64 > UINT_MAX)
+        THROW(FormatError, "number is out of range for uint");
+
+    FUNCTION_TEST_RETURN((unsigned int)number.value.u64);
+}
+
+/**********************************************************************************************************************************/
+uint64_t
+jsonReadUInt64(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeNumber, NULL);
+
+    JsonReadNumberResult number = jsonReadNumber(this);
+
+    if (number.type != jsonNumberTypeU64)
+        THROW(FormatError, "number is out of range for uint64");
+
+    FUNCTION_TEST_RETURN(number.value.u64);
 }
 
 /**********************************************************************************************************************************/
