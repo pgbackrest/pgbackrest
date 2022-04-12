@@ -240,7 +240,22 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("JsonRead and JsonWrite"))
+    if (testBegin("JsonRead"))
+    {
+        JsonRead *read = NULL;
+
+        const String *json = STRDEF("\t\r\n [ ]]");
+        TEST_ASSIGN(read, jsonReadNew(json), "new read");
+
+        TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
+        TEST_RESULT_VOID(jsonReadArrayEnd(read), "array end");
+        TEST_ERROR(jsonReadArrayEnd(read), FormatError, "JSON read is complete");
+
+        TEST_RESULT_VOID(jsonReadFree(read), "free");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("JsonWrite"))
     {
         // JsonWrite *write = NULL;
 

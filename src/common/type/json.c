@@ -16,12 +16,12 @@ Convert JSON to/from KeyValue
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
-typedef struct JsonStack
+typedef struct JsonWriteStack
 {
     JsonType type;                                                  // Container type
     bool first;                                                     // First element added
     String *keyLast;                                                // Last key set for an object value
-} JsonStack;
+} JsonWriteStack;
 
 struct JsonWrite
 {
@@ -30,13 +30,20 @@ struct JsonWrite
     List *stack;                                                    // Stack of object/array tags
     bool key;                                                       // Is a key set for an object value?
 
-    bool complete;                                                  // JSON is complete an nothing more can be written
+    bool complete;                                                  // JSON write is complete
 };
+
+typedef struct JsonReadStack
+{
+    JsonType type;                                                  // Container type
+} JsonReadStack;
 
 struct JsonRead
 {
     const char *json;                                               // JSON string
     List *stack;                                                    // Stack of object/array tags
+
+    bool complete;                                                  // JSON read is complete
 };
 
 /**********************************************************************************************************************************/
@@ -106,6 +113,10 @@ jsonReadTypeNext(JsonRead *const this)
 
     ASSERT(this != NULL);
 
+    // Cannot read after complete
+    if (this->complete)
+        THROW(FormatError, "JSON read is complete");
+
     jsonReadConsumeWhiteSpace(this);
 
     // There should be some data
@@ -140,7 +151,7 @@ jsonReadTypeNext(JsonRead *const this)
         // Null
         case 'n':
         {
-            result = jsonTypeString; // !!! THIS IS NOT RIGHT
+            result = jsonTypeNull;
             // if (strncmp(json + *jsonPos, NULL_Z, 4) == 0)
             //     *jsonPos += 4;
             // else
@@ -151,13 +162,23 @@ jsonReadTypeNext(JsonRead *const this)
 
         // Array
         case '[':
-            result = jsonTypeArray;
+            result = jsonTypeArrayBegin;
+            // result = varNewVarLst(jsonToVarLstInternal(json, jsonPos));
+            break;
+
+        case ']':
+            result = jsonTypeArrayEnd;
             // result = varNewVarLst(jsonToVarLstInternal(json, jsonPos));
             break;
 
         // Object
         case '{':
-            result = jsonTypeObject;
+            result = jsonTypeObjectBegin;
+            // result = varNewKv(jsonToKvInternal(json, jsonPos));
+            break;
+
+        case '}':
+            result = jsonTypeObjectEnd;
             // result = varNewKv(jsonToKvInternal(json, jsonPos));
             break;
 
@@ -167,9 +188,159 @@ jsonReadTypeNext(JsonRead *const this)
             break;
     }
 
-    jsonReadConsumeWhiteSpace(this);
-
     FUNCTION_TEST_RETURN(result);
+}
+
+/***********************************************************************************************************************************
+Push/Pop a type on/off the stack
+***********************************************************************************************************************************/
+static void
+jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(STRING, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (jsonReadTypeNext(this) != type)
+        THROW_FMT(FormatError, "expected !!!TYPE but found '%s'", this->json);
+
+    // !!!
+    if (this->stack == NULL)
+    {
+        ASSERT(key == NULL);
+
+        if (jsonTypeScalar(type))
+            this->complete = true;
+        else
+        {
+            MEM_CONTEXT_BEGIN(objMemContext(this))
+            {
+                this->stack = lstNewP(sizeof(JsonReadStack));
+            }
+            MEM_CONTEXT_END();
+        }
+    }
+
+    if (!this->complete)
+    {
+        ASSERT((jsonTypeContainer(type) && key == NULL) || !lstEmpty(this->stack));
+
+        // if (!lstEmpty(this->stack))
+        // {
+        //     JsonWriteStack *const item = lstGetLast(this->stack);
+
+        //     if (key != NULL)
+        //     {
+        //         if (this->key)
+        //             THROW_FMT(FormatError, "key has already been defined");
+
+        //         // if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
+        //         //     THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
+
+        //         // MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
+        //         // {
+        //         //     strFree(item->keyLast);
+        //         //     item->keyLast = strDup(key);
+        //         // }
+        //         // MEM_CONTEXT_END();
+
+        //         this->key = true;
+        //     }
+        //     else
+        //     {
+        //         if (item->type == jsonTypeObjectBegin)
+        //         {
+        //             if (!this->key)
+        //                 THROW_FMT(FormatError, "key has not been defined");
+
+        //             this->key = false;
+        //         }
+        //     }
+
+        //     if (item->first && (item->type != jsonTypeObjectBegin || key != NULL))
+        //         strCatChr(this->string, ',');
+        //     else
+        //         item->first = true;
+        // }
+
+        if (jsonTypeContainer(type))
+            lstAdd(this->stack, &(JsonReadStack){.type = type});
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static void
+jsonReadPop(JsonRead *const this, const JsonType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    // Cannot write after complete
+    if (this->complete)
+        THROW(FormatError, "JSON read is complete");
+
+    ASSERT(this != NULL);
+    ASSERT(this->stack != NULL);
+    ASSERT(!lstEmpty(this->stack));
+    ASSERT(jsonTypeContainer(type));
+    ASSERT_DECLARE(const JsonReadStack *const container = lstGetLast(this->stack));
+    ASSERT(container->type == type);
+    // ASSERT(container->type != jsonTypeObjectEnd || this->key == false);
+
+    // if (type == jsonTypeObjectEnd)
+    // {
+    //     MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
+    //     {
+    //         strFree(((JsonWriteStack *)lstGetLast(this->stack))->keyLast);
+    //     }
+    //     MEM_CONTEXT_END();
+    // }
+
+    lstRemoveLast(this->stack);
+
+    if (lstEmpty(this->stack))
+        this->complete = true;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+jsonReadArrayBegin(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeArrayBegin, NULL);
+    this->json++;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+jsonReadArrayEnd(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPop(this, jsonTypeArrayBegin);
+    this->json++;
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -208,7 +379,7 @@ jsonWriteNew(JsonWriteNewParam param)
 Push/Pop a type on/off the stack
 ***********************************************************************************************************************************/
 static void
-jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const key)
+jsonWritePush(JsonWrite *const this, const JsonType jsonType, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
@@ -218,14 +389,14 @@ jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const
 
     ASSERT(this != NULL);
 
-    // Cannot build on a scalar
+    // Cannot write after complete
     if (this->complete)
-        THROW(FormatError, "JSON is complete and nothing more may be added");
+        THROW(FormatError, "JSON write is complete");
 
     // !!!
     if (this->stack == NULL)
     {
-        ASSERT(key == false);
+        ASSERT(key == NULL);
 
         if (jsonTypeScalar(jsonType))
             this->complete = true;
@@ -233,7 +404,7 @@ jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const
         {
             MEM_CONTEXT_BEGIN(objMemContext(this))
             {
-                this->stack = lstNewP(sizeof(JsonStack));
+                this->stack = lstNewP(sizeof(JsonWriteStack));
             }
             MEM_CONTEXT_END();
         }
@@ -245,7 +416,7 @@ jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const
 
         if (!lstEmpty(this->stack))
         {
-            JsonStack *const item = lstGetLast(this->stack);
+            JsonWriteStack *const item = lstGetLast(this->stack);
 
             if (key != NULL)
             {
@@ -266,7 +437,7 @@ jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const
             }
             else
             {
-                if (item->type == jsonTypeObject)
+                if (item->type == jsonTypeObjectBegin)
                 {
                     if (!this->key)
                         THROW_FMT(FormatError, "key has not been defined");
@@ -275,21 +446,21 @@ jsonTypePush(JsonWrite *const this, const JsonType jsonType, const String *const
                 }
             }
 
-            if (item->first && (item->type != jsonTypeObject || key != NULL))
+            if (item->first && (item->type != jsonTypeObjectBegin || key != NULL))
                 strCatChr(this->string, ',');
             else
                 item->first = true;
         }
 
         if (jsonTypeContainer(jsonType))
-            lstAdd(this->stack, &(JsonStack){.type = jsonType});
+            lstAdd(this->stack, &(JsonWriteStack){.type = jsonType});
     }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 static void
-jsonTypePop(JsonWrite *const this, const JsonType type)
+jsonWritePop(JsonWrite *const this, const JsonType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
@@ -300,15 +471,15 @@ jsonTypePop(JsonWrite *const this, const JsonType type)
     ASSERT(this->stack != NULL);
     ASSERT(!lstEmpty(this->stack));
     ASSERT(jsonTypeContainer(type));
-    ASSERT_DECLARE(const JsonStack *const container = lstGetLast(this->stack));
+    ASSERT_DECLARE(const JsonWriteStack *const container = lstGetLast(this->stack));
     ASSERT(container->type == type);
-    ASSERT(container->type != jsonTypeObject || this->key == false);
+    ASSERT(container->type != jsonTypeObjectBegin || this->key == false);
 
-    if (type == jsonTypeObject)
+    if (type == jsonTypeObjectBegin)
     {
         MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
         {
-            strFree(((JsonStack *)lstGetLast(this->stack))->keyLast);
+            strFree(((JsonWriteStack *)lstGetLast(this->stack))->keyLast);
         }
         MEM_CONTEXT_END();
     }
@@ -331,7 +502,7 @@ jsonWriteArrayBegin(JsonWrite *const this)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeArray, false);
+    jsonWritePush(this, jsonTypeArrayBegin, NULL);
     strCatChr(this->string, '[');
 
     FUNCTION_TEST_RETURN(this);
@@ -346,7 +517,7 @@ jsonWriteArrayEnd(JsonWrite *const this)
 
     ASSERT(this != NULL);
 
-    jsonTypePop(this, jsonTypeArray);
+    jsonWritePop(this, jsonTypeArrayBegin);
     strCatChr(this->string, ']');
 
     FUNCTION_TEST_RETURN(this);
@@ -363,7 +534,7 @@ jsonWriteBool(JsonWrite *const this, const bool value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeBool, false);
+    jsonWritePush(this, jsonTypeBool, NULL);
     strCat(this->string, value ? TRUE_STR : FALSE_STR);
 
     FUNCTION_TEST_RETURN(this);
@@ -380,7 +551,7 @@ jsonWriteInt(JsonWrite *const this, const int value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeNumber, false);
+    jsonWritePush(this, jsonTypeNumber, NULL);
 
     char working[CVT_BASE10_BUFFER_SIZE];
     strCatZN(this->string, working, cvtIntToZ(value, working, sizeof(working)));
@@ -399,7 +570,7 @@ jsonWriteInt64(JsonWrite *const this, const int64_t value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeNumber, false);
+    jsonWritePush(this, jsonTypeNumber, NULL);
 
     char working[CVT_BASE10_BUFFER_SIZE];
     strCatZN(this->string, working, cvtInt64ToZ(value, working, sizeof(working)));
@@ -418,7 +589,7 @@ jsonWriteJson(JsonWrite *const this, const String *const value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeString, false);
+    jsonWritePush(this, jsonTypeString, NULL);
 
     if (value == NULL)
         strCat(this->string, NULL_STR);
@@ -535,7 +706,7 @@ jsonWriteKey(JsonWrite *const this, const String *const key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    jsonTypePush(this, jsonTypeString, key);
+    jsonWritePush(this, jsonTypeString, key);
 
     jsonWriteStrInternal(this, key);
     strCatChr(this->string, ':');
@@ -567,7 +738,7 @@ jsonWriteObjectBegin(JsonWrite *const this)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeObject, false);
+    jsonWritePush(this, jsonTypeObjectBegin, NULL);
     strCatChr(this->string, '{');
 
     FUNCTION_TEST_RETURN(this);
@@ -582,7 +753,7 @@ jsonWriteObjectEnd(JsonWrite *const this)
 
     ASSERT(this != NULL);
 
-    jsonTypePop(this, jsonTypeObject);
+    jsonWritePop(this, jsonTypeObjectBegin);
     strCatChr(this->string, '}');
 
     FUNCTION_TEST_RETURN(this);
@@ -599,7 +770,7 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeString, false);
+    jsonWritePush(this, jsonTypeString, NULL);
 
     if (value == NULL)
         strCat(this->string, NULL_STR);
@@ -618,7 +789,7 @@ jsonWriteStrFmt(JsonWrite *const this, const char *const format, ...)
         FUNCTION_TEST_PARAM(STRINGZ, format);
     FUNCTION_TEST_END();
 
-    jsonTypePush(this, jsonTypeString, false);
+    jsonWritePush(this, jsonTypeString, NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -675,7 +846,7 @@ jsonWriteUInt(JsonWrite *const this, const unsigned int value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeNumber, false);
+    jsonWritePush(this, jsonTypeNumber, NULL);
 
     char working[CVT_BASE10_BUFFER_SIZE];
     strCatZN(this->string, working, cvtUIntToZ(value, working, sizeof(working)));
@@ -694,7 +865,7 @@ jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeNumber, false);
+    jsonWritePush(this, jsonTypeNumber, NULL);
 
     char working[CVT_BASE10_BUFFER_SIZE];
     strCatZN(this->string, working, cvtUInt64ToZ(value, working, sizeof(working)));
@@ -815,7 +986,7 @@ jsonWriteVar(JsonWrite *const this, const Variant *const value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeString, false);
+    jsonWritePush(this, jsonTypeString, NULL);
     jsonWriteVarInternal(this, value);
 
     FUNCTION_TEST_RETURN(this);
@@ -832,7 +1003,7 @@ jsonWriteZ(JsonWrite *const this, const char *const value)
 
     ASSERT(this != NULL);
 
-    jsonTypePush(this, jsonTypeString, false);
+    jsonWritePush(this, jsonTypeString, NULL);
 
     if (value == NULL)
         strCat(this->string, NULL_STR);

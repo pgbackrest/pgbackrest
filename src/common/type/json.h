@@ -11,11 +11,15 @@ JSON types
 ***********************************************************************************************************************************/
 typedef enum
 {
-    jsonTypeArray = 0,                                              // !!!
-    jsonTypeObject = 1,
     jsonTypeBool,
+    jsonTypeNull,
     jsonTypeNumber,
     jsonTypeString,
+
+    jsonTypeArrayBegin,                                             // !!!
+    jsonTypeArrayEnd,                                               // !!!
+    jsonTypeObjectBegin,
+    jsonTypeObjectEnd,
 } JsonType;
 
 /***********************************************************************************************************************************
@@ -28,6 +32,25 @@ typedef struct JsonWrite JsonWrite;
 Read Constructors
 ***********************************************************************************************************************************/
 JsonRead *jsonReadNew(const String *string);
+
+/***********************************************************************************************************************************
+Read Functions
+***********************************************************************************************************************************/
+// !!!
+JsonType jsonReadTypeNext(JsonRead *const this);
+
+// !!!
+void jsonReadArrayBegin(JsonRead *const this);
+void jsonReadArrayEnd(JsonRead *const this);
+
+/***********************************************************************************************************************************
+Read Destructor
+***********************************************************************************************************************************/
+__attribute__((always_inline)) static inline void
+jsonReadFree(JsonRead *const this)
+{
+    objFree(this);
+}
 
 /***********************************************************************************************************************************
 Write Constructors
@@ -153,13 +176,13 @@ Functions
 __attribute__((always_inline)) static inline bool
 jsonTypeContainer(const JsonType jsonType)
 {
-    return jsonType <= jsonTypeObject;
+    return jsonType >= jsonTypeArrayBegin;
 }
 
 __attribute__((always_inline)) static inline bool
 jsonTypeScalar(const JsonType jsonType)
 {
-    return jsonType > jsonTypeObject;
+    return jsonType < jsonTypeArrayBegin;
 }
 
 /***********************************************************************************************************************************
