@@ -356,7 +356,7 @@ jsonReadNumber(JsonRead *const this)
     FUNCTION_TEST_END();
 
     // Consume the - when present
-    bool intSigned = *this->json == '-';
+    const bool intSigned = *this->json == '-';
 
     if (intSigned)
         this->json++;
