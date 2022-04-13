@@ -381,6 +381,7 @@ jsonReadNumber(JsonRead *const this)
 
     this->json += digits;
 
+    // Return result
     if (intSigned)
         FUNCTION_TEST_RETURN((JsonReadNumberResult){.type = jsonNumberTypeI64, .value = {.i64 = cvtZToInt64(working)}});
 
