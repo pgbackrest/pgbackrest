@@ -231,33 +231,34 @@ jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
         {
             JsonWriteStack *const item = lstGetLast(this->stack);
 
-            if (key != NULL)
-            {
-                // if (this->key)
-                //     THROW_FMT(FormatError, "key has already been defined");
+            (void)key; // !!!
+            // if (key != NULL)
+            // {
+            //     if (this->key)
+            //         THROW_FMT(FormatError, "key has already been defined");
 
-                // if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
-                //     THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
+            //     if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
+            //         THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
 
-                // MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
-                // {
-                //     strFree(item->keyLast);
-                //     item->keyLast = strDup(key);
-                // }
-                // MEM_CONTEXT_END();
+            //     MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
+            //     {
+            //         strFree(item->keyLast);
+            //         item->keyLast = strDup(key);
+            //     }
+            //     MEM_CONTEXT_END();
 
-                // this->key = true;
-            }
-            else
-            {
-                // if (item->type == jsonTypeObjectBegin)
-                // {
-                //     if (!this->key)
-                //         THROW_FMT(FormatError, "key has not been defined");
+            //     this->key = true;
+            // }
+            // else
+            // {
+            //     if (item->type == jsonTypeObjectBegin)
+            //     {
+            //         if (!this->key)
+            //             THROW_FMT(FormatError, "key has not been defined");
 
-                //     this->key = false;
-                // }
-            }
+            //         this->key = false;
+            //     }
+            // }
 
             if (item->first /*&& (item->type != jsonTypeObjectBegin || key != NULL)*/)
             {
