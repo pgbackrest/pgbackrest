@@ -356,13 +356,10 @@ jsonReadNumber(JsonRead *const this)
     FUNCTION_TEST_END();
 
     // Consume the - when present
-    bool intSigned = false;
+    bool intSigned = *this->json == '-';
 
-    if (*this->json == '-')
-    {
-        intSigned = true;
+    if (intSigned)
         this->json++;
-    }
 
     // Consume all digits
     size_t digits = 0;
