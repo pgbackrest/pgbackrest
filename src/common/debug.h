@@ -324,14 +324,14 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
         FUNCTION_TEST_BEGIN();                                                                                                     \
         FUNCTION_TEST_END();
 
-    #define FUNCTION_TEST_RETURN(result)                                                                                           \
+    #define FUNCTION_TEST_RETURN(...)                                                                                              \
         do                                                                                                                         \
         {                                                                                                                          \
             /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                                                     \
             (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
                                                                                                                                    \
             STACK_TRACE_POP(true);                                                                                                 \
-            return result;                                                                                                         \
+            return __VA_ARGS__;                                                                                                    \
         }                                                                                                                          \
         while (0)
 
@@ -351,8 +351,8 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
     #define FUNCTION_TEST_PARAM_PP(typeMacroPrefix, param)
     #define FUNCTION_TEST_END()
     #define FUNCTION_TEST_VOID()
-    #define FUNCTION_TEST_RETURN(result)                                                                                           \
-        return result
+    #define FUNCTION_TEST_RETURN(...)                                                                                              \
+        return __VA_ARGS__
     #define FUNCTION_TEST_RETURN_VOID()
 #endif // DEBUG_TEST_TRACE_MACRO
 

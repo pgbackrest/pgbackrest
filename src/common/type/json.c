@@ -328,6 +328,187 @@ jsonReadPop(JsonRead *const this, const JsonType type)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Read JSON number
+***********************************************************************************************************************************/
+typedef enum
+{
+    jsonNumberTypeU64,
+    jsonNumberTypeI64,
+} JsonNumberType;
+
+typedef struct JsonReadNumberResult
+{
+    JsonNumberType type;
+
+    union
+    {
+        int64_t i64;
+        uint64_t u64;
+    } value;
+} JsonReadNumberResult;
+
+static JsonReadNumberResult
+jsonReadNumber(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    // Consume the - when present
+    bool intSigned = false;
+
+    if (*this->json == '-')
+    {
+        intSigned = true;
+        this->json++;
+    }
+
+    // Consume all digits
+    size_t digits = 0;
+
+    while (isdigit(this->json[digits]))
+        digits++;
+
+    // Invalid if no digits were found
+    if (digits == 0)
+        THROW(JsonFormatError, "no digits found");
+
+    // Copy to buffer
+    if (digits >= CVT_BASE10_BUFFER_SIZE)
+        THROW(JsonFormatError, "invalid number");
+
+    char working[CVT_BASE10_BUFFER_SIZE];
+    strncpy(working, this->json - intSigned, digits + intSigned);
+    working[digits + intSigned] = '\0';
+
+    this->json += digits;
+
+    if (intSigned)
+        FUNCTION_TEST_RETURN((JsonReadNumberResult){.type = jsonNumberTypeI64, .value = {.i64 = cvtZToInt64(working)}});
+
+    FUNCTION_TEST_RETURN((JsonReadNumberResult){.type = jsonNumberTypeU64, .value = {.u64 = cvtZToUInt64(working)}});
+}
+
+/***********************************************************************************************************************************
+Read JSON string
+***********************************************************************************************************************************/
+static String *
+jsonReadStrInternal(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *const result = strNew();
+    // if (json[*jsonPos] != '"')
+    //     THROW_FMT(JsonFormatError, "expected '\"' at '%s'", json + *jsonPos);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Skip the beginning "
+        this->json++;
+
+        // Track portion of string with no escapes
+        const char *noEscape = NULL;
+        size_t noEscapeSize = 0;
+
+        while (*this->json != '"')
+        {
+            if (*this->json == '\\')
+            {
+                // Copy portion of string without escapes
+                if (noEscapeSize > 0)
+                {
+                    strCatZN(result, noEscape, noEscapeSize);
+                    noEscapeSize = 0;
+                }
+
+                this->json++;
+
+                switch (*this->json)
+                {
+                    case '"':
+                        strCatChr(result, '"');
+                        break;
+
+                    case '\\':
+                        strCatChr(result, '\\');
+                        break;
+
+                    case '/':
+                        strCatChr(result, '/');
+                        break;
+
+                    case 'n':
+                        strCatChr(result, '\n');
+                        break;
+
+                    case 'r':
+                        strCatChr(result, '\r');
+                        break;
+
+                    case 't':
+                        strCatChr(result, '\t');
+                        break;
+
+                    case 'b':
+                        strCatChr(result, '\b');
+                        break;
+
+                    case 'f':
+                        strCatChr(result, '\f');
+                        break;
+
+                    case 'u':
+                    {
+                        this->json++;
+
+                        // We don't know how to decode anything except ASCII so fail if it looks like Unicode
+                        if (strncmp(this->json, "00", 2) != 0)
+                            THROW_FMT(JsonFormatError, "unable to decode '%.4s'", this->json);
+
+                        // Decode char
+                        this->json += 2;
+                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewZN(this->json, 2)), 16));
+                        this->json++;
+
+                        break;
+                    }
+
+                    default:
+                        THROW_FMT(JsonFormatError, "invalid escape character '%c'", *this->json);
+                }
+            }
+            else
+            {
+                if (*this->json == '\0')
+                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
+
+                // If escape string is zero size then start it
+                if (noEscapeSize == 0)
+                    noEscape = this->json;
+
+                noEscapeSize++;
+            }
+
+            this->json++;
+        };
+
+        // Copy portion of string without escapes
+        if (noEscapeSize > 0)
+            strCatZN(result, noEscape, noEscapeSize);
+
+        // Advance the character array pointer to the next element after the string
+        this->json++;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 /**********************************************************************************************************************************/
 void
 jsonReadArrayBegin(JsonRead *const this)
@@ -389,69 +570,6 @@ jsonReadBool(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-typedef enum
-{
-    jsonNumberTypeU64,
-    jsonNumberTypeI64,
-} JsonNumberType;
-
-typedef struct JsonReadNumberResult
-{
-    JsonNumberType type;
-
-    union
-    {
-        int64_t i64;
-        uint64_t u64;
-    } value;
-} JsonReadNumberResult;
-
-static JsonReadNumberResult
-jsonReadNumber(JsonRead *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(JSON_READ, this);
-    FUNCTION_TEST_END();
-
-    // Consume the - when present
-    bool intSigned = false;
-
-    if (*this->json == '-')
-    {
-        intSigned = true;
-        this->json++;
-    }
-
-    // Consume all digits
-    size_t digits = 0;
-
-    while (isdigit(this->json[digits]))
-        digits++;
-
-    // Invalid if no digits were found
-    if (digits == 0)
-        THROW(JsonFormatError, "no digits found");
-
-    // Copy to buffer
-    if (digits >= CVT_BASE10_BUFFER_SIZE)
-        THROW(JsonFormatError, "buffer overflow");
-
-    char working[CVT_BASE10_BUFFER_SIZE];
-    strncpy(working, this->json - intSigned, digits + intSigned);
-    working[digits + intSigned] = '\0';
-
-    this->json += digits;
-
-    JsonReadNumberResult result;
-
-    if (intSigned)
-        result = (JsonReadNumberResult){.type = jsonNumberTypeI64, .value = {.i64 = cvtZToInt64(working)}};
-    else
-        result = (JsonReadNumberResult){.type = jsonNumberTypeU64, .value = {.u64 = cvtZToUInt64(working)}};
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 int
 jsonReadInt(JsonRead *const this)
 {
@@ -574,122 +692,6 @@ jsonReadUInt64(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-static String *
-jsonReadStrInternal(JsonRead *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(JSON_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    String *const result = strNew();
-    // if (json[*jsonPos] != '"')
-    //     THROW_FMT(JsonFormatError, "expected '\"' at '%s'", json + *jsonPos);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Skip the beginning "
-        this->json++;
-
-        // Track portion of string with no escapes
-        const char *noEscape = NULL;
-        size_t noEscapeSize = 0;
-
-        while (*this->json != '"')
-        {
-            if (*this->json == '\\')
-            {
-                // Copy portion of string without escapes
-                if (noEscapeSize > 0)
-                {
-                    strCatZN(result, noEscape, noEscapeSize);
-                    noEscapeSize = 0;
-                }
-
-                this->json++;
-
-                switch (*this->json)
-                {
-                    case '"':
-                        strCatChr(result, '"');
-                        break;
-
-                    case '\\':
-                        strCatChr(result, '\\');
-                        break;
-
-                    case '/':
-                        strCatChr(result, '/');
-                        break;
-
-                    case 'n':
-                        strCatChr(result, '\n');
-                        break;
-
-                    case 'r':
-                        strCatChr(result, '\r');
-                        break;
-
-                    case 't':
-                        strCatChr(result, '\t');
-                        break;
-
-                    case 'b':
-                        strCatChr(result, '\b');
-                        break;
-
-                    case 'f':
-                        strCatChr(result, '\f');
-                        break;
-
-                    case 'u':
-                    {
-                        this->json++;
-
-                        // We don't know how to decode anything except ASCII so fail if it looks like Unicode
-                        if (strncmp(this->json, "00", 2) != 0)
-                            THROW_FMT(JsonFormatError, "unable to decode '%.4s'", this->json);
-
-                        // Decode char
-                        this->json += 2;
-                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewZN(this->json, 2)), 16));
-                        this->json++;
-
-                        break;
-                    }
-
-                    default:
-                        THROW_FMT(JsonFormatError, "invalid escape character '%c'", *this->json);
-                }
-            }
-            else
-            {
-                if (*this->json == '\0')
-                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
-
-                // If escape string is zero size then start it
-                if (noEscapeSize == 0)
-                    noEscape = this->json;
-
-                noEscapeSize++;
-            }
-
-            this->json++;
-        };
-
-        // Copy portion of string without escapes
-        if (noEscapeSize > 0)
-            strCatZN(result, noEscape, noEscapeSize);
-
-        // Advance the character array pointer to the next element after the string
-        this->json++;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 String *
 jsonReadStr(JsonRead *const this)
 {
