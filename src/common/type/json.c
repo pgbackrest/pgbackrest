@@ -114,10 +114,6 @@ jsonReadTypeNext(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    // Cannot read after complete
-    if (this->complete)
-        THROW(FormatError, "JSON read is complete");
-
     jsonReadConsumeWhiteSpace(this);
 
     // There should be some data
@@ -206,6 +202,10 @@ jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
 
     ASSERT(this != NULL);
 
+    // Cannot read after complete
+    if (this->complete)
+        THROW(FormatError, "JSON read is complete");
+
     // !!!
     if (this->stack == NULL)
     {
@@ -231,33 +231,33 @@ jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
         {
             JsonWriteStack *const item = lstGetLast(this->stack);
 
-            // if (key != NULL)
-            // {
-            //     if (this->key)
-            //         THROW_FMT(FormatError, "key has already been defined");
+            if (key != NULL)
+            {
+                // if (this->key)
+                //     THROW_FMT(FormatError, "key has already been defined");
 
-            //     if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
-            //         THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
+                // if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
+                //     THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
 
-            //     MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
-            //     {
-            //         strFree(item->keyLast);
-            //         item->keyLast = strDup(key);
-            //     }
-            //     MEM_CONTEXT_END();
+                // MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
+                // {
+                //     strFree(item->keyLast);
+                //     item->keyLast = strDup(key);
+                // }
+                // MEM_CONTEXT_END();
 
-            //     this->key = true;
-            // }
-            // else
-            // {
-            //     if (item->type == jsonTypeObjectBegin)
-            //     {
-            //         if (!this->key)
-            //             THROW_FMT(FormatError, "key has not been defined");
+                // this->key = true;
+            }
+            else
+            {
+                // if (item->type == jsonTypeObjectBegin)
+                // {
+                //     if (!this->key)
+                //         THROW_FMT(FormatError, "key has not been defined");
 
-            //         this->key = false;
-            //     }
-            // }
+                //     this->key = false;
+                // }
+            }
 
             if (item->first /*&& (item->type != jsonTypeObjectBegin || key != NULL)*/)
             {
@@ -570,6 +570,137 @@ jsonReadUInt64(JsonRead *const this)
         THROW(FormatError, "number is out of range for uint64");
 
     FUNCTION_TEST_RETURN(number.value.u64);
+}
+
+/**********************************************************************************************************************************/
+static String *
+jsonReadStrInternal(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *const result = strNew();
+    // if (json[*jsonPos] != '"')
+    //     THROW_FMT(JsonFormatError, "expected '\"' at '%s'", json + *jsonPos);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Skip the beginning "
+        this->json++;
+
+        // Track portion of string with no escapes
+        const char *noEscape = NULL;
+        size_t noEscapeSize = 0;
+
+        while (*this->json != '"')
+        {
+            if (*this->json == '\\')
+            {
+                // Copy portion of string without escapes
+                if (noEscapeSize > 0)
+                {
+                    strCatZN(result, noEscape, noEscapeSize);
+                    noEscapeSize = 0;
+                }
+
+                this->json++;
+
+                switch (*this->json)
+                {
+                    case '"':
+                        strCatChr(result, '"');
+                        break;
+
+                    case '\\':
+                        strCatChr(result, '\\');
+                        break;
+
+                    case '/':
+                        strCatChr(result, '/');
+                        break;
+
+                    case 'n':
+                        strCatChr(result, '\n');
+                        break;
+
+                    case 'r':
+                        strCatChr(result, '\r');
+                        break;
+
+                    case 't':
+                        strCatChr(result, '\t');
+                        break;
+
+                    case 'b':
+                        strCatChr(result, '\b');
+                        break;
+
+                    case 'f':
+                        strCatChr(result, '\f');
+                        break;
+
+                    case 'u':
+                    {
+                        this->json++;
+
+                        // We don't know how to decode anything except ASCII so fail if it looks like Unicode
+                        if (strncmp(this->json, "00", 2) != 0)
+                            THROW_FMT(JsonFormatError, "unable to decode '%.4s'", this->json);
+
+                        // Decode char
+                        this->json += 2;
+                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewZN(this->json, 2)), 16));
+                        this->json++;
+
+                        break;
+                    }
+
+                    default:
+                        THROW_FMT(JsonFormatError, "invalid escape character '%c'", *this->json);
+                }
+            }
+            else
+            {
+                if (*this->json == '\0')
+                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
+
+                // If escape string is zero size then start it
+                if (noEscapeSize == 0)
+                    noEscape = this->json;
+
+                noEscapeSize++;
+            }
+
+            this->json++;
+        };
+
+        // Copy portion of string without escapes
+        if (noEscapeSize > 0)
+            strCatZN(result, noEscape, noEscapeSize);
+
+        // Advance the character array pointer to the next element after the string
+        this->json++;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+String *
+jsonReadStr(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeString, NULL);
+
+    FUNCTION_TEST_RETURN(jsonReadStrInternal(this));
 }
 
 /**********************************************************************************************************************************/
@@ -1600,7 +1731,7 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
             strCatZN(result, noEscape, noEscapeSize);
 
         // Advance the character array pointer to the next element after the string
-        (*jsonPos)++;;
+        (*jsonPos)++;
     }
     MEM_CONTEXT_TEMP_END();
 

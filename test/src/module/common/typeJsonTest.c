@@ -242,9 +242,21 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("JsonRead"))
     {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("scalar");
+
         JsonRead *read = NULL;
 
-        const String *json = STRDEF("\t\r\n [\t{\r}, 123, 18446744073709551615, -1, -9223372036854775807, true, false\n]]");
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("true")), "new read");
+
+        TEST_RESULT_BOOL(jsonReadBool(read), true, "bool true");
+        TEST_ERROR(jsonReadBool(read), FormatError, "JSON read is complete");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("scalar");
+
+        const String *json = STRDEF(
+            "\t\r\n [\t{\r}, \"abc\", 123, 18446744073709551615, -1, -9223372036854775807, true, false\n]]");
         TEST_ASSIGN(read, jsonReadNew(json), "new read");
 
         TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
@@ -253,6 +265,7 @@ testRun(void)
         TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
         TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
 
+        TEST_RESULT_STR_Z(jsonReadStr(read), "abc", "str");
         TEST_RESULT_UINT(jsonReadUInt(read), 123, "uint");
         TEST_RESULT_UINT(jsonReadUInt64(read), 18446744073709551615U, "uint64");
         TEST_RESULT_INT(jsonReadInt(read), -1, "int");
