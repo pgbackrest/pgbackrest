@@ -112,8 +112,7 @@ testRun(void)
                 };
 
                 TEST_RESULT_VOID(
-                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
-                    "run process loop");
+                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), "run process loop");
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
             }
             HRN_FORK_CHILD_END();

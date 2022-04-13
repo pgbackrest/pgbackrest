@@ -52,14 +52,14 @@ cmdOption(void)
 
                 if (!strLstEmpty(commandParamList))
                 {
-                    strCatFmt(cmdOptionStr, " [");
+                    strCatZ(cmdOptionStr, " [");
 
                     for (unsigned int commandParamIdx = 0; commandParamIdx < strLstSize(commandParamList); commandParamIdx++)
                     {
                         const String *commandParam = strLstGet(commandParamList, commandParamIdx);
 
                         if (commandParamIdx != 0)
-                            strCatFmt(cmdOptionStr, ", ");
+                            strCatZ(cmdOptionStr, ", ");
 
                         if (strchr(strZ(commandParam), ' ') != NULL)
                             commandParam = strNewFmt("\"%s\"", strZ(commandParam));
@@ -67,7 +67,7 @@ cmdOption(void)
                         strCat(cmdOptionStr, commandParam);
                     }
 
-                    strCatFmt(cmdOptionStr, "]");
+                    strCatZ(cmdOptionStr, "]");
                 }
 
                 // Loop though options and add the ones that are interesting

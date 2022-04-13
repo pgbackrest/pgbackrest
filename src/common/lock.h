@@ -57,5 +57,34 @@ typedef struct LockWriteDataParam
     lockWriteData(lockType, (LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
 
 void lockWriteData(LockType lockType, LockWriteDataParam param);
+// Read a lock file held by another process to get information about what the process is doing. This is a lower-level version to use
+// when the lock file name is already known and the lock file may need to be removed.
+typedef enum
+{
+    lockReadStatusMissing,                                          // File is missing
+    lockReadStatusUnlocked,                                         // File is not locked
+    lockReadStatusInvalid,                                          // File contents are invalid
+    lockReadStatusValid,                                            // File is locked and contexts are valid
+} LockReadStatus;
+
+typedef struct LockReadResult
+{
+    LockReadStatus status;                                          // Status of file read
+    LockData data;                                                  // Lock data
+} LockReadResult;
+
+typedef struct LockReadFileParam
+{
+    VAR_PARAM_HEADER;
+    bool remove;                                                    // Remove the lock file after locking/reading
+} LockReadFileParam;
+
+#define lockReadFileP(lockFile, ...)                                                                                               \
+    lockReadFile(lockFile, (LockReadFileParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+LockReadResult lockReadFile(const String *lockFile, LockReadFileParam param);
+
+// Wrapper that generates the lock filename before calling lockReadFile()
+LockReadResult lockRead(const String *lockPath, const String *stanza, LockType lockType);
 
 #endif

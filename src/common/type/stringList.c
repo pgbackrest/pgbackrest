@@ -24,7 +24,7 @@ strLstAddInternal(StringList *const this, String *const string)
 /***********************************************************************************************************************************
 Internal insert -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline  String *
+__attribute__((always_inline)) static inline String *
 strLstInsertInternal(StringList *const this, const unsigned int listIdx, String *const string)
 {
     return *(String **)lstInsert((List *)this, listIdx, &string);
@@ -86,7 +86,7 @@ strLstNewVarLst(const VariantList *sourceList)
     // Create the list
     StringList *this = NULL;
 
-    if  (sourceList != NULL)
+    if (sourceList != NULL)
     {
         this = strLstNew();
 

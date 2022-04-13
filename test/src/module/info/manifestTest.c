@@ -1062,7 +1062,7 @@ testRun(void)
         OBJ_NEW_BEGIN(Manifest)
         {
             manifestPrior = manifestNewInternal();
-            manifestPrior->pub.data.backupLabel = STRDEF("20190101-010101F");
+            manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");
 
             manifestFileAdd(
                 manifestPrior,
@@ -1747,9 +1747,12 @@ testRun(void)
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;", "find special file");
         TEST_RESULT_BOOL(manifestFileExists(manifest, STRDEF("bogus")), false, "manifest file does not exist");
 
-        TEST_RESULT_VOID(
-            manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "", NULL, false, false, NULL, 0, 0),
-            "update file");
+        // Munge the sha1 checksum to be blank
+        ManifestFilePack **const fileMungePack = manifestFilePackFindInternal(manifest, STRDEF("pg_data/postgresql.conf"));
+        ManifestFile fileMunge = manifestFileUnpack(manifest, *fileMungePack);
+        fileMunge.checksumSha1[0] = '\0';
+        manifestFilePackUpdate(manifest, fileMungePack, &fileMunge);
+
         TEST_RESULT_VOID(
             manifestFileUpdate(
                 manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL, 0, 0),

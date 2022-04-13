@@ -127,7 +127,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
                 PROTOCOL_GREETING_VERSION_STR, STRDEF(PROJECT_VERSION),
             };
 
-            for (unsigned int expectedIdx = 0; expectedIdx < sizeof(expected) / sizeof(char *) / 2; expectedIdx++)
+            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected) / 2; expectedIdx++)
             {
                 const String *expectedKey = expected[expectedIdx * 2];
                 const String *expectedValue = expected[expectedIdx * 2 + 1];

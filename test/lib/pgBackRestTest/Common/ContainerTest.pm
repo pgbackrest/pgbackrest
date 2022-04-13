@@ -131,9 +131,10 @@ sub containerWrite
 
     # Write the image
     $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
-    executeTest('docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') .
-                " -f ${strTempPath}/${strImage} -t ${strTag} ${strTempPath}",
-                {bSuppressStdErr => true});
+    executeTest(
+        'docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
+            $oStorageDocker->pathGet('test'),
+        {bSuppressStdErr => true, bShowOutputAsync => (logLevel())[1] eq DETAIL});
 }
 
 ####################################################################################################################################
@@ -282,7 +283,7 @@ sub caSetup
         $strScript .=
             "    update-ca-trust extract";
     }
-    elsif ($strOsBase  eq VM_OS_BASE_DEBIAN)
+    elsif ($strOsBase eq VM_OS_BASE_DEBIAN)
     {
         $strScript .=
             "    update-ca-certificates";
@@ -468,7 +469,7 @@ sub containerBuild
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
         {
-            $strScript .=  sectionHeader() .
+            $strScript .= sectionHeader() .
                 "# Install PostgreSQL packages\n";
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
@@ -527,12 +528,12 @@ sub containerBuild
                         my $strDbVersionNoDot = $strDbVersion;
                         $strDbVersionNoDot =~ s/\.//;
 
-                        $strScript .=  " postgresql${strDbVersionNoDot}-server";
+                        $strScript .= " postgresql${strDbVersionNoDot}-server";
 
                         # Add development package for the latest version of postgres
                         if ($strDbVersion eq @{$oOS->{&VM_DB}}[-1])
                         {
-                            $strScript .=  " postgresql${strDbVersionNoDot}-devel";
+                            $strScript .= " postgresql${strDbVersionNoDot}-devel";
                         }
                     }
                     else
@@ -553,7 +554,7 @@ sub containerBuild
         #---------------------------------------------------------------------------------------------------------------------------
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
-        $strScript .=  sectionHeader() .
+        $strScript .= sectionHeader() .
             "# Cleanup\n";
 
             $strScript .=
@@ -624,7 +625,7 @@ sub containerBuild
             $strScript .=
                 sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MTR});
 
-            $strScript .=  sectionHeader() .
+            $strScript .= sectionHeader() .
                 "# Make " . TEST_USER . " home dir readable\n" .
                 '    chmod g+r,g+x /home/' . TEST_USER;
 

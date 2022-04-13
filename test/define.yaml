@@ -413,7 +413,9 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
-        total: 2
+        total: 3
+        feature: STORAGE
+        harness: storage
 
         coverage:
           - common/lock
@@ -491,8 +493,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
         total: 22
-        feature: STORAGE
-        harness: storage
 
         coverage:
           - storage/cifs/helper
@@ -823,6 +823,7 @@ unit:
         total: 4
 
         coverage:
+          - command/repo/common
           - command/repo/get
           - command/repo/ls
           - command/repo/put

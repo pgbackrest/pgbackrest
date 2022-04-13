@@ -174,8 +174,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "pg1-path is source config");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "delta not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "delta is source config");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "archive-check is not set");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "archive-copy is not set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptArchiveCheck), false, "archive-check is false");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptArchiveCopy), false, "archive-copy is false");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "repo-hardlink is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
@@ -614,7 +614,7 @@ testRun(void)
         TEST_TITLE("option resolve list contains an entry for every option");
 
         TEST_RESULT_INT(
-            sizeof(optionResolveOrder) / sizeof(ConfigOption), CFG_OPTION_TOTAL,
+            LENGTH_OF(optionResolveOrder), CFG_OPTION_TOTAL,
             "check that the option resolve list contains an entry for every option");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1017,7 +1017,16 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "999999999999999999p");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
-            "'999999999999999999p' is out of range for 'manifest-save-threshold' option");
+            "'999999999999999999p' is not valid for 'manifest-save-threshold' option");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "999t");
+        TEST_ERROR(
+            configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidValueError,
+            "'999t' is out of range for 'manifest-save-threshold' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("value missing");
@@ -1686,8 +1695,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "delta not set");
         TEST_RESULT_BOOL(varBool(cfgOptionVar(cfgOptDelta)), true, "delta as variant");
         TEST_RESULT_INT(cfgOptionSource(cfgOptDelta), cfgSourceConfig, "delta is source config");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCheck), false, "archive-check is not set");
-        TEST_RESULT_BOOL(cfgOptionTest(cfgOptArchiveCopy), false, "archive-copy is not set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptArchiveCheck), false, "archive-check is false");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptArchiveCopy), false, "archive-copy is false");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptRepoHardlink), true, "repo-hardlink is set");
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptRepoHardlink), "true", "repo-hardlink display is true");
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");

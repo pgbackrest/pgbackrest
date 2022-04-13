@@ -254,7 +254,7 @@ sub run
         $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_VERSION} = PROJECT_VERSION;
         $oManifest{&INI_SECTION_BACKREST}{&INI_KEY_FORMAT} = REPOSITORY_FORMAT;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK} = JSON::PP::false;
-        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::true;
+        $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY} = JSON::PP::false;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BUFFER_SIZE} = 16384;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} = JSON::PP::true;
@@ -784,7 +784,8 @@ sub run
             $oHostBackup->manifestMunge(
                 basename($strResumePath),
                 {&MANIFEST_SECTION_TARGET_FILE =>
-                    {(&MANIFEST_TARGET_PGDATA . '/badchecksum.txt') => {&MANIFEST_SUBKEY_CHECKSUM => BOGUS}}},
+                    {(&MANIFEST_TARGET_PGDATA . '/badchecksum.txt') =>
+                        {&MANIFEST_SUBKEY_CHECKSUM => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}},
                 false);
         }
         # Change contents of resumed file without changing size so it will throw a nasty error about the repo having been corrupted
@@ -960,10 +961,12 @@ sub run
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'compress-type' => $strCompressType}});
         }
 
-        # Enable hardlinks (except for s3) to ensure a warning is raised
+        # Enable hardlinks (except for s3) to show they can be enabled after a full backup
         if ($strStorage eq POSIX)
         {
             $oHostBackup->configUpdate({&CFGDEF_SECTION_GLOBAL => {'repo1-hardlink' => 'y'}});
+            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::true;
+            $oHostBackup->{bHardLink} = true;
         }
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = 1;
@@ -987,15 +990,9 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_FULL;
 
-        # Now the compression and hardlink changes will take effect
+        # Now the compression changes will take effect
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS} = JSON::PP::true;
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE} = $strCompressType;
-
-        if ($strStorage eq POSIX)
-        {
-            $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_HARDLINK} = JSON::PP::true;
-            $oHostBackup->{bHardLink} = true;
-        }
 
         $oHostDbPrimary->manifestReference(\%oManifest);
 

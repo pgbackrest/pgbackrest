@@ -134,7 +134,7 @@ testRun(void)
         TEST_TITLE("set error handler");
 
         static const ErrorHandlerFunction testErrorHandlerList[] = {testErrorHandler};
-        errorHandlerSet(testErrorHandlerList, sizeof(testErrorHandlerList) / sizeof(ErrorHandlerFunction));
+        errorHandlerSet(testErrorHandlerList, LENGTH_OF(testErrorHandlerList));
 
         assert(errorContext.handlerList[0] == testErrorHandler);
         assert(errorContext.handlerTotal == 1);
@@ -403,6 +403,9 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN(.expectedExitStatus = UnhandledError.code)
             {
+                // Redirect stderr to stdout (we do not care about the output here since coverage will tell us we hit the code)
+                stderr = stdout;
+
                 THROW(TestChildError, "does not get caught!");
             }
             HRN_FORK_CHILD_END();

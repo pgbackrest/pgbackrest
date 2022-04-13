@@ -8,7 +8,7 @@ use warnings FATAL => qw(all);
 use Carp qw(confess);
 
 use Exporter qw(import);
-    our @EXPORT =  qw();
+    our @EXPORT = qw();
 
 use pgBackRestDoc::Common::Log;
 

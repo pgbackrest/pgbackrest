@@ -611,7 +611,7 @@ testRun(void)
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
-    hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     // The tests expect the timezone to be UTC
     setenv("TZ", "UTC", true);
@@ -1748,7 +1748,7 @@ testRun(void)
             manifestResume = manifestNewInternal();
             manifestResume->pub.info = infoNew(NULL);
             manifestResume->pub.data.backupType = backupTypeFull;
-            manifestResume->pub.data.backupLabel = STRDEF("20191003-105320F");
+            manifestResume->pub.data.backupLabel = strNewZ("20191003-105320F");
             manifestResume->pub.data.pgVersion = PG_VERSION_12;
         }
         OBJ_NEW_END();
@@ -1988,7 +1988,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
         hrnCfgArgRawBool(argList, cfgOptCompress, true);
-        hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -1998,8 +1997,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
-            "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]\n"
-            "P00   WARN: diff backup cannot alter hardlink option to 'true', reset to value in [FULL-1]");
+            "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2299,7 +2297,6 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
-            hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -3157,12 +3154,12 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16K");
-            hrnCfgArgRawBool(argList, cfgOptBundle, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Set to a smaller values than the defaults allow
-            cfgOptionSet(cfgOptBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
-            cfgOptionSet(cfgOptBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
+            cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
+            cfgOptionSet(cfgOptRepoBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
 
             // Zeroed file which passes page checksums
             Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);

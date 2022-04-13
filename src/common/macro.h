@@ -85,4 +85,31 @@ Adapted from PostgreSQL src/include/c.h.
         ((type)(expression))
 #endif
 
+/***********************************************************************************************************************************
+Determine the alignment of a data type
+
+This macro reduces to a constant so it is safe to use anywhere a constant is allowed, e.g. a switch statement case.
+***********************************************************************************************************************************/
+#define ALIGN_OF(type) ((size_t)&((struct {char c; type t;} *)0)->t)
+
+/***********************************************************************************************************************************
+Determine the byte offset required to align a type after an arbitrary number of bytes
+
+This is useful for determining how to correctly align a type in a buffer that is being dynamically built up like a struct.
+***********************************************************************************************************************************/
+#define ALIGN_OFFSET(type, bytes) (ALIGN_OF(type) - ((bytes) % ALIGN_OF(type)))
+
+/***********************************************************************************************************************************
+Determine the length of an array that can be determined at compile time
+
+For this macro to work correctly the array must be declared like:
+
+int intList[] = {0, 1};
+
+It will not work for an array declared like:
+
+int *intList;
+***********************************************************************************************************************************/
+#define LENGTH_OF(array) (sizeof(array) / sizeof((array)[0]))
+
 #endif

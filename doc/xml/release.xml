@@ -16,7 +16,58 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.39dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <commit subject="Refactor target type checking for clarity in restore module."/>
+                        <commit subject="Auto-select backup for restore command --type=lsn.">
+                            <github-pull-request id="1706"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Auto-select backup for <cmd>restore</cmd> command <br-option>--type=lsn</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1711"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Suppress existing WAL warning when <br-option>archive-mode-check</br-option> is disabled.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1685"/>
+                        <github-pull-request id="1691"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="nuno.pires"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <proper>AWS</proper> <proper>IMDSv2</proper> support.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1699"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow <br-option>repo-hardlink</br-option> option to be changed after full backup.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1679"/>
 
@@ -26,6 +77,17 @@
                         </release-item-contributor-list>
 
                         <p>Increase precision of percent complete logging for <cmd>backup</cmd> and <cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1697"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve path validation for <cmd>repo-*</cmd> commands.</p>
                     </release-item>
 
                     <release-item>
@@ -64,14 +126,51 @@
                             <github-pull-request id="1683"/>
                         </commit>
                         <commit subject="Add bundle logging to backup command."/>
+                        <commit subject="Rename bundle-* options to repo-bundle-*.">
+                            <github-pull-request id="1694"/>
+                        </commit>
+                        <commit subject="Disable repo-hardlink option when repo-bundle option is enabled."/>
+                        <commit subject="Allow files that become zero-length after the backup manifest is built."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="reid.thompson"/>
                             <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="chris.bandy"/>
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Set option-archive-copy flag in backup.manifest to false when offline."/>
+                        <commit subject="Move cfgParseOptionalFilterDepend() and add comment block."/>
+                        <commit subject="Add default for boolean options with unresolved dependencies.">
+                            <github-pull-request id="1710"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add default for boolean options with unresolved dependencies.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Add lockRead*() functions for reading locks from another process.">
+                            <github-pull-request id="1712"/>
+                        </commit>
+                        <commit subject="Throw error when unable to read process from lock file.">
+                            <github-pull-request id="1715"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Lock module refactoring.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -80,10 +179,27 @@
                 <release-bug-list>
                     <release-item>
                         <release-item-contributor-list>
+                            <release-item-contributor id="abubakar.mohammed"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect reference to <id>stanza-update</id> in the user guide.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
 
                         <p>Fix example for <br-option>repo-gcs-key-type</br-option> option in configuration reference.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix <br-option>tls-server-auth</br-option> example and add clarifications.</p>
                     </release-item>
                 </release-bug-list>
             </release-doc-list>
@@ -10764,6 +10880,11 @@
         </contributor>
 
         <!-- The order of other contributors is alpha by name -->
+        <contributor id="abubakar.mohammed">
+            <contributor-name-display>Abubakar Mohammed</contributor-name-display>
+            <contributor-id type="github">abubakarm94</contributor-id>
+        </contributor>
+
         <contributor id="adam.brusselback">
             <contributor-name-display>Adam Brusselback</contributor-name-display>
             <contributor-id type="github">Tostino</contributor-id>
@@ -11417,6 +11538,11 @@
         <contributor id="nj.baliyan">
             <contributor-name-display>Nj Baliyan</contributor-name-display>
             <contributor-id type="github">nj3110</contributor-id>
+        </contributor>
+
+        <contributor id="nuno.pires">
+            <contributor-name-display>Nuno Pires</contributor-name-display>
+            <contributor-id type="github">nunopi</contributor-id>
         </contributor>
 
         <contributor id="patrick.mclaughlin">

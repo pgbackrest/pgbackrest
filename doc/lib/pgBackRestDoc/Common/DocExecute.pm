@@ -282,7 +282,7 @@ sub execute
                             $iFilterFirst = $iFilterFirst < 0 ? 0 : $iFilterFirst;
 
                             # Don't repeat lines that have already been output
-                            $iFilterFirst  = $iFilterFirst <= $iLastOutput ? $iLastOutput + 1 : $iFilterFirst;
+                            $iFilterFirst = $iFilterFirst <= $iLastOutput ? $iLastOutput + 1 : $iFilterFirst;
 
                             # Determine the last line to output
                             my $iFilterLast = $iIndex + $iFilterContext;

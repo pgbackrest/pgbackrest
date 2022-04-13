@@ -70,6 +70,7 @@ SRCS = \
 	command/control/start.c \
 	command/control/stop.c \
 	command/local/local.c \
+	command/repo/common.c \
 	command/repo/create.c \
 	command/repo/get.c \
 	command/repo/ls.c \

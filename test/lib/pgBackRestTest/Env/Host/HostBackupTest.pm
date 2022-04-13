@@ -180,7 +180,7 @@ sub new
     $self->{strLockPath} = $self->testPath() . '/' . HOST_PATH_LOCK;
 
     # Set conf file
-    $self->{strBackRestConfig} =  $self->testPath() . '/' . PROJECT_CONF;
+    $self->{strBackRestConfig} = $self->testPath() . '/' . PROJECT_CONF;
 
     # Set LogTest object
     $self->{oLogTest} = $$oParam{oLogTest};
@@ -1177,9 +1177,10 @@ sub configCreate
 
     if ($oParam->{bBundle})
     {
-        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'bundle'} = 'y';
-        # Set bundle size smaller for testing and because FakeGCS does not do multi-part upload
-        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'bundle-size'} = '1MiB';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle'} = 'y';
+        # Set bundle size/limit smaller for testing and because FakeGCS does not do multi-part upload
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle-size'} = '1MiB';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle-limit'} = '64KiB';
     }
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();

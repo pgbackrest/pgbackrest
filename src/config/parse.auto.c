@@ -745,8 +745,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
         PARSE_RULE_OPTIONAL
@@ -760,6 +766,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEPEND
                 (
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),
                     PARSE_RULE_VAL_OPT(cfgOptOnline),
                     PARSE_RULE_VAL_BOOL_TRUE,
                 ),
@@ -806,6 +813,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
                 PARSE_RULE_OPTIONAL_DEPEND
                 (
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),
                     PARSE_RULE_VAL_OPT(cfgOptArchiveCheck),
                     PARSE_RULE_VAL_BOOL_TRUE,
                 ),
@@ -968,8 +976,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)
         ),
 
         PARSE_RULE_OPTIONAL
@@ -978,6 +992,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (
                 PARSE_RULE_OPTIONAL_DEPEND
                 (
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),
                     PARSE_RULE_VAL_OPT(cfgOptArchiveCheck),
                     PARSE_RULE_VAL_BOOL_TRUE,
                 ),
@@ -1174,111 +1189,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (
                     PARSE_RULE_VAL_INT(parseRuleValInt1048576),
                     PARSE_RULE_VAL_STR(parseRuleValStrQT_1MiB_QT),
-                ),
-            ),
-        ),
-    ),
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION
-    (
-        PARSE_RULE_OPTION_NAME("bundle"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
-        PARSE_RULE_OPTION_NEGATE(true),
-        PARSE_RULE_OPTION_RESET(true),
-        PARSE_RULE_OPTION_REQUIRED(true),
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-        ),
-
-        PARSE_RULE_OPTIONAL
-        (
-            PARSE_RULE_OPTIONAL_GROUP
-            (
-                PARSE_RULE_OPTIONAL_DEFAULT
-                (
-                    PARSE_RULE_VAL_BOOL_FALSE,
-                ),
-            ),
-        ),
-    ),
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION
-    (
-        PARSE_RULE_OPTION_NAME("bundle-limit"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
-        PARSE_RULE_OPTION_RESET(true),
-        PARSE_RULE_OPTION_REQUIRED(true),
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-        ),
-
-        PARSE_RULE_OPTIONAL
-        (
-            PARSE_RULE_OPTIONAL_GROUP
-            (
-                PARSE_RULE_OPTIONAL_DEPEND
-                (
-                    PARSE_RULE_VAL_OPT(cfgOptBundle),
-                    PARSE_RULE_VAL_BOOL_TRUE,
-                ),
-
-                PARSE_RULE_OPTIONAL_ALLOW_RANGE
-                (
-                    PARSE_RULE_VAL_INT(parseRuleValInt8192),
-                    PARSE_RULE_VAL_INT(parseRuleValInt1125899906842624),
-                ),
-
-                PARSE_RULE_OPTIONAL_DEFAULT
-                (
-                    PARSE_RULE_VAL_INT(parseRuleValInt2097152),
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_2MiB_QT),
-                ),
-            ),
-        ),
-    ),
-
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION
-    (
-        PARSE_RULE_OPTION_NAME("bundle-size"),
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
-        PARSE_RULE_OPTION_RESET(true),
-        PARSE_RULE_OPTION_REQUIRED(true),
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
-
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
-        ),
-
-        PARSE_RULE_OPTIONAL
-        (
-            PARSE_RULE_OPTIONAL_GROUP
-            (
-                PARSE_RULE_OPTIONAL_DEPEND
-                (
-                    PARSE_RULE_VAL_OPT(cfgOptBundle),
-                    PARSE_RULE_VAL_BOOL_TRUE,
-                ),
-
-                PARSE_RULE_OPTIONAL_ALLOW_RANGE
-                (
-                    PARSE_RULE_VAL_INT(parseRuleValInt1048576),
-                    PARSE_RULE_VAL_INT(parseRuleValInt1125899906842624),
-                ),
-
-                PARSE_RULE_OPTIONAL_DEFAULT
-                (
-                    PARSE_RULE_VAL_INT(parseRuleValInt20971520),
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_20MiB_QT),
                 ),
             ),
         ),
@@ -4953,6 +4863,117 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("repo-bundle"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
+        PARSE_RULE_OPTION_NEGATE(true),
+        PARSE_RULE_OPTION_RESET(true),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
+
+        PARSE_RULE_OPTIONAL
+        (
+            PARSE_RULE_OPTIONAL_GROUP
+            (
+                PARSE_RULE_OPTIONAL_DEFAULT
+                (
+                    PARSE_RULE_VAL_BOOL_FALSE,
+                ),
+            ),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("repo-bundle-limit"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_RESET(true),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
+
+        PARSE_RULE_OPTIONAL
+        (
+            PARSE_RULE_OPTIONAL_GROUP
+            (
+                PARSE_RULE_OPTIONAL_DEPEND
+                (
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBundle),
+                    PARSE_RULE_VAL_BOOL_TRUE,
+                ),
+
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE
+                (
+                    PARSE_RULE_VAL_INT(parseRuleValInt8192),
+                    PARSE_RULE_VAL_INT(parseRuleValInt1125899906842624),
+                ),
+
+                PARSE_RULE_OPTIONAL_DEFAULT
+                (
+                    PARSE_RULE_VAL_INT(parseRuleValInt2097152),
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_2MiB_QT),
+                ),
+            ),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
+        PARSE_RULE_OPTION_NAME("repo-bundle-size"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),
+        PARSE_RULE_OPTION_RESET(true),
+        PARSE_RULE_OPTION_REQUIRED(true),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
+
+        PARSE_RULE_OPTIONAL
+        (
+            PARSE_RULE_OPTIONAL_GROUP
+            (
+                PARSE_RULE_OPTIONAL_DEPEND
+                (
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBundle),
+                    PARSE_RULE_VAL_BOOL_TRUE,
+                ),
+
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE
+                (
+                    PARSE_RULE_VAL_INT(parseRuleValInt1048576),
+                    PARSE_RULE_VAL_INT(parseRuleValInt1125899906842624),
+                ),
+
+                PARSE_RULE_OPTIONAL_DEFAULT
+                (
+                    PARSE_RULE_VAL_INT(parseRuleValInt20971520),
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_20MiB_QT),
+                ),
+            ),
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("repo-cipher-pass"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeString),
         PARSE_RULE_OPTION_RESET(true),
@@ -5460,6 +5481,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (
             PARSE_RULE_OPTIONAL_GROUP
             (
+                PARSE_RULE_OPTIONAL_DEPEND
+                (
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBundle),
+                    PARSE_RULE_VAL_BOOL_FALSE,
+                ),
+
                 PARSE_RULE_OPTIONAL_DEFAULT
                 (
                     PARSE_RULE_VAL_BOOL_FALSE,
@@ -9230,9 +9258,6 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
-    cfgOptBundle,
-    cfgOptBundleLimit,
-    cfgOptBundleSize,
     cfgOptChecksumPage,
     cfgOptCipherPass,
     cfgOptCmd,
@@ -9283,6 +9308,9 @@ static const ConfigOption optionResolveOrder[] =
     cfgOptRecurse,
     cfgOptRemoteType,
     cfgOptRepo,
+    cfgOptRepoBundle,
+    cfgOptRepoBundleLimit,
+    cfgOptRepoBundleSize,
     cfgOptRepoCipherType,
     cfgOptRepoHardlink,
     cfgOptRepoLocal,

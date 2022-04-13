@@ -54,9 +54,6 @@ Option constants
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
-#define CFGOPT_BUNDLE                                               "bundle"
-#define CFGOPT_BUNDLE_LIMIT                                         "bundle-limit"
-#define CFGOPT_BUNDLE_SIZE                                          "bundle-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
 #define CFGOPT_CIPHER_PASS                                          "cipher-pass"
 #define CFGOPT_CMD                                                  "cmd"
@@ -368,9 +365,6 @@ typedef enum
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
     cfgOptBufferSize,
-    cfgOptBundle,
-    cfgOptBundleLimit,
-    cfgOptBundleSize,
     cfgOptChecksumPage,
     cfgOptCipherPass,
     cfgOptCmd,
@@ -442,6 +436,9 @@ typedef enum
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,
     cfgOptRepoAzureUriStyle,
+    cfgOptRepoBundle,
+    cfgOptRepoBundleLimit,
+    cfgOptRepoBundleSize,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoGcsBucket,

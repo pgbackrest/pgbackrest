@@ -265,7 +265,7 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     // Get archive info
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
+    if (cfgOptionBool(cfgOptArchiveCheck))
     {
         result->archiveInfo = infoArchiveLoadFile(
                 storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
@@ -404,17 +404,6 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
                     // Set the compression level back to whatever was in the prior backup
                     cfgOptionSet(
                         cfgOptCompressLevel, cfgSourceParam, VARINT64(varUInt(manifestPriorData->backupOptionCompressLevel)));
-                }
-
-                // Warn if hardlink option changed ??? Doesn't seem like this is needed?  Hardlinks are always to a directory that
-                // is guaranteed to contain a real file -- like references.  Also annoying that if the full backup was not
-                // hardlinked then an diff/incr can't be used because we need more testing.
-                if (cfgOptionBool(cfgOptRepoHardlink) != manifestPriorData->backupOptionHardLink)
-                {
-                    LOG_WARN_FMT(
-                        "%s backup cannot alter hardlink option to '%s', reset to value in %s",
-                        strZ(cfgOptionDisplay(cfgOptType)), strZ(cfgOptionDisplay(cfgOptRepoHardlink)), strZ(backupLabelPrior));
-                    cfgOptionSet(cfgOptRepoHardlink, cfgSourceParam, VARBOOL(manifestPriorData->backupOptionHardLink));
                 }
 
                 // If not defined this backup was done in a version prior to page checksums being introduced.  Just set
@@ -683,7 +672,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                 // Resumable backups must have backup.manifest.copy
                 if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                 {
-                    reason = STRDEF("resume is disabled");
+                    reason = strNewZ("resume is disabled");
 
                     // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
                     // occurs then the backup will be considered unusable and a resume will not be attempted.
@@ -1797,7 +1786,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSubPass = manifestCipherSubPass(manifest),
             .delta = cfgOptionBool(cfgOptDelta),
-            .bundle = cfgOptionBool(cfgOptBundle),
+            .bundle = cfgOptionBool(cfgOptRepoBundle),
             .bundleId = 1,
 
             // Build expression to identify files that can be copied from the standby when standby backup is supported
@@ -1810,8 +1799,8 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
 
         if (jobData.bundle)
         {
-            jobData.bundleSize = cfgOptionUInt64(cfgOptBundleSize);
-            jobData.bundleLimit = cfgOptionUInt64(cfgOptBundleLimit);
+            jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
+            jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
         }
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
@@ -1949,11 +1938,11 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                 // If hardlinking is enabled then create a hardlink for files that have not changed since the last backup
                 if (hardLink)
                 {
-                    LOG_DETAIL_FMT("hardlink %s to %s",  strZ(file.name), strZ(file.reference));
+                    LOG_DETAIL_FMT("hardlink %s to %s", strZ(file.name), strZ(file.reference));
 
                     const String *const linkName = storagePathP(
                         storageRepo(), strNewFmt("%s/%s%s", strZ(backupPathExp), strZ(file.name), compressExt));
-                    const String *const linkDestination =  storagePathP(
+                    const String *const linkDestination = storagePathP(
                         storageRepo(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
 
@@ -2004,7 +1993,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
     // If archive logs are required to complete the backup, then check them.  This is the default, but can be overridden if the
     // archive logs are going to a different server.  Be careful of disabling this option because there is no way to verify that the
     // backup will be consistent - at least not here.
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck))
+    if (cfgOptionBool(cfgOptArchiveCheck))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -2236,7 +2225,7 @@ cmdBackup(void)
         // Build the manifest
         Manifest *manifest = manifestNewBuild(
             backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, cfgOptionBool(cfgOptOnline),
-            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptBundle), strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
+            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
             backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
@@ -2284,10 +2273,9 @@ cmdBackup(void)
         manifestBuildComplete(
             manifest, timestampStart, backupStartResult.lsn, backupStartResult.walSegmentName, backupStopResult.timestamp,
             backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
-            cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptArchiveCheck),
-            !cfgOptionBool(cfgOptOnline) || (cfgOptionBool(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCopy)),
-            cfgOptionUInt(cfgOptBufferSize), cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork),
-            cfgOptionBool(cfgOptRepoHardlink), cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
+            cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
+            cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
+            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
 
         // The primary db object won't be used anymore so free it
         dbFree(backupData->dbPrimary);

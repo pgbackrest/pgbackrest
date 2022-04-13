@@ -237,15 +237,23 @@ restoreBackupSet(void)
             repoIdxMax = repoIdxMin;
         }
 
-        // If the set option was not provided by the user but a time to recover was set, then we will need to search for a backup
-        // set that satisfies the time condition, else we will use the backup provided
+        // If the set option was not provided by the user but a target was set, then we will need to search for a backup set that
+        // satisfies the target condition, else we will use the backup provided
         const String *backupSetRequested = NULL;
-        time_t timeTargetEpoch = 0;
+        const StringId targetType = cfgOptionStrId(cfgOptType);
+
+        union
+        {
+            time_t time;
+            uint64_t lsn;
+        } target = {0};
 
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
-            if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_TIME)
-                timeTargetEpoch = getEpoch(cfgOptionStr(cfgOptTarget));
+            if (targetType == CFGOPTVAL_TYPE_TIME)
+                target.time = getEpoch(cfgOptionStr(cfgOptTarget));
+            else if (targetType == CFGOPTVAL_TYPE_LSN)
+                target.lsn = pgLsnFromStr(cfgOptionStr(cfgOptTarget));
         }
         else
             backupSetRequested = cfgOptionStr(cfgOptSet);
@@ -283,14 +291,14 @@ restoreBackupSet(void)
                 continue;
             }
 
-            // If a backup set was not specified, then see if a time to recover was requested
+            // If a backup set was not specified, then see if a target was requested
             if (backupSetRequested == NULL)
             {
                 // Get the latest backup
                 InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
-                // If the recovery type is time, attempt to determine the backup set
-                if (timeTargetEpoch != 0)
+                // If a target was requested, attempt to determine the backup set
+                if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
                 {
                     bool found = false;
 
@@ -300,13 +308,25 @@ restoreBackupSet(void)
                         // Get the backup data
                         InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
 
-                        // If the end of the backup is before the target time, then select this backup
-                        if (backupData.backupTimestampStop < timeTargetEpoch)
+                        // If target is lsn and no backupLsnStop exists, exit this repo and log that backup may be manually selected
+                        if (targetType == CFGOPTVAL_TYPE_LSN && !backupData.backupLsnStop)
+                        {
+                            LOG_WARN_FMT(
+                                "%s reached backup from prior version missing required LSN info before finding a match -- backup"
+                                    " auto-select has been disabled for this repo\n"
+                                "HINT: you may specify a backup to restore using the --set option.",
+                                cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
+
+                            break;
+                        }
+
+                        // If the end of the backup is valid for the target, then select this backup
+                        if ((targetType == CFGOPTVAL_TYPE_TIME && backupData.backupTimestampStop < target.time) ||
+                            (targetType == CFGOPTVAL_TYPE_LSN && pgLsnFromStr(backupData.backupLsnStop) <= target.lsn))
                         {
                             found = true;
 
-                            result = restoreBackupData(
-                                backupData.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
+                            result = restoreBackupData(backupData.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                             break;
                         }
                     }
@@ -345,10 +365,11 @@ restoreBackupSet(void)
         {
             if (backupSetRequested != NULL)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
-            else if (timeTargetEpoch != 0)
+            else if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
             {
                 THROW_FMT(
-                    BackupSetInvalidError, "unable to find backup set with stop time less than '%s'",
+                    BackupSetInvalidError, "unable to find backup set with %s '%s'",
+                    targetType == CFGOPTVAL_TYPE_LSN ? "lsn less than or equal to" : "stop time less than",
                     strZ(cfgOptionDisplay(cfgOptTarget)));
             }
             else
@@ -694,7 +715,7 @@ restoreManifestOwnerReplace(const String *const owner, const String *const owner
         {                                                                                                                          \
             const String *owner = strLstGet(type##List, ownerIdx);                                                                 \
                                                                                                                                    \
-            if (type##Name() == NULL ||  !strEq(type##Name(), owner))                                                              \
+            if (type##Name() == NULL || !strEq(type##Name(), owner))                                                              \
                 LOG_WARN_FMT("unknown " #type " '%s' in backup manifest mapped to current " #type, strZ(owner));                   \
         }                                                                                                                          \
     }                                                                                                                              \
@@ -1254,7 +1275,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                 const String *pgPath = storagePathP(storagePg(), manifestPathPg(path->name));
                 StorageInfo pathInfo = storageInfoP(storagePg(), pgPath, .ignoreMissing = true);
 
-                // Create the path if it is missing  If it exists it should already have the correct ownership and mode.
+                // Create the path if it is missing. If it exists it should already have the correct ownership and mode.
                 if (!pathInfo.exists)
                 {
                     LOG_DETAIL_FMT("create path '%s'", strZ(pgPath));
@@ -1804,7 +1825,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                 }
             }
 
-            strCatFmt(content, "%s", strZ(restoreRecoveryConf(pgVersion, restoreLabel)));
+            strCat(content, restoreRecoveryConf(pgVersion, restoreLabel));
         }
 
         LOG_INFO_FMT(

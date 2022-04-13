@@ -5,6 +5,7 @@ Repository Put Command
 
 #include <unistd.h>
 
+#include "command/repo/common.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/fdRead.h"
@@ -34,6 +35,9 @@ storagePutProcess(IoRead *source)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Is path valid for repo?
+        file = repoPathIsValid(file);
+
         StorageWrite *destination = storageNewWriteP(storageRepoWrite(), file);
 
         // Add encryption if needed

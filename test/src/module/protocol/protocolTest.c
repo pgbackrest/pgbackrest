@@ -285,7 +285,7 @@ testRun(void)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
             *protocolHelperClient.client = (ProtocolClient){
-                .name = STRDEF("test"), .state = protocolClientStateIdle, .write = write};
+                .name = strNewZ("test"), .state = protocolClientStateIdle, .write = write};
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
         }
         OBJ_NEW_END();
@@ -293,7 +293,7 @@ testRun(void)
         OBJ_NEW_BEGIN(Exec)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
-            *protocolHelperClient.exec = (Exec){.name = STRDEF("test"), .command = strNewZ("test"), .processId = INT_MAX};
+            *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};
             memContextCallbackSet(memContextCurrent(), execFreeResource, protocolHelperClient.exec);
         }
         OBJ_NEW_END();
@@ -518,22 +518,21 @@ testRun(void)
                 const ProtocolServerHandler commandHandler[] = {TEST_PROTOCOL_SERVER_HANDLER_LIST};
 
                 TEST_ERROR(
-                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
-                    ProtocolError, "invalid command 'BOGUS' (0x38eacd271)");
+                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), ProtocolError,
+                    "invalid command 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart and assert");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
                 TEST_ERROR(
-                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
-                    AssertError, "ERR_MESSAGE");
+                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), AssertError, "ERR_MESSAGE");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
-                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
+                protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server with retries");
@@ -547,7 +546,7 @@ testRun(void)
                     "new server");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
-                protocolServerProcess(server, retryList, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
+                protocolServerProcess(server, retryList, commandHandler, LENGTH_OF(commandHandler));
             }
             HRN_FORK_CHILD_END();
 

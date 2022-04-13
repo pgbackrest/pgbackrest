@@ -233,6 +233,9 @@ optionGroup:
 #   Specify the dependencies this option has on another option. All commands listed for this option must also be listed in the
 #   dependent option(s).
 #
+#   'default' may be specified to be set when the dependency does not resolve. This can, and probably should be, different than
+#   the standard default for the option.
+#
 #   'list' further defines the allowable settings for the depended option.
 #
 # allow-list:
@@ -1069,13 +1072,16 @@ option:
     type: boolean
     default: true
     command:
+      archive-push: {}
       backup:
         depend:
           option: online
+          default: false
           list:
             - true
       check: {}
     command-role:
+      async: {}
       main: {}
 
   archive-copy:
@@ -1086,6 +1092,7 @@ option:
       backup:
         depend:
           option: archive-check
+          default: false
           list:
             - true
     command-role:
@@ -1096,12 +1103,15 @@ option:
     type: boolean
     default: true
     command:
+      archive-push: {}
       backup: {}
       check: {}
     command-role:
+      async: {}
       main: {}
     depend:
       option: archive-check
+      default: false
       list:
         - true
 
@@ -1114,36 +1124,6 @@ option:
       check: {}
     command-role:
       main: {}
-
-  bundle:
-    internal: true
-    section: global
-    type: boolean
-    default: false
-    command:
-      backup: {}
-    command-role:
-      main: {}
-
-  bundle-size:
-    internal: true
-    section: global
-    type: size
-    default: 20MiB
-    allow-range: [1MiB, 1PiB]
-    command:
-      backup: {}
-    command-role:
-      main: {}
-    depend:
-      option: bundle
-      list:
-        - true
-
-  bundle-limit:
-    inherit: bundle-size
-    default: 2MiB
-    allow-range: [8KiB, 1PiB]
 
   checksum-page:
     section: global
@@ -1761,6 +1741,38 @@ option:
     command: repo-type
     depend: repo-azure-account
 
+  repo-bundle:
+    internal: true
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
+  repo-bundle-size:
+    internal: true
+    section: global
+    group: repo
+    type: size
+    default: 20MiB
+    allow-range: [1MiB, 1PiB]
+    command:
+      backup: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-bundle
+      list:
+        - true
+
+  repo-bundle-limit:
+    inherit: repo-bundle-size
+    default: 2MiB
+    allow-range: [8KiB, 1PiB]
+
   repo-cipher-pass:
     section: global
     type: string
@@ -1838,6 +1850,11 @@ option:
       backup: {}
     command-role:
       main: {}
+    depend:
+      option: repo-bundle
+      default: false
+      list:
+        - false
     deprecate:
       hardlink: {}
 

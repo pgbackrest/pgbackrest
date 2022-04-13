@@ -12,6 +12,7 @@ Convert C Types
 #include <time.h>
 
 #include "common/debug.h"
+#include "common/macro.h"
 #include "common/type/convert.h"
 
 /***********************************************************************************************************************************

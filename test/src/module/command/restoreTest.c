@@ -38,6 +38,33 @@ Test data for backup.info
     "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                                       \
     "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","                  \
     "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"                     \
+    "\"backup-info-size-delta\":26897030,\"backup-lsn-stop\":\"0/1C000101\",\"backup-timestamp-start\":1482182846,"                \
+    "\"backup-timestamp-stop\":1482182861,\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,"                     \
+    "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
+    "\"option-hardlink\":false,\"option-online\":true}\n"                                                                          \
+    "20161219-212741F_20161219-212803D={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
+    "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","                  \
+    "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
+    "\"backup-info-size-delta\":163866,\"backup-lsn-stop\":\"0/1E000101\",\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-reference\":[\"20161219-212741F\"],\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,"      \
+    "\"backup-type\":\"diff\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"                            \
+    "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"           \
+    "\"option-online\":true}\n"                                                                                                    \
+    "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
+    "\"backup-archive-start\":null,\"backup-archive-stop\":null,"                                                                  \
+    "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
+    "\"backup-lsn-stop\":\"0/1E000105\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803D\"],\"backup-timestamp-start\":1482182884,"     \
+    "\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,\"option-archive-check\":true,"                     \
+    "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
+    "\"option-hardlink\":false,\"option-online\":true}\n"
+
+// To verify handling of missing backup-lsn-stop for --type=lsn --target=<lsn> backup
+#define TEST_RESTORE_BACKUP_INFO1                                                                                                  \
+    "[backup:current]\n"                                                                                                           \
+    "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                                       \
+    "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","                  \
+    "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"                     \
     "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,"              \
     "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"                            \
     "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"           \
@@ -45,18 +72,19 @@ Test data for backup.info
     "20161219-212741F_20161219-212803D={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
     "\"backup-archive-start\":\"00000008000000000000001E\",\"backup-archive-stop\":\"00000008000000000000001E\","                  \
     "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
-    "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\"],"         \
-    "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"diff\",\"db-id\":1,"             \
-    "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"                                 \
-    "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"                  \
+    "\"backup-info-size-delta\":163866,\"backup-lsn-stop\":\"0/1E000101\",\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-reference\":[\"20161219-212741F\"],\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,"      \
+    "\"backup-type\":\"diff\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"                            \
+    "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,"           \
+    "\"option-online\":true}\n"                                                                                                    \
     "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
     "\"backup-archive-start\":null,\"backup-archive-stop\":null,"                                                                  \
     "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
-    "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","          \
-    "\"20161219-212741F_20161219-212803D\"],"                                                                                      \
-    "\"backup-timestamp-start\":1482182884,\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,"             \
-    "\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"                                 \
-    "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+    "\"backup-lsn-stop\":\"0/1E000105\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803D\"],\"backup-timestamp-start\":1482182884,"     \
+    "\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,\"option-archive-check\":true,"                     \
+    "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
+    "\"option-hardlink\":false,\"option-online\":true}\n"
 
 /***********************************************************************************************************************************
 Test restores to be sure they match the manifest
@@ -148,7 +176,7 @@ testRun(void)
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_RESTORE_LIST};
-    hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
@@ -483,6 +511,108 @@ testRun(void)
             "unable to find backup set with stop time less than '2016-12-19 16:27:30-0500'");
         TEST_RESULT_LOG(
             "P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore\n"
+            "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("target lsn");
+
+        // Match oldest backup on repo 2
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000101");
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // Write out backup.info with no current backups to repo1, with current backups to repo2
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+        HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn 0/1C000101");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F", "backup set found");
+        TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
+        TEST_RESULT_LOG("P00   WARN: repo1: [BackupSetInvalidError] no backup sets to restore");
+
+        // Switch repo paths and target lsn to match newer backup on repo1
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1E000105");
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn 0/1E000105");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F_20161219-212918I", "backup set found");
+        TEST_RESULT_UINT(backupData.repoIdx, 0, "backup set found, repo1");
+
+        // Log warning if missing backup-lsn-stop is found before finding a match
+        // Missing backup-lsn-stop in repo1, no backups in repo2, no qualifying auto-selectable backup in either repo
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000101");
+
+        // Re-write repo information with set missing backup-lsn-stop
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO1 "\n" TEST_RESTORE_BACKUP_INFO_DB);
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than or equal to '0/1C000101'");
+        TEST_RESULT_LOG(
+            "P00   WARN: repo1 reached backup from prior version missing required LSN info before finding a match -- backup"
+                " auto-select has been disabled for this repo\n"
+            "            HINT: you may specify a backup to restore using the --set option.\n"
+            "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
+
+        // Log warning if missing backup-lsn-stop is found before finding a match
+        // Missing backup-lsn-stop in repo1, qualifying auto-selectable backup set in repo2
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1C000102");
+
+        // Write repo2 information with data required to find backup
+        HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ASSIGN(backupData, restoreBackupSet(), "get backup set for lsn 0/1C000102");
+        TEST_RESULT_STR_Z(backupData.backupSet, "20161219-212741F", "backup set found");
+        TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
+        TEST_RESULT_LOG(
+            "P00   WARN: repo1 reached backup from prior version missing required LSN info before finding a match -- backup"
+                " auto-select has been disabled for this repo\n"
+            "            HINT: you may specify a backup to restore using the --set option.");
+
+        // No backups to search for qualifying backup set
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+        hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptType, "lsn");
+        hrnCfgArgRawZ(argList, cfgOptTarget, "0/1A000102");
+
+        // Write repo info with no current backups
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO_DB);
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than or equal to '0/1A000102'");
+        TEST_RESULT_LOG(
             "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
     }
 
@@ -1900,7 +2030,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
-            manifest->pub.data.backupLabel = STRDEF(TEST_LABEL);
+            manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_90;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_90);
             manifest->pub.data.backupType = backupTypeFull;
@@ -2306,7 +2436,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
-            manifest->pub.data.backupLabel = STRDEF(TEST_LABEL);
+            manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_10;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeIncr;
@@ -2375,6 +2505,13 @@ testRun(void)
                     .name = STRDEF(TEST_PGDATA "xxxxx"), .size = 5, .sizeRepo = 5, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 11,
                     .reference = NULL, .checksumSha1 = "9addbf544119efa4a64223b649750a510f0d463f"});
+            // Set bogus sizeRepo and checksumSha1 to ensure this is not handled as a regular file
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "zero-length"), .size = 0, .sizeRepo = 1, .timestamp = 1482182866,
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 16,
+                    .reference = NULL, .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
@@ -2695,6 +2832,7 @@ testRun(void)
                 " e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/888 (0B, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/zero-length (bundle 1/16, 0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2708,7 +2846,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 20");
+            "P00   INFO: restore size = [SIZE], file total = 21");
 
         testRestoreCompare(
             storagePg(), NULL, manifest,
@@ -2741,6 +2879,7 @@ testRun(void)
             "postgresql.conf {link, d=../config/postgresql.conf}\n"
             "xxxxx {file, s=5, t=1482182860}\n"
             "yyy {file, s=3, t=1482182860}\n"
+            "zero-length {file, s=0, t=1482182866}\n"
             "zz {file, s=2, t=1482182860}\n");
 
         testRestoreCompare(
@@ -2870,6 +3009,7 @@ testRun(void)
                 " 20161219-212741F_20161219-212900I/2/2, 1B, [PCT]) checksum e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/888 - exists and is zero size (0B, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/zero-length - exists and is zero size (bundle 1/16, 0B, [PCT])\n"
             "P00 DETAIL: sync path '" TEST_PATH "/config'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/base'\n"
@@ -2883,7 +3023,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 20");
+            "P00   INFO: restore size = [SIZE], file total = 21");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);

@@ -339,9 +339,10 @@ testRun(void)
             .remove = true, .comment = "check repo for WAL file, then remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("generate valid WAL and push them");
+        TEST_TITLE("generate valid WAL and push them, with parameter --no-archive-mode-check to suppress duplicate WAL warning");
 
         argListTemp = strLstDup(argList);
+        hrnCfgArgRawNegate(argListTemp, cfgOptArchiveModeCheck);
         strLstAddZ(argListTemp, "pg_wal/000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
@@ -363,10 +364,9 @@ testRun(void)
             storageRepoIdxWrite(0), strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)),
             .comment = "check repo for WAL file");
 
+        // No warning emitted re WAL file already existing with the same checksum due to --no-archive-mode-check
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment again");
         TEST_RESULT_LOG(
-            "P00   WARN: WAL file '000000010000000100000001' already exists in the repo1 archive with the same checksum\n"
-            "            HINT: this is valid in some recovery scenarios but may also indicate a problem.\n"
             "P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
 
         // Now create a new WAL buffer with a different checksum to test checksum errors
@@ -608,7 +608,7 @@ testRun(void)
 
         // Install local command handler shim
         static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST};
-        hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+        hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command must be run on the pg host");

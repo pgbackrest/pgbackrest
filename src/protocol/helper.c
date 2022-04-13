@@ -399,7 +399,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
                 strLstInsert(paramList, 0, cfgExe());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
 
-                // Error if the client is authorized for the requested stanza
+                // Error if the client is not authorized for the requested stanza
                 if (!protocolServerAuthorize(clientAuthList, cfgOptionStrNull(cfgOptStanza)))
                     THROW(AccessError, "access denied");
             }
@@ -813,7 +813,7 @@ protocolKeepAlive(void)
 
     if (protocolHelper.memContext != NULL)
     {
-        for (unsigned int clientIdx  = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
         {
             if (protocolHelper.clientRemote[clientIdx].client != NULL)
                 protocolClientNoOp(protocolHelper.clientRemote[clientIdx].client);
