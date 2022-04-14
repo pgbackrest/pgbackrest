@@ -279,7 +279,7 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
     }
 
     if (jsonReadTypeNext(this) != type)
-        THROW_FMT(FormatError, "expected !!!TYPE but found '%s'", this->json);
+        THROW_FMT(FormatError, "expected %u but found '%s'", type, this->json);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -619,16 +619,14 @@ jsonReadInt64(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-String *
-jsonReadKey(JsonRead *const this)
+static String *
+jsonReadKeyInternal(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_READ, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
-    jsonReadPush(this, jsonTypeString, true);
 
     String *const result = jsonReadStrInternal(this);
 
@@ -641,6 +639,105 @@ jsonReadKey(JsonRead *const this)
     this->json++;
 
     FUNCTION_TEST_RETURN(result);
+}
+
+String *
+jsonReadKey(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeString, true);
+
+    FUNCTION_TEST_RETURN(jsonReadKeyInternal(this));
+}
+
+/**********************************************************************************************************************************/
+bool
+jsonReadKeyExpect(JsonRead *const this, const String *const key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        jsonReadConsumeWhiteSpace(this);
+
+        while (*this->json != '}')
+        {
+            jsonReadPush(this, jsonTypeString, true);
+
+            const char *const jsonBeforeKey = this->json;
+            const String *const keyNext = jsonReadKeyInternal(this);
+
+            const int compare = strCmp(key, keyNext);
+
+            // LOG_WARN("!!!compare");
+
+            if (compare == 0)
+            {
+                // LOG_WARN("!!!keys are equal");
+                result = true;
+                break;
+            }
+            else if (compare < 0)
+            {
+                // LOG_WARN("!!!key next is greater");
+                this->json = jsonBeforeKey;
+                break;
+            }
+
+            jsonReadSkip(this);
+            jsonReadConsumeWhiteSpace(this);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+void
+jsonReadKeyRequire(JsonRead *const this, const String *const key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    if (!jsonReadKeyExpect(this, key))
+        THROW_FMT(JsonFormatError, "required key '%s' not found", strZ(key));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+jsonReadNull(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeNull, false);
+
+    if (strncmp(this->json, NULL_Z, sizeof(NULL_Z) - 1) == 0)
+    {
+        this->json += sizeof(NULL_Z) - 1;
+
+        FUNCTION_TEST_RETURN_VOID();
+    }
+
+    THROW(JsonFormatError, "expected null");
 }
 
 /**********************************************************************************************************************************/
@@ -672,6 +769,101 @@ jsonReadObjectEnd(JsonRead *const this)
     this->json++;
 
     FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+jsonReadSkipRecurse(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    switch (jsonReadTypeNext(this))
+    {
+        case jsonTypeBool:
+            jsonReadBool(this);
+            break;
+
+        case jsonTypeNull:
+            jsonReadNull(this);
+            break;
+
+        case jsonTypeNumber:
+            jsonReadPush(this, jsonTypeNumber, false);
+            jsonReadNumber(this);
+            break;
+
+        case jsonTypeString:
+            jsonReadPush(this, jsonTypeString, false);
+            jsonReadStrInternal(this);
+            break;
+
+        case jsonTypeArrayBegin:
+        {
+            jsonReadArrayBegin(this);
+
+            while (jsonReadTypeNext(this) != jsonTypeArrayEnd)
+                jsonReadSkipRecurse(this);
+
+            jsonReadArrayEnd(this);
+
+            break;
+        }
+
+        case jsonTypeObjectBegin:
+        {
+            jsonReadObjectBegin(this);
+
+            while (jsonReadTypeNext(this) != jsonTypeObjectEnd)
+            {
+                jsonReadKey(this);
+                jsonReadSkipRecurse(this);
+            }
+
+            jsonReadObjectEnd(this);
+
+            break;
+        }
+
+        default:
+            THROW_FMT(JsonFormatError, "invalid container end at: %s", this->json);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+void
+jsonReadSkip(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        jsonReadSkipRecurse(this);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+String *
+jsonReadStr(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeString, false);
+
+    FUNCTION_TEST_RETURN(jsonReadStrInternal(this));
 }
 
 /**********************************************************************************************************************************/
@@ -712,21 +904,6 @@ jsonReadUInt64(JsonRead *const this)
         THROW(JsonFormatError, "number is out of range for uint64");
 
     FUNCTION_TEST_RETURN(number.value.u64);
-}
-
-/**********************************************************************************************************************************/
-String *
-jsonReadStr(JsonRead *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(JSON_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    jsonReadPush(this, jsonTypeString, false);
-
-    FUNCTION_TEST_RETURN(jsonReadStrInternal(this));
 }
 
 /**********************************************************************************************************************************/

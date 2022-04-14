@@ -53,20 +53,28 @@ int jsonReadInt(JsonRead *this);
 int64_t jsonReadInt64(JsonRead *this);
 
 // !!!
-String *jsonReadKey(JsonRead *const this);
+String *jsonReadKey(JsonRead *this);
+bool jsonReadKeyExpect(JsonRead *this, const String *key);
+void jsonReadKeyRequire(JsonRead *this, const String *key);
+
+// !!
+void jsonReadNull(JsonRead *this);
 
 // !!!
 void jsonReadObjectBegin(JsonRead *this);
 void jsonReadObjectEnd(JsonRead *this);
 
 // !!!
+void jsonReadSkip(JsonRead *this);
+
+// !!!
+String *jsonReadStr(JsonRead *this);
+
+// !!!
 unsigned int jsonReadUInt(JsonRead *this);
 
 // !!!
 uint64_t jsonReadUInt64(JsonRead *this);
-
-// !!!
-String *jsonReadStr(JsonRead *this);
 
 /***********************************************************************************************************************************
 Read Destructor
@@ -139,7 +147,7 @@ JsonWrite *jsonWriteZ(JsonWrite *this, const char *value);
 Write Getters/Setters
 ***********************************************************************************************************************************/
 // !!!
-const String *jsonWriteResult(JsonWrite *const this);
+const String *jsonWriteResult(JsonWrite *this);
 
 /***********************************************************************************************************************************
 Write Destructor

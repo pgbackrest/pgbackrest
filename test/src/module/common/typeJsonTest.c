@@ -247,7 +247,7 @@ testRun(void)
 
         JsonRead *read = NULL;
 
-        TEST_ASSIGN(read, jsonReadNew(STRDEF("true")), "new read");
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("\rtrue\t")), "new read");
 
         TEST_RESULT_BOOL(jsonReadBool(read), true, "bool true");
         TEST_ERROR(jsonReadBool(read), FormatError, "JSON read is complete");
@@ -260,7 +260,9 @@ testRun(void)
             "[\n"
             "    {"
             "        \"key1\"\t: \"value1\","
-            "        \"key2\"\t: 777"
+            "        \"key2\"\t: 777,"
+            "        \"key3\"\t: 777,"
+            "        \"key4\"\t: 888"
             "    },"
             "    \"abc\","
             "    123,"
@@ -278,10 +280,13 @@ testRun(void)
         TEST_ERROR(jsonReadArrayEnd(read), FormatError, "expected ] but found {");
 
         TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
-        TEST_RESULT_STR_Z(jsonReadKey(read), "key1", "str");
+        TEST_RESULT_STR_Z(jsonReadKey(read), "key1", "key1");
         TEST_RESULT_STR_Z(jsonReadStr(read), "value1", "str");
-        TEST_RESULT_STR_Z(jsonReadKey(read), "key2", "str");
+        TEST_RESULT_STR_Z(jsonReadKey(read), "key2", "key2");
         TEST_RESULT_INT(jsonReadInt(read), 777, "int");
+        TEST_RESULT_BOOL(jsonReadKeyExpect(read, STRDEF("key4")), true, "expect key4");
+        TEST_RESULT_INT(jsonReadInt(read), 888, "int");
+        TEST_RESULT_BOOL(jsonReadKeyExpect(read, STRDEF("key5")), false, "do not expect key5");
         TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
 
         TEST_RESULT_STR_Z(jsonReadStr(read), "abc", "str");
