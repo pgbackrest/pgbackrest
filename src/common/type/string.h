@@ -214,7 +214,7 @@ String * will result in a segfault due to modifying read-only memory.
 By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
 #define STR_SIZE(bufferParam, sizeParam)                                                                                           \
-    ((const String *)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)(sizeParam)})
+    ((const String *const)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)(sizeParam)})
 
 // Create a String constant inline from any zero-terminated string
 #define STR(buffer)                                                                                                                \

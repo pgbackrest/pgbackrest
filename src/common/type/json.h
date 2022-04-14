@@ -76,6 +76,16 @@ unsigned int jsonReadUInt(JsonRead *this);
 // !!!
 uint64_t jsonReadUInt64(JsonRead *this);
 
+// !!!
+Variant *jsonReadVar(JsonRead *this);
+
+/***********************************************************************************************************************************
+Write Helper Functions
+***********************************************************************************************************************************/
+// Convert JSON to Variant
+// Convert JSON to a variant
+Variant *jsonToVar(const String *json);
+
 /***********************************************************************************************************************************
 Read Destructor
 ***********************************************************************************************************************************/
@@ -235,12 +245,6 @@ KeyValue *jsonToKv(const String *json);
 
 // Convert a json string to a String
 String *jsonToStr(const String *json);
-
-// Convert JSON to a variant
-Variant *jsonToVar(const String *json);
-
-// Convert a json array to a VariantList
-VariantList *jsonToVarLst(const String *json);
 
 /***********************************************************************************************************************************
 Macros for function logging

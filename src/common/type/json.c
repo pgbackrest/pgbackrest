@@ -190,6 +190,30 @@ jsonReadTypeNext(JsonRead *const this)
     FUNCTION_TEST_RETURN(result);
 }
 
+static JsonType
+jsonReadTypeNextIgnoreComma(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadConsumeWhiteSpace(this);
+
+    // !!!
+    if (*this->json != ',')
+        FUNCTION_TEST_RETURN(jsonReadTypeNext(this));
+
+    const char *const jsonBeforeComma = this->json;
+    this->json++;
+
+    const JsonType result = jsonReadTypeNext(this);
+    this->json = jsonBeforeComma;
+
+    FUNCTION_TEST_RETURN(result);
+}
+
 /***********************************************************************************************************************************
 Push/Pop a type on/off the stack
 ***********************************************************************************************************************************/
@@ -236,7 +260,7 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
             if (key)
             {
                 if (this->key)
-                    THROW_FMT(FormatError, "key has already been defined");
+                    THROW_FMT(FormatError, "key has already been defined at: %s", this->json);
 
                 // if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
                 //     THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
@@ -255,7 +279,7 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
                 if (item->type == jsonTypeObjectBegin)
                 {
                     if (!this->key)
-                        THROW_FMT(FormatError, "key has not been defined");
+                        THROW_FMT(JsonFormatError, "key has not been defined at: %s", this->json);
 
                     this->key = false;
                 }
@@ -680,17 +704,13 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
 
             const int compare = strCmp(key, keyNext);
 
-            // LOG_WARN("!!!compare");
-
             if (compare == 0)
             {
-                // LOG_WARN("!!!keys are equal");
                 result = true;
                 break;
             }
             else if (compare < 0)
             {
-                // LOG_WARN("!!!key next is greater");
                 this->json = jsonBeforeKey;
                 break;
             }
@@ -730,13 +750,11 @@ jsonReadNull(JsonRead *const this)
     jsonReadPush(this, jsonTypeNull, false);
 
     if (strncmp(this->json, NULL_Z, sizeof(NULL_Z) - 1) == 0)
-    {
         this->json += sizeof(NULL_Z) - 1;
+    else
+        THROW(JsonFormatError, "expected null");
 
-        FUNCTION_TEST_RETURN_VOID();
-    }
-
-    THROW(JsonFormatError, "expected null");
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -883,6 +901,77 @@ jsonReadUInt(JsonRead *const this)
         THROW(JsonFormatError, "number is out of range for uint");
 
     FUNCTION_TEST_RETURN((unsigned int)number.value.u64);
+}
+
+/**********************************************************************************************************************************/
+Variant *
+jsonReadVar(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    switch (jsonReadTypeNextIgnoreComma(this))
+    {
+        case jsonTypeBool:
+            FUNCTION_TEST_RETURN(varNewBool(jsonReadBool(this)));
+
+        case jsonTypeNull:
+            jsonReadNull(this);
+            FUNCTION_TEST_RETURN(NULL);
+
+        case jsonTypeNumber:
+        {
+            jsonReadPush(this, jsonTypeNumber, false);
+
+            JsonReadNumberResult number = jsonReadNumber(this);
+
+            if (number.type == jsonNumberTypeU64)
+                FUNCTION_TEST_RETURN(varNewUInt64(number.value.u64));
+
+            FUNCTION_TEST_RETURN(varNewInt64(number.value.i64));
+        }
+
+        case jsonTypeString:
+            jsonReadPush(this, jsonTypeString, false);
+            FUNCTION_TEST_RETURN(varNewStr(jsonReadStrInternal(this)));
+
+        case jsonTypeArrayBegin:
+        {
+            VariantList *const result = varLstNew();
+
+            jsonReadArrayBegin(this);
+
+            while (jsonReadTypeNextIgnoreComma(this) != jsonTypeArrayEnd)
+                varLstAdd(result, jsonReadVar(this));
+
+            jsonReadArrayEnd(this);
+
+            FUNCTION_TEST_RETURN(varNewVarLst(result));
+        }
+
+        case jsonTypeObjectBegin:
+        {
+            KeyValue *const result = kvNew();
+
+            jsonReadObjectBegin(this);
+
+            while (jsonReadTypeNextIgnoreComma(this) != jsonTypeObjectEnd)
+            {
+                const String *const key = jsonReadKey(this);
+                kvPut(result, varNewStr(key), jsonReadVar(this));
+            }
+
+            jsonReadObjectEnd(this);
+
+            FUNCTION_TEST_RETURN(varNewKv(result));
+        }
+
+        default:
+            THROW_FMT(JsonFormatError, "invalid container end at: %s", this->json);
+    }
 }
 
 /**********************************************************************************************************************************/
@@ -2094,26 +2183,6 @@ jsonToVarLstInternal(const char *json, unsigned int *jsonPos)
     FUNCTION_TEST_RETURN(result);
 }
 
-VariantList *
-jsonToVarLst(const String *json)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, json);
-    FUNCTION_TEST_END();
-
-    unsigned int jsonPos = 0;
-    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
-
-    VariantList *result = jsonToVarLstInternal(strZ(json), &jsonPos);
-
-    jsonConsumeWhiteSpace(strZ(json), &jsonPos);
-
-    if (jsonPos != strSize(json))
-        THROW_FMT(JsonFormatError, "unexpected characters after array at '%s'", strZ(json) + jsonPos);
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 /**********************************************************************************************************************************/
 static Variant *
 jsonToVarInternal(const char *json, unsigned int *jsonPos)
@@ -2184,19 +2253,25 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
 }
 
 Variant *
-jsonToVar(const String *json)
+jsonToVar(const String *const json)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, json);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
 
-    const char *jsonPtr = strZ(json);
-    unsigned int jsonPos = 0;
+    Variant *result = NULL;
 
-    Variant *result = jsonToVarInternal(jsonPtr, &jsonPos);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        JsonRead *const read = jsonReadNew(json);
 
-    if (jsonPos != strSize(json))
-        THROW_FMT(JsonFormatError, "unexpected characters after JSON at '%s'", strZ(json) + jsonPos);
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = jsonReadVar(read);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VARIANT, result);
+    FUNCTION_TEST_RETURN(result);
 }
