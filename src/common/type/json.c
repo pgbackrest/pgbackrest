@@ -358,13 +358,10 @@ jsonReadNumber(JsonRead *const this)
     // Consume the - when present
     const bool intSigned = *this->json == '-';
 
-    if (intSigned)
-        this->json++;
-
     // Consume all digits
     size_t digits = 0;
 
-    while (isdigit(this->json[digits]))
+    while (isdigit(this->json[digits + intSigned]))
         digits++;
 
     // Invalid if no digits were found
@@ -375,11 +372,13 @@ jsonReadNumber(JsonRead *const this)
     if (digits >= CVT_BASE10_BUFFER_SIZE)
         THROW(JsonFormatError, "invalid number");
 
-    char working[CVT_BASE10_BUFFER_SIZE];
-    strncpy(working, this->json - intSigned, digits + intSigned);
-    working[digits + intSigned] = '\0';
+    const size_t size = digits + intSigned;
 
-    this->json += digits;
+    char working[CVT_BASE10_BUFFER_SIZE];
+    strncpy(working, this->json, size);
+    working[size] = '\0';
+
+    this->json += size;
 
     // Return result
     if (intSigned)
