@@ -117,10 +117,11 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         // Read, parse, and check the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *greeting = ioReadLine(this->pub.read);
-            KeyValue *greetingKv = jsonToKv(greeting);
+            JsonRead *const greeting = jsonReadNew(ioReadLine(this->pub.read));
 
-            const String *expected[] =
+            jsonReadObjectBegin(greeting);
+
+            const String *const expected[] =
             {
                 PROTOCOL_GREETING_NAME_STR, STRDEF(PROJECT_NAME),
                 PROTOCOL_GREETING_SERVICE_STR, service,
@@ -129,26 +130,28 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 
             for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected) / 2; expectedIdx++)
             {
-                const String *expectedKey = expected[expectedIdx * 2];
-                const String *expectedValue = expected[expectedIdx * 2 + 1];
+                const String *const expectedKey = expected[expectedIdx * 2];
+                const String *const expectedValue = expected[expectedIdx * 2 + 1];
 
-                const Variant *actualValue = kvGet(greetingKv, VARSTR(expectedKey));
-
-                if (actualValue == NULL)
+                if (!jsonReadKeyExpect(greeting, expectedKey))
                     THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(expectedKey));
 
-                if (varType(actualValue) != varTypeString)
+                if (jsonReadTypeNext(greeting) != jsonTypeString)
                     THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(expectedKey));
 
-                if (!strEq(varStr(actualValue), expectedValue))
+                const String *const actualValue = jsonReadStr(greeting);
+
+                if (!strEq(actualValue, expectedValue))
                 {
                     THROW_FMT(
                         ProtocolError,
                         "expected value '%s' for greeting key '%s' but got '%s'\n"
                             "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
-                        strZ(expectedValue), strZ(expectedKey), strZ(varStr(actualValue)));
+                        strZ(expectedValue), strZ(expectedKey), strZ(actualValue));
                 }
             }
+
+            jsonReadObjectEnd(greeting);
         }
         MEM_CONTEXT_TEMP_END();
 
