@@ -25,10 +25,10 @@ pckWriteStrP(packWrite, NULL, .defaultWrite = true) is not valid since there is 
 NULLs are not stored in a pack and are therefore not typed. A NULL is essentially just a gap in the field IDs. Fields that are
 frequently NULL are best stored at the end of an object. When using read functions the default will always be returned
 when the field is NULL (i.e. missing). There are times when NULL must be explicitly passed, for example:
-pckWriteStrP(resultPack, result.pageChecksumResult != NULL ? jsonFromKv(result.pageChecksumResult) : NULL);
-In this case, NULL is declared since jsonFromKv() does not accept a NULL parameter and, following the rules for NULLs the field ID
-is skipped when result.pageChecksumResult == NULL. Upon reading, we can declare a NULL_STR when a NULL (field ID gap) is
-encountered, e.g. jsonToVar(pckReadStrP(jobResult, .defaultValue = NULL_STR)).
+pckWriteStrP(pack, strEmpty(checksumSha1) ? NULL : checksumSha1);
+In this case, NULL is declared since checksumSha1 might be empty and, following the rules for NULLs the field ID is skipped when
+strEmpty(checksumSha1). Upon reading, we can declare an empty string when a NULL (field ID gap) is encountered,
+e.g. pckReadStrP(pack, .defaultValue = EMPTY_STR)).
 
 A pack is an object by default. Objects can store fields, objects, or arrays. Objects and arrays will be referred to collectively as
 containers. Fields contain data to be stored, e.g. integers, strings, etc.
