@@ -253,16 +253,35 @@ testRun(void)
         TEST_ERROR(jsonReadBool(read), FormatError, "JSON read is complete");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("scalar");
+        TEST_TITLE("complex");
 
         const String *json = STRDEF(
-            "\t\r\n [\t{\r}, \"abc\", 123, 18446744073709551615, -1, -9223372036854775807, true, false\n]]");
+            "\t\r\n "                                               // Leading whitespace
+            "[\n"
+            "    {"
+            "        \"key1\"\t: \"value1\","
+            "        \"key2\"\t: 777"
+            "    },"
+            "    \"abc\","
+            "    123,"
+            "    18446744073709551615,"
+            "    -1,"
+            "    -9223372036854775807,"
+            "    true,"
+            "    false\n"
+            "]"
+            "] ");                                                  // Extra JSON and whitespace at the end
+
         TEST_ASSIGN(read, jsonReadNew(json), "new read");
 
         TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
         TEST_ERROR(jsonReadArrayEnd(read), FormatError, "expected ] but found {");
 
         TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        TEST_RESULT_STR_Z(jsonReadKey(read), "key1", "str");
+        TEST_RESULT_STR_Z(jsonReadStr(read), "value1", "str");
+        TEST_RESULT_STR_Z(jsonReadKey(read), "key2", "str");
+        TEST_RESULT_INT(jsonReadInt(read), 777, "int");
         TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
 
         TEST_RESULT_STR_Z(jsonReadStr(read), "abc", "str");

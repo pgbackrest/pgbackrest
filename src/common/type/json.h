@@ -53,6 +53,9 @@ int jsonReadInt(JsonRead *this);
 int64_t jsonReadInt64(JsonRead *this);
 
 // !!!
+String *jsonReadKey(JsonRead *const this);
+
+// !!!
 void jsonReadObjectBegin(JsonRead *this);
 void jsonReadObjectEnd(JsonRead *this);
 

@@ -16,6 +16,22 @@ Convert JSON to/from KeyValue
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
+typedef struct JsonReadStack
+{
+    JsonType type;                                                  // Container type
+    bool first;                                                     // First element has been read
+} JsonReadStack;
+
+struct JsonRead
+{
+    const char *json;                                               // JSON string
+
+    List *stack;                                                    // Stack of object/array tags
+    bool key;                                                       // Was a key read for an object value?
+
+    bool complete;                                                  // JSON read is complete
+};
+
 typedef struct JsonWriteStack
 {
     JsonType type;                                                  // Container type
@@ -31,20 +47,6 @@ struct JsonWrite
     bool key;                                                       // Is a key set for an object value?
 
     bool complete;                                                  // JSON write is complete
-};
-
-typedef struct JsonReadStack
-{
-    JsonType type;                                                  // Container type
-    bool first;                                                     // First element has been read
-} JsonReadStack;
-
-struct JsonRead
-{
-    const char *json;                                               // JSON string
-    List *stack;                                                    // Stack of object/array tags
-
-    bool complete;                                                  // JSON read is complete
 };
 
 /**********************************************************************************************************************************/
@@ -192,12 +194,12 @@ jsonReadTypeNext(JsonRead *const this)
 Push/Pop a type on/off the stack
 ***********************************************************************************************************************************/
 static void
-jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
+jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_READ, this);
         FUNCTION_TEST_PARAM(ENUM, type);
-        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(BOOL, key);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -209,7 +211,7 @@ jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
     // !!!
     if (this->stack == NULL)
     {
-        ASSERT(key == NULL);
+        ASSERT(!key);
 
         if (jsonTypeScalar(type))
             this->complete = true;
@@ -225,42 +227,41 @@ jsonReadPush(JsonRead *const this, const JsonType type, const String *const key)
 
     if (!this->complete)
     {
-        ASSERT((jsonTypeContainer(type) && key == NULL) || !lstEmpty(this->stack));
+        ASSERT((jsonTypeContainer(type) && !key) || !lstEmpty(this->stack));
 
         if (!lstEmpty(this->stack))
         {
             JsonWriteStack *const item = lstGetLast(this->stack);
 
-            (void)key; // !!!
-            // if (key != NULL)
-            // {
-            //     if (this->key)
-            //         THROW_FMT(FormatError, "key has already been defined");
+            if (key)
+            {
+                if (this->key)
+                    THROW_FMT(FormatError, "key has already been defined");
 
-            //     if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
-            //         THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
+                // if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
+                //     THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
 
-            //     MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
-            //     {
-            //         strFree(item->keyLast);
-            //         item->keyLast = strDup(key);
-            //     }
-            //     MEM_CONTEXT_END();
+                // MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
+                // {
+                //     strFree(item->keyLast);
+                //     item->keyLast = strDup(key);
+                // }
+                // MEM_CONTEXT_END();
 
-            //     this->key = true;
-            // }
-            // else
-            // {
-            //     if (item->type == jsonTypeObjectBegin)
-            //     {
-            //         if (!this->key)
-            //             THROW_FMT(FormatError, "key has not been defined");
+                this->key = true;
+            }
+            else
+            {
+                if (item->type == jsonTypeObjectBegin)
+                {
+                    if (!this->key)
+                        THROW_FMT(FormatError, "key has not been defined");
 
-            //         this->key = false;
-            //     }
-            // }
+                    this->key = false;
+                }
+            }
 
-            if (item->first /*&& (item->type != jsonTypeObjectBegin || key != NULL)*/)
+            if (item->first && (item->type != jsonTypeObjectBegin || key))
             {
                 jsonReadConsumeWhiteSpace(this);
 
@@ -308,7 +309,6 @@ jsonReadPop(JsonRead *const this, const JsonType type)
     if (jsonReadTypeNext(this) != type)
         THROW_FMT(FormatError, "expected %c but found %c", type == jsonTypeArrayEnd ? ']' : '}', *this->json);
 
-    // ASSERT(container->type == type);
     // ASSERT(container->type != jsonTypeObjectBegin || this->key == false);
 
     if (type == jsonTypeObjectEnd)
@@ -517,7 +517,7 @@ jsonReadArrayBegin(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPush(this, jsonTypeArrayBegin, NULL);
+    jsonReadPush(this, jsonTypeArrayBegin, false);
     this->json++;
 
     FUNCTION_TEST_RETURN_VOID();
@@ -548,7 +548,7 @@ jsonReadBool(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPush(this, jsonTypeBool, NULL);
+    jsonReadPush(this, jsonTypeBool, false);
 
     if (strncmp(this->json, TRUE_Z, sizeof(TRUE_Z) - 1) == 0)
     {
@@ -577,7 +577,7 @@ jsonReadInt(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPush(this, jsonTypeNumber, NULL);
+    jsonReadPush(this, jsonTypeNumber, false);
 
     JsonReadNumberResult number = jsonReadNumber(this);
 
@@ -605,7 +605,7 @@ jsonReadInt64(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPush(this, jsonTypeNumber, NULL);
+    jsonReadPush(this, jsonTypeNumber, false);
 
     JsonReadNumberResult number = jsonReadNumber(this);
 
@@ -619,6 +619,31 @@ jsonReadInt64(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
+String *
+jsonReadKey(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeString, true);
+
+    String *const result = jsonReadStrInternal(this);
+
+    // Consume the : after the key
+    jsonReadConsumeWhiteSpace(this);
+
+    if (*this->json != ':')
+        THROW_FMT(JsonFormatError, "expected : after key '%s' at: %s", strZ(result), this->json);
+
+    this->json++;
+
+    FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
 void
 jsonReadObjectBegin(JsonRead *const this)
 {
@@ -628,7 +653,7 @@ jsonReadObjectBegin(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPush(this, jsonTypeObjectBegin, NULL);
+    jsonReadPush(this, jsonTypeObjectBegin, false);
     this->json++;
 
     FUNCTION_TEST_RETURN_VOID();
@@ -659,12 +684,12 @@ jsonReadUInt(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPush(this, jsonTypeNumber, NULL);
+    jsonReadPush(this, jsonTypeNumber, false);
 
     JsonReadNumberResult number = jsonReadNumber(this);
 
     if (number.type != jsonNumberTypeU64 || number.value.u64 > UINT_MAX)
-        THROW(FormatError, "number is out of range for uint");
+        THROW(JsonFormatError, "number is out of range for uint");
 
     FUNCTION_TEST_RETURN((unsigned int)number.value.u64);
 }
@@ -679,12 +704,12 @@ jsonReadUInt64(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPush(this, jsonTypeNumber, NULL);
+    jsonReadPush(this, jsonTypeNumber, false);
 
     JsonReadNumberResult number = jsonReadNumber(this);
 
     if (number.type != jsonNumberTypeU64)
-        THROW(FormatError, "number is out of range for uint64");
+        THROW(JsonFormatError, "number is out of range for uint64");
 
     FUNCTION_TEST_RETURN(number.value.u64);
 }
@@ -699,7 +724,7 @@ jsonReadStr(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    jsonReadPush(this, jsonTypeString, NULL);
+    jsonReadPush(this, jsonTypeString, false);
 
     FUNCTION_TEST_RETURN(jsonReadStrInternal(this));
 }
@@ -752,7 +777,7 @@ jsonWritePush(JsonWrite *const this, const JsonType jsonType, const String *cons
 
     // Cannot write after complete
     if (this->complete)
-        THROW(FormatError, "JSON write is complete");
+        THROW(JsonFormatError, "JSON write is complete");
 
     // !!!
     if (this->stack == NULL)
@@ -782,10 +807,10 @@ jsonWritePush(JsonWrite *const this, const JsonType jsonType, const String *cons
             if (key != NULL)
             {
                 if (this->key)
-                    THROW_FMT(FormatError, "key has already been defined");
+                    THROW_FMT(JsonFormatError, "key has already been defined");
 
                 if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
-                    THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
+                    THROW_FMT(JsonFormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
 
                 MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
                 {
@@ -801,7 +826,7 @@ jsonWritePush(JsonWrite *const this, const JsonType jsonType, const String *cons
                 if (item->type == jsonTypeObjectBegin)
                 {
                     if (!this->key)
-                        THROW_FMT(FormatError, "key has not been defined");
+                        THROW_FMT(JsonFormatError, "key has not been defined");
 
                     this->key = false;
                 }
