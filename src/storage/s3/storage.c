@@ -345,7 +345,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
         httpRequestError(request, response);
 
     // Get credentials from the JSON response
-    KeyValue *credential = jsonToKv(strNewBuf(httpResponseContent(response)));
+    KeyValue *credential = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
     MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
     {

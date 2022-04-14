@@ -268,7 +268,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
 
     do
     {
-        HrnServerCmd cmd = jsonToUInt(ioReadLine(read));
+        HrnServerCmd cmd = varUIntForce(jsonToVar(ioReadLine(read)));
         const Variant *data = jsonToVar(ioReadLine(read));
 
         switch (cmd)

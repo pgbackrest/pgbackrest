@@ -81,7 +81,7 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
     FUNCTION_LOG_END();
 
-    KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
+    KeyValue *content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
     // Check the md5 hash
     const String *md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));

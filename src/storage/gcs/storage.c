@@ -122,7 +122,7 @@ storageGcsAuthToken(HttpRequest *request, time_t timeBegin)
     StorageGcsAuthTokenResult result = {0};
 
     // Get the response
-    KeyValue *kvResponse = jsonToKv(strNewBuf(httpResponseContent(httpRequestResponse(request, true))));
+    KeyValue *kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(httpRequestResponse(request, true)))));
 
     // Check for an error
     const String *error = varStr(kvGet(kvResponse, GCS_JSON_ERROR_VAR));
@@ -596,7 +596,7 @@ storageGcsListInternal(
                 else
                     response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query);
 
-                KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
+                KeyValue *content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
                 // If next page token exists then send an async request to get more data
                 const String *nextPageToken = varStr(kvGet(content, GCS_JSON_NEXT_PAGE_TOKEN_VAR));
@@ -715,7 +715,7 @@ storageGcsInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInt
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
         result.type = storageTypeFile;
-        storageGcsInfoFile(&result, jsonToKv(strNewBuf(httpResponseContent(httpResponse))));
+        storageGcsInfoFile(&result, varKv(jsonToVar(strNewBuf(httpResponseContent(httpResponse)))));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -964,7 +964,7 @@ storageGcsNew(
             // Read data from file for service keys
             case storageGcsKeyTypeService:
             {
-                KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
+                KeyValue *kvKey = varKv(jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key)))));
                 driver->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
                 driver->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
                 const String *const uri = varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR));

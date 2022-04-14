@@ -80,10 +80,9 @@ uint64_t jsonReadUInt64(JsonRead *this);
 Variant *jsonReadVar(JsonRead *this);
 
 /***********************************************************************************************************************************
-Write Helper Functions
+Read Helper Functions
 ***********************************************************************************************************************************/
 // Convert JSON to Variant
-// Convert JSON to a variant
 Variant *jsonToVar(const String *json);
 
 /***********************************************************************************************************************************
@@ -227,24 +226,6 @@ jsonTypeScalar(const JsonType jsonType)
 {
     return jsonType < jsonTypeArrayBegin;
 }
-
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Convert a json string to a bool
-bool jsonToBool(const String *json);
-
-// Convert a json number to various integer types
-int jsonToInt(const String *json);
-int64_t jsonToInt64(const String *json);
-unsigned int jsonToUInt(const String *json);
-uint64_t jsonToUInt64(const String *json);
-
-// Convert a json object to a KeyValue
-KeyValue *jsonToKv(const String *json);
-
-// Convert a json string to a String
-String *jsonToStr(const String *json);
 
 /***********************************************************************************************************************************
 Macros for function logging

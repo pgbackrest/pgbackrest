@@ -419,7 +419,7 @@ iniLoad(
 
                         // Key may not be zero-length
                         if (strSize(key) == 0)
-                            THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx++, linePtr);
+                            THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx + 1, linePtr);
 
                         // Callback with the section/key/value
                         callbackFunction(callbackData, section, key, value, valueVar);
