@@ -69,7 +69,7 @@ testRun(void)
 
         TEST_ERROR(
             iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
-            "key is zero-length at line 1: =\"value\"");
+            "key is zero-length at line 2: =\"value\"");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one section");
