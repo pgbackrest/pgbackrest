@@ -84,7 +84,7 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_KEY_VALUE_END_BUF, ":");
 #define INFO_CHECKSUM_KEY_VALUE(checksum, key, value)                                                                              \
     do                                                                                                                             \
     {                                                                                                                              \
-        ioFilterProcessIn(checksum, BUFSTR(jsonFromStr(key)));                                                                     \
+        ioFilterProcessIn(checksum, BUFSTR(jsonFromVar(VARSTR(key))));                                                             \
         ioFilterProcessIn(checksum, INFO_CHECKSUM_KEY_VALUE_END_BUF);                                                              \
         ioFilterProcessIn(checksum, BUFSTR(value));                                                                                \
     }                                                                                                                              \
@@ -418,14 +418,14 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
 
         // Add version and format
         callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, &data);
-        infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromUInt(REPOSITORY_FORMAT));
-        infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromStr(STRDEF(PROJECT_VERSION)));
+        infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromVar(VARUINT(REPOSITORY_FORMAT)));
+        infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromVar(VARSTRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
         if (infoCipherPass(this) != NULL)
         {
             callbackFunction(callbackData, INFO_SECTION_CIPHER_STR, &data);
-            infoSaveValue(&data, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromStr(infoCipherPass(this)));
+            infoSaveValue(&data, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromVar(VARSTR(infoCipherPass(this))));
         }
 
         // Flush out any additional sections
@@ -435,7 +435,7 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
         INFO_CHECKSUM_END(data.checksum);
 
         ioWrite(data.write, BUFSTRDEF("\n[" INFO_SECTION_BACKREST "]\n" INFO_KEY_CHECKSUM "="));
-        ioWriteLine(data.write, BUFSTR(jsonFromStr(pckReadStrP(pckReadNew(ioFilterResult(data.checksum))))));
+        ioWriteLine(data.write, BUFSTR(jsonFromVar(VARSTR(pckReadStrP(pckReadNew(ioFilterResult(data.checksum)))))));
 
         // Close the file
         ioWriteClose(data.write);

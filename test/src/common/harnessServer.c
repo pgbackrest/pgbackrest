@@ -82,7 +82,7 @@ hrnServerScriptCommand(IoWrite *write, HrnServerCmd cmd, const Variant *data)
 
     ASSERT(write != NULL);
 
-    ioWriteStrLine(write, jsonFromUInt(cmd));
+    ioWriteStrLine(write, jsonFromVar(VARUINT(cmd)));
     ioWriteStrLine(write, jsonFromVar(data));
     ioWriteFlush(write);
 

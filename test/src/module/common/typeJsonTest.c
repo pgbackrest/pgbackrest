@@ -54,30 +54,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("jsonFromBool()"))
-    {
-        TEST_RESULT_STR_Z(jsonFromBool(true), "true", "json bool true");
-        TEST_RESULT_STR_Z(jsonFromBool(false), "false", "json bool true");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("jsonFromInt(), jsonFromInt64(), jsonFromUInt() and jsonFromUInt64()"))
-    {
-        TEST_RESULT_STR_Z(jsonFromInt(-2147483648), "-2147483648", "json int");
-        TEST_RESULT_STR_Z(jsonFromInt64(-9223372036854775807L), "-9223372036854775807", "json int64");
-        TEST_RESULT_STR_Z(jsonFromUInt(4294967295), "4294967295", "json uint");
-        TEST_RESULT_STR_Z(jsonFromUInt64(18446744073709551615UL), "18446744073709551615", "json uint64");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("jsonFromStr() and jsonFromStrInternal()"))
-    {
-        TEST_RESULT_STR_Z(jsonFromStr(NULL), "null", "null string");
-        TEST_RESULT_STR_Z(jsonFromStr(STRDEF("simple string")), "\"simple string\"", "simple string");
-        TEST_RESULT_STR_Z(jsonFromStr(STRDEF("\"\\/\b\n\r\t\f")), "\"\\\"\\\\/\\b\\n\\r\\t\\f\"", "string escapes");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("jsonFromVar()"))
     {
         String *json = NULL;

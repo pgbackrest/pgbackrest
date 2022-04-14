@@ -9,6 +9,7 @@ Convert JSON to/from KeyValue
 /***********************************************************************************************************************************
 JSON types
 ***********************************************************************************************************************************/
+// !!! THESE SHOULD BE STRINGID?
 typedef enum
 {
     jsonTypeBool,
@@ -172,45 +173,6 @@ Write Helper Functions
 ***********************************************************************************************************************************/
 // Convert Variant to JSON
 String *jsonFromVar(const Variant *value);
-
-// Convert bool to JSON
-__attribute__((always_inline)) static inline String *
-jsonFromBool(const bool value)
-{
-    return jsonFromVar(VARBOOL(value));
-}
-
-// Convert integers to JSON
-__attribute__((always_inline)) static inline String *
-jsonFromInt(const int value)
-{
-    return jsonFromVar(VARINT(value));
-}
-
-__attribute__((always_inline)) static inline String *
-jsonFromInt64(const int64_t value)
-{
-    return jsonFromVar(VARINT64(value));
-}
-
-__attribute__((always_inline)) static inline String *
-jsonFromUInt(const unsigned int value)
-{
-    return jsonFromVar(VARUINT(value));
-}
-
-__attribute__((always_inline)) static inline String *
-jsonFromUInt64(const uint64_t value)
-{
-    return jsonFromVar(VARUINT64(value));
-}
-
-// Convert String to JSON
-__attribute__((always_inline)) static inline String *
-jsonFromStr(const String *const value)
-{
-    return jsonFromVar(VARSTR(value));
-}
 
 /***********************************************************************************************************************************
 Functions

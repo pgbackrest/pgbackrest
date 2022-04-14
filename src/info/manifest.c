@@ -2261,59 +2261,60 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_ARCHIVE_START_STR,
-                jsonFromStr(manifest->pub.data.archiveStart));
+                jsonFromVar(VARSTR(manifest->pub.data.archiveStart)));
         }
 
         if (manifest->pub.data.archiveStop != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR,
-                jsonFromStr(manifest->pub.data.archiveStop));
+                jsonFromVar(VARSTR(manifest->pub.data.archiveStop)));
         }
 
         if (manifest->pub.data.bundle)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_BUNDLE_STR, jsonFromBool(manifest->pub.data.bundle));
+                infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_BUNDLE_STR,
+                jsonFromVar(VARBOOL(manifest->pub.data.bundle)));
         }
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LABEL_STR,
-            jsonFromStr(manifest->pub.data.backupLabel));
+            jsonFromVar(VARSTR(manifest->pub.data.backupLabel)));
 
         if (manifest->pub.data.lsnStart != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LSN_START_STR,
-                jsonFromStr(manifest->pub.data.lsnStart));
+                jsonFromVar(VARSTR(manifest->pub.data.lsnStart)));
         }
 
         if (manifest->pub.data.lsnStop != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LSN_STOP_STR,
-                jsonFromStr(manifest->pub.data.lsnStop));
+                jsonFromVar(VARSTR(manifest->pub.data.lsnStop)));
         }
 
         if (manifest->pub.data.backupLabelPrior != NULL)
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_PRIOR_STR,
-                jsonFromStr(manifest->pub.data.backupLabelPrior));
+                jsonFromVar(VARSTR(manifest->pub.data.backupLabelPrior)));
         }
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,
-            jsonFromInt64(manifest->pub.data.backupTimestampCopyStart));
+            jsonFromVar(VARINT64(manifest->pub.data.backupTimestampCopyStart)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,
-            jsonFromInt64(manifest->pub.data.backupTimestampStart));
+            jsonFromVar(VARINT64(manifest->pub.data.backupTimestampStart)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,
-            jsonFromInt64(manifest->pub.data.backupTimestampStop));
+            jsonFromVar(VARINT64(manifest->pub.data.backupTimestampStop)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TYPE_STR,
-            jsonFromStr(strIdToStr(manifest->pub.data.backupType)));
+            jsonFromVar(VARSTR(strIdToStr(manifest->pub.data.backupType))));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -2321,18 +2322,18 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_CATALOG_VERSION_STR,
-            jsonFromUInt(manifest->pub.data.pgCatalogVersion));
+            jsonFromVar(VARUINT(manifest->pub.data.pgCatalogVersion)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-control-version"),
-            jsonFromUInt(pgControlVersion(manifest->pub.data.pgVersion)));
+            jsonFromVar(VARUINT(pgControlVersion(manifest->pub.data.pgVersion))));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_ID_STR, jsonFromUInt(manifest->pub.data.pgId));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_ID_STR, jsonFromVar(VARUINT(manifest->pub.data.pgId)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_SYSTEM_ID_STR,
-            jsonFromUInt64(manifest->pub.data.pgSystemId));
+            jsonFromVar(VARUINT64(manifest->pub.data.pgSystemId)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_VERSION_STR,
-            jsonFromStr(pgVersionToStr(manifest->pub.data.pgVersion)));
+            jsonFromVar(VARSTR(pgVersionToStr(manifest->pub.data.pgVersion))));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -2340,10 +2341,10 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     {
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,
-            jsonFromBool(manifest->pub.data.backupOptionArchiveCheck));
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionArchiveCheck)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR,
-            jsonFromBool(manifest->pub.data.backupOptionArchiveCopy));
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionArchiveCopy)));
 
         if (manifest->pub.data.backupOptionStandby != NULL)
         {
@@ -2370,7 +2371,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         // the type option must also be set if compression is not gz.
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_STR,
-            jsonFromBool(manifest->pub.data.backupOptionCompressType != compressTypeNone));
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionCompressType != compressTypeNone)));
 
         if (manifest->pub.data.backupOptionCompressLevel != NULL)
         {
@@ -2389,7 +2390,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         // Set the compression type.  Older versions will ignore this and assume gz compression if the compress option is set.
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR,
-            jsonFromStr(compressTypeStr(manifest->pub.data.backupOptionCompressType)));
+            jsonFromVar(VARSTR(compressTypeStr(manifest->pub.data.backupOptionCompressType))));
 
         if (manifest->pub.data.backupOptionDelta != NULL)
         {
@@ -2400,10 +2401,10 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_HARDLINK_STR,
-            jsonFromBool(manifest->pub.data.backupOptionHardLink));
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionHardLink)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ONLINE_STR,
-            jsonFromBool(manifest->pub.data.backupOptionOnline));
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionOnline)));
 
         if (manifest->pub.data.backupOptionProcessMax != NULL)
         {
@@ -2534,7 +2535,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             jsonFromVar(saveData->groupDefault));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_MODE_STR,
-            jsonFromStr(strNewFmt("%04o", saveData->fileModeDefault)));
+            jsonFromVar(VARSTR(strNewFmt("%04o", saveData->fileModeDefault))));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_USER_STR,
             jsonFromVar(saveData->userDefault));
@@ -2617,7 +2618,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             jsonFromVar(saveData->groupDefault));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_MODE_STR,
-            jsonFromStr(strNewFmt("%04o", saveData->pathModeDefault)));
+            jsonFromVar(VARSTR(strNewFmt("%04o", saveData->pathModeDefault))));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_USER_STR,
             jsonFromVar(saveData->userDefault));

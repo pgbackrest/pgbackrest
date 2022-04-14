@@ -55,7 +55,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
     // Render in json
     if (listData->json)
     {
-        ioWriteStr(listData->write, jsonFromStr(info->name));
+        ioWriteStr(listData->write, jsonFromVar(VARSTR(info->name)));
         ioWrite(listData->write, BUFSTRDEF(":{\"type\":\""));
 
         switch (info->type)
@@ -84,7 +84,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         }
 
         if (info->type == storageTypeLink)
-            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strZ(jsonFromStr(info->linkDestination))));
+            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strZ(jsonFromVar(VARSTR(info->linkDestination)))));
 
         ioWrite(listData->write, BRACER_BUF);
     }

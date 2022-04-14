@@ -55,7 +55,7 @@ harnessInfoChecksumCallback(
     else
         ioFilterProcessIn(data->checksum, BUFSTRDEF(","));
 
-    ioFilterProcessIn(data->checksum, BUFSTR(jsonFromStr(key)));
+    ioFilterProcessIn(data->checksum, BUFSTR(jsonFromVar(VARSTR(key))));
     ioFilterProcessIn(data->checksum, BUFSTRDEF(":"));
     ioFilterProcessIn(data->checksum, BUFSTR(value));
 }
@@ -84,9 +84,9 @@ harnessInfoChecksum(const String *info)
         result = bufNew(strSize(info) + 256);
 
         bufCat(result, BUFSTRDEF("[backrest]\nbackrest-format="));
-        bufCat(result, BUFSTR(jsonFromUInt(REPOSITORY_FORMAT)));
+        bufCat(result, BUFSTR(jsonFromVar(VARUINT(REPOSITORY_FORMAT))));
         bufCat(result, BUFSTRDEF("\nbackrest-version="));
-        bufCat(result, BUFSTR(jsonFromStr(STRDEF(PROJECT_VERSION))));
+        bufCat(result, BUFSTR(jsonFromVar(VARSTRDEF(PROJECT_VERSION))));
         bufCat(result, BUFSTRDEF("\n\n"));
         bufCat(result, BUFSTR(info));
 
@@ -97,7 +97,7 @@ harnessInfoChecksum(const String *info)
 
         // Append checksum to buffer
         bufCat(result, BUFSTRDEF("\n[backrest]\nbackrest-checksum="));
-        bufCat(result, BUFSTR(jsonFromStr(pckReadStrP(pckReadNew(ioFilterResult(data.checksum))))));
+        bufCat(result, BUFSTR(jsonFromVar(VARSTR(pckReadStrP(pckReadNew(ioFilterResult(data.checksum)))))));
         bufCat(result, BUFSTRDEF("\n"));
 
         bufMove(result, memContextPrior());

@@ -298,16 +298,19 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
         if (saveData->infoPg->type == infoPgBackup)
         {
             infoSaveValue(
-                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR), jsonFromUInt(pgData.catalogVersion));
+                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR),
+                jsonFromVar(VARUINT(pgData.catalogVersion)));
             infoSaveValue(
                 infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR),
-                jsonFromUInt(pgControlVersion(pgData.version)));
+                jsonFromVar(VARUINT(pgControlVersion(pgData.version))));
         }
 
-        infoSaveValue(infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR), jsonFromUInt(pgData.id));
-        infoSaveValue(infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_SYSTEM_ID_VAR), jsonFromUInt64(pgData.systemId));
+        infoSaveValue(infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR), jsonFromVar(VARUINT(pgData.id)));
         infoSaveValue(
-            infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR), jsonFromStr(pgVersionToStr(pgData.version)));
+            infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_SYSTEM_ID_VAR), jsonFromVar(VARUINT64(pgData.systemId)));
+        infoSaveValue(
+            infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR),
+            jsonFromVar(VARSTR(pgVersionToStr(pgData.version))));
     }
 
     if (infoSaveSection(infoSaveData, INFO_SECTION_DB_HISTORY_STR, sectionNext))
