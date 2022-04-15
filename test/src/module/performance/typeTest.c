@@ -352,19 +352,6 @@ testRun(void)
         }
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check stats have correct values");
-
-        // !!!
-        // KeyValue *statKv = statToKv();
-
-        // for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
-        // {
-        //     TEST_RESULT_UINT(
-        //         varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal,
-        //         strZ(strNewFmt("check stat %u", statIdx)));
-        // }
     }
 
     // *****************************************************************************************************************************
