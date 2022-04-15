@@ -6,12 +6,8 @@ Statistics Collector
 #include "common/debug.h"
 #include "common/memContext.h"
 #include "common/stat.h"
+#include "common/type/json.h"
 #include "common/type/list.h"
-
-/***********************************************************************************************************************************
-Stat output constants
-***********************************************************************************************************************************/
-VARIANT_STRDEF_EXTERN(STAT_VALUE_TOTAL_VAR,                         STAT_VALUE_TOTAL);
 
 /***********************************************************************************************************************************
 Cumulative statistics
@@ -106,21 +102,36 @@ statInc(const String *key)
 }
 
 /**********************************************************************************************************************************/
-KeyValue *
-statToKv(void)
+String *
+statToJson(void)
 {
     FUNCTION_TEST_VOID();
 
     ASSERT(statLocalData.memContext != NULL);
 
-    KeyValue *result = kvNew();
+    String *result = NULL;
 
-    for (unsigned int statIdx = 0; statIdx < lstSize(statLocalData.stat); statIdx++)
+    if (!lstEmpty(statLocalData.stat))
     {
-        Stat *stat = lstGet(statLocalData.stat, statIdx);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            KeyValue *const kv = kvNew();
 
-        KeyValue *statKv = kvPutKv(result, VARSTR(stat->key));
-        kvPut(statKv, STAT_VALUE_TOTAL_VAR, VARUINT64(stat->total));
+            for (unsigned int statIdx = 0; statIdx < lstSize(statLocalData.stat); statIdx++)
+            {
+                const Stat *const stat = lstGet(statLocalData.stat, statIdx);
+
+                KeyValue *const statKv = kvPutKv(kv, VARSTR(stat->key));
+                kvPut(statKv, VARSTRDEF("total"), VARUINT64(stat->total));
+            }
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = jsonFromKv(kv);
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_TEST_RETURN(result);

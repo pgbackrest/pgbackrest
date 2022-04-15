@@ -782,7 +782,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("statistics exist");
 
-        TEST_RESULT_BOOL(varLstEmpty(kvKeyList(statToKv())), false, "check");
+        TEST_RESULT_PTR_NE(statToJson(), NULL, "check");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
