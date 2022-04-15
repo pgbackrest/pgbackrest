@@ -358,7 +358,7 @@ testRun(void)
             "text - multi-repo, single stanza, one wal segment");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("coverage for stanzaStatus branches");
+        TEST_TITLE("coverage for stanzaStatus branches && percent complete null");
 
         // Db1 and Db3 (from above) have same system-id and db-version so consider them the same for WAL reporting
         HRN_STORAGE_PUT_EMPTY(
@@ -424,6 +424,7 @@ testRun(void)
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
+                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = NULL), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -617,7 +618,7 @@ testRun(void)
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("mixed multi-repo");
+        TEST_TITLE("mixed multi-repo, percent complete non-null");
 
         HRN_INFO_PUT(
             storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE,
@@ -1015,6 +1016,8 @@ testRun(void)
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
+                double percentComplete = 45.45;
+                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1348,7 +1351,7 @@ testRun(void)
                             "],"
                             "\"status\":{"
                                 "\"code\":4,"
-                                "\"lock\":{\"backup\":{\"held\":true}},"
+                                "\"lock\":{\"backup\":{\"held\":true,\"percent-complete\":\"45.45\"}},"
                                 "\"message\":\"different across repos\""
                             "}"
                         "},"
@@ -1447,6 +1450,8 @@ testRun(void)
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
+                double percentComplete = 55.55;
+                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1519,7 +1524,7 @@ testRun(void)
                     "            backup reference list: 20201116-155000F\n"
                     "\n"
                     "stanza: stanza2\n"
-                    "    status: mixed (backup/expire running)\n"
+                    "    status: mixed (backup/expire running - 55.55% complete)\n"
                     "        repo1: error (no valid backups)\n"
                     "        repo2: error (missing stanza path)\n"
                     "    cipher: mixed\n"

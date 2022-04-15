@@ -71,6 +71,7 @@ VARIANT_STRDEF_STATIC(STATUS_KEY_CODE_VAR,                          "code");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD_VAR,              "held");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR,  "percent-complete");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
 
 #define INFO_STANZA_STATUS_OK                                       "ok"
@@ -129,6 +130,7 @@ typedef struct InfoStanzaRepo
     unsigned int currentPgVersion;                                  // Current postgres version for the stanza
     bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
     bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
+    double *percentComplete;                                        // Percentage of backup complete (when not NULL)
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
@@ -175,16 +177,17 @@ infoStanzaErrorAdd(InfoRepoData *repoList, const ErrorType *type, const String *
 Set the overall error status code and message for the stanza to the code and message passed
 ***********************************************************************************************************************************/
 static void
-stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
+stanzaStatus(const int code, const InfoStanzaRepo *const infoStanzaRepo, Variant *stanzaInfo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, code);
-        FUNCTION_TEST_PARAM(BOOL, backupLockHeld);
+        FUNCTION_TEST_PARAM(INFO_STANZA_REPO, infoStanzaRepo);
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
     ASSERT((code >= 0 && code <= 6) || code == 99);
     ASSERT(stanzaInfo != NULL);
+    ASSERT(infoStanzaRepo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR);
 
@@ -228,7 +231,9 @@ stanzaStatus(const int code, bool backupLockHeld, Variant *stanzaInfo)
     // Construct a specific lock part
     KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
     KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
-    kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(backupLockHeld));
+    kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(infoStanzaRepo->backupLockHeld));
+    if (infoStanzaRepo->percentComplete != NULL)
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, VARSTR(strNewDbl(*infoStanzaRepo->percentComplete)));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -766,7 +771,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
 
         // Set the overall stanza status
-        stanzaStatus(stanzaStatusCode, stanzaData->backupLockHeld, stanzaInfo);
+        stanzaStatus(stanzaStatusCode, stanzaData, stanzaInfo);
 
         // Set the overall cipher type
         if (stanzaCipherType != INFO_STANZA_STATUS_CODE_MIXED)
@@ -1193,6 +1198,12 @@ infoUpdateStanza(
                     stanzaRepo->backupLockHeld = lockRead(
                         cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).status == lockReadStatusValid;
                     stanzaRepo->backupLockChecked = true;
+
+                    if (stanzaRepo->backupLockHeld)
+                    {
+                        stanzaRepo->percentComplete =
+                            lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).data.percentComplete;
+                    }
                 }
             }
 
@@ -1450,6 +1461,10 @@ infoRender(void)
                     KeyValue *lockKv = varKv(kvGet(stanzaStatus, STATUS_KEY_LOCK_VAR));
                     KeyValue *backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
                     bool backupLockHeld = varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR));
+                    const String *percentCompleteStr = kvGet(
+                        backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR) != NULL ?
+                        strNewFmt(" - %s%s", strZ(varStr(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR))),
+                            "% complete") : strNewZ("");
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
@@ -1463,7 +1478,9 @@ infoRender(void)
                                 statusCode == INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_MIXED :
                                     strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)",
                                     strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))))),
-                                backupLockHeld == true ? " (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : "");
+                                backupLockHeld == true ?
+                                    strZ(strNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(percentCompleteStr))) :
+                                    "");
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
@@ -1508,14 +1525,20 @@ infoRender(void)
                             strCatFmt(
                                 resultStr, "%s (%s%s\n", INFO_STANZA_STATUS_ERROR,
                                 strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))),
-                                backupLockHeld == true ? ", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP ")" : ")");
+                                backupLockHeld == true ?
+                                    strZ(strNewFmt(", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(percentCompleteStr))) :
+                                    ")");
                         }
                     }
                     else
                     {
                         // Change displayed status if backup lock is found
                         if (backupLockHeld)
-                            strCatFmt(resultStr, "%s (%s)\n", INFO_STANZA_STATUS_OK, INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP);
+                        {
+                            strCatFmt(
+                                resultStr, "%s (%s%s)\n", INFO_STANZA_STATUS_OK, INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP,
+                                strZ(percentCompleteStr));
+                        }
                         else
                             strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
                     }
