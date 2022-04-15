@@ -7,7 +7,6 @@ Postgres Client
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/type/list.h"
 #include "common/wait.h"
 #include "postgres/client.h"
 
@@ -166,19 +165,20 @@ pgClientOpen(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
-pgClientQuery(PgClient *this, const String *query)
+Pack *
+pgClientQuery(PgClient *const this, const String *const query, const PgClientQueryResult resultType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, this);
         FUNCTION_LOG_PARAM(STRING, query);
+        FUNCTION_LOG_PARAM(STRING_ID, resultType);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     CHECK(AssertError, this->connection != NULL, "invalid connection");
     ASSERT(query != NULL);
 
-    VariantList *result = NULL;
+    Pack *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -236,8 +236,16 @@ pgClientQuery(PgClient *this, const String *query)
             // If this was a command that returned no results then we are done
             ExecStatusType resultStatus = PQresultStatus(pgResult);
 
-            if (resultStatus != PGRES_COMMAND_OK)
+            if (resultStatus == PGRES_COMMAND_OK)
             {
+                if (resultType != pgClientQueryResultNone && resultType != pgClientQueryResultAny)
+                    THROW_FMT(DbQueryError, "result expected from '%s'", strZ(query));
+            }
+            else
+            {
+                if (resultType == pgClientQueryResultNone)
+                    THROW_FMT(DbQueryError, "not result expected from '%s'", strZ(query));
+
                 // Expect some rows to be returned
                 if (resultStatus != PGRES_TUPLES_OK)
                 {
@@ -247,71 +255,91 @@ pgClientQuery(PgClient *this, const String *query)
                 }
 
                 // Fetch row and column values
-                result = varLstNew();
+                PackWrite *const pack = pckWriteNewP();
 
-                MEM_CONTEXT_BEGIN(lstMemContext((List *)result))
+                int rowTotal = PQntuples(pgResult);
+                int columnTotal = PQnfields(pgResult);
+
+                if (resultType != pgClientQueryResultAny)
                 {
-                    int rowTotal = PQntuples(pgResult);
-                    int columnTotal = PQnfields(pgResult);
+                    if (rowTotal != 1)
+                        THROW_FMT(DbQueryError, "expected one row from '%s'", strZ(query));
 
-                    // Get column types
-                    Oid *columnType = memNew(sizeof(int) * (size_t)columnTotal);
+                    if (resultType == pgClientQueryResultColumn && columnTotal != 1)
+                        THROW_FMT(DbQueryError, "expected one column from '%s'", strZ(query));
+                }
+
+                // Get column types
+                Oid *columnType = memNew(sizeof(int) * (size_t)columnTotal);
+
+                for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+                    columnType[columnIdx] = PQftype(pgResult, columnIdx);
+
+                // Get values
+                for (int rowIdx = 0; rowIdx < rowTotal; rowIdx++)
+                {
+                    if (resultType == pgClientQueryResultAny)
+                        pckWriteArrayBeginP(pack);
 
                     for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
-                        columnType[columnIdx] = PQftype(pgResult, columnIdx);
-
-                    // Get values
-                    for (int rowIdx = 0; rowIdx < rowTotal; rowIdx++)
                     {
-                        VariantList *resultRow = varLstNew();
+                        char *value = PQgetvalue(pgResult, rowIdx, columnIdx);
 
-                        for (int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+                        // If value is zero-length then check if it is null
+                        if (value[0] == '\0' && PQgetisnull(pgResult, rowIdx, columnIdx))
                         {
-                            char *value = PQgetvalue(pgResult, rowIdx, columnIdx);
-
-                            // If value is zero-length then check if it is null
-                            if (value[0] == '\0' && PQgetisnull(pgResult, rowIdx, columnIdx))
+                            pckWriteNullP(pack);
+                        }
+                        // Else convert the value to a variant
+                        else
+                        {
+                            // Convert column type.  Not all PostgreSQL types are supported but these should suffice.
+                            switch (columnType[columnIdx])
                             {
-                                varLstAdd(resultRow, NULL);
-                            }
-                            // Else convert the value to a variant
-                            else
-                            {
-                                // Convert column type.  Not all PostgreSQL types are supported but these should suffice.
-                                switch (columnType[columnIdx])
-                                {
-                                    // Boolean type
-                                    case 16:                            // bool
-                                        varLstAdd(resultRow, varNewBool(varBoolForce(varNewStrZ(value))));
-                                        break;
+                                // Boolean type
+                                case 16:                            // bool
+                                    pckWriteBoolP(pack, varBoolForce(varNewStrZ(value)), .defaultWrite = true);
+                                    break;
 
-                                    // Text/char types
-                                    case 18:                            // char
-                                    case 19:                            // name
-                                    case 25:                            // text
-                                        varLstAdd(resultRow, varNewStrZ(value));
-                                        break;
+                                // Text/char types
+                                case 18:                            // char
+                                case 19:                            // name
+                                case 25:                            // text
+                                    pckWriteStrP(pack, STR(value), .defaultWrite = true);
+                                    break;
 
-                                    // Integer types
-                                    case 20:                            // int8
-                                    case 21:                            // int2
-                                    case 23:                            // int4
-                                    case 26:                            // oid
-                                        varLstAdd(resultRow, varNewInt64(cvtZToInt64(value)));
-                                        break;
+                                // 64-bit integer types
+                                case 20:                            // int8
+                                    pckWriteI64P(pack, cvtZToInt64(value), .defaultWrite = true);
+                                    break;
 
-                                    default:
-                                        THROW_FMT(
-                                            FormatError, "unable to parse type %u in column %d for query '%s'",
-                                            columnType[columnIdx], columnIdx, strZ(query));
-                                }
+                                // 32-bit integer types
+                                case 21:                            // int2
+                                case 23:                            // int4
+                                    pckWriteI32P(pack, cvtZToInt(value), .defaultWrite = true);
+                                    break;
+
+                                // 32-bit unsigned integer types
+                                case 26:                            // oid
+                                    pckWriteU32P(pack, cvtZToUInt(value), .defaultWrite = true);
+                                    break;
+
+                                default:
+                                    THROW_FMT(
+                                        FormatError, "unable to parse type %u in column %d for query '%s'",
+                                        columnType[columnIdx], columnIdx, strZ(query));
                             }
                         }
-
-                        varLstAdd(result, varNewVarLst(resultRow));
                     }
+
+                    if (resultType == pgClientQueryResultAny)
+                        pckWriteArrayEndP(pack);
                 }
-                MEM_CONTEXT_END();
+
+                // End pack and return result
+                pckWriteEndP(pack);
+
+                result = pckMove(pckWriteResult(pack), memContextPrior());
             }
         }
         FINALLY()
@@ -322,12 +350,10 @@ pgClientQuery(PgClient *this, const String *query)
             CHECK(ServiceError, PQgetResult(this->connection) == NULL, "NULL result required to complete request");
         }
         TRY_END();
-
-        varLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/

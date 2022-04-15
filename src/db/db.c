@@ -100,35 +100,45 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const stora
 /***********************************************************************************************************************************
 Execute a query
 ***********************************************************************************************************************************/
-static VariantList *
-dbQuery(Db *this, const String *query)
+static Pack *
+dbQuery(Db *this, const PgClientQueryResult resultType, const String *const query)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
+        FUNCTION_LOG_PARAM(STRING_ID, resultType);
         FUNCTION_LOG_PARAM(STRING, query);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(query != NULL);
 
-    VariantList *result = NULL;
+    Pack *result = NULL;
 
     // Query remotely
     if (this->remoteClient != NULL)
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
-        PackWrite *const param = protocolCommandParam(command);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
+            PackWrite *const param = protocolCommandParam(command);
 
-        pckWriteU32P(param, this->remoteIdx);
-        pckWriteStrP(param, query);
+            pckWriteU32P(param, this->remoteIdx);
+            pckWriteStrIdP(param, resultType);
+            pckWriteStrP(param, query);
 
-        result = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(this->remoteClient, command, true))));
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = pckReadPackP(protocolClientExecute(this->remoteClient, command, true));
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+        MEM_CONTEXT_TEMP_END();
     }
     // Else locally
     else
-        result = pgClientQuery(this->client, query);
+        result = pgClientQuery(this->client, query, resultType);
 
-    FUNCTION_LOG_RETURN(VARIANT_LIST, result);
+    FUNCTION_LOG_RETURN(PACK, result);
 }
 
 /***********************************************************************************************************************************
@@ -145,7 +155,7 @@ dbExec(Db *this, const String *command)
     ASSERT(this != NULL);
     ASSERT(command != NULL);
 
-    CHECK(AssertError, dbQuery(this, command) == NULL, "exec returned data");
+    CHECK(AssertError, dbQuery(this, pgClientQueryResultNone, command) == NULL, "exec returned data");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -153,8 +163,8 @@ dbExec(Db *this, const String *command)
 /***********************************************************************************************************************************
 Execute a query that returns a single row and column
 ***********************************************************************************************************************************/
-static Variant *
-dbQueryColumn(Db *this, const String *query)
+static PackRead *
+dbQueryColumn(Db *const this, const String *const query)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -164,19 +174,14 @@ dbQueryColumn(Db *this, const String *query)
     ASSERT(this != NULL);
     ASSERT(query != NULL);
 
-    VariantList *result = dbQuery(this, query);
-
-    CHECK(AssertError, varLstSize(result) == 1, "query must return one column");
-    CHECK(AssertError, varLstSize(varVarLst(varLstGet(result, 0))) == 1, "query must return one row");
-
-    FUNCTION_LOG_RETURN(VARIANT, varLstGet(varVarLst(varLstGet(result, 0)), 0));
+    FUNCTION_LOG_RETURN(PACK_READ, pckReadNew(dbQuery(this, pgClientQueryResultColumn, query)));
 }
 
 /***********************************************************************************************************************************
 Execute a query that returns a single row
 ***********************************************************************************************************************************/
-static VariantList *
-dbQueryRow(Db *this, const String *query)
+static PackRead *
+dbQueryRow(Db *const this, const String *const query)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -186,11 +191,7 @@ dbQueryRow(Db *this, const String *query)
     ASSERT(this != NULL);
     ASSERT(query != NULL);
 
-    VariantList *result = dbQuery(this, query);
-
-    CHECK(AssertError, varLstSize(result) == 1, "query must return one row");
-
-    FUNCTION_LOG_RETURN(VARIANT_LIST, varVarLst(varLstGet(result, 0)));
+    FUNCTION_LOG_RETURN(PACK_READ, pckReadNew(dbQuery(this, pgClientQueryResultRow, query)));
 }
 
 /***********************************************************************************************************************************
@@ -208,7 +209,7 @@ dbIsInRecovery(Db *const this)
     bool result = false;
 
     if (dbPgVersion(this) >= PG_VERSION_HOT_STANDBY)
-        result = varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()")));
+        result = pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()")));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -252,8 +253,8 @@ dbOpen(Db *this)
         dbExec(this, STRDEF("set client_encoding = 'UTF8'"));
 
         // Query the version and data_directory
-        VariantList *row = dbQueryRow(
-            this,
+        const Pack *const row = dbQuery(
+            this, pgClientQueryResultRow,
             STRDEF(
                 "select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                 " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
@@ -262,9 +263,11 @@ dbOpen(Db *this)
                 " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4"));
 
         // Check that none of the return values are null, which indicates the user cannot select some rows in pg_settings
-        for (unsigned int columnIdx = 0; columnIdx < varLstSize(row); columnIdx++)
+        PackRead *read = pckReadNew(row);
+
+        for (unsigned int columnIdx = 0; columnIdx < 5 /* !!! */; columnIdx++)
         {
-            if (varLstGet(row, columnIdx) == NULL)
+            if (pckReadNullP(read, .id = columnIdx + 1))
             {
                 THROW(
                     DbQueryError,
@@ -274,19 +277,22 @@ dbOpen(Db *this)
             }
         }
 
+        // !!!
+        read = pckReadNew(row);
+
         // Strip the minor version off since we don't need it.  In the future it might be a good idea to warn users when they are
         // running an old minor version.
-        this->pub.pgVersion = varUIntForce(varLstGet(row, 0)) / 100 * 100;
+        this->pub.pgVersion = (unsigned int)pckReadI32P(read) / 100 * 100;
 
         // Store the data directory that PostgreSQL is running in, the archive mode, and archive command. These can be compared to
         // the configured pgBackRest directory, and archive settings checked for validity, when validating the configuration.
         // Also store the checkpoint timeout to warn in case a backup is requested without using the start-fast option.
         MEM_CONTEXT_BEGIN(this->pub.memContext)
         {
-            this->pub.pgDataPath = strDup(varStr(varLstGet(row, 1)));
-            this->pub.archiveMode = strDup(varStr(varLstGet(row, 2)));
-            this->pub.archiveCommand = strDup(varStr(varLstGet(row, 3)));
-            this->pub.checkpointTimeout = (TimeMSec)(varUIntForce(varLstGet(row, 4))) * MSEC_PER_SEC;
+            this->pub.pgDataPath = pckReadStrP(read);
+            this->pub.archiveMode = pckReadStrP(read);
+            this->pub.archiveCommand = pckReadStrP(read);
+            this->pub.checkpointTimeout = (TimeMSec)pckReadI32P(read) * MSEC_PER_SEC;
         }
         MEM_CONTEXT_END();
 
@@ -364,7 +370,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
     {
         // Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
         // database cluster.  This lock helps make the stop-auto option safe.
-        if (!varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
+        if (!pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
         {
             THROW(
                 LockAcquireError,
@@ -380,7 +386,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
             // Feature is not needed for PostgreSQL >= 9.6 since backups are run in non-exclusive mode
             if (dbPgVersion(this) < PG_VERSION_96)
             {
-                if (varBool(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_backup()::bool"))))
+                if (pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_backup()::bool"))))
                 {
                     LOG_WARN(
                         "the cluster is already in backup mode but no " PROJECT_NAME " backup process is running."
@@ -406,7 +412,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 
         if (archiveCheck)
         {
-            walSegmentCheck = varStr(
+            walSegmentCheck = pckReadStrP(
                 dbQueryColumn(
                     this,
                     strNewFmt(
@@ -416,12 +422,12 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         }
 
         // Start backup
-        VariantList *row = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
+        PackRead *const read = dbQueryRow(this, dbBackupStartQuery(dbPgVersion(this), startFast));
 
         // Make sure the backup start checkpoint was written to pg_control. This helps ensure that we have a consistent view of the
         // storage with PostgreSQL.
         const PgControl pgControl = pgControlFromFile(this->storage);
-        const String *const lsnStart = varStr(varLstGet(row, 0));
+        const String *const lsnStart = pckReadStrP(read);
 
         if (pgControl.checkpoint < pgLsnFromStr(lsnStart))
         {
@@ -431,7 +437,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         }
 
         // If archive check then make sure WAL segment was switched on start backup
-        const String *const walSegmentName = varStr(varLstGet(row, 1));
+        const String *const walSegmentName = pckReadStrP(read);
 
         if (archiveCheck && strEq(walSegmentCheck, walSegmentName))
         {
@@ -530,24 +536,28 @@ dbBackupStop(Db *this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Stop backup
-        VariantList *row = dbQueryRow(this, dbBackupStopQuery(dbPgVersion(this)));
-
-        // Check if the tablespace map is empty
-        bool tablespaceMapEmpty =
-            dbPgVersion(this) >= PG_VERSION_96 ? strSize(strTrim(strDup(varStr(varLstGet(row, 3))))) == 0 : false;
+        PackRead *const read = dbQueryRow(this, dbBackupStopQuery(dbPgVersion(this)));
 
         // Return results
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result.lsn = strDup(varStr(varLstGet(row, 0)));
-            result.walSegmentName = strDup(varStr(varLstGet(row, 1)));
+            result.lsn = pckReadStrP(read);
+            result.walSegmentName = pckReadStrP(read);
 
             if (dbPgVersion(this) >= PG_VERSION_96)
             {
-                result.backupLabel = strDup(varStr(varLstGet(row, 2)));
+                result.backupLabel = pckReadStrP(read);
 
-                if (!tablespaceMapEmpty)
-                    result.tablespaceMap = strDup(varStr(varLstGet(row, 3)));
+                // Return the tablespace map if it is not empty
+                String *const tablespaceMap = pckReadStrP(read);
+                String *const tablespaceMapTrim = strTrim(strDup(tablespaceMap));
+
+                if (!strEmpty(tablespaceMapTrim))
+                    result.tablespaceMap = tablespaceMap;
+                else
+                    strFree(tablespaceMap);
+
+                strFree(tablespaceMapTrim);
             }
         }
         MEM_CONTEXT_PRIOR_END();
@@ -558,7 +568,7 @@ dbBackupStop(Db *this)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+Pack *
 dbList(Db *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -566,7 +576,10 @@ dbList(Db *this)
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
-        VARIANT_LIST, dbQuery(this, STRDEF("select oid::oid, datname::text, datlastsysoid::oid from pg_catalog.pg_database")));
+        PACK,
+        dbQuery(
+            this, pgClientQueryResultAny,
+            STRDEF("select oid::oid, datname::text, datlastsysoid::oid from pg_catalog.pg_database")));
 }
 
 /**********************************************************************************************************************************/
@@ -633,8 +646,8 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
                 strZ(replayLsnFunction));
 
             // Execute the query and get replayLsn
-            VariantList *row = dbQueryRow(this, query);
-            replayLsn = varStr(varLstGet(row, 0));
+            PackRead *read = dbQueryRow(this, query);
+            replayLsn = pckReadStrP(read);
 
             // Error when replayLsn is null which indicates that this is not a standby.  This should have been sorted out before we
             // connected but it's possible that the standby was promoted in the meantime.
@@ -647,10 +660,10 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
                     strZ(replayLsnFunction));
             }
 
-            targetReached = varBool(varLstGet(row, 1));
+            targetReached = pckReadBoolP(read);
 
             // If the target has not been reached but progress is being made then reset the timer
-            if (!targetReached && varLstSize(row) > 2 && varBool(varLstGet(row, 2)))
+            if (!targetReached && replayLsn != NULL && pckReadBoolP(read))
                 wait = waitNew(timeout);
 
             protocolKeepAlive();
@@ -688,9 +701,9 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
                     lsnName, strZ(targetLsn), lsnName);
 
                 // Execute the query and get checkpointLsn
-                VariantList *row = dbQueryRow(this, query);
-                targetReached = varBool(varLstGet(row, 0));
-                checkpointLsn = varStr(varLstGet(row, 1));
+                PackRead *const read = dbQueryRow(this, query);
+                targetReached = pckReadBoolP(read);
+                checkpointLsn = pckReadStrP(read);
 
                 protocolKeepAlive();
             }
@@ -753,14 +766,16 @@ dbPing(Db *const this, const bool force)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+Pack *
 dbTablespaceList(Db *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(VARIANT_LIST, dbQuery(this, STRDEF("select oid::oid, spcname::text from pg_catalog.pg_tablespace")));
+    FUNCTION_LOG_RETURN(
+        PACK,
+        dbQuery(this, pgClientQueryResultAny, STRDEF("select oid::oid, spcname::text from pg_catalog.pg_tablespace")));
 }
 
 /**********************************************************************************************************************************/
@@ -772,7 +787,8 @@ dbTimeMSec(Db *this)
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
-        TIME_MSEC, varUInt64Force(dbQueryColumn(this, STRDEF("select (extract(epoch from clock_timestamp()) * 1000)::bigint"))));
+        TIME_MSEC,
+        (TimeMSec)pckReadI64P(dbQueryColumn(this, STRDEF("select (extract(epoch from clock_timestamp()) * 1000)::bigint"))));
 }
 
 /**********************************************************************************************************************************/
@@ -796,7 +812,7 @@ dbWalSwitch(Db *this)
 
         // Request a WAL segment switch
         const char *walName = strZ(pgWalName(dbPgVersion(this)));
-        const String *walFileName = varStr(
+        const String *walFileName = pckReadStrP(
             dbQueryColumn(this, strNewFmt("select pg_catalog.pg_%sfile_name(pg_catalog.pg_switch_%s())::text", walName, walName)));
 
         // Copy WAL segment name to the prior context

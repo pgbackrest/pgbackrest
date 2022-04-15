@@ -83,9 +83,10 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PgClient *const pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
+        const PgClientQueryResult resultType = (PgClientQueryResult)pckReadStrIdP(param);
         const String *const query = pckReadStrP(param);
 
-        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), jsonFromVar(varNewVarLst(pgClientQuery(pgClient, query)))));
+        protocolServerDataPut(server, pckWritePackP(protocolPackNew(), pgClientQuery(pgClient, query, resultType)));
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();

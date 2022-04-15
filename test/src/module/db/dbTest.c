@@ -9,6 +9,7 @@ Test Database
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessLog.h"
+#include "common/harnessPack.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
 
@@ -338,8 +339,8 @@ testRun(void)
         TEST_RESULT_STR_Z(backupStartResult.lsn, "2/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000200000003", "check wal segment name");
 
-        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(dbList(db.primary))), "[[16384,\"test1\",13777]]", "check db list");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(dbTablespaceList(db.primary))), "[]", "check tablespace list");
+        TEST_RESULT_STR_Z(hrnPackToStr(dbList(db.primary)), "[[16384,\"test1\",13777]]", "check db list");
+        TEST_RESULT_STR_Z(hrnPackToStr(dbTablespaceList(db.primary)), "[]", "check tablespace list");
 
         DbBackupStopResult backupStopResult = {.lsn = NULL};
         TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");

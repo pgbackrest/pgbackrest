@@ -9,9 +9,20 @@ casts to queries to output one of these types.
 #define POSTGRES_QUERY_H
 
 #include "common/type/object.h"
+#include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/type/variantList.h"
 #include "common/time.h"
+
+/***********************************************************************************************************************************
+Query result types
+***********************************************************************************************************************************/
+typedef enum
+{
+    pgClientQueryResultAny = STRID5("any", 0x65c10),                // One or more rows expected
+    pgClientQueryResultRow = STRID5("row", 0x5df20),                // One row expected
+    pgClientQueryResultColumn = STRID5("column", 0x1cdab1e30),      // One row and column expected
+    pgClientQueryResultNone = STRID5("none", 0x2b9ee0),             // No rows expected
+} PgClientQueryResult;
 
 /***********************************************************************************************************************************
 Object type
@@ -85,7 +96,7 @@ pgClientMove(PgClient *const this, MemContext *const parentNew)
 }
 
 // Execute a query and return results
-VariantList *pgClientQuery(PgClient *this, const String *query);
+Pack *pgClientQuery(PgClient *this, const String *query, PgClientQueryResult resultType);
 
 // Close connection to PostgreSQL
 void pgClientClose(PgClient *this);

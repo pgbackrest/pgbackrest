@@ -10,6 +10,7 @@ This test can be run two ways:
 ***********************************************************************************************************************************/
 #include "common/type/json.h"
 
+#include "common/harnessPack.h"
 #include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
@@ -90,7 +91,7 @@ testRun(void)
         const String *query = STRDEF("select bogus from pg_class");
 
         TEST_ERROR(
-            pgClientQuery(client, query), DbQueryError,
+            pgClientQuery(client, query, pgClientQueryResultRow), DbQueryError,
             "unable to send query 'select bogus from pg_class': another command is already in progress");
 
         TEST_RESULT_VOID(pgClientFree(client), "free client");
@@ -134,7 +135,7 @@ testRun(void)
         query = STRDEF("select bogus from pg_class");
 
         TEST_ERROR(
-            pgClientQuery(client, query), DbQueryError,
+            pgClientQuery(client, query, pgClientQueryResultRow), DbQueryError,
             "unable to execute query 'select bogus from pg_class': ERROR:  column \"bogus\" does not exist\n"
                 "LINE 1: select bogus from pg_class\n"
                 "               ^");
@@ -161,7 +162,9 @@ testRun(void)
 
         query = STRDEF("select pg_sleep(3000)");
 
-        TEST_ERROR(pgClientQuery(client, query), DbQueryError, "query 'select pg_sleep(3000)' timed out after 500ms");
+        TEST_ERROR(
+            pgClientQuery(client, query, pgClientQueryResultColumn), DbQueryError,
+            "query 'select pg_sleep(3000)' timed out after 500ms");
 
         // Cancel error (can only be run with the scripted tests
         // -------------------------------------------------------------------------------------------------------------------------
@@ -181,7 +184,9 @@ testRun(void)
 
         query = STRDEF("select pg_sleep(3000)");
 
-        TEST_ERROR(pgClientQuery(client, query), DbQueryError, "unable to cancel query 'select pg_sleep(3000)': test error");
+        TEST_ERROR(
+            pgClientQuery(client, query, pgClientQueryResultColumn), DbQueryError,
+            "unable to cancel query 'select pg_sleep(3000)': test error");
 #endif
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -200,7 +205,8 @@ testRun(void)
         });
 
         TEST_ERROR(
-            pgClientQuery(client, STRDEF("select 1")), DbQueryError, "unable to cancel query 'select 1': connection was lost");
+            pgClientQuery(client, STRDEF("select 1"), pgClientQueryResultColumn), DbQueryError,
+            "unable to cancel query 'select 1': connection was lost");
 #endif
 
         // Execute do block and raise notice
@@ -221,7 +227,7 @@ testRun(void)
 
         query = STRDEF("do $$ begin raise notice 'mememe'; end $$");
 
-        TEST_RESULT_PTR(pgClientQuery(client, query), NULL, "execute do block");
+        TEST_RESULT_PTR(pgClientQuery(client, query, pgClientQueryResultNone), NULL, "execute do block");
 
         // Unsupported type
         // -------------------------------------------------------------------------------------------------------------------------
@@ -246,10 +252,10 @@ testRun(void)
         query = STRDEF("select clock_timestamp()");
 
         TEST_ERROR(
-            pgClientQuery(client, query), FormatError,
+            pgClientQuery(client, query, pgClientQueryResultAny), FormatError,
             "unable to parse type 1184 in column 0 for query 'select clock_timestamp()'");
 
-        // Successful query
+        // Successful query with rows
         // -------------------------------------------------------------------------------------------------------------------------
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
@@ -295,8 +301,9 @@ testRun(void)
             " order by relname");
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(varNewVarLst(pgClientQuery(client, query))),
-            "[[1259,null,\"pg_class\",true],[1255,\"\",\"pg_proc\",false]]", "simple query");
+            hrnPackToStr(pgClientQuery(client, query, pgClientQueryResultAny)),
+            "1:array:[1:i64:1259, 3:str:pg_class, 4:bool:true], 2:array:[1:i64:1255, 2:str:, 3:str:pg_proc, 4:bool:false]",
+            "simple query");
 
         // Close connection
         // -------------------------------------------------------------------------------------------------------------------------

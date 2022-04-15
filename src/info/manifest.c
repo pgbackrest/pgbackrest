@@ -806,7 +806,7 @@ typedef struct ManifestBuildData
     const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
-    const VariantList *tablespaceList;                              // List of tablespaces in the database
+    const Pack *tablespaceList;                                     // List of tablespaces in the database
     ManifestLinkCheck linkCheck;                                    // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
@@ -1115,12 +1115,16 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 if (buildData.tablespaceList != NULL)
                 {
                     // Search list
-                    for (unsigned int tablespaceIdx = 0; tablespaceIdx < varLstSize(buildData.tablespaceList); tablespaceIdx++)
-                    {
-                        const VariantList *tablespace = varVarLst(varLstGet(buildData.tablespaceList, tablespaceIdx));
+                    PackRead *const read = pckReadNew(buildData.tablespaceList);
 
-                        if (target.tablespaceId == varUIntForce(varLstGet(tablespace, 0)))
-                            target.tablespaceName = varStr(varLstGet(tablespace, 1));
+                    while (!pckReadNullP(read))
+                    {
+                        pckReadArrayBeginP(read);
+
+                        if (target.tablespaceId == pckReadU32P(read))
+                            target.tablespaceName = pckReadStrP(read);
+
+                        pckReadArrayEndP(read);
                     }
 
                     // Error if the tablespace could not be found.  ??? This seems excessive, perhaps just warn here?
@@ -1244,7 +1248,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 Manifest *
 manifestNewBuild(
     const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const bool online,
-    const bool checksumPage, const bool bundle, const StringList *const excludeList, const VariantList *const tablespaceList)
+    const bool checksumPage, const bool bundle, const StringList *const excludeList, const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -1254,7 +1258,7 @@ manifestNewBuild(
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, tablespaceList);
+        FUNCTION_LOG_PARAM(PACK, tablespaceList);
     FUNCTION_LOG_END();
 
     ASSERT(storagePg != NULL);
@@ -1629,11 +1633,11 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 /**********************************************************************************************************************************/
 void
 manifestBuildComplete(
-    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
-    bool optionStandby)
+    Manifest *const this, const time_t timestampStart, const String *const lsnStart, const String *const archiveStart,
+    const time_t timestampStop, const String *const lsnStop, const String *const archiveStop, const unsigned int pgId,
+    const uint64_t pgSystemId, const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy,
+    const size_t optionBufferSize, const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork,
+    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1645,7 +1649,7 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(STRING, archiveStop);
         FUNCTION_LOG_PARAM(UINT, pgId);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, dbList);
+        FUNCTION_LOG_PARAM(PACK, dbList);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
         FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
@@ -1671,18 +1675,20 @@ manifestBuildComplete(
         // Save db list
         if (dbList != NULL)
         {
-            for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbList); dbIdx++)
+            PackRead *const read = pckReadNew(dbList);
+
+            while (!pckReadNullP(read))
             {
-                const VariantList *dbRow = varVarLst(varLstGet(dbList, dbIdx));
+                pckReadArrayBeginP(read);
 
-                ManifestDb db =
-                {
-                    .id = varUIntForce(varLstGet(dbRow, 0)),
-                    .name = varStr(varLstGet(dbRow, 1)),
-                    .lastSystemId = varUIntForce(varLstGet(dbRow, 2)),
-                };
+                const unsigned int id = pckReadU32P(read);
+                const String *const name = pckReadStrP(read);
+                const unsigned int lastSystemId = pckReadU32P(read);
 
-                manifestDbAdd(this, &db);
+                pckReadArrayEndP(read);
+
+                manifestDbAdd(this, &(ManifestDb){.id = id, .name = name, .lastSystemId = lastSystemId});
+
             }
 
             lstSort(this->pub.dbList, sortOrderAsc);
