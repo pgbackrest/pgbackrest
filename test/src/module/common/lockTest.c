@@ -267,6 +267,34 @@ testRun(void)
         TEST_STORAGE_LIST(storageTest, NULL, "unlocked.lock\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("contains pid only - a one line lock file");
+
+        const String *stanza = STRDEF("1-test");
+        lockLocal.execId = STRDEF("1-test");
+
+        TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, lockLocal.file[lockTypeBackup].name), true, "backup lock file was created");
+
+        // Overwrite backup lock file leaving only one line containing the pid
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockLocal.file[lockTypeBackup].name));
+
+        ftruncate(lockLocal.file[lockTypeBackup].fd, 0);
+
+        IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockTypeBackup].name, lockLocal.file[lockTypeBackup].fd, 0);
+
+        // Write pid of 12345
+        ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("12345\n")), write);
+        ioWriteClose(write);
+
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockLocal.file[lockTypeBackup].name));
+        TEST_RESULT_UINT((uint64_t)lockReadFileP(lockLocal.file[lockTypeBackup].name).data.processId, 12345, "lock read pid 12345");
+        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid locked file");
 
         HRN_FORK_BEGIN()

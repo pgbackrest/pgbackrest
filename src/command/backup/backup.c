@@ -1212,8 +1212,8 @@ backupJobResult(
                         processId, "checksum resumed file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
                 }
                 // Else if the file was removed during backup add it to the list of files to be removed from the manifest when the
-                // backup is complete.  It can't be removed right now because that will invalidate the pointers that are being used for
-                // processing.
+                // backup is complete.  It can't be removed right now because that will invalidate the pointers that are being used
+                // for processing.
                 else if (copyResult == backupCopyResultSkip)
                 {
                     LOG_DETAIL_PID_FMT(processId, "skip file removed by database %s", strZ(fileLog));
@@ -1873,7 +1873,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         // Process jobs
         uint64_t sizeProgress = 0;
 
-        // Store percentage complete as an int
+        // Store current percentage complete - updated as jobs progress
         double currentPercentComplete = 0;
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()

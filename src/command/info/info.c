@@ -177,17 +177,17 @@ infoStanzaErrorAdd(InfoRepoData *repoList, const ErrorType *type, const String *
 Set the overall error status code and message for the stanza to the code and message passed
 ***********************************************************************************************************************************/
 static void
-stanzaStatus(const int code, const InfoStanzaRepo *const infoStanzaRepo, Variant *stanzaInfo)
+stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *stanzaInfo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, code);
-        FUNCTION_TEST_PARAM(INFO_STANZA_REPO, infoStanzaRepo);
+        FUNCTION_TEST_PARAM(INFO_STANZA_REPO, stanzaData);
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
     FUNCTION_TEST_END();
 
     ASSERT((code >= 0 && code <= 6) || code == 99);
     ASSERT(stanzaInfo != NULL);
-    ASSERT(infoStanzaRepo != NULL);
+    ASSERT(stanzaData != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR);
 
@@ -231,9 +231,9 @@ stanzaStatus(const int code, const InfoStanzaRepo *const infoStanzaRepo, Variant
     // Construct a specific lock part
     KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
     KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
-    kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(infoStanzaRepo->backupLockHeld));
-    if (infoStanzaRepo->percentComplete != NULL)
-        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, VARSTR(strNewDbl(*infoStanzaRepo->percentComplete)));
+    kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(stanzaData->backupLockHeld));
+    if (stanzaData->percentComplete != NULL)
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, VARSTR(strNewDbl(*stanzaData->percentComplete)));
 
     FUNCTION_TEST_RETURN_VOID();
 }
