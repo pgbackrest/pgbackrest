@@ -231,11 +231,11 @@ testRun(void)
             {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
             {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
             {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 5},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT4},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[4]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[4]", .resultInt = HRNPQ_TYPE_INT4},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "0"},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "value"},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "value"},
@@ -339,8 +339,8 @@ testRun(void)
         TEST_RESULT_STR_Z(backupStartResult.lsn, "2/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000200000003", "check wal segment name");
 
-        TEST_RESULT_STR_Z(hrnPackToStr(dbList(db.primary)), "[[16384,\"test1\",13777]]", "check db list");
-        TEST_RESULT_STR_Z(hrnPackToStr(dbTablespaceList(db.primary)), "[]", "check tablespace list");
+        TEST_RESULT_STR_Z(hrnPackToStr(dbList(db.primary)), "1:array:[1:u32:16384, 2:str:test1, 3:u32:13777]", "check db list");
+        TEST_RESULT_STR_Z(hrnPackToStr(dbTablespaceList(db.primary)), "", "check tablespace list");
 
         DbBackupStopResult backupStopResult = {.lsn = NULL};
         TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");

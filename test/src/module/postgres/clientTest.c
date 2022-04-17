@@ -272,7 +272,7 @@ testRun(void)
 
             {.function = HRNPQ_NTUPLES, .resultInt = 2},
             {.function = HRNPQ_NFIELDS, .resultInt = 4},
-            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_OID},
             {.function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
             {.function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
             {.function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_BOOL},
@@ -302,7 +302,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackToStr(pgClientQuery(client, query, pgClientQueryResultAny)),
-            "1:array:[1:i64:1259, 3:str:pg_class, 4:bool:true], 2:array:[1:i64:1255, 2:str:, 3:str:pg_proc, 4:bool:false]",
+            "1:array:[1:u32:1259, 3:str:pg_class, 4:bool:true], 2:array:[1:u32:1255, 2:str:, 3:str:pg_proc, 4:bool:false]",
             "simple query");
 
         // Close connection

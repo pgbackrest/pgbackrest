@@ -308,18 +308,17 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
                                     pckWriteStrP(pack, STR(value), .defaultWrite = true);
                                     break;
 
-                                // 64-bit integer types
+                                // 64-bit integer type
                                 case 20:                            // int8
                                     pckWriteI64P(pack, cvtZToInt64(value), .defaultWrite = true);
                                     break;
 
-                                // 32-bit integer types
-                                case 21:                            // int2
+                                // 32-bit integer type
                                 case 23:                            // int4
                                     pckWriteI32P(pack, cvtZToInt(value), .defaultWrite = true);
                                     break;
 
-                                // 32-bit unsigned integer types
+                                // 32-bit unsigned integer type
                                 case 26:                            // oid
                                     pckWriteU32P(pack, cvtZToUInt(value), .defaultWrite = true);
                                     break;
