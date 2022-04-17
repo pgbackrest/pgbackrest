@@ -73,7 +73,7 @@ process-max=1
     <section id="old-package">
         <title>Where can I find packages for older versions of <backrest/>?</title>
 
-        <p>The <link url="https://apt.postgresql.org">apt.postgresql.org</link> repository maintains an <link url="https://atalia.postgresql.org/morgue/p/pgbackrest">archive of older versions</link>.  Debian also maintains <link url="https://snapshot.debian.org/binary/pgbackrest/">snapshots</link> of all test builds.</p>
+        <p>The <link url="https://apt.postgresql.org">apt.postgresql.org</link> repository maintains an <link url="https://apt-archive.postgresql.org">archive of older versions</link>. Debian also maintains <link url="https://snapshot.debian.org/binary/pgbackrest/">snapshots</link> of all test builds.</p>
     </section>
 
     <section id="backup-standby">
