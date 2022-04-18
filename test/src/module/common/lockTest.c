@@ -204,6 +204,8 @@ testRun(void)
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeAll, 0, true), true, "all lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), true, "archive lock file was created");
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
+
+        // Seek to start of file before read
         lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
         TEST_RESULT_STR(
             lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).execId, STRDEF("1-test"), "verify execId");
@@ -285,9 +287,10 @@ testRun(void)
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockTypeBackup].name, lockLocal.file[lockTypeBackup].fd, 0);
 
         // Write pid of 12345
-        ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("12345\n")), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("12345")), write);
         ioWriteClose(write);
 
+        // Seek to start of file before read
         THROW_ON_SYS_ERROR_FMT(
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
             strZ(lockLocal.file[lockTypeBackup].name));

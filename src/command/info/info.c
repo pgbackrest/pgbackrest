@@ -10,6 +10,7 @@ Info Command
 
 #include "command/archive/common.h"
 #include "command/info/info.h"
+#include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/lock.h"
@@ -17,7 +18,6 @@ Info Command
 #include "common/memContext.h"
 #include "common/type/json.h"
 #include "config/config.h"
-#include "common/crypto/common.h"
 #include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -186,8 +186,8 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *st
     FUNCTION_TEST_END();
 
     ASSERT((code >= 0 && code <= 6) || code == 99);
-    ASSERT(stanzaInfo != NULL);
     ASSERT(stanzaData != NULL);
+    ASSERT(stanzaInfo != NULL);
 
     KeyValue *statusKv = kvPutKv(varKv(stanzaInfo), STANZA_KEY_STATUS_VAR);
 
