@@ -85,7 +85,6 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
 #define MANIFEST_KEY_DB_VERSION                                     "db-version"
     STRING_STATIC(MANIFEST_KEY_DB_VERSION_STR,                      MANIFEST_KEY_DB_VERSION);
 #define MANIFEST_KEY_DESTINATION                                    "destination"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_DESTINATION_VAR,             MANIFEST_KEY_DESTINATION);
 #define MANIFEST_KEY_FILE                                           "file"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_FILE_VAR,                    MANIFEST_KEY_FILE);
 #define MANIFEST_KEY_GROUP                                          "group"
@@ -1868,33 +1867,30 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_TARGET_PATH_STR))
     {
-        KeyValue *pathKv = varKv(value);
+        JsonRead *const json = jsonReadNew(jsonFromVar(value));
+        jsonReadObjectBegin(json);
 
         MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.pathList))
         {
             ManifestLoadFound valueFound = {0};
+            ManifestPath path = {.name = key};
 
-            ManifestPath path =
-            {
-                .name = key,
-            };
-
-            if (kvKeyExists(pathKv, MANIFEST_KEY_GROUP_VAR))
+            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
             {
                 valueFound.group = true;
-                path.group = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_GROUP_VAR));
+                path.group = manifestOwnerGet(jsonReadVar(json));
             }
 
-            if (kvKeyExists(pathKv, MANIFEST_KEY_MODE_VAR))
+            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_MODE)))
             {
                 valueFound.mode = true;
-                path.mode = cvtZToMode(strZ(varStr(kvGet(pathKv, MANIFEST_KEY_MODE_VAR))));
+                path.mode = cvtZToMode(strZ(jsonReadStr(json)));
             }
 
-            if (kvKeyExists(pathKv, MANIFEST_KEY_USER_VAR))
+            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
             {
                 valueFound.user = true;
-                path.user = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_USER_VAR));
+                path.user = manifestOwnerGet(jsonReadVar(json));
             }
 
             lstAdd(loadData->pathFoundList, &valueFound);
@@ -1906,28 +1902,27 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_TARGET_LINK_STR))
     {
-        KeyValue *linkKv = varKv(value);
+        JsonRead *const json = jsonReadNew(jsonFromVar(value));
+        jsonReadObjectBegin(json);
 
         MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.linkList))
         {
             ManifestLoadFound valueFound = {0};
+            ManifestLink link = {.name = key};
 
-            ManifestLink link =
-            {
-                .name = key,
-                .destination = varStr(kvGet(linkKv, MANIFEST_KEY_DESTINATION_VAR)),
-            };
+            jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_DESTINATION));
+            link.destination = jsonReadStr(json);
 
-            if (kvKeyExists(linkKv, MANIFEST_KEY_GROUP_VAR))
+            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
             {
                 valueFound.group = true;
-                link.group = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_GROUP_VAR));
+                link.group = manifestOwnerGet(jsonReadVar(json));
             }
 
-            if (kvKeyExists(linkKv, MANIFEST_KEY_USER_VAR))
+            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
             {
                 valueFound.user = true;
-                link.user = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_USER_VAR));
+                link.user = manifestOwnerGet(jsonReadVar(json));
             }
 
             lstAdd(loadData->linkFoundList, &valueFound);
