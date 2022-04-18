@@ -663,7 +663,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
             targetReached = pckReadBoolP(read);
 
             // If the target has not been reached but progress is being made then reset the timer
-            if (!targetReached && replayLsn != NULL && pckReadBoolP(read))
+            if (!targetReached && pckReadBoolP(read, .defaultValue = true))
                 wait = waitNew(timeout);
 
             protocolKeepAlive();

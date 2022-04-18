@@ -244,7 +244,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             else
             {
                 if (resultType == pgClientQueryResultNone)
-                    THROW_FMT(DbQueryError, "not result expected from '%s'", strZ(query));
+                    THROW_FMT(DbQueryError, "no result expected from '%s'", strZ(query));
 
                 // Expect some rows to be returned
                 if (resultStatus != PGRES_TUPLES_OK)
