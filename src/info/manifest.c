@@ -1782,92 +1782,87 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     // -----------------------------------------------------------------------------------------------------------------------------
     if (strEq(section, MANIFEST_SECTION_TARGET_FILE_STR))
     {
+        ManifestFile file = {.name = key};
+
         JsonRead *const json = jsonReadNew(jsonFromVar(value));
         jsonReadObjectBegin(json);
 
-        // !!! THIS MEM CONTEXT SWITCH SHOULD NOT BE NEEDED!
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.fileList))
+        // Bundle info
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_BUNDLE_ID)))
         {
-            ManifestFile file = {.name = key};
+            file.bundleId = jsonReadUInt64(json);
 
-            // Bundle info
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_BUNDLE_ID)))
-            {
-                file.bundleId = jsonReadUInt64(json);
-
-                if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_BUNDLE_OFFSET)))
-                    file.bundleOffset = jsonReadUInt64(json);
-            }
-
-            // The checksum might not exist if this is a partial save that was done during the backup to preserve checksums for
-            // already backed up files
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM)))
-                memcpy(file.checksumSha1, strZ(jsonReadStr(json)), HASH_TYPE_SHA1_SIZE_HEX + 1);
-
-            // Page checksum errors
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM_PAGE)))
-            {
-                file.checksumPage = true;
-                file.checksumPageError = !jsonReadBool(json);
-
-                if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM_PAGE_ERROR)))
-                    file.checksumPageErrorList = jsonFromVar(jsonReadVar(json));
-            }
-
-            // Group
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
-                file.group = manifestOwnerGet(jsonReadVar(json));
-            else
-                file.group = manifest->fileGroupDefault;
-
-            // Mode
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_MODE)))
-                file.mode = cvtZToMode(strZ(jsonReadStr(json)));
-            else
-                file.mode = manifest->fileModeDefault;
-
-            // Reference
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_REFERENCE)))
-                file.reference = jsonReadStr(json);
-
-            // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
-            // the repo-size is only stored in the manifest file if it is different than size.
-            const bool sizeRepoExists = jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_SIZE_REPO));
-
-            if (sizeRepoExists)
-                file.sizeRepo = jsonReadUInt64(json);
-
-            // Size is required so error if it is not present. Older versions removed the size before the backup to ensure that the
-            // manifest was updated during the backup, so size can be missing in partial manifests. This error will prevent older
-            // partials from being resumed.
-            if (!jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_SIZE)))
-                THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
-
-            file.size = jsonReadUInt64(json);
-
-            // If repo size did not exist then
-            if (!sizeRepoExists)
-                file.sizeRepo = file.size;
-
-            // If file size is zero then assign the static zero hash
-            if (file.size == 0)
-                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
-
-            // Timestamp is required so error if it is not present
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_TIMESTAMP)))
-                file.timestamp = (time_t)jsonReadInt64(json);
-            else
-                THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
-
-            // User
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
-                file.user = manifestOwnerGet(jsonReadVar(json));
-            else
-                file.user = manifest->fileUserDefault;
-
-            manifestFileAdd(manifest, &file);
+            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_BUNDLE_OFFSET)))
+                file.bundleOffset = jsonReadUInt64(json);
         }
-        MEM_CONTEXT_END();
+
+        // The checksum might not exist if this is a partial save that was done during the backup to preserve checksums for already
+        // backed up files
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM)))
+            memcpy(file.checksumSha1, strZ(jsonReadStr(json)), HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+        // Page checksum errors
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM_PAGE)))
+        {
+            file.checksumPage = true;
+            file.checksumPageError = !jsonReadBool(json);
+
+            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM_PAGE_ERROR)))
+                file.checksumPageErrorList = jsonFromVar(jsonReadVar(json));
+        }
+
+        // Group
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
+            file.group = manifestOwnerGet(jsonReadVar(json));
+        else
+            file.group = manifest->fileGroupDefault;
+
+        // Mode
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_MODE)))
+            file.mode = cvtZToMode(strZ(jsonReadStr(json)));
+        else
+            file.mode = manifest->fileModeDefault;
+
+        // Reference
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_REFERENCE)))
+            file.reference = jsonReadStr(json);
+
+        // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
+        // the repo-size is only stored in the manifest file if it is different than size.
+        const bool sizeRepoExists = jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_SIZE_REPO));
+
+        if (sizeRepoExists)
+            file.sizeRepo = jsonReadUInt64(json);
+
+        // Size is required so error if it is not present. Older versions removed the size before the backup to ensure that the
+        // manifest was updated during the backup, so size can be missing in partial manifests. This error will prevent older
+        // partials from being resumed.
+        if (!jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_SIZE)))
+            THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
+
+        file.size = jsonReadUInt64(json);
+
+        // If repo size did not exist then
+        if (!sizeRepoExists)
+            file.sizeRepo = file.size;
+
+        // If file size is zero then assign the static zero hash
+        if (file.size == 0)
+            memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+        // Timestamp is required so error if it is not present
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_TIMESTAMP)))
+            file.timestamp = (time_t)jsonReadInt64(json);
+        else
+            THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
+
+        // User
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
+            file.user = manifestOwnerGet(jsonReadVar(json));
+        else
+            file.user = manifest->fileUserDefault;
+
+        manifestFileAdd(manifest, &file);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
