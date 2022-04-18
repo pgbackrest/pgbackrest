@@ -18,9 +18,9 @@ Query result types
 ***********************************************************************************************************************************/
 typedef enum
 {
-    pgClientQueryResultAny = STRID5("any", 0x65c10),                // One or more rows expected
+    pgClientQueryResultAny = STRID5("any", 0x65c10),                // Any number of rows/columns expected (even none)
     pgClientQueryResultRow = STRID5("row", 0x5df20),                // One row expected
-    pgClientQueryResultColumn = STRID5("column", 0x1cdab1e30),      // One row and column expected
+    pgClientQueryResultColumn = STRID5("column", 0x1cdab1e30),      // One row/column expected
     pgClientQueryResultNone = STRID5("none", 0x2b9ee0),             // No rows expected
 } PgClientQueryResult;
 
