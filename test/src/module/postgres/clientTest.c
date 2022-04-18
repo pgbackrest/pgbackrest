@@ -3,10 +3,10 @@ Test PostgreSQL Client
 
 This test can be run two ways:
 
-1) The default uses a libpq shim to simulate a PostgreSQL connection.  This will work with all VM types.
+1) The default uses a libpq shim to simulate a PostgreSQL connection. This will work with all VM types.
 
-2) Optionally use a real cluster for testing (only works with debian/pg11).  The test Makefile must be manually updated with the
--DHARNESS_PQ_REAL flag and -lpq must be added to the libs list.  This method does not have 100% coverage but is very close.
+2) Optionally use a real cluster for testing (only works on Debian) add `define: -DHARNESS_PQ_REAL` to the postgres/client test in
+define.yaml. THe PostgreSQL version can be adjusted by changing TEST_PG_VERSION.
 ***********************************************************************************************************************************/
 #include "common/type/json.h"
 
@@ -22,30 +22,37 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // PQfinish() is strictly checked
+#ifndef HARNESS_PQ_REAL
     harnessPqScriptStrictSet(true);
+#endif
 
     // *****************************************************************************************************************************
     if (testBegin("pgClient"))
     {
-        // Create and start the test database
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef HARNESS_PQ_REAL
-        HRN_SYSTEM("sudo pg_createcluster 11 test");
-        HRN_SYSTEM("sudo pg_ctlcluster 11 test start");
-        HRN_SYSTEM("sudo -u postgres psql -c 'create user " TEST_USER " superuser'");
+        TEST_TITLE("create/start test database");
+
+        #define TEST_PG_VERSION                                     "14"
+
+        HRN_SYSTEM("sudo pg_createcluster " TEST_PG_VERSION " test");
+        HRN_SYSTEM("sudo pg_ctlcluster " TEST_PG_VERSION " test start");
+        HRN_SYSTEM("cd /var/lib/postgresql && sudo -u postgres psql -c 'create user " TEST_USER " superuser'");
 #endif
 
-        // Test connection error
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("connection error");
+
+        #define TEST_PQ_ERROR                                                                                                      \
+            "connection to server on socket \"/var/run/postgresql/.s.PGSQL.5433\" failed: No such file or directory\n"             \
+            "\tIs the server running locally and accepting connections on that socket?"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
             {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postg \\\\'\\\\\\\\res' port=5433\"]"},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.function = HRNPQ_ERRORMESSAGE, .resultZ =
-                "could not connect to server: No such file or directory\n"
-                    "\tIs the server running locally and accepting\n"
-                    "\tconnections on Unix domain socket \"/var/run/postgresql/.s.PGSQL.5433\"?\n"},
+            {.function = HRNPQ_ERRORMESSAGE, .resultZ = TEST_PQ_ERROR},
             {.function = HRNPQ_FINISH},
             {.function = NULL}
         });
@@ -62,21 +69,24 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_ERROR(
-            pgClientOpen(client), DbConnectError,
-            "unable to connect to 'dbname='postg \\'\\\\res' port=5433': could not connect to server: No such file or directory\n"
-                "\tIs the server running locally and accepting\n"
-                "\tconnections on Unix domain socket \"/var/run/postgresql/.s.PGSQL.5433\"?");
+            pgClientOpen(client), DbConnectError, "unable to connect to 'dbname='postg \\'\\\\res' port=5433': " TEST_PQ_ERROR);
         TEST_RESULT_VOID(pgClientFree(client), "free client");
 
-        // Test send error
+        #undef TEST_PQ_ERROR
+
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("send error");
+
+        #define TEST_PQ_ERROR                                       "another command is already in progress"
+        #define TEST_QUERY                                          "select bogus from pg_class"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
             {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_OK},
-            {.function = HRNPQ_SENDQUERY, .param = "[\"select bogus from pg_class\"]", .resultInt = 0},
-            {.function = HRNPQ_ERRORMESSAGE, .resultZ = "another command is already in progress\n"},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 0},
+            {.function = HRNPQ_ERRORMESSAGE, .resultZ = TEST_PQ_ERROR "\n"},
             {.function = HRNPQ_FINISH},
             {.function = NULL}
         });
@@ -85,19 +95,21 @@ testRun(void)
         TEST_ASSIGN(client, pgClientOpen(pgClientNew(NULL, 5432, STRDEF("postgres"), NULL, 3000)), "new client");
 
 #ifdef HARNESS_PQ_REAL
-        PQsendQuery(client->connection, "select bogus from pg_class");
+        PQsendQuery(client->connection, TEST_QUERY);
 #endif
 
-        const String *query = STRDEF("select bogus from pg_class");
-
         TEST_ERROR(
-            pgClientQuery(client, query, pgClientQueryResultRow), DbQueryError,
-            "unable to send query 'select bogus from pg_class': another command is already in progress");
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultRow), DbQueryError,
+            "unable to send query '" TEST_QUERY "': " TEST_PQ_ERROR);
 
         TEST_RESULT_VOID(pgClientFree(client), "free client");
 
-        // Connect
+        #undef TEST_PQ_ERROR
+        #undef TEST_QUERY
+
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("connect");
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
@@ -112,40 +124,46 @@ testRun(void)
             client, pgClientOpen(pgClientNew(STRDEF("/var/run/postgresql"), 5432, STRDEF("postgres"), TEST_USER_STR, 500)),
             "new client");
 
-        // Invalid query
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid query");
+
+        #define TEST_PQ_ERROR                                                                                                      \
+            "ERROR:  column \"bogus\" does not exist\n"                                                                            \
+            "LINE 1: select bogus from pg_class\n"                                                                                 \
+            "               ^"
+        #define TEST_QUERY                                          "select bogus from pg_class"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"select bogus from pg_class\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
             {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_FATAL_ERROR},
-            {.function = HRNPQ_RESULTERRORMESSAGE, .resultZ =
-                "ERROR:  column \"bogus\" does not exist\n"
-                    "LINE 1: select bogus from pg_class\n"
-                    "               ^                 \n"},
+            {.function = HRNPQ_RESULTERRORMESSAGE, .resultZ = TEST_PQ_ERROR "                 \n"},
             {.function = HRNPQ_CLEAR},
             {.function = HRNPQ_GETRESULT, .resultNull = true},
             {.function = NULL}
         });
 #endif
 
-        query = STRDEF("select bogus from pg_class");
-
         TEST_ERROR(
-            pgClientQuery(client, query, pgClientQueryResultRow), DbQueryError,
-            "unable to execute query 'select bogus from pg_class': ERROR:  column \"bogus\" does not exist\n"
-                "LINE 1: select bogus from pg_class\n"
-                "               ^");
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultRow), DbQueryError,
+            "unable to execute query '" TEST_QUERY "': " TEST_PQ_ERROR);
 
-        // Timeout query
+        #undef TEST_PQ_ERROR
+        #undef TEST_QUERY
+
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("query timeout");
+
+        #define TEST_QUERY                                          "select pg_sleep(3000)"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"select pg_sleep(3000)\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT, .sleep = 600},
             {.function = HRNPQ_ISBUSY, .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
@@ -160,42 +178,49 @@ testRun(void)
         });
 #endif
 
-        query = STRDEF("select pg_sleep(3000)");
-
         TEST_ERROR(
-            pgClientQuery(client, query, pgClientQueryResultColumn), DbQueryError,
-            "query 'select pg_sleep(3000)' timed out after 500ms");
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
+            "query '" TEST_QUERY "' timed out after 500ms");
 
-        // Cancel error (can only be run with the scripted tests
+        #undef TEST_QUERY
+
         // -------------------------------------------------------------------------------------------------------------------------
 #ifndef HARNESS_PQ_REAL
+        TEST_TITLE("cancel error");
+
+        #define TEST_PQ_ERROR                                       "test error"
+        #define TEST_QUERY                                          "select pg_sleep(3000)"
+
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"select pg_sleep(3000)\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT, .sleep = 600},
             {.function = HRNPQ_ISBUSY, .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY, .resultInt = 1},
             {.function = HRNPQ_GETCANCEL},
-            {.function = HRNPQ_CANCEL, .resultInt = 0, .resultZ = "test error"},
+            {.function = HRNPQ_CANCEL, .resultInt = 0, .resultZ = TEST_PQ_ERROR},
             {.function = HRNPQ_FREECANCEL},
             {.function = NULL}
         });
 
-        query = STRDEF("select pg_sleep(3000)");
-
         TEST_ERROR(
-            pgClientQuery(client, query, pgClientQueryResultColumn), DbQueryError,
-            "unable to cancel query 'select pg_sleep(3000)': test error");
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
+            "unable to cancel query '" TEST_QUERY "': " TEST_PQ_ERROR);
+
+        #undef TEST_PQ_ERROR
+        #undef TEST_QUERY
 #endif
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifndef HARNESS_PQ_REAL
         TEST_TITLE("PQgetCancel() returns NULL");
 
+        #define TEST_QUERY                                          "select 1"
+
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"select 1\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT, .sleep = 600},
             {.function = HRNPQ_ISBUSY, .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
@@ -205,17 +230,21 @@ testRun(void)
         });
 
         TEST_ERROR(
-            pgClientQuery(client, STRDEF("select 1"), pgClientQueryResultColumn), DbQueryError,
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
             "unable to cancel query 'select 1': connection was lost");
+
+        #undef TEST_QUERY
 #endif
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when results expected");
 
+        #define TEST_QUERY                                          "set client_encoding = 'UTF8'"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"set client_encoding = 'UTF8'\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
@@ -226,19 +255,21 @@ testRun(void)
         });
 #endif
 
-        query = STRDEF("set client_encoding = 'UTF8'");
-
         TEST_ERROR(
-            pgClientQuery(
-                client, query, pgClientQueryResultRow), DbQueryError, "result expected from 'set client_encoding = 'UTF8''");
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
+            "result expected from '" TEST_QUERY "'");
+
+        #undef TEST_QUERY
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when no results expected");
 
+        #define TEST_QUERY                                          "select * from pg_class limit 1"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"select * from pg_class\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
@@ -249,19 +280,21 @@ testRun(void)
         });
 #endif
 
-        query = STRDEF("select * from pg_class");
-
         TEST_ERROR(
-            pgClientQuery(
-                client, query, pgClientQueryResultNone), DbQueryError, "no result expected from 'select * from pg_class'");
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), DbQueryError,
+            "no result expected from '" TEST_QUERY "'");
+
+        #undef TEST_QUERY
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("set with no results");
 
+        #define TEST_QUERY                                          "set client_encoding = 'UTF8'"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"set client_encoding = 'UTF8'\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
@@ -272,16 +305,19 @@ testRun(void)
         });
 #endif
 
-        query = STRDEF("set client_encoding = 'UTF8'");
+        TEST_RESULT_PTR(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultAny), NULL, "execute set");
 
-        TEST_RESULT_PTR(pgClientQuery(client, query, pgClientQueryResultAny), NULL, "execute set");
+        #undef TEST_QUERY
 
-        // Execute do block and raise notice
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("execute do block and raise notice");
+
+        #define TEST_QUERY                                          "do $$ begin raise notice 'mememe'; end $$"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"do $$ begin raise notice 'mememe'; end $$\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
@@ -292,16 +328,19 @@ testRun(void)
         });
 #endif
 
-        query = STRDEF("do $$ begin raise notice 'mememe'; end $$");
+        TEST_RESULT_PTR(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), NULL, "execute do block");
 
-        TEST_RESULT_PTR(pgClientQuery(client, query, pgClientQueryResultNone), NULL, "execute do block");
+        #undef TEST_QUERY
 
-        // Unsupported type
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unsupported type");
+
+        #define TEST_QUERY                                          "select clock_timestamp()"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param = "[\"select clock_timestamp()\"]", .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
@@ -316,22 +355,24 @@ testRun(void)
         });
 #endif
 
-        query = STRDEF("select clock_timestamp()");
-
         TEST_ERROR(
-            pgClientQuery(client, query, pgClientQueryResultAny), FormatError,
-            "unable to parse type 1184 in column 0 for query 'select clock_timestamp()'");
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultAny), FormatError,
+            "unable to parse type 1184 in column 0 for query '" TEST_QUERY "'");
 
-        // Successful query with rows
+        #undef TEST_QUERY
+
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("successful query");
+
+        #define TEST_QUERY                                                                                                         \
+            "select oid, case when relname = 'pg_class' then null::text else '' end, relname, relname = 'pg_class'"                \
+            "  from pg_class where relname in ('pg_class', 'pg_proc')"                                                             \
+            " order by relname"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
-            {.function = HRNPQ_SENDQUERY, .param =
-                "[\"select oid, case when relname = 'pg_class' then null::text else '' end, relname, relname = 'pg_class'"
-                    "  from pg_class where relname in ('pg_class', 'pg_proc')"
-                    " order by relname\"]",
-                .resultInt = 1},
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRNPQ_CONSUMEINPUT},
             {.function = HRNPQ_ISBUSY},
             {.function = HRNPQ_GETRESULT},
@@ -362,20 +403,17 @@ testRun(void)
         });
 #endif
 
-        query = STRDEF(
-            "select oid, case when relname = 'pg_class' then null::text else '' end, relname, relname = 'pg_class'"
-            "  from pg_class where relname in ('pg_class', 'pg_proc')"
-            " order by relname");
-
         TEST_RESULT_STR_Z(
-            hrnPackToStr(pgClientQuery(client, query, pgClientQueryResultAny)),
+            hrnPackToStr(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultAny)),
             "1:array:[1:u32:1259, 3:str:pg_class, 4:bool:true], 2:array:[1:u32:1255, 2:str:, 3:str:pg_proc, 4:bool:false]",
             "simple query");
+
+        #undef TEST_QUERY
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when result is not a single row");
 
-        #define TEST_QUERY                                          "select * from pg_class"
+        #define TEST_QUERY                                          "select * from pg_class limit 2"
 
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
@@ -496,8 +534,9 @@ testRun(void)
 
         #undef TEST_QUERY
 
-        // Close connection
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("close connection");
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
