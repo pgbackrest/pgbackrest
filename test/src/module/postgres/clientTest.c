@@ -301,7 +301,7 @@ testRun(void)
 
             {.function = HRNPQ_NTUPLES, .resultInt = 2},
             {.function = HRNPQ_NFIELDS, .resultInt = 4},
-            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_OID},
             {.function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
             {.function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
             {.function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_BOOL},
