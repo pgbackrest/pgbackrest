@@ -69,15 +69,10 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
 #define MANIFEST_KEY_BACKUP_TYPE                                    "backup-type"
     STRING_STATIC(MANIFEST_KEY_BACKUP_TYPE_STR,                     MANIFEST_KEY_BACKUP_TYPE);
 #define MANIFEST_KEY_BUNDLE_ID                                      "bni"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_BUNDLE_ID_VAR,               MANIFEST_KEY_BUNDLE_ID);
 #define MANIFEST_KEY_BUNDLE_OFFSET                                  "bno"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_BUNDLE_OFFSET_VAR,           MANIFEST_KEY_BUNDLE_OFFSET);
 #define MANIFEST_KEY_CHECKSUM                                       "checksum"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_VAR,                MANIFEST_KEY_CHECKSUM);
 #define MANIFEST_KEY_CHECKSUM_PAGE                                  "checksum-page"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_VAR,           MANIFEST_KEY_CHECKSUM_PAGE);
 #define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,     MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
 #define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
     STRING_STATIC(MANIFEST_KEY_DB_CATALOG_VERSION_STR,              MANIFEST_KEY_DB_CATALOG_VERSION);
 #define MANIFEST_KEY_DB_ID                                          "db-id"
@@ -102,17 +97,13 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
 #define MANIFEST_KEY_PATH                                           "path"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_PATH_VAR,                    MANIFEST_KEY_PATH);
 #define MANIFEST_KEY_REFERENCE                                      "reference"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_REFERENCE_VAR,               MANIFEST_KEY_REFERENCE);
 #define MANIFEST_KEY_SIZE                                           "size"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_SIZE_VAR,                    MANIFEST_KEY_SIZE);
 #define MANIFEST_KEY_SIZE_REPO                                      "repo-size"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_SIZE_REPO_VAR,               MANIFEST_KEY_SIZE_REPO);
 #define MANIFEST_KEY_TABLESPACE_ID                                  "tablespace-id"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_TABLESPACE_ID_VAR,           MANIFEST_KEY_TABLESPACE_ID);
 #define MANIFEST_KEY_TABLESPACE_NAME                                "tablespace-name"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_TABLESPACE_NAME_VAR,         MANIFEST_KEY_TABLESPACE_NAME);
 #define MANIFEST_KEY_TIMESTAMP                                      "timestamp"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_TIMESTAMP_VAR,               MANIFEST_KEY_TIMESTAMP);
 #define MANIFEST_KEY_TYPE                                           "type"
     VARIANT_STRDEF_STATIC(MANIFEST_KEY_TYPE_VAR,                    MANIFEST_KEY_TYPE);
 #define MANIFEST_KEY_USER                                           "user"
