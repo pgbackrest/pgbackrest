@@ -3,10 +3,10 @@ Test PostgreSQL Client
 
 This test can be run two ways:
 
-1) The default uses a libpq shim to simulate a PostgreSQL connection.  This will work with all VM types.
+1) The default uses a libpq shim to simulate a PostgreSQL connection. This will work with all VM types.
 
-2) Optionally use a real cluster for testing (only works with debian/pg11).  The test Makefile must be manually updated with the
--DHARNESS_PQ_REAL flag and -lpq must be added to the libs list.  This method does not have 100% coverage but is very close.
+2) Optionally use a real cluster for testing (only works on Debian) add `define: -DHARNESS_PQ_REAL` to the postgres/client test in
+define.yaml. THe PostgreSQL version can be adjusted by changing TEST_PG_VERSION.
 ***********************************************************************************************************************************/
 #include "common/type/json.h"
 
@@ -21,7 +21,9 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // PQfinish() is strictly checked
+#ifndef HARNESS_PQ_REAL
     harnessPqScriptStrictSet(true);
+#endif
 
     // *****************************************************************************************************************************
     if (testBegin("pgClient"))
@@ -29,22 +31,25 @@ testRun(void)
         // Create and start the test database
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef HARNESS_PQ_REAL
-        HRN_SYSTEM("sudo pg_createcluster 11 test");
-        HRN_SYSTEM("sudo pg_ctlcluster 11 test start");
-        HRN_SYSTEM("sudo -u postgres psql -c 'create user " TEST_USER " superuser'");
+        #define TEST_PG_VERSION                                     "14"
+
+        HRN_SYSTEM("sudo pg_createcluster " TEST_PG_VERSION " test");
+        HRN_SYSTEM("sudo pg_ctlcluster " TEST_PG_VERSION " test start");
+        HRN_SYSTEM("cd /var/lib/postgresql && sudo -u postgres psql -c 'create user " TEST_USER " superuser'");
 #endif
 
         // Test connection error
         // -------------------------------------------------------------------------------------------------------------------------
+        #define TEST_PQ_ERROR                                                                                                      \
+            "connection to server on socket \"/var/run/postgresql/.s.PGSQL.5433\" failed: No such file or directory\n"             \
+            "\tIs the server running locally and accepting connections on that socket?"
+
 #ifndef HARNESS_PQ_REAL
         harnessPqScriptSet((HarnessPq [])
         {
             {.function = HRNPQ_CONNECTDB, .param = "[\"dbname='postg \\\\'\\\\\\\\res' port=5433\"]"},
             {.function = HRNPQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.function = HRNPQ_ERRORMESSAGE, .resultZ =
-                "could not connect to server: No such file or directory\n"
-                    "\tIs the server running locally and accepting\n"
-                    "\tconnections on Unix domain socket \"/var/run/postgresql/.s.PGSQL.5433\"?\n"},
+            {.function = HRNPQ_ERRORMESSAGE, .resultZ = TEST_PQ_ERROR},
             {.function = HRNPQ_FINISH},
             {.function = NULL}
         });
@@ -61,11 +66,10 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_ERROR(
-            pgClientOpen(client), DbConnectError,
-            "unable to connect to 'dbname='postg \\'\\\\res' port=5433': could not connect to server: No such file or directory\n"
-                "\tIs the server running locally and accepting\n"
-                "\tconnections on Unix domain socket \"/var/run/postgresql/.s.PGSQL.5433\"?");
+            pgClientOpen(client), DbConnectError, "unable to connect to 'dbname='postg \\'\\\\res' port=5433': " TEST_PQ_ERROR);
         TEST_RESULT_VOID(pgClientFree(client), "free client");
+
+        #undef TEST_PQ_ERROR
 
         // Test send error
         // -------------------------------------------------------------------------------------------------------------------------
