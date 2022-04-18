@@ -695,13 +695,17 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
     {
         jsonReadConsumeWhiteSpace(this);
 
+        JsonWriteStack *const item = lstGetLast(this->stack);
+        ASSERT(item->type == jsonTypeObjectBegin);
+
         while (*this->json != '}')
         {
+            const char *const jsonBeforeKey = this->json;
+            const bool firstBeforeKey = item->first;
+
             jsonReadPush(this, jsonTypeString, true);
 
-            const char *const jsonBeforeKey = this->json;
             const String *const keyNext = jsonReadKeyInternal(this);
-
             const int compare = strCmp(key, keyNext);
 
             if (compare == 0)
@@ -712,6 +716,8 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
             else if (compare < 0)
             {
                 this->json = jsonBeforeKey;
+                this->key = false;
+                item->first = firstBeforeKey;
                 break;
             }
 
@@ -985,9 +991,6 @@ jsonReadVar(JsonRead *const this)
 
     jsonReadConsumeWhiteSpace(this);
 
-    if (*this->json != '\0')
-        THROW_FMT(JsonFormatError, "characters after JSON complete at: %s", this->json);
-
     FUNCTION_TEST_RETURN(result);
 }
 
@@ -1034,6 +1037,33 @@ jsonToVar(const String *const json)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
+}
+
+/**********************************************************************************************************************************/
+void
+jsonValidate(const String *const json)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, json);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        JsonRead *const read = jsonReadNew(json);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            // !!! THIS SHOULD BE CHANGED TO SKIP
+            jsonReadVar(read);
+
+            if (*read->json != '\0')
+                THROW_FMT(JsonFormatError, "characters after JSON at: %s", read->json);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

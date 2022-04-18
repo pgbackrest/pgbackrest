@@ -86,6 +86,9 @@ Read Helper Functions
 // Convert JSON to Variant
 Variant *jsonToVar(const String *json);
 
+// Validate JSON
+void jsonValidate(const String *json);
+
 /***********************************************************************************************************************************
 Read Destructor
 ***********************************************************************************************************************************/

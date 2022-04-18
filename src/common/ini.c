@@ -400,6 +400,9 @@ iniLoad(
                             // Check that the value is valid JSON
                             TRY_BEGIN()
                             {
+                                jsonValidate(value);
+
+                                // !!! REMOVE THIS WHEN POSSIBLE
                                 valueVar = jsonToVar(value);
                             }
                             CATCH(JsonFormatError)
