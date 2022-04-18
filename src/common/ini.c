@@ -411,7 +411,11 @@ iniLoad(
                                 lineEqual = strstr(lineEqual + 1, "=");
 
                                 if (lineEqual == NULL)
-                                    THROW_FMT(FormatError, "invalid JSON value at line %u: %s", lineIdx + 1, linePtr);
+                                {
+                                    THROW_FMT(
+                                        FormatError, "invalid JSON value at line %u '%s': %s", lineIdx + 1, linePtr,
+                                        errorMessage());
+                                }
 
                                 // Try again with = in new position
                                 retry = true;

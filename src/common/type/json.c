@@ -795,7 +795,7 @@ jsonReadObjectEnd(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 jsonReadSkipRecurse(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -826,7 +826,7 @@ jsonReadSkipRecurse(JsonRead *const this)
         {
             jsonReadArrayBegin(this);
 
-            while (jsonReadTypeNext(this) != jsonTypeArrayEnd)
+            while (jsonReadTypeNextIgnoreComma(this) != jsonTypeArrayEnd)
                 jsonReadSkipRecurse(this);
 
             jsonReadArrayEnd(this);
@@ -838,7 +838,7 @@ jsonReadSkipRecurse(JsonRead *const this)
         {
             jsonReadObjectBegin(this);
 
-            while (jsonReadTypeNext(this) != jsonTypeObjectEnd)
+            while (jsonReadTypeNextIgnoreComma(this) != jsonTypeObjectEnd)
             {
                 jsonReadKey(this);
                 jsonReadSkipRecurse(this);
@@ -1053,8 +1053,7 @@ jsonValidate(const String *const json)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            // !!! THIS SHOULD BE CHANGED TO SKIP
-            jsonReadVar(read);
+            jsonReadSkip(read);
 
             if (*read->json != '\0')
                 THROW_FMT(JsonFormatError, "characters after JSON at: %s", read->json);

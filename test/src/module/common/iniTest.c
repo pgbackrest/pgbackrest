@@ -51,7 +51,8 @@ testRun(void)
         iniBuf = BUFSTRZ("[section]\nkey=value\n");
 
         TEST_ERROR(
-            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError, "invalid JSON value at line 2: key=value");
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "invalid JSON value at line 2 'key=value': invalid type at 'value'");
 
         // Key outside of section
         // -------------------------------------------------------------------------------------------------------------------------
