@@ -14,7 +14,6 @@ Remote Storage Protocol Handler
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/type/pack.h"
-#include "common/type/json.h"
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/remote/protocol.h"
@@ -356,7 +355,7 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
         const String *file = pckReadStrP(param);
         bool ignoreMissing = pckReadBoolP(param);
         const uint64_t offset = pckReadU64P(param);
-        const Variant *limit = jsonToVar(pckReadStrP(param));
+        const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
         const Pack *const filter = pckReadPackP(param);
 
         // Create the read object
