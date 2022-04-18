@@ -8,7 +8,6 @@ Remote Storage File write
 #include "common/io/io.h"
 #include "common/io/write.h"
 #include "common/log.h"
-#include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/write.h"
