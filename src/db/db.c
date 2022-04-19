@@ -110,6 +110,7 @@ dbQuery(Db *this, const PgClientQueryResult resultType, const String *const quer
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(resultType != 0);
     ASSERT(query != NULL);
 
     Pack *result = NULL;

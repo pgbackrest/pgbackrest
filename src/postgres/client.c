@@ -177,6 +177,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
     ASSERT(this != NULL);
     CHECK(AssertError, this->connection != NULL, "invalid connection");
     ASSERT(query != NULL);
+    ASSERT(resultType != 0);
 
     Pack *result = NULL;
 
