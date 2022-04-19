@@ -56,7 +56,9 @@ int64_t jsonReadInt64(JsonRead *this);
 // !!!
 String *jsonReadKey(JsonRead *this);
 bool jsonReadKeyExpect(JsonRead *this, const String *key);
-void jsonReadKeyRequire(JsonRead *this, const String *key);
+bool jsonReadKeyExpectZ(JsonRead *this, const char *key);
+JsonRead *jsonReadKeyRequire(JsonRead *this, const String *key);
+JsonRead *jsonReadKeyRequireZ(JsonRead *this, const char *key);
 
 // !!
 void jsonReadNull(JsonRead *this);

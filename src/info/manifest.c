@@ -77,32 +77,25 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path
     STRING_STATIC(MANIFEST_KEY_DB_CATALOG_VERSION_STR,              MANIFEST_KEY_DB_CATALOG_VERSION);
 #define MANIFEST_KEY_DB_ID                                          "db-id"
     STRING_STATIC(MANIFEST_KEY_DB_ID_STR,                           MANIFEST_KEY_DB_ID);
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_DB_ID_VAR,                   MANIFEST_KEY_DB_ID);
 #define MANIFEST_KEY_DB_LAST_SYSTEM_ID                              "db-last-system-id"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR,       MANIFEST_KEY_DB_LAST_SYSTEM_ID);
 #define MANIFEST_KEY_DB_SYSTEM_ID                                   "db-system-id"
     STRING_STATIC(MANIFEST_KEY_DB_SYSTEM_ID_STR,                    MANIFEST_KEY_DB_SYSTEM_ID);
 #define MANIFEST_KEY_DB_VERSION                                     "db-version"
     STRING_STATIC(MANIFEST_KEY_DB_VERSION_STR,                      MANIFEST_KEY_DB_VERSION);
 #define MANIFEST_KEY_DESTINATION                                    "destination"
 #define MANIFEST_KEY_FILE                                           "file"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_FILE_VAR,                    MANIFEST_KEY_FILE);
 #define MANIFEST_KEY_GROUP                                          "group"
     STRING_STATIC(MANIFEST_KEY_GROUP_STR,                           MANIFEST_KEY_GROUP);
 #define MANIFEST_KEY_MODE                                           "mode"
     STRING_STATIC(MANIFEST_KEY_MODE_STR,                            MANIFEST_KEY_MODE);
 #define MANIFEST_KEY_PATH                                           "path"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_PATH_VAR,                    MANIFEST_KEY_PATH);
 #define MANIFEST_KEY_REFERENCE                                      "reference"
 #define MANIFEST_KEY_SIZE                                           "size"
 #define MANIFEST_KEY_SIZE_REPO                                      "repo-size"
 #define MANIFEST_KEY_TABLESPACE_ID                                  "tablespace-id"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_TABLESPACE_ID_VAR,           MANIFEST_KEY_TABLESPACE_ID);
 #define MANIFEST_KEY_TABLESPACE_NAME                                "tablespace-name"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_TABLESPACE_NAME_VAR,         MANIFEST_KEY_TABLESPACE_NAME);
 #define MANIFEST_KEY_TIMESTAMP                                      "timestamp"
 #define MANIFEST_KEY_TYPE                                           "type"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_TYPE_VAR,                    MANIFEST_KEY_TYPE);
 #define MANIFEST_KEY_USER                                           "user"
     STRING_STATIC(MANIFEST_KEY_USER_STR,                            MANIFEST_KEY_USER);
 
@@ -1786,48 +1779,48 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         jsonReadObjectBegin(json);
 
         // Bundle info
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_BUNDLE_ID)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_BUNDLE_ID))
         {
             file.bundleId = jsonReadUInt64(json);
 
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_BUNDLE_OFFSET)))
+            if (jsonReadKeyExpectZ(json, MANIFEST_KEY_BUNDLE_OFFSET))
                 file.bundleOffset = jsonReadUInt64(json);
         }
 
         // The checksum might not exist if this is a partial save that was done during the backup to preserve checksums for already
         // backed up files
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM))
             memcpy(file.checksumSha1, strZ(jsonReadStr(json)), HASH_TYPE_SHA1_SIZE_HEX + 1);
 
         // Page checksum errors
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM_PAGE)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE))
         {
             file.checksumPage = true;
             file.checksumPageError = !jsonReadBool(json);
 
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_CHECKSUM_PAGE_ERROR)))
+            if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR))
                 file.checksumPageErrorList = jsonFromVar(jsonReadVar(json));
         }
 
         // Group
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
             file.group = manifestOwnerGet(jsonReadVar(json));
         else
             file.group = manifest->fileGroupDefault;
 
         // Mode
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_MODE)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_MODE))
             file.mode = cvtZToMode(strZ(jsonReadStr(json)));
         else
             file.mode = manifest->fileModeDefault;
 
         // Reference
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_REFERENCE)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_REFERENCE))
             file.reference = jsonReadStr(json);
 
         // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
         // the repo-size is only stored in the manifest file if it is different than size.
-        const bool sizeRepoExists = jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_SIZE_REPO));
+        const bool sizeRepoExists = jsonReadKeyExpectZ(json, MANIFEST_KEY_SIZE_REPO);
 
         if (sizeRepoExists)
             file.sizeRepo = jsonReadUInt64(json);
@@ -1835,7 +1828,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         // Size is required so error if it is not present. Older versions removed the size before the backup to ensure that the
         // manifest was updated during the backup, so size can be missing in partial manifests. This error will prevent older
         // partials from being resumed.
-        if (!jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_SIZE)))
+        if (!jsonReadKeyExpectZ(json, MANIFEST_KEY_SIZE))
             THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
 
         file.size = jsonReadUInt64(json);
@@ -1849,13 +1842,13 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
 
         // Timestamp is required so error if it is not present
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_TIMESTAMP)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_TIMESTAMP))
             file.timestamp = (time_t)jsonReadInt64(json);
         else
             THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
 
         // User
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
             file.user = manifestOwnerGet(jsonReadVar(json));
         else
             file.user = manifest->fileUserDefault;
@@ -1872,19 +1865,19 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
         {
             valueFound.group = true;
             path.group = manifestOwnerGet(jsonReadVar(json));
         }
 
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_MODE)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_MODE))
         {
             valueFound.mode = true;
             path.mode = cvtZToMode(strZ(jsonReadStr(json)));
         }
 
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
         {
             valueFound.user = true;
             path.user = manifestOwnerGet(jsonReadVar(json));
@@ -1903,17 +1896,18 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
+        // !!!
+        link.destination = jsonReadStr(jsonReadKeyRequireZ(json, MANIFEST_KEY_DESTINATION));
 
-        jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_DESTINATION));
-        link.destination = jsonReadStr(json);
-
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
+        // !!!
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
         {
             valueFound.group = true;
             link.group = manifestOwnerGet(jsonReadVar(json));
         }
 
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
+        // !!!
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
         {
             valueFound.user = true;
             link.user = manifestOwnerGet(jsonReadVar(json));
@@ -1975,26 +1969,21 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         jsonReadObjectBegin(json);
 
         // File
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_FILE)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_FILE))
             target.file = jsonReadStr(json);
 
         // Path
-        jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_PATH));
-        target.path = jsonReadStr(json);
+        target.path = jsonReadStr(jsonReadKeyRequireZ(json, MANIFEST_KEY_PATH));
 
         // Tablespace oid
-        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_TABLESPACE_ID)))
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_TABLESPACE_ID))
         {
             target.tablespaceId = cvtZToUInt(strZ(jsonReadStr(json)));
-
-            jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_TABLESPACE_NAME));
-            target.tablespaceName = jsonReadStr(json);
+            target.tablespaceName = jsonReadStr(jsonReadKeyRequireZ(json, MANIFEST_KEY_TABLESPACE_NAME));
         }
 
         // Tablespace type
-        jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_TYPE));
-
-        const String *const targetType = jsonReadStr(json);
+        const String *const targetType = jsonReadStr(jsonReadKeyRequireZ(json, MANIFEST_KEY_TYPE));
         ASSERT(strEq(targetType, MANIFEST_TARGET_TYPE_LINK_STR) || strEq(targetType, MANIFEST_TARGET_TYPE_PATH_STR));
 
         target.type = strEq(targetType, MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink;
@@ -2011,12 +2000,10 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         jsonReadObjectBegin(json);
 
         // Database oid
-        jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_DB_ID));
-        db.id = jsonReadUInt(json);
+        db.id = jsonReadUInt(jsonReadKeyRequireZ(json, MANIFEST_KEY_DB_ID));
 
         // Last system oid
-        jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_DB_LAST_SYSTEM_ID));
-        db.lastSystemId = jsonReadUInt(json);
+        db.lastSystemId = jsonReadUInt(jsonReadKeyRequireZ(json, MANIFEST_KEY_DB_LAST_SYSTEM_ID));
 
         manifestDbAdd(manifest, &db);
     }

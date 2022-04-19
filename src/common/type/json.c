@@ -730,17 +730,46 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
     FUNCTION_TEST_RETURN(result);
 }
 
-void
+bool
+jsonReadKeyExpectZ(JsonRead *const this, const char *const key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    FUNCTION_TEST_RETURN(jsonReadKeyExpect(this, STR(key)));
+}
+
+JsonRead *
 jsonReadKeyRequire(JsonRead *const this, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_READ, this);
     FUNCTION_TEST_END();
 
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
     if (!jsonReadKeyExpect(this, key))
         THROW_FMT(JsonFormatError, "required key '%s' not found", strZ(key));
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_RETURN(this);
+}
+
+JsonRead *
+jsonReadKeyRequireZ(JsonRead *const this, const char *const key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    FUNCTION_TEST_RETURN(jsonReadKeyRequire(this, STR(key)));
 }
 
 /**********************************************************************************************************************************/
