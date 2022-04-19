@@ -1164,6 +1164,7 @@ testRun(void)
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20181119-152800F={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
             "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
             "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
             "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","

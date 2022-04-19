@@ -156,10 +156,6 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             info.backupArchiveStart = jsonReadStr(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START));
             info.backupArchiveStop = jsonReadStr(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP));
 
-            ASSERT(
-                (info.backupArchiveStart == NULL && info.backupArchiveStop == NULL) ||
-                (info.backupArchiveStart != NULL && info.backupArchiveStop != NULL));
-
             // Report errors detected during the backup. The key may not exist in older versions.
             if (jsonReadKeyExpectStrId(json, INFO_BACKUP_KEY_BACKUP_ERROR))
                 info.backupError = varNewBool(jsonReadBool(json));
@@ -176,10 +172,6 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
 
             if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_LSN_STOP))
                 info.backupLsnStop = jsonReadStr(json);
-
-            ASSERT(
-                (info.backupLsnStart == NULL && info.backupLsnStop == NULL) ||
-                (info.backupLsnStart != NULL && info.backupLsnStop != NULL));
 
             // Prior backup
             if (jsonReadKeyExpectStrId(json, INFO_BACKUP_KEY_BACKUP_PRIOR))
