@@ -290,7 +290,7 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
                 jsonReadConsumeWhiteSpace(this);
 
                 if (*this->json != ',')
-                    THROW(FormatError, "missing comma");
+                    THROW_FMT(FormatError, "missing comma at: %s", this->json);
 
                 this->json++;
             }
@@ -949,9 +949,41 @@ jsonReadStr(JsonRead *const this)
 
     ASSERT(this != NULL);
 
+    if (jsonReadTypeNextIgnoreComma(this) == jsonTypeNull)
+    {
+        jsonReadNull(this);
+        FUNCTION_TEST_RETURN(NULL);
+    }
+
     jsonReadPush(this, jsonTypeString, false);
 
     FUNCTION_TEST_RETURN(jsonReadStrInternal(this));
+}
+
+/**********************************************************************************************************************************/
+StringList *
+jsonReadStrLst(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    StringList *const result = strLstNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        jsonReadArrayBegin(this);
+
+        while (jsonReadTypeNextIgnoreComma(this) != jsonTypeArrayEnd)
+            strLstAdd(result, jsonReadStr(this));
+
+        jsonReadArrayEnd(this);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/

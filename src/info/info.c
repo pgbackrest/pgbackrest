@@ -154,7 +154,9 @@ typedef struct InfoLoadData
 } InfoLoadData;
 
 static void
-infoLoadCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
+infoLoadCallback(
+    void *const data, const String *const section, const String *const key, const String *const value,
+    const Variant *const valueVar)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -169,7 +171,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    InfoLoadData *loadData = (InfoLoadData *)data;
+    InfoLoadData *const loadData = (InfoLoadData *)data;
 
     // Calculate checksum
     if (!(strEqZ(section, INFO_SECTION_BACKREST) && strEqZ(key, INFO_KEY_CHECKSUM)))
@@ -320,9 +322,12 @@ infoSaveSection(InfoSave *const infoSaveData, const char *const section, const S
         FUNCTION_TEST_PARAM(STRING, sectionNext);
     FUNCTION_TEST_END();
 
+    ASSERT(infoSaveData != NULL);
+    ASSERT(section != NULL);
+
     FUNCTION_TEST_RETURN(
-        (infoSaveData->sectionLast == NULL || strCmp(STRDEF(section), infoSaveData->sectionLast) > 0) &&
-            (sectionNext == NULL || strCmp(STRDEF(section), sectionNext) < 0));
+        (infoSaveData->sectionLast == NULL || strCmpZ(infoSaveData->sectionLast, section) < 0) &&
+            (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
 }
 
 /**********************************************************************************************************************************/

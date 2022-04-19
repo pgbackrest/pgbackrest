@@ -1732,8 +1732,8 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
     ASSERT(section != NULL);
     ASSERT(key != NULL);
 
-    ManifestLoadData *loadData = (ManifestLoadData *)callbackData;
-    Manifest *manifest = loadData->manifest;
+    ManifestLoadData *const loadData = (ManifestLoadData *)callbackData;
+    Manifest *const manifest = loadData->manifest;
 
     const String *const value = jsonFromVar(valueXXX);
 
@@ -2180,7 +2180,7 @@ manifestOwnerVar(const String *ownerDefault)
 }
 
 static void
-manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *infoSaveData)
+manifestSaveCallback(void *const callbackData, const String *const sectionNext, InfoSave *const infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -2191,8 +2191,8 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     ASSERT(callbackData != NULL);
     ASSERT(infoSaveData != NULL);
 
-    ManifestSaveData *saveData = (ManifestSaveData *)callbackData;
-    Manifest *manifest = saveData->manifest;
+    ManifestSaveData *const saveData = (ManifestSaveData *)callbackData;
+    Manifest *const manifest = saveData->manifest;
 
     // -----------------------------------------------------------------------------------------------------------------------------
     if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP, sectionNext))
@@ -2357,7 +2357,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
-                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
+                const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
                 JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 if (target->file != NULL)
@@ -2391,7 +2391,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
             {
-                const ManifestDb *db = manifestDb(manifest, dbIdx);
+                const ManifestDb *const db = manifestDb(manifest, dbIdx);
                 JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 jsonWriteUInt(jsonWriteKeyZ(json, MANIFEST_KEY_DB_ID), db->id);
@@ -2481,7 +2481,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
             {
-                const ManifestLink *link = manifestLink(manifest, linkIdx);
+                const ManifestLink *const link = manifestLink(manifest, linkIdx);
                 JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_DESTINATION), link->destination);
@@ -2520,7 +2520,7 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
         {
             for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
             {
-                const ManifestPath *path = manifestPath(manifest, pathIdx);
+                const ManifestPath *const path = manifestPath(manifest, pathIdx);
                 JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 if (!varEq(manifestOwnerVar(path->group), saveData->groupDefault))

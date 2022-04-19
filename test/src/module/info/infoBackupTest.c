@@ -120,7 +120,7 @@ testRun(void)
         contentLoad = harnessInfoChecksumZ(
             "[backup:current]\n"
             "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
-            "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","
+            "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
             "\"backup-error\":false,"
             "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,"
@@ -165,8 +165,8 @@ testRun(void)
         TEST_RESULT_UINT(backupData.backupType, backupTypeFull, "backup type full");
         TEST_RESULT_INT(backupData.backrestFormat, 5, "backrest format");
         TEST_RESULT_STR_Z(backupData.backrestVersion, "2.04", "backrest version");
-        TEST_RESULT_STR_Z(backupData.backupArchiveStart, "00000007000000000000001C", "archive start");
-        TEST_RESULT_STR_Z(backupData.backupArchiveStop, "00000007000000000000001C", "archive stop");
+        TEST_RESULT_STR_Z(backupData.backupArchiveStart, NULL, "archive start");
+        TEST_RESULT_STR_Z(backupData.backupArchiveStop, NULL, "archive stop");
         TEST_RESULT_UINT(backupData.backupInfoRepoSize, 3159776, "repo size");
         TEST_RESULT_UINT(backupData.backupInfoRepoSizeDelta, 3159776, "repo delta");
         TEST_RESULT_UINT(backupData.backupInfoSize, 26897030, "backup size");

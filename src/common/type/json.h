@@ -79,6 +79,9 @@ void jsonReadSkip(JsonRead *this);
 String *jsonReadStr(JsonRead *this);
 
 // !!!
+StringList *jsonReadStrLst(JsonRead *this);
+
+// !!!
 unsigned int jsonReadUInt(JsonRead *this);
 
 // !!!

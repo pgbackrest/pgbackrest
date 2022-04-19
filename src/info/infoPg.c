@@ -97,7 +97,7 @@ typedef struct InfoPgLoadData
 } InfoPgLoadData;
 
 static void
-infoPgLoadCallback(void *data, const String *section, const String *key, const Variant *valueXXX)
+infoPgLoadCallback(void *const data, const String *const section, const String *const key, const Variant *const valueXXX)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -271,7 +271,7 @@ typedef struct InfoPgSaveData
 } InfoPgSaveData;
 
 static void
-infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
+infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *const infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -282,7 +282,7 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
     ASSERT(data != NULL);
     ASSERT(infoSaveData != NULL);
 
-    InfoPgSaveData *saveData = (InfoPgSaveData *)data;
+    InfoPgSaveData *const saveData = (InfoPgSaveData *)data;
 
     if (infoSaveSection(infoSaveData, INFO_SECTION_DB, sectionNext))
     {
