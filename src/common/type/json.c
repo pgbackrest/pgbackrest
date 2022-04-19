@@ -684,6 +684,7 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_READ, this);
+        FUNCTION_TEST_PARAM(STRING, key);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -731,10 +732,27 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
 }
 
 bool
+jsonReadKeyExpectStrId(JsonRead *const this, const StringId key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+        FUNCTION_TEST_PARAM(STRING_ID, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != 0);
+
+    char buffer[STRID_MAX + 1];
+
+    FUNCTION_TEST_RETURN(jsonReadKeyExpect(this, STR_SIZE(buffer, strIdToZ(key, buffer))));
+}
+
+bool
 jsonReadKeyExpectZ(JsonRead *const this, const char *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_READ, this);
+        FUNCTION_TEST_PARAM(STRINGZ, key);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -748,6 +766,7 @@ jsonReadKeyRequire(JsonRead *const this, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_READ, this);
+        FUNCTION_TEST_PARAM(STRING, key);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -760,10 +779,27 @@ jsonReadKeyRequire(JsonRead *const this, const String *const key)
 }
 
 JsonRead *
+jsonReadKeyRequireStrId(JsonRead *const this, const StringId key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+        FUNCTION_TEST_PARAM(STRING_ID, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != 0);
+
+    char buffer[STRID_MAX + 1];
+
+    FUNCTION_TEST_RETURN(jsonReadKeyRequire(this, STR_SIZE(buffer, strIdToZ(key, buffer))));
+}
+
+JsonRead *
 jsonReadKeyRequireZ(JsonRead *const this, const char *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_READ, this);
+        FUNCTION_TEST_PARAM(STRINGZ, key);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -1466,11 +1502,33 @@ jsonWriteKey(JsonWrite *const this, const String *const key)
 }
 
 JsonWrite *
+jsonWriteKeyStrId(JsonWrite *const this, const StringId key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+        FUNCTION_TEST_PARAM(STRING_ID, key);
+    FUNCTION_TEST_END();
+
+    char buffer[STRID_MAX + 4];
+    size_t size = strIdToZ(key, buffer + 1);
+
+    jsonWritePush(this, jsonTypeString, STR_SIZE(buffer + 1, size));
+
+    buffer[0] = '"';
+    buffer[++size] = '"';
+    buffer[++size] = ':';
+
+    strCatZN(this->string, buffer, size + 1);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+JsonWrite *
 jsonWriteKeyZ(JsonWrite *const this, const char *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
-        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRINGZ, key);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -1520,6 +1578,7 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(value != NULL);
 
     jsonWritePush(this, jsonTypeString, NULL);
 

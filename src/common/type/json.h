@@ -4,6 +4,7 @@ Convert JSON to/from KeyValue
 #ifndef COMMON_TYPE_JSON_H
 #define COMMON_TYPE_JSON_H
 
+#include "common/type/stringId.h"
 #include "common/type/variant.h"
 
 /***********************************************************************************************************************************
@@ -55,9 +56,13 @@ int64_t jsonReadInt64(JsonRead *this);
 
 // !!!
 String *jsonReadKey(JsonRead *this);
+
 bool jsonReadKeyExpect(JsonRead *this, const String *key);
+bool jsonReadKeyExpectStrId(JsonRead *this, StringId key);
 bool jsonReadKeyExpectZ(JsonRead *this, const char *key);
+
 JsonRead *jsonReadKeyRequire(JsonRead *this, const String *key);
+JsonRead *jsonReadKeyRequireStrId(JsonRead *this, StringId key);
 JsonRead *jsonReadKeyRequireZ(JsonRead *this, const char *key);
 
 // !!
@@ -133,6 +138,7 @@ JsonWrite *jsonWriteJson(JsonWrite *this, const String *value);
 
 // !!!
 JsonWrite *jsonWriteKey(JsonWrite *this, const String *key);
+JsonWrite *jsonWriteKeyStrId(JsonWrite *this, StringId key);
 JsonWrite *jsonWriteKeyZ(JsonWrite *this, const char *key);
 
 // !!!
