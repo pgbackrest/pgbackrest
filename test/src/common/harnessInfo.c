@@ -31,10 +31,9 @@ typedef struct HarnessInfoChecksumData
 
 static void
 harnessInfoChecksumCallback(
-    void *callbackData, const String *section, const String *key, const String *value, const Variant *valueVar)
+    void *const callbackData, const String *const section, const String *const key, const String *const value)
 {
     HarnessInfoChecksumData *data = (HarnessInfoChecksumData *)callbackData;
-    (void)valueVar;
 
     // Calculate checksum
     if (data->sectionLast == NULL || !strEq(section, data->sectionLast))
@@ -123,8 +122,9 @@ harnessInfoChecksumZ(const char *info)
 Test callback that logs the results to a string
 ***********************************************************************************************************************************/
 void
-harnessInfoLoadNewCallback(void *callbackData, const String *section, const String *key, const Variant *value)
+harnessInfoLoadNewCallback(
+    void *const callbackData, const String *const section, const String *const key, const String *const value)
 {
     if (callbackData != NULL)
-        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strZ(section), strZ(key), strZ(jsonFromVar(value)));
+        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strZ(section), strZ(key), strZ(value));
 }

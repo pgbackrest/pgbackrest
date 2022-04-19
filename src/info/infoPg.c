@@ -97,22 +97,21 @@ typedef struct InfoPgLoadData
 } InfoPgLoadData;
 
 static void
-infoPgLoadCallback(void *const data, const String *const section, const String *const key, const Variant *const valueXXX)
+infoPgLoadCallback(void *const data, const String *const section, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, valueXXX);
+        FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
-    ASSERT(valueXXX != NULL);
+    ASSERT(value != NULL);
 
     InfoPgLoadData *const loadData = data;
-    const String *const value = jsonFromVar(valueXXX);
 
     // Process db section
     if (strEqZ(section, INFO_SECTION_DB))
@@ -144,7 +143,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
     }
     // Callback if set
     else if (loadData->callbackFunction != NULL)
-        loadData->callbackFunction(loadData->callbackData, section, key, valueXXX);
+        loadData->callbackFunction(loadData->callbackData, section, key, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }

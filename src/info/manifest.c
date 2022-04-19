@@ -1719,13 +1719,13 @@ manifestOwnerDefaultGet(const Variant *ownerDefault)
 }
 
 static void
-manifestLoadCallback(void *callbackData, const String *const section, const String *const key, const Variant *const valueXXX)
+manifestLoadCallback(void *callbackData, const String *const section, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, valueXXX);
+        FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
     ASSERT(callbackData != NULL);
@@ -1734,8 +1734,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
     ManifestLoadData *const loadData = (ManifestLoadData *)callbackData;
     Manifest *const manifest = loadData->manifest;
-
-    const String *const value = jsonFromVar(valueXXX);
 
     // -----------------------------------------------------------------------------------------------------------------------------
     if (strEqZ(section, MANIFEST_SECTION_TARGET_FILE))

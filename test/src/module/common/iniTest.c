@@ -9,11 +9,8 @@ Test Ini
 Test callback to accumulate ini load results
 ***********************************************************************************************************************************/
 static void
-testIniLoadCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
+testIniLoadCallback(void *data, const String *section, const String *key, const String *value)
 {
-    if (!strEq(value, jsonFromVar(valueVar)))
-        THROW_FMT(AssertError, "value '%s' does not equal valueVar '%s'", strZ(value), strZ(jsonFromVar(valueVar)));
-
     strCatFmt((String *)data, "%s:%s:%s\n", strZ(section), strZ(key), strZ(value));
 }
 

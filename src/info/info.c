@@ -150,20 +150,17 @@ typedef struct InfoLoadData
     Info *info;                                                     // Info object
     String *sectionLast;                                            // The last section seen during load
     IoFilter *checksumActual;                                       // Checksum calculated from the file
-    String *checksumExpected;                                       // Checksum found in ini file
+    const String *checksumExpected;                                 // Checksum found in ini file
 } InfoLoadData;
 
 static void
-infoLoadCallback(
-    void *const data, const String *const section, const String *const key, const String *const value,
-    const Variant *const valueVar)
+infoLoadCallback(void *const data, const String *const section, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
-        FUNCTION_TEST_PARAM(VARIANT, valueVar);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
@@ -198,20 +195,18 @@ infoLoadCallback(
     // Process backrest section
     if (strEqZ(section, INFO_SECTION_BACKREST))
     {
-        ASSERT(valueVar != NULL);
-
         // Validate format
         if (strEqZ(key, INFO_KEY_FORMAT))
         {
-            if (varUInt64(valueVar) != REPOSITORY_FORMAT)
-                THROW_FMT(FormatError, "expected format %d but found %" PRIu64, REPOSITORY_FORMAT, varUInt64(valueVar));
+            if (varUInt64(jsonToVar(value)) != REPOSITORY_FORMAT)
+                THROW_FMT(FormatError, "expected format %d but found %" PRIu64, REPOSITORY_FORMAT, varUInt64(jsonToVar(value)));
         }
         // Store pgBackRest version
         else if (strEqZ(key, INFO_KEY_VERSION))
         {
             MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
-                loadData->info->pub.backrestVersion = strDup(varStr(valueVar));
+                loadData->info->pub.backrestVersion = varStr(jsonToVar(value));
             }
             MEM_CONTEXT_END();
         }
@@ -220,7 +215,7 @@ infoLoadCallback(
         {
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->checksumExpected = strDup(varStr(valueVar));
+                loadData->checksumExpected = varStr(jsonToVar(value));
             }
             MEM_CONTEXT_END();
         }
@@ -228,21 +223,19 @@ infoLoadCallback(
     // Process cipher section
     else if (strEqZ(section, INFO_SECTION_CIPHER))
     {
-        ASSERT(valueVar != NULL);
-
         // No validation needed for cipher-pass, just store it
         if (strEqZ(key, INFO_KEY_CIPHER_PASS))
         {
             MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
-                loadData->info->pub.cipherPass = strDup(varStr(valueVar));
+                loadData->info->pub.cipherPass = varStr(jsonToVar(value));
             }
             MEM_CONTEXT_END();
         }
     }
     // Else pass to callback for processing
     else
-        loadData->callbackFunction(loadData->callbackData, section, key, valueVar);
+        loadData->callbackFunction(loadData->callbackData, section, key, value);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -327,7 +320,7 @@ infoSaveSection(InfoSave *const infoSaveData, const char *const section, const S
 
     FUNCTION_TEST_RETURN(
         (infoSaveData->sectionLast == NULL || strCmpZ(infoSaveData->sectionLast, section) < 0) &&
-            (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
+        (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
 }
 
 /**********************************************************************************************************************************/

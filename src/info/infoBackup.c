@@ -118,22 +118,21 @@ Create new object and load contents from a file
 #define INFO_BACKUP_KEY_OPT_ONLINE                                  "option-online"
 
 static void
-infoBackupLoadCallback(void *data, const String *section, const String *key, const Variant *valueXXX)
+infoBackupLoadCallback(void *data, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, valueXXX);
+        FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
-    ASSERT(valueXXX != NULL);
+    ASSERT(value != NULL);
 
     InfoBackup *const infoBackup = (InfoBackup *)data;
-    const String *const value = jsonFromVar(valueXXX);
 
     // Process current backup list
     if (strEqZ(section, INFO_BACKUP_SECTION_BACKUP_CURRENT))

@@ -325,9 +325,9 @@ iniSet(Ini *this, const String *section, const String *key, const String *value)
 /**********************************************************************************************************************************/
 void
 iniLoad(
-    IoRead *read,
-    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value, const Variant *valueVar),
-    void *callbackData)
+    IoRead *const read,
+    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
+    void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
@@ -385,7 +385,6 @@ iniLoad(
                         // then an error is thrown.
                         String *key;
                         String *value;
-                        Variant *valueVar = NULL;
 
                         bool retry;
 
@@ -401,9 +400,6 @@ iniLoad(
                             TRY_BEGIN()
                             {
                                 jsonValidate(value);
-
-                                // !!! REMOVE THIS WHEN POSSIBLE
-                                valueVar = jsonToVar(value);
                             }
                             CATCH(JsonFormatError)
                             {
@@ -429,7 +425,7 @@ iniLoad(
                             THROW_FMT(FormatError, "key is zero-length at line %u: %s", lineIdx + 1, linePtr);
 
                         // Callback with the section/key/value
-                        callbackFunction(callbackData, section, key, value, valueVar);
+                        callbackFunction(callbackData, section, key, value);
                     }
                 }
 
