@@ -31,7 +31,7 @@ Constants
 // general system error.
 #define LOCK_ON_EXEC_ID                                             -2
 VARIANT_STRDEF_STATIC(EXEC_ID_VAR,                                  "execId");
-VARIANT_STRDEF_STATIC(PERCENT_COMPLETE_VAR,                         "percentComplete");
+VARIANT_STRDEF_STATIC(PERCENT_COMPLETE_VAR,                         "pctCplt");
 
 /***********************************************************************************************************************************
 Lock type names

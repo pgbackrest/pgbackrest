@@ -71,7 +71,7 @@ VARIANT_STRDEF_STATIC(STATUS_KEY_CODE_VAR,                          "code");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_HELD_VAR,              "held");
-VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR,  "percent-complete");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR,  "pct-cplt");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
 
 #define INFO_STANZA_STATUS_OK                                       "ok"
@@ -232,7 +232,7 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *st
     KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
     KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
     kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(stanzaData->backupLockHeld));
-    if (stanzaData->percentComplete != NULL)
+    if (stanzaData->percentComplete != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
         kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, VARSTR(strNewDbl(*stanzaData->percentComplete)));
 
     FUNCTION_TEST_RETURN_VOID();

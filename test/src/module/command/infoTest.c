@@ -1351,7 +1351,7 @@ testRun(void)
                             "],"
                             "\"status\":{"
                                 "\"code\":4,"
-                                "\"lock\":{\"backup\":{\"held\":true,\"percent-complete\":\"45.45\"}},"
+                                "\"lock\":{\"backup\":{\"held\":true}},"
                                 "\"message\":\"different across repos\""
                             "}"
                         "},"
