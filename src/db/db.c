@@ -252,7 +252,7 @@ dbOpen(Db *this)
         // Set client encoding to UTF8.  This is the only encoding (other than ASCII) that we can safely work with.
         dbExec(this, STRDEF("set client_encoding = 'UTF8'"));
 
-        // Query the version and data_directory
+        // Query the version and data_directory. Be sure the update the total in the null check below when adding/removing columns.
         const Pack *const row = dbQuery(
             this, pgClientQueryResultRow,
             STRDEF(
@@ -265,7 +265,7 @@ dbOpen(Db *this)
         // Check that none of the return values are null, which indicates the user cannot select some rows in pg_settings
         PackRead *read = pckReadNew(row);
 
-        for (unsigned int columnIdx = 0; columnIdx < 5 /* !!! */; columnIdx++)
+        for (unsigned int columnIdx = 0; columnIdx < 5; columnIdx++)
         {
             if (pckReadNullP(read, .id = columnIdx + 1))
             {
@@ -277,7 +277,7 @@ dbOpen(Db *this)
             }
         }
 
-        // !!!
+        // Restart the read to get the data
         read = pckReadNew(row);
 
         // Strip the minor version off since we don't need it.  In the future it might be a good idea to warn users when they are
