@@ -20,19 +20,6 @@ Info Handler
 #include "version.h"
 
 /***********************************************************************************************************************************
-Internal constants
-***********************************************************************************************************************************/
-#define INFO_SECTION_BACKREST                                       "backrest"
-    STRING_STATIC(INFO_SECTION_BACKREST_STR,                            INFO_SECTION_BACKREST);
-STRING_STATIC(INFO_SECTION_CIPHER_STR,                              "cipher");
-
-STRING_STATIC(INFO_KEY_CIPHER_PASS_STR,                             "cipher-pass");
-#define INFO_KEY_CHECKSUM                                           "backrest-checksum"
-    STRING_STATIC(INFO_KEY_CHECKSUM_STR,                            INFO_KEY_CHECKSUM);
-STRING_EXTERN(INFO_KEY_FORMAT_STR,                                  INFO_KEY_FORMAT);
-STRING_EXTERN(INFO_KEY_VERSION_STR,                                 INFO_KEY_VERSION);
-
-/***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
 struct Info
@@ -150,6 +137,11 @@ infoNew(const String *cipherPass)
 /***********************************************************************************************************************************
 Load and validate the info file (or copy)
 ***********************************************************************************************************************************/
+#define INFO_SECTION_BACKREST                                       "backrest"
+#define INFO_KEY_CHECKSUM                                           "backrest-checksum"
+#define INFO_SECTION_CIPHER                                         "cipher"
+#define INFO_KEY_CIPHER_PASS                                        "cipher-pass"
+
 typedef struct InfoLoadData
 {
     MemContext *memContext;                                         // Mem context to use for storing data in this structure
@@ -180,7 +172,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
     InfoLoadData *loadData = (InfoLoadData *)data;
 
     // Calculate checksum
-    if (!(strEq(section, INFO_SECTION_BACKREST_STR) && strEq(key, INFO_KEY_CHECKSUM_STR)))
+    if (!(strEqZ(section, INFO_SECTION_BACKREST) && strEqZ(key, INFO_KEY_CHECKSUM)))
     {
         if (loadData->sectionLast == NULL || !strEq(section, loadData->sectionLast))
         {
@@ -202,18 +194,18 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
     }
 
     // Process backrest section
-    if (strEq(section, INFO_SECTION_BACKREST_STR))
+    if (strEqZ(section, INFO_SECTION_BACKREST))
     {
         ASSERT(valueVar != NULL);
 
         // Validate format
-        if (strEq(key, INFO_KEY_FORMAT_STR))
+        if (strEqZ(key, INFO_KEY_FORMAT))
         {
             if (varUInt64(valueVar) != REPOSITORY_FORMAT)
                 THROW_FMT(FormatError, "expected format %d but found %" PRIu64, REPOSITORY_FORMAT, varUInt64(valueVar));
         }
         // Store pgBackRest version
-        else if (strEq(key, INFO_KEY_VERSION_STR))
+        else if (strEqZ(key, INFO_KEY_VERSION))
         {
             MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
@@ -222,7 +214,7 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
             MEM_CONTEXT_END();
         }
         // Store checksum to be validated later
-        else if (strEq(key, INFO_KEY_CHECKSUM_STR))
+        else if (strEqZ(key, INFO_KEY_CHECKSUM))
         {
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
@@ -232,12 +224,12 @@ infoLoadCallback(void *data, const String *section, const String *key, const Str
         }
     }
     // Process cipher section
-    else if (strEq(section, INFO_SECTION_CIPHER_STR))
+    else if (strEqZ(section, INFO_SECTION_CIPHER))
     {
         ASSERT(valueVar != NULL);
 
         // No validation needed for cipher-pass, just store it
-        if (strEq(key, INFO_KEY_CIPHER_PASS_STR))
+        if (strEqZ(key, INFO_KEY_CIPHER_PASS))
         {
             MEM_CONTEXT_BEGIN(loadData->info->memContext)
             {
@@ -320,27 +312,27 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
 
 /**********************************************************************************************************************************/
 bool
-infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext)
+infoSaveSection(InfoSave *const infoSaveData, const char *const section, const String *const sectionNext)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
-        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRINGZ, section);
         FUNCTION_TEST_PARAM(STRING, sectionNext);
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
-        (infoSaveData->sectionLast == NULL || strCmp(section, infoSaveData->sectionLast) > 0) &&
-            (sectionNext == NULL || strCmp(section, sectionNext) < 0));
+        (infoSaveData->sectionLast == NULL || strCmp(STRDEF(section), infoSaveData->sectionLast) > 0) &&
+            (sectionNext == NULL || strCmp(STRDEF(section), sectionNext) < 0));
 }
 
 /**********************************************************************************************************************************/
 void
-infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue)
+infoSaveValue(InfoSave *const infoSaveData, const char *const section, const char *const key, const String *const jsonValue)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
-        FUNCTION_TEST_PARAM(STRING, section);
-        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRINGZ, section);
+        FUNCTION_TEST_PARAM(STRINGZ, key);
         FUNCTION_TEST_PARAM(STRING, jsonValue);
     FUNCTION_TEST_END();
 
@@ -353,7 +345,7 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
     ASSERT(strZ(jsonValue)[0] != '[');
 
     // Save section
-    if (infoSaveData->sectionLast == NULL || !strEq(section, infoSaveData->sectionLast))
+    if (infoSaveData->sectionLast == NULL || !strEqZ(infoSaveData->sectionLast, section))
     {
         if (infoSaveData->sectionLast != NULL)
         {
@@ -361,15 +353,15 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
             ioWriteLine(infoSaveData->write, BUFSTRDEF(""));
         }
 
-        INFO_CHECKSUM_SECTION(infoSaveData->checksum, section);
+        INFO_CHECKSUM_SECTION(infoSaveData->checksum, STR(section));
 
         ioWrite(infoSaveData->write, BRACKETL_BUF);
-        ioWrite(infoSaveData->write, BUFSTR(section));
+        ioWrite(infoSaveData->write, BUFSTRZ(section));
         ioWriteLine(infoSaveData->write, BRACKETR_BUF);
 
         MEM_CONTEXT_BEGIN(infoSaveData->memContext)
         {
-            infoSaveData->sectionLast = strDup(section);
+            infoSaveData->sectionLast = strNewZ(section);
         }
         MEM_CONTEXT_END();
     }
@@ -377,9 +369,9 @@ infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, 
         INFO_CHECKSUM_KEY_VALUE_NEXT(infoSaveData->checksum);
 
     // Save key/value
-    INFO_CHECKSUM_KEY_VALUE(infoSaveData->checksum, key, jsonValue);
+    INFO_CHECKSUM_KEY_VALUE(infoSaveData->checksum, STR(key), jsonValue);
 
-    ioWrite(infoSaveData->write, BUFSTR(key));
+    ioWrite(infoSaveData->write, BUFSTRZ(key));
     ioWrite(infoSaveData->write, EQ_BUF);
     ioWriteLine(infoSaveData->write, BUFSTR(jsonValue));
 
@@ -417,15 +409,15 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
         INFO_CHECKSUM_BEGIN(data.checksum);
 
         // Add version and format
-        callbackFunction(callbackData, INFO_SECTION_BACKREST_STR, &data);
-        infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_FORMAT_STR, jsonFromVar(VARUINT(REPOSITORY_FORMAT)));
-        infoSaveValue(&data, INFO_SECTION_BACKREST_STR, INFO_KEY_VERSION_STR, jsonFromVar(VARSTRDEF(PROJECT_VERSION)));
+        callbackFunction(callbackData, STRDEF(INFO_SECTION_BACKREST), &data);
+        infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_FORMAT, jsonFromVar(VARUINT(REPOSITORY_FORMAT)));
+        infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_VERSION, jsonFromVar(VARSTRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
         if (infoCipherPass(this) != NULL)
         {
-            callbackFunction(callbackData, INFO_SECTION_CIPHER_STR, &data);
-            infoSaveValue(&data, INFO_SECTION_CIPHER_STR, INFO_KEY_CIPHER_PASS_STR, jsonFromVar(VARSTR(infoCipherPass(this))));
+            callbackFunction(callbackData, STRDEF(INFO_SECTION_CIPHER), &data);
+            infoSaveValue(&data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS, jsonFromVar(VARSTR(infoCipherPass(this))));
         }
 
         // Flush out any additional sections

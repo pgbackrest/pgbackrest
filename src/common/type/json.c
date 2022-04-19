@@ -1578,7 +1578,6 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(value != NULL);
 
     jsonWritePush(this, jsonTypeString, NULL);
 

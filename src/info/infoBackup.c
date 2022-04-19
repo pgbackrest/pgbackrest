@@ -30,7 +30,6 @@ Constants
 ***********************************************************************************************************************************/
 #define INFO_BACKUP_SECTION                                         "backup"
 #define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
-    STRING_STATIC(INFO_BACKUP_SECTION_BACKUP_CURRENT_STR,           INFO_BACKUP_SECTION_BACKUP_CURRENT);
 
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR,     "backup-archive-start");
 VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR,      "backup-archive-stop");
@@ -136,7 +135,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
     InfoBackup *infoBackup = (InfoBackup *)data;
 
     // Process current backup list
-    if (strEq(section, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
+    if (strEqZ(section, INFO_BACKUP_SECTION_BACKUP_CURRENT))
     {
         const KeyValue *backupKv = varKv(value);
 
@@ -144,14 +143,14 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
         {
             InfoBackupData infoBackupData =
             {
-                .backrestFormat = varUIntForce(kvGet(backupKv, VARSTR(INFO_KEY_FORMAT_STR))),
-                .backrestVersion = varStrForce(kvGet(backupKv, VARSTR(INFO_KEY_VERSION_STR))),
+                .backrestFormat = varUIntForce(kvGet(backupKv, VARSTRDEF(INFO_KEY_FORMAT))),
+                .backrestVersion = varStrForce(kvGet(backupKv, VARSTRDEF(INFO_KEY_VERSION))),
                 .backupInfoRepoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR)),
                 .backupInfoRepoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR)),
                 .backupInfoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR)),
                 .backupInfoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR)),
                 .backupLabel = strDup(key),
-                .backupPgId = cvtZToUInt(strZ(varStrForce(kvGet(backupKv, INFO_KEY_DB_ID_VAR)))),
+                .backupPgId = cvtZToUInt(strZ(varStrForce(kvGet(backupKv, VARSTRDEF(INFO_KEY_DB_ID))))),
 
                 // When reading timestamps, read as uint64 to ensure always positive value (guarantee no backups before 1970)
                 .backupTimestampStart = (time_t)varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)),
@@ -233,7 +232,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
 
     InfoBackup *infoBackup = (InfoBackup *)data;
 
-    if (infoSaveSection(infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT, sectionNext))
     {
         // Set the backup current section
         for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
@@ -275,7 +274,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             jsonWriteInt64(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR)), backupData.backupTimestampStop);
 
             jsonWriteStr(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_BACKUP_TYPE_VAR)), strIdToStr(backupData.backupType));
-            jsonWriteUInt(jsonWriteKey(json, varStr(INFO_KEY_DB_ID_VAR)), backupData.backupPgId);
+            jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_ID), backupData.backupPgId);
 
             jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)), backupData.optionArchiveCheck);
             jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR)), backupData.optionArchiveCopy);
@@ -286,7 +285,7 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
             jsonWriteBool(jsonWriteKey(json, varStr(INFO_BACKUP_KEY_OPT_ONLINE_VAR)), backupData.optionOnline);
 
             infoSaveValue(
-                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel,
+                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT, strZ(backupData.backupLabel),
                 jsonWriteResult(jsonWriteObjectEnd(json)));
         }
     }

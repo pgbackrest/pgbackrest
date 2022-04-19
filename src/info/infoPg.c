@@ -23,19 +23,6 @@ PostgreSQL Info Handler
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
-Internal constants
-***********************************************************************************************************************************/
-STRING_STATIC(INFO_SECTION_DB_STR,                                          "db");
-STRING_STATIC(INFO_SECTION_DB_HISTORY_STR,                                  "db:history");
-
-STRING_STATIC(INFO_KEY_DB_ID_STR,                                           INFO_KEY_DB_ID);
-VARIANT_STRDEF_EXTERN(INFO_KEY_DB_ID_VAR,                                   INFO_KEY_DB_ID);
-VARIANT_STRDEF_STATIC(INFO_KEY_DB_CATALOG_VERSION_VAR,                      "db-catalog-version");
-VARIANT_STRDEF_STATIC(INFO_KEY_DB_CONTROL_VERSION_VAR,                      "db-control-version");
-VARIANT_STRDEF_STATIC(INFO_KEY_DB_SYSTEM_ID_VAR,                            "db-system-id");
-VARIANT_STRDEF_STATIC(INFO_KEY_DB_VERSION_VAR,                              "db-version");
-
-/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct InfoPg
@@ -93,6 +80,14 @@ infoPgNew(InfoPgType type, const String *cipherPassSub)
 }
 
 /**********************************************************************************************************************************/
+#define INFO_SECTION_DB                                                     "db"
+#define INFO_SECTION_DB_HISTORY                                             "db:history"
+
+#define INFO_KEY_DB_CATALOG_VERSION                                         "db-catalog-version"
+#define INFO_KEY_DB_CONTROL_VERSION                                         "db-control-version"
+#define INFO_KEY_DB_SYSTEM_ID                                               "db-system-id"
+#define INFO_KEY_DB_VERSION                                                 "db-version"
+
 typedef struct InfoPgLoadData
 {
     InfoLoadNewCallback *callbackFunction;                          // Callback function for child object
@@ -102,52 +97,54 @@ typedef struct InfoPgLoadData
 } InfoPgLoadData;
 
 static void
-infoPgLoadCallback(void *data, const String *section, const String *key, const Variant *value)
+infoPgLoadCallback(void *data, const String *section, const String *key, const Variant *valueXXX)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, value);
+        FUNCTION_TEST_PARAM(VARIANT, valueXXX);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
-    ASSERT(value != NULL);
+    ASSERT(valueXXX != NULL);
 
-    InfoPgLoadData *loadData = (InfoPgLoadData *)data;
+    InfoPgLoadData *const loadData = data;
+    const String *const value = jsonFromVar(valueXXX);
 
     // Process db section
-    if (strEq(section, INFO_SECTION_DB_STR))
+    if (strEqZ(section, INFO_SECTION_DB))
     {
-        if (strEq(key, INFO_KEY_DB_ID_STR))
-            loadData->currentId = varUIntForce(value);
+        if (strEqZ(key, INFO_KEY_DB_ID))
+            loadData->currentId = varUIntForce(jsonToVar(value));
     }
     // Process db:history section
-    else if (strEq(section, INFO_SECTION_DB_HISTORY_STR))
+    else if (strEqZ(section, INFO_SECTION_DB_HISTORY))
     {
-        // Get db values that are common to all info files
-        const KeyValue *pgDataKv = varKv(value);
+        InfoPgData infoPgData = {.id = cvtZToUInt(strZ(key))};
 
-        InfoPgData infoPgData =
-        {
-            .id = cvtZToUInt(strZ(key)),
-            .version = pgVersionFromStr(varStr(kvGet(pgDataKv, INFO_KEY_DB_VERSION_VAR))),
-            .catalogVersion =
-                loadData->infoPg->type == infoPgBackup ? varUIntForce(kvGet(pgDataKv, INFO_KEY_DB_CATALOG_VERSION_VAR)) : 0,
+        JsonRead *const json = jsonReadNew(value);
+        jsonReadObjectBegin(json);
 
-            // This is different in archive.info due to a typo that can't be fixed without a format version bump
-            .systemId = varUInt64Force(
-                kvGet(pgDataKv, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID_VAR : INFO_KEY_DB_SYSTEM_ID_VAR)),
-        };
+        // Catalog version
+        if (loadData->infoPg->type == infoPgBackup)
+            infoPgData.catalogVersion = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_CATALOG_VERSION));
+
+        // System id
+        infoPgData.systemId = jsonReadUInt64(
+                jsonReadKeyRequireZ(json, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID : INFO_KEY_DB_SYSTEM_ID));
+
+        // PostgreSQL version
+        infoPgData.version = pgVersionFromStr(jsonReadStr(jsonReadKeyRequireZ(json, INFO_KEY_DB_VERSION)));
 
         // Insert at beginning of list so the history is reverse ordered
         lstInsert(loadData->infoPg->pub.history, 0, &infoPgData);
     }
     // Callback if set
     else if (loadData->callbackFunction != NULL)
-        loadData->callbackFunction(loadData->callbackData, section, key, value);
+        loadData->callbackFunction(loadData->callbackData, section, key, valueXXX);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -287,36 +284,30 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
 
     InfoPgSaveData *saveData = (InfoPgSaveData *)data;
 
-    if (infoSaveSection(infoSaveData, INFO_SECTION_DB_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, INFO_SECTION_DB, sectionNext))
     {
         if (saveData->callbackFunction != NULL)
-            saveData->callbackFunction(saveData->callbackData, INFO_SECTION_DB_STR, infoSaveData);
+            saveData->callbackFunction(saveData->callbackData, STRDEF(INFO_SECTION_DB), infoSaveData);
 
         InfoPgData pgData = infoPgDataCurrent(saveData->infoPg);
 
         // These need to be saved because older pgBackRest versions expect them
         if (saveData->infoPg->type == infoPgBackup)
         {
+            infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_CATALOG_VERSION, jsonFromVar(VARUINT(pgData.catalogVersion)));
             infoSaveValue(
-                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR),
-                jsonFromVar(VARUINT(pgData.catalogVersion)));
-            infoSaveValue(
-                infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR),
-                jsonFromVar(VARUINT(pgControlVersion(pgData.version))));
+                infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_CONTROL_VERSION, jsonFromVar(VARUINT(pgControlVersion(pgData.version))));
         }
 
-        infoSaveValue(infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_ID_VAR), jsonFromVar(VARUINT(pgData.id)));
-        infoSaveValue(
-            infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_SYSTEM_ID_VAR), jsonFromVar(VARUINT64(pgData.systemId)));
-        infoSaveValue(
-            infoSaveData, INFO_SECTION_DB_STR, varStr(INFO_KEY_DB_VERSION_VAR),
-            jsonFromVar(VARSTR(pgVersionToStr(pgData.version))));
+        infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_ID, jsonFromVar(VARUINT(pgData.id)));
+        infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_SYSTEM_ID, jsonFromVar(VARUINT64(pgData.systemId)));
+        infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_VERSION, jsonFromVar(VARSTR(pgVersionToStr(pgData.version))));
     }
 
-    if (infoSaveSection(infoSaveData, INFO_SECTION_DB_HISTORY_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, INFO_SECTION_DB_HISTORY, sectionNext))
     {
         if (saveData->callbackFunction != NULL)
-            saveData->callbackFunction(saveData->callbackData, INFO_SECTION_DB_HISTORY_STR, infoSaveData);
+            saveData->callbackFunction(saveData->callbackData, STRDEF(INFO_SECTION_DB_HISTORY), infoSaveData);
 
         // Set the db history section in reverse so oldest history is first instead of last to be consistent with load
         for (unsigned int pgDataIdx = infoPgDataTotal(saveData->infoPg) - 1; (int)pgDataIdx >= 0; pgDataIdx--)
@@ -327,29 +318,29 @@ infoPgSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData
             // These need to be saved because older pgBackRest versions expect them
             if (saveData->infoPg->type == infoPgBackup)
             {
-                jsonWriteKey(json, varStr(INFO_KEY_DB_CATALOG_VERSION_VAR));
+                jsonWriteKeyZ(json, INFO_KEY_DB_CATALOG_VERSION);
                 jsonWriteUInt(json, pgData.catalogVersion);
-                jsonWriteKey(json, varStr(INFO_KEY_DB_CONTROL_VERSION_VAR));
+                jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION);
                 jsonWriteUInt(json, pgControlVersion(pgData.version));
             }
 
             if (saveData->infoPg->type == infoPgArchive)
             {
-                jsonWriteKey(json, varStr(INFO_KEY_DB_ID_VAR));
+                jsonWriteKeyZ(json, INFO_KEY_DB_ID);
                 jsonWriteUInt64(json, pgData.systemId);
             }
 
             if (saveData->infoPg->type == infoPgBackup)
             {
-                jsonWriteKey(json, varStr(INFO_KEY_DB_SYSTEM_ID_VAR));
+                jsonWriteKeyZ(json, INFO_KEY_DB_SYSTEM_ID);
                 jsonWriteUInt64(json, pgData.systemId);
             }
 
-            jsonWriteKey(json, varStr(INFO_KEY_DB_VERSION_VAR));
+            jsonWriteKeyZ(json, INFO_KEY_DB_VERSION);
             jsonWriteStr(json, pgVersionToStr(pgData.version));
 
             infoSaveValue(
-                infoSaveData, INFO_SECTION_DB_HISTORY_STR, varStrForce(VARUINT(pgData.id)),
+                infoSaveData, INFO_SECTION_DB_HISTORY, strZ(varStrForce(VARUINT(pgData.id))),
                 jsonWriteResult(jsonWriteObjectEnd(json)));
         }
     }
