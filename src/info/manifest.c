@@ -1866,68 +1866,61 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_TARGET_PATH_STR))
     {
+        ManifestPath path = {.name = key};
+        ManifestLoadFound valueFound = {0};
+
         JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.pathList))
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
         {
-            ManifestLoadFound valueFound = {0};
-            ManifestPath path = {.name = key};
-
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
-            {
-                valueFound.group = true;
-                path.group = manifestOwnerGet(jsonReadVar(json));
-            }
-
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_MODE)))
-            {
-                valueFound.mode = true;
-                path.mode = cvtZToMode(strZ(jsonReadStr(json)));
-            }
-
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
-            {
-                valueFound.user = true;
-                path.user = manifestOwnerGet(jsonReadVar(json));
-            }
-
-            lstAdd(loadData->pathFoundList, &valueFound);
-            manifestPathAdd(manifest, &path);
+            valueFound.group = true;
+            path.group = manifestOwnerGet(jsonReadVar(json));
         }
-        MEM_CONTEXT_END();
+
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_MODE)))
+        {
+            valueFound.mode = true;
+            path.mode = cvtZToMode(strZ(jsonReadStr(json)));
+        }
+
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
+        {
+            valueFound.user = true;
+            path.user = manifestOwnerGet(jsonReadVar(json));
+        }
+
+        lstAdd(loadData->pathFoundList, &valueFound);
+        manifestPathAdd(manifest, &path);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_TARGET_LINK_STR))
     {
+        ManifestLink link = {.name = key};
+        ManifestLoadFound valueFound = {0};
+
         JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.linkList))
+
+        jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_DESTINATION));
+        link.destination = jsonReadStr(json);
+
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
         {
-            ManifestLoadFound valueFound = {0};
-            ManifestLink link = {.name = key};
-
-            jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_DESTINATION));
-            link.destination = jsonReadStr(json);
-
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_GROUP)))
-            {
-                valueFound.group = true;
-                link.group = manifestOwnerGet(jsonReadVar(json));
-            }
-
-            if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
-            {
-                valueFound.user = true;
-                link.user = manifestOwnerGet(jsonReadVar(json));
-            }
-
-            lstAdd(loadData->linkFoundList, &valueFound);
-            manifestLinkAdd(manifest, &link);
+            valueFound.group = true;
+            link.group = manifestOwnerGet(jsonReadVar(json));
         }
-        MEM_CONTEXT_END();
+
+        if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_USER)))
+        {
+            valueFound.user = true;
+            link.user = manifestOwnerGet(jsonReadVar(json));
+        }
+
+        lstAdd(loadData->linkFoundList, &valueFound);
+        manifestLinkAdd(manifest, &link);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1989,7 +1982,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_PATH));
         target.path = jsonReadStr(json);
 
-        // !!!
+        // Tablespace oid
         if (jsonReadKeyExpect(json, STRDEF(MANIFEST_KEY_TABLESPACE_ID)))
         {
             target.tablespaceId = cvtZToUInt(strZ(jsonReadStr(json)));
@@ -1998,7 +1991,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             target.tablespaceName = jsonReadStr(json);
         }
 
-        // !!!
+        // Tablespace type
         jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_TYPE));
 
         const String *const targetType = jsonReadStr(json);
@@ -2012,20 +2005,20 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_DB_STR))
     {
-        KeyValue *dbKv = varKv(valueXXX);
+        ManifestDb db = {.name = key};
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.dbList))
-        {
-            ManifestDb db =
-            {
-                .name = strDup(key),
-                .id = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_ID_VAR)),
-                .lastSystemId = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR)),
-            };
+        JsonRead *const json = jsonReadNew(value);
+        jsonReadObjectBegin(json);
 
-            manifestDbAdd(manifest, &db);
-        }
-        MEM_CONTEXT_END();
+        // Database oid
+        jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_DB_ID));
+        db.id = jsonReadUInt(json);
+
+        // Last system oid
+        jsonReadKeyRequire(json, STRDEF(MANIFEST_KEY_DB_LAST_SYSTEM_ID));
+        db.lastSystemId = jsonReadUInt(json);
+
+        manifestDbAdd(manifest, &db);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
