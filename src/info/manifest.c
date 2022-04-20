@@ -1761,130 +1761,121 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     {
         KeyValue *fileKv = varKv(value);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.fileList))
+        ManifestFile file =
         {
-            ManifestFile file =
-            {
-                .name = key,
-                .reference = varStr(kvGetDefault(fileKv, MANIFEST_KEY_REFERENCE_VAR, NULL)),
-            };
+            .name = key,
+            .reference = varStr(kvGetDefault(fileKv, MANIFEST_KEY_REFERENCE_VAR, NULL)),
+        };
 
-            // Timestamp is required so error if it is not present
-            const Variant *timestamp = kvGet(fileKv, MANIFEST_KEY_TIMESTAMP_VAR);
+        // Timestamp is required so error if it is not present
+        const Variant *timestamp = kvGet(fileKv, MANIFEST_KEY_TIMESTAMP_VAR);
 
-            if (timestamp == NULL)
-                THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
+        if (timestamp == NULL)
+            THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
 
-            file.timestamp = (time_t)varUInt64(timestamp);
+        file.timestamp = (time_t)varUInt64(timestamp);
 
-            // Size is required so error if it is not present.  Older versions removed the size before the backup to ensure that the
-            // manifest was updated during the backup, so size can be missing in partial manifests.  This error will prevent older
-            // partials from being resumed.
-            const Variant *size = kvGet(fileKv, MANIFEST_KEY_SIZE_VAR);
+        // Size is required so error if it is not present.  Older versions removed the size before the backup to ensure that the
+        // manifest was updated during the backup, so size can be missing in partial manifests.  This error will prevent older
+        // partials from being resumed.
+        const Variant *size = kvGet(fileKv, MANIFEST_KEY_SIZE_VAR);
 
-            if (size == NULL)
-                THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
+        if (size == NULL)
+            THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
 
-            file.size = varUInt64(size);
+        file.size = varUInt64(size);
 
-            // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
-            // the repo-size is only stored in the manifest file if it is different than size.
-            file.sizeRepo = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
+        // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
+        // the repo-size is only stored in the manifest file if it is different than size.
+        file.sizeRepo = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
 
-            // If file size is zero then assign the static zero hash
-            if (file.size == 0)
-            {
-                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
-            }
-            // Else if the key exists then load it.  The key might not exist if this is a partial save that was done during the
-            // backup to preserve checksums for already backed up files.
-            else if (kvKeyExists(fileKv, MANIFEST_KEY_CHECKSUM_VAR))
-                memcpy(file.checksumSha1, strZ(varStr(kvGet(fileKv, MANIFEST_KEY_CHECKSUM_VAR))), HASH_TYPE_SHA1_SIZE_HEX + 1);
-
-            const Variant *checksumPage = kvGetDefault(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_VAR, NULL);
-
-            if (checksumPage != NULL)
-            {
-                file.checksumPage = true;
-                file.checksumPageError = !varBool(checksumPage);
-
-                const Variant *checksumPageErrorList = kvGetDefault(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
-
-                if (checksumPageErrorList != NULL)
-                    file.checksumPageErrorList = jsonFromVar(checksumPageErrorList);
-            }
-
-            // Bundle info
-            file.bundleId = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_BUNDLE_ID_VAR, VARUINT64(0)));
-
-            if (file.bundleId != 0)
-                file.bundleOffset = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_BUNDLE_OFFSET_VAR, VARUINT64(0)));
-
-            // Group
-            const Variant *value = kvGet(fileKv, MANIFEST_KEY_GROUP_VAR);
-
-            if (value != NULL)
-                file.group = manifestOwnerGet(value);
-            else
-                file.group = manifest->fileGroupDefault;
-
-            // Mode
-            value = kvGet(fileKv, MANIFEST_KEY_MODE_VAR);
-
-            if (value != NULL)
-                file.mode = cvtZToMode(strZ(varStr(value)));
-            else
-                file.mode = manifest->fileModeDefault;
-
-            // User
-            value = kvGet(fileKv, MANIFEST_KEY_USER_VAR);
-
-            if (value != NULL)
-                file.user = manifestOwnerGet(value);
-            else
-                file.user = manifest->fileUserDefault;
-
-            manifestFileAdd(manifest, &file);
+        // If file size is zero then assign the static zero hash
+        if (file.size == 0)
+        {
+            memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
         }
-        MEM_CONTEXT_END();
+        // Else if the key exists then load it.  The key might not exist if this is a partial save that was done during the
+        // backup to preserve checksums for already backed up files.
+        else if (kvKeyExists(fileKv, MANIFEST_KEY_CHECKSUM_VAR))
+            memcpy(file.checksumSha1, strZ(varStr(kvGet(fileKv, MANIFEST_KEY_CHECKSUM_VAR))), HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+        const Variant *checksumPage = kvGetDefault(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_VAR, NULL);
+
+        if (checksumPage != NULL)
+        {
+            file.checksumPage = true;
+            file.checksumPageError = !varBool(checksumPage);
+
+            const Variant *checksumPageErrorList = kvGetDefault(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
+
+            if (checksumPageErrorList != NULL)
+                file.checksumPageErrorList = jsonFromVar(checksumPageErrorList);
+        }
+
+        // Bundle info
+        file.bundleId = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_BUNDLE_ID_VAR, VARUINT64(0)));
+
+        if (file.bundleId != 0)
+            file.bundleOffset = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_BUNDLE_OFFSET_VAR, VARUINT64(0)));
+
+        // Group
+        const Variant *value = kvGet(fileKv, MANIFEST_KEY_GROUP_VAR);
+
+        if (value != NULL)
+            file.group = manifestOwnerGet(value);
+        else
+            file.group = manifest->fileGroupDefault;
+
+        // Mode
+        value = kvGet(fileKv, MANIFEST_KEY_MODE_VAR);
+
+        if (value != NULL)
+            file.mode = cvtZToMode(strZ(varStr(value)));
+        else
+            file.mode = manifest->fileModeDefault;
+
+        // User
+        value = kvGet(fileKv, MANIFEST_KEY_USER_VAR);
+
+        if (value != NULL)
+            file.user = manifestOwnerGet(value);
+        else
+            file.user = manifest->fileUserDefault;
+
+        manifestFileAdd(manifest, &file);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_TARGET_PATH_STR))
     {
         KeyValue *pathKv = varKv(value);
+        ManifestLoadFound valueFound = {0};
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.pathList))
+        ManifestPath path =
         {
-            ManifestLoadFound valueFound = {0};
+            .name = key,
+        };
 
-            ManifestPath path =
-            {
-                .name = key,
-            };
-
-            if (kvKeyExists(pathKv, MANIFEST_KEY_GROUP_VAR))
-            {
-                valueFound.group = true;
-                path.group = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_GROUP_VAR));
-            }
-
-            if (kvKeyExists(pathKv, MANIFEST_KEY_MODE_VAR))
-            {
-                valueFound.mode = true;
-                path.mode = cvtZToMode(strZ(varStr(kvGet(pathKv, MANIFEST_KEY_MODE_VAR))));
-            }
-
-            if (kvKeyExists(pathKv, MANIFEST_KEY_USER_VAR))
-            {
-                valueFound.user = true;
-                path.user = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_USER_VAR));
-            }
-
-            lstAdd(loadData->pathFoundList, &valueFound);
-            manifestPathAdd(manifest, &path);
+        if (kvKeyExists(pathKv, MANIFEST_KEY_GROUP_VAR))
+        {
+            valueFound.group = true;
+            path.group = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_GROUP_VAR));
         }
-        MEM_CONTEXT_END();
+
+        if (kvKeyExists(pathKv, MANIFEST_KEY_MODE_VAR))
+        {
+            valueFound.mode = true;
+            path.mode = cvtZToMode(strZ(varStr(kvGet(pathKv, MANIFEST_KEY_MODE_VAR))));
+        }
+
+        if (kvKeyExists(pathKv, MANIFEST_KEY_USER_VAR))
+        {
+            valueFound.user = true;
+            path.user = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_USER_VAR));
+        }
+
+        lstAdd(loadData->pathFoundList, &valueFound);
+        manifestPathAdd(manifest, &path);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1892,32 +1883,28 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     {
         KeyValue *linkKv = varKv(value);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.linkList))
+        ManifestLoadFound valueFound = {0};
+
+        ManifestLink link =
         {
-            ManifestLoadFound valueFound = {0};
+            .name = key,
+            .destination = varStr(kvGet(linkKv, MANIFEST_KEY_DESTINATION_VAR)),
+        };
 
-            ManifestLink link =
-            {
-                .name = key,
-                .destination = varStr(kvGet(linkKv, MANIFEST_KEY_DESTINATION_VAR)),
-            };
-
-            if (kvKeyExists(linkKv, MANIFEST_KEY_GROUP_VAR))
-            {
-                valueFound.group = true;
-                link.group = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_GROUP_VAR));
-            }
-
-            if (kvKeyExists(linkKv, MANIFEST_KEY_USER_VAR))
-            {
-                valueFound.user = true;
-                link.user = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_USER_VAR));
-            }
-
-            lstAdd(loadData->linkFoundList, &valueFound);
-            manifestLinkAdd(manifest, &link);
+        if (kvKeyExists(linkKv, MANIFEST_KEY_GROUP_VAR))
+        {
+            valueFound.group = true;
+            link.group = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_GROUP_VAR));
         }
-        MEM_CONTEXT_END();
+
+        if (kvKeyExists(linkKv, MANIFEST_KEY_USER_VAR))
+        {
+            valueFound.user = true;
+            link.user = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_USER_VAR));
+        }
+
+        lstAdd(loadData->linkFoundList, &valueFound);
+        manifestLinkAdd(manifest, &link);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1989,18 +1976,14 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     {
         KeyValue *dbKv = varKv(value);
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.dbList))
+        ManifestDb db =
         {
-            ManifestDb db =
-            {
-                .name = strDup(key),
-                .id = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_ID_VAR)),
-                .lastSystemId = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR)),
-            };
+            .name = strDup(key),
+            .id = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_ID_VAR)),
+            .lastSystemId = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR)),
+        };
 
-            manifestDbAdd(manifest, &db);
-        }
-        MEM_CONTEXT_END();
+        manifestDbAdd(manifest, &db);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
