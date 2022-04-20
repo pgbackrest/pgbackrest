@@ -831,18 +831,12 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
     // Skip all . paths because they have already been recorded on the previous level of recursion
     if (strEq(info->name, DOT_STR))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
     // are recreated.
     if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Get build data
     ManifestBuildData buildData = *(ManifestBuildData *)data;
@@ -859,7 +853,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             strZ(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
         FUNCTION_TEST_RETURN_VOID();
-        return;
     }
 
     // Process storage types
@@ -896,7 +889,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     strZ(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
                 FUNCTION_TEST_RETURN_VOID();
-                return;
             }
 
             // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
@@ -904,53 +896,32 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             {
                 // Skip pg_dynshmem/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_notify/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGNOTIFY))
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_replslot/* since these files are generally not useful after a restore
                 if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_serial/* since these files are reset
                 if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_snapshots/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
                 // created there
                 if (strEqZ(info->name, PG_PATH_PGSTATTMP))
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_subtrans/* since these files are reset
                 if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
             }
 
             // Skip the contents of archive_status when online
@@ -958,7 +929,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 strEqZ(info->name, PG_PATH_ARCHIVE_STATUS))
             {
                 FUNCTION_TEST_RETURN_VOID();
-                return;
             }
 
             // Recurse into the path
@@ -994,7 +964,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
             {
                 FUNCTION_TEST_RETURN_VOID();
-                return;
             }
 
             // Skip files in the root data path
@@ -1020,24 +989,17 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     strEqZ(info->name, PG_FILE_POSTMTRPID))
                 {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
                 }
             }
 
             // Skip the contents of the wal path when online. WAL will be restored from the archive or stored in the wal directory
             // at the end of the backup if the archive-copy option is set.
             if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName))
-            {
                 FUNCTION_TEST_RETURN_VOID();
-                return;
-            }
 
             // Skip temp relations in db paths
             if (buildData.dbPath && regExpMatch(buildData.tempRelationExp, info->name))
-            {
                 FUNCTION_TEST_RETURN_VOID();
-                return;
-            }
 
             // Add file to manifest
             ManifestFile file =

@@ -908,17 +908,11 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
     // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
     if (cleanData->basePath && info->type == storageTypeFile && strLstExists(cleanData->fileIgnore, info->name))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Skip all . paths because they have already been cleaned on the previous level of recursion
     if (strEq(info->name, DOT_STR))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
     if (!cleanData->delta)
