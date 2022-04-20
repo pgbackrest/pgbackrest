@@ -358,7 +358,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
     #define FUNCTION_TEST_RETURN(...)                                                                                              \
         return __VA_ARGS__
     #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
-        return;
+        return
 #endif // DEBUG_TEST_TRACE_MACRO
 
 #endif

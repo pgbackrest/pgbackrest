@@ -509,18 +509,12 @@ void backupResumeCallback(void *data, const StorageInfo *info)
 
     // Skip all . paths because they have already been handled on the previous level of recursion
     if (strEq(info->name, DOT_STR))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Skip backup.manifest.copy -- it must be preserved to allow resume again if this process throws an error before writing the
     // manifest for the first time
     if (resumeData->manifestParentName == NULL && strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Build the name used to lookup files in the manifest
     const String *manifestName = resumeData->manifestParentName != NULL ?

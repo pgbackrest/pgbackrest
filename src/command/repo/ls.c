@@ -41,10 +41,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
 
     // Skip . path if it is not first when json output
     if (info->type == storageTypePath && strEq(info->name, DOT_STR) && (!listData->first || !listData->json))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Add separator character
     if (!listData->first && listData->json)
