@@ -287,6 +287,9 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
 #endif // DEBUG_TEST_TRACE
 #endif // DEBUG
 
+// Annotate functions that do not return so it is clear why there is no FUNCTION_TEST_RETURN*() macro
+#define FUNCTION_TEST_NO_RETURN()
+
 #ifdef DEBUG_TEST_TRACE_MACRO
     #define FUNCTION_TEST_BEGIN()                                                                                                  \
         /* Ensure that FUNCTION_LOG_BEGIN() and FUNCTION_TEST_BEGIN() are not both used in a single function by declaring the */   \
@@ -342,6 +345,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
             (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
                                                                                                                                    \
             STACK_TRACE_POP(true);                                                                                                 \
+            return;                                                                                                                \
         }                                                                                                                          \
         while (0)
 #else
@@ -353,7 +357,8 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
     #define FUNCTION_TEST_VOID()
     #define FUNCTION_TEST_RETURN(...)                                                                                              \
         return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_VOID()
+    #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
+        return;
 #endif // DEBUG_TEST_TRACE_MACRO
 
 #endif
