@@ -172,6 +172,22 @@
 
                         <p>Lock module refactoring.</p>
                     </release-item>
+
+                    <release-item>
+                        <commit subject="Update postgres/client unit test for changes in libpq."/>
+                        <commit subject="Update postgres/client unit test to conform to current patterns."/>
+                        <commit subject="Use specific integer types in postgres/client and db unit tests."/>
+                        <commit subject="Refactor PgClient to return results in Pack format.">
+                            <github-pull-request id="1718"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Refactor <code>PgClient</code> to return results in <code>Pack</code> format.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

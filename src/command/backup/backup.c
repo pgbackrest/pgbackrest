@@ -814,8 +814,8 @@ typedef struct BackupStartResult
 {
     String *lsn;
     String *walSegmentName;
-    VariantList *dbList;
-    VariantList *tablespaceList;
+    Pack *dbList;
+    Pack *tablespaceList;
 } BackupStartResult;
 
 static BackupStartResult

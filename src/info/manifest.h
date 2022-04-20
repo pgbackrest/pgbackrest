@@ -33,7 +33,7 @@ typedef struct Manifest Manifest;
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/type/variantList.h"
+#include "common/type/variant.h"
 #include "common/type/object.h"
 #include "info/info.h"
 #include "info/infoBackup.h"
@@ -158,7 +158,7 @@ Constructors
 // Build a new manifest for a PostgreSQL data directory
 Manifest *manifestNewBuild(
     const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
-    const StringList *excludeList, const VariantList *tablespaceList);
+    const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);
@@ -213,7 +213,7 @@ void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, c
 // Set remaining values before the final save
 void manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
+    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
     bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
     unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
 
