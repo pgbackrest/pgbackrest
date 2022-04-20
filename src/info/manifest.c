@@ -1829,17 +1829,17 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
-        // !!!
+        // Link destination
         link.destination = jsonReadStr(jsonReadKeyRequireStrId(json, MANIFEST_KEY_DESTINATION));
 
-        // !!!
+        // Group
         if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
         {
             valueFound.group = true;
             link.group = manifestOwnerGet(jsonReadVar(json));
         }
 
-        // !!!
+        // User
         if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
         {
             valueFound.user = true;

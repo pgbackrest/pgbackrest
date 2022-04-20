@@ -287,7 +287,7 @@ testRun(void)
         TEST_ERROR(jsonReadKeyRequire(read, STRDEF("key1")), JsonFormatError, "required key 'key1' not found");
         TEST_RESULT_VOID(jsonReadKeyRequire(read, STRDEF("key2")), "key2");
         jsonReadConsumeWhiteSpace(read);
-        TEST_ERROR_FMT(jsonReadStr(read), JsonFormatError, "expected 3 but found 2 at: %s", read->json);
+        TEST_ERROR_FMT(jsonReadStr(read), JsonFormatError, "expected 'str' but found 'nmbr' at: %s", read->json);
         TEST_RESULT_INT(jsonReadInt(read), 777, "int");
         TEST_RESULT_BOOL(jsonReadKeyExpectZ(read, "key4"), true, "expect key4");
         TEST_RESULT_INT(jsonReadInt64(read), INT64_MAX, "int");
@@ -335,9 +335,9 @@ testRun(void)
         TEST_RESULT_VOID(jsonWriteStr(write, STRDEF("two\nlines")), "str with two lines");
 
         TEST_RESULT_VOID(jsonWriteObjectBegin(write), "object begin");
-        TEST_ERROR(jsonWriteBool(write, false), JsonFormatError, "key has not been defined");
+        TEST_ERROR(jsonWriteBool(write, false), JsonFormatError, "key has not been written");
         TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("flag")), "key 'flag'");
-        TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), JsonFormatError, "key has already been defined");
+        TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), JsonFormatError, "key has already been written");
         TEST_RESULT_VOID(jsonWriteBool(write, false), "bool false");
         TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), JsonFormatError, "key 'flag' is not after prior key 'flag'");
         TEST_RESULT_VOID(jsonWriteKeyStrId(write, STRID5("key5", 0xee4ab0)), "key 'key5'");

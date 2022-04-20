@@ -13,15 +13,15 @@ JSON types
 // !!! THESE SHOULD BE STRINGID?
 typedef enum
 {
-    jsonTypeBool,
-    jsonTypeNull,
-    jsonTypeNumber,
-    jsonTypeString,
+    jsonTypeBool = STRID5("bool", 0x63de20),                        // Boolean
+    jsonTypeNull = STRID5("null", 0x632ae0),                        // Null
+    jsonTypeNumber = STRID5("nmbr", 0x909ae0),                      // Number
+    jsonTypeString = STRID5("str", 0x4a930),                        // String
 
-    jsonTypeArrayBegin,                                             // !!!
-    jsonTypeArrayEnd,                                               // !!!
-    jsonTypeObjectBegin,
-    jsonTypeObjectEnd,
+    jsonTypeArrayBegin = STRID5("ary-b", 0x2de6410),                // Array begin
+    jsonTypeArrayEnd = STRID5("ary-e", 0x5de6410),                  // Array end
+    jsonTypeObjectBegin = STRID5("obj-b", 0x2da84f0),               // Object begin
+    jsonTypeObjectEnd = STRID5("obj-e", 0x5da84f0),                 // Object end
 } JsonType;
 
 /***********************************************************************************************************************************
@@ -38,7 +38,8 @@ JsonRead *jsonReadNew(const String *string);
 /***********************************************************************************************************************************
 Read Functions
 ***********************************************************************************************************************************/
-// Read next JSON type
+// Read next JSON type. This is based on an examination of the first character so there may be an error when the type is read, but
+// the type will not change.
 JsonType jsonReadTypeNext(JsonRead *this);
 
 // Read array begin/end
@@ -82,7 +83,7 @@ String *jsonReadStr(JsonRead *this);
 StringId jsonReadStrId(JsonRead *this);
 StringList *jsonReadStrLst(JsonRead *this);
 
-// !!!
+// Read variant
 Variant *jsonReadVar(JsonRead *this);
 
 /***********************************************************************************************************************************
@@ -106,11 +107,10 @@ jsonReadFree(JsonRead *const this)
 /***********************************************************************************************************************************
 Write Constructors
 ***********************************************************************************************************************************/
-// !!!
 typedef struct JsonWriteNewParam
 {
     VAR_PARAM_HEADER;
-    String *string;
+    String *json;
 } JsonWriteNewParam;
 
 #define jsonWriteNewP(...)                                                                                                          \
@@ -182,21 +182,6 @@ Write Helper Functions
 ***********************************************************************************************************************************/
 // Convert Variant to JSON
 String *jsonFromVar(const Variant *value);
-
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline bool
-jsonTypeContainer(const JsonType jsonType)
-{
-    return jsonType >= jsonTypeArrayBegin;
-}
-
-__attribute__((always_inline)) static inline bool
-jsonTypeScalar(const JsonType jsonType)
-{
-    return jsonType < jsonTypeArrayBegin;
-}
 
 /***********************************************************************************************************************************
 Macros for function logging

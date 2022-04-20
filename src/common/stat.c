@@ -117,7 +117,7 @@ statToJson(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP(.string = result));
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP(.json = result));
 
             for (unsigned int statIdx = 0; statIdx < lstSize(statLocalData.stat); statIdx++)
             {
