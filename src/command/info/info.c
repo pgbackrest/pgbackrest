@@ -130,7 +130,7 @@ typedef struct InfoStanzaRepo
     unsigned int currentPgVersion;                                  // Current postgres version for the stanza
     bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
     bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
-    double *percentComplete;                                        // Percentage of backup complete (when not NULL)
+    uint64_t *percentComplete;                                      // Percentage of backup complete (when not NULL)
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
@@ -233,7 +233,7 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *st
     KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
     kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(stanzaData->backupLockHeld));
     if (stanzaData->percentComplete != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
-        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, VARSTR(strNewDbl(*stanzaData->percentComplete)));
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, VARUINT64(*stanzaData->percentComplete));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1463,7 +1463,9 @@ infoRender(void)
                     bool backupLockHeld = varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR));
                     const String *percentCompleteStr = kvGet(
                         backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR) != NULL ?
-                        strNewFmt(" - %s%s", strZ(varStr(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR))),
+                        strNewFmt(
+                            " - %.2f%s",
+                            (double)varUInt64(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR)) / 100.0,
                             "% complete") : strNewZ("");
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)

@@ -1016,7 +1016,7 @@ testRun(void)
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
-                double percentComplete = 45.45;
+                uint64_t percentComplete = 4545;
                 TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
 
                 // Notify parent that lock has been acquired
@@ -1450,7 +1450,7 @@ testRun(void)
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
-                double percentComplete = 55.55;
+                uint64_t percentComplete = 5555;
                 TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
 
                 // Notify parent that lock has been acquired

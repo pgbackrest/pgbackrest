@@ -127,8 +127,8 @@ lockReadFileData(const String *const lockFile, const int fd)
 
                     if (percentCompleteStr != NULL)
                     {
-                        result.percentComplete = memNew(sizeof(double));
-                        *result.percentComplete = cvtZToDouble(strZ(percentCompleteStr));
+                        result.percentComplete = memNew(sizeof(uint64_t));
+                        *result.percentComplete = cvtZToUInt64(strZ(percentCompleteStr));
                     }
                 }
                 MEM_CONTEXT_PRIOR_END();
@@ -240,7 +240,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
-        FUNCTION_LOG_PARAM_P(DOUBLE, param.percentComplete);
+        FUNCTION_LOG_PARAM_P(UINT64, param.percentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -254,7 +254,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         kvPut(keyValue, EXEC_ID_VAR, varNewStr(lockLocal.execId));
 
         if (param.percentComplete != NULL)
-            kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(strNewFmt("%.2f", *param.percentComplete)));
+            kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(strNewFmt("%" PRIu64, *param.percentComplete)));
 
         if (lockType == lockTypeBackup && lockLocal.held != lockTypeNone)
         {

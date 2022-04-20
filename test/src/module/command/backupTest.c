@@ -1851,7 +1851,7 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        double currentPercentComplete = 0;
+        uint64_t currentPercentComplete = 0;
         TEST_ERROR(
             backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL, &currentPercentComplete),
             AssertError, "error message");
@@ -1965,7 +1965,7 @@ testRun(void)
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and " PG_FILE_POSTMTRPID " exists but --force was passed so backup will continue though"
                 " it looks like " PG_NAME " is running and the backup will probably not be consistent\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99.87%%) checksum %s\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99.86%%) checksum %s\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100.00%%) checksum"
                 " e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: new backup label = [FULL-1]\n"
