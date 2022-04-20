@@ -826,7 +826,7 @@ jsonReadNull(JsonRead *const this)
     if (strncmp(this->json, NULL_Z, sizeof(NULL_Z) - 1) == 0)
         this->json += sizeof(NULL_Z) - 1;
     else
-        THROW(JsonFormatError, "expected null");
+        THROW_FMT(JsonFormatError, "expected null at: %s", this->json);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -902,7 +902,8 @@ jsonReadSkipRecurse(JsonRead *const this)
             break;
         }
 
-        case jsonTypeObjectBegin:
+        // !!! MUST BE OBJECT BEGIN
+        default:
         {
             jsonReadObjectBegin(this);
 
@@ -916,9 +917,6 @@ jsonReadSkipRecurse(JsonRead *const this)
 
             break;
         }
-
-        default:
-            THROW_FMT(JsonFormatError, "invalid container end at: %s", this->json);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -1003,10 +1001,33 @@ jsonReadUInt(JsonRead *const this)
 
     JsonReadNumberResult number = jsonReadNumber(this);
 
-    if (number.type != jsonNumberTypeU64 || number.value.u64 > UINT_MAX)
-        THROW(JsonFormatError, "number is out of range for uint");
+    if (number.type == jsonNumberTypeI64)
+        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for uint", number.value.i64);
+
+    if (number.value.u64 > UINT_MAX)
+        THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for uint", number.value.u64);
 
     FUNCTION_TEST_RETURN((unsigned int)number.value.u64);
+}
+
+/**********************************************************************************************************************************/
+uint64_t
+jsonReadUInt64(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonReadPush(this, jsonTypeNumber, false);
+
+    JsonReadNumberResult number = jsonReadNumber(this);
+
+    if (number.type == jsonNumberTypeI64)
+        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for uint64", number.value.i64);
+
+    FUNCTION_TEST_RETURN(number.value.u64);
 }
 
 /**********************************************************************************************************************************/
@@ -1058,7 +1079,8 @@ jsonReadVarRecurse(JsonRead *const this)
             FUNCTION_TEST_RETURN(varNewVarLst(result));
         }
 
-        case jsonTypeObjectBegin:
+        // !!! MUST BE OBJECT BEGIN
+        default:
         {
             KeyValue *const result = kvNew();
 
@@ -1074,9 +1096,6 @@ jsonReadVarRecurse(JsonRead *const this)
 
             FUNCTION_TEST_RETURN(varNewKv(result));
         }
-
-        default:
-            THROW_FMT(JsonFormatError, "invalid container end at: %s", this->json);
     }
 }
 
@@ -1092,26 +1111,6 @@ jsonReadVar(JsonRead *const this)
     jsonReadConsumeWhiteSpace(this);
 
     FUNCTION_TEST_RETURN(result);
-}
-
-/**********************************************************************************************************************************/
-uint64_t
-jsonReadUInt64(JsonRead *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(JSON_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    jsonReadPush(this, jsonTypeNumber, false);
-
-    JsonReadNumberResult number = jsonReadNumber(this);
-
-    if (number.type != jsonNumberTypeU64)
-        THROW(JsonFormatError, "number is out of range for uint64");
-
-    FUNCTION_TEST_RETURN(number.value.u64);
 }
 
 /**********************************************************************************************************************************/
@@ -1154,6 +1153,7 @@ jsonValidate(const String *const json)
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             jsonReadSkip(read);
+            jsonReadConsumeWhiteSpace(read);
 
             if (*read->json != '\0')
                 THROW_FMT(JsonFormatError, "characters after JSON at: %s", read->json);
@@ -1245,7 +1245,7 @@ jsonWritePush(JsonWrite *const this, const JsonType jsonType, const String *cons
                 if (this->key)
                     THROW_FMT(JsonFormatError, "key has already been defined");
 
-                if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
+                if (item->keyLast != NULL && strCmp(key, item->keyLast) <= 0)
                     THROW_FMT(JsonFormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
 
                 MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
@@ -1411,12 +1411,13 @@ jsonWriteJson(JsonWrite *const this, const String *const value)
 
     ASSERT(this != NULL);
 
-    jsonWritePush(this, jsonTypeString, NULL);
-
     if (value == NULL)
-        strCat(this->string, NULL_STR);
+        jsonWriteNull(this);
     else
+    {
+        jsonWritePush(this, jsonTypeString, NULL);
         strCat(this->string, value);
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1574,6 +1575,23 @@ jsonWriteKeyZ(JsonWrite *const this, const char *const key)
 
 /**********************************************************************************************************************************/
 JsonWrite *
+jsonWriteNull(JsonWrite *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonWritePush(this, jsonTypeNull, NULL);
+
+    strCat(this->string, NULL_STR);
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+JsonWrite *
 jsonWriteObjectBegin(JsonWrite *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1614,12 +1632,13 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
 
     ASSERT(this != NULL);
 
-    jsonWritePush(this, jsonTypeString, NULL);
-
     if (value == NULL)
-        strCat(this->string, NULL_STR);
+        jsonWriteNull(this);
     else
+    {
+        jsonWritePush(this, jsonTypeString, NULL);
         jsonWriteStrInternal(this, value);
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1847,12 +1866,13 @@ jsonWriteZ(JsonWrite *const this, const char *const value)
 
     ASSERT(this != NULL);
 
-    jsonWritePush(this, jsonTypeString, NULL);
-
     if (value == NULL)
-        strCat(this->string, NULL_STR);
+        jsonWriteNull(this);
     else
+    {
+        jsonWritePush(this, jsonTypeString, NULL);
         jsonWriteStrInternal(this, STR(value));
+    }
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1865,13 +1885,10 @@ jsonWriteResult(JsonWrite *const this)
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
     FUNCTION_TEST_END();
 
-    if (this != NULL)
-    {
-        ASSERT(this->complete);
-        FUNCTION_TEST_RETURN(this->string);
-    }
+    ASSERT(this != NULL);
+    ASSERT(this->complete);
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(this->string);
 }
 
 /**********************************************************************************************************************************/

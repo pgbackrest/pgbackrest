@@ -144,9 +144,15 @@ JsonWrite *jsonWriteKey(JsonWrite *this, const String *key);
 JsonWrite *jsonWriteKeyStrId(JsonWrite *this, StringId key);
 JsonWrite *jsonWriteKeyZ(JsonWrite *this, const char *key);
 
+// Write null
+JsonWrite *jsonWriteNull(JsonWrite *this);
+
 // !!!
 JsonWrite *jsonWriteObjectBegin(JsonWrite *this);
 JsonWrite *jsonWriteObjectEnd(JsonWrite *this);
+
+// Skip the next value
+void jsonReadSkip(JsonRead *this);
 
 // !!!
 JsonWrite *jsonWriteStr(JsonWrite *this, const String *value);
@@ -166,6 +172,8 @@ JsonWrite *jsonWriteVar(JsonWrite *this, const Variant *value);
 
 // !!!
 JsonWrite *jsonWriteZ(JsonWrite *this, const char *value);
+
+// !!! READ/WRITE STRID?
 
 /***********************************************************************************************************************************
 Write Getters/Setters

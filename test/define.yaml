@@ -218,10 +218,7 @@ unit:
       - name: type-json
         total: 4
 
-        include:
-          - common/type/json
-
-        depend:
+        coverage:
           - common/type/json
 
       # ----------------------------------------------------------------------------------------------------------------------------
