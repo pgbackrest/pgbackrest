@@ -884,6 +884,68 @@ jsonReadObjectEnd(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
+// Quickly skip over a valid JSON string
+static void
+jsonReadSkipStr(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    // Skip the beginning "
+    ASSERT(*this->json == '"');
+    this->json++;
+
+    // Read string
+    while (*this->json != '"')
+    {
+        if (*this->json == '\\')
+        {
+            this->json++;
+
+            switch (*this->json)
+            {
+                // Unicode character
+                case 'u':
+                {
+                    this->json++;
+
+                    // Expect four digits
+                    unsigned int digitIdx = 0;
+
+                    for (; digitIdx < 4; digitIdx++)
+                    {
+                        if (!isdigit(this->json[digitIdx]))
+                            break;
+                    }
+
+                    if (digitIdx != 4)
+                        THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
+
+                    this->json += 4;
+
+                    break;
+                }
+
+                // Any other escape
+                default:
+                    break;
+            }
+        }
+        else if (*this->json == '\0')
+            THROW(JsonFormatError, "expected '\"' but found null delimiter");
+
+        this->json++;
+    };
+
+    // Advance the character array pointer to the next element after the string
+    this->json++;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static void
 jsonReadSkipRecurse(JsonRead *const this)
 {
@@ -908,7 +970,7 @@ jsonReadSkipRecurse(JsonRead *const this)
 
         case jsonTypeString:
             jsonReadPush(this, jsonTypeString, false);
-            jsonReadStrInternal(this);
+            jsonReadSkipStr(this);
             break;
 
         case jsonTypeArrayBegin:
@@ -929,7 +991,20 @@ jsonReadSkipRecurse(JsonRead *const this)
 
             while (jsonReadTypeNextIgnoreComma(this) != jsonTypeObjectEnd)
             {
-                jsonReadKey(this);
+                // !!! READ KEY INTERNAL SHOULD RETURN A POS AND LEN -- AND ERROR ON ESCAPE
+                // Read key
+                jsonReadPush(this, jsonTypeString, true);
+                jsonReadSkipStr(this);
+
+                // Consume the : after the key
+                jsonReadConsumeWhiteSpace(this);
+
+                if (*this->json != ':')
+                    THROW_FMT(JsonFormatError, "expected : after key at: %s", this->json);
+
+                this->json++;
+
+                // Skip value
                 jsonReadSkipRecurse(this);
             }
 
@@ -951,11 +1026,7 @@ jsonReadSkip(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        jsonReadSkipRecurse(this);
-    }
-    MEM_CONTEXT_TEMP_END();
+    jsonReadSkipRecurse(this);
 
     FUNCTION_TEST_RETURN_VOID();
 }

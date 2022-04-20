@@ -251,7 +251,7 @@ testRun(void)
             "\t\r\n "                                               // Leading whitespace
             "[\n"
             "    {"
-            "        \"key1\"\t: \"\\u0076alue1\","
+            "        \"key1\"\t: \"\\u0076\\na\\tlu e\\r1\","
             "        \"key2\"\t: 777,"
             "        \"key3\"\t: 777,"
             "        \"key4\"\t: 9223372036854775807"
@@ -282,7 +282,7 @@ testRun(void)
         TEST_RESULT_STR_Z(jsonReadKey(read), "key1", "key1");
         jsonReadConsumeWhiteSpace(read);
         TEST_ERROR_FMT(jsonReadKey(read), AssertError, "key has already been read at: %s", read->json);
-        TEST_RESULT_STR_Z(jsonReadStr(read), "value1", "str");
+        TEST_RESULT_STR_Z(jsonReadStr(read), "v\na\tlu e\r1", "str");
         TEST_ERROR_FMT(jsonReadStr(read), AssertError, "key has not been read at: %s", read->json);
         TEST_ERROR(jsonReadKeyRequire(read, STRDEF("key1")), JsonFormatError, "required key 'key1' not found");
         TEST_RESULT_VOID(jsonReadKeyRequire(read, STRDEF("key2")), "key2");
@@ -318,6 +318,9 @@ testRun(void)
         TEST_TITLE("validate");
 
         TEST_RESULT_VOID(jsonValidate(json), "valid");
+        TEST_ERROR(jsonValidate(STRDEF("\"\\u000")), JsonFormatError, "unable to decode at: \\u000");
+        TEST_ERROR(jsonValidate(STRDEF("\"")), JsonFormatError, "expected '\"' but found null delimiter");
+        TEST_ERROR(jsonValidate(STRDEF("{\"key\"x")), JsonFormatError, "expected : after key at: x");
         TEST_ERROR(jsonValidate(strNewFmt("%s]", strZ(json))), JsonFormatError, "characters after JSON at: ]");
     }
 
