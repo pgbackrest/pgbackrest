@@ -189,7 +189,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             info.backupTimestampStop = (time_t)jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP));
 
             // backup type
-            info.backupType = (BackupType)strIdFromStr(jsonReadStr(jsonReadKeyRequireStrId(json, INFO_BACKUP_KEY_BACKUP_TYPE)));
+            info.backupType = (BackupType)jsonReadStrId(jsonReadKeyRequireStrId(json, INFO_BACKUP_KEY_BACKUP_TYPE));
             ASSERT(info.backupType == backupTypeFull || info.backupType == backupTypeDiff || info.backupType == backupTypeIncr);
 
             // Database id
@@ -292,7 +292,7 @@ infoBackupSaveCallback(void *const data, const String *const sectionNext, InfoSa
             jsonWriteInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START), backupData.backupTimestampStart);
             jsonWriteInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP), backupData.backupTimestampStop);
 
-            jsonWriteStr(jsonWriteKeyStrId(json, INFO_BACKUP_KEY_BACKUP_TYPE), strIdToStr(backupData.backupType));
+            jsonWriteStrId(jsonWriteKeyStrId(json, INFO_BACKUP_KEY_BACKUP_TYPE), backupData.backupType);
             jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_ID), backupData.backupPgId);
 
             jsonWriteBool(jsonWriteKeyZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK), backupData.optionArchiveCheck);

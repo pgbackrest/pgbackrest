@@ -190,6 +190,9 @@ jsonReadTypeNext(JsonRead *const this)
     FUNCTION_TEST_RETURN(result);
 }
 
+/***********************************************************************************************************************************
+Read the next type ignoring a single comma before the type
+***********************************************************************************************************************************/
 static JsonType
 jsonReadTypeNextIgnoreComma(JsonRead *const this)
 {
@@ -201,7 +204,6 @@ jsonReadTypeNextIgnoreComma(JsonRead *const this)
 
     jsonReadConsumeWhiteSpace(this);
 
-    // !!!
     if (*this->json != ',')
         FUNCTION_TEST_RETURN(jsonReadTypeNext(this));
 
@@ -232,13 +234,19 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
     if (this->complete)
         THROW(FormatError, "JSON read is complete");
 
+    if (jsonReadTypeNextIgnoreComma(this) != type)
+        THROW_FMT(JsonFormatError, "expected %u but found %u at: %s", type, jsonReadTypeNextIgnoreComma(this), this->json);
+
     // !!!
     if (this->stack == NULL)
     {
         ASSERT(!key);
 
         if (jsonTypeScalar(type))
+        {
             this->complete = true;
+            FUNCTION_TEST_RETURN_VOID();
+        }
         else
         {
             MEM_CONTEXT_BEGIN(objMemContext(this))
@@ -249,61 +257,44 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
         }
     }
 
-    if (jsonReadTypeNextIgnoreComma(this) != type)
-        THROW_FMT(JsonFormatError, "expected %u but found %u at: %s", type, jsonReadTypeNextIgnoreComma(this), this->json);
+    ASSERT((jsonTypeContainer(type) && !key) || !lstEmpty(this->stack));
 
-    if (!this->complete)
+    if (!lstEmpty(this->stack))
     {
-        ASSERT((jsonTypeContainer(type) && !key) || !lstEmpty(this->stack));
+        JsonWriteStack *const item = lstGetLast(this->stack);
 
-        if (!lstEmpty(this->stack))
+        if (key)
         {
-            JsonWriteStack *const item = lstGetLast(this->stack);
+            if (this->key)
+                THROW_FMT(AssertError, "key has already been read at: %s", this->json);
 
-            if (key)
+            this->key = true;
+        }
+        else
+        {
+            if (item->type == jsonTypeObjectBegin)
             {
-                if (this->key)
-                    THROW_FMT(AssertError, "key has already been read at: %s", this->json);
+                if (!this->key)
+                    THROW_FMT(AssertError, "key has not been read at: %s", this->json);
 
-                // !!! HERE IS WHERE WE CAN MAKE SURE KEYS ARE IN THE PROPER ORDER
-                // if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
-                //     THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
-
-                // MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
-                // {
-                //     strFree(item->keyLast);
-                //     item->keyLast = strDup(key);
-                // }
-                // MEM_CONTEXT_END();
-
-                this->key = true;
+                this->key = false;
             }
-            else
-            {
-                if (item->type == jsonTypeObjectBegin)
-                {
-                    if (!this->key)
-                        THROW_FMT(AssertError, "key has not been read at: %s", this->json);
-
-                    this->key = false;
-                }
-            }
-
-            if (item->first && (item->type != jsonTypeObjectBegin || key))
-            {
-                if (*this->json != ',')
-                    THROW_FMT(JsonFormatError, "missing comma at: %s", this->json);
-
-                this->json++;
-                jsonReadConsumeWhiteSpace(this);
-            }
-            else
-                item->first = true;
         }
 
-        if (jsonTypeContainer(type))
-            lstAdd(this->stack, &(JsonReadStack){.type = type});
+        if (item->first && (item->type != jsonTypeObjectBegin || key))
+        {
+            if (*this->json != ',')
+                THROW_FMT(JsonFormatError, "missing comma at: %s", this->json);
+
+            this->json++;
+            jsonReadConsumeWhiteSpace(this);
+        }
+        else
+            item->first = true;
     }
+
+    if (jsonTypeContainer(type))
+        lstAdd(this->stack, &(JsonReadStack){.type = type});
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -824,11 +815,12 @@ jsonReadNull(JsonRead *const this)
     jsonReadPush(this, jsonTypeNull, false);
 
     if (strncmp(this->json, NULL_Z, sizeof(NULL_Z) - 1) == 0)
+    {
         this->json += sizeof(NULL_Z) - 1;
-    else
-        THROW_FMT(JsonFormatError, "expected null at: %s", this->json);
+        FUNCTION_TEST_RETURN_VOID();
+    }
 
-    FUNCTION_TEST_RETURN_VOID();
+    THROW_FMT(JsonFormatError, "expected null at: %s", this->json);
 }
 
 /**********************************************************************************************************************************/
@@ -959,6 +951,27 @@ jsonReadStr(JsonRead *const this)
     jsonReadPush(this, jsonTypeString, false);
 
     FUNCTION_TEST_RETURN(jsonReadStrInternal(this));
+}
+
+/**********************************************************************************************************************************/
+StringId
+jsonReadStrId(JsonRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_READ, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    StringId result = 0;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = strIdFromStr(jsonReadStr(this));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
@@ -1672,6 +1685,29 @@ jsonWriteStrFmt(JsonWrite *const this, const char *const format, ...)
         jsonWriteStrInternal(this, STR_SIZE(buffer, size));
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(this);
+}
+
+/**********************************************************************************************************************************/
+JsonWrite *
+jsonWriteStrId(JsonWrite *const this, const StringId value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(JSON_WRITE, this);
+        FUNCTION_TEST_PARAM(STRING_ID, value);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    jsonWritePush(this, jsonTypeString, NULL);
+
+    char buffer[STRID_MAX + 3];
+    buffer[0] = '"';
+    size_t size = strIdToZN(value, buffer + 1) + 1;
+    buffer[size++] = '"';
+
+    strCatZN(this->string, buffer, size);
 
     FUNCTION_TEST_RETURN(this);
 }

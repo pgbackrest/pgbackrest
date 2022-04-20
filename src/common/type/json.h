@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Convert JSON to/from KeyValue
+JSON read/write
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_JSON_H
 #define COMMON_TYPE_JSON_H
@@ -38,54 +38,49 @@ JsonRead *jsonReadNew(const String *string);
 /***********************************************************************************************************************************
 Read Functions
 ***********************************************************************************************************************************/
-// !!!
+// Read next JSON type
 JsonType jsonReadTypeNext(JsonRead *this);
 
-// !!!
+// Read array begin/end
 void jsonReadArrayBegin(JsonRead *this);
 void jsonReadArrayEnd(JsonRead *this);
 
-// !!!
+// Read boolean
 bool jsonReadBool(JsonRead *this);
 
-// !!!
+// Read integer
 int jsonReadInt(JsonRead *this);
-
-// !!!
 int64_t jsonReadInt64(JsonRead *this);
+unsigned int jsonReadUInt(JsonRead *this);
+uint64_t jsonReadUInt64(JsonRead *this);
 
-// !!!
+// Read key
 String *jsonReadKey(JsonRead *this);
 
+// Read an expected key
 bool jsonReadKeyExpect(JsonRead *this, const String *key);
 bool jsonReadKeyExpectStrId(JsonRead *this, StringId key);
 bool jsonReadKeyExpectZ(JsonRead *this, const char *key);
 
+// Read an required key
 JsonRead *jsonReadKeyRequire(JsonRead *this, const String *key);
 JsonRead *jsonReadKeyRequireStrId(JsonRead *this, StringId key);
 JsonRead *jsonReadKeyRequireZ(JsonRead *this, const char *key);
 
-// !!
+// Read null
 void jsonReadNull(JsonRead *this);
 
-// !!!
+// Read object begin/end
 void jsonReadObjectBegin(JsonRead *this);
 void jsonReadObjectEnd(JsonRead *this);
 
-// !!!
+// Skip a JSON value
 void jsonReadSkip(JsonRead *this);
 
-// !!!
+// Read string
 String *jsonReadStr(JsonRead *this);
-
-// !!!
+StringId jsonReadStrId(JsonRead *this);
 StringList *jsonReadStrLst(JsonRead *this);
-
-// !!!
-unsigned int jsonReadUInt(JsonRead *this);
-
-// !!!
-uint64_t jsonReadUInt64(JsonRead *this);
 
 // !!!
 Variant *jsonReadVar(JsonRead *this);
@@ -126,20 +121,23 @@ JsonWrite *jsonWriteNew(JsonWriteNewParam param);
 /***********************************************************************************************************************************
 Write Functions
 ***********************************************************************************************************************************/
-// !!!
+// Write array begin/end
 JsonWrite *jsonWriteArrayBegin(JsonWrite *this);
+JsonWrite *jsonWriteArrayEnd(JsonWrite *this);
 
-// !!!
+// Write boolean
 JsonWrite *jsonWriteBool(JsonWrite *this, bool value);
 
-// !!!
+// Write integer
 JsonWrite *jsonWriteInt(JsonWrite *this, int value);
 JsonWrite *jsonWriteInt64(JsonWrite *this, int64_t value);
+JsonWrite *jsonWriteUInt(JsonWrite *this, unsigned int value);
+JsonWrite *jsonWriteUInt64(JsonWrite *this, uint64_t value);
 
-// !!!
+// Write JSON
 JsonWrite *jsonWriteJson(JsonWrite *this, const String *value);
 
-// !!!
+// Write key
 JsonWrite *jsonWriteKey(JsonWrite *this, const String *key);
 JsonWrite *jsonWriteKeyStrId(JsonWrite *this, StringId key);
 JsonWrite *jsonWriteKeyZ(JsonWrite *this, const char *key);
@@ -147,38 +145,27 @@ JsonWrite *jsonWriteKeyZ(JsonWrite *this, const char *key);
 // Write null
 JsonWrite *jsonWriteNull(JsonWrite *this);
 
-// !!!
+// Write object begin/end
 JsonWrite *jsonWriteObjectBegin(JsonWrite *this);
 JsonWrite *jsonWriteObjectEnd(JsonWrite *this);
 
 // Skip the next value
 void jsonReadSkip(JsonRead *this);
 
-// !!!
+// Write string
 JsonWrite *jsonWriteStr(JsonWrite *this, const String *value);
-
-// !!!
 JsonWrite *jsonWriteStrFmt(JsonWrite *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
-
-// !!!
+JsonWrite *jsonWriteStrId(JsonWrite *this, StringId value);
 JsonWrite *jsonWriteStrLst(JsonWrite *this, const StringList *value);
-
-// !!!
-JsonWrite *jsonWriteUInt(JsonWrite *this, unsigned int value);
-JsonWrite *jsonWriteUInt64(JsonWrite *this, uint64_t value);
-
-// !!!
-JsonWrite *jsonWriteVar(JsonWrite *this, const Variant *value);
-
-// !!!
 JsonWrite *jsonWriteZ(JsonWrite *this, const char *value);
 
-// !!! READ/WRITE STRID?
+// Write variant
+JsonWrite *jsonWriteVar(JsonWrite *this, const Variant *value);
 
 /***********************************************************************************************************************************
 Write Getters/Setters
 ***********************************************************************************************************************************/
-// !!!
+// Get JSON result
 const String *jsonWriteResult(JsonWrite *this);
 
 /***********************************************************************************************************************************

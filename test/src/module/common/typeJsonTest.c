@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Test Convert JSON to/from KeyValue
+Test JSON read/write
 ***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
@@ -16,7 +16,6 @@ testRun(void)
         TEST_ERROR(jsonToVar(strNew()), JsonFormatError, "expected data");
         TEST_ERROR(jsonToVar(STRDEF(" \t\r\n ")), JsonFormatError, "expected data");
         TEST_ERROR(jsonToVar(STRDEF("z")), JsonFormatError, "invalid type at 'z'");
-        // TEST_ERROR(jsonToVar(STRDEF("3 =")), JsonFormatError, "unexpected characters after JSON at '='");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(varStr(jsonToVar(STRDEF(" \"test\""))), "test", "simple string");
@@ -24,17 +23,13 @@ testRun(void)
         TEST_RESULT_STR_Z(varStr(jsonToVar(STRDEF("\"\\\"\\\\\\/\\b\\n\\r\\t\\f\""))), "\"\\/\b\n\r\t\f", "string with escapes");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_ERROR(jsonToVar(STRDEF("ton")), JsonFormatError, "expected boolean at 'ton'");
         TEST_RESULT_BOOL(varBool(jsonToVar(STRDEF(" true"))), true, "boolean true");
         TEST_RESULT_BOOL(varBool(jsonToVar(STRDEF("false "))), false, "boolean false");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_ERROR(jsonToVar(STRDEF("not")), JsonFormatError, "expected null at 'not'");
         TEST_RESULT_PTR(jsonToVar(STRDEF("null")), NULL, "null value");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_ERROR(jsonToVar(STRDEF("[1, \"test\", false")), JsonFormatError, "expected ']' at ''");
-
         VariantList *valueList = NULL;
         TEST_ASSIGN(valueList, varVarLst(jsonToVar(STRDEF("[1, \"test\", false]"))), "array");
         TEST_RESULT_UINT(varLstSize(valueList), 3, "check array size");
@@ -262,6 +257,7 @@ testRun(void)
             "        \"key4\"\t: 9223372036854775807"
             "    },"
             "    \"abc\","
+            "    \"def\","
             "    null,"
             "    [\"a\", \"b\"],"
             "    123,"
@@ -301,6 +297,7 @@ testRun(void)
         TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
 
         TEST_RESULT_STR_Z(jsonReadStr(read), "abc", "str");
+        TEST_RESULT_STR_Z(strIdToStr(jsonReadStrId(read)), "def", "strid");
         TEST_RESULT_STR_Z(jsonReadStr(read), NULL, "str null");
         TEST_RESULT_STRLST_Z(jsonReadStrLst(read), "a\nb\n", "str list");
         TEST_RESULT_UINT(jsonReadUInt(read), 123, "uint");
@@ -360,6 +357,7 @@ testRun(void)
         TEST_RESULT_VOID(jsonWriteJson(write, STRDEF("{}")), "json");
         TEST_RESULT_VOID(jsonWriteZ(write, NULL), "null z");
         TEST_RESULT_VOID(jsonWriteZ(write, "a string"), "z");
+        TEST_RESULT_VOID(jsonWriteStrId(write, strIdFromZ("hilly")), "strid");
         TEST_RESULT_VOID(jsonWriteVar(write, varNewKv(NULL)), "null kv");
         TEST_RESULT_VOID(jsonWriteStr(write, NULL), "null str");
         TEST_RESULT_VOID(jsonWriteArrayEnd(write), "array end");
@@ -384,6 +382,7 @@ testRun(void)
                 "{},"
                 "null,"
                 "\"a string\","
+                "\"hilly\","
                 "null,"
                 "null"
             "]",
