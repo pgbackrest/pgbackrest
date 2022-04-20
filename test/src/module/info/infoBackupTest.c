@@ -120,7 +120,7 @@ testRun(void)
         contentLoad = harnessInfoChecksumZ(
             "[backup:current]\n"
             "20161219-212741F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
-            "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
+            "\"backup-archive-start\":\"00000007000000000000001C\",\"backup-archive-stop\":\"00000007000000000000001C\","
             "\"backup-error\":false,"
             "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159776,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1482182846,\"backup-timestamp-stop\":1482182861,"
@@ -165,8 +165,8 @@ testRun(void)
         TEST_RESULT_UINT(backupData.backupType, backupTypeFull, "backup type full");
         TEST_RESULT_INT(backupData.backrestFormat, 5, "backrest format");
         TEST_RESULT_STR_Z(backupData.backrestVersion, "2.04", "backrest version");
-        TEST_RESULT_STR_Z(backupData.backupArchiveStart, NULL, "archive start");
-        TEST_RESULT_STR_Z(backupData.backupArchiveStop, NULL, "archive stop");
+        TEST_RESULT_STR_Z(backupData.backupArchiveStart, "00000007000000000000001C", "archive start");
+        TEST_RESULT_STR_Z(backupData.backupArchiveStop, "00000007000000000000001C", "archive stop");
         TEST_RESULT_UINT(backupData.backupInfoRepoSize, 3159776, "repo size");
         TEST_RESULT_UINT(backupData.backupInfoRepoSizeDelta, 3159776, "repo delta");
         TEST_RESULT_UINT(backupData.backupInfoSize, 26897030, "backup size");
@@ -841,12 +841,11 @@ testRun(void)
         const Buffer *contentLoad = harnessInfoChecksumZ(
             "[backup:current]\n"
             "20200317-181416F={\"backrest-format\":5,\"backrest-version\":\"2.25dev\","
-            "\"backup-archive-start\":\"000000080000000000000020\",\"backup-archive-stop\":\"000000080000000000000020\","
             "\"backup-info-repo-size\":3687611,\"backup-info-repo-size-delta\":3687611,\"backup-info-size\":31230816,"
             "\"backup-info-size-delta\":31230816,\"backup-timestamp-start\":1584468856,\"backup-timestamp-stop\":1584468864,"
             "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
             "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
-            "\"option-online\":true}\n"
+            "\"option-online\":false}\n"
             "20200317-181625F={\"backrest-format\":5,\"backrest-version\":\"2.25dev\","
             "\"backup-archive-start\":\"000000010000000000000038\",\"backup-archive-stop\":\"000000010000000000000038\","
             "\"backup-info-repo-size\":3768898,\"backup-info-repo-size-delta\":3768898,\"backup-info-size\":31533937,"

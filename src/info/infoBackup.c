@@ -153,8 +153,11 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             info.backrestVersion = jsonReadStr(jsonReadKeyRequireZ(json, INFO_KEY_VERSION));
 
             // Archive start/stop
-            info.backupArchiveStart = jsonReadStr(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START));
-            info.backupArchiveStop = jsonReadStr(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP));
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START))
+                info.backupArchiveStart = jsonReadStr(json);
+
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP))
+                info.backupArchiveStop = jsonReadStr(json);
 
             // Report errors detected during the backup. The key may not exist in older versions.
             if (jsonReadKeyExpectStrId(json, INFO_BACKUP_KEY_BACKUP_ERROR))
