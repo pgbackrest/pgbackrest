@@ -249,6 +249,9 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
         }
     }
 
+    if (jsonReadTypeNextIgnoreComma(this) != type)
+        THROW_FMT(JsonFormatError, "expected %u but found %u at: %s", type, jsonReadTypeNextIgnoreComma(this), this->json);
+
     if (!this->complete)
     {
         ASSERT((jsonTypeContainer(type) && !key) || !lstEmpty(this->stack));
@@ -260,8 +263,9 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
             if (key)
             {
                 if (this->key)
-                    THROW_FMT(FormatError, "key has already been defined at: %s", this->json);
+                    THROW_FMT(AssertError, "key has already been read at: %s", this->json);
 
+                // !!! HERE IS WHERE WE CAN MAKE SURE KEYS ARE IN THE PROPER ORDER
                 // if (item->keyLast != NULL && strCmp(key, item->keyLast) == -1)
                 //     THROW_FMT(FormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
 
@@ -279,7 +283,7 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
                 if (item->type == jsonTypeObjectBegin)
                 {
                     if (!this->key)
-                        THROW_FMT(JsonFormatError, "key has not been defined at: %s", this->json);
+                        THROW_FMT(AssertError, "key has not been read at: %s", this->json);
 
                     this->key = false;
                 }
@@ -287,12 +291,11 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
 
             if (item->first && (item->type != jsonTypeObjectBegin || key))
             {
-                jsonReadConsumeWhiteSpace(this);
-
                 if (*this->json != ',')
-                    THROW_FMT(FormatError, "missing comma at: %s", this->json);
+                    THROW_FMT(JsonFormatError, "missing comma at: %s", this->json);
 
                 this->json++;
+                jsonReadConsumeWhiteSpace(this);
             }
             else
                 item->first = true;
@@ -301,9 +304,6 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
         if (jsonTypeContainer(type))
             lstAdd(this->stack, &(JsonReadStack){.type = type});
     }
-
-    if (jsonReadTypeNext(this) != type)
-        THROW_FMT(FormatError, "expected %u but found '%s'", type, this->json);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -331,7 +331,10 @@ jsonReadPop(JsonRead *const this, const JsonType type)
         (container->type == jsonTypeObjectBegin && type == jsonTypeObjectEnd));
 
     if (jsonReadTypeNext(this) != type)
-        THROW_FMT(FormatError, "expected %c but found %c", type == jsonTypeArrayEnd ? ']' : '}', *this->json);
+    {
+        THROW_FMT(
+            JsonFormatError, "expected %c but found %c at: %s", type == jsonTypeArrayEnd ? ']' : '}', *this->json, this->json);
+    }
 
     // ASSERT(container->type != jsonTypeObjectBegin || this->key == false);
 
@@ -390,11 +393,11 @@ jsonReadNumber(JsonRead *const this)
 
     // Invalid if no digits were found
     if (digits == 0)
-        THROW(JsonFormatError, "no digits found");
+        THROW_FMT(JsonFormatError, "no digits found at: %s", this->json);
 
     // Copy to buffer
     if (digits >= CVT_BASE10_BUFFER_SIZE)
-        THROW(JsonFormatError, "invalid number");
+        THROW_FMT(JsonFormatError, "invalid number at: %s", this->json);
 
     const size_t size = digits + intSigned;
 
@@ -489,7 +492,7 @@ jsonReadStrInternal(JsonRead *const this)
 
                         // We don't know how to decode anything except ASCII so fail if it looks like Unicode
                         if (strncmp(this->json, "00", 2) != 0)
-                            THROW_FMT(JsonFormatError, "unable to decode '%.4s'", this->json);
+                            THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
 
                         // Decode char
                         this->json += 2;
@@ -500,7 +503,7 @@ jsonReadStrInternal(JsonRead *const this)
                     }
 
                     default:
-                        THROW_FMT(JsonFormatError, "invalid escape character '%c'", *this->json);
+                        THROW_FMT(JsonFormatError, "invalid escape character at: %s", this->json - 1);
                 }
             }
             else
@@ -587,7 +590,7 @@ jsonReadBool(JsonRead *const this)
         FUNCTION_TEST_RETURN(false);
     }
 
-    THROW(JsonFormatError, "expected boolean");
+    THROW_FMT(JsonFormatError, "expected boolean at: %s", this->json);
 }
 
 /**********************************************************************************************************************************/
@@ -607,13 +610,13 @@ jsonReadInt(JsonRead *const this)
     if (number.type == jsonNumberTypeU64)
     {
         if (number.value.u64 > INT_MAX)
-            THROW(FormatError, "number is out of range for int");
+            THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for int", number.value.u64);
 
         FUNCTION_TEST_RETURN((int)number.value.u64);
     }
 
-    if (number.value.i64 > INT_MAX || number.value.i64 < INT_MIN)
-        THROW(FormatError, "number is out of range for int");
+    if (number.value.i64 < INT_MIN)
+        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for int", number.value.i64);
 
     FUNCTION_TEST_RETURN((int)number.value.i64);
 }
@@ -636,7 +639,7 @@ jsonReadInt64(JsonRead *const this)
         FUNCTION_TEST_RETURN(number.value.i64);
 
     if (number.value.u64 > INT64_MAX)
-        THROW(FormatError, "number is out of range for int64");
+        THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for int64", number.value.u64);
 
     FUNCTION_TEST_RETURN((int64_t)number.value.u64);
 }

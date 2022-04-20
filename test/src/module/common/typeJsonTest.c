@@ -154,9 +154,81 @@ testRun(void)
     if (testBegin("JsonRead"))
     {
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("scalar");
+        TEST_TITLE("error on missing comma");
 
         JsonRead *read = NULL;
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("\r[\ttrue true]")), "new read");
+
+        TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
+        TEST_RESULT_BOOL(jsonReadBool(read), true, "bool true");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR(jsonReadBool(read), JsonFormatError, "missing comma at: true]");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on missing comma");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ ] ")), "new read");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "objects begin");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR(jsonReadObjectEnd(read), JsonFormatError, "expected } but found ] at: ] ");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on no digits in number");
+
+        TEST_ERROR(jsonReadNumber(jsonReadNew(STRDEF("a"))), JsonFormatError, "no digits found at: a");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on number larger than available buffer");
+
+        TEST_ERROR(
+            jsonReadNumber(jsonReadNew(STRDEF("9999999999999999999999999999999999999999999999999999999999999999"))),
+            JsonFormatError, "invalid number at: 9999999999999999999999999999999999999999999999999999999999999999");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid ascii encoding");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u1111"))), JsonFormatError, "unable to decode at: \\u1111");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid escape");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\xy"))), JsonFormatError, "invalid escape character at: \\xy");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on unterminated string");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\""))), JsonFormatError, "expected '\"' but found null delimiter");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid bool");
+
+        TEST_ERROR(jsonReadBool(jsonReadNew(STRDEF("fase"))), JsonFormatError, "expected boolean at: fase");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid integers");
+
+        TEST_ERROR(
+            jsonReadInt(jsonReadNew(STRDEF("-9223372036854775807"))), JsonFormatError,
+            "-9223372036854775807 is out of range for int");
+        TEST_ERROR(
+            jsonReadInt(jsonReadNew(STRDEF("18446744073709551615"))), JsonFormatError,
+            "18446744073709551615 is out of range for int");
+        TEST_ERROR(
+            jsonReadInt64(jsonReadNew(STRDEF("18446744073709551615"))), JsonFormatError,
+            "18446744073709551615 is out of range for int64");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on missing : after key");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ \"key1\"xxx")), "new read");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "objects begin");
+        TEST_ERROR(jsonReadKey(read), JsonFormatError, "expected : after key 'key1' at: xxx");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("scalar");
 
         TEST_ASSIGN(read, jsonReadNew(STRDEF("\rtrue\t")), "new read");
 
@@ -170,10 +242,10 @@ testRun(void)
             "\t\r\n "                                               // Leading whitespace
             "[\n"
             "    {"
-            "        \"key1\"\t: \"value1\","
+            "        \"key1\"\t: \"\\u0076alue1\","
             "        \"key2\"\t: 777,"
             "        \"key3\"\t: 777,"
-            "        \"key4\"\t: 888"
+            "        \"key4\"\t: 9223372036854775807"
             "    },"
             "    \"abc\","
             "    123,"
@@ -188,16 +260,26 @@ testRun(void)
         TEST_ASSIGN(read, jsonReadNew(json), "new read");
 
         TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
-        TEST_ERROR(jsonReadArrayEnd(read), FormatError, "expected ] but found {");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR_FMT(jsonReadArrayEnd(read), JsonFormatError, "expected ] but found { at: %s", read->json);
 
         TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        TEST_RESULT_BOOL(jsonReadKeyExpect(read, STRDEF("key0")), false, "expect key0");
         TEST_RESULT_STR_Z(jsonReadKey(read), "key1", "key1");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR_FMT(jsonReadKey(read), AssertError, "key has already been read at: %s", read->json);
         TEST_RESULT_STR_Z(jsonReadStr(read), "value1", "str");
-        TEST_RESULT_STR_Z(jsonReadKey(read), "key2", "key2");
+        TEST_ERROR_FMT(jsonReadStr(read), AssertError, "key has not been read at: %s", read->json);
+        TEST_ERROR(jsonReadKeyRequire(read, STRDEF("key1")), JsonFormatError, "required key 'key1' not found");
+        TEST_RESULT_VOID(jsonReadKeyRequire(read, STRDEF("key2")), "key2");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR_FMT(jsonReadStr(read), JsonFormatError, "expected 3 but found 2 at: %s", read->json);
         TEST_RESULT_INT(jsonReadInt(read), 777, "int");
-        TEST_RESULT_BOOL(jsonReadKeyExpect(read, STRDEF("key4")), true, "expect key4");
-        TEST_RESULT_INT(jsonReadInt(read), 888, "int");
-        TEST_RESULT_BOOL(jsonReadKeyExpect(read, STRDEF("key5")), false, "do not expect key5");
+        TEST_RESULT_BOOL(jsonReadKeyExpectZ(read, "key4"), true, "expect key4");
+        TEST_RESULT_INT(jsonReadInt64(read), INT64_MAX, "int");
+        TEST_RESULT_BOOL(jsonReadKeyExpectStrId(read, STRID5("key5", 0xee4ab0)), false, "do not expect key5");
+        TEST_ERROR(jsonReadKeyRequireStrId(read, STRID5("key5", 0xee4ab0)), JsonFormatError, "required key 'key5' not found");
+        TEST_ERROR(jsonReadKeyRequireZ(read, "key5"), JsonFormatError, "required key 'key5' not found");
         TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
 
         TEST_RESULT_STR_Z(jsonReadStr(read), "abc", "str");
@@ -217,35 +299,35 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("JsonWrite"))
     {
-        // JsonWrite *write = NULL;
+        JsonWrite *write = NULL;
 
-        // TEST_ASSIGN(write, jsonWriteNewP(), "new write");
+        TEST_ASSIGN(write, jsonWriteNewP(), "new write");
 
-        // TEST_RESULT_VOID(jsonWriteArrayBegin(write), "write array begin");
-        // TEST_RESULT_VOID(jsonWriteBool(write, true), "write bool true");
-        // TEST_RESULT_VOID(jsonWriteInt(write, 55), "write int 55");
-        // TEST_RESULT_VOID(jsonWriteStr(write, STRDEF("two\nlines")), "write str with two lines");
+        TEST_RESULT_VOID(jsonWriteArrayBegin(write), "write array begin");
+        TEST_RESULT_VOID(jsonWriteBool(write, true), "write bool true");
+        TEST_RESULT_VOID(jsonWriteInt(write, 55), "write int 55");
+        TEST_RESULT_VOID(jsonWriteStr(write, STRDEF("two\nlines")), "write str with two lines");
 
-        // TEST_RESULT_VOID(jsonWriteObjectBegin(write), "write object begin");
-        // TEST_ERROR(jsonWriteBool(write, false), FormatError, "key has not been defined");
-        // TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("flag")), "write key 'flag'");
-        // TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), FormatError, "key has already been defined");
-        // TEST_RESULT_VOID(jsonWriteBool(write, false), "write bool false");
-        // TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("val")), "write key 'val'");
-        // TEST_RESULT_VOID(jsonWriteUInt64(write, UINT64_MAX), "write uint64 max");
+        TEST_RESULT_VOID(jsonWriteObjectBegin(write), "write object begin");
+        TEST_ERROR(jsonWriteBool(write, false), JsonFormatError, "key has not been defined");
+        TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("flag")), "write key 'flag'");
+        TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), JsonFormatError, "key has already been defined");
+        TEST_RESULT_VOID(jsonWriteBool(write, false), "write bool false");
+        TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("val")), "write key 'val'");
+        TEST_RESULT_VOID(jsonWriteUInt64(write, UINT64_MAX), "write uint64 max");
         // TEST_ERROR(jsonWriteKey(write, STRDEF("a")), FormatError, "key 'a' is not after prior key 'val'");
-        // TEST_RESULT_VOID(jsonWriteObjectEnd(write), "write object end");
+        TEST_RESULT_VOID(jsonWriteObjectEnd(write), "write object end");
 
-        // TEST_RESULT_VOID(jsonWriteUInt(write, 66), "write int 66");
-        // TEST_RESULT_VOID(jsonWriteArrayEnd(write), "write array end");
+        TEST_RESULT_VOID(jsonWriteUInt(write, 66), "write int 66");
+        TEST_RESULT_VOID(jsonWriteArrayEnd(write), "write array end");
 
-        // TEST_ERROR(jsonWriteUInt(write, 66), FormatError, "JSON is complete and nothing more may be added");
+        TEST_ERROR(jsonWriteUInt(write, 66), JsonFormatError, "JSON write is complete");
 
-        // TEST_RESULT_STR_Z(
-        //     jsonWriteResult(write), "[true,55,\"two\\nlines\",{\"flag\":false,\"val\":18446744073709551615},66]",
-        //     "json result");
+        TEST_RESULT_STR_Z(
+            jsonWriteResult(write), "[true,55,\"two\\nlines\",{\"flag\":false,\"val\":18446744073709551615},66]",
+            "json result");
 
-        // TEST_RESULT_VOID(jsonWriteFree(write), "free");
+        TEST_RESULT_VOID(jsonWriteFree(write), "free");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
