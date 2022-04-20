@@ -1097,7 +1097,6 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
     strCatZ(config, "};\n");
 
-
     // Rule Strings
     // -----------------------------------------------------------------------------------------------------------------------------
     String *const configVal = strNew();

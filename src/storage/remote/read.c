@@ -11,7 +11,6 @@ Remote Storage Read
 #include "common/io/read.h"
 #include "common/log.h"
 #include "common/type/convert.h"
-#include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
@@ -75,7 +74,12 @@ storageReadRemoteOpen(THIS_VOID)
         pckWriteStrP(param, this->interface.name);
         pckWriteBoolP(param, this->interface.ignoreMissing);
         pckWriteU64P(param, this->interface.offset);
-        pckWriteStrP(param, jsonFromVar(this->interface.limit));
+
+        if (this->interface.limit == NULL)
+            pckWriteNullP(param);
+        else
+            pckWriteU64P(param, varUInt64(this->interface.limit));
+
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         protocolClientCommandPut(this->client, command, false);
