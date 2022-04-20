@@ -282,25 +282,35 @@ testRun(void)
             .timeModified = 1565282115);
 
         // Add tablespaceList with error (no name)
-        VariantList *tablespaceList = varLstNew();
-        VariantList *tablespace = varLstNew();
-        varLstAdd(tablespace, varNewUInt(2)); // tablespaceId - does not exist so will bypass
-        varLstAdd(tablespace, varNewStrZ("tblspc2"));  // tablespaceName
-        varLstAdd(tablespaceList, varNewVarLst(tablespace));
+        PackWrite *tablespaceList = pckWriteNewP();
+
+        pckWriteArrayBeginP(tablespaceList);
+        pckWriteU32P(tablespaceList, 2);
+        pckWriteStrP(tablespaceList, STRDEF("tblspc2"));
+        pckWriteArrayEndP(tablespaceList);
+        pckWriteEndP(tablespaceList);
 
         // Test tablespace error
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, false, exclusionList, tablespaceList),
+                storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, false, exclusionList,
+                pckWriteResult(tablespaceList)),
             AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
             "HINT: was a tablespace created or dropped during the backup?");
 
         // Add a tablespace to tablespaceList that does exist
-        tablespace = varLstNew();
-        varLstAdd(tablespace, varNewUInt(1)); // tablespaceId - exists so will show up in manifest with tablespaceName
-        varLstAdd(tablespace, varNewStrZ("tblspc1"));  // tablespaceName
-        varLstAdd(tablespaceList, varNewVarLst(tablespace));
+        tablespaceList = pckWriteNewP();
+
+        pckWriteArrayBeginP(tablespaceList);
+        pckWriteU32P(tablespaceList, 2);
+        pckWriteStrP(tablespaceList, STRDEF("tblspc2"));
+        pckWriteArrayEndP(tablespaceList);
+        pckWriteArrayBeginP(tablespaceList);
+        pckWriteU32P(tablespaceList, 1);
+        pckWriteStrP(tablespaceList, STRDEF("tblspc1"));
+        pckWriteArrayEndP(tablespaceList);
+        pckWriteEndP(tablespaceList);
 
         // Test manifest - temp tables and pg_notify files ignored
         Manifest *manifest = NULL;
@@ -308,7 +318,8 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, false, NULL, tablespaceList),
+                storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, false, NULL,
+                pckWriteResult(tablespaceList)),
             "build manifest");
 
         Buffer *contentSave = bufNew(0);
@@ -1615,30 +1626,32 @@ testRun(void)
             "manifest complete without db");
 
         // Create db list
-        VariantList *dbList = varLstNew();
+        PackWrite *dbList = pckWriteNewP();
 
-        VariantList *dbRow = varLstNew();
-        varLstAdd(dbRow, varNewUInt64(12168));
-        varLstAdd(dbRow, varNewStrZ("template0"));
-        varLstAdd(dbRow, varNewUInt64(12168));
-        varLstAdd(dbList, varNewVarLst(dbRow));
+        pckWriteArrayBeginP(dbList);
+        pckWriteU32P(dbList, 12168);
+        pckWriteStrP(dbList, STRDEF("template0"));
+        pckWriteU32P(dbList, 12168);
+        pckWriteArrayEndP(dbList);
 
-        dbRow = varLstNew();
-        varLstAdd(dbRow, varNewUInt64(1));
-        varLstAdd(dbRow, varNewStrZ("template1"));
-        varLstAdd(dbRow, varNewUInt64(12168));
-        varLstAdd(dbList, varNewVarLst(dbRow));
+        pckWriteArrayBeginP(dbList);
+        pckWriteU32P(dbList, 1);
+        pckWriteStrP(dbList, STRDEF("template1"));
+        pckWriteU32P(dbList, 12168);
+        pckWriteArrayEndP(dbList);
 
-        dbRow = varLstNew();
-        varLstAdd(dbRow, varNewUInt64(18000));
-        varLstAdd(dbRow, varNewStrZ(SHRUG_EMOJI));
-        varLstAdd(dbRow, varNewUInt64(12168));
-        varLstAdd(dbList, varNewVarLst(dbRow));
+        pckWriteArrayBeginP(dbList);
+        pckWriteU32P(dbList, 18000);
+        pckWriteStrP(dbList, STRDEF(SHRUG_EMOJI));
+        pckWriteU32P(dbList, 12168);
+        pckWriteArrayEndP(dbList);
+
+        pckWriteEndP(dbList);
 
         TEST_RESULT_VOID(
             manifestBuildComplete(
                 manifest, 1565282140, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142,
-                STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, dbList,
+                STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, pckWriteResult(dbList),
                 true, true, 16384, 3, 6, true, 32, false),
             "manifest complete with db");
 
