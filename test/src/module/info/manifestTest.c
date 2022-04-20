@@ -1864,11 +1864,11 @@ testRun(void)
         TEST_TITLE("load validation errors");
 
         TEST_ERROR(
-            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"timestamp\":0}"))), FormatError,
-            "missing size for file 'pg_data/bogus'");
-        TEST_ERROR(
             manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"size\":0}"))), FormatError,
             "missing timestamp for file 'pg_data/bogus'");
+        TEST_ERROR(
+            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"timestamp\":0}"))), FormatError,
+            "missing size for file 'pg_data/bogus'");
     }
 
     // *****************************************************************************************************************************
