@@ -70,6 +70,8 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    lockLocal.execId = STRDEF("1-test");
+
     StringList *argListBase = strLstNew();
     hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");
     hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH "/repo");
@@ -818,7 +820,31 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdBackup, argList2);
 
+        // Obtain a backup lock file and write a percentage complete into it
+        TEST_RESULT_BOOL(
+            lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockLocal.execId, lockTypeBackup, 0, true), true,
+            "backup lock");
+        uint64_t percentComplete = 10000;
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
+
+        // Verify data written to lock file
+        LockReadResult lockReadResult = {0};
+        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        TEST_ASSIGN(lockReadResult, lockRead(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup),
+            "lock read");
+        TEST_RESULT_BOOL(lockReadResult.data.processId != 0, true, "check processId not 0");
+        TEST_RESULT_STR_Z(lockReadResult.data.execId, "1-test", "check execId");
+        TEST_RESULT_UINT(*lockReadResult.data.percentComplete, 10000, "verify percentComplete");
+
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
+
+        // Verify lock file is valid, sans percent complete - removal occurs at the start of the expire command
+        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        TEST_ASSIGN(lockReadResult, lockRead(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup),
+            "lock read");
+        TEST_RESULT_BOOL(lockReadResult.data.processId != 0, true, "check processId");
+        TEST_RESULT_STR_Z(lockReadResult.data.execId, "1-test", "check execId");
+        TEST_RESULT_PTR(lockReadResult.data.percentComplete, NULL, "verify percentComplete is NULL");
 
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), false,
@@ -845,6 +871,7 @@ testRun(void)
             "P00   INFO: repo2: 9.4-1 remove archive, start = 0000000100000000, stop = 0000000100000000\n"
             "P00   INFO: repo2: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: repo2: 10-2 no archive to remove");
+        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - no dry run");
