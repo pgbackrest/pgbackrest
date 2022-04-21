@@ -40,7 +40,7 @@ testRun(void)
 
         TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ ] ")), "new read");
 
-        TEST_RESULT_VOID(jsonReadObjectBegin(read), "objects begin");
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
         jsonReadConsumeWhiteSpace(read);
         TEST_ERROR(jsonReadObjectEnd(read), JsonFormatError, "expected } but found ] at: ] ");
 
@@ -104,11 +104,29 @@ testRun(void)
         TEST_ERROR(jsonReadNull(jsonReadNew(STRDEF("nil"))), JsonFormatError, "expected null at: nil");
 
         //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on escape characters in key");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("{\"\\\"")), "new read");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR(jsonReadKey(read), JsonFormatError, "escape character not allowed in key at: \\\"");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on unterminated key");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("{\"")), "new read");
+
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
+        jsonReadConsumeWhiteSpace(read);
+        TEST_ERROR(jsonReadKey(read), JsonFormatError, "expected '\"' but found null delimiter");
+
+        //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing : after key");
 
         TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ \"key1\"xxx")), "new read");
 
-        TEST_RESULT_VOID(jsonReadObjectBegin(read), "objects begin");
+        TEST_RESULT_VOID(jsonReadObjectBegin(read), "object begin");
         TEST_ERROR(jsonReadKey(read), JsonFormatError, "expected : after key 'key1' at: xxx");
 
         //--------------------------------------------------------------------------------------------------------------------------

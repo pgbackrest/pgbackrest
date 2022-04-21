@@ -659,8 +659,13 @@ jsonReadInt64(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
-// !!! READ KEY INTERNAL SHOULD RETURN A POS AND LEN -- AND ERROR ON ESCAPE
-static String *
+typedef struct JsonReadKeyInternalResult
+{
+    const char *buffer;
+    size_t size;
+} JsonReadKeyInternalResult;
+
+static JsonReadKeyInternalResult
 jsonReadKeyInternal(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -669,13 +674,34 @@ jsonReadKeyInternal(JsonRead *const this)
 
     ASSERT(this != NULL);
 
-    String *const result = jsonReadStrInternal(this);
+    // Skip the beginning "
+    ASSERT(*this->json == '"');
+    this->json++;
+
+    // Read string
+    JsonReadKeyInternalResult result = {.buffer = this->json};
+
+    while (*this->json != '"')
+    {
+        if (*this->json == '\\')
+            THROW_FMT(JsonFormatError, "escape character not allowed in key at: %s", this->json);
+        else if (*this->json == '\0')
+            THROW(JsonFormatError, "expected '\"' but found null delimiter");
+
+        this->json++;
+    };
+
+    // Set key size
+    result.size = (size_t)(this->json - result.buffer);
+
+    // Advance the character array pointer to the next element after the string
+    this->json++;
 
     // Consume the : after the key
     jsonReadConsumeWhiteSpace(this);
 
     if (*this->json != ':')
-        THROW_FMT(JsonFormatError, "expected : after key '%s' at: %s", strZ(result), this->json);
+        THROW_FMT(JsonFormatError, "expected : after key '%.*s' at: %s", (int)result.size, result.buffer, this->json);
 
     this->json++;
 
@@ -692,8 +718,9 @@ jsonReadKey(JsonRead *const this)
     ASSERT(this != NULL);
 
     jsonReadPush(this, jsonTypeString, true);
+    JsonReadKeyInternalResult key = jsonReadKeyInternal(this);
 
-    FUNCTION_TEST_RETURN(jsonReadKeyInternal(this));
+    FUNCTION_TEST_RETURN(strNewZN(key.buffer, key.size));
 }
 
 /**********************************************************************************************************************************/
@@ -728,8 +755,8 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
             jsonReadPush(this, jsonTypeString, true);
 
             // Get and compare next key
-            const String *const keyNext = jsonReadKeyInternal(this);
-            const int compare = strCmp(key, keyNext);
+            const JsonReadKeyInternalResult keyNext = jsonReadKeyInternal(this);
+            const int compare = strncmp(strZ(key), keyNext.buffer, keyNext.size);
 
             // Return true if key matches
             if (compare == 0)
