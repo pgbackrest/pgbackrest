@@ -1566,7 +1566,6 @@ jsonWriteStrInternal(JsonWrite *const this, const String *const value)
         {
             case '"':
             case '\\':
-            case '/':
             case '\n':
             case '\r':
             case '\t':
@@ -1588,10 +1587,6 @@ jsonWriteStrInternal(JsonWrite *const this, const String *const value)
 
                     case '\\':
                         strCatZ(this->json, "\\\\");
-                        break;
-
-                    case '/':
-                        strCatZ(this->json, "\\/");
                         break;
 
                     case '\n':

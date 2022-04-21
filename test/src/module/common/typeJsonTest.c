@@ -236,7 +236,7 @@ testRun(void)
 
         StringList *list = strLstNew();
         strLstAddZ(list, "a");
-        strLstAddZ(list, "\n\"a\\\r\t\b\fbc");
+        strLstAddZ(list, "\n\"a\\\r\t\bbc");
 
         TEST_RESULT_VOID(jsonWriteStrLst(write, list), "write str list");
 
@@ -244,7 +244,7 @@ testRun(void)
         TEST_RESULT_VOID(jsonWriteJson(write, NULL), "null json");
         TEST_RESULT_VOID(jsonWriteJson(write, STRDEF("{}")), "json");
         TEST_RESULT_VOID(jsonWriteZ(write, NULL), "null z");
-        TEST_RESULT_VOID(jsonWriteZ(write, "a string/"), "z");
+        TEST_RESULT_VOID(jsonWriteZ(write, "a string\f"), "z");
         TEST_RESULT_VOID(jsonWriteStrId(write, strIdFromZ("hilly")), "strid");
         TEST_RESULT_VOID(jsonWriteVar(write, varNewKv(NULL)), "null kv");
         TEST_RESULT_VOID(jsonWriteStr(write, NULL), "null str");
@@ -264,12 +264,12 @@ testRun(void)
                     "\"key5\":\"898\","
                     "\"val\":18446744073709551615"
                 "},"
-                "[\"a\",\"\\n\\\"a\\\\\\r\\t\\b\\fbc\"],"
+                "[\"a\",\"\\n\\\"a\\\\\\r\\t\\bbc\"],"
                 "66,"
                 "null,"
                 "{},"
                 "null,"
-                "\"a string\\/\","
+                "\"a string\\f\","
                 "\"hilly\","
                 "null,"
                 "null"

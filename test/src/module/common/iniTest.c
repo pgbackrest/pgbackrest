@@ -49,7 +49,7 @@ testRun(void)
 
         TEST_ERROR(
             iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
-            "invalid JSON value at line 2 'key=value': invalid type at 'value'");
+            "invalid JSON value at line 2 'key=value': invalid type at: value");
 
         // Key outside of section
         // -------------------------------------------------------------------------------------------------------------------------
