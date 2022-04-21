@@ -325,8 +325,7 @@ iniSet(Ini *this, const String *section, const String *key, const String *value)
 /**********************************************************************************************************************************/
 void
 iniLoad(
-    IoRead *const read,
-    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
+    IoRead *const read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
     void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
