@@ -1385,21 +1385,20 @@ jsonWritePush(JsonWrite *const this, const JsonType type, const String *const ke
             if (this->key)
                 THROW_FMT(JsonFormatError, "key has already been written");
 
+            // Also check that the key is after the last key
             if (item->keyLast[0] != '\0' && strCmpZ(key, item->keyLast) <= 0)
                 THROW_FMT(JsonFormatError, "key '%s' is not after prior key '%s'", strZ(key), item->keyLast);
 
-            MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
+            // Copy key to a buffer to avoid needing to allocate memory
+            if (strSize(key) >= SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast))
             {
-                if (strSize(key) >= SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast))
-                {
-                    THROW_FMT(
-                        AssertError, "key '%s' must be no longer than %zu bytes", strZ(key),
-                        SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1);
-                }
-
-                strncpy(item->keyLast, strZ(key), SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast));
+                THROW_FMT(
+                    AssertError, "key '%s' must be no longer than %zu bytes", strZ(key),
+                    SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1);
             }
-            MEM_CONTEXT_END();
+
+            strncpy(item->keyLast, strZ(key), SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1);
+            item->keyLast[SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1] = '\0';
 
             this->key = true;
         }
