@@ -215,10 +215,10 @@ size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize);
 /***********************************************************************************************************************************
 Macros to return function results (or void)
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_RETURN_BASE(typePre, typeMacroPrefix, typePost, result)                                                       \
+#define FUNCTION_LOG_RETURN_BASE(typePre, typeMacroPrefix, typePost, ...)                                                          \
     do                                                                                                                             \
     {                                                                                                                              \
-        typePre FUNCTION_LOG_##typeMacroPrefix##_TYPE typePost FUNCTION_LOG_RETURN_result = result;                                \
+        typePre FUNCTION_LOG_##typeMacroPrefix##_TYPE typePost FUNCTION_LOG_RETURN_result = __VA_ARGS__;                           \
                                                                                                                                    \
         STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
@@ -234,25 +234,25 @@ Macros to return function results (or void)
     }                                                                                                                              \
     while (0)
 
-#define FUNCTION_LOG_RETURN(typeMacroPrefix, result)                                                                               \
-    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, , result)
+#define FUNCTION_LOG_RETURN(typeMacroPrefix, ...)                                                                                  \
+    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, , __VA_ARGS__)
 
-#define FUNCTION_LOG_RETURN_P(typeMacroPrefix, result)                                                                             \
-    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, *, result)
+#define FUNCTION_LOG_RETURN_P(typeMacroPrefix, ...)                                                                                \
+    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, *, __VA_ARGS__)
 
-#define FUNCTION_LOG_RETURN_PP(typeMacroPrefix, result)                                                                            \
-    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, **, result)
+#define FUNCTION_LOG_RETURN_PP(typeMacroPrefix, ...)                                                                               \
+    FUNCTION_LOG_RETURN_BASE(, typeMacroPrefix, **, __VA_ARGS__)
 
-#define FUNCTION_LOG_RETURN_CONST(typeMacroPrefix, result)                                                                         \
-    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, , result)
+#define FUNCTION_LOG_RETURN_CONST(typeMacroPrefix, ...)                                                                            \
+    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, , __VA_ARGS__)
 
-#define FUNCTION_LOG_RETURN_CONST_P(typeMacroPrefix, result)                                                                       \
-    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, *, result)
+#define FUNCTION_LOG_RETURN_CONST_P(typeMacroPrefix, ...)                                                                          \
+    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, *, __VA_ARGS__)
 
-#define FUNCTION_LOG_RETURN_CONST_PP(typeMacroPrefix, result)                                                                      \
-    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, **, result)
+#define FUNCTION_LOG_RETURN_CONST_PP(typeMacroPrefix, ...)                                                                         \
+    FUNCTION_LOG_RETURN_BASE(const, typeMacroPrefix, **, __VA_ARGS__)
 
-#define FUNCTION_LOG_RETURN_STRUCT(result)                                                                                         \
+#define FUNCTION_LOG_RETURN_STRUCT(...)                                                                                            \
     do                                                                                                                             \
     {                                                                                                                              \
         STACK_TRACE_POP(false);                                                                                                    \
@@ -260,7 +260,7 @@ Macros to return function results (or void)
         IF_LOG_ANY(FUNCTION_LOG_LEVEL())                                                                                           \
             LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "=> struct");                                                                         \
                                                                                                                                    \
-        return result;                                                                                                             \
+        return __VA_ARGS__;                                                                                                        \
     }                                                                                                                              \
     while (0)
 
