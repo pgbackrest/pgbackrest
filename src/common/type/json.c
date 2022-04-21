@@ -36,7 +36,7 @@ typedef struct JsonWriteStack
 {
     JsonType type;                                                  // Container type
     bool first;                                                     // First element has been written
-    String *keyLast;                                                // Last key set for an object value
+    char keyLast[67];                                               // Last key (may need to be adjusted for alignment)
 } JsonWriteStack;
 
 struct JsonWrite
@@ -1385,13 +1385,19 @@ jsonWritePush(JsonWrite *const this, const JsonType type, const String *const ke
             if (this->key)
                 THROW_FMT(JsonFormatError, "key has already been written");
 
-            if (item->keyLast != NULL && strCmp(key, item->keyLast) <= 0)
-                THROW_FMT(JsonFormatError, "key '%s' is not after prior key '%s'", strZ(key), strZ(item->keyLast));
+            if (item->keyLast[0] != '\0' && strCmpZ(key, item->keyLast) <= 0)
+                THROW_FMT(JsonFormatError, "key '%s' is not after prior key '%s'", strZ(key), item->keyLast);
 
             MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
             {
-                strFree(item->keyLast);
-                item->keyLast = strDup(key);
+                if (strSize(key) >= SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast))
+                {
+                    THROW_FMT(
+                        AssertError, "key '%s' must be no longer than %zu bytes", strZ(key),
+                        SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1);
+                }
+
+                strncpy(item->keyLast, strZ(key), SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast));
             }
             MEM_CONTEXT_END();
 
@@ -1424,7 +1430,7 @@ jsonWritePush(JsonWrite *const this, const JsonType type, const String *const ke
 }
 
 static void
-jsonWritePop(JsonWrite *const this, const JsonType type)
+jsonWritePop(JsonWrite *const this ASSERT_PARAM(const JsonType type))
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
@@ -1436,18 +1442,11 @@ jsonWritePop(JsonWrite *const this, const JsonType type)
     ASSERT(!lstEmpty(this->stack));
     ASSERT(jsonTypeContainer(type));
     ASSERT_DECLARE(const JsonWriteStack *const container = lstGetLast(this->stack));
+
+    // !!! FIX TYPE HERE TO WORK MORE LIKE READ -- IE IT SHOULD END WITH AN END RATHER THAN A BEGIN
+
     ASSERT(container->type == type);
     ASSERT(container->type != jsonTypeObjectBegin || this->key == false);
-
-    // Free the last object key
-    if (type == jsonTypeObjectBegin)
-    {
-        MEM_CONTEXT_BEGIN(lstMemContext(this->stack))
-        {
-            strFree(((JsonWriteStack *)lstGetLast(this->stack))->keyLast);
-        }
-        MEM_CONTEXT_END();
-    }
 
     // Remove container
     lstRemoveLast(this->stack);
@@ -1484,7 +1483,7 @@ jsonWriteArrayEnd(JsonWrite *const this)
 
     ASSERT(this != NULL);
 
-    jsonWritePop(this, jsonTypeArrayBegin);
+    jsonWritePop(this ASSERT_PARAM(jsonTypeArrayBegin));
     strCatChr(this->json, ']');
 
     FUNCTION_TEST_RETURN(this);
@@ -1760,7 +1759,7 @@ jsonWriteObjectEnd(JsonWrite *const this)
 
     ASSERT(this != NULL);
 
-    jsonWritePop(this, jsonTypeObjectBegin);
+    jsonWritePop(this ASSERT_PARAM(jsonTypeObjectBegin));
     strCatChr(this->json, '}');
 
     FUNCTION_TEST_RETURN(this);
