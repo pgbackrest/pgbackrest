@@ -1884,10 +1884,10 @@ testRun(void)
         OBJ_NEW_END();
 
         uint64_t sizeProgress = 0;
-        currentPercentComplete = 0;
+        currentPercentComplete = 4567;
         lockLocal.execId = STRDEF("1-test");
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_VOID(
             backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress,
             &currentPercentComplete), "log noop result");
@@ -1958,7 +1958,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF");
 
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
         TEST_RESULT_LOG_FMT(
@@ -1992,7 +1992,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_ERROR(cmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         TEST_RESULT_LOG(
@@ -2017,7 +2017,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
         TEST_RESULT_LOG(
@@ -2048,7 +2048,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR2");
 
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_VOID(cmdBackup(), "backup");
 
         TEST_RESULT_LOG(
@@ -2085,7 +2085,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_VOID(cmdBackup(), "backup");
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
         TEST_RESULT_VOID(lockRelease(true), "release all locks");
@@ -2102,7 +2102,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_VOID(cmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: repo option not specified, defaulting to repo1\n"
@@ -2127,7 +2127,7 @@ testRun(void)
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
         TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_VOID(cmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
@@ -2239,7 +2239,8 @@ testRun(void)
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
             TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
+                "backup lock");
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -2381,7 +2382,8 @@ testRun(void)
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
+                "backup lock");
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Enable storage features
@@ -2549,7 +2551,8 @@ testRun(void)
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
+                "backup lock");
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Check log
@@ -2690,7 +2693,8 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
+                "backup lock");
             TEST_ERROR(
                 cmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69BF000000FF was not archived before the 100ms timeout\n"
@@ -2880,7 +2884,8 @@ testRun(void)
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
             TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
+                "backup lock");
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             // Reset storage features
@@ -3052,7 +3057,8 @@ testRun(void)
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
             TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
+                "backup lock");
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3182,7 +3188,8 @@ testRun(void)
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
             TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, STRDEF("test-1"), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
+                "backup lock");
             TEST_RESULT_VOID(cmdBackup(), "backup");
 
             TEST_RESULT_LOG(
