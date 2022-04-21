@@ -10,146 +10,19 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // !!! REMOVE OLD TESTS
-
-    // *****************************************************************************************************************************
-    if (testBegin("jsonToVar()"))
-    {
-        TEST_ERROR(jsonToVar(strNew()), JsonFormatError, "expected data");
-        TEST_ERROR(jsonToVar(STRDEF(" \t\r\n ")), JsonFormatError, "expected data");
-        TEST_ERROR(jsonToVar(STRDEF("z")), JsonFormatError, "invalid type at 'z'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(varStr(jsonToVar(STRDEF(" \"test\""))), "test", "simple string");
-        TEST_RESULT_STR_Z(varStr(jsonToVar(STRDEF("\"te\\\"st\" "))), "te\"st", "string with quote");
-        TEST_RESULT_STR_Z(varStr(jsonToVar(STRDEF("\"\\\"\\\\\\/\\b\\n\\r\\t\\f\""))), "\"\\/\b\n\r\t\f", "string with escapes");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_BOOL(varBool(jsonToVar(STRDEF(" true"))), true, "boolean true");
-        TEST_RESULT_BOOL(varBool(jsonToVar(STRDEF("false "))), false, "boolean false");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_PTR(jsonToVar(STRDEF("null")), NULL, "null value");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        VariantList *valueList = NULL;
-        TEST_ASSIGN(valueList, varVarLst(jsonToVar(STRDEF("[1, \"test\", false]"))), "array");
-        TEST_RESULT_UINT(varLstSize(valueList), 3, "check array size");
-        TEST_RESULT_UINT(varUInt64(varLstGet(valueList, 0)), 1, "check array int");
-        TEST_RESULT_STR_Z(varStr(varLstGet(valueList, 1)), "test", "check array str");
-        TEST_RESULT_BOOL(varBool(varLstGet(valueList, 2)), false, "check array bool");
-
-        TEST_ASSIGN(valueList, varVarLst(jsonToVar(STRDEF("[ ]"))), "empty array");
-        TEST_RESULT_UINT(varLstSize(valueList), 0, "check array size");
-
-        TEST_RESULT_VOID(jsonToVar(STRDEF("{\"path\":\"/home/vagrant/test/test-0/pg\",\"type\":\"path\"}")), "object");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        KeyValue *kv = NULL;
-        TEST_ASSIGN(kv, varKv(jsonToVar(STRDEF("\t{\n} "))), "empty object");
-        TEST_RESULT_UINT(varLstSize(kvKeyList(kv)), 0, "check key total");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("jsonFromVar()"))
-    {
-        String *json = NULL;
-        Variant *keyValue = NULL;
-
-        TEST_ASSIGN(keyValue, varNewKv(kvNew()), "build new kv");
-        kvPut(varKv(keyValue), varNewStrZ("backup-info-size-delta"), varNewInt(1982702));
-        kvPut(varKv(keyValue), varNewStrZ("backup-prior"), varNewStrZ("20161219-212741F_20161219-212803I"));
-
-        Variant *listVar = NULL;
-        TEST_ASSIGN(listVar, varNewVarLst(varLstNew()), "  new string array to kv");
-        varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F"));
-        varLstAdd(varVarLst(listVar), varNewStrZ("20161219-212741F_20161219-212803I"));
-        varLstAdd(varVarLst(listVar), varNewStrZ(NULL));
-        kvPut(varKv(keyValue), varNewStrZ("backup-reference"), listVar);
-        kvPut(varKv(keyValue), varNewStrZ("backup-timestamp-start"), varNewInt(1482182951));
-
-        Variant *listVar2 = NULL;
-        TEST_ASSIGN(listVar2, varNewVarLst(varLstNew()), "  new int array to kv");
-        varLstAdd(varVarLst(listVar2), varNewInt(1));
-        kvPut(varKv(keyValue), varNewStrZ("checksum-page-error"), listVar2);
-
-        // Embed a keyValue section to test recursion
-        const Variant *sectionKey = VARSTRDEF("section");
-        KeyValue *sectionKv = kvPutKv(varKv(keyValue), sectionKey);
-        kvPut(sectionKv, VARSTRDEF("key1"), VARSTRDEF("value1"));
-        kvPut(sectionKv, VARSTRDEF("key2"), (Variant *)NULL);
-        kvPut(sectionKv, VARSTRDEF("key3"), VARSTRDEF("value2"));
-        kvAdd(sectionKv, VARSTRDEF("escape"), VARSTRDEF("\"\\/\b\n\r\t\f"));
-
-        TEST_ASSIGN(json, jsonFromVar(keyValue), "KeyValue");
-        TEST_RESULT_STR_Z(
-            json,
-            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}",
-            "  sorted json string result, no pretty print");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        Variant *varListOuter = NULL;
-
-        TEST_ASSIGN(json, jsonFromVar(varNewVarLst(varLstNew())), "VariantList");
-        TEST_RESULT_STR_Z(json, "[]", "  empty list no pretty print");
-
-        TEST_ASSIGN(varListOuter, varNewVarLst(varLstNew()), "new variant list with keyValues");
-        varLstAdd(varVarLst(varListOuter), varNewStrZ("ASTRING"));
-        varLstAdd(varVarLst(varListOuter), varNewInt64(9223372036854775807LL));
-        varLstAdd(varVarLst(varListOuter), varNewInt(2147483647));
-        varLstAdd(varVarLst(varListOuter), varNewBool(true));
-        varLstAdd(varVarLst(varListOuter), varNewVarLst(NULL));
-        varLstAdd(varVarLst(varListOuter), varNewVarLst(varLstNew()));
-        varLstAdd(varVarLst(varListOuter), NULL);
-        varLstAdd(varVarLst(varListOuter), keyValue);
-
-        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList");
-        TEST_RESULT_STR_Z(
-            json,
-            "[\"ASTRING\",9223372036854775807,2147483647,true,null,[],null,{\"backup-info-size-delta\":1982702,"
-            "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
-            "  sorted json string result no pretty print");
-
-        Variant *keyValue2 = varDup(keyValue);
-        varLstAdd(varVarLst(varListOuter), keyValue2);
-
-        TEST_ASSIGN(json, jsonFromVar(varListOuter), "VariantList - multiple elements");
-        TEST_RESULT_STR_Z(
-            json,
-            "[\"ASTRING\",9223372036854775807,2147483647,true,null,[],null,{\"backup-info-size-delta\":1982702,"
-            "\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}},"
-            "{\"backup-info-size-delta\":1982702,\"backup-prior\":\"20161219-212741F_20161219-212803I\","
-            "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803I\",null],"
-            "\"backup-timestamp-start\":1482182951,\"checksum-page-error\":[1],"
-            "\"section\":{\"escape\":\"\\\"\\\\/\\b\\n\\r\\t\\f\",\"key1\":\"value1\",\"key2\":null,\"key3\":\"value2\"}}]",
-            "  sorted json string result no pretty print");
-
-        VariantList *varList = varLstNew();
-        varLstAdd(varList, varNewUInt(32));
-        varLstAdd(varList, varNewUInt64(10000000000));
-
-        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(varList)), "[32,10000000000]", "list various types");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(jsonFromVar(NULL), "null", "null variant");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewBool(true)), "true", "bool variant");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewUInt(66)), "66", "uint variant");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewUInt64(10000000001)), "10000000001", "uint64 variant");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewStrZ("test \" string")), "\"test \\\" string\"", "string variant");
-    }
-
     // *****************************************************************************************************************************
     if (testBegin("JsonRead"))
     {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on no data");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF(""))), JsonFormatError, "expected data");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid type");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("x"))), JsonFormatError, "invalid type at: x");
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing comma");
 
@@ -249,16 +122,18 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("complex");
 
+        #define TEST_VARIANT                                        "[-1,true,\"zxv\",{\"key1\":null,\"key2\":777}]"
+
         const String *json = STRDEF(
             "\t\r\n "                                               // Leading whitespace
             "[\n"
             "    {"
-            "        \"key1\"\t: \"\\u0076\\na\\tlu e\\r1\","
+            "        \"key1\"\t: \"\\u0076\\na\\tlu e\\f\\b\\/\\\\\\\"\\r1\","
             "        \"key2\"\t: 777,"
             "        \"key3\"\t: 777,"
             "        \"key4\"\t: 9223372036854775807"
             "    },"
-            "    \"abc\","
+            "    \"abc\\/\","
             "    \"def\","
             "    null,"
             "    [\"a\", \"b\"],"
@@ -268,7 +143,7 @@ testRun(void)
             "    -9223372036854775807,"
             "    [true, {\"key1\":null,\"key1\":\"value1\"}],"
             "    true,"
-            "    [-1],"
+            "    " TEST_VARIANT ","
             "    false\n"
             "]"
             " ");                                                  // Extra whitespace at the end
@@ -284,7 +159,7 @@ testRun(void)
         TEST_RESULT_STR_Z(jsonReadKey(read), "key1", "key1");
         jsonReadConsumeWhiteSpace(read);
         TEST_ERROR_FMT(jsonReadKey(read), AssertError, "key has already been read at: %s", read->json);
-        TEST_RESULT_STR_Z(jsonReadStr(read), "v\na\tlu e\r1", "str");
+        TEST_RESULT_STR_Z(jsonReadStr(read), "v\na\tlu e\f\b/\\\"\r1", "str");
         TEST_ERROR_FMT(jsonReadStr(read), AssertError, "key has not been read at: %s", read->json);
         TEST_ERROR(jsonReadKeyRequire(read, STRDEF("key1")), JsonFormatError, "required key 'key1' not found");
         TEST_RESULT_VOID(jsonReadKeyRequire(read, STRDEF("key2")), "key2");
@@ -298,7 +173,7 @@ testRun(void)
         TEST_ERROR(jsonReadKeyRequireZ(read, "key5"), JsonFormatError, "required key 'key5' not found");
         TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
 
-        TEST_RESULT_STR_Z(jsonReadStr(read), "abc", "str");
+        TEST_RESULT_STR_Z(jsonReadStr(read), "abc/", "str");
         TEST_RESULT_STR_Z(strIdToStr(jsonReadStrId(read)), "def", "strid");
         TEST_RESULT_STR_Z(jsonReadStr(read), NULL, "str null");
         TEST_RESULT_STRLST_Z(jsonReadStrLst(read), "a\nb\n", "str list");
@@ -308,13 +183,18 @@ testRun(void)
         TEST_RESULT_INT(jsonReadInt64(read), -9223372036854775807L, "int64");
         TEST_RESULT_VOID(jsonReadSkip(read), "skip");
         TEST_RESULT_BOOL(jsonReadBool(read), true, "bool true");
-        TEST_RESULT_STR_Z(jsonFromVar(jsonReadVar(read)), "[-1]", "var");
+        TEST_RESULT_STR_Z(jsonFromVar(jsonReadVar(read)), TEST_VARIANT, "var");
         TEST_RESULT_BOOL(jsonReadBool(read), false, "bool false");
 
         TEST_RESULT_VOID(jsonReadArrayEnd(read), "array end");
         TEST_ERROR(jsonReadArrayEnd(read), FormatError, "JSON read is complete");
 
         TEST_RESULT_VOID(jsonReadFree(read), "free");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("variant");
+
+        TEST_RESULT_STR_Z(varStr(jsonToVar(STRDEF("\"test\""))), "test", "var");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("validate");
@@ -329,6 +209,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("JsonWrite"))
     {
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("complex");
+
         JsonWrite *write = NULL;
 
         TEST_ASSIGN(write, jsonWriteNewP(), "new write");
@@ -353,7 +236,7 @@ testRun(void)
 
         StringList *list = strLstNew();
         strLstAddZ(list, "a");
-        strLstAddZ(list, "abc");
+        strLstAddZ(list, "\n\"a\\\r\t\b\fbc");
 
         TEST_RESULT_VOID(jsonWriteStrLst(write, list), "write str list");
 
@@ -361,7 +244,7 @@ testRun(void)
         TEST_RESULT_VOID(jsonWriteJson(write, NULL), "null json");
         TEST_RESULT_VOID(jsonWriteJson(write, STRDEF("{}")), "json");
         TEST_RESULT_VOID(jsonWriteZ(write, NULL), "null z");
-        TEST_RESULT_VOID(jsonWriteZ(write, "a string"), "z");
+        TEST_RESULT_VOID(jsonWriteZ(write, "a string/"), "z");
         TEST_RESULT_VOID(jsonWriteStrId(write, strIdFromZ("hilly")), "strid");
         TEST_RESULT_VOID(jsonWriteVar(write, varNewKv(NULL)), "null kv");
         TEST_RESULT_VOID(jsonWriteStr(write, NULL), "null str");
@@ -381,12 +264,12 @@ testRun(void)
                     "\"key5\":\"898\","
                     "\"val\":18446744073709551615"
                 "},"
-                "[\"a\",\"abc\"],"
+                "[\"a\",\"\\n\\\"a\\\\\\r\\t\\b\\fbc\"],"
                 "66,"
                 "null,"
                 "{},"
                 "null,"
-                "\"a string\","
+                "\"a string\\/\","
                 "\"hilly\","
                 "null,"
                 "null"
@@ -394,6 +277,12 @@ testRun(void)
             "json result");
 
         TEST_RESULT_VOID(jsonWriteFree(write), "free");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("variant");
+
+        TEST_RESULT_STR_Z(jsonFromVar(varNewStr(NULL)), "null", "null str");
+        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(NULL)), "null", "null var lst");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

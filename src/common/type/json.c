@@ -204,7 +204,7 @@ jsonReadTypeNext(JsonRead *const this)
 
         // Invalid type
         default:
-            THROW_FMT(JsonFormatError, "invalid type at '%s'", this->json);
+            THROW_FMT(JsonFormatError, "invalid type at: %s", this->json);
             break;
     }
 
@@ -533,7 +533,7 @@ jsonReadStrInternal(JsonRead *const this)
             }
 
             this->json++;
-        };
+        }
 
         // Copy portion of string without escapes
         if (noEscapeSize > 0)
@@ -659,6 +659,7 @@ jsonReadInt64(JsonRead *const this)
 }
 
 /**********************************************************************************************************************************/
+// !!! READ KEY INTERNAL SHOULD RETURN A POS AND LEN -- AND ERROR ON ESCAPE
 static String *
 jsonReadKeyInternal(JsonRead *const this)
 {
@@ -991,7 +992,6 @@ jsonReadSkipRecurse(JsonRead *const this)
 
             while (jsonReadTypeNextIgnoreComma(this) != jsonTypeObjectEnd)
             {
-                // !!! READ KEY INTERNAL SHOULD RETURN A POS AND LEN -- AND ERROR ON ESCAPE
                 // Read key
                 jsonReadPush(this, jsonTypeString, true);
                 jsonReadSkipStr(this);
@@ -1566,6 +1566,7 @@ jsonWriteStrInternal(JsonWrite *const this, const String *const value)
         {
             case '"':
             case '\\':
+            case '/':
             case '\n':
             case '\r':
             case '\t':
@@ -1587,6 +1588,10 @@ jsonWriteStrInternal(JsonWrite *const this, const String *const value)
 
                     case '\\':
                         strCatZ(this->json, "\\\\");
+                        break;
+
+                    case '/':
+                        strCatZ(this->json, "\\/");
                         break;
 
                     case '\n':
