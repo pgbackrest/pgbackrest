@@ -512,10 +512,9 @@ cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
-    ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     // Check that the option is valid for the current command
     if (!cfgOptionValid(optionId))
@@ -573,10 +572,9 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
-    ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     // If an indexed option
     ConfigOptionData *const option = &configLocal->option[optionId];
@@ -629,10 +627,9 @@ cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
-    ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].negate);
 }
@@ -658,10 +655,9 @@ cfgOptionIdxReset(ConfigOption optionId, unsigned int optionIdx)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
-    ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].reset);
 }
@@ -681,10 +677,9 @@ cfgOptionIdxInternal(
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
-    ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     // Check that the option is valid for the current command
     if (!cfgOptionValid(optionId))
@@ -719,10 +714,9 @@ cfgOptionIdxVar(const ConfigOption optionId, const unsigned int optionIdx)
     FUNCTION_TEST_END();
 
     ASSERT(configLocal != NULL);
-    ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     const ConfigOptionData *const option = &configLocal->option[optionId];
 
@@ -928,10 +922,9 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
-    ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     // Set the source
     ConfigOptionData *const option = &configLocal->option[optionId];
@@ -1024,10 +1017,9 @@ cfgOptionIdxSource(ConfigOption optionId, unsigned int optionIdx)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
-    ASSERT(
-        (!configLocal->option[optionId].group && optionIdx == 0) ||
-        (configLocal->option[optionId].group && optionIdx <
-            configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     FUNCTION_TEST_RETURN(configLocal->option[optionId].index[optionIdx].source);
 }
@@ -1053,11 +1045,9 @@ cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(configLocal != NULL);
-    ASSERT(
-        !cfgOptionValid(optionId) ||
-        ((!configLocal->option[optionId].group && optionIdx == 0) ||
-         (configLocal->option[optionId].group && optionIdx <
-          configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal)));
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT(!cfgOptionValid(optionId) || ((!group && optionIdx == 0) || (group && optionIdx < indexTotal)));
 
     FUNCTION_TEST_RETURN(cfgOptionValid(optionId) && configLocal->option[optionId].index[optionIdx].set);
 }
