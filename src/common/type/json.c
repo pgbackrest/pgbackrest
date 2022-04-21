@@ -1393,7 +1393,7 @@ jsonWritePush(JsonWrite *const this, const JsonType type, const String *const ke
             if (strSize(key) >= SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast))
             {
                 THROW_FMT(
-                    AssertError, "key '%s' must be no longer than %zu bytes", strZ(key),
+                    AssertError, "key '%s' must not be longer than %zu bytes", strZ(key),
                     SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1);
             }
 

@@ -244,7 +244,7 @@ testRun(void)
         TEST_ERROR(jsonWriteBool(write, false), JsonFormatError, "key has not been written");
         TEST_ERROR(
             jsonWriteKeyZ(write, "1234567890123456789012345678901234567890123456789012345678901234567"), AssertError,
-            "key '1234567890123456789012345678901234567890123456789012345678901234567' must be no longer than 66 bytes");
+            "key '1234567890123456789012345678901234567890123456789012345678901234567' must not be longer than 66 bytes");
         TEST_RESULT_VOID(jsonWriteKey(write, STRDEF("flag")), "key 'flag'");
         TEST_ERROR(jsonWriteKey(write, STRDEF("flag")), JsonFormatError, "key has already been written");
         TEST_RESULT_VOID(jsonWriteBool(write, false), "bool false");
