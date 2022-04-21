@@ -330,7 +330,7 @@ helpRender(const Buffer *const helpData)
                 optionData[optionId] = (HelpOptionData)
                 {
                     .internal = pckReadBoolP(pckHelp),
-                    .section = pckReadStrP(pckHelp, .defaultValue = STR("general")),
+                    .section = pckReadStrP(pckHelp, .defaultValue = STRDEF("general")),
                     .summary = pckReadStrP(pckHelp),
                     .description = pckReadStrP(pckHelp),
                 };
