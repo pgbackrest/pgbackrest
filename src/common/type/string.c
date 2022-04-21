@@ -557,7 +557,7 @@ strCmpZ(const String *this, const char *compare)
         FUNCTION_TEST_PARAM(STRINGZ, compare);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(strCmp(this, compare == NULL ? NULL : STRDEF(compare)));
+    FUNCTION_TEST_RETURN(strCmp(this, compare == NULL ? NULL : STR(compare)));
 }
 
 /**********************************************************************************************************************************/
