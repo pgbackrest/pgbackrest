@@ -304,6 +304,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(jsonFromVar(varNewStr(NULL)), "null", "null str");
         TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(NULL)), "null", "null var lst");
+        TEST_RESULT_STR_Z(jsonFromVar(varNewUInt(47)), "47", "uint");
+        TEST_RESULT_STR_Z(jsonFromVar(varNewInt(-99)), "-99", "int");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

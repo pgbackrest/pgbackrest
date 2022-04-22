@@ -429,124 +429,6 @@ jsonReadNumber(JsonRead *const this)
     FUNCTION_TEST_RETURN((JsonReadNumberResult){.type = jsonNumberTypeU64, .value = {.u64 = cvtZToUInt64(working)}});
 }
 
-/***********************************************************************************************************************************
-Read JSON string
-***********************************************************************************************************************************/
-static String *
-jsonReadStrInternal(JsonRead *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(JSON_READ, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    String *const result = strNew();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Skip the beginning "
-        ASSERT(*this->json == '"');
-        this->json++;
-
-        // Track portion of string with no escapes
-        const char *noEscape = NULL;
-        size_t noEscapeSize = 0;
-
-        while (*this->json != '"')
-        {
-            if (*this->json == '\\')
-            {
-                // Copy portion of string without escapes
-                if (noEscapeSize > 0)
-                {
-                    strCatZN(result, noEscape, noEscapeSize);
-                    noEscapeSize = 0;
-                }
-
-                this->json++;
-
-                switch (*this->json)
-                {
-                    case '"':
-                        strCatChr(result, '"');
-                        break;
-
-                    case '\\':
-                        strCatChr(result, '\\');
-                        break;
-
-                    case '/':
-                        strCatChr(result, '/');
-                        break;
-
-                    case 'n':
-                        strCatChr(result, '\n');
-                        break;
-
-                    case 'r':
-                        strCatChr(result, '\r');
-                        break;
-
-                    case 't':
-                        strCatChr(result, '\t');
-                        break;
-
-                    case 'b':
-                        strCatChr(result, '\b');
-                        break;
-
-                    case 'f':
-                        strCatChr(result, '\f');
-                        break;
-
-                    case 'u':
-                    {
-                        this->json++;
-
-                        // We don't know how to decode anything except ASCII so fail if it looks like Unicode
-                        if (strncmp(this->json, "00", 2) != 0)
-                            THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
-
-                        // Decode char
-                        this->json += 2;
-                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewZN(this->json, 2)), 16));
-                        this->json++;
-
-                        break;
-                    }
-
-                    default:
-                        THROW_FMT(JsonFormatError, "invalid escape character at: %s", this->json - 1);
-                }
-            }
-            else
-            {
-                if (*this->json == '\0')
-                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
-
-                // If escape string is zero size then start it
-                if (noEscapeSize == 0)
-                    noEscape = this->json;
-
-                noEscapeSize++;
-            }
-
-            this->json++;
-        }
-
-        // Copy portion of string without escapes
-        if (noEscapeSize > 0)
-            strCatZN(result, noEscape, noEscapeSize);
-
-        // Advance the character array pointer to the next element after the string
-        this->json++;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(result);
-}
-
 /**********************************************************************************************************************************/
 void
 jsonReadArrayBegin(JsonRead *const this)
@@ -666,7 +548,7 @@ typedef struct JsonReadKeyInternalResult
 } JsonReadKeyInternalResult;
 
 static JsonReadKeyInternalResult
-jsonReadKeyInternal(JsonRead *const this)
+jsonReadKeyZN(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_READ, this);
@@ -718,7 +600,7 @@ jsonReadKey(JsonRead *const this)
     ASSERT(this != NULL);
 
     jsonReadPush(this, jsonTypeString, true);
-    JsonReadKeyInternalResult key = jsonReadKeyInternal(this);
+    JsonReadKeyInternalResult key = jsonReadKeyZN(this);
 
     FUNCTION_TEST_RETURN(strNewZN(key.buffer, key.size));
 }
@@ -755,7 +637,7 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
             jsonReadPush(this, jsonTypeString, true);
 
             // Get and compare next key
-            const JsonReadKeyInternalResult keyNext = jsonReadKeyInternal(this);
+            const JsonReadKeyInternalResult keyNext = jsonReadKeyZN(this);
             const int compare = strncmp(strZ(key), keyNext.buffer, keyNext.size);
 
             // Return true if key matches
@@ -1068,15 +950,120 @@ jsonReadStr(JsonRead *const this)
 
     ASSERT(this != NULL);
 
+    // If NULL
     if (jsonReadTypeNextIgnoreComma(this) == jsonTypeNull)
     {
         jsonReadNull(this);
         FUNCTION_TEST_RETURN(NULL);
     }
 
+    // Read string
     jsonReadPush(this, jsonTypeString, false);
 
-    FUNCTION_TEST_RETURN(jsonReadStrInternal(this));
+    String *const result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Skip the beginning "
+        ASSERT(*this->json == '"');
+        this->json++;
+
+        // Track portion of string with no escapes
+        const char *noEscape = NULL;
+        size_t noEscapeSize = 0;
+
+        while (*this->json != '"')
+        {
+            if (*this->json == '\\')
+            {
+                // Copy portion of string without escapes
+                if (noEscapeSize > 0)
+                {
+                    strCatZN(result, noEscape, noEscapeSize);
+                    noEscapeSize = 0;
+                }
+
+                this->json++;
+
+                switch (*this->json)
+                {
+                    case '"':
+                        strCatChr(result, '"');
+                        break;
+
+                    case '\\':
+                        strCatChr(result, '\\');
+                        break;
+
+                    case '/':
+                        strCatChr(result, '/');
+                        break;
+
+                    case 'n':
+                        strCatChr(result, '\n');
+                        break;
+
+                    case 'r':
+                        strCatChr(result, '\r');
+                        break;
+
+                    case 't':
+                        strCatChr(result, '\t');
+                        break;
+
+                    case 'b':
+                        strCatChr(result, '\b');
+                        break;
+
+                    case 'f':
+                        strCatChr(result, '\f');
+                        break;
+
+                    case 'u':
+                    {
+                        this->json++;
+
+                        // We don't know how to decode anything except ASCII so fail if it looks like Unicode
+                        if (strncmp(this->json, "00", 2) != 0)
+                            THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
+
+                        // Decode char
+                        this->json += 2;
+                        strCatChr(result, (char)cvtZToUIntBase(strZ(strNewZN(this->json, 2)), 16));
+                        this->json++;
+
+                        break;
+                    }
+
+                    default:
+                        THROW_FMT(JsonFormatError, "invalid escape character at: %s", this->json - 1);
+                }
+            }
+            else
+            {
+                if (*this->json == '\0')
+                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
+
+                // If escape string is zero size then start it
+                if (noEscapeSize == 0)
+                    noEscape = this->json;
+
+                noEscapeSize++;
+            }
+
+            this->json++;
+        }
+
+        // Copy portion of string without escapes
+        if (noEscapeSize > 0)
+            strCatZN(result, noEscape, noEscapeSize);
+
+        // Advance the character array pointer to the next element after the string
+        this->json++;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(result);
 }
 
 /**********************************************************************************************************************************/
@@ -1201,8 +1188,7 @@ jsonReadVarRecurse(JsonRead *const this)
         }
 
         case jsonTypeString:
-            jsonReadPush(this, jsonTypeString, false);
-            FUNCTION_TEST_RETURN(varNewStr(jsonReadStrInternal(this)));
+            FUNCTION_TEST_RETURN(varNewStr(jsonReadStr(this)));
 
         case jsonTypeArrayBegin:
         {
@@ -1439,13 +1425,11 @@ jsonWritePop(JsonWrite *const this ASSERT_PARAM(const JsonType type))
     ASSERT(this != NULL);
     ASSERT(this->stack != NULL);
     ASSERT(!lstEmpty(this->stack));
-    ASSERT(jsonTypeContainer(type));
     ASSERT_DECLARE(const JsonWriteStack *const container = lstGetLast(this->stack));
-
-    // !!! FIX TYPE HERE TO WORK MORE LIKE READ -- IE IT SHOULD END WITH AN END RATHER THAN A BEGIN
-
-    ASSERT(container->type == type);
-    ASSERT(container->type != jsonTypeObjectBegin || this->key == false);
+    ASSERT(
+        (container->type == jsonTypeArrayBegin && type == jsonTypeArrayEnd) ||
+        (container->type == jsonTypeObjectBegin && type == jsonTypeObjectEnd));
+    ASSERT(container->type != jsonTypeObjectEnd || this->key == false);
 
     // Remove container
     lstRemoveLast(this->stack);
@@ -1482,7 +1466,7 @@ jsonWriteArrayEnd(JsonWrite *const this)
 
     ASSERT(this != NULL);
 
-    jsonWritePop(this ASSERT_PARAM(jsonTypeArrayBegin));
+    jsonWritePop(this ASSERT_PARAM(jsonTypeArrayEnd));
     strCatChr(this->json, ']');
 
     FUNCTION_TEST_RETURN(this);
@@ -1566,101 +1550,6 @@ jsonWriteJson(JsonWrite *const this, const String *const value)
 }
 
 /**********************************************************************************************************************************/
-// Write String to JSON
-static void
-jsonWriteStrInternal(JsonWrite *const this, const String *const value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(JSON_WRITE, this);
-        FUNCTION_TEST_PARAM(STRING, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(value != NULL);
-
-    strCatChr(this->json, '"');
-
-    // Track portion of string with no escapes
-    const char *valuePtr = strZ(value);
-    const char *noEscape = NULL;
-    size_t noEscapeSize = 0;
-
-    for (unsigned int valueIdx = 0; valueIdx < strSize(value); valueIdx++)
-    {
-        switch (*valuePtr)
-        {
-            case '"':
-            case '\\':
-            case '\n':
-            case '\r':
-            case '\t':
-            case '\b':
-            case '\f':
-            {
-                // Copy portion of string without escapes
-                if (noEscapeSize > 0)
-                {
-                    strCatZN(this->json, noEscape, noEscapeSize);
-                    noEscapeSize = 0;
-                }
-
-                switch (*valuePtr)
-                {
-                    case '"':
-                        strCatZ(this->json, "\\\"");
-                        break;
-
-                    case '\\':
-                        strCatZ(this->json, "\\\\");
-                        break;
-
-                    case '\n':
-                        strCatZ(this->json, "\\n");
-                        break;
-
-                    case '\r':
-                        strCatZ(this->json, "\\r");
-                        break;
-
-                    case '\t':
-                        strCatZ(this->json, "\\t");
-                        break;
-
-                    case '\b':
-                        strCatZ(this->json, "\\b");
-                        break;
-
-                    case '\f':
-                        strCatZ(this->json, "\\f");
-                        break;
-                }
-
-                break;
-            }
-
-            default:
-            {
-                // If escape string is zero size then start it
-                if (noEscapeSize == 0)
-                    noEscape = valuePtr;
-
-                noEscapeSize++;
-                break;
-            }
-        }
-
-        valuePtr++;
-    }
-
-    // Copy portion of string without escapes
-    if (noEscapeSize > 0)
-        strCatZN(this->json, noEscape, noEscapeSize);
-
-    strCatChr(this->json, '"');
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 JsonWrite *
 jsonWriteKey(JsonWrite *const this, const String *const key)
 {
@@ -1671,11 +1560,16 @@ jsonWriteKey(JsonWrite *const this, const String *const key)
 
     ASSERT(this != NULL);
     ASSERT(key != NULL);
+    ASSERT(
+        strchr(strZ(key), '\f') == NULL && strchr(strZ(key), '\\') == NULL && strchr(strZ(key), '\n') == NULL &&
+        strchr(strZ(key), '\r') == NULL && strchr(strZ(key), '\t') == NULL && strchr(strZ(key), '\b') == NULL &&
+        strchr(strZ(key), '"') == NULL);
 
     jsonWritePush(this, jsonTypeString, key);
 
-    jsonWriteStrInternal(this, key);
-    strCatChr(this->json, ':');
+    strCatChr(this->json, '"');
+    strCat(this->json, key);
+    strCatZ(this->json, "\":");
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1758,7 +1652,7 @@ jsonWriteObjectEnd(JsonWrite *const this)
 
     ASSERT(this != NULL);
 
-    jsonWritePop(this ASSERT_PARAM(jsonTypeObjectBegin));
+    jsonWritePop(this ASSERT_PARAM(jsonTypeObjectEnd));
     strCatChr(this->json, '}');
 
     FUNCTION_TEST_RETURN(this);
@@ -1776,12 +1670,91 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
     ASSERT(this != NULL);
 
     if (value == NULL)
-        jsonWriteNull(this);
-    else
     {
-        jsonWritePush(this, jsonTypeString, NULL);
-        jsonWriteStrInternal(this, value);
+        jsonWriteNull(this);
+        FUNCTION_TEST_RETURN(this);
     }
+
+    jsonWritePush(this, jsonTypeString, NULL);
+    strCatChr(this->json, '"');
+
+    // Track portion of string with no escapes
+    const char *valuePtr = strZ(value);
+    const char *noEscape = NULL;
+    size_t noEscapeSize = 0;
+
+    for (unsigned int valueIdx = 0; valueIdx < strSize(value); valueIdx++)
+    {
+        switch (*valuePtr)
+        {
+            case '"':
+            case '\\':
+            case '\n':
+            case '\r':
+            case '\t':
+            case '\b':
+            case '\f':
+            {
+                // Copy portion of string without escapes
+                if (noEscapeSize > 0)
+                {
+                    strCatZN(this->json, noEscape, noEscapeSize);
+                    noEscapeSize = 0;
+                }
+
+                switch (*valuePtr)
+                {
+                    case '"':
+                        strCatZ(this->json, "\\\"");
+                        break;
+
+                    case '\\':
+                        strCatZ(this->json, "\\\\");
+                        break;
+
+                    case '\n':
+                        strCatZ(this->json, "\\n");
+                        break;
+
+                    case '\r':
+                        strCatZ(this->json, "\\r");
+                        break;
+
+                    case '\t':
+                        strCatZ(this->json, "\\t");
+                        break;
+
+                    case '\b':
+                        strCatZ(this->json, "\\b");
+                        break;
+
+                    case '\f':
+                        strCatZ(this->json, "\\f");
+                        break;
+                }
+
+                break;
+            }
+
+            default:
+            {
+                // If escape string is zero size then start it
+                if (noEscapeSize == 0)
+                    noEscape = valuePtr;
+
+                noEscapeSize++;
+                break;
+            }
+        }
+
+        valuePtr++;
+    }
+
+    // Copy portion of string without escapes
+    if (noEscapeSize > 0)
+        strCatZN(this->json, noEscape, noEscapeSize);
+
+    strCatChr(this->json, '"');
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -1794,8 +1767,6 @@ jsonWriteStrFmt(JsonWrite *const this, const char *const format, ...)
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
         FUNCTION_TEST_PARAM(STRINGZ, format);
     FUNCTION_TEST_END();
-
-    jsonWritePush(this, jsonTypeString, NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1811,8 +1782,7 @@ jsonWriteStrFmt(JsonWrite *const this, const char *const format, ...)
         vsnprintf(buffer, size + 1, format, argumentList);
         va_end(argumentList);
 
-        // Write as JSON
-        jsonWriteStrInternal(this, STR_SIZE(buffer, size));
+        jsonWriteStr(this, STR_SIZE(buffer, size));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1903,9 +1873,8 @@ jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
 }
 
 /**********************************************************************************************************************************/
-// Write a Variant to JSON
 static void
-jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
+jsonWriteVarRecurse(JsonWrite *const this, const Variant *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
@@ -1916,17 +1885,21 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
     {
         // If VariantList then process each item in the array. Currently the list must be KeyValue types.
         if (value == NULL)
-            strCat(this->json, NULL_STR);
+            jsonWriteNull(this);
         else
         {
             switch (varType(value))
             {
                 case varTypeBool:
+                    jsonWriteBool(this, varBool(value));
+                    break;
+
                 case varTypeInt:
+                    jsonWriteInt(this, varInt(value));
+                    break;
+
                 case varTypeInt64:
-                case varTypeUInt:
-                case varTypeUInt64:
-                    strCat(this->json, varStrForce(value));
+                    jsonWriteInt64(this, varInt64(value));
                     break;
 
                 case varTypeKeyValue:
@@ -1934,30 +1907,25 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
                     const KeyValue *const keyValue = varKv(value);
 
                     if (keyValue == NULL)
-                        strCat(this->json, NULL_STR);
+                        jsonWriteNull(this);
                     else
                     {
                         const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(keyValue)), sortOrderAsc);
 
-                        strCatChr(this->json, '{');
+                        jsonWriteObjectBegin(this);
 
                         for (unsigned int keyListIdx = 0; keyListIdx < strLstSize(keyList); keyListIdx++)
                         {
-                            // Add common after first key/value
-                            if (keyListIdx > 0)
-                                strCatChr(this->json, ',');
-
                             // Write key
                             const String *const key = strLstGet(keyList, keyListIdx);
 
-                            jsonWriteStrInternal(this, key);
-                            strCatChr(this->json, ':');
+                            jsonWriteKey(this, key);
 
                             // Write value
-                            jsonWriteVarInternal(this, kvGet(keyValue, VARSTR(key)));
+                            jsonWriteVarRecurse(this, kvGet(keyValue, VARSTR(key)));
                         }
 
-                        strCatChr(this->json, '}');
+                        jsonWriteObjectEnd(this);
                     }
 
                     break;
@@ -1965,13 +1933,17 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
 
                 case varTypeString:
                 {
-                    if (varStr(value) == NULL)
-                        strCat(this->json, NULL_STR);
-                    else
-                        jsonWriteStrInternal(this, varStr(value));
-
+                    jsonWriteStr(this, varStr(value));
                     break;
                 }
+
+                case varTypeUInt:
+                    jsonWriteUInt(this, varUInt(value));
+                    break;
+
+                case varTypeUInt64:
+                    jsonWriteUInt64(this, varUInt64(value));
+                    break;
 
                 default:
                 {
@@ -1980,21 +1952,15 @@ jsonWriteVarInternal(JsonWrite *const this, const Variant *const value)
                     const VariantList *const valueList = varVarLst(value);
 
                     if (valueList == NULL)
-                        strCat(this->json, NULL_STR);
+                        jsonWriteNull(this);
                     else
                     {
-                        strCatChr(this->json, '[');
+                        jsonWriteArrayBegin(this);
 
                         for (unsigned int valueListIdx = 0; valueListIdx < varLstSize(valueList); valueListIdx++)
-                        {
-                            // Add common after first value
-                            if (valueListIdx > 0)
-                                strCatChr(this->json, ',');
+                            jsonWriteVarRecurse(this, varLstGet(valueList, valueListIdx));
 
-                            jsonWriteVarInternal(this, varLstGet(valueList, valueListIdx));
-                        }
-
-                        strCatChr(this->json, ']');
+                        jsonWriteArrayEnd(this);
                     }
                 }
             }
@@ -2015,8 +1981,7 @@ jsonWriteVar(JsonWrite *const this, const Variant *const value)
 
     ASSERT(this != NULL);
 
-    jsonWritePush(this, jsonTypeString, NULL);
-    jsonWriteVarInternal(this, value);
+    jsonWriteVarRecurse(this, value);
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -2032,13 +1997,7 @@ jsonWriteZ(JsonWrite *const this, const char *const value)
 
     ASSERT(this != NULL);
 
-    if (value == NULL)
-        jsonWriteNull(this);
-    else
-    {
-        jsonWritePush(this, jsonTypeString, NULL);
-        jsonWriteStrInternal(this, STR(value));
-    }
+    jsonWriteStr(this, value == NULL ? NULL : STR(value));
 
     FUNCTION_TEST_RETURN(this);
 }
@@ -2080,5 +2039,5 @@ jsonFromVar(const Variant *const value)
 String *
 jsonWriteToLog(const JsonWrite *const this)
 {
-    return strNewFmt("{depth: %u}", this->stack != NULL ? lstSize(this->stack) : (unsigned int)(this->complete ? 1 : 0));
+    return strNewFmt("{size: %zu}", strSize(this->json));
 }

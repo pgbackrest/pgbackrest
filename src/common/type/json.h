@@ -74,7 +74,7 @@ void jsonReadNull(JsonRead *this);
 void jsonReadObjectBegin(JsonRead *this);
 void jsonReadObjectEnd(JsonRead *this);
 
-// Skip a JSON value
+// Skip value
 void jsonReadSkip(JsonRead *this);
 
 // Read string
@@ -147,9 +147,6 @@ JsonWrite *jsonWriteNull(JsonWrite *this);
 // Write object begin/end
 JsonWrite *jsonWriteObjectBegin(JsonWrite *this);
 JsonWrite *jsonWriteObjectEnd(JsonWrite *this);
-
-// Skip the next value
-void jsonReadSkip(JsonRead *this);
 
 // Write string
 JsonWrite *jsonWriteStr(JsonWrite *this, const String *value);
