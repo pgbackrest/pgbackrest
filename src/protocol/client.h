@@ -35,12 +35,9 @@ typedef struct ProtocolClient ProtocolClient;
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define PROTOCOL_GREETING_NAME                                      "name"
-    STRING_DECLARE(PROTOCOL_GREETING_NAME_STR);
-#define PROTOCOL_GREETING_SERVICE                                   "service"
-    STRING_DECLARE(PROTOCOL_GREETING_SERVICE_STR);
-#define PROTOCOL_GREETING_VERSION                                   "version"
-    STRING_DECLARE(PROTOCOL_GREETING_VERSION_STR);
+#define PROTOCOL_GREETING_NAME                                      STRID5("name", 0x2b42e0)
+#define PROTOCOL_GREETING_SERVICE                                   STRID5("service", 0x1469b48b30)
+#define PROTOCOL_GREETING_VERSION                                   STRID5("version", 0x39e99c8b60)
 
 #define PROTOCOL_COMMAND_CONFIG                                     STRID5("config", 0xe9339e30)
 #define PROTOCOL_COMMAND_EXIT                                       STRID5("exit", 0xa27050)

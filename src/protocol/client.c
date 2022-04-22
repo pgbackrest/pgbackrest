@@ -13,13 +13,6 @@ Protocol Client
 #include "version.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_GREETING_NAME_STR,                           PROTOCOL_GREETING_NAME);
-STRING_EXTERN(PROTOCOL_GREETING_SERVICE_STR,                        PROTOCOL_GREETING_SERVICE);
-STRING_EXTERN(PROTOCOL_GREETING_VERSION_STR,                        PROTOCOL_GREETING_VERSION);
-
-/***********************************************************************************************************************************
 Client state enum
 ***********************************************************************************************************************************/
 typedef enum
@@ -121,33 +114,34 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 
             jsonReadObjectBegin(greeting);
 
-            const String *const expected[] =
+            const struct
             {
-                PROTOCOL_GREETING_NAME_STR, STRDEF(PROJECT_NAME),
-                PROTOCOL_GREETING_SERVICE_STR, service,
-                PROTOCOL_GREETING_VERSION_STR, STRDEF(PROJECT_VERSION),
+                const StringId key;
+                const char *const value;
+            } expected[] =
+            {
+                {.key = PROTOCOL_GREETING_NAME, .value = PROJECT_NAME},
+                {.key = PROTOCOL_GREETING_SERVICE, .value = strZ(service)},
+                {.key = PROTOCOL_GREETING_VERSION, .value = PROJECT_VERSION},
             };
 
-            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected) / 2; expectedIdx++)
+            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
             {
-                const String *const expectedKey = expected[expectedIdx * 2];
-                const String *const expectedValue = expected[expectedIdx * 2 + 1];
-
-                if (!jsonReadKeyExpect(greeting, expectedKey))
-                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(expectedKey));
+                if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
+                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(strIdToStr(expected[expectedIdx].key)));
 
                 if (jsonReadTypeNext(greeting) != jsonTypeString)
-                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(expectedKey));
+                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(strIdToStr(expected[expectedIdx].key)));
 
                 const String *const actualValue = jsonReadStr(greeting);
 
-                if (!strEq(actualValue, expectedValue))
+                if (!strEqZ(actualValue, expected[expectedIdx].value))
                 {
                     THROW_FMT(
                         ProtocolError,
                         "expected value '%s' for greeting key '%s' but got '%s'\n"
                             "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
-                        strZ(expectedValue), strZ(expectedKey), strZ(actualValue));
+                        expected[expectedIdx].value, strZ(strIdToStr(expected[expectedIdx].key)), strZ(actualValue));
                 }
             }
 

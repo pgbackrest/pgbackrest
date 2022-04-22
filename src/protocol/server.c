@@ -58,12 +58,9 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
         {
             JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-            jsonWriteKey(json, PROTOCOL_GREETING_NAME_STR);
-            jsonWriteZ(json, PROJECT_NAME);
-            jsonWriteKey(json, PROTOCOL_GREETING_SERVICE_STR);
-            jsonWriteStr(json, service);
-            jsonWriteKey(json, PROTOCOL_GREETING_VERSION_STR);
-            jsonWriteZ(json, PROJECT_VERSION);
+            jsonWriteZ(jsonWriteKeyStrId(json, PROTOCOL_GREETING_NAME), PROJECT_NAME);
+            jsonWriteStr(jsonWriteKeyStrId(json, PROTOCOL_GREETING_SERVICE), service);
+            jsonWriteZ(jsonWriteKeyStrId(json, PROTOCOL_GREETING_VERSION), PROJECT_VERSION);
 
             ioWriteStrLine(this->write, jsonWriteResult(jsonWriteObjectEnd(json)));
             ioWriteFlush(this->write);

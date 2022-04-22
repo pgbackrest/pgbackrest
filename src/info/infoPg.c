@@ -317,26 +317,17 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
             // These need to be saved because older pgBackRest versions expect them
             if (saveData->infoPg->type == infoPgBackup)
             {
-                jsonWriteKeyZ(json, INFO_KEY_DB_CATALOG_VERSION);
-                jsonWriteUInt(json, pgData.catalogVersion);
-                jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION);
-                jsonWriteUInt(json, pgControlVersion(pgData.version));
+                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CATALOG_VERSION), pgData.catalogVersion);
+                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION), pgControlVersion(pgData.version));
             }
 
             if (saveData->infoPg->type == infoPgArchive)
-            {
-                jsonWriteKeyZ(json, INFO_KEY_DB_ID);
-                jsonWriteUInt64(json, pgData.systemId);
-            }
+                jsonWriteUInt64(jsonWriteKeyZ(json, INFO_KEY_DB_ID), pgData.systemId);
 
             if (saveData->infoPg->type == infoPgBackup)
-            {
-                jsonWriteKeyZ(json, INFO_KEY_DB_SYSTEM_ID);
-                jsonWriteUInt64(json, pgData.systemId);
-            }
+                jsonWriteUInt64(jsonWriteKeyZ(json, INFO_KEY_DB_SYSTEM_ID), pgData.systemId);
 
-            jsonWriteKeyZ(json, INFO_KEY_DB_VERSION);
-            jsonWriteStr(json, pgVersionToStr(pgData.version));
+            jsonWriteStr(jsonWriteKeyZ(json, INFO_KEY_DB_VERSION), pgVersionToStr(pgData.version));
 
             infoSaveValue(
                 infoSaveData, INFO_SECTION_DB_HISTORY, strZ(varStrForce(VARUINT(pgData.id))),
