@@ -619,47 +619,43 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
 
     bool result = false;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    // Check that we are currently reading an object
+    jsonReadConsumeWhiteSpace(this);
+
+    JsonWriteStack *const item = lstGetLast(this->stack);
+    ASSERT(item->type == jsonTypeObjectBegin);
+
+    // Read until object end
+    while (jsonReadTypeNextIgnoreComma(this) != jsonTypeObjectEnd)
     {
-        // Check that we are currently reading an object
-        jsonReadConsumeWhiteSpace(this);
+        // Save state before reading the key
+        const char *const jsonBeforeKey = this->json;
+        const bool firstBeforeKey = item->first;
 
-        JsonWriteStack *const item = lstGetLast(this->stack);
-        ASSERT(item->type == jsonTypeObjectBegin);
+        jsonReadPush(this, jsonTypeString, true);
 
-        // Read until object end
-        while (jsonReadTypeNextIgnoreComma(this) != jsonTypeObjectEnd)
+        // Get and compare next key
+        const JsonReadKeyInternalResult keyNext = jsonReadKeyZN(this);
+        const int compare = strncmp(strZ(key), keyNext.buffer, keyNext.size);
+
+        // Return true if key matches
+        if (compare == 0)
         {
-            // Save state before reading the key
-            const char *const jsonBeforeKey = this->json;
-            const bool firstBeforeKey = item->first;
-
-            jsonReadPush(this, jsonTypeString, true);
-
-            // Get and compare next key
-            const JsonReadKeyInternalResult keyNext = jsonReadKeyZN(this);
-            const int compare = strncmp(strZ(key), keyNext.buffer, keyNext.size);
-
-            // Return true if key matches
-            if (compare == 0)
-            {
-                result = true;
-                break;
-            }
-            // Return false and reset state if requested key is after the actual key
-            else if (compare < 0)
-            {
-                this->json = jsonBeforeKey;
-                this->key = false;
-                item->first = firstBeforeKey;
-                break;
-            }
-
-            // Skip the value and continue
-            jsonReadSkip(this);
+            result = true;
+            break;
         }
+        // Return false and reset state if requested key is after the actual key
+        else if (compare < 0)
+        {
+            this->json = jsonBeforeKey;
+            this->key = false;
+            item->first = firstBeforeKey;
+            break;
+        }
+
+        // Skip the value and continue
+        jsonReadSkip(this);
     }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(result);
 }
