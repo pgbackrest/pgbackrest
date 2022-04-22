@@ -42,6 +42,7 @@ Option group constants
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
+#define CFGOPT_ANNOTATION                                           "annotation"
 #define CFGOPT_ARCHIVE_ASYNC                                        "archive-async"
 #define CFGOPT_ARCHIVE_CHECK                                        "archive-check"
 #define CFGOPT_ARCHIVE_COPY                                         "archive-copy"
@@ -127,7 +128,7 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 
-#define CFG_OPTION_TOTAL                                            154
+#define CFG_OPTION_TOTAL                                            155
 
 /***********************************************************************************************************************************
 Option value constants
@@ -353,6 +354,7 @@ Option enum
 ***********************************************************************************************************************************/
 typedef enum
 {
+    cfgOptAnnotation,
     cfgOptArchiveAsync,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,

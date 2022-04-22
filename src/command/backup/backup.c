@@ -2237,6 +2237,10 @@ cmdBackup(void)
                     (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
         }
 
+        // Set annotations in the manifest
+        if (cfgOptionTest(cfgOptAnnotation))
+            manifestAnnotationSet(manifest, cfgOptionKv(cfgOptAnnotation));
+
         // Save the manifest before processing starts
         backupManifestSaveCopy(manifest, cipherPassBackup);
 

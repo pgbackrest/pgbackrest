@@ -36,6 +36,7 @@ STRING_STATIC(MANIFEST_SECTION_BACKUP_OPTION_STR,                   "backup:opti
 STRING_STATIC(MANIFEST_SECTION_BACKUP_TARGET_STR,                   "backup:target");
 
 STRING_STATIC(MANIFEST_SECTION_DB_STR,                              "db");
+STRING_STATIC(MANIFEST_SECTION_METADATA_STR,                        "metadata");
 
 STRING_STATIC(MANIFEST_SECTION_TARGET_FILE_STR,                     "target:file");
 STRING_STATIC(MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR,             "target:file:default");
@@ -46,6 +47,8 @@ STRING_STATIC(MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR,             "target:link
 STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_STR,                     "target:path");
 STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path:default");
 
+#define MANIFEST_KEY_ANNOTATION                                     "annotation"
+    STRING_STATIC(MANIFEST_KEY_ANNOTATION_STR,                      MANIFEST_KEY_ANNOTATION);
 #define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
     STRING_STATIC(MANIFEST_KEY_BACKUP_ARCHIVE_START_STR,            MANIFEST_KEY_BACKUP_ARCHIVE_START);
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
@@ -2017,6 +2020,17 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEq(section, MANIFEST_SECTION_METADATA_STR))
+    {
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+        {
+            if (strEq(key, MANIFEST_KEY_ANNOTATION_STR))
+                manifest->pub.data.annotation = kvDup(varKv(value));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEq(section, MANIFEST_SECTION_DB_STR))
     {
         KeyValue *dbKv = varKv(value);
@@ -2467,6 +2481,17 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
             }
         }
         MEM_CONTEXT_TEMP_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_METADATA_STR, sectionNext))
+    {
+        if (manifest->pub.data.annotation != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_METADATA_STR, MANIFEST_KEY_ANNOTATION_STR,
+                jsonFromKv(manifest->pub.data.annotation));
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -3069,6 +3094,25 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+void
+manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(KEY_VALUE, annotationKv);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    {
+        this->pub.data.annotation = kvDup(annotationKv);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 void
 manifestBackupLabelSet(Manifest *this, const String *backupLabel)
 {

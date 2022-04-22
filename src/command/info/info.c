@@ -34,6 +34,7 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_ANNOTATION_VAR,                    "annotation");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_VAR,                         "error");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_LIST_VAR,                    "error-list");
@@ -551,6 +552,10 @@ backupListAdd(
             kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, BOOL_TRUE_VAR);
         }
 
+        // Get annotation metadata
+        if (manifestData(repoData->manifest)->annotation != NULL)
+            kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, varNewKv(manifestData(repoData->manifest)->annotation));
+
         manifestFree(repoData->manifest);
         repoData->manifest = NULL;
     }
@@ -948,6 +953,21 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             // Else output a general message
             else
                 strCatZ(resultStr, "            error(s) detected during backup\n");
+        }
+
+        // Annotations metadata
+        if (kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR) != NULL)
+        {
+            const KeyValue *annotationKv = varKv(kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR));
+            const StringList *annotationKeyList = strLstNewVarLst(kvKeyList(annotationKv));
+
+            strCatZ(resultStr, "            annotation(s)\n");
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(annotationKeyList); keyIdx++)
+            {
+                String *key = strLstGet(annotationKeyList, keyIdx);
+                const String *value = varStr(kvGet(annotationKv, VARSTR(key)));
+                strCatZ(resultStr, strZ(strNewFmt("                %s: %s\n", strZ(key), strZ(value))));
+            }
         }
     }
 

@@ -1104,6 +1104,19 @@
                         <example>n</example>
                     </config-key>
 
+                    <!-- CONFIG - BACKUP SECTION - ANNOTATION-->
+                    <config-key id="annotation" name="Backup annotation(s)">
+                        <summary>Annotate the backup with user-defined key and value pairs.</summary>
+
+                        <text>
+                            <p>Users can attach informative key/value pairs to the backup. This option can be used multiple times to attach multiple annotations.</p>
+
+                            <p>Those annotations will then be showed by the <cmd>info</cmd> command when a specific backup <br-option>set</br-option> is specified.</p>
+                        </text>
+
+                        <example>source="Sunday backup for website database"</example>
+                    </config-key>
+
                     <!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
                     <config-key id="archive-copy" name="Copy Archive">
                         <summary>Copy WAL segments needed for consistency to the backup.</summary>

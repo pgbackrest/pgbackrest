@@ -1067,6 +1067,15 @@ option:
 
   # Backup options
   #---------------------------------------------------------------------------------------------------------------------------------
+  annotation:
+    section: global
+    type: hash
+    required: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+
   archive-check:
     section: global
     type: boolean

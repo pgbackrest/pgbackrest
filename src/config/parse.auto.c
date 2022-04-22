@@ -690,6 +690,22 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION
     (
+        PARSE_RULE_OPTION_NAME("annotation"),
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),
+        PARSE_RULE_OPTION_RESET(true),
+        PARSE_RULE_OPTION_REQUIRED(false),
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),
+        PARSE_RULE_OPTION_MULTI(true),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)
+        ),
+    ),
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION
+    (
         PARSE_RULE_OPTION_NAME("archive-async"),
         PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),
         PARSE_RULE_OPTION_NEGATE(true),
@@ -9249,6 +9265,7 @@ Order for option parse resolution
 static const ConfigOption optionResolveOrder[] =
 {
     cfgOptStanza,
+    cfgOptAnnotation,
     cfgOptArchiveAsync,
     cfgOptArchiveGetQueueMax,
     cfgOptArchiveHeaderCheck,

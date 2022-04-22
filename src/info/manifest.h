@@ -66,6 +66,8 @@ typedef struct ManifestData
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
     unsigned int pgCatalogVersion;                                  // PostgreSQL catalog version
 
+    KeyValue *annotation;                                           // Backup annotation(s) metadata
+
     bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
     bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?
     const Variant *backupOptionStandby;                             // Will the backup be performed from a standby?
@@ -197,6 +199,9 @@ manifestData(const Manifest *const this)
 {
     return &(THIS_PUB(Manifest)->data);
 }
+
+// Set annotations
+void manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv);
 
 // Set backup label
 void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
