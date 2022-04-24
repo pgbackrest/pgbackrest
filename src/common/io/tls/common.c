@@ -27,6 +27,7 @@ tlsAsn1ToStr(ASN1_STRING *const nameAsn1)
         THROW(CryptoError, "TLS certificate name entry is missing");
 
     FUNCTION_TEST_RETURN(                                                                                           // {vm_covered}
+        STRING,
         strNewZN(
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
             (const char *)ASN1_STRING_data(nameAsn1),
@@ -70,7 +71,7 @@ tlsCertCommonName(X509 *const certificate)                                      
     // Check for NULLs in the name
     tlsCertNameVerify(result);                                                                                      // {vm_covered}
 
-    FUNCTION_TEST_RETURN(result);                                                                                   // {vm_covered}
+    FUNCTION_TEST_RETURN(STRING, result);                                                                           // {vm_covered}
 }
 
 /**********************************************************************************************************************************/
@@ -182,5 +183,5 @@ tlsContext(void)
     // Disable auto-retry to prevent SSL_read() from hanging
     SSL_CTX_clear_mode(result, SSL_MODE_AUTO_RETRY);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE_P(SSL_CTX, result);
 }

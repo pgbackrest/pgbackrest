@@ -57,7 +57,7 @@ jsonToBoolInternal(const char *json, unsigned int *jsonPos)
     else
         THROW_FMT(JsonFormatError, "expected boolean at '%s'", json + *jsonPos);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 bool
@@ -77,7 +77,7 @@ jsonToBool(const String *json)
     if (jsonPos != strSize(json))
         THROW_FMT(JsonFormatError, "unexpected characters after boolean at '%s'", strZ(json) + jsonPos);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
@@ -125,7 +125,7 @@ jsonToNumberInternal(const char *json, unsigned int *jsonPos)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 static Variant *
@@ -145,7 +145,7 @@ jsonToNumber(const String *json)
     if (jsonPos != strSize(json))
         THROW_FMT(JsonFormatError, "unexpected characters after number at '%s'", strZ(json) + jsonPos);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 int
@@ -163,7 +163,7 @@ jsonToInt(const String *json)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(INT, result);
 }
 
 int64_t
@@ -181,7 +181,7 @@ jsonToInt64(const String *json)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(INT64, result);
 }
 
 unsigned int
@@ -199,7 +199,7 @@ jsonToUInt(const String *json)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(UINT, result);
 }
 
 uint64_t
@@ -217,7 +217,7 @@ jsonToUInt64(const String *json)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 /**********************************************************************************************************************************/
@@ -334,7 +334,7 @@ jsonToStrInternal(const char *json, unsigned int *jsonPos)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 String *
@@ -359,7 +359,7 @@ jsonToStr(const String *json)
     if (jsonPos != strSize(json))
         THROW_FMT(JsonFormatError, "unexpected characters after string at '%s'", strZ(json) + jsonPos);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -411,7 +411,7 @@ jsonToKvInternal(const char *json, unsigned int *jsonPos)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(KEY_VALUE, result);
 }
 
 KeyValue *
@@ -434,7 +434,7 @@ jsonToKv(const String *json)
     if (jsonPos != strSize(json))
         THROW_FMT(JsonFormatError, "unexpected characters after object at '%s'", strZ(json) + jsonPos);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(KEY_VALUE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -486,7 +486,7 @@ jsonToVarLstInternal(const char *json, unsigned int *jsonPos)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 VariantList *
@@ -506,7 +506,7 @@ jsonToVarLst(const String *json)
     if (jsonPos != strSize(json))
         THROW_FMT(JsonFormatError, "unexpected characters after array at '%s'", strZ(json) + jsonPos);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -575,7 +575,7 @@ jsonToVarInternal(const char *json, unsigned int *jsonPos)
 
     jsonConsumeWhiteSpace(json, jsonPos);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 Variant *
@@ -604,7 +604,7 @@ jsonFromBool(bool value)
         FUNCTION_TEST_PARAM(BOOL, value);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(value ? TRUE_STR : FALSE_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, value ? TRUE_STR : FALSE_STR);
 }
 
 /**********************************************************************************************************************************/
@@ -618,7 +618,7 @@ jsonFromInt(int number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtIntToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNewZ(working));
+    FUNCTION_TEST_RETURN(STRING, strNewZ(working));
 }
 
 String *
@@ -631,7 +631,7 @@ jsonFromInt64(int64_t number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtInt64ToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNewZ(working));
+    FUNCTION_TEST_RETURN(STRING, strNewZ(working));
 }
 
 String *
@@ -644,7 +644,7 @@ jsonFromUInt(unsigned int number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtUIntToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNewZ(working));
+    FUNCTION_TEST_RETURN(STRING, strNewZ(working));
 }
 
 String *
@@ -657,7 +657,7 @@ jsonFromUInt64(uint64_t number)
     char working[CVT_BASE10_BUFFER_SIZE];
     cvtUInt64ToZ(number, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(strNewZ(working));
+    FUNCTION_TEST_RETURN(STRING, strNewZ(working));
 }
 
 /**********************************************************************************************************************************/
@@ -773,7 +773,7 @@ jsonFromStr(const String *string)
     String *json = strNew();
     jsonFromStrInternal(json, string);
 
-    FUNCTION_TEST_RETURN(json);
+    FUNCTION_TEST_RETURN(STRING, json);
 }
 
 /***********************************************************************************************************************************
@@ -881,7 +881,7 @@ jsonFromKvInternal(const KeyValue *kv)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************

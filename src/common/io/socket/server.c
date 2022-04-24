@@ -129,7 +129,7 @@ sckServerName(THIS_VOID)                                                        
 
     ASSERT(this != NULL);                                                                                           // {vm_covered}
 
-    FUNCTION_TEST_RETURN(this->name);                                                                               // {vm_covered}
+    FUNCTION_TEST_RETURN_CONST(STRING, this->name);                                                                 // {vm_covered}
 }
 
 /**********************************************************************************************************************************/

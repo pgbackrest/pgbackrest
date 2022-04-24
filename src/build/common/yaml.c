@@ -66,7 +66,7 @@ yamlNew(const Buffer *const buffer)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN_TYPE_P(Yaml, this);
 }
 
 /**********************************************************************************************************************************/
@@ -81,38 +81,38 @@ yamlEventType(yaml_event_type_t type)
     switch (type)
     {
         case YAML_STREAM_START_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeStreamBegin);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeStreamBegin);
 
         case YAML_STREAM_END_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeStreamEnd);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeStreamEnd);
 
         case YAML_DOCUMENT_START_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeDocBegin);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeDocBegin);
 
         case YAML_DOCUMENT_END_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeDocEnd);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeDocEnd);
 
         case YAML_ALIAS_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeAlias);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeAlias);
 
         case YAML_SCALAR_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeScalar);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeScalar);
 
         case YAML_SEQUENCE_START_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeSeqBegin);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeSeqBegin);
 
         case YAML_SEQUENCE_END_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeSeqEnd);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeSeqEnd);
 
         case YAML_MAPPING_START_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeMapBegin);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeMapBegin);
 
         case YAML_MAPPING_END_EVENT:
-            FUNCTION_TEST_RETURN(yamlEventTypeMapEnd);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeMapEnd);
 
         default:
             CHECK(FormatError, type == YAML_NO_EVENT, "expected yaml no event");
-            FUNCTION_TEST_RETURN(yamlEventTypeNone);
+            FUNCTION_TEST_RETURN_TYPE(YamlEventType, yamlEventTypeNone);
     }
 }
 
@@ -149,7 +149,7 @@ yamlEventNext(Yaml *this)
 
     yaml_event_delete(&event);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(YamlEvent, result);
 }
 
 /**********************************************************************************************************************************/
@@ -164,7 +164,7 @@ yamlEventNextCheck(Yaml *this, YamlEventType type)
     YamlEvent result = yamlEventNext(this);
     yamlEventCheck(result, type);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(YamlEvent, result);
 }
 
 /**********************************************************************************************************************************/
@@ -195,9 +195,9 @@ yamlBoolParse(YamlEvent event)
     FUNCTION_TEST_END();
 
     if (strEq(event.value, FALSE_STR))
-        FUNCTION_TEST_RETURN(false);
+        FUNCTION_TEST_RETURN(BOOL, false);
     else if (strEq(event.value, TRUE_STR))
-        FUNCTION_TEST_RETURN(true);
+        FUNCTION_TEST_RETURN(BOOL, true);
 
     THROW_FMT(FormatError, "invalid boolean '%s'", strZ(event.value));
 }

@@ -1414,7 +1414,7 @@ backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
     ASSERT(name != NULL);
 
     FUNCTION_TEST_RETURN(
-        strEqZ(name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) || !regExpMatch(standbyExp, name));
+        BOOL, strEqZ(name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) || !regExpMatch(standbyExp, name));
 }
 
 // Comparator to order ManifestFile objects by size, date, and name
@@ -1442,22 +1442,22 @@ backupProcessQueueComparator(const void *item1, const void *item2)
         file2.size > backupProcessQueueComparatorBundleLimit)
     {
         if (file1.size < file2.size)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
         else if (file1.size > file2.size)
-            FUNCTION_TEST_RETURN(1);
+            FUNCTION_TEST_RETURN(INT, 1);
     }
 
     // If bundling order by time ascending so that older files are bundled with older files and newer with newer
     if (backupProcessQueueComparatorBundle)
     {
         if (file1.timestamp > file2.timestamp)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
         else if (file1.timestamp < file2.timestamp)
-            FUNCTION_TEST_RETURN(1);
+            FUNCTION_TEST_RETURN(INT, 1);
     }
 
     // If size/time is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
+    FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
 }
 
 // Helper to generate the backup queues
@@ -1610,11 +1610,11 @@ backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal
 
     // Deal with wrapping on either end
     if (queueIdx < 0)
-        FUNCTION_TEST_RETURN((int)queueTotal - 1);
+        FUNCTION_TEST_RETURN(INT, (int)queueTotal - 1);
     else if (queueIdx == (int)queueTotal)
-        FUNCTION_TEST_RETURN(0);
+        FUNCTION_TEST_RETURN(INT, 0);
 
-    FUNCTION_TEST_RETURN(queueIdx);
+    FUNCTION_TEST_RETURN(INT, queueIdx);
 }
 
 // Callback to fetch backup jobs for the parallel executor
@@ -1734,7 +1734,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 static void

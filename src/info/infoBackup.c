@@ -84,7 +84,7 @@ infoBackupNewInternal(void)
         },
     };
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(INFO_BACKUP, this);
 }
 
 /**********************************************************************************************************************************/

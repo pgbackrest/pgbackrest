@@ -70,7 +70,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                     break;
 
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
-                    FUNCTION_TEST_RETURN(0);
+                    FUNCTION_TEST_RETURN(STRING_ID, 0);
             }
 
             // Set encoding in header
@@ -123,7 +123,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                     result |= (uint64_t)map[(uint8_t)buffer[0]] << 4;
             }
 
-            FUNCTION_TEST_RETURN(result);
+            FUNCTION_TEST_RETURN(STRING_ID, result);
         }
 
         // 6-bit encoding
@@ -159,7 +159,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                     break;
 
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
-                    FUNCTION_TEST_RETURN(0);
+                    FUNCTION_TEST_RETURN(STRING_ID, 0);
             }
 
             // Set encoding in header
@@ -206,7 +206,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                     result |= (uint64_t)map[(uint8_t)buffer[0]] << 4;
             }
 
-            FUNCTION_TEST_RETURN(result);
+            FUNCTION_TEST_RETURN(STRING_ID, result);
         }
     }
 }
@@ -232,7 +232,7 @@ strIdFromZN(const char *const buffer, const size_t size, const bool error)
             THROW_FMT(FormatError, "'%s' contains invalid characters", buffer);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_ID, result);
 }
 
 /**********************************************************************************************************************************/
@@ -271,7 +271,7 @@ strIdToZN(StringId strId, char *const buffer)
                 strId >>= 5;                                                                                                       \
                                                                                                                                    \
                 if (strId == 0)                                                                                                    \
-                    FUNCTION_TEST_RETURN(idx + 1)
+                    FUNCTION_TEST_RETURN(SIZE, idx + 1)
 
             // Char 1-11
             STR5ID_TO_ZN_IDX(0);
@@ -294,10 +294,10 @@ strIdToZN(StringId strId, char *const buffer)
             if (prefix)
             {
                 buffer[12] = '+';
-                FUNCTION_TEST_RETURN(13);
+                FUNCTION_TEST_RETURN(SIZE, 13);
             }
 
-            FUNCTION_TEST_RETURN(12);
+            FUNCTION_TEST_RETURN(SIZE, 12);
         }
 
         // 6-bit decoding
@@ -314,7 +314,7 @@ strIdToZN(StringId strId, char *const buffer)
                 strId >>= 6;                                                                                                       \
                                                                                                                                    \
                 if (strId == 0)                                                                                                    \
-                    FUNCTION_TEST_RETURN(idx + 1)
+                    FUNCTION_TEST_RETURN(SIZE, idx + 1)
 
             // Char 1-9
             STR6ID_TO_ZN_IDX(0);
@@ -335,10 +335,10 @@ strIdToZN(StringId strId, char *const buffer)
             if (prefix)
             {
                 buffer[10] = '+';
-                FUNCTION_TEST_RETURN(11);
+                FUNCTION_TEST_RETURN(SIZE, 11);
             }
 
-            FUNCTION_TEST_RETURN(10);
+            FUNCTION_TEST_RETURN(SIZE, 10);
         }
     }
 }
@@ -354,7 +354,7 @@ strIdToStr(const StringId strId)
     char buffer[STRID_MAX + 1];
     buffer[strIdToZN(strId, buffer)] = '\0';
 
-    FUNCTION_TEST_RETURN(strNewZ(buffer));
+    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
 }
 
 /**********************************************************************************************************************************/
@@ -369,7 +369,7 @@ strIdToZ(const StringId strId, char *const buffer)
     size_t size = strIdToZN(strId, buffer);
     buffer[size] = '\0';
 
-    FUNCTION_TEST_RETURN(size);
+    FUNCTION_TEST_RETURN(SIZE, size);
 }
 
 /**********************************************************************************************************************************/

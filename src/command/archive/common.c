@@ -50,7 +50,8 @@ archiveAsyncSpoolQueue(ArchiveMode archiveMode)
         FUNCTION_TEST_PARAM(STRING_ID, archiveMode);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN((archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR));
+    FUNCTION_TEST_RETURN_CONST(
+        STRING, archiveMode == archiveModeGet ? STORAGE_SPOOL_ARCHIVE_IN_STR : STORAGE_SPOOL_ARCHIVE_OUT_STR);
 }
 
 /**********************************************************************************************************************************/

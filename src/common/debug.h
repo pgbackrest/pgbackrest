@@ -327,16 +327,48 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
         FUNCTION_TEST_BEGIN();                                                                                                     \
         FUNCTION_TEST_END();
 
-    #define FUNCTION_TEST_RETURN(...)                                                                                              \
+    #define FUNCTION_TEST_RETURN_TYPE_BASE(typePre, type, typePost, ...)                                                           \
         do                                                                                                                         \
         {                                                                                                                          \
             /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                                                     \
             (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
                                                                                                                                    \
+            typePre type typePost FUNCTION_TEST_result = __VA_ARGS__;                                                              \
+                                                                                                                                   \
             STACK_TRACE_POP(true);                                                                                                 \
-            return __VA_ARGS__;                                                                                                    \
+                                                                                                                                   \
+            return FUNCTION_TEST_result;                                                                                           \
         }                                                                                                                          \
         while (0)
+
+    #define FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(typePre, typeMacroPrefix, typePost, ...)                                          \
+        FUNCTION_TEST_RETURN_TYPE_BASE(typePre, FUNCTION_LOG_##typeMacroPrefix##_TYPE, typePost, __VA_ARGS__)
+
+    #define FUNCTION_TEST_RETURN(typeMacroPrefix, ...)                                                                             \
+        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, , __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_P(typeMacroPrefix, ...)                                                                           \
+        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, *, __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_PP(typeMacroPrefix, ...)                                                                          \
+        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, **, __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_CONST(typeMacroPrefix, ...)                                                                       \
+        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, , __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_CONST_P(typeMacroPrefix, ...)                                                                     \
+        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, *, __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_CONST_PP(typeMacroPrefix, ...)                                                                    \
+        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, **, __VA_ARGS__)
+
+    #define FUNCTION_TEST_RETURN_TYPE(type, ...)                                                                                   \
+        FUNCTION_TEST_RETURN_TYPE_BASE(, type, , __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_TYPE_P(type, ...)                                                                                 \
+        FUNCTION_TEST_RETURN_TYPE_BASE(, type, *, __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_TYPE_PP(type, ...)                                                                                \
+        FUNCTION_TEST_RETURN_TYPE_BASE(, type, **, __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_TYPE_CONST(type, ...)                                                                             \
+        FUNCTION_TEST_RETURN_TYPE_BASE(const, type, , __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_TYPE_CONST_P(type, ...)                                                                           \
+        FUNCTION_TEST_RETURN_TYPE_BASE(const, type, *, __VA_ARGS__)
+    #define FUNCTION_TEST_RETURN_TYPE_CONST_PP(type, ...)                                                                          \
+        FUNCTION_TEST_RETURN_TYPE_BASE(const, type, **, __VA_ARGS__)
 
     #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
         do                                                                                                                         \
@@ -355,8 +387,33 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
     #define FUNCTION_TEST_PARAM_PP(typeMacroPrefix, param)
     #define FUNCTION_TEST_END()
     #define FUNCTION_TEST_VOID()
-    #define FUNCTION_TEST_RETURN(...)                                                                                              \
+
+    #define FUNCTION_TEST_RETURN(typeMacroPrefix, ...)                                                                             \
         return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_P(typeMacroPrefix, ...)                                                                           \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_PP(typeMacroPrefix, ...)                                                                          \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_CONST(typeMacroPrefix, ...)                                                                       \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_CONST_P(typeMacroPrefix, ...)                                                                     \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_CONST_PP(typeMacroPrefix, ...)                                                                    \
+        return __VA_ARGS__
+
+    #define FUNCTION_TEST_RETURN_TYPE(type, ...)                                                                                   \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_TYPE_P(type, ...)                                                                                 \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_TYPE_PP(type, ...)                                                                                \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_TYPE_CONST(type, ...)                                                                             \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_TYPE_CONST_P(type, ...)                                                                           \
+        return __VA_ARGS__
+    #define FUNCTION_TEST_RETURN_TYPE_CONST_PP(type, ...)                                                                          \
+        return __VA_ARGS__
+
     #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
         return
 #endif // DEBUG_TEST_TRACE_MACRO

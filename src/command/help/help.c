@@ -90,7 +90,7 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(STRING_LIST, this);
 }
 
 /***********************************************************************************************************************************

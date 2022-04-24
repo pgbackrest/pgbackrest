@@ -118,7 +118,7 @@ memAllocInternal(size_t size)
         THROW_FMT(MemoryError, "unable to allocate %zu bytes", size);
 
     // Return the buffer
-    FUNCTION_TEST_RETURN(buffer);
+    FUNCTION_TEST_RETURN_P(VOID, buffer);
 }
 
 /***********************************************************************************************************************************
@@ -139,7 +139,7 @@ memAllocPtrArrayInternal(size_t size)
         buffer[ptrIdx] = NULL;
 
     // Return the buffer
-    FUNCTION_TEST_RETURN(buffer);
+    FUNCTION_TEST_RETURN_P(VOID, buffer);
 }
 
 /***********************************************************************************************************************************
@@ -163,7 +163,7 @@ memReAllocInternal(void *bufferOld, size_t sizeNew)
         THROW_FMT(MemoryError, "unable to reallocate %zu bytes", sizeNew);
 
     // Return the buffer
-    FUNCTION_TEST_RETURN(bufferNew);
+    FUNCTION_TEST_RETURN_P(VOID, bufferNew);
 }
 
 /***********************************************************************************************************************************
@@ -186,7 +186,7 @@ memReAllocPtrArrayInternal(void *bufferOld, size_t sizeOld, size_t sizeNew)
         bufferNew[ptrIdx] = NULL;
 
     // Return the buffer
-    FUNCTION_TEST_RETURN(bufferNew);
+    FUNCTION_TEST_RETURN_P(VOID, bufferNew);
 }
 
 /***********************************************************************************************************************************
@@ -252,7 +252,7 @@ memContextNewIndex(MemContext *memContext)
         }
     }
 
-    FUNCTION_TEST_RETURN(memContext->contextChildFreeIdx);
+    FUNCTION_TEST_RETURN(UINT, memContext->contextChildFreeIdx);
 }
 
 /**********************************************************************************************************************************/
@@ -308,7 +308,7 @@ memContextNew(const char *const name, const MemContextNewParam param)
     };
 
     // Return context
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, this);
 }
 
 /**********************************************************************************************************************************/
@@ -322,7 +322,7 @@ memContextAllocExtra(MemContext *const this)
     ASSERT(this != NULL);
     ASSERT(this->allocExtra != 0);
 
-    FUNCTION_TEST_RETURN(this + 1);
+    FUNCTION_TEST_RETURN_P(VOID, this + 1);
 }
 
 /**********************************************************************************************************************************/
@@ -336,7 +336,7 @@ memContextFromAllocExtra(void *const allocExtra)
     ASSERT(allocExtra != NULL);
     ASSERT(((MemContext *)allocExtra - 1)->allocExtra != 0);
 
-    FUNCTION_TEST_RETURN((MemContext *)allocExtra - 1);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, (MemContext *)allocExtra - 1);
 }
 
 const MemContext *
@@ -349,7 +349,7 @@ memContextConstFromAllocExtra(const void *const allocExtra)
     ASSERT(allocExtra != NULL);
     ASSERT(((MemContext *)allocExtra - 1)->allocExtra != 0);
 
-    FUNCTION_TEST_RETURN((MemContext *)allocExtra - 1);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, (MemContext *)allocExtra - 1);
 }
 
 /**********************************************************************************************************************************/
@@ -466,7 +466,7 @@ memContextAllocNew(size_t size)
     // Update free index to next location. This location may not actually be free but it is where the search should start next time.
     contextCurrent->allocFreeIdx++;
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE_P(MemContextAlloc, result);
 }
 
 /***********************************************************************************************************************************
@@ -489,7 +489,7 @@ memContextAllocResize(MemContextAlloc *alloc, size_t size)
     // Update pointer in allocation list in case the realloc moved the allocation
     memContextStack[memContextCurrentStackIdx].memContext->allocList[alloc->allocIdx] = alloc;
 
-    FUNCTION_TEST_RETURN(alloc);
+    FUNCTION_TEST_RETURN_TYPE_P(MemContextAlloc, alloc);
 }
 
 /**********************************************************************************************************************************/
@@ -500,7 +500,7 @@ memNew(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size)));
+    FUNCTION_TEST_RETURN_P(VOID, MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size)));
 }
 
 /**********************************************************************************************************************************/
@@ -518,7 +518,7 @@ memNewPtrArray(size_t size)
     for (size_t ptrIdx = 0; ptrIdx < size; ptrIdx++)
         buffer[ptrIdx] = NULL;
 
-    FUNCTION_TEST_RETURN(buffer);
+    FUNCTION_TEST_RETURN_P(VOID, buffer);
 }
 
 /**********************************************************************************************************************************/
@@ -530,7 +530,7 @@ memResize(const void *buffer, size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(MEM_CONTEXT_ALLOC_BUFFER(memContextAllocResize(MEM_CONTEXT_ALLOC_HEADER(buffer), size)));
+    FUNCTION_TEST_RETURN_P(VOID, MEM_CONTEXT_ALLOC_BUFFER(memContextAllocResize(MEM_CONTEXT_ALLOC_HEADER(buffer), size)));
 }
 
 /**********************************************************************************************************************************/
@@ -694,7 +694,7 @@ MemContext *
 memContextTop(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(&contextTop);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, &contextTop);
 }
 
 /**********************************************************************************************************************************/
@@ -702,7 +702,7 @@ MemContext *
 memContextCurrent(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx].memContext);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, memContextStack[memContextCurrentStackIdx].memContext);
 }
 
 /**********************************************************************************************************************************/
@@ -715,7 +715,7 @@ memContextFreeing(const MemContext *const this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->state == memContextStateFreeing);
+    FUNCTION_TEST_RETURN(BOOL, this->state == memContextStateFreeing);
 }
 
 /**********************************************************************************************************************************/
@@ -732,7 +732,7 @@ memContextName(const MemContext *const this)
     if (this->state != memContextStateActive)
         THROW(AssertError, "cannot get name for inactive context");
 
-    FUNCTION_TEST_RETURN(this->name);
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, this->name);
 }
 
 /**********************************************************************************************************************************/
@@ -748,7 +748,7 @@ memContextPrior(void)
     while (memContextStack[memContextCurrentStackIdx - priorIdx].type == memContextStackTypeNew)
         priorIdx++;
 
-    FUNCTION_TEST_RETURN(memContextStack[memContextCurrentStackIdx - priorIdx].memContext);
+    FUNCTION_TEST_RETURN(MEM_CONTEXT, memContextStack[memContextCurrentStackIdx - priorIdx].memContext);
 }
 
 /**********************************************************************************************************************************/
@@ -778,7 +778,7 @@ memContextSize(const MemContext *this)
             result += this->allocList[allocIdx]->size;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 /**********************************************************************************************************************************/

@@ -684,7 +684,7 @@ restoreManifestOwnerReplace(const String *const owner, const String *const owner
         FUNCTION_TEST_PARAM(STRING, ownerDefaultRoot);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(userRoot() ? (owner == NULL ? ownerDefaultRoot : owner) : NULL);
+    FUNCTION_TEST_RETURN_CONST(STRING, userRoot() ? (owner == NULL ? ownerDefaultRoot : owner) : NULL);
 }
 
 // Helper to get list of owners from a file/link/path list
@@ -1934,54 +1934,54 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     if (file1.size == 0)
     {
         if (file2.size != 0)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
     }
     else if (file2.size == 0)
-        FUNCTION_TEST_RETURN(1);
+        FUNCTION_TEST_RETURN(INT, 1);
 
     // If the bundle id differs that is enough to determine order
     if (file1.bundleId < file2.bundleId)
-        FUNCTION_TEST_RETURN(1);
+        FUNCTION_TEST_RETURN(INT, 1);
     else if (file1.bundleId > file2.bundleId)
-        FUNCTION_TEST_RETURN(-1);
+        FUNCTION_TEST_RETURN(INT, -1);
 
     // If the bundle ids are 0
     if (file1.bundleId == 0)
     {
         // If the size differs then that's enough to determine order
         if (file1.size < file2.size)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
         else if (file1.size > file2.size)
-            FUNCTION_TEST_RETURN(1);
+            FUNCTION_TEST_RETURN(INT, 1);
 
         // If size is the same then use name to generate a deterministic ordering (names must be unique)
         ASSERT(!strEq(file1.name, file2.name));
-        FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
+        FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
     }
 
     // If the reference differs that is enough to determine order
     if (file1.reference == NULL)
     {
         if (file2.reference != NULL)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
     }
     else if (file2.reference == NULL)
-        FUNCTION_TEST_RETURN(1);
+        FUNCTION_TEST_RETURN(INT, 1);
     else
     {
         const int backupLabelCmp = strCmp(file1.reference, file2.reference) * -1;
 
         if (backupLabelCmp != 0)
-            FUNCTION_TEST_RETURN(backupLabelCmp);
+            FUNCTION_TEST_RETURN(INT, backupLabelCmp);
     }
 
     // Finally order by bundle offset
     ASSERT(file1.bundleOffset != file2.bundleOffset);
 
     if (file1.bundleOffset < file2.bundleOffset)
-        FUNCTION_TEST_RETURN(1);
+        FUNCTION_TEST_RETURN(INT, 1);
 
-    FUNCTION_TEST_RETURN(-1);
+    FUNCTION_TEST_RETURN(INT, -1);
 }
 
 static uint64_t
@@ -2081,6 +2081,7 @@ restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
     ASSERT(manifestName != NULL);
 
     FUNCTION_TEST_RETURN(
+        BOOL,
         zeroExp == NULL ? false : regExpMatch(zeroExp, manifestName) && !strEndsWith(manifestName, STRDEF("/" PG_FILE_PGVERSION)));
 }
 
@@ -2101,7 +2102,7 @@ restoreFilePgPath(const Manifest *manifest, const String *manifestName)
     if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
         result = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(result));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 static uint64_t
@@ -2235,11 +2236,11 @@ restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTota
 
     // Deal with wrapping on either end
     if (queueIdx < 0)
-        FUNCTION_TEST_RETURN((int)queueTotal - 1);
+        FUNCTION_TEST_RETURN(INT, (int)queueTotal - 1);
     else if (queueIdx == (int)queueTotal)
-        FUNCTION_TEST_RETURN(0);
+        FUNCTION_TEST_RETURN(INT, 0);
 
-    FUNCTION_TEST_RETURN(queueIdx);
+    FUNCTION_TEST_RETURN(INT, queueIdx);
 }
 
 // Callback to fetch restore jobs for the parallel executor
@@ -2363,7 +2364,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 /**********************************************************************************************************************************/

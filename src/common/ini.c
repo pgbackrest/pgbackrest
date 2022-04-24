@@ -40,7 +40,7 @@ iniNew(void)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(INI, this);
 }
 
 /***********************************************************************************************************************************
@@ -73,7 +73,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key, bool r
     if (result == NULL && required)
         THROW_FMT(FormatError, "section '%s', key '%s' does not exist", strZ(section), strZ(key));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(VARIANT, result);
 }
 
 /**********************************************************************************************************************************/
@@ -86,14 +86,7 @@ iniGet(const Ini *this, const String *section, const String *key)
         FUNCTION_TEST_PARAM(STRING, key);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(section != NULL);
-    ASSERT(key != NULL);
-
-    // Get the value
-    const Variant *result = iniGetInternal(this, section, key, true);
-
-    FUNCTION_TEST_RETURN(varStr(result));
+    FUNCTION_TEST_RETURN_CONST(STRING, varStr(iniGetInternal(this, section, key, true)));
 }
 
 /**********************************************************************************************************************************/
@@ -107,14 +100,10 @@ iniGetDefault(const Ini *this, const String *section, const String *key, const S
         FUNCTION_TEST_PARAM(STRING, defaultValue);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(section != NULL);
-    ASSERT(key != NULL);
-
     // Get the value
     const Variant *result = iniGetInternal(this, section, key, false);
 
-    FUNCTION_TEST_RETURN(result == NULL ? defaultValue : varStr(result));
+    FUNCTION_TEST_RETURN_CONST(STRING, result == NULL ? defaultValue : varStr(result));
 }
 
 /**********************************************************************************************************************************/
@@ -127,14 +116,10 @@ iniGetList(const Ini *this, const String *section, const String *key)
         FUNCTION_TEST_PARAM(STRING, key);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(section != NULL);
-    ASSERT(key != NULL);
-
     // Get the value
     const Variant *result = iniGetInternal(this, section, key, false);
 
-    FUNCTION_TEST_RETURN(result == NULL ? NULL : strLstNewVarLst(varVarLst(result)));
+    FUNCTION_TEST_RETURN(STRING_LIST, result == NULL ? NULL : strLstNewVarLst(varVarLst(result)));
 }
 
 /**********************************************************************************************************************************/
@@ -147,14 +132,10 @@ iniSectionKeyIsList(const Ini *this, const String *section, const String *key)
         FUNCTION_TEST_PARAM(STRING, key);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL);
-    ASSERT(section != NULL);
-    ASSERT(key != NULL);
-
     // Get the value
     const Variant *result = iniGetInternal(this, section, key, true);
 
-    FUNCTION_TEST_RETURN(varType(result) == varTypeVariantList);
+    FUNCTION_TEST_RETURN(BOOL, varType(result) == varTypeVariantList);
 }
 
 /**********************************************************************************************************************************/
@@ -187,7 +168,7 @@ iniSectionKeyList(const Ini *this, const String *section)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -211,7 +192,7 @@ iniSectionList(const Ini *this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/

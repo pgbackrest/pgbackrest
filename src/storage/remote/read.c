@@ -206,7 +206,7 @@ storageReadRemoteEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->eof);
+    FUNCTION_TEST_RETURN(BOOL, this->eof);
 }
 
 /**********************************************************************************************************************************/

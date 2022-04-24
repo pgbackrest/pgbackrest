@@ -155,7 +155,7 @@ cmdOption(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(cmdOptionStr);
+    FUNCTION_TEST_RETURN(STRING, cmdOptionStr);
 }
 
 /**********************************************************************************************************************************/

@@ -88,7 +88,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
     }
     TRY_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/

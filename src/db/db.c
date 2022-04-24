@@ -350,7 +350,7 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
     // Complete query
     strCatZ(result, ") as lsn");
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 DbBackupStartResult
@@ -520,7 +520,7 @@ dbBackupStopQuery(unsigned int pgVersion)
     if (pgVersion < PG_VERSION_96)
         strCatZ(result, " as lsn");
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 DbBackupStopResult

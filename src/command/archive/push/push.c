@@ -48,7 +48,7 @@ archivePushDropWarning(const String *walFile, uint64_t queueMax)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
-        strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strZ(walFile), strZ(strSizeFormat(queueMax))));
+        STRING, strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strZ(walFile), strZ(strSizeFormat(queueMax))));
 }
 
 /***********************************************************************************************************************************
@@ -502,7 +502,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 void

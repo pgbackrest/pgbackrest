@@ -887,7 +887,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 void

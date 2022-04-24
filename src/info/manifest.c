@@ -175,9 +175,9 @@ manifestOwnerCache(Manifest *this, const String *owner)
     ASSERT(this != NULL);
 
     if (owner != NULL)
-        FUNCTION_TEST_RETURN(strLstAddIfMissing(this->ownerList, owner));
+        FUNCTION_TEST_RETURN_CONST(STRING, strLstAddIfMissing(this->ownerList, owner));
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN_CONST(STRING, NULL);
 }
 
 static void
@@ -343,7 +343,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
         memcpy(result + resultPos, (uint8_t *)strZ(file->checksumPageErrorList), strSize(file->checksumPageErrorList) + 1);
     }
 
-    FUNCTION_TEST_RETURN((ManifestFilePack *)result);
+    FUNCTION_TEST_RETURN_TYPE_P(ManifestFilePack, (ManifestFilePack *)result);
 }
 
 ManifestFile
@@ -418,7 +418,7 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     if (flag & (1 << manifestFilePackFlagChecksumPageErrorList))
         result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + bufferPos + ALIGN_OFFSET(StringPub, bufferPos));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(ManifestFile, result);
 }
 
 void
@@ -589,7 +589,7 @@ manifestNewInternal(void)
         .referenceList = strLstNew(),
     };
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(MANIFEST, this);
 }
 
 /***********************************************************************************************************************************
@@ -619,7 +619,8 @@ static ManifestLinkCheck
 manifestLinkCheckInit(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN((ManifestLinkCheck){.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)});
+    FUNCTION_TEST_RETURN_TYPE(
+        ManifestLinkCheck, (ManifestLinkCheck){.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)});
 }
 
 // Helper to check a single link specified by targetIdx
@@ -1711,10 +1712,10 @@ manifestOwnerGet(const Variant *owner)
     if (varType(owner) == varTypeBool)
     {
         CHECK(FormatError, !varBool(owner), "owner bool must be false");
-        FUNCTION_TEST_RETURN(NULL);
+        FUNCTION_TEST_RETURN_CONST(STRING, NULL);
     }
 
-    FUNCTION_TEST_RETURN(varStr(owner));
+    FUNCTION_TEST_RETURN_CONST(STRING, varStr(owner));
 }
 
 // Helper to check the variant type of owner and duplicate (call in the containing context)
@@ -1732,11 +1733,11 @@ manifestOwnerDefaultGet(const Variant *ownerDefault)
     {
         // Value must be false
         CHECK(FormatError, !varBool(ownerDefault), "owner bool must be false");
-        FUNCTION_TEST_RETURN(BOOL_FALSE_VAR);
+        FUNCTION_TEST_RETURN_CONST(VARIANT, BOOL_FALSE_VAR);
     }
 
     // Return a duplicate of the owner passed in
-    FUNCTION_TEST_RETURN(varDup(ownerDefault));
+    FUNCTION_TEST_RETURN_CONST(VARIANT, varDup(ownerDefault));
 }
 
 static void
@@ -2187,7 +2188,7 @@ manifestOwnerVar(const String *ownerDefault)
         FUNCTION_TEST_PARAM(STRING, ownerDefault);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(ownerDefault == NULL ? BOOL_FALSE_VAR : varNewStr(ownerDefault));
+    FUNCTION_TEST_RETURN_CONST(VARIANT, ownerDefault == NULL ? BOOL_FALSE_VAR : varNewStr(ownerDefault));
 }
 
 static void
@@ -2677,7 +2678,7 @@ manifestDbFind(const Manifest *this, const String *name)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest db list", strZ(name));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(MANIFEST_DB, result);
 }
 
 /***********************************************************************************************************************************
@@ -2699,7 +2700,7 @@ manifestFilePackFindInternal(const Manifest *this, const String *name)
     if (filePack == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
 
-    FUNCTION_TEST_RETURN(filePack);
+    FUNCTION_TEST_RETURN_TYPE_PP(ManifestFilePack, filePack);
 }
 
 const ManifestFilePack *
@@ -2713,7 +2714,7 @@ manifestFilePackFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    FUNCTION_TEST_RETURN(*manifestFilePackFindInternal(this, name));
+    FUNCTION_TEST_RETURN_TYPE_P(ManifestFilePack, *manifestFilePackFindInternal(this, name));
 }
 
 void
@@ -2815,7 +2816,7 @@ manifestLinkFind(const Manifest *this, const String *name)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest link list", strZ(name));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(MANIFEST_LINK, result);
 }
 
 void
@@ -2879,7 +2880,7 @@ manifestPathFind(const Manifest *this, const String *name)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest path list", strZ(name));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(MANIFEST_PATH, result);
 }
 
 String *
@@ -2894,7 +2895,7 @@ manifestPathPg(const String *manifestPath)
     // If something in pg_data/
     if (strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGDATA "/")))
     {
-        FUNCTION_TEST_RETURN(strNewZ(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
+        FUNCTION_TEST_RETURN(STRING, strNewZ(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
     }
     // Else not pg_data (this is faster since the length of everything else will be different than pg_data)
     else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
@@ -2903,10 +2904,10 @@ manifestPathPg(const String *manifestPath)
         ASSERT(
             strEq(manifestPath, MANIFEST_TARGET_PGTBLSPC_STR) || strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
 
-        FUNCTION_TEST_RETURN(strDup(manifestPath));
+        FUNCTION_TEST_RETURN(STRING, strDup(manifestPath));
     }
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
 /***********************************************************************************************************************************
@@ -2928,7 +2929,7 @@ manifestTargetFind(const Manifest *this, const String *name)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strZ(name));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(MANIFEST_TARGET, result);
 }
 
 String *
@@ -2944,7 +2945,7 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
 
     // If the target path is already absolute then just return it
     if (strBeginsWith(target->path, FSLASH_STR))
-        FUNCTION_TEST_RETURN(strDup(target->path));
+        FUNCTION_TEST_RETURN(STRING, strDup(target->path));
 
     // Construct it from the base pg path and a relative path
     String *result = NULL;
@@ -2966,7 +2967,7 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 void

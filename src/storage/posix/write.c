@@ -215,7 +215,7 @@ storageWritePosixFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fd);
+    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/

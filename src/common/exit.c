@@ -46,7 +46,7 @@ exitSignalName(SignalType signalType)
             THROW(AssertError, "no name for signal none");
     }
 
-    FUNCTION_TEST_RETURN(name);
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, name);
 }
 
 /***********************************************************************************************************************************
@@ -88,6 +88,7 @@ exitErrorDetail(void)
     FUNCTION_TEST_VOID();
 
     FUNCTION_TEST_RETURN(
+        STRING,
         strCatFmt(
             strNew(),
             "--------------------------------------------------------------------\n"

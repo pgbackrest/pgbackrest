@@ -340,7 +340,7 @@ protocolServerAuthorize(const String *authListStr, const String *const stanza)
 
     // If * then all stanzas are authorized
     if (strEqZ(authListStr, "*"))
-        FUNCTION_TEST_RETURN(true);
+        FUNCTION_TEST_RETURN(BOOL, true);
 
     // Check the list of stanzas for a match with the specified stanza. Each entry will need to be trimmed before comparing.
     if (stanza != NULL)
@@ -350,11 +350,11 @@ protocolServerAuthorize(const String *authListStr, const String *const stanza)
         for (unsigned int authListIdx = 0; authListIdx < strLstSize(authList); authListIdx++)
         {
             if (strEq(strTrim(strLstGet(authList, authListIdx)), stanza))
-                FUNCTION_TEST_RETURN(true);
+                FUNCTION_TEST_RETURN(BOOL, true);
         }
     }
 
-    FUNCTION_TEST_RETURN(false);
+    FUNCTION_TEST_RETURN(BOOL, false);
 }
 
 ProtocolServer *

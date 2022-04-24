@@ -50,7 +50,7 @@ lstNew(size_t itemSize, ListParam param)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 /**********************************************************************************************************************************/
@@ -75,7 +75,7 @@ lstClear(List *this)
         this->listSizeMax = 0;
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 /**********************************************************************************************************************************/
@@ -90,7 +90,7 @@ lstComparatorStr(const void *item1, const void *item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    FUNCTION_TEST_RETURN(strCmp(*(String **)item1, *(String **)item2));
+    FUNCTION_TEST_RETURN(INT, strCmp(*(String **)item1, *(String **)item2));
 }
 
 /**********************************************************************************************************************************/
@@ -105,7 +105,7 @@ lstComparatorZ(const void *item1, const void *item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    FUNCTION_TEST_RETURN(strcmp(*(char **)item1, *(char **)item2));
+    FUNCTION_TEST_RETURN(INT, strcmp(*(char **)item1, *(char **)item2));
 }
 
 /***********************************************************************************************************************************
@@ -135,7 +135,7 @@ lstGet(const List *this, unsigned int listIdx)
         THROW_FMT(AssertError, "cannot get index %u from list with %u value(s)", listIdx, lstSize(this));
 
     // Return pointer to list item
-    FUNCTION_TEST_RETURN(this->list + (listIdx * this->itemSize));
+    FUNCTION_TEST_RETURN_P(VOID, this->list + (listIdx * this->itemSize));
 }
 
 void *
@@ -152,7 +152,7 @@ lstGetLast(const List *this)
         THROW(AssertError, "cannot get last from list with no values");
 
     // Return pointer to list item
-    FUNCTION_TEST_RETURN(lstGet(this, lstSize(this) - 1));
+    FUNCTION_TEST_RETURN_P(VOID, lstGet(this, lstSize(this) - 1));
 }
 
 /**********************************************************************************************************************************/
@@ -171,24 +171,24 @@ lstFind(const List *this, const void *item)
     if (this->list != NULL)
     {
         if (this->sortOrder == sortOrderAsc)
-            FUNCTION_TEST_RETURN(bsearch(item, this->list, lstSize(this), this->itemSize, this->comparator));
+            FUNCTION_TEST_RETURN_P(VOID, bsearch(item, this->list, lstSize(this), this->itemSize, this->comparator));
         else if (this->sortOrder == sortOrderDesc)
         {
             // Assign the list for the descending comparator to use
             comparatorDescList = this;
 
-            FUNCTION_TEST_RETURN(bsearch(item, this->list, lstSize(this), this->itemSize, lstComparatorDesc));
+            FUNCTION_TEST_RETURN_P(VOID, bsearch(item, this->list, lstSize(this), this->itemSize, lstComparatorDesc));
         }
 
         // Fall back on an iterative search
         for (unsigned int listIdx = 0; listIdx < lstSize(this); listIdx++)
         {
             if (this->comparator(item, lstGet(this, listIdx)) == 0)
-                FUNCTION_TEST_RETURN(lstGet(this, listIdx));
+                FUNCTION_TEST_RETURN_P(VOID, lstGet(this, listIdx));
         }
     }
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN_P(VOID, NULL);
 }
 
 unsigned int
@@ -204,7 +204,7 @@ lstFindIdx(const List *this, const void *item)
 
     void *result = lstFind(this, item);
 
-    FUNCTION_TEST_RETURN(result == NULL ? LIST_NOT_FOUND : lstIdx(this, result));
+    FUNCTION_TEST_RETURN(UINT, result == NULL ? LIST_NOT_FOUND : lstIdx(this, result));
 }
 
 void *
@@ -221,7 +221,7 @@ lstFindDefault(const List *this, const void *item, void *itemDefault)
 
     void *result= lstFind(this, item);
 
-    FUNCTION_TEST_RETURN(result == NULL ? itemDefault : result);
+    FUNCTION_TEST_RETURN_P(VOID, result == NULL ? itemDefault : result);
 }
 
 /**********************************************************************************************************************************/
@@ -244,7 +244,7 @@ lstIdx(const List *this, const void *item)
     // Item pointers should always be in range
     ASSERT(result < lstSize(this));
 
-    FUNCTION_TEST_RETURN((unsigned int)result);
+    FUNCTION_TEST_RETURN(UINT, (unsigned int)result);
 }
 
 /**********************************************************************************************************************************/
@@ -303,7 +303,7 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
     memcpy(itemPtr, item, this->itemSize);
     this->pub.listSize++;
 
-    FUNCTION_TEST_RETURN(itemPtr);
+    FUNCTION_TEST_RETURN_P(VOID, itemPtr);
 }
 
 /**********************************************************************************************************************************/
@@ -334,7 +334,7 @@ lstRemoveIdx(List *this, unsigned int listIdx)
             (lstSize(this) - listIdx) * this->itemSize);
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 bool
@@ -353,10 +353,10 @@ lstRemove(List *this, const void *item)
     if (listIdx != LIST_NOT_FOUND)
     {
         lstRemoveIdx(this, listIdx);
-        FUNCTION_TEST_RETURN(true);
+        FUNCTION_TEST_RETURN(BOOL, true);
     }
 
-    FUNCTION_TEST_RETURN(false);
+    FUNCTION_TEST_RETURN(BOOL, false);
 }
 
 List *
@@ -371,7 +371,7 @@ lstRemoveLast(List *this)
     if (lstSize(this) == 0)
         THROW(AssertError, "cannot remove last from list with no values");
 
-    FUNCTION_TEST_RETURN(lstRemoveIdx(this, lstSize(this) - 1));
+    FUNCTION_TEST_RETURN(LIST, lstRemoveIdx(this, lstSize(this) - 1));
 }
 
 /**********************************************************************************************************************************/
@@ -410,7 +410,7 @@ lstSort(List *this, SortOrder sortOrder)
 
     this->sortOrder = sortOrder;
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 /**********************************************************************************************************************************/
@@ -427,7 +427,7 @@ lstComparatorSet(List *this, ListComparator *comparator)
     this->comparator = comparator;
     this->sortOrder = sortOrderNone;
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(LIST, this);
 }
 
 /**********************************************************************************************************************************/

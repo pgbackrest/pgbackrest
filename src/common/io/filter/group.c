@@ -142,7 +142,7 @@ ioFilterGroupGet(const IoFilterGroup *this, unsigned int filterIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN((IoFilterData *)lstGet(this->pub.filterList, filterIdx));
+    FUNCTION_TEST_RETURN(IO_FILTER_DATA, (IoFilterData *)lstGet(this->pub.filterList, filterIdx));
 }
 
 /**********************************************************************************************************************************/

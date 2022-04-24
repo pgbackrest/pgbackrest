@@ -82,7 +82,7 @@ statGetOrCreate(const String *key)
         ASSERT(stat != NULL);
     }
 
-    FUNCTION_TEST_RETURN(stat);
+    FUNCTION_TEST_RETURN_TYPE_P(Stat, stat);
 }
 
 /**********************************************************************************************************************************/
@@ -98,7 +98,7 @@ statInc(const String *key)
 
     statGetOrCreate(key)->total++;
 
-    FUNCTION_TEST_RETURN();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -134,5 +134,5 @@ statToJson(void)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
