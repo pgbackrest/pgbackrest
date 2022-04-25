@@ -66,17 +66,24 @@ archivePushDrop(const String *walPath, const StringList *const processList)
     uint64_t queueSize = 0;
     bool result = false;
 
-    for (unsigned int processIdx = 0; processIdx < strLstSize(processList); processIdx++)
+    MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        queueSize += storageInfoP(
-            storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, processIdx)))).size;
-
-        if (queueSize > queueMax)
+        for (unsigned int processIdx = 0; processIdx < strLstSize(processList); processIdx++)
         {
-            result = true;
-            break;
+            queueSize += storageInfoP(
+                storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, processIdx)))).size;
+
+            if (queueSize > queueMax)
+            {
+                result = true;
+                break;
+            }
+
+            // Reset the memory context occasionally so we don't use too much memory or slow down processing
+            MEM_CONTEXT_TEMP_RESET(1000);
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
