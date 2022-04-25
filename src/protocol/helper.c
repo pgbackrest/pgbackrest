@@ -597,15 +597,13 @@ protocolRemoteParamSsh(const ProtocolStorageType protocolStorageType, const unsi
         if (cfgOptionIdxTest(optHostPort, hostIdx))
         {
             strLstAddZ(result, "-p");
-            strLstAdd(result, strNewFmt("%u", cfgOptionIdxUInt(optHostPort, hostIdx)));
+            strLstAddFmt(result, "%u", cfgOptionIdxUInt(optHostPort, hostIdx));
         }
 
         // Append user/host
-        strLstAdd(
-            result,
-            strNewFmt(
-                "%s@%s", strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser, hostIdx)),
-                strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx))));
+        strLstAddFmt(
+            result, "%s@%s", strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHostUser : cfgOptPgHostUser, hostIdx)),
+            strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx)));
 
         // Add remote command and parameters
         StringList *paramList = protocolRemoteParam(protocolStorageType, hostIdx);

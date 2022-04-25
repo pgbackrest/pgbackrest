@@ -572,7 +572,7 @@ pgLsnRangeToWalSegmentList(
         unsigned int minorPerMajor = 0xFFFFFFFF / walSegmentSize;
 
         // Create list
-        strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
+        strLstAddFmt(result, "%08X%08X%08X", timeline, startMajor, startMinor);
 
         while (!(startMajor == stopMajor && startMinor == stopMinor))
         {
@@ -584,7 +584,7 @@ pgLsnRangeToWalSegmentList(
                 startMinor = 0;
             }
 
-            strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
+            strLstAddFmt(result, "%08X%08X%08X", timeline, startMajor, startMinor);
         }
 
         strLstMove(result, memContextPrior());

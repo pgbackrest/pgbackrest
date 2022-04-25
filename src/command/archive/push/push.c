@@ -276,10 +276,9 @@ archivePushCheck(bool pgPathSet)
             }
             CATCH_ANY()
             {
-                strLstAdd(
-                    result.errorList,
-                    strNewFmt(
-                        "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+                strLstAddFmt(
+                    result.errorList, "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()),
+                    errorMessage());
             }
             TRY_END();
         }

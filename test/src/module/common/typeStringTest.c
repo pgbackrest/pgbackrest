@@ -341,7 +341,7 @@ testRun(void)
                 else
                 {
                     TEST_RESULT_STR(
-                        strLstAdd(list, strNewFmt("STR%02d", listIdx)), strNewFmt("STR%02d", listIdx),
+                        strLstAddFmt(list, "STR%02d", listIdx), strNewFmt("STR%02d", listIdx),
                         strZ(strNewFmt("add item %d", listIdx)));
                 }
             }
@@ -418,7 +418,7 @@ testRun(void)
             if (listIdx == 0)
                 strLstAdd(list, NULL);
             else
-                strLstAdd(list, strNewFmt("STR%02d", listIdx));
+                strLstAddFmt(list, "STR%02d", listIdx);
         }
 
         // Check pointer

@@ -2010,7 +2010,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
-                strLstAdd(targetList, strNewFmt("%s/", strZ(target->name)));
+                strLstAddFmt(targetList, "%s/", strZ(target->name));
         }
 
         // Generate the processing queues

@@ -1748,11 +1748,11 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                 if (stanza != NULL)
                 {
-                    strLstAdd(sectionList, strNewFmt("%s:%s", strZ(stanza), cfgParseCommandName(config->command)));
+                    strLstAddFmt(sectionList, "%s:%s", strZ(stanza), cfgParseCommandName(config->command));
                     strLstAdd(sectionList, stanza);
                 }
 
-                strLstAdd(sectionList, strNewFmt(CFGDEF_SECTION_GLOBAL ":%s", cfgParseCommandName(config->command)));
+                strLstAddFmt(sectionList, CFGDEF_SECTION_GLOBAL ":%s", cfgParseCommandName(config->command));
                 strLstAddZ(sectionList, CFGDEF_SECTION_GLOBAL);
 
                 // Loop through sections to search for options

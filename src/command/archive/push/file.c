@@ -38,9 +38,7 @@ archivePushErrorAdd(StringList *errorList, unsigned int repoIdx)
         FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
-    strLstAdd(
-        errorList,
-        strNewFmt("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+    strLstAddFmt(errorList, "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -201,12 +199,11 @@ archivePushFile(
                             MEM_CONTEXT_PRIOR_BEGIN()
                             {
                                 // Add warning to the result that will be returned to the main process
-                                strLstAdd(
+                                strLstAddFmt(
                                     result.warnList,
-                                    strNewFmt(
-                                        "WAL file '%s' already exists in the %s archive with the same checksum"
-                                        "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                        strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx)));
+                                    "WAL file '%s' already exists in the %s archive with the same checksum"
+                                    "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
+                                    strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx));
                             }
                             MEM_CONTEXT_PRIOR_END();
                         }

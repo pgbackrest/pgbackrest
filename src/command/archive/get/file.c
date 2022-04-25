@@ -89,11 +89,9 @@ ArchiveGetFileResult archiveGetFile(
         {
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                strLstAdd(
-                    result.warnList,
-                    strNewFmt(
-                        "%s: %s [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, actual->repoIdx), strZ(actual->file),
-                        errorTypeName(errorType()), errorMessage()));
+                strLstAddFmt(
+                    result.warnList, "%s: %s [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, actual->repoIdx), strZ(actual->file),
+                    errorTypeName(errorType()), errorMessage());
             }
             MEM_CONTEXT_PRIOR_END();
         }

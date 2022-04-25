@@ -1488,7 +1488,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
-                strLstAdd(targetList, strNewFmt("%s/", strZ(target->name)));
+                strLstAddFmt(targetList, "%s/", strZ(target->name));
         }
 
         // Generate the processing queues (there is always at least one)

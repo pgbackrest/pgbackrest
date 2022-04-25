@@ -152,6 +152,39 @@ strLstAdd(StringList *this, const String *string)
 }
 
 String *
+strLstAddFmt(StringList *const this, const char *const format, ...)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+    FUNCTION_TEST_END();
+
+    // Determine how long the allocated string needs to be
+    va_list argumentList;
+    va_start(argumentList, format);
+    const size_t size = (size_t)vsnprintf(NULL, 0, format, argumentList);
+    va_end(argumentList);
+
+    // Format string
+    va_start(argumentList, format);
+    char *const buffer = memNew(size + 1);
+    vsnprintf(buffer, size + 1, format, argumentList);
+    va_end(argumentList);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstAddInternal(this, strNewZN(buffer, size));
+    }
+    MEM_CONTEXT_END();
+
+    memFree(buffer);
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+String *
 strLstAddIfMissing(StringList *this, const String *string)
 {
     FUNCTION_TEST_BEGIN();

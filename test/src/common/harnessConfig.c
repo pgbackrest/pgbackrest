@@ -144,7 +144,7 @@ hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value)
 void
 hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *value)
 {
-    strLstAdd(argList, strNewFmt("--%s=%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1), value));
+    strLstAddFmt(argList, "--%s=%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1), value);
 }
 
 void
@@ -171,7 +171,7 @@ hrnCfgArgRawBool(StringList *argList, ConfigOption optionId, bool value)
 void
 hrnCfgArgKeyRawBool(StringList *argList, ConfigOption optionId, unsigned optionKey, bool value)
 {
-    strLstAdd(argList, strNewFmt("--%s%s", value ? "" : "no-", cfgParseOptionKeyIdxName(optionId, optionKey - 1)));
+    strLstAddFmt(argList, "--%s%s", value ? "" : "no-", cfgParseOptionKeyIdxName(optionId, optionKey - 1));
 }
 
 void
@@ -183,7 +183,7 @@ hrnCfgArgRawNegate(StringList *argList, ConfigOption optionId)
 void
 hrnCfgArgKeyRawNegate(StringList *argList, ConfigOption optionId, unsigned optionKey)
 {
-    strLstAdd(argList, strNewFmt("--no-%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1)));
+    strLstAddFmt(argList, "--no-%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1));
 }
 
 void
@@ -195,7 +195,7 @@ hrnCfgArgRawReset(StringList *argList, ConfigOption optionId)
 void
 hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned optionKey)
 {
-    strLstAdd(argList, strNewFmt("--reset-%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1)));
+    strLstAddFmt(argList, "--reset-%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1));
 }
 
 /**********************************************************************************************************************************/

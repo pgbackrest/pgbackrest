@@ -781,7 +781,7 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
-        strLstAdd(argList, strNewFmt("--%s", optionMax));
+        strLstAddFmt(argList, "--%s", optionMax);
         TEST_ERROR_FMT(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
             "option '%s' exceeds maximum size of 64", optionMax);

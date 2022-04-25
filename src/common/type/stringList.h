@@ -68,6 +68,7 @@ Functions
 ***********************************************************************************************************************************/
 // Add String to the list
 String *strLstAdd(StringList *this, const String *string);
+String *strLstAddFmt(StringList *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
 String *strLstAddZ(StringList *this, const char *string);
 String *strLstAddIfMissing(StringList *this, const String *string);
 

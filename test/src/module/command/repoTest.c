@@ -528,7 +528,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
-        strLstAdd(argList, strNewFmt(TEST_PATH "/repo/%s", strZ(fileName)));
+        strLstAddFmt(argList, TEST_PATH "/repo/%s", strZ(fileName));
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
@@ -701,11 +701,9 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
-        strLstAdd(
-            argList,
-            strNewFmt(
-                "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                TEST_PATH));
+        strLstAddFmt(
+            argList, "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            TEST_PATH);
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
