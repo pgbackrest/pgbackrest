@@ -107,7 +107,7 @@ storageWriteRemoteOpen(THIS_VOID)
         }
 
         // Set free callback to ensure remote file is freed
-        memContextCallbackSet(THIS_MEM_CONTEXT(), storageWriteRemoteFreeResource, this);
+        memContextCallbackSet(objMemContext(this), storageWriteRemoteFreeResource, this);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -171,7 +171,7 @@ storageWriteRemoteClose(THIS_VOID)
         MEM_CONTEXT_TEMP_END();
 
         this->client = NULL;
-        memContextCallbackClear(THIS_MEM_CONTEXT());
+        memContextCallbackClear(objMemContext(this));
     }
 
     FUNCTION_LOG_RETURN_VOID();

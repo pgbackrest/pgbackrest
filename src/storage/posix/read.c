@@ -89,7 +89,7 @@ storageReadPosixOpen(THIS_VOID)
     else
     {
         // Set free callback to ensure the file descriptor is freed
-        memContextCallbackSet(THIS_MEM_CONTEXT(), storageReadPosixFreeResource, this);
+        memContextCallbackSet(objMemContext(this), storageReadPosixFreeResource, this);
 
         // Seek to offset
         if (this->interface.offset != 0)
@@ -165,7 +165,7 @@ storageReadPosixClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    memContextCallbackClear(THIS_MEM_CONTEXT());
+    memContextCallbackClear(objMemContext(this));
     storageReadPosixFreeResource(this);
     this->fd = -1;
 
