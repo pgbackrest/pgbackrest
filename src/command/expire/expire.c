@@ -795,66 +795,71 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
 
     ASSERT(infoBackup != NULL);
 
-    // Get all the current backups in backup.info - these will not be expired
-    StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
-
-    // Get all the backups on disk
-    StringList *backupList = strLstSort(
-        storageListP(
-            storageRepoIdx(repoIdx), STORAGE_REPO_BACKUP_STR,
-            .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
-        sortOrderDesc);
-
-    // Initialize the index to the latest backup on disk
-    unsigned int backupIdx = 0;
-
-    // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired
-    if (adhocBackupLabel != NULL)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *manifestFileName = strNewFmt(
-            STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, backupIdx)));
-        String *manifestCopyFileName = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFileName));
+        // Get all the current backups in backup.info - these will not be expired
+        StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
 
-        // If the latest backup is resumable (has a backup.manifest.copy but no backup.manifest)
-        if (!storageExistsP(storageRepoIdx(repoIdx), manifestFileName) &&
-            storageExistsP(storageRepoIdx(repoIdx), manifestCopyFileName))
+        // Get all the backups on disk
+        StringList *backupList = strLstSort(
+            storageListP(
+                storageRepoIdx(repoIdx), STORAGE_REPO_BACKUP_STR,
+                .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+            sortOrderDesc);
+
+        // Initialize the index to the latest backup on disk
+        unsigned int backupIdx = 0;
+
+        // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired
+        if (adhocBackupLabel != NULL)
         {
-            // If the resumable backup is not related to the expired adhoc backup then don't remove it
-            if (!strBeginsWith(strLstGet(backupList, backupIdx), strSubN(adhocBackupLabel, 0, 16)))
-            {
-                backupIdx = 1;
-            }
-            // Else it may be related to the adhoc backup so check if its ancestor still exists
-            else
-            {
-                Manifest *manifestResume = manifestLoadFile(
-                    storageRepoIdx(repoIdx), manifestFileName, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                    infoPgCipherPass(infoBackupPg(infoBackup)));
+            String *manifestFileName = strNewFmt(
+                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, backupIdx)));
+            String *manifestCopyFileName = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFileName));
 
-                // If the ancestor of the resumable backup still exists in backup.info then do not remove the resumable backup
-                if (infoBackupLabelExists(infoBackup, manifestData(manifestResume)->backupLabelPrior))
+            // If the latest backup is resumable (has a backup.manifest.copy but no backup.manifest)
+            if (!storageExistsP(storageRepoIdx(repoIdx), manifestFileName) &&
+                storageExistsP(storageRepoIdx(repoIdx), manifestCopyFileName))
+            {
+                // If the resumable backup is not related to the expired adhoc backup then don't remove it
+                if (!strBeginsWith(strLstGet(backupList, backupIdx), strSubN(adhocBackupLabel, 0, 16)))
+                {
                     backupIdx = 1;
+                }
+                // Else it may be related to the adhoc backup so check if its ancestor still exists
+                else
+                {
+                    Manifest *manifestResume = manifestLoadFile(
+                        storageRepoIdx(repoIdx), manifestFileName, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
+                        infoPgCipherPass(infoBackupPg(infoBackup)));
+
+                    // If the ancestor of the resumable backup still exists in backup.info then do not remove the resumable backup
+                    if (infoBackupLabelExists(infoBackup, manifestData(manifestResume)->backupLabelPrior))
+                        backupIdx = 1;
+                }
             }
         }
-    }
 
-    // Remove non-current backups from disk
-    for (; backupIdx < strLstSize(backupList); backupIdx++)
-    {
-        if (!strLstExists(currentBackupList, strLstGet(backupList, backupIdx)))
+        // Remove non-current backups from disk
+        for (; backupIdx < strLstSize(backupList); backupIdx++)
         {
-            LOG_INFO_FMT(
-                "%s: remove expired backup %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(strLstGet(backupList, backupIdx)));
-
-            // Execute the real expiration and deletion only if the dry-run mode is disabled
-            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+            if (!strLstExists(currentBackupList, strLstGet(backupList, backupIdx)))
             {
-                storagePathRemoveP(
-                    storageRepoIdxWrite(repoIdx), strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(strLstGet(backupList, backupIdx))),
-                    .recurse = true);
+                LOG_INFO_FMT(
+                    "%s: remove expired backup %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                    strZ(strLstGet(backupList, backupIdx)));
+
+                // Execute the real expiration and deletion only if the dry-run mode is disabled
+                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                {
+                    storagePathRemoveP(
+                        storageRepoIdxWrite(repoIdx), strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(strLstGet(backupList, backupIdx))),
+                        .recurse = true);
+                }
             }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -1065,7 +1070,7 @@ cmdExpire(void)
             CATCH_ANY()
             {
                 LOG_ERROR_FMT(errorTypeCode(errorType()), "%s: %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorMessage());
-                errorTotal++;;
+                errorTotal++;
             }
             TRY_END();
         }
