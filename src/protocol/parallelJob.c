@@ -61,12 +61,12 @@ protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *m
     ASSERT(code != 0);
     ASSERT(message != NULL);
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->pub.code = code;
         this->pub.message = strDup(message);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

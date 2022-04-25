@@ -140,12 +140,12 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     // If binary then read the next block
                     if (pckReadType(read) == pckTypeBin)
                     {
-                        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+                        MEM_CONTEXT_OBJ_BEGIN(this)
                         {
                             this->block = pckReadBinP(read);
                             this->remaining = bufUsed(this->block);
                         }
-                        MEM_CONTEXT_END();
+                        MEM_CONTEXT_OBJ_END();
                     }
                     // Else read is complete and get the filter list
                     else

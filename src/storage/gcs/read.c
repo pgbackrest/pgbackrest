@@ -53,7 +53,7 @@ storageReadGcsOpen(THIS_VOID)
     bool result = false;
 
     // Request the file
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->httpResponse = storageGcsRequestP(
             this->storage, HTTP_VERB_GET_STR, .object = this->interface.name,
@@ -61,7 +61,7 @@ storageReadGcsOpen(THIS_VOID)
             .allowMissing = true, .contentIo = true,
             .query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR));
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     if (httpResponseCodeOk(this->httpResponse))
     {

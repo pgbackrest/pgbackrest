@@ -299,7 +299,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
         if (destinationSize > bufRemains(destination))
         {
             // Allocate the buffer if needed
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 if (this->buffer == NULL)
                 {
@@ -309,7 +309,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
                 else
                     bufResize(this->buffer, destinationSize);
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             outputActual = this->buffer;
         }

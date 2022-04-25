@@ -206,7 +206,7 @@ iniParse(Ini *this, const String *content)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         kvFree(this->store);
         this->store = kvNew();
@@ -267,7 +267,7 @@ iniParse(Ini *this, const String *content)
             MEM_CONTEXT_TEMP_END();
         }
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }

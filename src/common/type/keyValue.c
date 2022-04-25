@@ -177,11 +177,11 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         kvPutInternal(this, key, varDup(value));
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
@@ -199,7 +199,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // Find the key
         unsigned int listIdx = kvGetIdx(this, key);
@@ -227,7 +227,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
                 varLstAdd(varVarLst(pair->value), varDup(value));
         }
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
@@ -246,12 +246,12 @@ kvPutKv(KeyValue *this, const Variant *key)
 
     KeyValue *result = NULL;
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         result = kvNew();
         kvPutInternal(this, key, varNewKv(result));
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN(KEY_VALUE, result);
 }

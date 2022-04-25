@@ -105,11 +105,11 @@ protocolParallelProcess(ProtocolParallel *this)
         // If called for the first time, initialize processing
         if (this->state == protocolParallelJobStatePending)
         {
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->clientJobList = memNewPtrArray(lstSize(this->clientList));
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             this->state = protocolParallelJobStateRunning;
         }

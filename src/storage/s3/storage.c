@@ -215,12 +215,12 @@ storageS3Auth(
             const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, S3_BUF);
 
             // Switch to the object context so signing key and date are not lost
-            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->signingKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, serviceKey, AWS4_REQUEST_BUF);
                 this->signingKeyDate = strDup(date);
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Generate authorization header
@@ -320,11 +320,11 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
             httpRequestError(request, response);
 
         // Get role from the text response
-        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->credRole = strNewBuf(httpResponseContent(response));
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     // Retrieve the temp credentials
@@ -348,7 +348,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
     // Get credentials from the JSON response
     KeyValue *credential = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // Check the code field for errors
         const Variant *code = kvGetDefault(credential, S3_JSON_TAG_CODE_VAR, VARSTRDEF("code field is missing"));
@@ -367,7 +367,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
         this->secretAccessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR)));
         this->securityToken = strDup(varStr(kvGet(credential, S3_JSON_TAG_TOKEN_VAR)));
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     // Update expiration time
     CHECK(FormatError, kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR) != NULL, "expiration missing");
@@ -417,13 +417,13 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
     const XmlNode *const secretAccessKeyNode = xmlNodeChild(xmlCred, STRDEF("SecretAccessKey"), true);
     const XmlNode *const securityTokenNode = xmlNodeChild(xmlCred, STRDEF("SessionToken"), true);
 
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->accessKey = xmlNodeContent(accessKeyNode);
         this->secretAccessKey = xmlNodeContent(secretAccessKeyNode);
         this->securityToken = xmlNodeContent(securityTokenNode);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     // Update expiration time
     this->credExpirationTime = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xmlCred, STRDEF("Expiration"), true)));

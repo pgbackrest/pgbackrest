@@ -247,11 +247,11 @@ bufResize(Buffer *this, size_t size)
             // When setting size down to 0 the buffer should always be allocated
             ASSERT(bufPtrConst(this) != NULL);
 
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 memFree(bufPtr(this));
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             this->pub.buffer = NULL;
             this->pub.sizeAlloc = 0;
@@ -259,14 +259,14 @@ bufResize(Buffer *this, size_t size)
         // Else allocate or resize
         else
         {
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 if (bufPtrConst(this) == NULL)
                     this->pub.buffer = memNew(size);
                 else
                     this->pub.buffer = memResize(bufPtr(this), size);
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             this->pub.sizeAlloc = size;
         }

@@ -277,11 +277,11 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
         // Create the container stack
         else
         {
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->stack = lstNewP(sizeof(JsonReadStack));
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
     }
 
@@ -1350,11 +1350,11 @@ jsonWritePush(JsonWrite *const this, const JsonType type, const String *const ke
         // Create the container stack
         else
         {
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->stack = lstNewP(sizeof(JsonWriteStack));
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
     }
 

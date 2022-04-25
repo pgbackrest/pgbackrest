@@ -80,6 +80,12 @@ thisNotNull(const void *const this)
 }
 
 /***********************************************************************************************************************************
+Switch to the object memory context and ensure that the prior memory context is restored after the block executes (even on error)
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_OBJ_BEGIN(this)                         MEM_CONTEXT_BEGIN(objMemContext(this))
+#define MEM_CONTEXT_OBJ_END()                               MEM_CONTEXT_END()
+
+/***********************************************************************************************************************************
 Functions
 
 To ensure proper type checking, these functions are meant to be called from inline functions created specifically for each object:

@@ -363,13 +363,13 @@ pckReadNewIo(IoRead *read)
 
     PackRead *this = pckReadNewInternal();
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->read = read;
         this->buffer = bufNew(ioBufferSize());
         this->bufferPtr = bufPtr(this->buffer);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN(PACK_READ, this);
 }
@@ -1316,11 +1316,11 @@ pckWriteNew(const PckWriteNewParam param)
 
     PackWrite *this = pckWriteNewInternal();
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->buffer = bufNew(param.size == 0 ? PACK_EXTRA_MIN : param.size);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN(PACK_WRITE, this);
 }
@@ -1336,12 +1336,12 @@ pckWriteNewIo(IoWrite *write)
 
     PackWrite *this = pckWriteNewInternal();
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->write = write;
         this->buffer = bufNew(ioBufferSize());
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN(PACK_WRITE, this);
 }
