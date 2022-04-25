@@ -56,7 +56,7 @@ archiveAsyncSpoolQueue(ArchiveMode archiveMode)
 
 /**********************************************************************************************************************************/
 void
-archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
+archiveAsyncErrorClear(const ArchiveMode archiveMode, const String *const archiveFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
@@ -65,8 +65,12 @@ archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile)
 
     ASSERT(archiveFile != NULL);
 
-    storageRemoveP(storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strZ(archiveFile)));
+    String *const errorFile = strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strZ(archiveFile));
+
+    storageRemoveP(storageSpoolWrite(), errorFile);
     storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/" STATUS_FILE_GLOBAL_ERROR));
+
+    strFree(errorFile);
 
     FUNCTION_LOG_RETURN_VOID();
 }
