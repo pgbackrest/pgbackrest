@@ -97,7 +97,7 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
 Helper function for helpRender() to make output look good on a console
 ***********************************************************************************************************************************/
 static String *
-helpRenderText(const String *text, const bool internal, size_t indent, bool indentFirst, size_t length)
+helpRenderText(const String *const text, const bool internal, const size_t indent, const bool indentFirst, const size_t length)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, text);
@@ -110,38 +110,42 @@ helpRenderText(const String *text, const bool internal, size_t indent, bool inde
     ASSERT(text != NULL);
     ASSERT(length > 0);
 
-    String *result = strNew();
+    String *const result = strNew();
 
-    // Split the text into paragraphs
-    StringList *lineList = strLstNewSplitZ(
-        strNewFmt("%s%s", strZ(text), internal ? "\n\nFOR INTERNAL USE ONLY. DO NOT USE IN PRODUCTION." : ""), "\n");
-
-    // Iterate through each paragraph and split the lines according to the line length
-    for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Add LF if there is already content
-        if (strSize(result) != 0)
-            strCat(result, LF_STR);
+        // Split the text into paragraphs
+        const StringList *const lineList = strLstNewSplitZ(
+            strNewFmt("%s%s", strZ(text), internal ? "\n\nFOR INTERNAL USE ONLY. DO NOT USE IN PRODUCTION." : ""), "\n");
 
-        // Split the paragraph into lines that don't exceed the line length
-        StringList *partList = helpRenderSplitSize(strLstGet(lineList, lineIdx), " ", length - indent);
-
-        for (unsigned int partIdx = 0; partIdx < strLstSize(partList); partIdx++)
+        // Iterate through each paragraph and split the lines according to the line length
+        for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
         {
-            // Indent when required
-            if (partIdx != 0 || indentFirst)
+            // Add LF if there is already content
+            if (strSize(result) != 0)
+                strCat(result, LF_STR);
+
+            // Split the paragraph into lines that don't exceed the line length
+            StringList *const partList = helpRenderSplitSize(strLstGet(lineList, lineIdx), " ", length - indent);
+
+            for (unsigned int partIdx = 0; partIdx < strLstSize(partList); partIdx++)
             {
-                if (partIdx != 0)
-                    strCat(result, LF_STR);
+                // Indent when required
+                if (partIdx != 0 || indentFirst)
+                {
+                    if (partIdx != 0)
+                        strCat(result, LF_STR);
 
-                if (strSize(strLstGet(partList, partIdx)))
-                    strCatFmt(result, "%*s", (int)indent, "");
+                    if (strSize(strLstGet(partList, partIdx)))
+                        strCatFmt(result, "%*s", (int)indent, "");
+                }
+
+                // Add the line
+                strCat(result, strLstGet(partList, partIdx));
             }
-
-            // Add the line
-            strCat(result, strLstGet(partList, partIdx));
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STRING, result);
 }
@@ -149,7 +153,7 @@ helpRenderText(const String *text, const bool internal, size_t indent, bool inde
 /***********************************************************************************************************************************
 Helper function for helpRender() to output values as strings
 ***********************************************************************************************************************************/
-static const String *
+static String *
 helpRenderValue(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -157,61 +161,61 @@ helpRenderValue(const ConfigOption optionId, const unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    const String *result = NULL;
+    String *result = NULL;
 
     if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
     {
-        const Variant *const value = cfgOptionIdxVar(optionId, optionIdx);
-        ASSERT(value != NULL);
+        result = strNew();
 
-        switch (varType(value))
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            case varTypeKeyValue:
+            const Variant *const value = cfgOptionIdxVar(optionId, optionIdx);
+            ASSERT(value != NULL);
+
+            switch (varType(value))
             {
-                String *resultTemp = strNew();
-
-                const KeyValue *optionKv = varKv(value);
-                const VariantList *keyList = kvKeyList(optionKv);
-
-                for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+                case varTypeKeyValue:
                 {
-                    if (keyIdx != 0)
-                        strCatZ(resultTemp, ", ");
+                    const KeyValue *const optionKv = varKv(value);
+                    const VariantList *const keyList = kvKeyList(optionKv);
 
-                    strCatFmt(
-                        resultTemp, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                        strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+                    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
+                    {
+                        if (keyIdx != 0)
+                            strCatZ(result, ", ");
+
+                        strCatFmt(
+                            result, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                            strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
+                    }
+
+                    break;
                 }
 
-                result = resultTemp;
-                break;
-            }
-
-            case varTypeVariantList:
-            {
-                String *resultTemp = strNew();
-
-                const VariantList *list = varVarLst(value);
-
-                for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+                case varTypeVariantList:
                 {
-                    if (listIdx != 0)
-                        strCatZ(resultTemp, ", ");
+                    const VariantList *const list = varVarLst(value);
 
-                    strCatFmt(resultTemp, "%s", strZ(varStr(varLstGet(list, listIdx))));
+                    for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
+                    {
+                        if (listIdx != 0)
+                            strCatZ(result, ", ");
+
+                        strCatFmt(result, "%s", strZ(varStr(varLstGet(list, listIdx))));
+                    }
+
+                    break;
                 }
 
-                result = resultTemp;
-                break;
+                default:
+                    strCat(result, cfgOptionIdxDisplay(optionId, optionIdx));
+                    break;
             }
-
-            default:
-                result = cfgOptionIdxDisplay(optionId, optionIdx);
-                break;
         }
+        MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN_CONST(STRING, result);
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
