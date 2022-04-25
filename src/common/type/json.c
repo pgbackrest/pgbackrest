@@ -56,7 +56,7 @@ static bool
 jsonTypeScalar(const JsonType type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
     switch (type)
@@ -65,10 +65,10 @@ jsonTypeScalar(const JsonType type)
         case jsonTypeNull:
         case jsonTypeNumber:
         case jsonTypeString:
-            FUNCTION_TEST_RETURN(true);
+            FUNCTION_TEST_RETURN(BOOL, true);
 
         default:
-            FUNCTION_TEST_RETURN(false);
+            FUNCTION_TEST_RETURN(BOOL, false);
     }
 }
 
@@ -76,10 +76,10 @@ static bool
 jsonTypeContainer(const JsonType type)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(!jsonTypeScalar(type));
+    FUNCTION_TEST_RETURN(STRING_ID, !jsonTypeScalar(type));
 }
 
 /**********************************************************************************************************************************/
@@ -103,7 +103,7 @@ jsonReadNew(const String *const json)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_READ, this);
 }
 
 /***********************************************************************************************************************************
@@ -208,7 +208,7 @@ jsonReadTypeNext(JsonRead *const this)
             break;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_ID, result);
 }
 
 /***********************************************************************************************************************************
@@ -226,7 +226,7 @@ jsonReadTypeNextIgnoreComma(JsonRead *const this)
     jsonReadConsumeWhiteSpace(this);
 
     if (*this->json != ',')
-        FUNCTION_TEST_RETURN(jsonReadTypeNext(this));
+        FUNCTION_TEST_RETURN(STRING_ID, jsonReadTypeNext(this));
 
     const char *const jsonBeforeComma = this->json;
     this->json++;
@@ -234,7 +234,7 @@ jsonReadTypeNextIgnoreComma(JsonRead *const this)
     const JsonType result = jsonReadTypeNext(this);
     this->json = jsonBeforeComma;
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_ID, result);
 }
 
 /***********************************************************************************************************************************
@@ -424,9 +424,13 @@ jsonReadNumber(JsonRead *const this)
 
     // Return result
     if (intSigned)
-        FUNCTION_TEST_RETURN((JsonReadNumberResult){.type = jsonNumberTypeI64, .value = {.i64 = cvtZToInt64(working)}});
+    {
+        FUNCTION_TEST_RETURN_TYPE(
+            JsonReadNumberResult, (JsonReadNumberResult){.type = jsonNumberTypeI64, .value = {.i64 = cvtZToInt64(working)}});
+    }
 
-    FUNCTION_TEST_RETURN((JsonReadNumberResult){.type = jsonNumberTypeU64, .value = {.u64 = cvtZToUInt64(working)}});
+    FUNCTION_TEST_RETURN_TYPE(
+        JsonReadNumberResult, (JsonReadNumberResult){.type = jsonNumberTypeU64, .value = {.u64 = cvtZToUInt64(working)}});
 }
 
 /**********************************************************************************************************************************/
@@ -476,14 +480,14 @@ jsonReadBool(JsonRead *const this)
     {
         this->json += sizeof(TRUE_Z) - 1;
 
-        FUNCTION_TEST_RETURN(true);
+        FUNCTION_TEST_RETURN(BOOL, true);
     }
 
     if (strncmp(this->json, FALSE_Z, sizeof(FALSE_Z) - 1) == 0)
     {
         this->json += sizeof(FALSE_Z) - 1;
 
-        FUNCTION_TEST_RETURN(false);
+        FUNCTION_TEST_RETURN(BOOL, false);
     }
 
     THROW_FMT(JsonFormatError, "expected boolean at: %s", this->json);
@@ -508,13 +512,13 @@ jsonReadInt(JsonRead *const this)
         if (number.value.u64 > INT_MAX)
             THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for int", number.value.u64);
 
-        FUNCTION_TEST_RETURN((int)number.value.u64);
+        FUNCTION_TEST_RETURN(INT, (int)number.value.u64);
     }
 
     if (number.value.i64 < INT_MIN)
         THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for int", number.value.i64);
 
-    FUNCTION_TEST_RETURN((int)number.value.i64);
+    FUNCTION_TEST_RETURN(INT, (int)number.value.i64);
 }
 
 /**********************************************************************************************************************************/
@@ -532,12 +536,12 @@ jsonReadInt64(JsonRead *const this)
     JsonReadNumberResult number = jsonReadNumber(this);
 
     if (number.type == jsonNumberTypeI64)
-        FUNCTION_TEST_RETURN(number.value.i64);
+        FUNCTION_TEST_RETURN(INT64, number.value.i64);
 
     if (number.value.u64 > INT64_MAX)
         THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for int64", number.value.u64);
 
-    FUNCTION_TEST_RETURN((int64_t)number.value.u64);
+    FUNCTION_TEST_RETURN(INT64, (int64_t)number.value.u64);
 }
 
 /**********************************************************************************************************************************/
@@ -587,7 +591,7 @@ jsonReadKeyZN(JsonRead *const this)
 
     this->json++;
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(JsonReadKeyInternalResult, result);
 }
 
 String *
@@ -602,7 +606,7 @@ jsonReadKey(JsonRead *const this)
     jsonReadPush(this, jsonTypeString, true);
     JsonReadKeyInternalResult key = jsonReadKeyZN(this);
 
-    FUNCTION_TEST_RETURN(strNewZN(key.buffer, key.size));
+    FUNCTION_TEST_RETURN(STRING, strNewZN(key.buffer, key.size));
 }
 
 /**********************************************************************************************************************************/
@@ -657,7 +661,7 @@ jsonReadKeyExpect(JsonRead *const this, const String *const key)
         jsonReadSkip(this);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 bool
@@ -673,7 +677,7 @@ jsonReadKeyExpectStrId(JsonRead *const this, const StringId key)
 
     char buffer[STRID_MAX + 1];
 
-    FUNCTION_TEST_RETURN(jsonReadKeyExpect(this, STR_SIZE(buffer, strIdToZ(key, buffer))));
+    FUNCTION_TEST_RETURN(BOOL, jsonReadKeyExpect(this, STR_SIZE(buffer, strIdToZ(key, buffer))));
 }
 
 bool
@@ -687,7 +691,7 @@ jsonReadKeyExpectZ(JsonRead *const this, const char *const key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(jsonReadKeyExpect(this, STR(key)));
+    FUNCTION_TEST_RETURN(BOOL, jsonReadKeyExpect(this, STR(key)));
 }
 
 JsonRead *
@@ -704,7 +708,7 @@ jsonReadKeyRequire(JsonRead *const this, const String *const key)
     if (!jsonReadKeyExpect(this, key))
         THROW_FMT(JsonFormatError, "required key '%s' not found", strZ(key));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_READ, this);
 }
 
 JsonRead *
@@ -720,7 +724,7 @@ jsonReadKeyRequireStrId(JsonRead *const this, const StringId key)
 
     char buffer[STRID_MAX + 1];
 
-    FUNCTION_TEST_RETURN(jsonReadKeyRequire(this, STR_SIZE(buffer, strIdToZ(key, buffer))));
+    FUNCTION_TEST_RETURN(JSON_READ, jsonReadKeyRequire(this, STR_SIZE(buffer, strIdToZ(key, buffer))));
 }
 
 JsonRead *
@@ -734,7 +738,7 @@ jsonReadKeyRequireZ(JsonRead *const this, const char *const key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(jsonReadKeyRequire(this, STR(key)));
+    FUNCTION_TEST_RETURN(JSON_READ, jsonReadKeyRequire(this, STR(key)));
 }
 
 /**********************************************************************************************************************************/
@@ -950,7 +954,7 @@ jsonReadStr(JsonRead *const this)
     if (jsonReadTypeNextIgnoreComma(this) == jsonTypeNull)
     {
         jsonReadNull(this);
-        FUNCTION_TEST_RETURN(NULL);
+        FUNCTION_TEST_RETURN(STRING, NULL);
     }
 
     // Read string
@@ -1059,7 +1063,7 @@ jsonReadStr(JsonRead *const this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1080,7 +1084,7 @@ jsonReadStrId(JsonRead *const this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_ID, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1106,7 +1110,7 @@ jsonReadStrLst(JsonRead *const this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1129,7 +1133,7 @@ jsonReadUInt(JsonRead *const this)
     if (number.value.u64 > UINT_MAX)
         THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for uint", number.value.u64);
 
-    FUNCTION_TEST_RETURN((unsigned int)number.value.u64);
+    FUNCTION_TEST_RETURN(UINT, (unsigned int)number.value.u64);
 }
 
 /**********************************************************************************************************************************/
@@ -1149,7 +1153,7 @@ jsonReadUInt64(JsonRead *const this)
     if (number.type == jsonNumberTypeI64)
         THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for uint64", number.value.i64);
 
-    FUNCTION_TEST_RETURN(number.value.u64);
+    FUNCTION_TEST_RETURN(UINT64, number.value.u64);
 }
 
 /**********************************************************************************************************************************/
@@ -1165,11 +1169,11 @@ jsonReadVarRecurse(JsonRead *const this)
     switch (jsonReadTypeNextIgnoreComma(this))
     {
         case jsonTypeBool:
-            FUNCTION_TEST_RETURN(varNewBool(jsonReadBool(this)));
+            FUNCTION_TEST_RETURN(VARIANT, varNewBool(jsonReadBool(this)));
 
         case jsonTypeNull:
             jsonReadNull(this);
-            FUNCTION_TEST_RETURN(NULL);
+            FUNCTION_TEST_RETURN(VARIANT, NULL);
 
         case jsonTypeNumber:
         {
@@ -1178,13 +1182,13 @@ jsonReadVarRecurse(JsonRead *const this)
             JsonReadNumberResult number = jsonReadNumber(this);
 
             if (number.type == jsonNumberTypeU64)
-                FUNCTION_TEST_RETURN(varNewUInt64(number.value.u64));
+                FUNCTION_TEST_RETURN(VARIANT, varNewUInt64(number.value.u64));
 
-            FUNCTION_TEST_RETURN(varNewInt64(number.value.i64));
+            FUNCTION_TEST_RETURN(VARIANT, varNewInt64(number.value.i64));
         }
 
         case jsonTypeString:
-            FUNCTION_TEST_RETURN(varNewStr(jsonReadStr(this)));
+            FUNCTION_TEST_RETURN(VARIANT, varNewStr(jsonReadStr(this)));
 
         case jsonTypeArrayBegin:
         {
@@ -1197,7 +1201,7 @@ jsonReadVarRecurse(JsonRead *const this)
 
             jsonReadArrayEnd(this);
 
-            FUNCTION_TEST_RETURN(varNewVarLst(result));
+            FUNCTION_TEST_RETURN(VARIANT, varNewVarLst(result));
         }
 
         default:
@@ -1214,7 +1218,7 @@ jsonReadVarRecurse(JsonRead *const this)
 
             jsonReadObjectEnd(this);
 
-            FUNCTION_TEST_RETURN(varNewKv(result));
+            FUNCTION_TEST_RETURN(VARIANT, varNewKv(result));
         }
     }
 }
@@ -1228,7 +1232,7 @@ jsonReadVar(JsonRead *const this)
 
     Variant *const result = jsonReadVarRecurse(this);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1253,7 +1257,7 @@ jsonToVar(const String *const json)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1311,7 +1315,7 @@ jsonWriteNew(JsonWriteNewParam param)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /***********************************************************************************************************************************
@@ -1415,7 +1419,7 @@ jsonWritePop(JsonWrite *const this ASSERT_PARAM(const JsonType type))
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(JSON_WRITE, this);
-        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -1450,7 +1454,7 @@ jsonWriteArrayBegin(JsonWrite *const this)
     jsonWritePush(this, jsonTypeArrayBegin, NULL);
     strCatChr(this->json, '[');
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 JsonWrite *
@@ -1465,7 +1469,7 @@ jsonWriteArrayEnd(JsonWrite *const this)
     jsonWritePop(this ASSERT_PARAM(jsonTypeArrayEnd));
     strCatChr(this->json, ']');
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1482,7 +1486,7 @@ jsonWriteBool(JsonWrite *const this, const bool value)
     jsonWritePush(this, jsonTypeBool, NULL);
     strCat(this->json, value ? TRUE_STR : FALSE_STR);
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1501,7 +1505,7 @@ jsonWriteInt(JsonWrite *const this, const int value)
     char working[CVT_BASE10_BUFFER_SIZE];
     strCatZN(this->json, working, cvtIntToZ(value, working, sizeof(working)));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1520,7 +1524,7 @@ jsonWriteInt64(JsonWrite *const this, const int64_t value)
     char working[CVT_BASE10_BUFFER_SIZE];
     strCatZN(this->json, working, cvtInt64ToZ(value, working, sizeof(working)));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1542,7 +1546,7 @@ jsonWriteJson(JsonWrite *const this, const String *const value)
         strCat(this->json, value);
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1567,7 +1571,7 @@ jsonWriteKey(JsonWrite *const this, const String *const key)
     strCat(this->json, key);
     strCatZ(this->json, "\":");
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 JsonWrite *
@@ -1589,7 +1593,7 @@ jsonWriteKeyStrId(JsonWrite *const this, const StringId key)
 
     strCatZN(this->json, buffer, size + 1);
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 JsonWrite *
@@ -1603,7 +1607,7 @@ jsonWriteKeyZ(JsonWrite *const this, const char *const key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(jsonWriteKey(this, STR(key)));
+    FUNCTION_TEST_RETURN(JSON_WRITE, jsonWriteKey(this, STR(key)));
 }
 
 /**********************************************************************************************************************************/
@@ -1620,7 +1624,7 @@ jsonWriteNull(JsonWrite *const this)
 
     strCat(this->json, NULL_STR);
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1636,7 +1640,7 @@ jsonWriteObjectBegin(JsonWrite *const this)
     jsonWritePush(this, jsonTypeObjectBegin, NULL);
     strCatChr(this->json, '{');
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 JsonWrite *
@@ -1651,7 +1655,7 @@ jsonWriteObjectEnd(JsonWrite *const this)
     jsonWritePop(this ASSERT_PARAM(jsonTypeObjectEnd));
     strCatChr(this->json, '}');
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1668,7 +1672,7 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
     if (value == NULL)
     {
         jsonWriteNull(this);
-        FUNCTION_TEST_RETURN(this);
+        FUNCTION_TEST_RETURN(JSON_WRITE, this);
     }
 
     jsonWritePush(this, jsonTypeString, NULL);
@@ -1752,7 +1756,7 @@ jsonWriteStr(JsonWrite *const this, const String *const value)
 
     strCatChr(this->json, '"');
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1782,7 +1786,7 @@ jsonWriteStrFmt(JsonWrite *const this, const char *const format, ...)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1805,7 +1809,7 @@ jsonWriteStrId(JsonWrite *const this, const StringId value)
 
     strCatZN(this->json, buffer, size);
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1827,7 +1831,7 @@ jsonWriteStrLst(JsonWrite *const this, const StringList *const value)
 
     jsonWriteArrayEnd(this);
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1846,7 +1850,7 @@ jsonWriteUInt(JsonWrite *const this, const unsigned int value)
     char working[CVT_BASE10_BUFFER_SIZE];
     strCatZN(this->json, working, cvtUIntToZ(value, working, sizeof(working)));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1865,7 +1869,7 @@ jsonWriteUInt64(JsonWrite *const this, const uint64_t value)
     char working[CVT_BASE10_BUFFER_SIZE];
     strCatZN(this->json, working, cvtUInt64ToZ(value, working, sizeof(working)));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1979,7 +1983,7 @@ jsonWriteVar(JsonWrite *const this, const Variant *const value)
 
     jsonWriteVarRecurse(this, value);
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -1995,7 +1999,7 @@ jsonWriteZ(JsonWrite *const this, const char *const value)
 
     jsonWriteStr(this, value == NULL ? NULL : STR(value));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(JSON_WRITE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -2009,7 +2013,7 @@ jsonWriteResult(JsonWrite *const this)
     ASSERT(this != NULL);
     ASSERT(this->complete);
 
-    FUNCTION_TEST_RETURN(this->json);
+    FUNCTION_TEST_RETURN(STRING, this->json);
 }
 
 /**********************************************************************************************************************************/
@@ -2028,7 +2032,7 @@ jsonFromVar(const Variant *const value)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

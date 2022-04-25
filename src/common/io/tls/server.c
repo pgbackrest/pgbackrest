@@ -247,7 +247,7 @@ tlsServerName(THIS_VOID)                                                        
 
     ASSERT(this != NULL);                                                                                           // {vm_covered}
 
-    FUNCTION_TEST_RETURN(this->host);                                                                               // {vm_covered}
+    FUNCTION_TEST_RETURN_CONST(STRING, this->host);                                                                 // {vm_covered}
 }
 
 /***********************************************************************************************************************************

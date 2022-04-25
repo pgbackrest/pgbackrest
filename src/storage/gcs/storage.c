@@ -150,7 +150,7 @@ storageGcsAuthToken(HttpRequest *request, time_t timeBegin)
     }
     MEM_CONTEXT_PRIOR_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(StorageGcsAuthTokenResult, result);
 }
 
 /***********************************************************************************************************************************
@@ -232,7 +232,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 static StorageGcsAuthTokenResult
@@ -266,7 +266,7 @@ storageGcsAuthService(StorageGcs *this, time_t timeBegin)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(StorageGcsAuthTokenResult, result);
 }
 
 /***********************************************************************************************************************************
@@ -301,7 +301,7 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(StorageGcsAuthTokenResult, result);
 }
 
 /***********************************************************************************************************************************
@@ -495,6 +495,7 @@ storageGcsCvtTime(const String *time)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
+        TIME,
         epochFromParts(
             cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
             cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),

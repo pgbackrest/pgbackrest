@@ -131,7 +131,7 @@ storageS3DateTime(time_t authTime)
         strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime_r(&authTime, &timePart)) != ISO_8601_DATE_TIME_SIZE, AssertError,
         "unable to format date");
 
-    FUNCTION_TEST_RETURN(strNewZ(buffer));
+    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -248,6 +248,7 @@ storageS3CvtTime(const String *time)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
+        TIME,
         epochFromParts(
             cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
             cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
@@ -921,7 +922,7 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
             .content = xmlDocumentBuf(xml));
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(HTTP_REQUEST, result);
 }
 
 static void

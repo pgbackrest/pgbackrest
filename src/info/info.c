@@ -108,7 +108,7 @@ infoNewInternal(void)
         .memContext = memContextCurrent(),
     };
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(INFO, this);
 }
 
 /**********************************************************************************************************************************/
@@ -319,8 +319,9 @@ infoSaveSection(InfoSave *const infoSaveData, const char *const section, const S
     ASSERT(section != NULL);
 
     FUNCTION_TEST_RETURN(
+        BOOL,
         (infoSaveData->sectionLast == NULL || strCmpZ(infoSaveData->sectionLast, section) < 0) &&
-        (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
+            (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
 }
 
 /**********************************************************************************************************************************/

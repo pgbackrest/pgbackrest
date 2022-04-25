@@ -110,7 +110,7 @@ storageReadGcsEof(THIS_VOID)
     ASSERT(this != NULL && this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
-    FUNCTION_TEST_RETURN(ioReadEof(httpResponseIoRead(this->httpResponse)));
+    FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
 /**********************************************************************************************************************************/

@@ -294,7 +294,7 @@ execFdRead(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fdRead);
+    FUNCTION_TEST_RETURN(INT, this->fdRead);
 }
 
 /**********************************************************************************************************************************/

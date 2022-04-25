@@ -180,10 +180,10 @@ static ProtocolParallelJob *testParallelJobCallback(void *data, unsigned int cli
         ProtocolParallelJob *job = *(ProtocolParallelJob **)lstGet(listData->jobList, listData->jobIdx);
         listData->jobIdx++;
 
-        FUNCTION_TEST_RETURN(protocolParallelJobMove(job, memContextCurrent()));
+        FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, protocolParallelJobMove(job, memContextCurrent()));
     }
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, NULL);
 }
 
 /***********************************************************************************************************************************

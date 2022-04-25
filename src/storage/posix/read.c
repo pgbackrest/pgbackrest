@@ -186,7 +186,7 @@ storageReadPosixEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->eof);
+    FUNCTION_TEST_RETURN(BOOL, this->eof);
 }
 
 /***********************************************************************************************************************************
@@ -203,7 +203,7 @@ storageReadPosixFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fd);
+    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/

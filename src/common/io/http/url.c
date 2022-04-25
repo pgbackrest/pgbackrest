@@ -191,7 +191,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_URL, this);
 }
 
 /**********************************************************************************************************************************/

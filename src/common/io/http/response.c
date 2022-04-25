@@ -395,7 +395,7 @@ httpResponseContent(HttpResponse *this)
         }
     }
 
-    FUNCTION_TEST_RETURN(this->content);
+    FUNCTION_TEST_RETURN(BUFFER, this->content);
 }
 
 /**********************************************************************************************************************************/

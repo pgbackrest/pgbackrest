@@ -30,7 +30,7 @@ varLstNewStrLst(const StringList *stringList)
             varLstAdd(result, varNewStr(strLstGet(stringList, listIdx)));
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -51,5 +51,5 @@ varLstDup(const VariantList *source)
             varLstAdd(result, varDup(varLstGet(source, listIdx)));
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }

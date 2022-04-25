@@ -91,7 +91,7 @@ stanzaDelete(const Storage *storageRepoWriteStanza, const StringList *archiveLis
     else
         result = true;
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/

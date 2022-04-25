@@ -79,7 +79,7 @@ static XmlNodeList *
 xmlNodeLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN((XmlNodeList *)lstNewP(sizeof(XmlNode *)));
+    FUNCTION_TEST_RETURN(XML_NODE_LIST, (XmlNodeList *)lstNewP(sizeof(XmlNode *)));
 }
 
 /**********************************************************************************************************************************/
@@ -99,7 +99,7 @@ xmlNodeNew(xmlNodePtr node)
         .node = node,
     };
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(XML_NODE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -117,7 +117,7 @@ xmlNodeAdd(XmlNode *this, const String *name)
     XmlNode *result = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strZ(name)));
     xmlAddChild(this->node, result->node);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(XML_NODE, result);
 }
 
 /***********************************************************************************************************************************
@@ -141,7 +141,7 @@ xmlNodeLstAdd(XmlNodeList *this, xmlNodePtr node)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(XML_NODE_LIST, this);
 }
 
 /**********************************************************************************************************************************/
@@ -165,7 +165,7 @@ xmlNodeAttribute(const XmlNode *this, const String *name)
         xmlFree(value);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -185,7 +185,7 @@ xmlNodeContent(const XmlNode *this)
         xmlFree(content);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 void
@@ -224,7 +224,7 @@ xmlNodeChildList(const XmlNode *this, const String *name)
             xmlNodeLstAdd(list, currentNode);
     }
 
-    FUNCTION_TEST_RETURN(list);
+    FUNCTION_TEST_RETURN(XML_NODE_LIST, list);
 }
 
 /**********************************************************************************************************************************/
@@ -260,7 +260,7 @@ xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool 
     if (child == NULL && errorOnMissing)
         THROW_FMT(FormatError, "unable to find child '%s':%u in node '%s'", strZ(name), index, this->node->name);
 
-    FUNCTION_TEST_RETURN(child);
+    FUNCTION_TEST_RETURN(XML_NODE, child);
 }
 
 /**********************************************************************************************************************************/
@@ -281,7 +281,7 @@ xmlNodeChildTotal(const XmlNode *this, const String *name)
             result++;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(UINT, result);
 }
 
 /**********************************************************************************************************************************/
@@ -349,7 +349,7 @@ xmlDocumentNew(const String *rootName)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(XML_DOCUMENT, this);
 }
 
 /**********************************************************************************************************************************/
@@ -384,7 +384,7 @@ xmlDocumentNewBuf(const Buffer *buffer)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(XML_DOCUMENT, this);
 }
 
 /**********************************************************************************************************************************/
@@ -404,5 +404,5 @@ xmlDocumentBuf(const XmlDocument *this)
     Buffer *result = bufNewC(xml, (size_t)xmlSize);
     xmlFree(xml);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }

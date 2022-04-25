@@ -23,7 +23,7 @@ timeMSec(void)
     struct timeval currentTime;
     gettimeofday(&currentTime, NULL);
 
-    FUNCTION_TEST_RETURN(((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC);
+    FUNCTION_TEST_RETURN(TIME_MSEC, ((TimeMSec)currentTime.tv_sec * MSEC_PER_SEC) + (TimeMSec)currentTime.tv_usec / MSEC_PER_USEC);
 }
 
 /**********************************************************************************************************************************/
@@ -125,7 +125,7 @@ tzOffsetSeconds(int tzHour, int tzMinute)
         tzHour = sign * tzHour;
     }
 
-    FUNCTION_TEST_RETURN(sign * (tzHour * 3600 + tzMinute * 60));
+    FUNCTION_TEST_RETURN(INT, sign * (tzHour * 3600 + tzMinute * 60));
 }
 
 /**********************************************************************************************************************************/
@@ -136,7 +136,7 @@ yearIsLeap(int year)
         FUNCTION_TEST_PARAM(INT, year);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0));
+    FUNCTION_TEST_RETURN(BOOL, (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0));
 }
 
 /**********************************************************************************************************************************/
@@ -157,7 +157,7 @@ dayOfYear(int year, int month, int day)
         {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335},
     };
 
-    FUNCTION_TEST_RETURN(cumulativeDaysPerMonth[yearIsLeap(year) ? 1 : 0][month - 1] + day);
+    FUNCTION_TEST_RETURN(INT, cumulativeDaysPerMonth[yearIsLeap(year) ? 1 : 0][month - 1] + day);
 }
 
 /**********************************************************************************************************************************/
@@ -178,6 +178,7 @@ epochFromParts(int year, int month, int day, int hour, int minute, int second, i
 
     // Return epoch using calculation from https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_16
     FUNCTION_TEST_RETURN(
+        TIME,
         -1 * tzOffsetSecond + second + minute * 60 + hour * 3600 +
         (dayOfYear(year, month, day) - 1) * 86400 + (year - 1900 - 70) * 31536000 +
         ((year - 1900 - 69) / 4) * 86400 - ((year - 1900 - 1) / 100) * 86400 + ((year - 1900 + 299) / 400) * 86400);

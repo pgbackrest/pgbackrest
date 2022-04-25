@@ -146,7 +146,7 @@ sckClientName(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->name);
+    FUNCTION_TEST_RETURN_CONST(STRING, this->name);
 }
 
 /**********************************************************************************************************************************/

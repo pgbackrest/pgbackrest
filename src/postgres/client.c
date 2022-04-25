@@ -114,7 +114,7 @@ pgClientEscape(const String *string)
 
     strCatChr(result, '\'');
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

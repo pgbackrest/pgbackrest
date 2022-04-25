@@ -360,7 +360,7 @@ cipherBlockDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->done && !this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->done && !this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -377,7 +377,7 @@ cipherBlockInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/

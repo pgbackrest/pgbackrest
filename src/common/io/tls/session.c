@@ -314,7 +314,7 @@ tlsSessionIoRead(THIS_VOID, const bool ignoreUnexpectedEof)
 
     this->ignoreUnexpectedEof = ignoreUnexpectedEof;
 
-    FUNCTION_TEST_RETURN(this->read);
+    FUNCTION_TEST_RETURN(IO_READ, this->read);
 }
 
 /**********************************************************************************************************************************/
@@ -329,7 +329,7 @@ tlsSessionIoWrite(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->write);
+    FUNCTION_TEST_RETURN(IO_WRITE, this->write);
 }
 
 /**********************************************************************************************************************************/
@@ -344,7 +344,7 @@ tlsSessionRole(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(ioSessionRole(this->ioSession));
+    FUNCTION_TEST_RETURN(STRING_ID, ioSessionRole(this->ioSession));
 }
 
 /**********************************************************************************************************************************/

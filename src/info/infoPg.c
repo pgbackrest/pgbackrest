@@ -55,7 +55,7 @@ infoPgNewInternal(InfoPgType type)
         .type = type,
     };
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(INFO_PG, this);
 }
 
 /**********************************************************************************************************************************/
