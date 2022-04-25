@@ -36,7 +36,7 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // If the db list does not exist then create it in the prior context (which should be persistent)
+        // If the db list does not exist then create it in the top context
         if (dbProtocolLocal.pgClientList == NULL)
         {
             MEM_CONTEXT_BEGIN(memContextTop())
