@@ -446,8 +446,8 @@ testRun(void)
     if (testBegin("strLstExists()"))
     {
         StringList *list = strLstNew();
-        strLstAddZ(list, "A");
-        strLstAddZ(list, "C");
+        strLstAddSub(list, STRDEF("AX"), 1);
+        strLstAddSubN(list, STRDEF("XC"), 1, 1);
 
         TEST_RESULT_BOOL(strLstExists(list, STRDEF("B")), false, "string does not exist");
         TEST_RESULT_BOOL(strLstExists(list, STRDEF("C")), true, "string exists");
@@ -460,8 +460,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strLstJoin(list, ", "), "", "empty list");
 
-        strLstAddZ(list, "item1");
-        strLstAddZ(list, "item2");
+        strLstAddZSub(list, "item1X", 5);
+        strLstAddZSubN(list, "Xitem2X", 1, 5);
 
         TEST_RESULT_STR_Z(strLstJoin(list, ", "), "item1, item2", "list");
 

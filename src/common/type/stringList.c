@@ -152,12 +152,39 @@ strLstAdd(StringList *this, const String *string)
 }
 
 String *
+strLstAddSubN(StringList *const this, const String *const string, const size_t offset, const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(SIZE, offset);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstAddInternal(this, strSubN(string, offset, size));
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+String *
 strLstAddFmt(StringList *const this, const char *const format, ...)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, this);
         FUNCTION_TEST_PARAM(STRINGZ, format);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(format != NULL);
 
     // Determine how long the allocated string needs to be
     va_list argumentList;
@@ -217,6 +244,30 @@ strLstAddZ(StringList *this, const char *string)
     MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
     {
         result = strLstAddInternal(this, strNewZ(string));
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+String *
+strLstAddZSubN(StringList *const this, const char *const string, const size_t offset, const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRINGZ, string);
+        FUNCTION_TEST_PARAM(SIZE, offset);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)this))
+    {
+        result = strLstAddInternal(this, strSubN(STR(string), offset, size));
     }
     MEM_CONTEXT_END();
 

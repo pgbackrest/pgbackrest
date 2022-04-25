@@ -68,8 +68,24 @@ Functions
 ***********************************************************************************************************************************/
 // Add String to the list
 String *strLstAdd(StringList *this, const String *string);
+String *strLstAddSubN(StringList *this, const String *string, size_t offset, size_t size);
+
+__attribute__((always_inline)) static inline String *
+strLstAddSub(StringList *const this, const String *const string, const size_t size)
+{
+    return strLstAddSubN(this, string, 0, size);
+}
+
 String *strLstAddFmt(StringList *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
 String *strLstAddZ(StringList *this, const char *string);
+String *strLstAddZSubN(StringList *this, const char *string, size_t offset, size_t size);
+
+__attribute__((always_inline)) static inline String *
+strLstAddZSub(StringList *const this, const char *const string, const size_t size)
+{
+    return strLstAddZSubN(this, string, 0, size);
+}
+
 String *strLstAddIfMissing(StringList *this, const String *string);
 
 // Does the specified string exist in the list?

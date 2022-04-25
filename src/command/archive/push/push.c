@@ -108,9 +108,8 @@ archivePushReadyList(const String *walPath)
 
         for (unsigned int readyIdx = 0; readyIdx < strLstSize(readyListRaw); readyIdx++)
         {
-            strLstAdd(
-                result,
-                strSubN(strLstGet(readyListRaw, readyIdx), 0, strSize(strLstGet(readyListRaw, readyIdx)) - STATUS_EXT_READY_SIZE));
+            const String *const ready = strLstGet(readyListRaw, readyIdx);
+            strLstAddSub(result, ready, strSize(ready) - STATUS_EXT_READY_SIZE);
         }
 
         strLstMove(result, memContextPrior());
@@ -156,7 +155,7 @@ archivePushProcessList(const String *walPath)
             const String *statusFile = strLstGet(statusList, statusIdx);
 
             if (strEndsWithZ(statusFile, STATUS_EXT_OK))
-                strLstAdd(okList, strSubN(statusFile, 0, strSize(statusFile) - STATUS_EXT_OK_SIZE));
+                strLstAddSub(okList, statusFile, strSize(statusFile) - STATUS_EXT_OK_SIZE);
             else
             {
                 storageRemoveP(

@@ -1164,7 +1164,7 @@ manifestNewBuild(
                         if (buildData.excludeContent == NULL)
                             buildData.excludeContent = strLstNew();
 
-                        strLstAdd(buildData.excludeContent, strSubN(exclude, 0, strSize(exclude) - 1));
+                        strLstAddSub(buildData.excludeContent, exclude, strSize(exclude) - 1);
                     }
                     // Otherwise exclude a single file/link/path
                     else
