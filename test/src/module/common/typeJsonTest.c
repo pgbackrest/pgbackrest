@@ -80,23 +80,19 @@ testRun(void)
         TEST_TITLE("error on invalid integers");
 
         TEST_ERROR(
-            jsonReadInt(jsonReadNew(STRDEF("-9223372036854775807"))), JsonFormatError,
-            "-9223372036854775807 is out of range for int");
+            jsonReadInt(jsonReadNew(strNewFmt("%" PRId64, (int64_t)INT_MIN - 1))), JsonFormatError,
+            "-2147483649 is out of range for int");
         TEST_ERROR(
-            jsonReadInt(jsonReadNew(STRDEF("18446744073709551615"))), JsonFormatError,
-            "18446744073709551615 is out of range for int");
+            jsonReadInt(jsonReadNew(strNewFmt("%" PRId64, (int64_t)INT_MAX + 1))), JsonFormatError,
+            "2147483648 is out of range for int");
         TEST_ERROR(
-            jsonReadInt64(jsonReadNew(STRDEF("18446744073709551615"))), JsonFormatError,
-            "18446744073709551615 is out of range for int64");
+            jsonReadInt64(jsonReadNew(strNewFmt("%" PRIu64, (uint64_t)INT64_MAX + 1))), JsonFormatError,
+            "9223372036854775808 is out of range for int64");
+        TEST_ERROR(jsonReadUInt(jsonReadNew(STRDEF("-1"))), JsonFormatError, "-1 is out of range for uint");
         TEST_ERROR(
-            jsonReadUInt(jsonReadNew(STRDEF("-9223372036854775807"))), JsonFormatError,
-            "-9223372036854775807 is out of range for uint");
-        TEST_ERROR(
-            jsonReadUInt(jsonReadNew(STRDEF("18446744073709551615"))), JsonFormatError,
-            "18446744073709551615 is out of range for uint");
-        TEST_ERROR(
-            jsonReadUInt64(jsonReadNew(STRDEF("-9223372036854775807"))), JsonFormatError,
-            "-9223372036854775807 is out of range for uint64");
+            jsonReadUInt(jsonReadNew(strNewFmt("%" PRIu64, (uint64_t)UINT_MAX + 1))), JsonFormatError,
+            "4294967296 is out of range for uint");
+        TEST_ERROR(jsonReadUInt64(jsonReadNew(STRDEF("-1"))), JsonFormatError, "-1 is out of range for uint64");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid null");
