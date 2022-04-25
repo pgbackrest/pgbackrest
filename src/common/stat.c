@@ -113,23 +113,22 @@ statToJson(void)
 
     if (!lstEmpty(statLocalData.stat))
     {
+        result = strNew();
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            KeyValue *const kv = kvNew();
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP(.json = result));
 
             for (unsigned int statIdx = 0; statIdx < lstSize(statLocalData.stat); statIdx++)
             {
                 const Stat *const stat = lstGet(statLocalData.stat, statIdx);
 
-                KeyValue *const statKv = kvPutKv(kv, VARSTR(stat->key));
-                kvPut(statKv, VARSTRDEF("total"), VARUINT64(stat->total));
+                jsonWriteObjectBegin(jsonWriteKey(json, stat->key));
+                jsonWriteUInt64(jsonWriteKeyZ(json, "total"), stat->total);
+                jsonWriteObjectEnd(json);
             }
 
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                result = jsonFromKv(kv);
-            }
-            MEM_CONTEXT_PRIOR_END();
+            jsonWriteObjectEnd(json);
         }
         MEM_CONTEXT_TEMP_END();
     }

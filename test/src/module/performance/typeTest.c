@@ -47,13 +47,12 @@ testComparator(const void *item1, const void *item2)
 Test callback to count ini load results
 ***********************************************************************************************************************************/
 static void
-testIniLoadCountCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
+testIniLoadCountCallback(void *const data, const String *const section, const String *const key, const String *const value)
 {
     (*(unsigned int *)data)++;
     (void)section;
     (void)key;
     (void)value;
-    (void)valueVar;
 }
 
 /***********************************************************************************************************************************

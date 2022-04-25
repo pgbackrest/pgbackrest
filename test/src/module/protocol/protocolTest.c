@@ -559,13 +559,13 @@ testRun(void)
 
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
-                    JsonFormatError, "expected '{' at 'bogus greeting'");
+                    JsonFormatError, "invalid type at: bogus greeting");
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "greeting key 'name' must be string type");
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
-                    ProtocolError, "unable to find greeting key 'name'");
+                    ProtocolError, "greeting key 'name' must be string type");
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "unable to find greeting key 'name'");

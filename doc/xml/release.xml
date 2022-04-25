@@ -22,6 +22,7 @@
                         <commit subject="Auto-select backup for restore command --type=lsn.">
                             <github-pull-request id="1706"/>
                         </commit>
+                        <commit subject="Fix ordering of backup-lsn-stop field in command/restore unit test."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="reid.thompson"/>
@@ -140,6 +141,24 @@
                         </release-item-contributor-list>
 
                         <p>Improve small file support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Add test for protocol greeting when a field is missing."/>
+                        <commit subject="Return stats as a JSON string rather than a KeyValue object."/>
+                        <commit subject="Add size to info/manifest unit test."/>
+                        <commit subject="Handle missing archive start/stop in info/info backup unit test."/>
+                        <commit subject="Add JSON error when value does not parse in Ini object."/>
+                        <commit subject="Improve JSON handling.">
+                            <github-pull-request id="1721"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve JSON handling.</p>
                     </release-item>
 
                     <release-item>

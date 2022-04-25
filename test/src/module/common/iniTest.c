@@ -9,9 +9,8 @@ Test Ini
 Test callback to accumulate ini load results
 ***********************************************************************************************************************************/
 static void
-testIniLoadCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
+testIniLoadCallback(void *data, const String *section, const String *key, const String *value)
 {
-    ASSERT(strEq(value, jsonFromVar(valueVar)));
     strCatFmt((String *)data, "%s:%s:%s\n", strZ(section), strZ(key), strZ(value));
 }
 
@@ -50,7 +49,7 @@ testRun(void)
 
         TEST_ERROR(
             iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
-            "invalid JSON value at line 2 'key=value': invalid type at 'value'");
+            "invalid JSON value at line 2 'key=value': invalid type at: value");
 
         // Key outside of section
         // -------------------------------------------------------------------------------------------------------------------------
