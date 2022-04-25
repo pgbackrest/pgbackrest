@@ -499,7 +499,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         hrnCfgArgRawZ(argList, cfgOptCipherPass, "custom2");
-        strLstAdd(argList, STRDEF(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label");
         HRN_CFG_LOAD(cfgCmdRepoPut, argList);
 
         TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(backupLabelBuffer)), "put");
@@ -755,7 +755,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
-        strLstAdd(argList, STRDEF(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label");
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);

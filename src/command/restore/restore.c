@@ -2003,7 +2003,7 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
 
         // Generate the list of processing queues (there is always at least one)
         StringList *targetList = strLstNew();
-        strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
+        strLstAddZ(targetList, MANIFEST_TARGET_PGDATA "/");
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {

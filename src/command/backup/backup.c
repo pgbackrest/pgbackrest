@@ -1481,7 +1481,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
 
         // Generate the list of targets
         StringList *targetList = strLstNew();
-        strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
+        strLstAddZ(targetList, MANIFEST_TARGET_PGDATA "/");
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {

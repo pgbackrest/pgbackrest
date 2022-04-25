@@ -460,7 +460,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strLstJoin(list, ", "), "", "empty list");
 
-        strLstAdd(list, STRDEF("item1"));
+        strLstAddZ(list, "item1");
         strLstAddZ(list, "item2");
 
         TEST_RESULT_STR_Z(strLstJoin(list, ", "), "item1, item2", "list");
