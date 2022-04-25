@@ -196,16 +196,12 @@ archivePushFile(
                     {
                         if (modeCheck)
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
-                            {
-                                // Add warning to the result that will be returned to the main process
-                                strLstAddFmt(
-                                    result.warnList,
-                                    "WAL file '%s' already exists in the %s archive with the same checksum"
-                                    "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                    strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx));
-                            }
-                            MEM_CONTEXT_PRIOR_END();
+                            // Add warning to the result that will be returned to the main process
+                            strLstAddFmt(
+                                result.warnList,
+                                "WAL file '%s' already exists in the %s archive with the same checksum"
+                                "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
+                                strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx));
                         }
 
                         // No need to copy to this repo
