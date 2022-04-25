@@ -740,7 +740,8 @@ strPath(const String *this)
     while (end > this->pub.buffer && *(end - 1) != '/')
         end--;
 
-    FUNCTION_TEST_RETURN(STRING,
+    FUNCTION_TEST_RETURN(
+        STRING,
         strNewZN(
             this->pub.buffer,
             end - this->pub.buffer <= 1 ? (size_t)(end - this->pub.buffer) : (size_t)(end - this->pub.buffer - 1)));
@@ -1041,7 +1042,6 @@ strSizeFormat(const uint64_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT64, size);
-
     FUNCTION_TEST_END();
 
     String *result = NULL;
