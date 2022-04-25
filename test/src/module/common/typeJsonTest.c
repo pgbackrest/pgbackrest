@@ -36,7 +36,7 @@ testRun(void)
         TEST_ERROR(jsonReadBool(read), JsonFormatError, "missing comma at: true]");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on missing comma");
+        TEST_TITLE("error on mismatched container end");
 
         TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ ] ")), "new read");
 
