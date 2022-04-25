@@ -1474,6 +1474,11 @@ testRun(void)
             "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
             SHRUG_EMOJI "={\"db-id\":18000,\"db-last-system-id\":12168}\n"
 
+        #define TEST_MANIFEST_METADATA                                                                                             \
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
+            "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"
+
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
@@ -1483,7 +1488,7 @@ testRun(void)
             "pg_data/base/16384/17000={\"bni\":1,\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"\
                 ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
             "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""         \
-                ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                                          \
+                ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                      \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
@@ -1570,6 +1575,7 @@ testRun(void)
                 "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
                 "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"
                 "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
+                TEST_MANIFEST_METADATA
                 TEST_MANIFEST_FILE
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
@@ -1578,6 +1584,10 @@ testRun(void)
                 TEST_MANIFEST_PATH_DEFAULT))),
             "load manifest");
 
+        KeyValue *annotationKV = kvNew();
+        kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
+        kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
+        TEST_RESULT_VOID(manifestAnnotationSet(manifest, annotationKV), "annotation set");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1822,6 +1832,7 @@ testRun(void)
             "[cipher]\n"
             "cipher-pass=\"supersecret\"\n"
             TEST_MANIFEST_DB
+            TEST_MANIFEST_METADATA
             TEST_MANIFEST_FILE
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
@@ -1900,6 +1911,9 @@ testRun(void)
             "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
             "\n"                                                                                                                   \
             "[ignore-section]\n"                                                                                                   \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
             "ignore-key=\"ignore-value\"\n"                                                                                        \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \

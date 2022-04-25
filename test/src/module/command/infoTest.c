@@ -1818,18 +1818,24 @@ testRun(void)
             "text - backup set requested, no db and no checksum error");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup set requested with missing backup lsn stop location");
+        TEST_TITLE("backup set requested with missing backup lsn stop location and annotations");
 
         argList2 = strLstDup(argListTextStanzaOpt);
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201116-155000F_20201119-152100I");
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
+        #define TEST_MANIFEST_METADATA                                                                                             \
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
+            "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"
+
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20201116-155000F_20201119-152100I/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER2
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_NO_DB
+            TEST_MANIFEST_METADATA
             TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
@@ -1853,7 +1859,10 @@ testRun(void)
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20201116-155000F\n"
-            "            database list: none\n",
+            "            database list: none\n"
+            "            annotation(s)\n"
+            "                extra key: this is an annotation\n"
+            "                source: this is another annotation\n",
             "text - backup set requested, no lsn start/stop location");
 
         //--------------------------------------------------------------------------------------------------------------------------
