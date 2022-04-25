@@ -116,10 +116,11 @@ archivePushFile(
     ASSERT(lstSize(repoList) > 0);
 
     ArchivePushFileResult result = {.warnList = strLstNew()};
-    StringList *errorList = strLstDup(priorErrorList);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        StringList *const errorList = strLstDup(priorErrorList);
+
         // Is this a WAL segment?
         bool isSegment = walIsSegment(archiveFile);
 
@@ -322,13 +323,13 @@ archivePushFile(
                 }
             }
         }
+
+        // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
+        // remove the file.
+        if (strLstSize(errorList) > 0)
+            THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
     }
     MEM_CONTEXT_TEMP_END();
-
-    // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
-    // remove the file.
-    if (strLstSize(errorList) > 0)
-        THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
 
     FUNCTION_LOG_RETURN_STRUCT(result);
 }
