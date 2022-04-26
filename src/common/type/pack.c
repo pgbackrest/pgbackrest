@@ -1191,8 +1191,12 @@ pckReadStrLst(PackRead *const this, PckReadStrLstParam param)
 
     StringList *const result = strLstNew();
 
-    while (!pckReadNullP(this))
-        strLstAdd(result, pckReadStrP(this));
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        while (!pckReadNullP(this))
+            strLstAdd(result, pckReadStrP(this));
+    }
+    MEM_CONTEXT_TEMP_END();
 
     pckReadArrayEndP(this);
 
