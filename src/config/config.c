@@ -97,8 +97,12 @@ cfgCommandJobRetry(void)
     // Build retry list
     VariantList *result = varLstNew();
 
-    for (unsigned int retryIdx = 0; retryIdx < cfgOptionUInt(cfgOptJobRetry); retryIdx++)
-        varLstAdd(result, varNewUInt64(retryIdx == 0 ? 0 : cfgOptionUInt64(cfgOptJobRetryInterval)));
+    MEM_CONTEXT_BEGIN(lstMemContext((List *)result))
+    {
+        for (unsigned int retryIdx = 0; retryIdx < cfgOptionUInt(cfgOptJobRetry); retryIdx++)
+            varLstAdd(result, varNewUInt64(retryIdx == 0 ? 0 : cfgOptionUInt64(cfgOptJobRetryInterval)));
+    }
+    MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
@@ -119,7 +123,6 @@ String *
 cfgCommandRoleName(void)
 {
     FUNCTION_TEST_VOID();
-
     FUNCTION_TEST_RETURN(STRING, cfgParseCommandRoleName(cfgCommand(), cfgCommandRole(), COLON_STR));
 }
 
