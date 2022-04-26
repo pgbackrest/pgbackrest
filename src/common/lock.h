@@ -57,6 +57,7 @@ typedef struct LockWriteDataParam
     lockWriteData(lockType, (LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
 
 void lockWriteData(LockType lockType, LockWriteDataParam param);
+
 // Read a lock file held by another process to get information about what the process is doing. This is a lower-level version to use
 // when the lock file name is already known and the lock file may need to be removed.
 typedef enum

@@ -602,6 +602,28 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 };
 
 /***********************************************************************************************************************************
+Wrap cmdBackup() with lock acquire and release
+***********************************************************************************************************************************/
+void testCmdBackup(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
+
+    TRY_BEGIN()
+    {
+        cmdBackup();
+    }
+    FINALLY()
+    {
+        lockRelease(true);
+    }
+    TRY_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -1886,15 +1908,16 @@ testRun(void)
 
         uint64_t sizeProgress = 0;
         currentPercentComplete = 4567;
-        lockLocal.execId = STRDEF("1-test");
-        TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
+
+        TEST_RESULT_VOID(
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true),
+            "acquire backup lock");
         TEST_RESULT_VOID(
             backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress,
             &currentPercentComplete), "log noop result");
+        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
     }
 
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
@@ -1937,7 +1960,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTMTRPID, "PID");
 
         TEST_ERROR(
-            cmdBackup(), PgRunningError,
+            testCmdBackup(), PgRunningError,
             "--no-online passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and"
                 " try again, or use --force.");
 
@@ -1958,9 +1981,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF");
 
-        TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
 
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
@@ -1977,7 +1998,6 @@ testRun(void)
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when no files have changed");
@@ -1992,14 +2012,11 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-        TEST_ERROR(cmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
+        TEST_ERROR(testCmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
             "P00   WARN: diff backup cannot alter compress-type option to 'gz', reset to value in [FULL-1]");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("offline incr backup to test unresumable backup");
@@ -2017,9 +2034,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
-        TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2030,7 +2045,6 @@ testRun(void)
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: new backup label = [INCR-1]\n"
             "P00   INFO: incr backup size = 3B, file total = 3");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("offline diff backup to test prior backup must be full");
@@ -2048,9 +2062,7 @@ testRun(void)
         sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR2");
 
-        TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2059,7 +2071,6 @@ testRun(void)
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: new backup label = [DIFF-2]\n"
             "P00   INFO: diff backup size = 3B, file total = 3");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("only repo2 configured");
@@ -2085,11 +2096,9 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
+
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo");
@@ -2102,9 +2111,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
+
         TEST_RESULT_LOG(
             "P00   INFO: repo option not specified, defaulting to repo1\n"
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2114,7 +2122,6 @@ testRun(void)
             "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-1]\n"
             "P00   INFO: new backup label = [DIFF-3]\n"
             "P00   INFO: diff backup size = 3B, file total = 3");
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - specify repo");
@@ -2127,9 +2134,8 @@ testRun(void)
 
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
-        TEST_RESULT_BOOL(
-            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
+
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
@@ -2144,7 +2150,6 @@ testRun(void)
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         harnessLogLevelReset();
-        TEST_RESULT_VOID(lockRelease(true), "release all locks");
     }
 
     // *****************************************************************************************************************************
@@ -2239,10 +2244,8 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
-            TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
-                "backup lock");
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
@@ -2281,7 +2284,6 @@ testRun(void)
                 "pg_data/global={}\n"
                 "pg_data/pg_xlog={}\n",
                 "compare file list");
-            TEST_RESULT_VOID(lockRelease(true), "release all locks");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2382,10 +2384,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
-            TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
-                "backup lock");
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             // Enable storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePath;
@@ -2470,7 +2469,6 @@ testRun(void)
             HRN_STORAGE_REMOVE(storagePgWrite(), "size-mismatch", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "time-mismatch", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "zero-size", .errorOnMissing = true);
-            TEST_RESULT_VOID(lockRelease(true), "release all locks");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2551,10 +2549,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
-            TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
-                "backup lock");
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             // Check log
             TEST_RESULT_LOG(
@@ -2624,7 +2619,6 @@ testRun(void)
             // Remove test files
             HRN_STORAGE_REMOVE(storagePgWrite(), "resume-ref", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "time-mismatch2", .errorOnMissing = true);
-            TEST_RESULT_VOID(lockRelease(true), "release all locks");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2693,11 +2687,8 @@ testRun(void)
             // Run backup but error on first archive check
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
-            TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
-                "backup lock");
             TEST_ERROR(
-                cmdBackup(), ArchiveTimeoutError,
+                testCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69BF000000FF was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
@@ -2707,7 +2698,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
-                cmdBackup(), ArchiveTimeoutError,
+                testCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
@@ -2718,7 +2709,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             // Set log level back to detail
             harnessLogLevelSet(logLevelDetail);
@@ -2770,7 +2761,6 @@ testRun(void)
             // Remove test files
             HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(1), NULL, .recurse = true);
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "base/1", .recurse = true);
-            TEST_RESULT_VOID(lockRelease(true), "release all locks");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2884,10 +2874,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
-            TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
-                "backup lock");
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             // Reset storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureSymLink;
@@ -2996,7 +2983,6 @@ testRun(void)
             HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/2", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/3", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/4", .errorOnMissing = true);
-            TEST_RESULT_VOID(lockRelease(true), "release all locks");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3019,7 +3005,7 @@ testRun(void)
 
             // Run backup
             TEST_ERROR(
-                cmdBackup(), FileMissingError,
+                testCmdBackup(), FileMissingError,
                 "pg_control must be present in all online backups\n"
                 "HINT: is something wrong with the clock or filesystem timestamps?");
 
@@ -3057,10 +3043,7 @@ testRun(void)
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
-            TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
-                "backup lock");
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
@@ -3142,7 +3125,6 @@ testRun(void)
                 "pg_tblspc/32768/PG_11_201809051={}\n"
                 "pg_tblspc/32768/PG_11_201809051/1={}\n",
                 "compare file list");
-            TEST_RESULT_VOID(lockRelease(true), "release all locks");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3188,10 +3170,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
-            TEST_RESULT_BOOL(
-                lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), STRDEF("1-test"), lockTypeBackup, 0, true), true,
-                "backup lock");
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
@@ -3281,7 +3260,6 @@ testRun(void)
                 "pg_tblspc/32768/PG_11_201809051={}\n"
                 "pg_tblspc/32768/PG_11_201809051/1={}\n",
                 "compare file list");
-            TEST_RESULT_VOID(lockRelease(true), "release all locks");
         }
     }
 
