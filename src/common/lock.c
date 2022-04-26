@@ -30,8 +30,9 @@ Constants
 // Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
 // general system error.
 #define LOCK_ON_EXEC_ID                                             -2
-VARIANT_STRDEF_STATIC(EXEC_ID_VAR,                                  "execId");
-VARIANT_STRDEF_STATIC(PERCENT_COMPLETE_VAR,                         "pctCplt");
+
+#define LOCK_KEY_EXEC_ID                                            STRID6("execId", 0x12e0c56051)
+#define LOCK_KEY_PERCENT_COMPLETE                                   STRID6("pctCplt", 0x14310a140d01)
 
 /***********************************************************************************************************************************
 Lock type names
@@ -117,18 +118,17 @@ lockReadFileData(const String *const lockFile, const int fd)
 
             if (strLstSize(parse) == 3)
             {
-                KeyValue *kv = jsonToKv(strLstGet(parse, 1));
-
-                const String *percentCompleteStr = varStr(kvGet(kv, PERCENT_COMPLETE_VAR));
+                JsonRead *const json = jsonReadNew(strLstGet(parse, 1));
+                jsonReadObjectBegin(json);
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result.execId = strDup(varStr(kvGet(kv, EXEC_ID_VAR)));
+                    result.execId = jsonReadStr(jsonReadKeyRequireStrId(json, LOCK_KEY_EXEC_ID));
 
-                    if (percentCompleteStr != NULL)
+                    if (jsonReadKeyExpectStrId(json, LOCK_KEY_PERCENT_COMPLETE))
                     {
                         result.percentComplete = memNew(sizeof(uint64_t));
-                        *result.percentComplete = cvtZToUInt64(strZ(percentCompleteStr));
+                        *result.percentComplete = jsonReadUInt64(json);
                     }
                 }
                 MEM_CONTEXT_PRIOR_END();
@@ -250,11 +250,15 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build key value store for second line json
-        KeyValue *keyValue = kvNew();
-        kvPut(keyValue, EXEC_ID_VAR, varNewStr(lockLocal.execId));
+        JsonWrite *json = jsonWriteNewP();
+        jsonWriteObjectBegin(json);
+
+        jsonWriteStr(jsonWriteKeyStrId(json, LOCK_KEY_EXEC_ID), lockLocal.execId);
 
         if (param.percentComplete != NULL)
-            kvPut(keyValue, PERCENT_COMPLETE_VAR, varNewStr(strNewFmt("%" PRIu64, *param.percentComplete)));
+            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), *param.percentComplete);
+
+        jsonWriteObjectEnd(json);
 
         if (lockType == lockTypeBackup && lockLocal.held != lockTypeNone)
         {
@@ -272,7 +276,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         // Write lock file data
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
 
-        ioCopyP(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonFromKv(keyValue))))), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonWriteResult(json))))), write);
         ioWriteClose(write);
     }
     MEM_CONTEXT_TEMP_END();
