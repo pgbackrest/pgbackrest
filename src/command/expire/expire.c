@@ -973,9 +973,6 @@ cmdExpire(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Null out any backup percent complete value in the backup lock file
-        lockWriteDataP(lockTypeBackup);
-
         // Initialize the repo index
         unsigned int repoIdxMin = 0;
         unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1;

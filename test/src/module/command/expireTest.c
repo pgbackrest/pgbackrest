@@ -63,28 +63,6 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
 }
 
 /***********************************************************************************************************************************
-Wrap cmdExpire() with lock acquire and release
-***********************************************************************************************************************************/
-void testCmdExpire(void)
-{
-    FUNCTION_HARNESS_VOID();
-
-    lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
-
-    TRY_BEGIN()
-    {
-        cmdExpire();
-    }
-    FINALLY()
-    {
-        lockRelease(true);
-    }
-    TRY_END();
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -481,7 +459,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "/repo/not/local");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_ERROR(testCmdExpire(), HostInvalidError, "expire command must be run on the repository host");
+        TEST_ERROR(cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check stop file");
@@ -492,7 +470,7 @@ testRun(void)
         // Create the stop file
         HRN_STORAGE_PUT_EMPTY(storagePosixNewP(HRN_PATH_STR, .write = true), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
 
-        TEST_ERROR(testCmdExpire(), StopError, "stop file exists for stanza db");
+        TEST_ERROR(cmdExpire(), StopError, "stop file exists for stanza db");
 
         // Remove the stop file
         HRN_STORAGE_REMOVE(storagePosixNewP(HRN_PATH_STR, .write = true), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
@@ -801,7 +779,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire (dry-run) do not remove last backup in archive sub path or sub path");
+        TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove last backup in archive sub path or sub path");
 
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), true,
@@ -840,29 +818,7 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdBackup, argList2);
 
-        // Obtain a backup lock file and write a percentage complete into it
-        TEST_RESULT_VOID(
-            lockAcquire(
-                cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true),
-            "acquire backup lock");
-        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(10000)), "write lock data");
-
-        // Verify data written to lock file
-        LockReadResult lockReadResult = {0};
-        TEST_ASSIGN(
-            lockReadResult, lockRead(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup), "read backup lock");
-        TEST_RESULT_UINT(lockReadResult.status, lockReadStatusValid, "verify valid");
-        TEST_RESULT_UINT(varUInt(lockReadResult.data.percentComplete), 10000, "verify percentComplete");
-
         TEST_RESULT_VOID(cmdExpire(), "via backup command: expire last backup in archive sub path and remove sub path");
-
-        // Verify lock file is valid, sans percent complete - removal occurs at the start of the expire command
-        TEST_ASSIGN(
-            lockReadResult, lockRead(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup), "read backup lock");
-        TEST_RESULT_UINT(lockReadResult.status, lockReadStatusValid, "verify valid");
-        TEST_RESULT_PTR(lockReadResult.data.percentComplete, NULL, "verify percentComplete");
-
-        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), false,
@@ -897,7 +853,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire last backup in archive sub path and remove sub path");
+        TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), false,
             "archive sub path removed repo1");
@@ -943,7 +899,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList2);
 
         TEST_ERROR(
-            testCmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 2 error(s), check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 2 error(s), check the log file for details");
         TEST_RESULT_LOG(
             "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/repo/backup/db/backup.info' or '"
                          TEST_PATH "/repo/backup/db/backup.info.copy':\n"
@@ -973,7 +929,7 @@ testRun(void)
         TEST_TITLE("expire command - multi-repo, continue to next repo after error");
 
         TEST_ERROR(
-            testCmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         TEST_RESULT_LOG(
             "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/repo/backup/db/backup.info' or '"
                          TEST_PATH "/repo/backup/db/backup.info.copy':\n"
@@ -1004,7 +960,7 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, dry run: archive and backups not removed");
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire (dry-run) - log expired backups and archive path to remove");
+        TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) - log expired backups and archive path to remove");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\n", .noRecurse = true,
@@ -1073,7 +1029,7 @@ testRun(void)
         // Rerun previous test without dry-run
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire backups and remove archive path");
+        TEST_RESULT_VOID(cmdExpire(), "expire backups and remove archive path");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE, "10-2/\narchive.info\n", .noRecurse = true,
@@ -1138,7 +1094,7 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201119-123456F_20201119-234567I");
         HRN_CFG_LOAD(cfgCmdExpire, argList2);
 
-        TEST_RESULT_VOID(testCmdExpire(), "label format OK but backup does not exist on any repo");
+        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 10-2 no archive to remove\n"
             "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
@@ -1150,7 +1106,7 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdExpire, argList2);
 
-        TEST_RESULT_VOID(testCmdExpire(), "label format OK but backup does not exist on requested repo");
+        TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on requested repo");
         TEST_RESULT_LOG(
             "P00   WARN: backup 20201119-123456F_20201119-234567I does not exist\n"
             "            HINT: run the info command and confirm the backup is listed\n"
@@ -1163,7 +1119,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Incremental removed but no archives expired because the only remaining full backups must be able to play through PITR
-        TEST_RESULT_VOID(testCmdExpire(), "label format OK and expired on specified repo");
+        TEST_RESULT_VOID(cmdExpire(), "label format OK and expired on specified repo");
         TEST_RESULT_LOG(
             "P00   WARN: [DRY-RUN] repo1: expiring latest backup 20181119-152900F_20181119-152500I - the ability to perform"
                 " point-in-time-recovery (PITR) may be affected\n"
@@ -1178,7 +1134,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptSet, BOGUS_STR);
 
         HRN_CFG_LOAD(cfgCmdExpire, argList);
-        TEST_ERROR(testCmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
+        TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - archive removed");
@@ -1189,7 +1145,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire remove archive path");
+        TEST_RESULT_VOID(cmdExpire(), "expire remove archive path");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
@@ -1346,7 +1302,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire (dry-run) do not remove 00000002.history file");
+        TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove 00000002.history file");
 
         TEST_STORAGE_EXISTS(storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/00000002.history", .comment = "history file not removed");
         TEST_RESULT_LOG(
@@ -1364,7 +1320,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire remove 00000002.history file");
+        TEST_RESULT_VOID(cmdExpire(), "expire remove 00000002.history file");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000002.history")), false, "history file removed");
@@ -1388,7 +1344,7 @@ testRun(void)
         // Restore the history file
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/00000002.history");
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire history files via backup command");
+        TEST_RESULT_VOID(cmdExpire(), "expire history files via backup command");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/10-2/00000002.history")), false, "history file removed");
@@ -1434,7 +1390,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire");
+        TEST_RESULT_VOID(cmdExpire(), "expire");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP "/backup.history",
@@ -1471,7 +1427,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/backup.history/2019/20191119-152138F.manifest.gz");
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire");
+        TEST_RESULT_VOID(cmdExpire(), "expire");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP "/backup.history",
@@ -1504,7 +1460,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire");
+        TEST_RESULT_VOID(cmdExpire(), "expire");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP "/backup.history",
@@ -1599,7 +1555,7 @@ testRun(void)
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 7, "10-2", "0000000100000000");
 
         TEST_ERROR(
-            testCmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
@@ -1627,7 +1583,7 @@ testRun(void)
             "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
         TEST_ERROR(
-            testCmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
 
         TEST_RESULT_LOG(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
@@ -1647,7 +1603,7 @@ testRun(void)
             "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
         TEST_ERROR(
-            testCmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
 
         TEST_RESULT_LOG(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
@@ -1718,7 +1674,7 @@ testRun(void)
         // Here, although backup 20181119-152138F of 10-1 will be expired, the WAL in 10-1 will not since the archive.info
         // does not know about that dir. Again, not really realistic since if it is on disk and reconstructed it would have. So
         // here we are testing that things on disk that we are not aware of are not touched.
-        TEST_RESULT_VOID(testCmdExpire(), "expire archive that archive.info is aware of");
+        TEST_RESULT_VOID(cmdExpire(), "expire archive that archive.info is aware of");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
@@ -1912,7 +1868,7 @@ testRun(void)
         // Set the log level to detail so archive expiration messages are seen
         harnessLogLevelSet(logLevelDetail);
 
-        TEST_RESULT_VOID(testCmdExpire(), "adhoc expire only backup and dependent");
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire only backup and dependent");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
@@ -1955,7 +1911,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152138F");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "adhoc expire full backup");
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire full backup");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
@@ -1990,7 +1946,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "adhoc expire latest backup");
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest backup");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
@@ -2031,7 +1987,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_ERROR(
-            testCmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
 
         TEST_RESULT_LOG(
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
@@ -2044,7 +2000,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152800F");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "adhoc expire last prior db-id backup");
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire last prior db-id backup");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP,
@@ -2070,7 +2026,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_ERROR(
-            testCmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+            cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         TEST_RESULT_LOG(
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
                 " this repo");
@@ -2292,7 +2248,7 @@ testRun(void)
             symlink("20181119-152850F_20181200-152252D", strZ(latestLink)) == -1,
             FileOpenError, "unable to create symlink '%s' to '%s'", strZ(latestLink), "20181119-152850F_20181200-152252D");
 
-        TEST_RESULT_VOID(testCmdExpire(), "adhoc expire latest with resumable possibly based on it");
+        TEST_RESULT_VOID(cmdExpire(), "adhoc expire latest with resumable possibly based on it");
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform"
@@ -2376,7 +2332,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
-        TEST_RESULT_VOID(testCmdExpire(), "repo-retention-full not set for time-based");
+        TEST_RESULT_VOID(cmdExpire(), "repo-retention-full not set for time-based");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=time', the repository may run out"
                 " of space\n"
@@ -2398,7 +2354,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "35");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "oldest backup older but other backups too young");
+        TEST_RESULT_VOID(cmdExpire(), "oldest backup older but other backups too young");
 
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(1, 11, "0000000100000000"),
@@ -2416,7 +2372,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "30");
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
-        TEST_RESULT_VOID(testCmdExpire(), "only oldest backup expired - dry-run");
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
@@ -2425,7 +2381,7 @@ testRun(void)
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "9999999");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
-        TEST_RESULT_VOID(testCmdExpire(), "only oldest backup expired - dry-run, retention-archive set to max, no archives expired");
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired - dry-run, retention-archive set to max, no archives expired");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F");
@@ -2435,7 +2391,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1"); // 1-day: expire non-essential archive prior to newest full backup
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
-        TEST_RESULT_VOID(testCmdExpire(), "only oldest backup expired but retention archive set lower - dry-run");
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired but retention archive set lower - dry-run");
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
@@ -2460,7 +2416,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "only oldest backup expired, retention archive is DIFF - dry-run");
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired, retention archive is DIFF - dry-run");
         TEST_RESULT_LOG(
             "P00   WARN: [DRY-RUN] option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
@@ -2495,7 +2451,7 @@ testRun(void)
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "save backup.info without oldest");
         TEST_RESULT_LOG("P00   INFO: repo1: expire time-based backup 20181119-152138F");
-        TEST_RESULT_VOID(testCmdExpire(), "only oldest backup expired");
+        TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"
@@ -2508,7 +2464,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(testCmdExpire(), "expire all but newest");
+        TEST_RESULT_VOID(cmdExpire(), "expire all but newest");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire time-based backup set 20181119-152800F, 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I\n"
