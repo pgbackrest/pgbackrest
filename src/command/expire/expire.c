@@ -974,8 +974,7 @@ cmdExpire(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Null out any backup percent complete value in the backup lock file
-        if (lockRead(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup).status == lockReadStatusValid)
-            lockWriteDataP(lockTypeBackup);
+        lockWriteDataP(lockTypeBackup);
 
         // Initialize the repo index
         unsigned int repoIdxMin = 0;
