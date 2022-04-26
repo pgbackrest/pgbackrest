@@ -3106,7 +3106,18 @@ manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
-        this->pub.data.annotation = kvDup(annotationKv);
+        this->pub.data.annotation = kvNew();
+        const VariantList *annotationKeyList = kvKeyList(annotationKv);
+
+        for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
+        {
+            const Variant *key = varLstGet(annotationKeyList, keyIdx);
+            const Variant *value = kvGet(annotationKv, key);
+
+            // Skip empty values
+            if (!strEmpty(varStr(value)))
+                kvPut(this->pub.data.annotation, key, value);
+        }
     }
     MEM_CONTEXT_END();
 

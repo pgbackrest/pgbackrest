@@ -1587,6 +1587,7 @@ testRun(void)
         KeyValue *annotationKV = kvNew();
         kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
         kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
+        kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
         TEST_RESULT_VOID(manifestAnnotationSet(manifest, annotationKV), "annotation set");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
