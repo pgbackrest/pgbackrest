@@ -883,5 +883,7 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
     }
 
+    protocolFree();
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
