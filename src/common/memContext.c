@@ -51,6 +51,9 @@ struct MemContext
 {
     const char *name;                                               // Indicates what the context is being used for
     MemContextState state:1;                                        // Current state of the context
+    MemContextAllocType allocType:2;                                // How many allocations can this context have?
+    MemContextChildType childType:2;                                // How many child contexts can this context have?
+    bool callback:1;                                                // Is a callback allowed?
     size_t allocExtra:16;                                           // Size of extra allocation (1kB max)
 
     unsigned int contextParentIdx;                                  // Index in the parent context list
@@ -67,6 +70,69 @@ struct MemContext
     void (*callbackFunction)(void *);                               // Function to call before the context is freed
     void *callbackArgument;                                         // Argument to pass to callback function
 };
+
+typedef struct MemContextAllocMany
+{
+    MemContextAlloc **allocList;                                    // List of memory allocations created in this context
+    unsigned int allocListSize;                                     // Size of alloc list (not the actual count of allocations)
+    unsigned int allocFreeIdx;                                      // Index of first free space in the alloc list
+} MemContextAllocMany;
+
+typedef struct MemContextChildMany
+{
+    MemContext **contextChildList;                                  // List of contexts created in this context
+    unsigned int contextChildListSize;                              // Size of child context list (not the actual count of contexts)
+    unsigned int contextChildFreeIdx;                               // Index of first free space in the context list
+} MemContextChildMany;
+
+typedef struct MemContextCallback
+{
+    void (*callbackFunction)(void *);                               // Function to call before the context is freed
+    void *callbackArgument;                                         // Argument to pass to callback function
+} MemContextCallback;
+
+static size_t
+memContextAllocSize(const MemContextAllocType type)
+{
+    switch (type)
+    {
+        case memContextAllocTypeNone:
+            return 0;
+
+        case memContextAllocTypeOne:
+            return sizeof(MemContextAlloc);
+
+        default:
+            ASSERT(type == memContextAllocTypeMany);
+            return sizeof(MemContextAllocMany);
+    }
+}
+
+static size_t
+memContextChildSize(const MemContextChildType type)
+{
+    switch (type)
+    {
+        case memContextAllocTypeNone:
+            return 0;
+
+        case memContextAllocTypeOne:
+            return sizeof(MemContext);
+
+        default:
+            ASSERT(type == memContextChildTypeMany);
+            return sizeof(MemContextChildMany);
+    }
+}
+
+static size_t
+memContextCallbackSize(bool callback)
+{
+    if (callback)
+        return sizeof(MemContextCallback);
+
+    return 0;
+}
 
 /***********************************************************************************************************************************
 Top context
@@ -257,14 +323,19 @@ memContextNewIndex(MemContext *memContext)
 
 /**********************************************************************************************************************************/
 MemContext *
-memContextNew(const char *const name, const MemContextNewParam param)
+memContextNew(const char *const name, MemContextNewParam param /* !!! MAKE THIS CONST AGAIN */)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, name);
+        FUNCTION_TEST_PARAM(ENUM, param.allocType);
+        FUNCTION_TEST_PARAM(ENUM, param.childType);
+        FUNCTION_TEST_PARAM(BOOL, param.callback);
         FUNCTION_TEST_PARAM(SIZE, param.allocExtra);
     FUNCTION_TEST_END();
 
     ASSERT(name != NULL);
+    ASSERT(param.allocType <= memContextAllocTypeMany);
+    ASSERT(param.childType <= memContextChildTypeMany);
     // Check context name length
     ASSERT(name[0] != '\0');
 
@@ -272,8 +343,15 @@ memContextNew(const char *const name, const MemContextNewParam param)
     MemContext *contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     unsigned int contextIdx = memContextNewIndex(contextCurrent);
 
+    // !!! FUDGE THIS FOR NOW
+    param.callback = true;
+    param.allocType = memContextAllocTypeMany;
+    param.childType = memContextChildTypeMany;
+
     // Allocate memory for the context
-    contextCurrent->contextChildList[contextIdx] = memAllocInternal(sizeof(MemContext) + param.allocExtra);
+    contextCurrent->contextChildList[contextIdx] = memAllocInternal(
+        sizeof(MemContext) + memContextAllocSize(param.allocType) + memContextChildSize(param.childType) +
+        memContextCallbackSize(param.callback) + param.allocExtra);
 
     // Get the context
     MemContext *this = contextCurrent->contextChildList[contextIdx];
@@ -282,6 +360,11 @@ memContextNew(const char *const name, const MemContextNewParam param)
     {
         // Set the context name
         .name = name,
+
+        // Set flags
+        .allocType = param.allocType,
+        .childType = param.childType,
+        .callback = param.callback,
 
         // Set extra allocation
         .allocExtra = param.allocExtra,

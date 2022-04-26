@@ -201,10 +201,27 @@ Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerpl
 ***********************************************************************************************************************************/
 // Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
 // memContextDisard() before switching back from the parent context.
+typedef enum
+{
+    memContextChildTypeNone = 0,
+    memContextChildTypeOne = 1,
+    memContextChildTypeMany = 2,
+} MemContextChildType;
+
+typedef enum
+{
+    memContextAllocTypeNone = 0,
+    memContextAllocTypeOne = 1,
+    memContextAllocTypeMany = 2,
+} MemContextAllocType;
+
 typedef struct MemContextNewParam
 {
     VAR_PARAM_HEADER;
+    bool callback;                                                  // Is a callback allowed?
     uint16_t allocExtra;                                            // Extra memory to allocate with the context
+    MemContextAllocType allocType;                                  // How many allocations can this context have?
+    MemContextChildType childType;                                  // How many child contexts can this context have?
 } MemContextNewParam;
 
 #define memContextNewP(name, ...)                                                                                                  \
