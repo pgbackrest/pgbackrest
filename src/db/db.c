@@ -54,6 +54,7 @@ dbFreeResource(THIS_VOID)
     pckWriteU32P(protocolCommandParam(command), this->remoteIdx);
 
     protocolClientExecute(this->remoteClient, command, false);
+    protocolCommandFree(command);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -787,9 +788,16 @@ dbTimeMSec(Db *this)
         FUNCTION_LOG_PARAM(DB, this);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(
-        TIME_MSEC,
-        (TimeMSec)pckReadI64P(dbQueryColumn(this, STRDEF("select (extract(epoch from clock_timestamp()) * 1000)::bigint"))));
+    TimeMSec result;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = (TimeMSec)pckReadI64P(
+            dbQueryColumn(this, STRDEF("select (extract(epoch from clock_timestamp()) * 1000)::bigint")));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(TIME_MSEC, result);
 }
 
 /**********************************************************************************************************************************/
