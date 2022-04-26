@@ -142,7 +142,7 @@ ioFilterGroupGet(const IoFilterGroup *this, unsigned int filterIdx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN((IoFilterData *)lstGet(this->pub.filterList, filterIdx));
+    FUNCTION_TEST_RETURN(IO_FILTER_DATA, (IoFilterData *)lstGet(this->pub.filterList, filterIdx));
 }
 
 /**********************************************************************************************************************************/
@@ -176,7 +176,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // If the last filter is not an output filter then add a filter to buffer/copy data.  Input filters won't copy to an output
         // buffer so we need some way to get the data to the output buffer.
@@ -217,7 +217,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
             }
         }
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     // Filter group is open
 #ifdef DEBUG

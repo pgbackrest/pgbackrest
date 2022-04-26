@@ -68,7 +68,7 @@ gid_t
 groupId(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.groupId);
+    FUNCTION_TEST_RETURN_TYPE(gid_t, userLocalData.groupId);
 }
 
 /**********************************************************************************************************************************/
@@ -84,10 +84,10 @@ groupIdFromName(const String *groupName)
         struct group *groupData = getgrnam(strZ(groupName));
 
         if (groupData != NULL)
-            FUNCTION_TEST_RETURN(groupData->gr_gid);
+            FUNCTION_TEST_RETURN_TYPE(gid_t, groupData->gr_gid);
     }
 
-    FUNCTION_TEST_RETURN((gid_t)-1);
+    FUNCTION_TEST_RETURN_TYPE(gid_t, (gid_t)-1);
 }
 
 /**********************************************************************************************************************************/
@@ -95,7 +95,7 @@ const String *
 groupName(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.groupName);
+    FUNCTION_TEST_RETURN_CONST(STRING, userLocalData.groupName);
 }
 
 /**********************************************************************************************************************************/
@@ -109,9 +109,9 @@ groupNameFromId(gid_t groupId)
     struct group *groupData = getgrgid(groupId);
 
     if (groupData != NULL)
-        FUNCTION_TEST_RETURN(strNewZ(groupData->gr_name));
+        FUNCTION_TEST_RETURN(STRING, strNewZ(groupData->gr_name));
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
 /**********************************************************************************************************************************/
@@ -119,7 +119,7 @@ uid_t
 userId(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.userId);
+    FUNCTION_TEST_RETURN_TYPE(uid_t, userLocalData.userId);
 }
 
 /**********************************************************************************************************************************/
@@ -135,10 +135,10 @@ userIdFromName(const String *userName)
         struct passwd *userData = getpwnam(strZ(userName));
 
         if (userData != NULL)
-            FUNCTION_TEST_RETURN(userData->pw_uid);
+            FUNCTION_TEST_RETURN_TYPE(uid_t, userData->pw_uid);
     }
 
-    FUNCTION_TEST_RETURN((uid_t)-1);
+    FUNCTION_TEST_RETURN_TYPE(uid_t, (uid_t)-1);
 }
 
 /**********************************************************************************************************************************/
@@ -146,7 +146,7 @@ const String *
 userName(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.userName);
+    FUNCTION_TEST_RETURN_CONST(STRING, userLocalData.userName);
 }
 
 /**********************************************************************************************************************************/
@@ -160,9 +160,9 @@ userNameFromId(uid_t userId)
     struct passwd *userData = getpwuid(userId);
 
     if (userData != NULL)
-        FUNCTION_TEST_RETURN(strNewZ(userData->pw_name));
+        FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_name));
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
 /**********************************************************************************************************************************/
@@ -170,5 +170,5 @@ bool
 userRoot(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(userLocalData.userRoot);
+    FUNCTION_TEST_RETURN(BOOL, userLocalData.userRoot);
 }

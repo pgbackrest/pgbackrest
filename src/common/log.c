@@ -124,7 +124,7 @@ logLevelEnum(const StringId logLevelId)
     // Check that the log level was found
     CHECK(AssertError, result != LOG_LEVEL_TOTAL, "invalid log level");
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(ENUM, result);
 }
 
 const char *
@@ -136,7 +136,7 @@ logLevelStr(LogLevel logLevel)
 
     ASSERT(logLevel <= LOG_LEVEL_MAX);
 
-    FUNCTION_TEST_RETURN(logLevelList[logLevel].name);
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, logLevelList[logLevel].name);
 }
 
 /**********************************************************************************************************************************/
@@ -165,7 +165,7 @@ logAny(LogLevel logLevel)
 
     ASSERT_LOG_LEVEL(logLevel);
 
-    FUNCTION_TEST_RETURN(logLevel <= logLevelAny);
+    FUNCTION_TEST_RETURN(BOOL, logLevel <= logLevelAny);
 }
 
 /**********************************************************************************************************************************/
@@ -260,7 +260,7 @@ logFileSet(const char *logFile)
 
     logAnySet();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
@@ -295,7 +295,7 @@ logRange(LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax)
     ASSERT_LOG_LEVEL(logRangeMax);
     ASSERT(logRangeMin <= logRangeMax);
 
-    FUNCTION_TEST_RETURN(logLevel >= logRangeMin && logLevel <= logRangeMax);
+    FUNCTION_TEST_RETURN(BOOL, logLevel >= logRangeMin && logLevel <= logRangeMax);
 }
 
 /***********************************************************************************************************************************
@@ -442,7 +442,7 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
             functionName);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(LogPreResult, result);
 }
 
 /***********************************************************************************************************************************

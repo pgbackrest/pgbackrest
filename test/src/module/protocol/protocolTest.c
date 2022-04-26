@@ -180,10 +180,10 @@ static ProtocolParallelJob *testParallelJobCallback(void *data, unsigned int cli
         ProtocolParallelJob *job = *(ProtocolParallelJob **)lstGet(listData->jobList, listData->jobIdx);
         listData->jobIdx++;
 
-        FUNCTION_TEST_RETURN(protocolParallelJobMove(job, memContextCurrent()));
+        FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, protocolParallelJobMove(job, memContextCurrent()));
     }
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, NULL);
 }
 
 /***********************************************************************************************************************************
@@ -490,6 +490,8 @@ testRun(void)
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":null}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"bogus\"}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"pgBackRest\",\"service\":\"bogus\"}"));
@@ -557,7 +559,10 @@ testRun(void)
 
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
-                    JsonFormatError, "expected '{' at 'bogus greeting'");
+                    JsonFormatError, "invalid type at: bogus greeting");
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError, "greeting key 'name' must be string type");
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "greeting key 'name' must be string type");

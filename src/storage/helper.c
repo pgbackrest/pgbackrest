@@ -149,7 +149,7 @@ storageLocal(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageLocal);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageLocal);
 }
 
 const Storage *
@@ -168,7 +168,7 @@ storageLocalWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageLocalWrite);
 }
 
 /***********************************************************************************************************************************
@@ -197,7 +197,7 @@ storagePgGet(unsigned int pgIdx, bool write)
         result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -222,14 +222,14 @@ storagePgIdx(unsigned int pgIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePg[pgIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storagePg[pgIdx]);
 }
 
 const Storage *
 storagePg(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 const Storage *
@@ -257,14 +257,14 @@ storagePgIdxWrite(unsigned int pgIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite[pgIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storagePgWrite[pgIdx]);
 }
 
 const Storage *
 storagePgWrite(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storagePgIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 /***********************************************************************************************************************************
@@ -337,7 +337,7 @@ storageRepoPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -388,7 +388,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -421,14 +421,14 @@ storageRepoIdx(unsigned int repoIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageRepo[repoIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageRepo[repoIdx]);
 }
 
 const Storage *
 storageRepo(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storageRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
 const Storage *
@@ -464,14 +464,14 @@ storageRepoIdxWrite(unsigned int repoIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageRepoWrite[repoIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageRepoWrite[repoIdx]);
 }
 
 const Storage *
 storageRepoWrite(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
 /***********************************************************************************************************************************
@@ -514,7 +514,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -536,7 +536,7 @@ storageSpool(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageSpool);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpool);
 }
 
 const Storage *
@@ -561,7 +561,7 @@ storageSpoolWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageSpoolWrite);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpoolWrite);
 }
 
 /**********************************************************************************************************************************/

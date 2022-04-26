@@ -38,9 +38,7 @@ archivePushErrorAdd(StringList *errorList, unsigned int repoIdx)
         FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
-    strLstAdd(
-        errorList,
-        strNewFmt("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+    strLstAddFmt(errorList, "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -88,7 +86,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
     }
     TRY_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
@@ -118,10 +116,11 @@ archivePushFile(
     ASSERT(lstSize(repoList) > 0);
 
     ArchivePushFileResult result = {.warnList = strLstNew()};
-    StringList *errorList = strLstDup(priorErrorList);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        StringList *const errorList = strLstDup(priorErrorList);
+
         // Is this a WAL segment?
         bool isSegment = walIsSegment(archiveFile);
 
@@ -198,17 +197,12 @@ archivePushFile(
                     {
                         if (modeCheck)
                         {
-                            MEM_CONTEXT_PRIOR_BEGIN()
-                            {
-                                // Add warning to the result that will be returned to the main process
-                                strLstAdd(
-                                    result.warnList,
-                                    strNewFmt(
-                                        "WAL file '%s' already exists in the %s archive with the same checksum"
-                                        "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                        strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx)));
-                            }
-                            MEM_CONTEXT_PRIOR_END();
+                            // Add warning to the result that will be returned to the main process
+                            strLstAddFmt(
+                                result.warnList,
+                                "WAL file '%s' already exists in the %s archive with the same checksum"
+                                "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
+                                strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx));
                         }
 
                         // No need to copy to this repo
@@ -329,13 +323,13 @@ archivePushFile(
                 }
             }
         }
+
+        // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
+        // remove the file.
+        if (strLstSize(errorList) > 0)
+            THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
     }
     MEM_CONTEXT_TEMP_END();
-
-    // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
-    // remove the file.
-    if (strLstSize(errorList) > 0)
-        THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
 
     FUNCTION_LOG_RETURN_STRUCT(result);
 }

@@ -28,32 +28,6 @@ Backup Info Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define INFO_BACKUP_SECTION                                         "backup"
-#define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
-    STRING_STATIC(INFO_BACKUP_SECTION_BACKUP_CURRENT_STR,           INFO_BACKUP_SECTION_BACKUP_CURRENT);
-
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR,     "backup-archive-start");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR,      "backup-archive-stop");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR,    "backup-info-repo-size");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, "backup-info-repo-size-delta");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR,         "backup-info-size");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR,   "backup-info-size-delta");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_LSN_START_VAR,         "backup-lsn-start");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR,          "backup-lsn-stop");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_PRIOR_VAR,             "backup-prior");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR,         "backup-reference");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR,   "backup-timestamp-start");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR,    "backup-timestamp-stop");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_TYPE_VAR,              "backup-type");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_BACKUP_ERROR_VAR,             "backup-error");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR,        "option-archive-check");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR,         "option-archive-copy");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR,       "option-backup-standby");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR,        "option-checksum-page");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_COMPRESS_VAR,             "option-compress");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_HARDLINK_VAR,             "option-hardlink");
-VARIANT_STRDEF_STATIC(INFO_BACKUP_KEY_OPT_ONLINE_VAR,               "option-online");
-
 STRING_EXTERN(INFO_BACKUP_PATH_FILE_STR,                            INFO_BACKUP_PATH_FILE);
 STRING_EXTERN(INFO_BACKUP_PATH_FILE_COPY_STR,                       INFO_BACKUP_PATH_FILE_COPY);
 
@@ -84,7 +58,7 @@ infoBackupNewInternal(void)
         },
     };
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(INFO_BACKUP, this);
 }
 
 /**********************************************************************************************************************************/
@@ -118,14 +92,39 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalo
 /***********************************************************************************************************************************
 Create new object and load contents from a file
 ***********************************************************************************************************************************/
+#define INFO_BACKUP_SECTION                                         "backup"
+#define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
+
+#define INFO_BACKUP_KEY_BACKUP_ARCHIVE_START                        "backup-archive-start"
+#define INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP                         "backup-archive-stop"
+#define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE                       "backup-info-repo-size"
+#define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA                 "backup-info-repo-size-delta"
+#define INFO_BACKUP_KEY_BACKUP_INFO_SIZE                            "backup-info-size"
+#define INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA                      "backup-info-size-delta"
+#define INFO_BACKUP_KEY_BACKUP_LSN_START                            "backup-lsn-start"
+#define INFO_BACKUP_KEY_BACKUP_LSN_STOP                             "backup-lsn-stop"
+#define INFO_BACKUP_KEY_BACKUP_PRIOR                                STRID5("backup-prior", 0x93d3286e1558c220)
+#define INFO_BACKUP_KEY_BACKUP_REFERENCE                            "backup-reference"
+#define INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START                      "backup-timestamp-start"
+#define INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP                       "backup-timestamp-stop"
+#define INFO_BACKUP_KEY_BACKUP_TYPE                                 STRID5("backup-type", 0x1619a6e1558c220)
+#define INFO_BACKUP_KEY_BACKUP_ERROR                                STRID5("backup-error", 0x93e522ee1558c220)
+#define INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK                           "option-archive-check"
+#define INFO_BACKUP_KEY_OPT_ARCHIVE_COPY                            "option-archive-copy"
+#define INFO_BACKUP_KEY_OPT_BACKUP_STANDBY                          "option-backup-standby"
+#define INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE                           "option-checksum-page"
+#define INFO_BACKUP_KEY_OPT_COMPRESS                                "option-compress"
+#define INFO_BACKUP_KEY_OPT_HARDLINK                                "option-hardlink"
+#define INFO_BACKUP_KEY_OPT_ONLINE                                  "option-online"
+
 static void
-infoBackupLoadCallback(void *data, const String *section, const String *key, const Variant *value)
+infoBackupLoadCallback(void *data, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, value);
+        FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
     ASSERT(data != NULL);
@@ -133,60 +132,80 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
     ASSERT(key != NULL);
     ASSERT(value != NULL);
 
-    InfoBackup *infoBackup = (InfoBackup *)data;
+    InfoBackup *const infoBackup = (InfoBackup *)data;
 
     // Process current backup list
-    if (strEq(section, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR))
+    if (strEqZ(section, INFO_BACKUP_SECTION_BACKUP_CURRENT))
     {
-        const KeyValue *backupKv = varKv(value);
-
         MEM_CONTEXT_BEGIN(lstMemContext(infoBackup->pub.backup))
         {
-            InfoBackupData infoBackupData =
+            JsonRead *const json = jsonReadNew(value);
+            jsonReadObjectBegin(json);
+
+            InfoBackupData info =
             {
-                .backrestFormat = varUIntForce(kvGet(backupKv, VARSTR(INFO_KEY_FORMAT_STR))),
-                .backrestVersion = varStrForce(kvGet(backupKv, VARSTR(INFO_KEY_VERSION_STR))),
-                .backupInfoRepoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR)),
-                .backupInfoRepoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR)),
-                .backupInfoSize = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR)),
-                .backupInfoSizeDelta = varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR)),
                 .backupLabel = strDup(key),
-                .backupPgId = cvtZToUInt(strZ(varStrForce(kvGet(backupKv, INFO_KEY_DB_ID_VAR)))),
 
-                // When reading timestamps, read as uint64 to ensure always positive value (guarantee no backups before 1970)
-                .backupTimestampStart = (time_t)varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR)),
-                .backupTimestampStop= (time_t)varUInt64(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR)),
-                .backupType = (BackupType)strIdFromStr(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR))),
-
-                // Possible NULL values
-                .backupArchiveStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR))),
-                .backupArchiveStop = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR))),
-                .backupLsnStart = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_LSN_START_VAR))),
-                .backupLsnStop = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR))),
-                .backupPrior = strDup(varStr(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR))),
-                .backupReference =
-                    kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR) != NULL ?
-                        strLstNewVarLst(varVarLst(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR))) : NULL,
-
-                // Report errors detected during the backup. The key may not exist in older versions.
-                .backupError = varDup(kvGet(backupKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR)),
-
-                // Options
-                .optionArchiveCheck = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR)),
-                .optionArchiveCopy = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR)),
-                .optionBackupStandby = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR)),
-                .optionChecksumPage = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR)),
-                .optionCompress = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_COMPRESS_VAR)),
-                .optionHardlink = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_HARDLINK_VAR)),
-                .optionOnline = varBool(kvGet(backupKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR)),
             };
 
-            ASSERT(
-                infoBackupData.backupType == backupTypeFull || infoBackupData.backupType == backupTypeDiff ||
-                infoBackupData.backupType == backupTypeIncr);
+            // Format and version
+            info.backrestFormat = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_FORMAT));
+            info.backrestVersion = jsonReadStr(jsonReadKeyRequireZ(json, INFO_KEY_VERSION));
+
+            // Archive start/stop
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START))
+                info.backupArchiveStart = jsonReadStr(json);
+
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP))
+                info.backupArchiveStop = jsonReadStr(json);
+
+            // Report errors detected during the backup. The key may not exist in older versions.
+            if (jsonReadKeyExpectStrId(json, INFO_BACKUP_KEY_BACKUP_ERROR))
+                info.backupError = varNewBool(jsonReadBool(json));
+
+            // Size info
+            info.backupInfoRepoSize = jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE));
+            info.backupInfoRepoSizeDelta = jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA));
+            info.backupInfoSize = jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_SIZE));
+            info.backupInfoSizeDelta = jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA));
+
+            // Lsn start/stop
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_LSN_START))
+                info.backupLsnStart = jsonReadStr(json);
+
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_LSN_STOP))
+                info.backupLsnStop = jsonReadStr(json);
+
+            // Prior backup
+            if (jsonReadKeyExpectStrId(json, INFO_BACKUP_KEY_BACKUP_PRIOR))
+                info.backupPrior = jsonReadStr(json);
+
+            // Reference
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_REFERENCE))
+                info.backupReference = jsonReadStrLst(json);
+
+            // Read timestamps as uint64 to ensure a positive value (guarantee no backups before 1970)
+            info.backupTimestampStart = (time_t)jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START));
+            info.backupTimestampStop = (time_t)jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP));
+
+            // backup type
+            info.backupType = (BackupType)jsonReadStrId(jsonReadKeyRequireStrId(json, INFO_BACKUP_KEY_BACKUP_TYPE));
+            ASSERT(info.backupType == backupTypeFull || info.backupType == backupTypeDiff || info.backupType == backupTypeIncr);
+
+            // Database id
+            info.backupPgId = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_ID));
+
+                // Options
+            info.optionArchiveCheck = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK));
+            info.optionArchiveCopy = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY));
+            info.optionBackupStandby = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY));
+            info.optionChecksumPage = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE));
+            info.optionCompress = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_COMPRESS));
+            info.optionHardlink = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_HARDLINK));
+            info.optionOnline = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_ONLINE));
 
             // Add the backup data to the list
-            lstAdd(infoBackup->pub.backup, &infoBackupData);
+            lstAdd(infoBackup->pub.backup, &info);
         }
         MEM_CONTEXT_END();
     }
@@ -220,7 +239,7 @@ infoBackupNewLoad(IoRead *read)
 Save to file
 ***********************************************************************************************************************************/
 static void
-infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
+infoBackupSaveCallback(void *const data, const String *const sectionNext, InfoSave *const infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -231,63 +250,62 @@ infoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *infoSave
     ASSERT(data != NULL);
     ASSERT(infoSaveData != NULL);
 
-    InfoBackup *infoBackup = (InfoBackup *)data;
+    InfoBackup *const infoBackup = (InfoBackup *)data;
 
-    if (infoSaveSection(infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT, sectionNext))
     {
         // Set the backup current section
         for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
         {
-            InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
+            const InfoBackupData backupData = infoBackupData(infoBackup, backupIdx);
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-            KeyValue *backupDataKv = kvNew();
-            kvPut(backupDataKv, VARSTR(INFO_KEY_FORMAT_STR), VARUINT(backupData.backrestFormat));
-            kvPut(backupDataKv, VARSTR(INFO_KEY_VERSION_STR), VARSTR(backupData.backrestVersion));
+            jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_FORMAT), backupData.backrestFormat);
+            jsonWriteStr(jsonWriteKeyZ(json, INFO_KEY_VERSION), backupData.backrestVersion);
 
-            kvPut(backupDataKv, INFO_KEY_DB_ID_VAR, VARUINT(backupData.backupPgId));
-
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START_VAR, VARSTR(backupData.backupArchiveStart));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP_VAR, VARSTR(backupData.backupArchiveStop));
-
-            if (backupData.backupLsnStart != NULL)
-                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_LSN_START_VAR, VARSTR(backupData.backupLsnStart));
-            if (backupData.backupLsnStop != NULL)
-                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_LSN_STOP_VAR, VARSTR(backupData.backupLsnStop));
-
-            if (backupData.backupPrior != NULL)
-                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_PRIOR_VAR, VARSTR(backupData.backupPrior));
-
-            if (backupData.backupReference != NULL)
-            {
-                kvPut(
-                    backupDataKv, INFO_BACKUP_KEY_BACKUP_REFERENCE_VAR, varNewVarLst(varLstNewStrLst(backupData.backupReference)));
-            }
-
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_VAR, VARUINT64(backupData.backupInfoRepoSize));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoRepoSizeDelta));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_VAR, VARUINT64(backupData.backupInfoSize));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA_VAR, VARUINT64(backupData.backupInfoSizeDelta));
-
-            // When storing time_t treat as signed int to avoid casting
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START_VAR, VARINT64(backupData.backupTimestampStart));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP_VAR, VARINT64(backupData.backupTimestampStop));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_TYPE_VAR, VARSTR(strIdToStr(backupData.backupType)));
+            jsonWriteStr(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START), backupData.backupArchiveStart);
+            jsonWriteStr(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP), backupData.backupArchiveStop);
 
             // Do not save backup-error if it was not loaded. This prevents backups that were added before the backup-error flag
             // was introduced from being saved with an incorrect value.
             if (backupData.backupError != NULL)
-                kvPut(backupDataKv, INFO_BACKUP_KEY_BACKUP_ERROR_VAR, backupData.backupError);
+                jsonWriteBool(jsonWriteKeyStrId(json, INFO_BACKUP_KEY_BACKUP_ERROR), varBool(backupData.backupError));
 
-            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK_VAR, VARBOOL(backupData.optionArchiveCheck));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY_VAR, VARBOOL(backupData.optionArchiveCopy));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY_VAR, VARBOOL(backupData.optionBackupStandby));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE_VAR, VARBOOL(backupData.optionChecksumPage));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_COMPRESS_VAR, VARBOOL(backupData.optionCompress));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_HARDLINK_VAR, VARBOOL(backupData.optionHardlink));
-            kvPut(backupDataKv, INFO_BACKUP_KEY_OPT_ONLINE_VAR, VARBOOL(backupData.optionOnline));
+            jsonWriteUInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE), backupData.backupInfoRepoSize);
+            jsonWriteUInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA), backupData.backupInfoRepoSizeDelta);
+            jsonWriteUInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_SIZE), backupData.backupInfoSize);
+            jsonWriteUInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA), backupData.backupInfoSizeDelta);
+
+            if (backupData.backupLsnStart != NULL)
+                jsonWriteStr(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_LSN_START), backupData.backupLsnStart);
+
+            if (backupData.backupLsnStop != NULL)
+                jsonWriteStr(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_LSN_STOP), backupData.backupLsnStop);
+
+            if (backupData.backupPrior != NULL)
+                jsonWriteStr(jsonWriteKeyStrId(json, INFO_BACKUP_KEY_BACKUP_PRIOR), backupData.backupPrior);
+
+            if (backupData.backupReference != NULL)
+                jsonWriteStrLst(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_REFERENCE), backupData.backupReference);
+
+            // When storing time_t treat as signed int to avoid casting
+            jsonWriteInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_START), backupData.backupTimestampStart);
+            jsonWriteInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_TIMESTAMP_STOP), backupData.backupTimestampStop);
+
+            jsonWriteStrId(jsonWriteKeyStrId(json, INFO_BACKUP_KEY_BACKUP_TYPE), backupData.backupType);
+            jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_ID), backupData.backupPgId);
+
+            jsonWriteBool(jsonWriteKeyZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK), backupData.optionArchiveCheck);
+            jsonWriteBool(jsonWriteKeyZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY), backupData.optionArchiveCopy);
+            jsonWriteBool(jsonWriteKeyZ(json, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY), backupData.optionBackupStandby);
+            jsonWriteBool(jsonWriteKeyZ(json, INFO_BACKUP_KEY_OPT_CHECKSUM_PAGE), backupData.optionChecksumPage);
+            jsonWriteBool(jsonWriteKeyZ(json, INFO_BACKUP_KEY_OPT_COMPRESS), backupData.optionCompress);
+            jsonWriteBool(jsonWriteKeyZ(json, INFO_BACKUP_KEY_OPT_HARDLINK), backupData.optionHardlink);
+            jsonWriteBool(jsonWriteKeyZ(json, INFO_BACKUP_KEY_OPT_ONLINE), backupData.optionOnline);
 
             infoSaveValue(
-                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT_STR, backupData.backupLabel, jsonFromKv(backupDataKv));
+                infoSaveData, INFO_BACKUP_SECTION_BACKUP_CURRENT, strZ(backupData.backupLabel),
+                jsonWriteResult(jsonWriteObjectEnd(json)));
         }
     }
 

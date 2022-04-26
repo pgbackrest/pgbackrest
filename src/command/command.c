@@ -114,11 +114,9 @@ cmdOption(void)
 
                                     for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
                                     {
-                                        strLstAdd(
-                                            valueList,
-                                            strNewFmt(
-                                                "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                                                strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
+                                        strLstAddFmt(
+                                            valueList, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                                            strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
                                     }
                                 }
                                 // Generate values for list options
@@ -155,7 +153,7 @@ cmdOption(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(cmdOptionStr);
+    FUNCTION_TEST_RETURN(STRING, cmdOptionStr);
 }
 
 /**********************************************************************************************************************************/
@@ -207,10 +205,10 @@ cmdEnd(int code, const String *errorMessage)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Output statistics if there are any
-            const KeyValue *statKv = statToKv();
+            const String *const statJson = statToJson();
 
-            if (!varLstEmpty(kvKeyList(statKv)))
-                LOG_DETAIL_FMT("statistics: %s", strZ(jsonFromKv(statKv)));
+            if (statJson != NULL)
+                LOG_DETAIL_FMT("statistics: %s", strZ(statJson));
 
             // Basic info on command end
             String *info = strCatFmt(strNew(), "%s command end: ", strZ(cfgCommandRoleName()));

@@ -179,7 +179,7 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
     if (compressTypeFromName(pathFileName) != compressTypeNone)
         ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(compressTypeFromName(pathFileName)));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STORAGE_READ, result);
 }
 
 /***********************************************************************************************************************************
@@ -805,7 +805,7 @@ verifyArchive(void *data)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 /***********************************************************************************************************************************
@@ -1050,7 +1050,7 @@ verifyBackup(void *data)
             break;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 /***********************************************************************************************************************************
@@ -1090,7 +1090,7 @@ verifyJobCallback(void *data, unsigned int clientIdx)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 /***********************************************************************************************************************************
@@ -1114,7 +1114,7 @@ verifyErrorMsg(VerifyResult verifyResult)
     else
         result = strCatZ(result, "invalid result");
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -1138,14 +1138,12 @@ verifyLogInvalidResult(const String *fileType, VerifyResult verifyResult, unsign
     if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR) && verifyResult == verifyFileMissing)
     {
         LOG_WARN_PID_FMT(processId, "%s '%s'", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
-        FUNCTION_TEST_RETURN(0);
+        FUNCTION_TEST_RETURN(UINT, 0);
     }
-    else
-    {
-        LOG_ERROR_PID_FMT(
-            processId, errorTypeCode(&FileInvalidError), "%s '%s'", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
-        FUNCTION_TEST_RETURN(1);
-    }
+
+    LOG_ERROR_PID_FMT(
+        processId, errorTypeCode(&FileInvalidError), "%s '%s'", strZ(verifyErrorMsg(verifyResult)), strZ(filePathName));
+    FUNCTION_TEST_RETURN(UINT, 1);
 }
 
 /***********************************************************************************************************************************
@@ -1220,7 +1218,7 @@ verifySetBackupCheckArchive(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -1399,7 +1397,7 @@ verifyRender(List *archiveIdResultList, List *backupResultList)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************

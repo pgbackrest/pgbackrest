@@ -410,8 +410,8 @@ testRun(void)
     {
         StringList *listStr = strLstNew();
 
-        strLstAdd(listStr, STRDEF("string1"));
-        strLstAdd(listStr, STRDEF("string2"));
+        strLstAddZ(listStr, "string1");
+        strLstAddZ(listStr, "string2");
 
         TEST_RESULT_STRLST_Z(strLstNewVarLst(varLstNewStrLst(listStr)), "string1\nstring2\n", "variant list from string list");
 

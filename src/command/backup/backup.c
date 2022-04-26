@@ -510,18 +510,12 @@ void backupResumeCallback(void *data, const StorageInfo *info)
 
     // Skip all . paths because they have already been handled on the previous level of recursion
     if (strEq(info->name, DOT_STR))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Skip backup.manifest.copy -- it must be preserved to allow resume again if this process throws an error before writing the
     // manifest for the first time
     if (resumeData->manifestParentName == NULL && strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Build the name used to lookup files in the manifest
     const String *manifestName = resumeData->manifestParentName != NULL ?
@@ -815,8 +809,8 @@ typedef struct BackupStartResult
 {
     String *lsn;
     String *walSegmentName;
-    VariantList *dbList;
-    VariantList *tablespaceList;
+    Pack *dbList;
+    Pack *tablespaceList;
 } BackupStartResult;
 
 static BackupStartResult
@@ -1432,7 +1426,7 @@ backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
     ASSERT(name != NULL);
 
     FUNCTION_TEST_RETURN(
-        strEqZ(name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) || !regExpMatch(standbyExp, name));
+        BOOL, strEqZ(name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) || !regExpMatch(standbyExp, name));
 }
 
 // Comparator to order ManifestFile objects by size, date, and name
@@ -1460,22 +1454,22 @@ backupProcessQueueComparator(const void *item1, const void *item2)
         file2.size > backupProcessQueueComparatorBundleLimit)
     {
         if (file1.size < file2.size)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
         else if (file1.size > file2.size)
-            FUNCTION_TEST_RETURN(1);
+            FUNCTION_TEST_RETURN(INT, 1);
     }
 
     // If bundling order by time ascending so that older files are bundled with older files and newer with newer
     if (backupProcessQueueComparatorBundle)
     {
         if (file1.timestamp > file2.timestamp)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
         else if (file1.timestamp < file2.timestamp)
-            FUNCTION_TEST_RETURN(1);
+            FUNCTION_TEST_RETURN(INT, 1);
     }
 
     // If size/time is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
+    FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
 }
 
 // Helper to generate the backup queues
@@ -1499,14 +1493,14 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
 
         // Generate the list of targets
         StringList *targetList = strLstNew();
-        strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
+        strLstAddZ(targetList, MANIFEST_TARGET_PGDATA "/");
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
-                strLstAdd(targetList, strNewFmt("%s/", strZ(target->name)));
+                strLstAddFmt(targetList, "%s/", strZ(target->name));
         }
 
         // Generate the processing queues (there is always at least one)
@@ -1628,11 +1622,11 @@ backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal
 
     // Deal with wrapping on either end
     if (queueIdx < 0)
-        FUNCTION_TEST_RETURN((int)queueTotal - 1);
+        FUNCTION_TEST_RETURN(INT, (int)queueTotal - 1);
     else if (queueIdx == (int)queueTotal)
-        FUNCTION_TEST_RETURN(0);
+        FUNCTION_TEST_RETURN(INT, 0);
 
-    FUNCTION_TEST_RETURN(queueIdx);
+    FUNCTION_TEST_RETURN(INT, queueIdx);
 }
 
 // Callback to fetch backup jobs for the parallel executor
@@ -1752,7 +1746,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 static void

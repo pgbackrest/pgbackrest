@@ -65,11 +65,11 @@ storageWriteS3Open(THIS_VOID)
     ASSERT(this->partBuffer == NULL);
 
     // Allocate the part buffer
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->partBuffer = bufNew(this->partSize);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -128,12 +128,12 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true))));
 
             // Store the upload id
-            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->uploadId = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_UPLOAD_ID_STR, true));
                 this->uploadPartList = strLstNew();
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Upload the part async
@@ -141,12 +141,12 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         httpQueryAdd(query, S3_QUERY_UPLOAD_ID_STR, this->uploadId);
         httpQueryAdd(query, S3_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
 
-        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->request = storageS3RequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
     MEM_CONTEXT_TEMP_END();
 

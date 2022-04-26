@@ -70,7 +70,7 @@ lockFileName(const String *const stanza, const LockType lockType)
         FUNCTION_TEST_PARAM(ENUM, lockType);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]));
+    FUNCTION_TEST_RETURN(STRING, strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]));
 }
 
 /***********************************************************************************************************************************

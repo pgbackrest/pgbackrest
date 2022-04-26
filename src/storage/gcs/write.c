@@ -60,12 +60,12 @@ storageWriteGcsOpen(THIS_VOID)
     ASSERT(this->chunkBuffer == NULL);
 
     // Allocate the chunk buffer
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->chunkBuffer = bufNew(this->chunkSize);
         this->md5hash = cryptoHashNew(HASH_TYPE_MD5_STR);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -81,7 +81,7 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
     FUNCTION_LOG_END();
 
-    KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
+    KeyValue *content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
     // Check the md5 hash
     const String *md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
@@ -172,12 +172,12 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         {
             HttpResponse *response = storageGcsRequestP(this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query);
 
-            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->uploadId = strDup(httpHeaderGet(httpResponseHeader(response), GCS_HEADER_UPLOAD_ID_STR));
                 CHECK(FormatError, this->uploadId != NULL, "upload id missing");
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Add data to md5 hash
@@ -198,13 +198,13 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         if (done)
             httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
-        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->request = storageGcsRequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, .upload = true, .noAuth = true, .header = header, .query = query,
                 .content = this->chunkBuffer);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
 
         this->uploadTotal += bufUsed(this->chunkBuffer);
     }

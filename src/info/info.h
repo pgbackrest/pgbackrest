@@ -19,9 +19,7 @@ Constants
 #define INFO_COPY_EXT                                               ".copy"
 
 #define INFO_KEY_FORMAT                                             "backrest-format"
-    STRING_DECLARE(INFO_KEY_FORMAT_STR);
 #define INFO_KEY_VERSION                                            "backrest-version"
-    STRING_DECLARE(INFO_KEY_VERSION_STR);
 
 /***********************************************************************************************************************************
 Function types for loading and saving
@@ -31,7 +29,7 @@ Function types for loading and saving
 // start at 0 and be incremented on each call.
 typedef bool InfoLoadCallback(void *data, unsigned int try);
 
-typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, const Variant *value);
+typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, const String *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
 
 /***********************************************************************************************************************************
@@ -74,10 +72,10 @@ Functions
 void infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
 
 // Check if the section should be saved
-bool infoSaveSection(InfoSave *infoSaveData, const String *section, const String *sectionNext);
+bool infoSaveSection(InfoSave *infoSaveData, const char *section, const String *sectionNext);
 
 // Save a JSON formatted value and update checksum
-void infoSaveValue(InfoSave *infoSaveData, const String *section, const String *key, const String *jsonValue);
+void infoSaveValue(InfoSave *infoSaveData, const char *section, const char *key, const String *jsonValue);
 
 /***********************************************************************************************************************************
 Helper functions

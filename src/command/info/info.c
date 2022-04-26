@@ -782,7 +782,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         varLstAdd(result, stanzaInfo);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************

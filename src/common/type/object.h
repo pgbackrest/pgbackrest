@@ -53,12 +53,6 @@ Create a local "this" variable of the correct type from a THIS_VOID parameter
 #define THIS(type)                                                  type *this = thisVoid
 
 /***********************************************************************************************************************************
-Get the mem context of this object
-***********************************************************************************************************************************/
-#define THIS_MEM_CONTEXT()                                                                                                         \
-    memContextFromAllocExtra(this)
-
-/***********************************************************************************************************************************
 Cast this private struct, e.g. List, to the associated public struct, e.g. ListPub. Note that the public struct must be the first
 member of the private struct. For example:
 
@@ -78,6 +72,12 @@ thisNotNull(const void *const this)
     ASSERT_INLINE(this != NULL);
     return this;
 }
+
+/***********************************************************************************************************************************
+Switch to the object memory context and ensure that the prior memory context is restored after the block executes (even on error)
+***********************************************************************************************************************************/
+#define MEM_CONTEXT_OBJ_BEGIN(this)                         MEM_CONTEXT_BEGIN(objMemContext(this))
+#define MEM_CONTEXT_OBJ_END()                               MEM_CONTEXT_END()
 
 /***********************************************************************************************************************************
 Functions

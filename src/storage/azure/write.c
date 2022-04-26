@@ -71,11 +71,11 @@ storageWriteAzureOpen(THIS_VOID)
     ASSERT(this->blockBuffer == NULL);
 
     // Allocate the block buffer
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->blockBuffer = bufNew(this->blockSize);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -123,11 +123,11 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         // Create the block id list
         if (this->blockIdList == NULL)
         {
-            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->blockIdList = strLstNew();
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Generate block id. Combine the block number with the provided file id to create a (hopefully) unique block id that won't
@@ -141,12 +141,12 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
 
-        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->request = storageAzureRequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, .path = this->interface.name, .query = query, .content = this->blockBuffer);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
 
         strLstAdd(this->blockIdList, blockId);
     }

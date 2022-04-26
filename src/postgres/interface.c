@@ -236,7 +236,7 @@ pgInterfaceVersion(unsigned int pgVersion)
     if (result == NULL)
         THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
 }
 
 /***********************************************************************************************************************************
@@ -340,7 +340,7 @@ pgControlVersion(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->controlVersion());
+    FUNCTION_TEST_RETURN(UINT32, pgInterfaceVersion(pgVersion)->controlVersion());
 }
 
 /***********************************************************************************************************************************
@@ -447,7 +447,7 @@ pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -470,7 +470,7 @@ pgLsnFromStr(const String *lsn)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 String *
@@ -480,7 +480,7 @@ pgLsnToStr(uint64_t lsn)
         FUNCTION_TEST_PARAM(UINT64, lsn);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(strNewFmt("%x/%x", (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF)));
+    FUNCTION_TEST_RETURN(STRING, strNewFmt("%x/%x", (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF)));
 }
 
 /**********************************************************************************************************************************/
@@ -494,7 +494,7 @@ pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
-        strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF) / walSegmentSize));
+        STRING, strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF) / walSegmentSize));
 }
 
 uint64_t
@@ -510,6 +510,7 @@ pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
     ASSERT(walSegmentSize > 0);
 
     FUNCTION_TEST_RETURN(
+        UINT64,
         (cvtZToUInt64Base(strZ(strSubN(walSegment, 8, 8)), 16) << 32) +
         (cvtZToUInt64Base(strZ(strSubN(walSegment, 16, 8)), 16) * walSegmentSize));
 }
@@ -530,7 +531,7 @@ pgTimelineFromWalSegment(const String *const walSegment)
     strncpy(buffer, strZ(walSegment), sizeof(buffer) - 1);
     buffer[sizeof(buffer) - 1] = '\0';
 
-    FUNCTION_TEST_RETURN(cvtZToUIntBase(buffer, 16));
+    FUNCTION_TEST_RETURN(UINT32, cvtZToUIntBase(buffer, 16));
 }
 
 /**********************************************************************************************************************************/
@@ -571,7 +572,7 @@ pgLsnRangeToWalSegmentList(
         unsigned int minorPerMajor = 0xFFFFFFFF / walSegmentSize;
 
         // Create list
-        strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
+        strLstAddFmt(result, "%08X%08X%08X", timeline, startMajor, startMinor);
 
         while (!(startMajor == stopMajor && startMinor == stopMinor))
         {
@@ -583,14 +584,14 @@ pgLsnRangeToWalSegmentList(
                 startMinor = 0;
             }
 
-            strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
+            strLstAddFmt(result, "%08X%08X%08X", timeline, startMajor, startMinor);
         }
 
         strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -601,7 +602,7 @@ pgLsnName(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_LSN_STR : PG_NAME_LOCATION_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_LSN_STR : PG_NAME_LOCATION_STR);
 }
 
 /***********************************************************************************************************************************
@@ -614,7 +615,7 @@ pgWalName(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
 }
 
 /**********************************************************************************************************************************/
@@ -625,7 +626,7 @@ pgWalPath(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGWAL_STR : PG_PATH_PGXLOG_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGWAL_STR : PG_PATH_PGXLOG_STR);
 }
 
 /**********************************************************************************************************************************/
@@ -636,7 +637,7 @@ pgXactPath(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
 }
 
 /**********************************************************************************************************************************/

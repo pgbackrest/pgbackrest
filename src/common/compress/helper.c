@@ -122,7 +122,7 @@ compressTypeEnum(const StringId type)
     if (result == LENGTH_OF(compressHelperLocal))
         THROW_FMT(AssertError, "invalid compression type '%s'", strZ(strIdToStr(type)));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(ENUM, result);
 }
 
 /**********************************************************************************************************************************/
@@ -151,7 +151,7 @@ compressTypeStr(CompressType type)
 
     ASSERT(type < LENGTH_OF(compressHelperLocal));
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].type);
+    FUNCTION_TEST_RETURN_CONST(STRING, compressHelperLocal[type].type);
 }
 
 /**********************************************************************************************************************************/
@@ -173,7 +173,7 @@ compressTypeFromName(const String *name)
     if (result == LENGTH_OF(compressHelperLocal))
         result = compressTypeNone;
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(ENUM, result);
 }
 
 /**********************************************************************************************************************************/
@@ -187,7 +187,7 @@ compressLevelDefault(CompressType type)
     ASSERT(type < LENGTH_OF(compressHelperLocal));
     compressTypePresent(type);
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].levelDefault);
+    FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelDefault);
 }
 
 /**********************************************************************************************************************************/
@@ -203,7 +203,7 @@ compressFilter(CompressType type, int level)
     ASSERT(type != compressTypeNone);
     compressTypePresent(type);
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].compressNew(level));
+    FUNCTION_TEST_RETURN(IO_FILTER, compressHelperLocal[type].compressNew(level));
 }
 
 /**********************************************************************************************************************************/
@@ -256,7 +256,7 @@ decompressFilter(CompressType type)
     ASSERT(type != compressTypeNone);
     compressTypePresent(type);
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].decompressNew());
+    FUNCTION_TEST_RETURN(IO_FILTER, compressHelperLocal[type].decompressNew());
 }
 
 /**********************************************************************************************************************************/
@@ -269,7 +269,7 @@ compressExtStr(CompressType type)
 
     ASSERT(type < LENGTH_OF(compressHelperLocal));
 
-    FUNCTION_TEST_RETURN(compressHelperLocal[type].ext);
+    FUNCTION_TEST_RETURN_CONST(STRING, compressHelperLocal[type].ext);
 }
 
 /**********************************************************************************************************************************/
@@ -302,5 +302,5 @@ compressExtStrip(const String *file, CompressType type)
     if (!strEndsWith(file, compressExtStr(type)))
         THROW_FMT(FormatError, "'%s' must have '%s' extension", strZ(file), strZ(compressExtStr(type)));
 
-    FUNCTION_TEST_RETURN(strSubN(file, 0, strSize(file) - strSize(compressExtStr(type))));
+    FUNCTION_TEST_RETURN(STRING, strSubN(file, 0, strSize(file) - strSize(compressExtStr(type))));
 }

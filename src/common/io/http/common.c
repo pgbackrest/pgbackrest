@@ -49,7 +49,7 @@ httpDateToTime(const String *lastModified)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(TIME, result);
 }
 
 String *
@@ -63,6 +63,7 @@ httpDateFromTime(const time_t time)
     gmtime_r(&time, &timePart);
 
     FUNCTION_TEST_RETURN(
+        STRING,
         strNewFmt(
             "%s, %02d %s %04d %02d:%02d:%02d GMT", httpCommonDayList[timePart.tm_wday], timePart.tm_mday,
             httpCommonMonthList[timePart.tm_mon], timePart.tm_year + 1900, timePart.tm_hour, timePart.tm_min,
@@ -111,7 +112,7 @@ httpUriDecode(const String *uri)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -147,5 +148,5 @@ httpUriEncode(const String *uri, bool path)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }

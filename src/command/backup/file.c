@@ -32,7 +32,7 @@ segmentNumber(const String *pgFile)
     FUNCTION_TEST_END();
 
     // Determine which segment number this is by checking for a numeric extension.  No extension means segment 0.
-    FUNCTION_TEST_RETURN(regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strZ(pgFile), '.') + 1) : 0);
+    FUNCTION_TEST_RETURN(UINT, regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strZ(pgFile), '.') + 1) : 0);
 }
 
 /**********************************************************************************************************************************/

@@ -122,7 +122,7 @@ storageGcsAuthToken(HttpRequest *request, time_t timeBegin)
     StorageGcsAuthTokenResult result = {0};
 
     // Get the response
-    KeyValue *kvResponse = jsonToKv(strNewBuf(httpResponseContent(httpRequestResponse(request, true))));
+    KeyValue *kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(httpRequestResponse(request, true)))));
 
     // Check for an error
     const String *error = varStr(kvGet(kvResponse, GCS_JSON_ERROR_VAR));
@@ -150,7 +150,7 @@ storageGcsAuthToken(HttpRequest *request, time_t timeBegin)
     }
     MEM_CONTEXT_PRIOR_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(StorageGcsAuthTokenResult, result);
 }
 
 /***********************************************************************************************************************************
@@ -232,7 +232,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 static StorageGcsAuthTokenResult
@@ -266,7 +266,7 @@ storageGcsAuthService(StorageGcs *this, time_t timeBegin)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(StorageGcsAuthTokenResult, result);
 }
 
 /***********************************************************************************************************************************
@@ -301,7 +301,7 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(StorageGcsAuthTokenResult, result);
 }
 
 /***********************************************************************************************************************************
@@ -334,7 +334,7 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                 StorageGcsAuthTokenResult tokenResult = this->keyType == storageGcsKeyTypeAuto ?
                     storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
 
-                MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+                MEM_CONTEXT_OBJ_BEGIN(this)
                 {
                     strFree(this->token);
                     this->token = strNewFmt("%s %s", strZ(tokenResult.tokenType), strZ(tokenResult.token));
@@ -343,7 +343,7 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
                     this->tokenTimeExpire =
                         tokenResult.timeExpire - ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
                 }
-                MEM_CONTEXT_END();
+                MEM_CONTEXT_OBJ_END();
             }
         }
 
@@ -495,6 +495,7 @@ storageGcsCvtTime(const String *time)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
+        TIME,
         epochFromParts(
             cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
             cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
@@ -596,7 +597,7 @@ storageGcsListInternal(
                 else
                     response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query);
 
-                KeyValue *content = jsonToKv(strNewBuf(httpResponseContent(response)));
+                KeyValue *content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
                 // If next page token exists then send an async request to get more data
                 const String *nextPageToken = varStr(kvGet(content, GCS_JSON_NEXT_PAGE_TOKEN_VAR));
@@ -715,7 +716,7 @@ storageGcsInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInt
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
         result.type = storageTypeFile;
-        storageGcsInfoFile(&result, jsonToKv(strNewBuf(httpResponseContent(httpResponse))));
+        storageGcsInfoFile(&result, varKv(jsonToVar(strNewBuf(httpResponseContent(httpResponse)))));
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -964,7 +965,7 @@ storageGcsNew(
             // Read data from file for service keys
             case storageGcsKeyTypeService:
             {
-                KeyValue *kvKey = jsonToKv(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
+                KeyValue *kvKey = varKv(jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key)))));
                 driver->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
                 driver->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
                 const String *const uri = varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR));
