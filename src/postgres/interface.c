@@ -498,7 +498,7 @@ pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
 }
 
 uint64_t
-pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
+pgLsnFromWalSegment(const String *const walSegment, const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, walSegment);
@@ -509,10 +509,17 @@ pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
     ASSERT(strSize(walSegment) == 24);
     ASSERT(walSegmentSize > 0);
 
-    FUNCTION_TEST_RETURN(
-        UINT64,
-        (cvtZToUInt64Base(strZ(strSubN(walSegment, 8, 8)), 16) << 32) +
-        (cvtZToUInt64Base(strZ(strSubN(walSegment, 16, 8)), 16) * walSegmentSize));
+    uint64_t result;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result =
+            (cvtZToUInt64Base(strZ(strSubN(walSegment, 8, 8)), 16) << 32) +
+            (cvtZToUInt64Base(strZ(strSubN(walSegment, 16, 8)), 16) * walSegmentSize);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 /**********************************************************************************************************************************/
@@ -537,7 +544,8 @@ pgTimelineFromWalSegment(const String *const walSegment)
 /**********************************************************************************************************************************/
 StringList *
 pgLsnRangeToWalSegmentList(
-    unsigned int pgVersion, uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize)
+    const unsigned int pgVersion, const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop,
+    const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -553,23 +561,21 @@ pgLsnRangeToWalSegmentList(
     ASSERT(walSegmentSize != 0);
     ASSERT(pgVersion > PG_VERSION_92 || walSegmentSize == PG_WAL_SEGMENT_SIZE_DEFAULT);
 
-    StringList *result = NULL;
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strLstNew();
-
         // Skip the FF segment when PostgreSQL <= 9.2 (in this case segment size should always be 16MB)
-        bool skipFF = pgVersion <= PG_VERSION_92;
+        const bool skipFF = pgVersion <= PG_VERSION_92;
 
         // Calculate the start and stop segments
         unsigned int startMajor = (unsigned int)(lsnStart >> 32);
         unsigned int startMinor = (unsigned int)(lsnStart & 0xFFFFFFFF) / walSegmentSize;
 
-        unsigned int stopMajor = (unsigned int)(lsnStop >> 32);
-        unsigned int stopMinor = (unsigned int)(lsnStop & 0xFFFFFFFF) / walSegmentSize;
+        const unsigned int stopMajor = (unsigned int)(lsnStop >> 32);
+        const unsigned int stopMinor = (unsigned int)(lsnStop & 0xFFFFFFFF) / walSegmentSize;
 
-        unsigned int minorPerMajor = 0xFFFFFFFF / walSegmentSize;
+        const unsigned int minorPerMajor = 0xFFFFFFFF / walSegmentSize;
 
         // Create list
         strLstAddFmt(result, "%08X%08X%08X", timeline, startMajor, startMinor);
@@ -586,8 +592,6 @@ pgLsnRangeToWalSegmentList(
 
             strLstAddFmt(result, "%08X%08X%08X", timeline, startMajor, startMinor);
         }
-
-        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
