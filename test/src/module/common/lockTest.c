@@ -215,15 +215,13 @@ testRun(void)
         TEST_RESULT_PTR(
             lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, NULL, "verify percentComplete");
 
-        uint64_t percentComplete = 5555;
-        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(5555)), "write lock data");
         lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
         TEST_RESULT_UINT(
             *lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 5555,
             "verify percentComplete");
 
-        percentComplete = 8888;
-        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(8888)), "write lock data");
         lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
         TEST_RESULT_UINT(
             *lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, 8888,

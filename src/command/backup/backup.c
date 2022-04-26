@@ -1134,7 +1134,7 @@ static void
 backupJobResult(
     Manifest *const manifest, const String *const host, const Storage *const storagePg, StringList *const fileRemove,
     ProtocolParallelJob *const job, const bool bundle, const uint64_t sizeTotal, uint64_t *const sizeProgress,
-    uint64_t *const currentPercentComplete)
+    unsigned int *const currentPercentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1145,7 +1145,7 @@ backupJobResult(
         FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
-        FUNCTION_LOG_PARAM_P(UINT64, currentPercentComplete);
+        FUNCTION_LOG_PARAM_P(UINT, currentPercentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1162,7 +1162,7 @@ backupJobResult(
             const uint64_t bundleId = varType(protocolParallelJobKey(job)) == varTypeUInt64 ?
                 varUInt64(protocolParallelJobKey(job)) : 0;
             PackRead *const jobResult = protocolParallelJobResult(job);
-            uint64_t percentComplete = 0;
+            unsigned int percentComplete = 0;
 
             while (!pckReadNullP(jobResult))
             {
@@ -1188,7 +1188,7 @@ backupJobResult(
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
 
                 percentComplete = sizeTotal == 0 ? 10000 :
-                    (uint64_t)(((double)*sizeProgress * 100.0 / (double)sizeTotal) * 100.0);
+                    (unsigned int)(((double)*sizeProgress * 100.0 / (double)sizeTotal) * 100.0);
 
                 strCatFmt(logProgress, "%s, %.2lf%%", strZ(strSizeFormat(copySize)), (double)percentComplete / 100.0);
 
@@ -1318,7 +1318,7 @@ backupJobResult(
             if (percentComplete - *currentPercentComplete > 10)
             {
                 *currentPercentComplete = percentComplete;
-                lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete);
+                lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(*currentPercentComplete));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1870,7 +1870,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         uint64_t sizeProgress = 0;
 
         // Store current percentage complete - updated as jobs progress
-        uint64_t currentPercentComplete = 0;
+        unsigned int currentPercentComplete = 0;
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {

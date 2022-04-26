@@ -1851,7 +1851,8 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
-        uint64_t currentPercentComplete = 0;
+        unsigned int currentPercentComplete = 0;
+
         TEST_ERROR(
             backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL, &currentPercentComplete),
             AssertError, "error message");

@@ -824,8 +824,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             lockAcquire(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockLocal.execId, lockTypeBackup, 0, true), true,
             "backup lock");
-        uint64_t percentComplete = 10000;
-        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = &percentComplete), "write lock data");
+        TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(10000)), "write lock data");
 
         // Verify data written to lock file
         LockReadResult lockReadResult = {0};

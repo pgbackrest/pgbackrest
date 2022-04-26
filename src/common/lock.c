@@ -126,10 +126,7 @@ lockReadFileData(const String *const lockFile, const int fd)
                     result.execId = jsonReadStr(jsonReadKeyRequireStrId(json, LOCK_KEY_EXEC_ID));
 
                     if (jsonReadKeyExpectStrId(json, LOCK_KEY_PERCENT_COMPLETE))
-                    {
-                        result.percentComplete = memNew(sizeof(uint64_t));
-                        *result.percentComplete = jsonReadUInt64(json);
-                    }
+                        result.percentComplete = varNewUInt(jsonReadUInt(json));
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
@@ -240,7 +237,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
-        FUNCTION_LOG_PARAM_P(UINT64, param.percentComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -256,7 +253,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         jsonWriteStr(jsonWriteKeyStrId(json, LOCK_KEY_EXEC_ID), lockLocal.execId);
 
         if (param.percentComplete != NULL)
-            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), *param.percentComplete);
+            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
 
         jsonWriteObjectEnd(json);
 

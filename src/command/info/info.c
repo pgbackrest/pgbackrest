@@ -130,7 +130,7 @@ typedef struct InfoStanzaRepo
     unsigned int currentPgVersion;                                  // Current postgres version for the stanza
     bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
     bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
-    uint64_t *percentComplete;                                      // Percentage of backup complete (when not NULL)
+    const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
 
@@ -232,8 +232,9 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, Variant *st
     KeyValue *lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
     KeyValue *backupLockKv = kvPutKv(lockKv, STATUS_KEY_LOCK_BACKUP_VAR);
     kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR, VARBOOL(stanzaData->backupLockHeld));
+
     if (stanzaData->percentComplete != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
-        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, VARUINT64(*stanzaData->percentComplete));
+        kvPut(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR, stanzaData->percentComplete);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1461,12 +1462,13 @@ infoRender(void)
                     KeyValue *lockKv = varKv(kvGet(stanzaStatus, STATUS_KEY_LOCK_VAR));
                     KeyValue *backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
                     bool backupLockHeld = varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR));
-                    const String *percentCompleteStr = kvGet(
-                        backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR) != NULL ?
-                        strNewFmt(
-                            " - %.2f%s",
-                            (double)varUInt64(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR)) / 100.0,
-                            "% complete") : strNewZ("");
+
+                    const String *const percentCompleteStr =
+                        kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR) != NULL ?
+                            strNewFmt(
+                                " - %.2f%% complete",
+                                (double)varUInt(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR)) / 100.0) :
+                            EMPTY_STR;
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
