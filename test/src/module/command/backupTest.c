@@ -1722,7 +1722,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.backupType = backupTypeFull;
@@ -1743,7 +1743,7 @@ testRun(void)
 
         Manifest *manifestResume = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
         {
             manifestResume = manifestNewInternal();
             manifestResume->pub.info = infoNew(NULL);
@@ -1874,7 +1874,7 @@ testRun(void)
         // Create manifest with file
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
         {
             manifest = manifestNewInternal();
             manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});

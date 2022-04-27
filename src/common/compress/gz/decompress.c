@@ -150,7 +150,7 @@ gzDecompressNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(GzDecompress)
+    OBJ_NEW_BEGIN(GzDecompress, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         // Allocate state and set context
         GzDecompress *driver = OBJ_NEW_ALLOC();

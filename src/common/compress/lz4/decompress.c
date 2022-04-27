@@ -163,7 +163,7 @@ lz4DecompressNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(Lz4Decompress)
+    OBJ_NEW_BEGIN(Lz4Decompress, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         Lz4Decompress *driver = OBJ_NEW_ALLOC();
         *driver = (Lz4Decompress){0};

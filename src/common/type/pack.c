@@ -336,7 +336,7 @@ pckReadNewInternal(void)
 
     PackRead *this = NULL;
 
-    OBJ_NEW_BEGIN(PackRead)
+    OBJ_NEW_BEGIN(PackRead, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -1295,7 +1295,7 @@ pckWriteNewInternal(void)
 
     PackWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(PackWrite)
+    OBJ_NEW_BEGIN(PackWrite, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         this = OBJ_NEW_ALLOC();
 

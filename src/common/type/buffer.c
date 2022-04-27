@@ -41,7 +41,7 @@ bufNew(size_t size)
 
     Buffer *this = NULL;
 
-    OBJ_NEW_BEGIN(Buffer)
+    OBJ_NEW_BEGIN(Buffer, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         // Create object
         this = OBJ_NEW_ALLOC();

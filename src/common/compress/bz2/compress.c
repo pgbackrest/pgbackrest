@@ -167,7 +167,7 @@ bz2CompressNew(int level)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(Bz2Compress)
+    OBJ_NEW_BEGIN(Bz2Compress, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         Bz2Compress *driver = OBJ_NEW_ALLOC();
 

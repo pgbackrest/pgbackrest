@@ -69,7 +69,7 @@ infoPgNew(InfoPgType type, const String *cipherPassSub)
 
     InfoPg *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoPg)
+    OBJ_NEW_BEGIN(InfoPg, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         this = infoPgNewInternal(type);
         this->pub.info = infoNew(cipherPassSub);
@@ -164,7 +164,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
 
     InfoPg *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoPg)
+    OBJ_NEW_BEGIN(InfoPg, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         this = infoPgNewInternal(type);
 

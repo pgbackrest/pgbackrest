@@ -112,7 +112,7 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 
     IoWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(IoFdWrite)
+    OBJ_NEW_BEGIN(IoFdWrite, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         IoFdWrite *driver = OBJ_NEW_ALLOC();
 

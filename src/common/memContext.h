@@ -118,8 +118,7 @@ Note that memory context names are expected to live for the lifetime of the cont
 #define MEM_CONTEXT_NEW_BEGIN(memContextName, ...)                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
-        MemContext *MEM_CONTEXT_NEW() = memContextNewP(                                                                            \
-            memContextName, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, __VA_ARGS__);              \
+        MemContext *MEM_CONTEXT_NEW() = memContextNewP(memContextName, __VA_ARGS__);                                               \
         memContextSwitch(MEM_CONTEXT_NEW());
 
 #define MEM_CONTEXT_NEW_ALLOC()                                                                                                    \

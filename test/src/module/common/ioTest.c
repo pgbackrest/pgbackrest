@@ -114,7 +114,7 @@ ioTestFilterSizeNew(const StringId type)
 {
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(IoTestFilterSize)
+    OBJ_NEW_BEGIN(IoTestFilterSize, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         IoTestFilterSize *driver = OBJ_NEW_ALLOC();
         *driver = (IoTestFilterSize){0};
@@ -214,7 +214,7 @@ ioTestFilterMultiplyNew(const StringId type, unsigned int multiplier, unsigned i
 {
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(IoTestFilterMultiply)
+    OBJ_NEW_BEGIN(IoTestFilterMultiply, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         IoTestFilterMultiply *driver = OBJ_NEW_ALLOC();
 

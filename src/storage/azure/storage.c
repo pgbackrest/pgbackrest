@@ -719,7 +719,7 @@ storageAzureNew(
 
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageAzure)
+    OBJ_NEW_BEGIN(StorageAzure, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         StorageAzure *driver = OBJ_NEW_ALLOC();
 

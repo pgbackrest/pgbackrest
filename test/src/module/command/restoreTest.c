@@ -138,7 +138,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
     Manifest *result = NULL;
 
-    OBJ_NEW_BEGIN(Manifest)
+    OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         result = manifestNewInternal();
         result->pub.info = infoNew(NULL);
@@ -1294,7 +1294,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.pgVersion = PG_VERSION_90;
@@ -2026,7 +2026,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2432,7 +2432,7 @@ testRun(void)
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);

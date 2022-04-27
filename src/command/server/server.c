@@ -46,7 +46,7 @@ cmdServerInit(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN("Server")
+            MEM_CONTEXT_NEW_BEGIN("Server", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
             {
                 serverLocal.memContext = MEM_CONTEXT_NEW();
                 serverLocal.processList = lstNewP(sizeof(pid_t));

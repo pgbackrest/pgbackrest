@@ -58,7 +58,7 @@ ioBufferWriteNew(Buffer *buffer)
 
     IoWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(IoBufferWrite)
+    OBJ_NEW_BEGIN(IoBufferWrite, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         IoBufferWrite *driver = OBJ_NEW_ALLOC();
 

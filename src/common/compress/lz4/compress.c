@@ -253,7 +253,7 @@ lz4CompressNew(int level)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(Lz4Compress)
+    OBJ_NEW_BEGIN(Lz4Compress, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         Lz4Compress *driver = OBJ_NEW_ALLOC();
 

@@ -185,7 +185,7 @@ cryptoHashNew(const String *type)
     // Allocate memory to hold process state
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(CryptoHash)
+    OBJ_NEW_BEGIN(CryptoHash, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         CryptoHash *driver = OBJ_NEW_ALLOC();
         *driver = (CryptoHash){0};

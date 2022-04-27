@@ -178,7 +178,7 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
 
     IoSession *this = NULL;
 
-    OBJ_NEW_BEGIN(SocketSession)
+    OBJ_NEW_BEGIN(SocketSession, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
     {
         SocketSession *driver = OBJ_NEW_ALLOC();
 
