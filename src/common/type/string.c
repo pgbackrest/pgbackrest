@@ -115,16 +115,30 @@ strNewFixed(const size_t size)
 
     String *this = NULL;
 
-    // If the string is large than the extra allowed with a mem context then allocate the buffer separately
-    if (sizeof(String) + size + 1 > MEM_CONTEXT_ALLOC_EXTRA_MAX)
+    // If the string is larger than the extra allowed with a mem context then allocate the buffer separately
+    size_t allocExtra = sizeof(String) + size + 1;
+
+    if (allocExtra > MEM_CONTEXT_ALLOC_EXTRA_MAX)
     {
-        this = strNew();
-        this->pub = (StringPub){.size = (unsigned int)size, .buffer = memNew(size + 1)};
+        OBJ_NEW_BEGIN(String, .allocType = memContextAllocTypeOne)
+        {
+            this = OBJ_NEW_ALLOC();
+
+            *this = (String)
+            {
+                .pub =
+                {
+                    .size = (unsigned int)size,
+                    .buffer = memNew(size + 1),
+                },
+            };
+        }
+        OBJ_NEW_END();
 
         FUNCTION_TEST_RETURN(STRING, this);
     }
 
-    OBJ_NEW_EXTRA_BEGIN(String, (uint16_t)(sizeof(String) + size + 1))
+    OBJ_NEW_EXTRA_BEGIN(String, (uint16_t)(allocExtra))
     {
         this = OBJ_NEW_ALLOC();
 

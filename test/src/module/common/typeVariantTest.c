@@ -16,7 +16,7 @@ testRun(void)
     {
         // Ensure type sizes are as expected
         TEST_RESULT_UINT(sizeof(VariantBoolPub), 8, "check VariantBoolPub size");
-        TEST_RESULT_UINT(sizeof(VariantBool), TEST_64BIT() ? 16 : 12, "check VariantBool size");
+        TEST_RESULT_UINT(sizeof(VariantBool), 8, "check VariantBool size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *boolean = varNewBool(false);
@@ -57,7 +57,7 @@ testRun(void)
     {
         // Ensure type sizes are as expected
         TEST_RESULT_UINT(sizeof(VariantIntPub), 8, "check VariantIntPub size");
-        TEST_RESULT_UINT(sizeof(VariantInt), TEST_64BIT() ? 16 : 12, "check VariantInt size");
+        TEST_RESULT_UINT(sizeof(VariantInt), 8, "check VariantInt size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *integer = varNewInt(44);
@@ -96,7 +96,7 @@ testRun(void)
     {
         // Ensure type sizes are as expected
         TEST_RESULT_UINT(sizeof(VariantInt64Pub), TEST_64BIT() ? 16 : 12, "check VariantInt64Pub size");
-        TEST_RESULT_UINT(sizeof(VariantInt64), TEST_64BIT() ? 24 : 16, "check VariantInt64 size");
+        TEST_RESULT_UINT(sizeof(VariantInt64), TEST_64BIT() ? 16 : 12, "check VariantInt64 size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *integer = varNewInt64(44);
@@ -137,7 +137,7 @@ testRun(void)
     {
         // Ensure type sizes are as expected
         TEST_RESULT_UINT(sizeof(VariantUIntPub), 8, "check VariantUIntPub size");
-        TEST_RESULT_UINT(sizeof(VariantUInt), TEST_64BIT() ? 16 : 12, "check VariantUInt size");
+        TEST_RESULT_UINT(sizeof(VariantUInt), 8, "check VariantUInt size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *unsignedint = varNewUInt(787);
@@ -178,7 +178,7 @@ testRun(void)
     {
         // Ensure type sizes are as expected
         TEST_RESULT_UINT(sizeof(VariantUInt64Pub), TEST_64BIT() ? 16 : 12, "check VariantUInt64Pub size");
-        TEST_RESULT_UINT(sizeof(VariantUInt64), TEST_64BIT() ? 24 : 16, "check VariantUInt64 size");
+        TEST_RESULT_UINT(sizeof(VariantUInt64), TEST_64BIT() ? 16 : 12, "check VariantUInt64 size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         Variant *uint64 = varNewUInt64(44);
@@ -220,7 +220,7 @@ testRun(void)
     if (testBegin("keyValue"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantKeyValue), TEST_64BIT() ? 24 : 12, "check VariantKeyValue size");
+        TEST_RESULT_UINT(sizeof(VariantKeyValue), TEST_64BIT() ? 16 : 8, "check VariantKeyValue size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(varKv(VARINT(66)), AssertError, "assertion 'varType(this) == varTypeKeyValue' failed");
@@ -254,7 +254,7 @@ testRun(void)
     {
         // Ensure type sizes are as expected
         TEST_RESULT_UINT(sizeof(VariantStringPub), TEST_64BIT() ? 16 : 8, "check VariantStringPub size");
-        TEST_RESULT_UINT(sizeof(VariantString), TEST_64BIT() ? 24 : 12, "check VariantString size");
+        TEST_RESULT_UINT(sizeof(VariantString), TEST_64BIT() ? 16 : 8, "check VariantString size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR(varStr(varNewStr(NULL)), NULL, "new null str");
@@ -310,13 +310,22 @@ testRun(void)
         TEST_RESULT_PTR(varDup(NULL), NULL, "dup NULL");
         TEST_RESULT_BOOL(varEq(VARSTRDEF("expect-equal"), VARSTRDEF("expect-equal")), true, "string, string eq");
         TEST_RESULT_BOOL(varEq(VARSTRDEF("Y"), VARSTRDEF("X")), false, "string, string not eq");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("string large enough to need separate allocation");
+
+        char *compare = memNew(MEM_CONTEXT_ALLOC_EXTRA_MAX + 1);
+        memset(compare, 'A', MEM_CONTEXT_ALLOC_EXTRA_MAX);
+        compare[MEM_CONTEXT_ALLOC_EXTRA_MAX] = '\0';
+
+        TEST_RESULT_STR_Z(varStr(varNewStrZ(compare)), compare, "compare");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("VariantList"))
     {
         // Ensure type sizes are as expected
-        TEST_RESULT_UINT(sizeof(VariantVariantList), TEST_64BIT() ? 24 : 12, "check VariantVariantList size");
+        TEST_RESULT_UINT(sizeof(VariantVariantList), TEST_64BIT() ? 16 : 8, "check VariantVariantList size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(varVarLst(VARINT(66)), AssertError, "assertion 'varType(this) == varTypeVariantList' failed");
