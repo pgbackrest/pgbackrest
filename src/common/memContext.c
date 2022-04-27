@@ -391,7 +391,7 @@ memContextNew(const char *const name, const MemContextNewParam param)
     size_t allocExtra = param.allocExtra;
 
     if (allocExtra % sizeof(void *) != 0 && //{uncovered}
-        (param.allocType != memContextAllocTypeNone || param.childType != memContextChildTypeNone || param.callback))
+        (param.allocType != memContextAllocTypeNone || param.childType != memContextChildTypeNone || param.callback)) //{uncovered}
     {
         allocExtra = allocExtra / sizeof(void *) + sizeof(void *); //{uncovered}
     }
