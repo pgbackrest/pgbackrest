@@ -30,7 +30,7 @@ OBJ_NEW_BEGIN(MyObj)
 OBJ_NEW_END();
 ***********************************************************************************************************************************/
 #define OBJ_NEW_BEGIN(type)                                                                                                        \
-    MEM_CONTEXT_NEW_BEGIN(STRINGIFY(type), .allocExtra = sizeof(type))
+    MEM_CONTEXT_NEW_BEGIN(STRINGIFY(type), .allocExtra = sizeof(type), .callback = true)
 
 #define OBJ_NEW_ALLOC()                                                                                                            \
     memContextAllocExtra(memContextCurrent())

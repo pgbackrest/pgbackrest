@@ -371,7 +371,7 @@ memContextNewIndex(MemContext *const context, MemContextChildMany *memContextChi
 
 /**********************************************************************************************************************************/
 MemContext *
-memContextNew(const char *const name, MemContextNewParam param /* !!! MAKE THIS CONST AGAIN */)
+memContextNew(const char *const name, const MemContextNewParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, name);
@@ -386,11 +386,6 @@ memContextNew(const char *const name, MemContextNewParam param /* !!! MAKE THIS 
     ASSERT(param.childType <= memContextChildTypeMany);
     // Check context name length
     ASSERT(name[0] != '\0');
-
-    // !!! FUDGE THIS FOR NOW
-    param.callback = true;
-    param.allocType = memContextAllocTypeMany;
-    param.childType = memContextChildTypeMany;
 
     // Fix alignment !!! WORTH MAKING THIS RIGHT? THE SYSTEM WILL PROBABLY ALIGN ANYWAY
     size_t allocExtra = param.allocExtra;

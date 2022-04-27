@@ -118,7 +118,8 @@ Note that memory context names are expected to live for the lifetime of the cont
 #define MEM_CONTEXT_NEW_BEGIN(memContextName, ...)                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
-        MemContext *MEM_CONTEXT_NEW() = memContextNewP(memContextName, __VA_ARGS__);                                               \
+        MemContext *MEM_CONTEXT_NEW() = memContextNewP(                                                                            \
+            memContextName, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, __VA_ARGS__);              \
         memContextSwitch(MEM_CONTEXT_NEW());
 
 #define MEM_CONTEXT_NEW_ALLOC()                                                                                                    \
@@ -167,7 +168,8 @@ MEM_CONTEXT_TEMP_END();
         {                                                                                                                          \
             memContextSwitchBack();                                                                                                \
             memContextDiscard();                                                                                                   \
-            MEM_CONTEXT_TEMP() = memContextNewP("temporary");                                                                      \
+            MEM_CONTEXT_TEMP() = memContextNewP(                                                                                   \
+                "temporary", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany);                          \
             memContextSwitch(MEM_CONTEXT_TEMP());                                                                                  \
             MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                        \
         }                                                                                                                          \

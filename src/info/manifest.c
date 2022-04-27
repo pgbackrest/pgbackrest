@@ -2053,7 +2053,7 @@ manifestNewLoad(IoRead *read)
         // Load the manifest
         ManifestLoadData loadData =
         {
-            .memContext = memContextNewP("load"),
+            .memContext = memContextNewP("load", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany),
             .manifest = this,
         };
 
