@@ -150,7 +150,8 @@ MEM_CONTEXT_TEMP_END();
 #define MEM_CONTEXT_TEMP_BEGIN()                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
-        MemContext *MEM_CONTEXT_TEMP() = memContextNewP("temporary");                                                              \
+        MemContext *MEM_CONTEXT_TEMP() = memContextNewP(                                                                           \
+            "temporary", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany);                              \
         memContextSwitch(MEM_CONTEXT_TEMP());
 
 #define MEM_CONTEXT_TEMP_RESET_BEGIN()                                                                                             \
