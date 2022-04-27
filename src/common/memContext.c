@@ -441,7 +441,12 @@ memContextNew(const char *const name, const MemContextNewParam param)
 
     if (contextCurrent->childType == memContextChildTypeOne) // {uncovered}
     {
-        THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+        ASSERT(!contextCurrent->childInitialized || memContextChildOne(contextCurrent)->context == NULL); // {uncovered}
+
+        memContextChildOne(contextCurrent)->context = this; // {uncovered}
+        contextIdx = 0;
+
+        contextCurrent->childInitialized = true; // {uncovered}
     }
     else
     {
@@ -613,7 +618,7 @@ memContextAllocNew(const size_t size)
 
         // Set pointer in allocation
         contextAlloc->alloc = result; // {uncovered}
-        contextCurrent->allocInitialized = true;
+        contextCurrent->allocInitialized = true; // {uncovered}
     }
     else
     {
@@ -798,11 +803,13 @@ memContextMove(MemContext *this, MemContext *parentNew)
     if (this != NULL && this->contextParent != parentNew)
     {
         ASSERT(this->contextParent->childType != memContextChildTypeNone);
+        ASSERT(this->contextParent->childInitialized);
 
         // Null out the context in the old parent
         if (this->contextParent->childType == memContextChildTypeOne) // {uncovered}
         {
-            THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+            ASSERT(memContextChildOne(this->contextParent)->context != NULL); // {uncovered}
+            memContextChildOne(this->contextParent)->context = NULL; // {uncovered}
         }
         else
         {
@@ -818,7 +825,10 @@ memContextMove(MemContext *this, MemContext *parentNew)
 
         if (parentNew->childType == memContextChildTypeOne) // {uncovered}
         {
-            THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+            ASSERT(!parentNew->childInitialized || memContextChildOne(parentNew)->context == NULL); // {uncovered}
+
+            memContextChildOne(parentNew)->context = this; // {uncovered}
+            parentNew->childInitialized = true; // {uncovered}
         }
         else
         {
@@ -1042,7 +1052,12 @@ memContextSize(const MemContext *const this)
     // Size of child contexts
     if (this->childType == memContextChildTypeOne) // {uncovered}
     {
-        THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+        const MemContextChildOne *const contextChild = (const MemContextChildOne *const)offset; // {uncovered}
+
+        if (contextChild->context != NULL) // {uncovered}
+            total += memContextSize(contextChild->context); // {uncovered}
+
+        offset += sizeof(MemContextChildOne); // {uncovered}
     }
     else
     {
@@ -1103,6 +1118,55 @@ memContextClean(unsigned int tryDepth)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
+static void
+memContextCallbackRecurse(MemContext *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    // Set context to freeing so we don't execute the callback
+    this->state = memContextStateFreeing;
+
+    // Callback
+    if (this->callbackInitialized)
+    {
+        MemContextCallback *const callback = memContextCallback(this);
+        callback->function(callback->argument);
+        this->callbackInitialized = false;
+    }
+
+    // Child callbacks
+    if (this->childInitialized)
+    {
+        if (this->childType == memContextChildTypeOne) // {uncovered}
+        {
+            MemContextChildOne *const memContextChild = memContextChildOne(this); // {uncovered}
+
+            if (memContextChild->context != NULL) // {uncovered}
+                memContextCallbackRecurse(memContextChild->context); // {uncovered}
+        }
+        else
+        {
+            ASSERT(this->childType == memContextChildTypeMany);
+            MemContextChildMany *const memContextChild = memContextChildMany(this);
+
+            for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
+            {
+                if (memContextChild->list[contextIdx] != NULL)
+                    memContextCallbackRecurse(memContextChild->list[contextIdx]);
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 void
 memContextFree(MemContext *this)
@@ -1114,32 +1178,8 @@ memContextFree(MemContext *this)
     ASSERT(this != NULL);
 
     // If context is already freeing then return if memContextFree() is called again - this can happen in callbacks
-    if (this->state != memContextStateFreeing)
-    {
-        // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
-        if (this == memContextStack[memContextCurrentStackIdx].memContext && this != (MemContext *)&contextTop)
-            THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
-
-        // Free child contexts
-        if (this->childInitialized)
-        {
-            if (this->childType == memContextChildTypeOne) // {uncovered}
-            {
-                THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
-            }
-            else
-            {
-                ASSERT(this->childType == memContextChildTypeMany);
-                MemContextChildMany *const memContextChild = memContextChildMany(this);
-
-                for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
-                {
-                    if (memContextChild->list[contextIdx] != NULL)
-                        memContextFree(memContextChild->list[contextIdx]);
-                }
-            }
-        }
-
+    // if (this->state != memContextStateFreeing)
+    // {
         // Set state to freeing now that there are no child contexts. Child contexts might need to interact with their parent while
         // freeing so the parent needs to remain active until they are all gone.
         this->state = memContextStateFreeing;
@@ -1147,15 +1187,39 @@ memContextFree(MemContext *this)
         // Execute callback if defined
         TRY_BEGIN()
         {
-            if (this->callbackInitialized)
-            {
-                MemContextCallback *const callback = memContextCallback(this);
-                callback->function(callback->argument);
-            }
+            // if (this->state != memContextStateFreeing)
+                memContextCallbackRecurse(this);
         }
         // Finish cleanup even if the callback fails
         FINALLY()
         {
+            // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
+            if (this == memContextStack[memContextCurrentStackIdx].memContext && this != (MemContext *)&contextTop)
+                THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
+
+            // Free child contexts
+            if (this->childInitialized)
+            {
+                if (this->childType == memContextChildTypeOne) // {uncovered}
+                {
+                    MemContextChildOne *const memContextChild = memContextChildOne(this); // {uncovered}
+
+                    if (memContextChild->context != NULL) // {uncovered}
+                        memContextFree(memContextChild->context); // {uncovered}
+                }
+                else
+                {
+                    ASSERT(this->childType == memContextChildTypeMany);
+                    MemContextChildMany *const memContextChild = memContextChildMany(this);
+
+                    for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
+                    {
+                        if (memContextChild->list[contextIdx] != NULL)
+                            memContextFree(memContextChild->list[contextIdx]);
+                    }
+                }
+            }
+
             // Free child context allocation list
             if (this->childInitialized)
             {
@@ -1194,19 +1258,12 @@ memContextFree(MemContext *this)
             }
 
             // If the context index is lower than the current free index in the parent then replace it
-            if (this->contextParent != NULL)
+            if (this->contextParent != NULL && this->contextParent->childType == memContextChildTypeMany) // {uncovered}
             {
-                if (this->contextParent->childType == memContextChildTypeOne) // {uncovered}
-                {
-                    THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
-                }
-                else
-                {
-                    MemContextChildMany *const memContextChild = memContextChildMany(this->contextParent);
+                MemContextChildMany *const memContextChild = memContextChildMany(this->contextParent);
 
-                    if (this->contextParentIdx < memContextChild->freeIdx)
-                        memContextChild->freeIdx = this->contextParentIdx;
-                }
+                if (this->contextParentIdx < memContextChild->freeIdx)
+                    memContextChild->freeIdx = this->contextParentIdx;
             }
 
             // Make top context active again
@@ -1220,18 +1277,15 @@ memContextFree(MemContext *this)
                 ASSERT(this->contextParent != NULL);
 
                 if (this->contextParent->childType == memContextChildTypeOne) // {uncovered}
-                {
-                    THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
-                }
+                    memContextChildOne(this->contextParent)->context = NULL; // {uncovered}
                 else
-                {
                     memContextChildMany(this->contextParent)->list[this->contextParentIdx] = NULL;
-                    memFreeInternal(this);
-                }
+
+                memFreeInternal(this);
             }
         }
         TRY_END();
-    }
+    // }
 
     FUNCTION_TEST_RETURN_VOID();
 }

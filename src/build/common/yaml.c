@@ -47,7 +47,7 @@ yamlNew(const Buffer *const buffer)
 
     Yaml *this = NULL;
 
-    OBJ_NEW_BEGIN(Yaml, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(Yaml, .childType = memContextChildTypeMany, .callback = true)
     {
         // Create object
         this = OBJ_NEW_ALLOC();
