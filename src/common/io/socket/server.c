@@ -155,13 +155,12 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
     IoServer *this = NULL;
 
-    MEM_CONTEXT_NEW_BEGIN("SocketServer")
+    OBJ_NEW_BEGIN(SocketServer)
     {
-        SocketServer *driver = memNew(sizeof(SocketServer));
+        SocketServer *const driver = OBJ_NEW_ALLOC();
 
         *driver = (SocketServer)
         {
-            .memContext = MEM_CONTEXT_NEW(),
             .address = strDup(address),
             .port = port,
             .name = strNewFmt("%s:%u", strZ(address), port),
@@ -185,7 +184,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
                 "unable to set SO_REUSEADDR");
 
             // Ensure file descriptor is closed
-            memContextCallbackSet(driver->memContext, sckServerFreeResource, driver);
+            memContextCallbackSet(objMemContext(driver), sckServerFreeResource, driver);
 
             // Bind the address
             THROW_ON_SYS_ERROR(
@@ -205,7 +204,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
         this = ioServerNew(driver, &sckServerInterface);
     }
-    MEM_CONTEXT_NEW_END();
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(IO_SERVER, this);
 }
