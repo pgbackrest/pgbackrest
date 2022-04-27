@@ -1187,10 +1187,11 @@ backupJobResult(
                 if (bundleId != 0)
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
 
-                percentComplete = sizeTotal == 0 ? 10000 :
-                    (unsigned int)(((double)*sizeProgress * 100.0 / (double)sizeTotal) * 100.0);
+                // Store percentComplete as an integer
+                percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(*sizeProgress * 10000 / sizeTotal);
 
-                strCatFmt(logProgress, "%s, %.2lf%%", strZ(strSizeFormat(copySize)), (double)percentComplete / 100.0);
+                strCatFmt(
+                    logProgress, "%s, %u.%02u%%", strZ(strSizeFormat(copySize)), percentComplete / 100, percentComplete % 100);
 
                 // Format log checksum
                 const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
