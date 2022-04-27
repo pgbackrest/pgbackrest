@@ -110,7 +110,8 @@ storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server
         {
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                MEM_CONTEXT_NEW_BEGIN("StorageRemoteProtocol", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+                MEM_CONTEXT_NEW_BEGIN(
+                    StorageRemoteProtocol, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
                 {
                     storageRemoteProtocolLocal.memContext = memContextCurrent();
                     storageRemoteProtocolLocal.driver = storageDriver(storage);
