@@ -395,10 +395,10 @@ memContextNew(const char *const name, MemContextNewParam param /* !!! MAKE THIS 
     // Fix alignment !!! WORTH MAKING THIS RIGHT? THE SYSTEM WILL PROBABLY ALIGN ANYWAY
     size_t allocExtra = param.allocExtra;
 
-    if (allocExtra % sizeof(void *) != 0 &&
+    if (allocExtra % sizeof(void *) != 0 && //{uncovered}
         (param.allocType != memContextAllocTypeNone || param.childType != memContextChildTypeNone || param.callback))
     {
-        allocExtra = allocExtra / sizeof(void *) + sizeof(void *);
+        allocExtra = allocExtra / sizeof(void *) + sizeof(void *); //{uncovered}
     }
 
     // Find space for the new context
@@ -437,7 +437,7 @@ memContextNew(const char *const name, MemContextNewParam param /* !!! MAKE THIS 
         .callback = param.callback,
 
         // Set extra allocation
-        .allocExtra = param.allocExtra,
+        .allocExtra = (uint16_t)allocExtra,
 
         // Set new context active
         .state = memContextStateActive,
