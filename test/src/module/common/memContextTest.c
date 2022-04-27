@@ -13,12 +13,11 @@ testFree(void *thisVoid)
 {
     MemContext *this = thisVoid;
 
-    TEST_RESULT_UINT(this->state, memContextStateFreeing, "state should be freeing in callback");
+    TEST_RESULT_BOOL(this->active, false, "state inactive in callback");
 
-    TEST_ERROR(memContextFree(this), AssertError, "assertion 'this->state != memContextStateFreeing' failed");
-    TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "cannot assign callback to inactive context");
-    TEST_ERROR(memContextSwitch(this), AssertError, "cannot switch to inactive context");
-    TEST_ERROR(memContextName(this), AssertError, "cannot get name for inactive context");
+    TEST_ERROR(memContextFree(this), AssertError, "assertion 'this->active' failed");
+    TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "assertion 'this->active' failed");
+    TEST_ERROR(memContextSwitch(this), AssertError, "assertion 'this->active' failed");
 
     memContextCallbackArgument = this;
 
@@ -110,12 +109,8 @@ testRun(void)
         {
             memContextNewP("test-filler", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
             memContextKeep();
-            TEST_RESULT_PTR_NE(
-                memContextChildMany(memContextTop())->list[contextIdx], NULL,
-                "new context exists");
-            TEST_RESULT_BOOL(
-                memContextChildMany(memContextTop())->list[contextIdx]->state == memContextStateActive, true,
-                "new context is active");
+            TEST_RESULT_PTR_NE(memContextChildMany(memContextTop())->list[contextIdx], NULL, "new context exists");
+            TEST_RESULT_BOOL(memContextChildMany(memContextTop())->list[contextIdx]->active, true, "new context is active");
             TEST_RESULT_Z(
                 memContextName(memContextChildMany(memContextTop())->list[contextIdx]), "test-filler", "new context name");
         }
@@ -140,8 +135,7 @@ testRun(void)
         memContextNewP("test-reuse", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
         memContextKeep();
         TEST_RESULT_BOOL(
-            memContextChildMany(memContextTop())->list[1]->state == memContextStateActive,
-            true, "new context in same index as freed context is active");
+            memContextChildMany(memContextTop())->list[1]->active, true, "new context in same index as freed context is active");
         TEST_RESULT_Z(memContextName(memContextChildMany(memContextTop())->list[1]), "test-reuse", "new context name");
         TEST_RESULT_UINT(memContextChildMany(memContextTop())->freeIdx, 2, "check context free idx");
 
@@ -350,7 +344,7 @@ testRun(void)
 
         TEST_RESULT_Z(memContextName(memContextCurrent()), "TOP", "context name is now 'TOP'");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
-        TEST_RESULT_BOOL(memContext->state == memContextStateActive, true, "new mem context is still active");
+        TEST_RESULT_BOOL(memContext->active, true, "new mem context is still active");
         memContextFree(memContext);
 
         // ------------------------------------------------------------------------------------------------------------------------

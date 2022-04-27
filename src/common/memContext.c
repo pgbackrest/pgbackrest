@@ -12,15 +12,6 @@ Memory Context Manager
 #include "common/memContext.h"
 
 /***********************************************************************************************************************************
-Memory context states
-***********************************************************************************************************************************/
-typedef enum
-{
-    memContextStateFreeing = 0,
-    memContextStateActive
-} MemContextState;
-
-/***********************************************************************************************************************************
 Contains information about a memory allocation. This header is placed at the beginning of every memory allocation returned to the
 user by memNew(), etc. The advantage is that when an allocation is passed back by the user we know the location of the allocation
 header by doing some pointer arithmetic. This is much faster than searching through a list.
@@ -51,7 +42,7 @@ Contains information about the memory context
 struct MemContext
 {
     const char *name;                                               // Indicates what the context is being used for
-    MemContextState state:1;                                        // Current state of the context
+    bool active:1;                                                  // Is the context currently active
     MemContextAllocType allocType:2;                                // How many allocations can this context have?
     bool allocInitialized:1;                                        // Has the allocation list been initialized?
     MemContextChildType childType:2;                                // How many child contexts can this context have?
@@ -217,7 +208,7 @@ static struct MemContextTop
     .memContext =
     {
         .name = "TOP",
-        .state = memContextStateActive,
+        .active = true,
         .allocType = memContextAllocTypeMany,
         .childType = memContextChildTypeMany,
     },
@@ -452,7 +443,7 @@ memContextNew(const char *const name, const MemContextNewParam param)
         .allocExtra = (uint16_t)allocExtra,
 
         // Set new context active
-        .state = memContextStateActive,
+        .active = true,
 
         // Set current context as the parent
         .contextParent = contextCurrent,
@@ -545,11 +536,8 @@ memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *
 
     ASSERT(this != NULL);
     ASSERT(callbackFunction != NULL);
+    ASSERT(this->active);
     ASSERT(this->callback);
-
-    // Error if context is not active
-    if (this->state != memContextStateActive)
-        THROW(AssertError, "cannot assign callback to inactive context");
 
     // Error if callback has already been set - there may be valid use cases for this in the future but error until one is found
     if (this->callbackInitialized)
@@ -796,6 +784,8 @@ memContextMove(MemContext *this, MemContext *parentNew)
     // Only move if a valid mem context is provided and the old and new parents are not the same
     if (this != NULL && this->contextParent != parentNew)
     {
+        ASSERT(this->active);
+        ASSERT(this->contextParent->active);
         ASSERT(this->contextParent->childType != memContextChildTypeNone);
         ASSERT(this->contextParent->childInitialized);
 
@@ -815,6 +805,7 @@ memContextMove(MemContext *this, MemContext *parentNew)
 
         // Find a place in the new parent context and assign it. The child list may be moved while finding a new index so store the
         // index and use it with (what might be) the new pointer.
+        ASSERT(parentNew->active);
         ASSERT(parentNew->childType != memContextChildTypeNone);
 
         if (parentNew->childType == memContextChildTypeOne) // {uncovered}
@@ -847,11 +838,8 @@ memContextSwitch(MemContext *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->active);
     ASSERT(memContextCurrentStackIdx < MEM_CONTEXT_STACK_MAX - 1);
-
-    // Error if context is not active
-    if (this->state != memContextStateActive)
-        THROW(AssertError, "cannot switch to inactive context");
 
     memContextMaxStackIdx++;
     memContextCurrentStackIdx = memContextMaxStackIdx;
@@ -967,10 +955,6 @@ memContextName(const MemContext *const this)
 
     ASSERT(this != NULL);
 
-    // Error if context is not active
-    if (this->state != memContextStateActive)
-        THROW(AssertError, "cannot get name for inactive context");
-
     FUNCTION_TEST_RETURN_CONST(STRINGZ, this->name);
 }
 
@@ -997,6 +981,9 @@ memContextSize(const MemContext *const this)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->active);
 
     // Size of struct and extra
     size_t total = 0;
@@ -1154,14 +1141,14 @@ memContextFree(MemContext *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->state != memContextStateFreeing);
+    ASSERT(this->active);
 
     // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
     if (this == memContextStack[memContextCurrentStackIdx].memContext && this != (MemContext *)&contextTop)
         THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
 
     // Set state to freeing so that actions against the context are now longer allowed
-    this->state = memContextStateFreeing;
+    this->active = false;
 
     // Execute callbacks if defined
     TRY_BEGIN()
@@ -1243,7 +1230,7 @@ memContextFree(MemContext *this)
         // Make top context active again
         if (this == (MemContext *)&contextTop)
         {
-            this->state = memContextStateActive;
+            this->active = true;
         }
         // Else free the memory context so the slot can be reused
         else
