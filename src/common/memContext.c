@@ -392,14 +392,22 @@ memContextNew(const char *const name, MemContextNewParam param /* !!! MAKE THIS 
     param.allocType = memContextAllocTypeMany;
     param.childType = memContextChildTypeMany;
 
+    // Fix alignment !!! WORTH MAKING THIS RIGHT? THE SYSTEM WILL PROBABLY ALIGN ANYWAY
+    size_t allocExtra = param.allocExtra;
+
+    if (allocExtra % sizeof(void *) != 0 &&
+        (param.allocType != memContextAllocTypeNone || param.childType != memContextChildTypeNone || param.callback))
+    {
+        allocExtra = allocExtra / sizeof(void *) + sizeof(void *);
+    }
+
     // Find space for the new context
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     ASSERT(contextCurrent->childType != memContextChildTypeNone);
 
     MemContext *const this = memAllocInternal(
-        sizeof(MemContext) +
-        (param.allocExtra % sizeof(void *) == 0 ? param.allocExtra : param.allocExtra / sizeof(void *) + sizeof(void *)) +
-        memContextAllocSize(param.allocType) + memContextChildSize(param.childType) + memContextCallbackSize(param.callback));
+        sizeof(MemContext) + allocExtra + memContextAllocSize(param.allocType) + memContextChildSize(param.childType) +
+        memContextCallbackSize(param.callback));
     unsigned int contextIdx;
 
     if (contextCurrent->childType == memContextChildTypeOne) // {uncovered}
