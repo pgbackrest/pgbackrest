@@ -392,18 +392,14 @@ memContextNew(const char *const name, MemContextNewParam param /* !!! MAKE THIS 
     param.allocType = memContextAllocTypeMany;
     param.childType = memContextChildTypeMany;
 
-    // !!! MAKE SURE RIGHT SIZE
-    ASSERT(
-        param.allocExtra % sizeof(void *) == 0 ||
-        (!param.callback && param.allocType == memContextAllocTypeNone && param.childType == memContextChildTypeMany));
-
     // Find space for the new context
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     ASSERT(contextCurrent->childType != memContextChildTypeNone);
 
     MemContext *const this = memAllocInternal(
-        sizeof(MemContext) + param.allocExtra + memContextAllocSize(param.allocType) + memContextChildSize(param.childType) +
-        memContextCallbackSize(param.callback));
+        sizeof(MemContext) +
+        (param.allocExtra % sizeof(void *) == 0 ? param.allocExtra : param.allocExtra / sizeof(void *) + sizeof(void *)) +
+        memContextAllocSize(param.allocType) + memContextChildSize(param.childType) + memContextCallbackSize(param.callback));
     unsigned int contextIdx;
 
     if (contextCurrent->childType == memContextChildTypeOne) // {uncovered}
