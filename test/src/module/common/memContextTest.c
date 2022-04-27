@@ -342,7 +342,7 @@ testRun(void)
 
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
 
-        MEM_CONTEXT_NEW_BEGIN(memContextTestName)
+        MEM_CONTEXT_NEW_BEGIN(memContextTestName, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
         {
             memContext = MEM_CONTEXT_NEW();
             TEST_RESULT_PTR(memContext, memContextCurrent(), "new mem context is current");
@@ -362,7 +362,7 @@ testRun(void)
 
         TRY_BEGIN()
         {
-            MEM_CONTEXT_NEW_BEGIN(memContextTestName)
+            MEM_CONTEXT_NEW_BEGIN(memContextTestName, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
             {
                 memContext = MEM_CONTEXT_NEW();
                 TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check mem context name");
@@ -391,14 +391,14 @@ testRun(void)
         void *mem = NULL;
         void *mem2 = NULL;
 
-        MEM_CONTEXT_NEW_BEGIN("outer")
+        MEM_CONTEXT_NEW_BEGIN("outer", .childType = memContextChildTypeMany)
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                memContextNewP("not-to-be-moved");
+                memContextNewP("not-to-be-moved", .childType = memContextChildTypeMany);
                 memContextKeep();
 
-                MEM_CONTEXT_NEW_BEGIN("inner")
+                MEM_CONTEXT_NEW_BEGIN("inner", .allocType = memContextAllocTypeMany)
                 {
                     memContext = MEM_CONTEXT_NEW();
                     mem = memNew(sizeof(int));
@@ -420,7 +420,7 @@ testRun(void)
                 TEST_RESULT_VOID(memContextMove(memContext, memContextPrior()), "move context again");
 
                 // Move another context
-                MEM_CONTEXT_NEW_BEGIN("inner2")
+                MEM_CONTEXT_NEW_BEGIN("inner2", .allocType = memContextAllocTypeMany)
                 {
                     memContext2 = MEM_CONTEXT_NEW();
                     mem2 = memNew(sizeof(int));
