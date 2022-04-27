@@ -13,12 +13,10 @@ testFree(void *thisVoid)
 {
     MemContext *this = thisVoid;
 
-    TEST_RESULT_BOOL(memContextFreeing(this), true, "state should be freeing before memContextFree() in callback");
-    memContextFree(this);
-    TEST_RESULT_INT(this->state, memContextStateFreeing, "state should still be freeing after memContextFree() in callback");
+    TEST_RESULT_UINT(this->state, memContextStateFreeing, "state should be freeing in callback");
 
+    TEST_ERROR(memContextFree(this), AssertError, "assertion 'this->state != memContextStateFreeing' failed");
     TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "cannot assign callback to inactive context");
-
     TEST_ERROR(memContextSwitch(this), AssertError, "cannot switch to inactive context");
     TEST_ERROR(memContextName(this), AssertError, "cannot get name for inactive context");
 
@@ -170,9 +168,9 @@ testRun(void)
             memContextFree(memContextChildMany(memContextTop())->list[MEM_CONTEXT_INITIAL_SIZE]), AssertError,
             "cannot free current context 'test5'");
 
-        memContextSwitch(memContextTop());
+        TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
         // memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
-        memContextFree(memContextTop());
+        TEST_RESULT_VOID(memContextFree(memContextTop()), "free top");
 
         MemContext *noAllocation = memContextNewP("empty", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
         memContextKeep();

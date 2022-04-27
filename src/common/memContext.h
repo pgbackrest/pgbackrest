@@ -279,9 +279,6 @@ const MemContext *memContextConstFromAllocExtra(const void *allocExtra);
 // Current memory context
 MemContext *memContextCurrent(void);
 
-// Is the mem context currently being freed?
-bool memContextFreeing(const MemContext *this);
-
 // Prior context, i.e. the context that was current before the last memContextSwitch()
 MemContext *memContextPrior(void);
 

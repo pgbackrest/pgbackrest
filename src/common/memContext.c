@@ -430,35 +430,13 @@ memContextNew(const char *const name, const MemContextNewParam param)
         allocExtra += sizeof(void *) - allocExtra % sizeof(void *); //{uncovered}
     }
 
-    // Find space for the new context
+    // Create the new context
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     ASSERT(contextCurrent->childType != memContextChildTypeNone);
 
     MemContext *const this = memAllocInternal(
         sizeof(MemContext) + allocExtra + memContextAllocSize(param.allocType) + memContextChildSize(param.childType) +
         memContextCallbackSize(param.callback));
-    unsigned int contextIdx;
-
-    if (contextCurrent->childType == memContextChildTypeOne) // {uncovered}
-    {
-        ASSERT(!contextCurrent->childInitialized || memContextChildOne(contextCurrent)->context == NULL); // {uncovered}
-
-        memContextChildOne(contextCurrent)->context = this; // {uncovered}
-        contextIdx = 0;
-
-        contextCurrent->childInitialized = true; // {uncovered}
-    }
-    else
-    {
-        ASSERT(contextCurrent->childType == memContextChildTypeMany);
-        MemContextChildMany *const memContextChild = memContextChildMany(contextCurrent);
-
-        contextIdx = memContextNewIndex(contextCurrent, memContextChild);
-        memContextChild->list[contextIdx] = this;
-
-        // Possible free context must be in the next position
-        memContextChild->freeIdx++;
-    }
 
     *this = (MemContext)
     {
@@ -478,8 +456,27 @@ memContextNew(const char *const name, const MemContextNewParam param)
 
         // Set current context as the parent
         .contextParent = contextCurrent,
-        .contextParentIdx = contextIdx,
     };
+
+    // Find space for the new context
+    if (contextCurrent->childType == memContextChildTypeOne) // {uncovered}
+    {
+        ASSERT(!contextCurrent->childInitialized || memContextChildOne(contextCurrent)->context == NULL); // {uncovered}
+
+        memContextChildOne(contextCurrent)->context = this; // {uncovered}
+        contextCurrent->childInitialized = true; // {uncovered}
+    }
+    else
+    {
+        ASSERT(contextCurrent->childType == memContextChildTypeMany);
+        MemContextChildMany *const memContextChild = memContextChildMany(contextCurrent);
+
+        this->contextParentIdx = memContextNewIndex(contextCurrent, memContextChild);
+        memContextChild->list[this->contextParentIdx] = this;
+
+        // Possible free context must be in the next position
+        memContextChild->freeIdx++;
+    }
 
     // Add to the mem context stack so it will be automatically freed on error if memContextKeep() has not been called
     memContextMaxStackIdx++;
@@ -575,9 +572,6 @@ memContextCallbackClear(MemContext *this)
 
     ASSERT(this != NULL);
     ASSERT(this->callback);
-
-    // Error if context is not active or freeing
-    ASSERT(this->state == memContextStateActive || this->state == memContextStateFreeing);
 
     // Top context cannot have a callback
     ASSERT(this != (MemContext *)&contextTop);
@@ -964,19 +958,6 @@ memContextCurrent(void)
 }
 
 /**********************************************************************************************************************************/
-bool
-memContextFreeing(const MemContext *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(BOOL, this->state == memContextStateFreeing);
-}
-
-/**********************************************************************************************************************************/
 const char *
 memContextName(const MemContext *const this)
 {
@@ -1130,9 +1111,6 @@ memContextCallbackRecurse(MemContext *const this)
 
     ASSERT(this != NULL);
 
-    // Set context to freeing so we don't execute the callback
-    this->state = memContextStateFreeing;
-
     // Callback
     if (this->callbackInitialized)
     {
@@ -1176,116 +1154,111 @@ memContextFree(MemContext *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->state != memContextStateFreeing);
 
-    // If context is already freeing then return if memContextFree() is called again - this can happen in callbacks
-    // if (this->state != memContextStateFreeing)
-    // {
-        // Set state to freeing now that there are no child contexts. Child contexts might need to interact with their parent while
-        // freeing so the parent needs to remain active until they are all gone.
-        this->state = memContextStateFreeing;
+    // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
+    if (this == memContextStack[memContextCurrentStackIdx].memContext && this != (MemContext *)&contextTop)
+        THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
 
-        // Execute callback if defined
-        TRY_BEGIN()
+    // Set state to freeing so that actions against the context are now longer allowed
+    this->state = memContextStateFreeing;
+
+    // Execute callbacks if defined
+    TRY_BEGIN()
+    {
+        memContextCallbackRecurse(this);
+    }
+    // Finish cleanup even if the callback fails
+    FINALLY()
+    {
+        // Free child contexts
+        if (this->childInitialized)
         {
-            // if (this->state != memContextStateFreeing)
-                memContextCallbackRecurse(this);
-        }
-        // Finish cleanup even if the callback fails
-        FINALLY()
-        {
-            // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
-            if (this == memContextStack[memContextCurrentStackIdx].memContext && this != (MemContext *)&contextTop)
-                THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
-
-            // Free child contexts
-            if (this->childInitialized)
+            if (this->childType == memContextChildTypeOne) // {uncovered}
             {
-                if (this->childType == memContextChildTypeOne) // {uncovered}
-                {
-                    MemContextChildOne *const memContextChild = memContextChildOne(this); // {uncovered}
+                MemContextChildOne *const memContextChild = memContextChildOne(this); // {uncovered}
 
-                    if (memContextChild->context != NULL) // {uncovered}
-                        memContextFree(memContextChild->context); // {uncovered}
-                }
-                else
-                {
-                    ASSERT(this->childType == memContextChildTypeMany);
-                    MemContextChildMany *const memContextChild = memContextChildMany(this);
-
-                    for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
-                    {
-                        if (memContextChild->list[contextIdx] != NULL)
-                            memContextFree(memContextChild->list[contextIdx]);
-                    }
-                }
+                if (memContextChild->context != NULL) // {uncovered}
+                    memContextFree(memContextChild->context); // {uncovered}
             }
-
-            // Free child context allocation list
-            if (this->childInitialized)
-            {
-                if (this->childType == memContextChildTypeMany) // {uncovered}
-                    memFreeInternal(memContextChildMany(this)->list);
-
-                this->childInitialized = false;
-            }
-
-            // Free memory allocations and list
-            if (this->allocInitialized)
-            {
-                ASSERT(this->allocType != memContextAllocTypeNone);
-
-                if (this->allocType == memContextAllocTypeOne) // {uncovered}
-                {
-                    MemContextAllocOne *const contextAlloc = memContextAllocOne(this); // {uncovered}
-
-                    if (contextAlloc->alloc != NULL) // {uncovered}
-                        memFreeInternal(contextAlloc->alloc); // {uncovered}
-                }
-                else
-                {
-                    ASSERT(this->allocType == memContextAllocTypeMany);
-
-                    MemContextAllocMany *const contextAlloc = memContextAllocMany(this);
-
-                    for (unsigned int allocIdx = 0; allocIdx < contextAlloc->listSize; allocIdx++)
-                        if (contextAlloc->list[allocIdx] != NULL)
-                            memFreeInternal(contextAlloc->list[allocIdx]);
-
-                    memFreeInternal(contextAlloc->list);
-                }
-
-                this->allocInitialized = false;
-            }
-
-            // If the context index is lower than the current free index in the parent then replace it
-            if (this->contextParent != NULL && this->contextParent->childType == memContextChildTypeMany) // {uncovered}
-            {
-                MemContextChildMany *const memContextChild = memContextChildMany(this->contextParent);
-
-                if (this->contextParentIdx < memContextChild->freeIdx)
-                    memContextChild->freeIdx = this->contextParentIdx;
-            }
-
-            // Make top context active again
-            if (this == (MemContext *)&contextTop)
-            {
-                this->state = memContextStateActive;
-            }
-            // Else free the memory context so the slot can be reused
             else
             {
-                ASSERT(this->contextParent != NULL);
+                ASSERT(this->childType == memContextChildTypeMany);
+                MemContextChildMany *const memContextChild = memContextChildMany(this);
 
-                if (this->contextParent->childType == memContextChildTypeOne) // {uncovered}
-                    memContextChildOne(this->contextParent)->context = NULL; // {uncovered}
-                else
-                    memContextChildMany(this->contextParent)->list[this->contextParentIdx] = NULL;
-
-                memFreeInternal(this);
+                for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
+                {
+                    if (memContextChild->list[contextIdx] != NULL)
+                        memContextFree(memContextChild->list[contextIdx]);
+                }
             }
         }
-        TRY_END();
-    // }
+
+        // Free child context allocation list
+        if (this->childInitialized)
+        {
+            if (this->childType == memContextChildTypeMany) // {uncovered}
+                memFreeInternal(memContextChildMany(this)->list);
+
+            this->childInitialized = false;
+        }
+
+        // Free memory allocations and list
+        if (this->allocInitialized)
+        {
+            ASSERT(this->allocType != memContextAllocTypeNone);
+
+            if (this->allocType == memContextAllocTypeOne) // {uncovered}
+            {
+                MemContextAllocOne *const contextAlloc = memContextAllocOne(this); // {uncovered}
+
+                if (contextAlloc->alloc != NULL) // {uncovered}
+                    memFreeInternal(contextAlloc->alloc); // {uncovered}
+            }
+            else
+            {
+                ASSERT(this->allocType == memContextAllocTypeMany);
+
+                MemContextAllocMany *const contextAlloc = memContextAllocMany(this);
+
+                for (unsigned int allocIdx = 0; allocIdx < contextAlloc->listSize; allocIdx++)
+                    if (contextAlloc->list[allocIdx] != NULL)
+                        memFreeInternal(contextAlloc->list[allocIdx]);
+
+                memFreeInternal(contextAlloc->list);
+            }
+
+            this->allocInitialized = false;
+        }
+
+        // If the context index is lower than the current free index in the parent then replace it
+        if (this->contextParent != NULL && this->contextParent->childType == memContextChildTypeMany) // {uncovered}
+        {
+            MemContextChildMany *const memContextChild = memContextChildMany(this->contextParent);
+
+            if (this->contextParentIdx < memContextChild->freeIdx)
+                memContextChild->freeIdx = this->contextParentIdx;
+        }
+
+        // Make top context active again
+        if (this == (MemContext *)&contextTop)
+        {
+            this->state = memContextStateActive;
+        }
+        // Else free the memory context so the slot can be reused
+        else
+        {
+            ASSERT(this->contextParent != NULL);
+
+            if (this->contextParent->childType == memContextChildTypeOne) // {uncovered}
+                memContextChildOne(this->contextParent)->context = NULL; // {uncovered}
+            else
+                memContextChildMany(this->contextParent)->list[this->contextParentIdx] = NULL;
+
+            memFreeInternal(this);
+        }
+    }
+    TRY_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
