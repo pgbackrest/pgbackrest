@@ -217,6 +217,8 @@ typedef enum
     memContextAllocTypeMany = 2,
 } MemContextAllocType;
 
+#define MEM_CONTEXT_ALLOC_EXTRA_MAX                                 UINT16_MAX // !!!
+
 typedef struct MemContextNewParam
 {
     VAR_PARAM_HEADER;

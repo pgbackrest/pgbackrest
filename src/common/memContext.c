@@ -3,7 +3,7 @@ Memory Context Manager
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-//#include <stdio.h> // !!! REMOVE
+// #include <stdio.h> // !!! REMOVE
 #include <stdlib.h>
 #include <string.h>
 
@@ -421,13 +421,13 @@ memContextNew(const char *const name, const MemContextNewParam param)
     // Check context name length
     ASSERT(name[0] != '\0');
 
-    // Fix alignment !!! WORTH MAKING THIS RIGHT? THE SYSTEM WILL PROBABLY ALIGN ANYWAY
+    // Fix alignment !!! WORTH MAKING THIS RIGHT? THE SYSTEM WILL PROBABLY ALIGN ANYWAY !!! ALSO FIND ALIGN MACRO
     size_t allocExtra = param.allocExtra;
 
     if (allocExtra % sizeof(void *) != 0 && //{uncovered}
         (param.allocType != memContextAllocTypeNone || param.childType != memContextChildTypeNone || param.callback)) //{uncovered}
     {
-        allocExtra = allocExtra / sizeof(void *) + sizeof(void *); //{uncovered}
+        allocExtra += sizeof(void *) - allocExtra % sizeof(void *); //{uncovered}
     }
 
     // Find space for the new context
@@ -606,13 +606,14 @@ memContextAllocNew(const size_t size)
     if (contextCurrent->allocType == memContextAllocTypeOne) // {uncovered}
     {
         MemContextAllocOne *const contextAlloc = memContextAllocOne(contextCurrent); // {uncovered}
-        ASSERT(contextAlloc->alloc == NULL); // {uncovered}
+        ASSERT(!contextCurrent->allocInitialized || contextAlloc->alloc == NULL); // {uncovered}
 
         // Initialize allocation header
         *result = (MemContextAlloc){.size = (unsigned int)(sizeof(MemContextAlloc) + size)}; // {uncovered}
 
         // Set pointer in allocation
         contextAlloc->alloc = result; // {uncovered}
+        contextCurrent->allocInitialized = true;
     }
     else
     {
@@ -684,6 +685,7 @@ memContextAllocResize(MemContextAlloc *alloc, size_t size)
     // Update pointer in allocation list in case the realloc moved the allocation
     MemContext *const currentContext = memContextStack[memContextCurrentStackIdx].memContext;
     ASSERT(currentContext->allocType != memContextAllocTypeNone);
+    ASSERT(currentContext->allocInitialized);
 
     if (currentContext->allocType == memContextAllocTypeOne) // {uncovered}
     {
@@ -744,7 +746,7 @@ memResize(const void *buffer, size_t size)
 
 /**********************************************************************************************************************************/
 void
-memFree(void *buffer)
+memFree(void *const buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, buffer);
@@ -755,6 +757,7 @@ memFree(void *buffer)
     // Get the allocation
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     ASSERT(contextCurrent->allocType != memContextAllocTypeNone);
+    ASSERT(contextCurrent->allocInitialized);
     MemContextAlloc *const alloc = MEM_CONTEXT_ALLOC_HEADER(buffer);
 
     if (contextCurrent->allocType == memContextAllocTypeOne) // {uncovered}

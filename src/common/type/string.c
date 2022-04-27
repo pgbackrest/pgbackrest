@@ -73,7 +73,6 @@ Object type
 struct String
 {
     StringPub pub;                                                  // Publicly accessible variables
-    MemContext *memContext;                                         // Required for dynamically allocated strings
 };
 
 /**********************************************************************************************************************************/
@@ -82,18 +81,22 @@ strNew(void)
 {
     FUNCTION_TEST_VOID();
 
-    // Create object
-    String *this = memNew(sizeof(String));
+    String *this = NULL;
 
-    *this = (String)
+    OBJ_NEW_BEGIN(String, .allocType = memContextAllocTypeOne)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (String)
         {
-            // Set empty so nothing is allocated until needed
-            .buffer = STR_EMPTY_BUFFER,
-        },
-        .memContext = memContextCurrent(),
-    };
+            .pub =
+            {
+                // Set empty so nothing is allocated until needed
+                .buffer = STR_EMPTY_BUFFER,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(STRING, this);
 }
@@ -110,17 +113,31 @@ strNewFixed(const size_t size)
 
     CHECK_SIZE(size);
 
-    String *this = memNew(sizeof(String) + size + 1);
+    String *this = NULL;
 
-    *this = (String)
+    // If the string is large than the extra allowed with a mem context then allocate the buffer separately
+    if (sizeof(String) + size + 1 > MEM_CONTEXT_ALLOC_EXTRA_MAX)
     {
-        .pub =
+        this = strNew();
+        this->pub = (StringPub){.size = (unsigned int)size, .buffer = memNew(size + 1)};
+
+        FUNCTION_TEST_RETURN(STRING, this);
+    }
+
+    OBJ_NEW_EXTRA_BEGIN(String, (uint16_t)(sizeof(String) + size + 1))
+    {
+        this = OBJ_NEW_ALLOC();
+
+        *this = (String)
         {
-            .size = (unsigned int)size,
-            .buffer = STR_FIXED_BUFFER,
-        },
-        .memContext = memContextCurrent(),
-    };
+            .pub =
+            {
+                .size = (unsigned int)size,
+                .buffer = STR_FIXED_BUFFER,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(STRING, this);
 }
@@ -337,14 +354,14 @@ strResize(String *this, size_t requested)
         if (this->pub.extra < STRING_EXTRA_MIN)
             this->pub.extra = STRING_EXTRA_MIN;
 
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             if (STR_IS_EMPTY_BUFFER())
                 this->pub.buffer = memNew(strSize(this) + this->pub.extra + 1);
             else
                 this->pub.buffer = memResize(this->pub.buffer, strSize(this) + this->pub.extra + 1);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -1071,29 +1088,4 @@ strSizeFormat(const uint64_t size)
     }
 
     FUNCTION_TEST_RETURN(STRING, result);
-}
-
-/***********************************************************************************************************************************
-Free the string
-***********************************************************************************************************************************/
-void
-strFree(String *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            if (!STR_IS_EMPTY_BUFFER() && !STR_IS_FIXED_BUFFER())
-                memFree(this->pub.buffer);
-
-            memFree(this);
-        }
-        MEM_CONTEXT_END();
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }

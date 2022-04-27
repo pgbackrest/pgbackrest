@@ -41,7 +41,8 @@ testRun(void)
         TEST_RESULT_VOID(CHECK_SIZE(555), "valid size");
         TEST_ERROR(CHECK_SIZE(STRING_SIZE_MAX + 1), AssertError, "string size must be <= 1073741824 bytes");
 
-        String *string = strNewZ("static string");
+        String *string = NULL;
+        TEST_ASSIGN(string, strNewZ("static string"), "new");
         TEST_RESULT_BOOL(string->pub.buffer == (char *)(string + 1), true, "string has fixed buffer");
         TEST_RESULT_STR_Z(string, "static string", "new with static string");
         TEST_RESULT_UINT(strSize(string), 13, "check size");
@@ -89,6 +90,15 @@ testRun(void)
         TEST_TITLE("strNewEncode()");
 
         TEST_RESULT_STR_Z(strNewEncode(encodeBase64, BUFSTRDEF("zz")), "eno=", "encode base64");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fixed string large enough to need separate allocation");
+
+        char *compare = memNew(MEM_CONTEXT_ALLOC_EXTRA_MAX + 1);
+        memset(compare, 'A', MEM_CONTEXT_ALLOC_EXTRA_MAX);
+        compare[MEM_CONTEXT_ALLOC_EXTRA_MAX] = '\0';
+
+        TEST_RESULT_STR_Z(strNewZN(compare, MEM_CONTEXT_ALLOC_EXTRA_MAX), compare, "compare");
     }
 
     // *****************************************************************************************************************************
