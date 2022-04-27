@@ -64,12 +64,22 @@ struct MemContext
     MemContext *contextParent;                                      // All contexts have a parent except top
 };
 
+typedef struct MemContextAllocOne
+{
+    MemContextAlloc *alloc;                                         // Memory allocation created in this context
+} MemContextAllocOne;
+
 typedef struct MemContextAllocMany
 {
     MemContextAlloc **list;                                         // List of memory allocations created in this context
     unsigned int listSize;                                          // Size of alloc list (not the actual count of allocations)
     unsigned int freeIdx;                                           // Index of first free space in the alloc list
 } MemContextAllocMany;
+
+typedef struct MemContextChildOne
+{
+    MemContext *context;                                            // Context created in this context
+} MemContextChildOne;
 
 typedef struct MemContextChildMany
 {
@@ -93,7 +103,7 @@ memContextAllocSize(const MemContextAllocType type)
             return 0; // {uncovered}
 
         case memContextAllocTypeOne: // {uncovered}
-            return sizeof(MemContextAlloc); // {uncovered}
+            return sizeof(MemContextAllocOne); // {uncovered}
 
         default:
             ASSERT(type == memContextAllocTypeMany);
@@ -110,7 +120,7 @@ memContextChildSize(const MemContextChildType type)
             return 0; // {uncovered}
 
         case memContextAllocTypeOne: // {uncovered}
-            return sizeof(MemContext); // {uncovered}
+            return sizeof(MemContextChildMany); // {uncovered}
 
         default:
             ASSERT(type == memContextChildTypeMany);
@@ -127,27 +137,51 @@ memContextCallbackSize(bool callback)
     return 0; // {uncovered}
 }
 
+static void *
+memContextAllocOffset(MemContext *const memContext)
+{
+    return (unsigned char *)(memContext + 1) + memContext->allocExtra;
+}
+
+static MemContextAllocOne *
+memContextAllocOne(MemContext *const memContext) // {uncovered}
+{
+    return (MemContextAllocOne *)memContextAllocOffset(memContext); // {uncovered}
+}
+
 static MemContextAllocMany *
 memContextAllocMany(MemContext *const memContext)
 {
-    return (MemContextAllocMany *)((unsigned char *)(memContext + 1) + memContext->allocExtra);
+    return (MemContextAllocMany *)memContextAllocOffset(memContext);
+}
+
+static void *
+memContextChildOffset(MemContext *const memContext)
+{
+    switch (memContext->allocType)
+    {
+        case memContextAllocTypeNone: // {uncovered}
+            return (unsigned char *)(memContext + 1) + memContext->allocExtra; // {uncovered}
+
+        case memContextAllocTypeOne: // {uncovered}
+            return (MemContextChildMany *)(memContextAllocOne(memContext) + 1); // {uncovered}
+
+        default:
+            ASSERT(memContext->allocType == memContextAllocTypeMany);
+            return (MemContextChildMany *)(memContextAllocMany(memContext) + 1);
+    }
+}
+
+static MemContextChildOne *
+memContextChildOne(MemContext *const memContext) // {uncovered}
+{
+    return (MemContextChildOne *)memContextChildOffset(memContext); // {uncovered}
 }
 
 static MemContextChildMany *
 memContextChildMany(MemContext *const memContext)
 {
-    switch (memContext->allocType)
-    {
-        case memContextAllocTypeNone: // {uncovered}
-            return (MemContextChildMany *)memContextAllocMany(memContext); // {uncovered}
-
-        case memContextAllocTypeOne: // {uncovered}
-            return (MemContextChildMany *)((MemContextAlloc *)memContextAllocMany(memContext) + 1); // {uncovered}
-
-        default:
-            ASSERT(memContext->allocType == memContextAllocTypeMany);
-            return (MemContextChildMany *)((MemContextAllocMany *)memContextAllocMany(memContext) + 1);
-    }
+    return (MemContextChildMany *)memContextChildOffset(memContext);
 }
 
 static MemContextCallback *
@@ -156,14 +190,14 @@ memContextCallback(MemContext *const memContext)
     switch (memContext->childType)
     {
         case memContextChildTypeNone: // {uncovered}
-            return (MemContextCallback *)memContextChildMany(memContext); // {uncovered}
+            return (MemContextCallback *)((unsigned char *)(memContext + 1) + memContext->allocExtra); // {uncovered}
 
         case memContextAllocTypeOne: // {uncovered}
-            return (MemContextCallback *)((MemContext *)memContextChildMany(memContext) + 1); // {uncovered}
+            return (MemContextCallback *)(memContextChildOne(memContext) + 1); // {uncovered}
 
         default:
             ASSERT(memContext->childType == memContextChildTypeMany);
-            return (MemContextCallback *)((MemContextChildMany *)memContextChildMany(memContext) + 1);
+            return (MemContextCallback *)(memContextChildMany(memContext) + 1);
     }
 }
 
@@ -560,7 +594,8 @@ memContextAllocNew(const size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    MemContextAlloc *result;
+    // Allocate memory
+    MemContextAlloc *const result = memAllocInternal(sizeof(MemContextAlloc) + size);
 
     // Find space for the new allocation
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
@@ -570,7 +605,14 @@ memContextAllocNew(const size_t size)
 
     if (contextCurrent->allocType == memContextAllocTypeOne) // {uncovered}
     {
-        THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+        MemContextAllocOne *const contextAlloc = memContextAllocOne(contextCurrent); // {uncovered}
+        ASSERT(contextAlloc->alloc == NULL); // {uncovered}
+
+        // Initialize allocation header
+        *result = (MemContextAlloc){.size = (unsigned int)(sizeof(MemContextAlloc) + size)}; // {uncovered}
+
+        // Set pointer in allocation
+        contextAlloc->alloc = result; // {uncovered}
     }
     else
     {
@@ -609,14 +651,8 @@ memContextAllocNew(const size_t size)
             }
         }
 
-        // Create new allocation
-        result = memAllocInternal(sizeof(MemContextAlloc) + size);
-
-        *result = (MemContextAlloc)
-        {
-            .allocIdx = contextAlloc->freeIdx,
-            .size = (unsigned int)(sizeof(MemContextAlloc) + size),
-        };
+        // Initialize allocation header
+        *result = (MemContextAlloc){.allocIdx = contextAlloc->freeIdx, .size = (unsigned int)(sizeof(MemContextAlloc) + size)};
 
         // Set pointer in allocation list
         contextAlloc->list[contextAlloc->freeIdx] = result;
@@ -651,7 +687,8 @@ memContextAllocResize(MemContextAlloc *alloc, size_t size)
 
     if (currentContext->allocType == memContextAllocTypeOne) // {uncovered}
     {
-        THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+        ASSERT(memContextAllocOne(currentContext)->alloc != NULL); // {uncovered}
+        memContextAllocOne(currentContext)->alloc = alloc; // {uncovered}
     }
     else
     {
@@ -722,7 +759,8 @@ memFree(void *buffer)
 
     if (contextCurrent->allocType == memContextAllocTypeOne) // {uncovered}
     {
-        THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+        // ASSERT(memContextAllocOne(currentContext)->alloc != NULL); // {uncovered}
+        memContextAllocOne(contextCurrent)->alloc = NULL; // {uncovered}
     }
     else
     {
@@ -735,8 +773,9 @@ memFree(void *buffer)
 
         // Free the allocation
         contextAlloc->list[alloc->allocIdx] = NULL;
-        memFreeInternal(alloc);
     }
+
+    memFreeInternal(alloc);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -972,7 +1011,12 @@ memContextSize(const MemContext *const this)
     // Size of allocations
     if (this->allocType == memContextAllocTypeOne) // {uncovered}
     {
-        THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+        const MemContextAllocOne *const contextAlloc = (const MemContextAllocOne *const)offset; // {uncovered}
+
+        if (contextAlloc->alloc != NULL) // {uncovered}
+            total += contextAlloc->alloc->size; // {uncovered}
+
+        offset += sizeof(MemContextAllocOne); // {uncovered}
     }
     else
     {
@@ -1121,11 +1165,14 @@ memContextFree(MemContext *this)
             // Free memory allocations and list
             if (this->allocInitialized)
             {
-                ASSERT(this->allocType != memContextAllocTypeOne);
+                ASSERT(this->allocType != memContextAllocTypeNone);
 
                 if (this->allocType == memContextAllocTypeOne) // {uncovered}
                 {
-                    THROW(AssertError, "!!!NOT YET IMPLEMENTED"); // {uncovered}
+                    MemContextAllocOne *const contextAlloc = memContextAllocOne(this); // {uncovered}
+
+                    if (contextAlloc->alloc != NULL) // {uncovered}
+                        memFreeInternal(contextAlloc->alloc); // {uncovered}
                 }
                 else
                 {
