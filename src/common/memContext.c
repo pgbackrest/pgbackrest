@@ -3,7 +3,7 @@ Memory Context Manager
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdio.h> // !!! REMOVE
+//#include <stdio.h> // !!! REMOVE
 #include <stdlib.h>
 #include <string.h>
 
@@ -567,8 +567,7 @@ memContextAllocNew(const size_t size)
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     ASSERT(contextCurrent->allocType != memContextAllocTypeNone);
 
-    // THROW(AssertError, "HERE");
-    fprintf(stdout, "!!!HERE\n"); fflush(stdout);
+    // fprintf(stdout, "!!!HERE\n"); fflush(stdout);
 
     if (contextCurrent->allocType == memContextAllocTypeOne) // {uncovered}
     {
@@ -583,8 +582,6 @@ memContextAllocNew(const size_t size)
         // Initialize
         if (!contextCurrent->allocInitialized)
         {
-            fprintf(stdout, "!!!INIT\n"); fflush(stdout);
-
             *contextAlloc = (MemContextAllocMany)
             {
                 .list = memAllocPtrArrayInternal(MEM_CONTEXT_ALLOC_INITIAL_SIZE),
@@ -595,8 +592,6 @@ memContextAllocNew(const size_t size)
         }
         else
         {
-            fprintf(stdout, "!!!NEXT\n"); fflush(stdout);
-
             for (; contextAlloc->freeIdx < contextAlloc->listSize; contextAlloc->freeIdx++)
                 if (contextAlloc->list[contextAlloc->freeIdx] == NULL)
                     break;
@@ -617,8 +612,6 @@ memContextAllocNew(const size_t size)
 
         // Create new allocation
         result = memAllocInternal(sizeof(MemContextAlloc) + size);
-
-        fprintf(stdout, "!!!CREATE %p\n", result); fflush(stdout);
 
         *result = (MemContextAlloc)
         {
@@ -678,11 +671,7 @@ memNew(size_t size)
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    fprintf(stdout, "!!!IN MEM NEW\n"); fflush(stdout);
-
     void *result = MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size));
-
-    fprintf(stdout, "!!!OUT MEM NEW\n"); fflush(stdout);
 
     FUNCTION_TEST_RETURN_P(VOID, result);
 }
