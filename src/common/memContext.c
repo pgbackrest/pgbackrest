@@ -85,48 +85,99 @@ typedef struct MemContextCallback
     void *argument;                                                 // Argument to pass to callback function
 } MemContextCallback;
 
-static size_t
-memContextAllocSize(const MemContextAllocType type)
+// !!! WOULD BE BETTER TO HAVE AN ARRAY TO PRECALCULATE ALL THESE SIZES
+static const uint8_t memContextSizeX[3][3][2] =
 {
-    switch (type)
+    // memContextAllocTypeNone
     {
-        case memContextAllocTypeNone: // {uncovered}
-            return 0; // {uncovered}
+        // memContextChildTypeNone
+        {
+            // callbackNone
+            0,
 
-        case memContextAllocTypeOne: // {uncovered}
-            return sizeof(MemContextAllocOne); // {uncovered}
+            // callbackOne
+            sizeof(MemContextCallback),
+        },
 
-        default:
-            ASSERT(type == memContextAllocTypeMany);
-            return sizeof(MemContextAllocMany);
-    }
-}
+        // memContextChildTypeOne
+        {
+            // callbackNone
+            sizeof(MemContextChildOne),
 
-static size_t
-memContextChildSize(const MemContextChildType type)
-{
-    switch (type)
+            // callbackOne
+            sizeof(MemContextChildOne) + sizeof(MemContextCallback),
+        },
+
+        // memContextChildTypeMany
+        {
+            // callbackNone
+            sizeof(MemContextChildMany),
+
+            // callbackOne
+            sizeof(MemContextChildMany) + sizeof(MemContextCallback),
+        },
+    },
+
+    // memContextAllocTypeOne
     {
-        case memContextAllocTypeNone: // {uncovered}
-            return 0; // {uncovered}
+        // memContextChildTypeNone
+        {
+            // callbackNone
+            sizeof(MemContextAllocOne),
 
-        case memContextAllocTypeOne: // {uncovered}
-            return sizeof(MemContextChildMany); // {uncovered}
+            // callbackOne
+            sizeof(MemContextAllocOne) + sizeof(MemContextCallback),
+        },
 
-        default:
-            ASSERT(type == memContextChildTypeMany);
-            return sizeof(MemContextChildMany);
-    }
-}
+        // memContextChildTypeOne
+        {
+            // callbackNone
+            sizeof(MemContextAllocOne) + sizeof(MemContextChildOne),
 
-static size_t
-memContextCallbackSize(bool callback)
-{
-    if (callback) // {uncovered}
-        return sizeof(MemContextCallback);
+            // callbackOne
+            sizeof(MemContextAllocOne) + sizeof(MemContextChildOne) + sizeof(MemContextCallback),
+        },
 
-    return 0; // {uncovered}
-}
+        // memContextChildTypeMany
+        {
+            // callbackNone
+            sizeof(MemContextAllocOne) + sizeof(MemContextChildMany),
+
+            // callbackOne
+            sizeof(MemContextAllocOne) + sizeof(MemContextChildMany) + sizeof(MemContextCallback),
+        },
+    },
+
+    // memContextAllocTypeMany
+    {
+        // memContextChildTypeNone
+        {
+            // callbackNone
+            sizeof(MemContextAllocMany),
+
+            // callbackOne
+            sizeof(MemContextAllocMany) + sizeof(MemContextCallback),
+        },
+
+        // memContextChildTypeOne
+        {
+            // callbackNone
+            sizeof(MemContextAllocMany) + sizeof(MemContextChildOne),
+
+            // callbackOne
+            sizeof(MemContextAllocMany) + sizeof(MemContextChildOne) + sizeof(MemContextCallback),
+        },
+
+        // memContextChildTypeMany
+        {
+            // callbackNone
+            sizeof(MemContextAllocMany) + sizeof(MemContextChildMany),
+
+            // callbackOne
+            sizeof(MemContextAllocMany) + sizeof(MemContextChildMany) + sizeof(MemContextCallback),
+        },
+    },
+};
 
 static void *
 memContextAllocOffset(MemContext *const memContext)
@@ -426,8 +477,7 @@ memContextNew(const char *const name, const MemContextNewParam param)
     ASSERT(contextCurrent->childType != memContextChildTypeNone);
 
     MemContext *const this = memAllocInternal(
-        sizeof(MemContext) + allocExtra + memContextAllocSize(param.allocType) + memContextChildSize(param.childType) +
-        memContextCallbackSize(param.callback));
+        sizeof(MemContext) + allocExtra + memContextSizeX[param.allocType][param.childType][param.callback]);
 
     *this = (MemContext)
     {
