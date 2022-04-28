@@ -43,6 +43,16 @@ testRun(void)
             "key/value found outside of section at line 1: key=value");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("empty section");
+
+        iniBuf = BUFSTRZ(
+            "\n[]\n");
+
+        TEST_ERROR(
+            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            "invalid empty section at line 2: []");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid JSON value");
 
         iniBuf = BUFSTRZ("[section]\nkey=value\n");

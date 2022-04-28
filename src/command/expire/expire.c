@@ -492,8 +492,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                         if (strCmp(archiveId, strLstGet(listArchiveDisk, archiveIdx)) != 0)
                             continue;
 
-                        StringList *archiveSplit = strLstNewSplitZ(archiveId, "-");
-                        unsigned int archivePgId = cvtZToUInt(strZ(strLstGet(archiveSplit, 1)));
+                        const unsigned int archivePgId = cvtZToUInt(strrchr(strZ(archiveId), '-') + 1);
 
                         // From the global list of backups to retain, create a list of backups, oldest to newest, associated with
                         // this archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then

@@ -302,7 +302,6 @@ sub run
                     "\n" .
                     "CFLAGS_TEST =" .
                         " \\\n\t" . (($self->{bOptimize} && ($self->{bProfile} || $bPerformance)) ? '-O2' : '-O0') .
-                        " \\\n\t-DDEBUG_MEM" .
                         (!$self->{bDebugTestTrace} && $self->{bDebug} ? " \\\n\t-DDEBUG_TEST_TRACE" : '') .
                         ($bCoverage ? " \\\n\t-fprofile-arcs -ftest-coverage" : '') .
                         ($self->{oTest}->{&TEST_VM} eq VM_NONE ? '' : " \\\n\t-DTEST_CONTAINER_REQUIRED") .

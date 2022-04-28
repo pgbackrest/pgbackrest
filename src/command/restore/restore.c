@@ -120,12 +120,12 @@ getEpoch(const String *targetTime)
             // Strip off the date and time and put the remainder into another string
             String *datetime = strSubN(targetTime, 0, 19);
 
-            int dtYear = cvtZToInt(strZ(strSubN(datetime, 0, 4)));
-            int dtMonth = cvtZToInt(strZ(strSubN(datetime, 5, 2)));
-            int dtDay = cvtZToInt(strZ(strSubN(datetime, 8, 2)));
-            int dtHour = cvtZToInt(strZ(strSubN(datetime, 11, 2)));
-            int dtMinute = cvtZToInt(strZ(strSubN(datetime, 14, 2)));
-            int dtSecond = cvtZToInt(strZ(strSubN(datetime, 17, 2)));
+            int dtYear = cvtZSubNToInt(strZ(datetime), 0, 4);
+            int dtMonth = cvtZSubNToInt(strZ(datetime), 5, 2);
+            int dtDay = cvtZSubNToInt(strZ(datetime), 8, 2);
+            int dtHour = cvtZSubNToInt(strZ(datetime), 11, 2);
+            int dtMinute = cvtZSubNToInt(strZ(datetime), 14, 2);
+            int dtSecond = cvtZSubNToInt(strZ(datetime), 17, 2);
 
             // Confirm date and time parts are valid
             datePartsValid(dtYear, dtMonth, dtDay);
@@ -145,13 +145,13 @@ getEpoch(const String *targetTime)
                 String *timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
 
                 // Include the sign with the hour
-                int tzHour = cvtZToInt(strZ(strSubN(timezoneOffset, 0, 3)));
+                int tzHour = cvtZSubNToInt(strZ(timezoneOffset), 0, 3);
                 int tzMinute = 0;
 
                 // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
                 // the hour
                 if (strSize(timezoneOffset) > 3)
-                    tzMinute = cvtZToInt(strZ(strSubN(timezoneOffset, 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2)));
+                    tzMinute = cvtZSubNToInt(strZ(timezoneOffset), 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2);
 
                 result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
             }

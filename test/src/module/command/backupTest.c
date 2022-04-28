@@ -65,7 +65,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             if (bundle)
             {
-                const uint64_t bundleId = cvtZToUInt64(strZ(strSub(info->name, sizeof("bundle"))));
+                const uint64_t bundleId = cvtZToUInt64(strZ(info->name) + sizeof("bundle"));
 
                 for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(data->manifest); fileIdx++)
                 {

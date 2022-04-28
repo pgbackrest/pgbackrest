@@ -74,43 +74,47 @@ storageWriteGcsOpen(THIS_VOID)
 Verify upload
 ***********************************************************************************************************************************/
 static void
-storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
+storageWriteGcsVerify(StorageWriteGcs *const this, HttpResponse *const response)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
     FUNCTION_LOG_END();
 
-    KeyValue *content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
-
-    // Check the md5 hash
-    const String *md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
-    CHECK(FormatError, md5base64 != NULL, "MD5 missing");
-
-    const String *md5actual = bufHex(bufNewDecode(encodeBase64, md5base64));
-    const String *md5expected = pckReadStrP(pckReadNew(ioFilterResult(this->md5hash)));
-
-    if (!strEq(md5actual, md5expected))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        THROW_FMT(
-            FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(md5expected), strZ(this->interface.name),
-            strZ(md5actual));
-    }
+        KeyValue *const content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
-    // Check the size when available
-    const String *sizeStr = varStr(kvGet(content, GCS_JSON_SIZE_VAR));
+        // Check the md5 hash
+        const String *const md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
+        CHECK(FormatError, md5base64 != NULL, "MD5 missing");
 
-    if (sizeStr != NULL)
-    {
-        uint64_t size = cvtZToUInt64(strZ(sizeStr));
+        const String *const md5actual = bufHex(bufNewDecode(encodeBase64, md5base64));
+        const String *const md5expected = pckReadStrP(pckReadNew(ioFilterResult(this->md5hash)));
 
-        if (size != this->uploadTotal)
+        if (!strEq(md5actual, md5expected))
         {
             THROW_FMT(
-                FormatError, "expected size %" PRIu64 " for '%s' but actual is %" PRIu64, size, strZ(this->interface.name),
-                this->uploadTotal);
+                FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(md5expected), strZ(this->interface.name),
+                strZ(md5actual));
+        }
+
+        // Check the size when available
+        const String *const sizeStr = varStr(kvGet(content, GCS_JSON_SIZE_VAR));
+
+        if (sizeStr != NULL)
+        {
+            const uint64_t size = cvtZToUInt64(strZ(sizeStr));
+
+            if (size != this->uploadTotal)
+            {
+                THROW_FMT(
+                    FormatError, "expected size %" PRIu64 " for '%s' but actual is %" PRIu64, size, strZ(this->interface.name),
+                    this->uploadTotal);
+            }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -119,7 +123,7 @@ storageWriteGcsVerify(StorageWriteGcs *this, HttpResponse *response)
 Flush bytes to upload chunk
 ***********************************************************************************************************************************/
 static void
-storageWriteGcsBlock(StorageWriteGcs *this, bool done)
+storageWriteGcsBlock(StorageWriteGcs *const this, const bool done)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
@@ -131,12 +135,13 @@ storageWriteGcsBlock(StorageWriteGcs *this, bool done)
     // If there is an outstanding async request then wait for the response to ensure the request did not error
     if (this->request != NULL)
     {
-        HttpResponse *response = storageGcsResponseP(this->request, .allowIncomplete = !done);
+        HttpResponse *const response = storageGcsResponseP(this->request, .allowIncomplete = !done);
 
         // If done then verify the md5 checksum
         if (done)
             storageWriteGcsVerify(this, response);
 
+        httpResponseFree(response);
         httpRequestFree(this->request);
         this->request = NULL;
     }

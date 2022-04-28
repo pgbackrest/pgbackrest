@@ -265,7 +265,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             if (spacePos != 3)
                 THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strZ(status));
 
-            this->pub.code = cvtZToUInt(strZ(strSubN(status, 0, (size_t)spacePos)));
+            this->pub.code = cvtZSubNToUInt(strZ(status), 0, (size_t)spacePos);
 
             // Read reason phrase. A missing reason phrase will be represented as an empty string.
             MEM_CONTEXT_OBJ_BEGIN(this)

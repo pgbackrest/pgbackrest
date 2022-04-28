@@ -25,62 +25,73 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
 
     ASSERT(cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == STORAGE_S3_TYPE);
 
-    // Parse the endpoint url
-    const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeHttps);
-    const String *const endPoint = httpUrlHost(url);
-    unsigned int port = httpUrlPort(url);
+    Storage *result = NULL;
 
-    // If host was specified then use it
-    const String *host = NULL;
-
-    if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+        // Parse the endpoint url
+        const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeHttps);
+        const String *const endPoint = httpUrlHost(url);
+        unsigned int port = httpUrlPort(url);
 
-        host = httpUrlHost(url);
-        port = httpUrlPort(url);
-    }
+        // If host was specified then use it
+        const String *host = NULL;
 
-    // If port was specified, overwrite the parsed/default port
-    if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
-        port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
-
-    // Get role and token
-    const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx);
-    const String *role = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
-    const String *webIdToken = NULL;
-
-    // If web identity authentication then load the role and token from environment variables documented here:
-    // https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html
-    if (keyType == storageS3KeyTypeWebId)
-    {
-        #define S3_ENV_AWS_ROLE_ARN                             "AWS_ROLE_ARN"
-        #define S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE              "AWS_WEB_IDENTITY_TOKEN_FILE"
-
-        const char *const roleZ = getenv(S3_ENV_AWS_ROLE_ARN);
-        const char *const webIdTokenFileZ = getenv(S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE);
-
-        if (roleZ == NULL || webIdTokenFileZ == NULL)
+        if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
         {
-            THROW_FMT(
-                OptionInvalidError,
-                "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z "' but '" S3_ENV_AWS_ROLE_ARN "' and '"
-                    S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE "' are not set",
-                cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
+            const HttpUrl *const url = httpUrlNewParseP(
+                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+
+            host = httpUrlHost(url);
+            port = httpUrlPort(url);
         }
 
-        role = strNewZ(roleZ);
-        webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STR(webIdTokenFileZ))));
-    }
+        // If port was specified, overwrite the parsed/default port
+        if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
+            port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
-    Storage *const result = storageS3New(
-        cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
-        cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint, (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
-        cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
-        cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
-        cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), role, webIdToken, STORAGE_S3_PARTSIZE_MIN, host, port, ioTimeoutMs(),
-        cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-        cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+        // Get role and token
+        const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx);
+        const String *role = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
+        const String *webIdToken = NULL;
+
+        // If web identity authentication then load the role and token from environment variables documented here:
+        // https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html
+        if (keyType == storageS3KeyTypeWebId)
+        {
+            #define S3_ENV_AWS_ROLE_ARN                             "AWS_ROLE_ARN"
+            #define S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE              "AWS_WEB_IDENTITY_TOKEN_FILE"
+
+            const char *const roleZ = getenv(S3_ENV_AWS_ROLE_ARN);
+            const char *const webIdTokenFileZ = getenv(S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE);
+
+            if (roleZ == NULL || webIdTokenFileZ == NULL)
+            {
+                THROW_FMT(
+                    OptionInvalidError,
+                    "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z "' but '" S3_ENV_AWS_ROLE_ARN "' and '"
+                        S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE "' are not set",
+                    cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
+            }
+
+            role = strNewZ(roleZ);
+            webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STR(webIdTokenFileZ))));
+        }
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = storageS3New(
+            cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback, cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx),
+            endPoint, (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
+            cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
+            cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
+            cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), role, webIdToken, STORAGE_S3_PARTSIZE_MIN, host, port,
+            ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx),
+            cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STORAGE, result);
 }

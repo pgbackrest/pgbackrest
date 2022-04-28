@@ -50,7 +50,10 @@ storageWriteRemoteFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    protocolClientDataPut(this->client, pckWriteBoolP(protocolPackNew(), false));
+    PackWrite *const write = protocolPackNew();
+    protocolClientDataPut(this->client, pckWriteBoolP(write, false));
+    pckWriteFree(write);
+
     protocolClientDataPut(this->client, NULL);
     protocolClientDataEndGet(this->client);
 
