@@ -312,7 +312,7 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
-        FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
+        FUNCTION_TEST_PARAM(HTTP_HEADER, httpHeader);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
