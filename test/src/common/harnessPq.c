@@ -73,14 +73,24 @@ harnessPqScriptStrictSet(bool strict)
 Run pq script
 ***********************************************************************************************************************************/
 static HarnessPq *
-harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *parent)
+harnessPqScriptRun(const char *const function, const VariantList *const param, const HarnessPq *const parent)
 {
     // If an error has already been thrown then throw the same error again
     if (harnessPqScriptFail)
         THROW(AssertError, harnessPqScriptError);
 
     // Convert params to json for comparison and reporting
-    String *paramStr = param ? jsonFromVar(varNewVarLst(param)) : strNew();
+    String *paramStr = NULL;
+
+    if (param)
+    {
+        Variant *const varList = varNewVarLst(param);
+
+        paramStr = jsonFromVar(varList);
+        varFree(varList);
+    }
+    else
+        paramStr = strNew();
 
     // Ensure script has not ended
     if (harnessPqScriptDone)
@@ -150,6 +160,8 @@ harnessPqScriptRun(const char *function, const VariantList *param, HarnessPq *pa
 
     if (harnessPqScript[harnessPqScriptIdx].function == NULL)
         harnessPqScriptDone = true;
+
+    strFree(paramStr);
 
     return result;
 }
