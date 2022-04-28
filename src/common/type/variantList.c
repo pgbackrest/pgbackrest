@@ -47,8 +47,12 @@ varLstDup(const VariantList *source)
     {
         result = varLstNew();
 
-        for (unsigned int listIdx = 0; listIdx < varLstSize(source); listIdx++)
-            varLstAdd(result, varDup(varLstGet(source, listIdx)));
+        MEM_CONTEXT_OBJ_BEGIN(result)
+        {
+            for (unsigned int listIdx = 0; listIdx < varLstSize(source); listIdx++)
+                varLstAdd(result, varDup(varLstGet(source, listIdx)));
+        }
+        MEM_CONTEXT_OBJ_END();
     }
 
     FUNCTION_TEST_RETURN(VARIANT_LIST, result);
