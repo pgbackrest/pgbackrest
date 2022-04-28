@@ -1575,7 +1575,6 @@ testRun(void)
                 "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
                 "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"
                 "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
-                TEST_MANIFEST_METADATA
                 TEST_MANIFEST_FILE
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
@@ -1588,7 +1587,11 @@ testRun(void)
         kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
         kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
         kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
+        kvPut(annotationKV, VARSTRDEF("key to remove"), VARSTRDEF("step 1"));
         TEST_RESULT_VOID(manifestAnnotationSet(manifest, annotationKV), "annotation set");
+        annotationKV = kvNew();
+        kvPut(annotationKV, VARSTRDEF("key to remove"), VARSTRDEF(""));
+        TEST_RESULT_VOID(manifestAnnotationSet(manifest, annotationKV), "annotation set - remove empty keys");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1915,6 +1918,7 @@ testRun(void)
             "ignore-key=\"ignore-value\"\n"                                                                                        \
             "\n"                                                                                                                   \
             "[metadata]\n"                                                                                                         \
+            "annotation={\"key\":\"value\"}\n"                                                                                     \
             "ignore-key=\"ignore-value\"\n"                                                                                        \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \

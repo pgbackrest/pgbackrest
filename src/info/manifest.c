@@ -3106,7 +3106,9 @@ manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
-        this->pub.data.annotation = kvNew();
+        if (this->pub.data.annotation == NULL)
+            this->pub.data.annotation = kvNew();
+
         const VariantList *annotationKeyList = kvKeyList(annotationKv);
 
         for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
@@ -3116,7 +3118,14 @@ manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
 
             // Skip empty values
             if (!strEmpty(varStr(value)))
+            {
                 kvPut(this->pub.data.annotation, key, value);
+            }
+            // Remove existing key if value is empty
+            else if (kvKeyExists(this->pub.data.annotation, key))
+            {
+                kvRemove(this->pub.data.annotation, key);
+            }
         }
     }
     MEM_CONTEXT_END();

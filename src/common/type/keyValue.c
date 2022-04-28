@@ -331,3 +331,39 @@ kvGetList(const KeyValue *this, const Variant *key)
 
     FUNCTION_TEST_RETURN(result);
 }
+
+/**********************************************************************************************************************************/
+KeyValue *
+kvRemove(KeyValue *this, const Variant *key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    MEM_CONTEXT_BEGIN(objMemContext(this))
+    {
+        // Find the key
+        unsigned int listIdx = kvGetIdx(this, key);
+
+        // If the key was found, remove it
+        if (listIdx != KEY_NOT_FOUND)
+        {
+            // Remove from the list
+            lstRemoveIdx(this->list, listIdx);
+
+            // Remove from the key list
+            for (unsigned int idx = 0; idx < varLstSize(this->pub.keyList); idx++)
+            {
+                if (varEq(key, varLstGet(this->pub.keyList, idx)))
+                    lstRemoveIdx((List *)this->pub.keyList, idx);
+            }
+        }
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN(this);
+}

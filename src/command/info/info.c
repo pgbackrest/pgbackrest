@@ -960,13 +960,21 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         {
             const KeyValue *annotationKv = varKv(kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR));
             const StringList *annotationKeyList = strLstNewVarLst(kvKeyList(annotationKv));
+            String *annotationStr = strNew();
 
-            strCatZ(resultStr, "            annotation(s)\n");
             for (unsigned int keyIdx = 0; keyIdx < strLstSize(annotationKeyList); keyIdx++)
             {
                 String *key = strLstGet(annotationKeyList, keyIdx);
                 const String *value = varStr(kvGet(annotationKv, VARSTR(key)));
-                strCatZ(resultStr, strZ(strNewFmt("                %s: %s\n", strZ(key), strZ(value))));
+                if (value != NULL)
+                    strCatZ(annotationStr, strZ(strNewFmt("                %s: %s\n", strZ(key), strZ(value))));
+            }
+
+            // Only output annotation section if at least one not NULL value has been found
+            if (!strEmpty(annotationStr))
+            {
+                strCatZ(resultStr, "            annotation(s)\n");
+                strCat(resultStr, annotationStr);
             }
         }
     }

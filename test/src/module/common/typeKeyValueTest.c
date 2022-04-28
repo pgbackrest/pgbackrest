@@ -23,7 +23,7 @@ testRun(void)
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetDefault(), kvGetList(), and kvDup()"))
+    if (testBegin("kvPut(), kvAdd(), kvKeyExists(), kvKeyList(), kvGet(), kvGetDefault(), kvGetList(), kvDup(), and kvRemove()"))
     {
         KeyValue *store = NULL;
 
@@ -104,6 +104,16 @@ testRun(void)
         TEST_RESULT_STR_Z(
             varStr(kvGet(varKv(kvGet(storeDup, VARSTRDEF("kv-key"))), VARSTRDEF("str-sub-key"))),
             "str-sub-value", "get string/kv");
+
+        // Remove a kv
+        // -------------------------------------------------------------------------------------------------------------------------
+        const Variant *key = VARSTRDEF("str-key-to-remove");
+
+        kvPut(store, key, VARSTRDEF("str-value"));
+        TEST_RESULT_STR_Z(varStr(kvGet(store, key)), "str-value", "get string/kv");
+        TEST_RESULT_PTR(kvRemove(store, key), store, "remove string/kv");
+        TEST_RESULT_BOOL(kvKeyExists(store, key), false, "key does not exist");
+        TEST_RESULT_PTR(kvRemove(store, key), store, "don't fail to remove key that doesn't exist");
 
         TEST_RESULT_VOID(kvFree(storeDup), "free dup store");
         TEST_RESULT_VOID(kvFree(store), "free store");

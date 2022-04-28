@@ -80,6 +80,9 @@ kvKeyExists(const KeyValue *const this, const Variant *const key)
 // Get a value as a list (even if there is only one value) using the key
 VariantList *kvGetList(const KeyValue *this, const Variant *key);
 
+// Remove a key/value pair
+KeyValue *kvRemove(KeyValue *this, const Variant *key);
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/

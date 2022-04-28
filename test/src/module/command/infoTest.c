@@ -1825,17 +1825,14 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
-        #define TEST_MANIFEST_METADATA                                                                                             \
-            "\n"                                                                                                                   \
-            "[metadata]\n"                                                                                                         \
-            "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"
-
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20201116-155000F_20201119-152100I/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER2
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_NO_DB
-            TEST_MANIFEST_METADATA
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
+            "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"                     \
             TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
@@ -1864,6 +1861,43 @@ testRun(void)
             "                extra key: this is an annotation\n"
             "                source: this is another annotation\n",
             "text - backup set requested, no lsn start/stop location");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup set requested with null annotations");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201116-155000F_20201119-152100I/" BACKUP_MANIFEST_FILE,
+            TEST_MANIFEST_HEADER2
+            TEST_MANIFEST_TARGET_NO_LINK
+            TEST_MANIFEST_NO_DB
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
+            "annotation={\"key1\":null}\n"                                                                                         \
+            TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest - with null annotations");
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n"
+            "    cipher: none\n"
+            "\n"
+            "    db (current)\n"
+            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201119-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
+            "            database size: 19.2MB, database backup size: 8.2KB\n"
+            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
+            "            backup reference list: 20201116-155000F\n"
+            "            database list: none\n",
+            "text - backup set requested, null annotations");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: stanza found");
