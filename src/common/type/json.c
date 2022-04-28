@@ -92,7 +92,7 @@ jsonReadNew(const String *const json)
 
     JsonRead *this = NULL;
 
-    OBJ_NEW_BEGIN(JsonRead, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(JsonRead, .childType = memContextChildTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -1304,7 +1304,7 @@ jsonWriteNew(JsonWriteNewParam param)
 
     JsonWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(JsonWrite, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(JsonWrite, .childType = memContextChildTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

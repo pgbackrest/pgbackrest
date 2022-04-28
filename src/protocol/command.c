@@ -30,7 +30,7 @@ protocolCommandNew(const StringId command)
 
     ProtocolCommand *this = NULL;
 
-    OBJ_NEW_BEGIN(ProtocolCommand, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(ProtocolCommand, .childType = memContextChildTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

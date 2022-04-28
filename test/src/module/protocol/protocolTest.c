@@ -281,7 +281,7 @@ testRun(void)
 
         IoWrite *write = ioFdWriteNewOpen(STRDEF("invalid"), 0, 0);
 
-        OBJ_NEW_BEGIN(ProtocolClient, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+        OBJ_NEW_BEGIN(ProtocolClient, .childType = memContextChildTypeMany, .callback = true)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
             *protocolHelperClient.client = (ProtocolClient){
@@ -290,7 +290,7 @@ testRun(void)
         }
         OBJ_NEW_END();
 
-        OBJ_NEW_BEGIN(Exec, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+        OBJ_NEW_BEGIN(Exec, .childType = memContextChildTypeMany, .callback = true)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
             *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};

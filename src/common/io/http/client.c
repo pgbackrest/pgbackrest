@@ -43,7 +43,7 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
 
     HttpClient *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpClient, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(HttpClient, .childType = memContextChildTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

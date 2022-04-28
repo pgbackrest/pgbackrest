@@ -132,7 +132,7 @@ storageReadGcsNew(
 
     StorageRead *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageReadGcs, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(StorageReadGcs, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
     {
         StorageReadGcs *driver = OBJ_NEW_ALLOC();
 

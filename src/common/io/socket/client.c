@@ -172,7 +172,7 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
 
     IoClient *this = NULL;
 
-    OBJ_NEW_BEGIN(SocketClient, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(SocketClient, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
     {
         SocketClient *driver = OBJ_NEW_ALLOC();
 

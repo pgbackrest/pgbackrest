@@ -125,7 +125,7 @@ storageReadAzureNew(
 
     StorageRead *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageReadAzure, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(StorageReadAzure, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
     {
         StorageReadAzure *driver = OBJ_NEW_ALLOC();
 

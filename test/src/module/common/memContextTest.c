@@ -334,7 +334,7 @@ testRun(void)
 
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
 
-        MEM_CONTEXT_NEW_BEGIN(memContextTestName, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+        MEM_CONTEXT_NEW_BEGIN(test-new-block, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
         {
             memContext = MEM_CONTEXT_NEW();
             TEST_RESULT_PTR(memContext, memContextCurrent(), "new mem context is current");
@@ -354,7 +354,7 @@ testRun(void)
 
         TRY_BEGIN()
         {
-            MEM_CONTEXT_NEW_BEGIN(memContextTestName, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+            MEM_CONTEXT_NEW_BEGIN(test-new-failed-block, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
             {
                 memContext = MEM_CONTEXT_NEW();
                 TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check mem context name");

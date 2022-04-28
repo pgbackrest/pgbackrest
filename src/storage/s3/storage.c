@@ -1086,7 +1086,7 @@ storageS3New(
 
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageS3, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(StorageS3, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
     {
         StorageS3 *driver = OBJ_NEW_ALLOC();
 

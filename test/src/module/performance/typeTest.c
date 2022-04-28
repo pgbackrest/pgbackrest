@@ -264,7 +264,7 @@ testRun(void)
         TEST_TITLE("build manifest");
 
         MemContext *testContext = memContextNewP(
-            "test", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany);
+            "test", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
         memContextKeep();
         Manifest *manifest = NULL;
         TimeMSec timeBegin = timeMSec();
@@ -277,7 +277,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
+        // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
         TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
 
@@ -296,7 +296,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("load manifest");
 
-        testContext = memContextNewP("test", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany);
+        testContext = memContextNewP(
+            "test", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
         memContextKeep();
         timeBegin = timeMSec();
 
@@ -307,7 +308,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
+        // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
         TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
 

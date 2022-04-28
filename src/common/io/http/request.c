@@ -193,7 +193,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
 
     HttpRequest *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpRequest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(HttpRequest, .childType = memContextChildTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

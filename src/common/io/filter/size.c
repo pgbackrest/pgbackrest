@@ -93,7 +93,7 @@ ioSizeNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(IoSize, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(IoSize, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
     {
         IoSize *driver = OBJ_NEW_ALLOC();
         *driver = (IoSize){0};

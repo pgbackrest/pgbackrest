@@ -1111,7 +1111,7 @@ manifestNewBuild(
 
     Manifest *this = NULL;
 
-    OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany)
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
@@ -2046,7 +2046,7 @@ manifestNewLoad(IoRead *read)
 
     Manifest *this = NULL;
 
-    OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany)
     {
         this = manifestNewInternal();
 

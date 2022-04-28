@@ -585,7 +585,7 @@ storagePosixNewInternal(
     // Create the object
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StoragePosix, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(StoragePosix, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
     {
         StoragePosix *driver = OBJ_NEW_ALLOC();
 

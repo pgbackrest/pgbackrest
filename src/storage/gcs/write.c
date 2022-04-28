@@ -328,7 +328,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
     StorageWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteGcs, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(StorageWriteGcs, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
     {
         StorageWriteGcs *driver = OBJ_NEW_ALLOC();
 
