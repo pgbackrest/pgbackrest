@@ -73,8 +73,10 @@ testRun(void)
             cvtZToInt("-9223372036854775807"), FormatError, "unable to convert base 10 string '-9223372036854775807' to int");
 
         TEST_RESULT_INT(cvtZToIntBase("-FF", 16), -255, "convert string to int");
+        TEST_RESULT_INT(cvtZSubNToIntBase("XFFX", 1, 2, 16), 255, "convert string to int");
         TEST_RESULT_INT(cvtZToInt("0"), 0, "convert string to int");
         TEST_RESULT_INT(cvtZToInt("1234567890"), 1234567890, "convert string to int");
+        TEST_RESULT_INT(cvtZSubNToInt("X1234567890X", 1, 10), 1234567890, "convert string to int");
         TEST_RESULT_INT(cvtZToInt("-1234567890"), -1234567890, "convert string to int");
     }
 
@@ -155,7 +157,9 @@ testRun(void)
         TEST_ERROR(cvtZToUInt("5000000000"), FormatError, "unable to convert base 10 string '5000000000' to unsigned int");
 
         TEST_RESULT_UINT(cvtZToUIntBase("FF", 16), 255, "convert string to unsigned int");
+        TEST_RESULT_UINT(cvtZSubNToUIntBase("XFFX", 1, 2, 16), 255, "convert string to unsigned int");
         TEST_RESULT_UINT(cvtZToUInt("3333333333"), 3333333333U, "convert string to unsigned int");
+        TEST_RESULT_UINT(cvtZSubNToUInt("X3333333333X", 1, 10), 3333333333U, "convert string to unsigned int");
     }
 
     // *****************************************************************************************************************************
@@ -178,9 +182,11 @@ testRun(void)
             cvtZToInt64("9223372036854775808"), FormatError, "unable to convert base 10 string '9223372036854775808' to int64");
 
         TEST_RESULT_INT(cvtZToInt64Base("-FF", 16), -255, "convert string to int64");
+        TEST_RESULT_INT(cvtZSubNToInt64Base("X-FFX", 1, 3, 16), -255, "convert string to int64");
         TEST_RESULT_INT(cvtZToInt64("0"), 0, "convert string to int64");
         TEST_RESULT_INT(cvtZToInt64("9223372036854775807"), 9223372036854775807, "convert string to int64");
         TEST_RESULT_INT(cvtZToInt64("-9223372036854775807"), -9223372036854775807, "convert string to int64");
+        TEST_RESULT_INT(cvtZSubNToInt64("X-9223372036854775807X", 1, 20), -9223372036854775807, "convert string to int64");
     }
 
     // *****************************************************************************************************************************
@@ -199,7 +205,9 @@ testRun(void)
         TEST_ERROR(cvtZToUInt64("-1"), FormatError, "unable to convert base 10 string '-1' to uint64");
 
         TEST_RESULT_UINT(cvtZToUInt64Base("FF", 16), 255, "convert string to uint64");
+        TEST_RESULT_UINT(cvtZSubNToUInt64Base("XFFX", 1, 2, 16), 255, "convert string to uint64");
         TEST_RESULT_UINT(cvtZToUInt64("18446744073709551615"), 18446744073709551615U, "convert string to uint64");
+        TEST_RESULT_UINT(cvtZSubNToUInt64("X18446744073709551615X", 1, 20), 18446744073709551615U, "convert string to uint64");
     }
 
     // *****************************************************************************************************************************
