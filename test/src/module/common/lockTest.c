@@ -206,23 +206,31 @@ testRun(void)
         TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), true, "backup lock file was created");
 
         // Seek to start of file before read
-        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockLocal.file[lockTypeBackup].name));
         TEST_RESULT_STR(
             lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).execId, STRDEF("1-test"), "verify execId");
 
         TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup), "write lock data");
-        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockLocal.file[lockTypeBackup].name));
         TEST_RESULT_PTR(
             lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete, NULL, "verify percentComplete");
 
         TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(5555)), "write lock data");
-        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockLocal.file[lockTypeBackup].name));
         TEST_RESULT_UINT(
             varUInt(lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete), 5555,
             "verify percentComplete");
 
         TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(8888)), "write lock data");
-        lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET);
+        THROW_ON_SYS_ERROR_FMT(
+            lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+            strZ(lockLocal.file[lockTypeBackup].name));
         TEST_RESULT_UINT(
             varUInt(lockReadFileData(backupLockFile, lockLocal.file[lockTypeBackup].fd).percentComplete), 8888,
             "verify percentComplete");
@@ -267,7 +275,7 @@ testRun(void)
         TEST_STORAGE_LIST(storageTest, NULL, "unlocked.lock\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("contains pid only - a one line lock file");
+        TEST_TITLE("execId && procPid valid file");
 
         const String *stanza = STRDEF("1-test");
         lockLocal.execId = STRDEF("1-test");
@@ -275,7 +283,7 @@ testRun(void)
         TEST_RESULT_BOOL(lockAcquire(TEST_PATH_STR, stanza, STRDEF("1-test"), lockTypeBackup, 0, true), true, "backup lock");
         TEST_RESULT_BOOL(storageExistsP(storageTest, lockLocal.file[lockTypeBackup].name), true, "backup lock file was created");
 
-        // Overwrite backup lock file leaving only one line containing the pid
+        // Overwrite backup lock file with execId of 1-test and pid of 12345
         THROW_ON_SYS_ERROR_FMT(
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
             strZ(lockLocal.file[lockTypeBackup].name));
@@ -284,15 +292,18 @@ testRun(void)
 
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockTypeBackup].name, lockLocal.file[lockTypeBackup].fd, 0);
 
-        // Write pid of 12345
-        ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("12345")), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("{\"execId\":\"1-test\",\"procPid\":12345}")), write);
         ioWriteClose(write);
 
         // Seek to start of file before read
         THROW_ON_SYS_ERROR_FMT(
             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
             strZ(lockLocal.file[lockTypeBackup].name));
-        TEST_RESULT_UINT((uint64_t)lockReadFileP(lockLocal.file[lockTypeBackup].name).data.processId, 12345, "lock read pid 12345");
+
+        LockReadResult result = {0};
+        TEST_ASSIGN(result, lockReadFileP(lockLocal.file[lockTypeBackup].name), "lock read");
+        TEST_RESULT_STR(result.data.execId, STRDEF("1-test"), "lock read execId 1-test");
+        TEST_RESULT_UINT((uint64_t)result.data.processId, 12345, "lock read pid 12345");
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         // -------------------------------------------------------------------------------------------------------------------------

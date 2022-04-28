@@ -33,6 +33,7 @@ Constants
 
 #define LOCK_KEY_EXEC_ID                                            STRID6("execId", 0x12e0c56051)
 #define LOCK_KEY_PERCENT_COMPLETE                                   STRID6("pctCplt", 0x14310a140d01)
+#define LOCK_KEY_PROCESS_ID                                         STRID6("procPid", 0x42750cf4901)
 
 /***********************************************************************************************************************************
 Lock type names
@@ -107,29 +108,19 @@ lockReadFileData(const String *const lockFile, const int fd)
             ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
             ioWriteClose(write);
 
-            // Parse the file
-            const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+            JsonRead *const json = jsonReadNew(strNewBuf(buffer));
+            jsonReadObjectBegin(json);
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+                result.execId = jsonReadStr(jsonReadKeyRequireStrId(json, LOCK_KEY_EXEC_ID));
+
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_PERCENT_COMPLETE))
+                    result.percentComplete = varNewUInt(jsonReadUInt(json));
+
+                result.processId = jsonReadInt(jsonReadKeyRequireStrId(json, LOCK_KEY_PROCESS_ID));
             }
             MEM_CONTEXT_PRIOR_END();
-
-            if (strLstSize(parse) == 3)
-            {
-                JsonRead *const json = jsonReadNew(strLstGet(parse, 1));
-                jsonReadObjectBegin(json);
-
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    result.execId = jsonReadStr(jsonReadKeyRequireStrId(json, LOCK_KEY_EXEC_ID));
-
-                    if (jsonReadKeyExpectStrId(json, LOCK_KEY_PERCENT_COMPLETE))
-                        result.percentComplete = varNewUInt(jsonReadUInt(json));
-                }
-                MEM_CONTEXT_PRIOR_END();
-            }
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -255,6 +246,8 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         if (param.percentComplete != NULL)
             jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
 
+        jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
+
         jsonWriteObjectEnd(json);
 
         if (lockType == lockTypeBackup && lockLocal.held != lockTypeNone)
@@ -273,7 +266,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         // Write lock file data
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
 
-        ioCopyP(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(jsonWriteResult(json))))), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTR(strNewFmt("%s" LF_Z, strZ(jsonWriteResult(json))))), write);
         ioWriteClose(write);
     }
     MEM_CONTEXT_TEMP_END();
