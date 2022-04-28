@@ -1185,16 +1185,23 @@ jsonReadVarRecurse(JsonRead *const this)
 
         case jsonTypeArrayBegin:
         {
-            VariantList *const result = varLstNew();
+            VariantList *const list = varLstNew();
 
             jsonReadArrayBegin(this);
 
-            while (jsonReadTypeNextIgnoreComma(this) != jsonTypeArrayEnd)
-                varLstAdd(result, jsonReadVarRecurse(this));
+            MEM_CONTEXT_BEGIN(lstMemContext((List *)list))
+            {
+                while (jsonReadTypeNextIgnoreComma(this) != jsonTypeArrayEnd)
+                    varLstAdd(list, jsonReadVarRecurse(this));
+            }
+            MEM_CONTEXT_END();
 
             jsonReadArrayEnd(this);
 
-            FUNCTION_TEST_RETURN(VARIANT, varNewVarLst(result));
+            Variant *const result = varNewVarLst(list);
+            varLstFree(list);
+
+            FUNCTION_TEST_RETURN(VARIANT, result);
         }
 
         default:
@@ -1205,8 +1212,13 @@ jsonReadVarRecurse(JsonRead *const this)
 
             while (jsonReadTypeNextIgnoreComma(this) != jsonTypeObjectEnd)
             {
-                const String *const key = jsonReadKey(this);
-                kvPut(result, varNewStr(key), jsonReadVarRecurse(this));
+                String *const key = jsonReadKey(this);
+                Variant *const value = jsonReadVarRecurse(this);
+
+                kvPut(result, VARSTR(key), value);
+
+                strFree(key);
+                varFree(value);
             }
 
             jsonReadObjectEnd(this);
