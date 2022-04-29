@@ -116,7 +116,7 @@ cryptoHash(CryptoHash *this)
 
     if (this->hash == NULL)
     {
-        MEM_CONTEXT_BEGIN(objMemContext(this))
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             // Standard OpenSSL implementation
             if (this->hashContext != NULL)
@@ -133,7 +133,7 @@ cryptoHash(CryptoHash *this)
 
             bufUsedSet(this->hash, bufSize(this->hash));
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     FUNCTION_LOG_RETURN(BUFFER, this->hash);
@@ -241,6 +241,10 @@ cryptoHashNew(const String *type)
 IoFilter *
 cryptoHashNewPack(const Pack *const paramList)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK, paramList);
+    FUNCTION_TEST_END();
+
     IoFilter *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -249,7 +253,7 @@ cryptoHashNewPack(const Pack *const paramList)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_TEST_RETURN(IO_FILTER, result);
 }
 
 /**********************************************************************************************************************************/

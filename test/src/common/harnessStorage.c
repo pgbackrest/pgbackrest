@@ -324,15 +324,15 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
                 break;
 
             case storageTypeLink:
-                strLstAdd(listStr, strNewFmt("%s>", strZ(info->name)));
+                strLstAddFmt(listStr, "%s>", strZ(info->name));
                 break;
 
             case storageTypePath:
-                strLstAdd(listStr, strNewFmt("%s/", strZ(info->name)));
+                strLstAddFmt(listStr, "%s/", strZ(info->name));
                 break;
 
             case storageTypeSpecial:
-                strLstAdd(listStr, strNewFmt("%s*", strZ(info->name)));
+                strLstAddFmt(listStr, "%s*", strZ(info->name));
                 break;
         }
     }

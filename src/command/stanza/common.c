@@ -31,7 +31,7 @@ cipherPassGen(CipherType cipherType)
         result = strNewEncode(encodeBase64, BUF(buffer, sizeof(buffer)));
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -61,5 +61,5 @@ pgValidate(void)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(PgControl, result);
 }

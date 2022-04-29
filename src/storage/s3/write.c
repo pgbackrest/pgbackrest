@@ -65,11 +65,11 @@ storageWriteS3Open(THIS_VOID)
     ASSERT(this->partBuffer == NULL);
 
     // Allocate the part buffer
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->partBuffer = bufNew(this->partSize);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -78,7 +78,7 @@ storageWriteS3Open(THIS_VOID)
 Flush bytes to upload part
 ***********************************************************************************************************************************/
 static void
-storageWriteS3Part(StorageWriteS3 *this)
+storageWriteS3Part(StorageWriteS3 *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
@@ -89,10 +89,12 @@ storageWriteS3Part(StorageWriteS3 *this)
     // If there is an outstanding async request then wait for the response and store the part id
     if (this->request != NULL)
     {
-        strLstAdd(
-            this->uploadPartList, httpHeaderGet(httpResponseHeader(storageS3ResponseP(this->request)), HTTP_HEADER_ETAG_STR));
+        HttpResponse *const response = storageS3ResponseP(this->request);
+
+        strLstAdd(this->uploadPartList, httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_ETAG_STR));
         ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
 
+        httpResponseFree(response);
         httpRequestFree(this->request);
         this->request = NULL;
     }
@@ -128,12 +130,12 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true))));
 
             // Store the upload id
-            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->uploadId = xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_UPLOAD_ID_STR, true));
                 this->uploadPartList = strLstNew();
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Upload the part async
@@ -141,12 +143,12 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         httpQueryAdd(query, S3_QUERY_UPLOAD_ID_STR, this->uploadId);
         httpQueryAdd(query, S3_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
 
-        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->request = storageS3RequestAsyncP(
                 this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
     MEM_CONTEXT_TEMP_END();
 

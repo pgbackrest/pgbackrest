@@ -103,7 +103,7 @@ storageWritePosixOpen(THIS_VOID)
     }
 
     // Set free callback to ensure the file descriptor is freed
-    memContextCallbackSet(THIS_MEM_CONTEXT(), storageWritePosixFreeResource, this);
+    memContextCallbackSet(objMemContext(this), storageWritePosixFreeResource, this);
 
     // Update user/group owner
     if (this->interface.user != NULL || this->interface.group != NULL)
@@ -172,7 +172,7 @@ storageWritePosixClose(THIS_VOID)
             THROW_ON_SYS_ERROR_FMT(fsync(this->fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
 
         // Close the file
-        memContextCallbackClear(THIS_MEM_CONTEXT());
+        memContextCallbackClear(objMemContext(this));
         THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
         this->fd = -1;
 
@@ -215,7 +215,7 @@ storageWritePosixFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fd);
+    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/

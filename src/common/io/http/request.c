@@ -209,12 +209,12 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
             .client = client,
             .content = param.content == NULL ? NULL : bufDup(param.content),
         };
-
-        // Send the request
-        httpRequestProcess(this, false, false);
-        statInc(HTTP_STAT_REQUEST_STR);
     }
     OBJ_NEW_END();
+
+    // Send the request
+    httpRequestProcess(this, false, false);
+    statInc(HTTP_STAT_REQUEST_STR);
 
     FUNCTION_LOG_RETURN(HTTP_REQUEST, this);
 }

@@ -53,7 +53,7 @@ Test data for backup.info
     "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
     "\"backup-archive-start\":null,\"backup-archive-stop\":null,"                                                                  \
     "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
-    "\"backup-lsn-stop\":\"0/1E000105\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-info-size-delta\":163866,\"backup-lsn-stop\":\"0/1E000105\",\"backup-prior\":\"20161219-212741F\","                  \
     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803D\"],\"backup-timestamp-start\":1482182884,"     \
     "\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,\"option-archive-check\":true,"                     \
     "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \
@@ -80,7 +80,7 @@ Test data for backup.info
     "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","                                      \
     "\"backup-archive-start\":null,\"backup-archive-stop\":null,"                                                                  \
     "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"                       \
-    "\"backup-lsn-stop\":\"0/1E000105\",\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\","                  \
+    "\"backup-info-size-delta\":163866,\"backup-lsn-stop\":\"0/1E000105\",\"backup-prior\":\"20161219-212741F\","                  \
     "\"backup-reference\":[\"20161219-212741F\",\"20161219-212741F_20161219-212803D\"],\"backup-timestamp-start\":1482182884,"     \
     "\"backup-timestamp-stop\":1482182985,\"backup-type\":\"incr\",\"db-id\":1,\"option-archive-check\":true,"                     \
     "\"option-archive-copy\":false,\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":true,"       \

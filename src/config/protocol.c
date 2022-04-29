@@ -63,9 +63,11 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
             pckWriteStrP(param, varStr(varLstGet(paramList, paramIdx)));
 
+        const String *const json = pckReadStrP(protocolClientExecute(client, command, true));
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(client, command, true))));
+            result = varVarLst(jsonToVar(json));
         }
         MEM_CONTEXT_PRIOR_END();
     }

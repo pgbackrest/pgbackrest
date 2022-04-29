@@ -149,7 +149,7 @@ storageLocal(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageLocal);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageLocal);
 }
 
 const Storage *
@@ -168,7 +168,7 @@ storageLocalWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageLocalWrite);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageLocalWrite);
 }
 
 /***********************************************************************************************************************************
@@ -197,7 +197,7 @@ storagePgGet(unsigned int pgIdx, bool write)
         result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -222,14 +222,14 @@ storagePgIdx(unsigned int pgIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePg[pgIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storagePg[pgIdx]);
 }
 
 const Storage *
 storagePg(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 const Storage *
@@ -257,14 +257,14 @@ storagePgIdxWrite(unsigned int pgIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storagePgWrite[pgIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storagePgWrite[pgIdx]);
 }
 
 const Storage *
 storagePgWrite(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storagePgIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storagePgIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
 /***********************************************************************************************************************************
@@ -291,7 +291,7 @@ storageHelperRepoInit(void)
 Construct a repo path from an expression and path
 ***********************************************************************************************************************************/
 static String *
-storageRepoPathExpression(const String *expression, const String *path)
+storageRepoPathExpression(const String *const expression, const String *const path)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
@@ -300,35 +300,37 @@ storageRepoPathExpression(const String *expression, const String *path)
 
     ASSERT(expression != NULL);
 
-    String *result = NULL;
+    String *const result = strNew();
 
     if (strEq(expression, STORAGE_REPO_ARCHIVE_STR))
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
-            result = strCatFmt(strNew(), STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
+            strCatFmt(result, STORAGE_PATH_ARCHIVE "/%s", strZ(storageHelper.stanza));
         else
-            result = strCatZ(strNew(), STORAGE_PATH_ARCHIVE);
+            strCat(result, STORAGE_PATH_ARCHIVE_STR);
 
         // If a subpath should be appended, determine if it is WAL path, else just append the subpath
         if (path != NULL)
         {
-            StringList *pathSplit = strLstNewSplitZ(path, "/");
-            String *file = strLstSize(pathSplit) == 2 ? strLstGet(pathSplit, 1) : NULL;
+            StringList *const pathSplit = strLstNewSplitZ(path, "/");
+            const String *const file = strLstSize(pathSplit) == 2 ? strLstGet(pathSplit, 1) : NULL;
 
             if (file != NULL && regExpMatch(storageHelper.walRegExp, file))
-                strCatFmt(result, "/%s/%s/%s", strZ(strLstGet(pathSplit, 0)), strZ(strSubN(file, 0, 16)), strZ(file));
+                strCatFmt(result, "/%s/%.16s/%s", strZ(strLstGet(pathSplit, 0)), strZ(file), strZ(file));
             else
                 strCatFmt(result, "/%s", strZ(path));
+
+            strLstFree(pathSplit);
         }
     }
     else if (strEq(expression, STORAGE_REPO_BACKUP_STR))
     {
         // Construct the base path
         if (storageHelper.stanza != NULL)
-            result = strCatFmt(strNew(), STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
+            strCatFmt(result, STORAGE_PATH_BACKUP "/%s", strZ(storageHelper.stanza));
         else
-            result = strCatZ(strNew(), STORAGE_PATH_BACKUP);
+            strCatZ(result, STORAGE_PATH_BACKUP);
 
         // Append subpath if provided
         if (path != NULL)
@@ -337,7 +339,9 @@ storageRepoPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    FUNCTION_TEST_RETURN(result);
+    ASSERT(result != 0);
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -388,7 +392,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -421,14 +425,14 @@ storageRepoIdx(unsigned int repoIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageRepo[repoIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageRepo[repoIdx]);
 }
 
 const Storage *
 storageRepo(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storageRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
 const Storage *
@@ -464,14 +468,14 @@ storageRepoIdxWrite(unsigned int repoIdx)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageRepoWrite[repoIdx]);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageRepoWrite[repoIdx]);
 }
 
 const Storage *
 storageRepoWrite(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
 /***********************************************************************************************************************************
@@ -514,7 +518,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -536,7 +540,7 @@ storageSpool(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageSpool);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpool);
 }
 
 const Storage *
@@ -561,7 +565,7 @@ storageSpoolWrite(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(storageHelper.storageSpoolWrite);
+    FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpoolWrite);
 }
 
 /**********************************************************************************************************************************/

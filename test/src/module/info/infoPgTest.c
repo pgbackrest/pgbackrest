@@ -15,14 +15,14 @@ testInfoBackupSaveCallback(void *data, const String *sectionNext, InfoSave *info
 {
     (void)data;
 
-    if (infoSaveSection(infoSaveData, STRDEF("backup:current"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("backup:current"), STRDEF("20161219-212741F"), STRDEF("{}"));
+    if (infoSaveSection(infoSaveData, "backup:current", sectionNext))
+        infoSaveValue(infoSaveData, "backup:current", "20161219-212741F", STRDEF("{}"));
 
-    if (infoSaveSection(infoSaveData, STRDEF("db:backup"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("db:backup"), STRDEF("key"), STRDEF("\"value\""));
+    if (infoSaveSection(infoSaveData, "db:backup", sectionNext))
+        infoSaveValue(infoSaveData, "db:backup", "key", STRDEF("\"value\""));
 
-    if (infoSaveSection(infoSaveData, STRDEF("later"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("later"), STRDEF("key"), STRDEF("\"value\""));
+    if (infoSaveSection(infoSaveData, "later", sectionNext))
+        infoSaveValue(infoSaveData, "later", "key", STRDEF("\"value\""));
 }
 
 /***********************************************************************************************************************************

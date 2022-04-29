@@ -87,15 +87,9 @@ ArchiveGetFileResult archiveGetFile(
         // Log errors as warnings and continue
         CATCH_ANY()
         {
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                strLstAdd(
-                    result.warnList,
-                    strNewFmt(
-                        "%s: %s [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, actual->repoIdx), strZ(actual->file),
-                        errorTypeName(errorType()), errorMessage()));
-            }
-            MEM_CONTEXT_PRIOR_END();
+            strLstAddFmt(
+                result.warnList, "%s: %s [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, actual->repoIdx), strZ(actual->file),
+                errorTypeName(errorType()), errorMessage());
         }
         TRY_END();
 

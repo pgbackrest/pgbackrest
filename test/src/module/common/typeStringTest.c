@@ -341,7 +341,7 @@ testRun(void)
                 else
                 {
                     TEST_RESULT_STR(
-                        strLstAdd(list, strNewFmt("STR%02d", listIdx)), strNewFmt("STR%02d", listIdx),
+                        strLstAddFmt(list, "STR%02d", listIdx), strNewFmt("STR%02d", listIdx),
                         strZ(strNewFmt("add item %d", listIdx)));
                 }
             }
@@ -418,7 +418,7 @@ testRun(void)
             if (listIdx == 0)
                 strLstAdd(list, NULL);
             else
-                strLstAdd(list, strNewFmt("STR%02d", listIdx));
+                strLstAddFmt(list, "STR%02d", listIdx);
         }
 
         // Check pointer
@@ -446,8 +446,8 @@ testRun(void)
     if (testBegin("strLstExists()"))
     {
         StringList *list = strLstNew();
-        strLstAddZ(list, "A");
-        strLstAddZ(list, "C");
+        strLstAddSub(list, STRDEF("AX"), 1);
+        strLstAddSubN(list, STRDEF("XC"), 1, 1);
 
         TEST_RESULT_BOOL(strLstExists(list, STRDEF("B")), false, "string does not exist");
         TEST_RESULT_BOOL(strLstExists(list, STRDEF("C")), true, "string exists");
@@ -460,8 +460,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strLstJoin(list, ", "), "", "empty list");
 
-        strLstAdd(list, STRDEF("item1"));
-        strLstAddZ(list, "item2");
+        strLstAddZSub(list, "item1X", 5);
+        strLstAddZSubN(list, "Xitem2X", 1, 5);
 
         TEST_RESULT_STR_Z(strLstJoin(list, ", "), "item1, item2", "list");
 

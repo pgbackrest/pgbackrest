@@ -114,11 +114,9 @@ cmdOption(void)
 
                                     for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
                                     {
-                                        strLstAdd(
-                                            valueList,
-                                            strNewFmt(
-                                                "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                                                strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
+                                        strLstAddFmt(
+                                            valueList, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                                            strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
                                     }
                                 }
                                 // Generate values for list options
@@ -155,7 +153,7 @@ cmdOption(void)
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN(cmdOptionStr);
+    FUNCTION_TEST_RETURN(STRING, cmdOptionStr);
 }
 
 /**********************************************************************************************************************************/

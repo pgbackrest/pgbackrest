@@ -13,13 +13,6 @@ Protocol Client
 #include "version.h"
 
 /***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-STRING_EXTERN(PROTOCOL_GREETING_NAME_STR,                           PROTOCOL_GREETING_NAME);
-STRING_EXTERN(PROTOCOL_GREETING_SERVICE_STR,                        PROTOCOL_GREETING_SERVICE);
-STRING_EXTERN(PROTOCOL_GREETING_VERSION_STR,                        PROTOCOL_GREETING_VERSION);
-
-/***********************************************************************************************************************************
 Client state enum
 ***********************************************************************************************************************************/
 typedef enum
@@ -117,38 +110,42 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
         // Read, parse, and check the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            String *greeting = ioReadLine(this->pub.read);
-            KeyValue *greetingKv = jsonToKv(greeting);
+            JsonRead *const greeting = jsonReadNew(ioReadLine(this->pub.read));
 
-            const String *expected[] =
+            jsonReadObjectBegin(greeting);
+
+            const struct
             {
-                PROTOCOL_GREETING_NAME_STR, STRDEF(PROJECT_NAME),
-                PROTOCOL_GREETING_SERVICE_STR, service,
-                PROTOCOL_GREETING_VERSION_STR, STRDEF(PROJECT_VERSION),
+                const StringId key;
+                const char *const value;
+            } expected[] =
+            {
+                {.key = PROTOCOL_GREETING_NAME, .value = PROJECT_NAME},
+                {.key = PROTOCOL_GREETING_SERVICE, .value = strZ(service)},
+                {.key = PROTOCOL_GREETING_VERSION, .value = PROJECT_VERSION},
             };
 
-            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected) / 2; expectedIdx++)
+            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
             {
-                const String *expectedKey = expected[expectedIdx * 2];
-                const String *expectedValue = expected[expectedIdx * 2 + 1];
+                if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
+                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(strIdToStr(expected[expectedIdx].key)));
 
-                const Variant *actualValue = kvGet(greetingKv, VARSTR(expectedKey));
+                if (jsonReadTypeNext(greeting) != jsonTypeString)
+                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(strIdToStr(expected[expectedIdx].key)));
 
-                if (actualValue == NULL)
-                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(expectedKey));
+                const String *const actualValue = jsonReadStr(greeting);
 
-                if (varType(actualValue) != varTypeString)
-                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(expectedKey));
-
-                if (!strEq(varStr(actualValue), expectedValue))
+                if (!strEqZ(actualValue, expected[expectedIdx].value))
                 {
                     THROW_FMT(
                         ProtocolError,
                         "expected value '%s' for greeting key '%s' but got '%s'\n"
                             "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
-                        strZ(expectedValue), strZ(expectedKey), strZ(varStr(actualValue)));
+                        expected[expectedIdx].value, strZ(strIdToStr(expected[expectedIdx].key)), strZ(actualValue));
                 }
             }
+
+            jsonReadObjectEnd(greeting);
         }
         MEM_CONTEXT_TEMP_END();
 

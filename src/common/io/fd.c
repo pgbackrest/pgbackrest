@@ -58,7 +58,7 @@ fdReadyRetry(int pollResult, int errNo, bool first, TimeMSec *timeout, TimeMSec 
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 bool

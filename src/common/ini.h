@@ -73,8 +73,7 @@ Helper Functions
 // or extraneous spaces, and where all values are valid JSON. This allows syntax characters such as [, =, #, and whitespace to be
 // used in keys.
 void iniLoad(
-    IoRead *read,
-    void (*callbackFunction)(void *data, const String *section, const String *key, const String *value, const Variant *valueVar),
+    IoRead *read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
     void *callbackData);
 
 /***********************************************************************************************************************************

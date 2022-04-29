@@ -10,6 +10,7 @@ define.yaml. THe PostgreSQL version can be adjusted by changing TEST_PG_VERSION.
 ***********************************************************************************************************************************/
 #include "common/type/json.h"
 
+#include "common/harnessPack.h"
 #include "common/harnessPq.h"
 
 /***********************************************************************************************************************************
@@ -98,7 +99,8 @@ testRun(void)
 #endif
 
         TEST_ERROR(
-            pgClientQuery(client, STRDEF(TEST_QUERY)), DbQueryError, "unable to send query '" TEST_QUERY "': " TEST_PQ_ERROR);
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultRow), DbQueryError,
+            "unable to send query '" TEST_QUERY "': " TEST_PQ_ERROR);
 
         TEST_RESULT_VOID(pgClientFree(client), "free client");
 
@@ -147,7 +149,8 @@ testRun(void)
 #endif
 
         TEST_ERROR(
-            pgClientQuery(client, STRDEF(TEST_QUERY)), DbQueryError, "unable to execute query '" TEST_QUERY "': " TEST_PQ_ERROR);
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultRow), DbQueryError,
+            "unable to execute query '" TEST_QUERY "': " TEST_PQ_ERROR);
 
         #undef TEST_PQ_ERROR
         #undef TEST_QUERY
@@ -175,7 +178,9 @@ testRun(void)
         });
 #endif
 
-        TEST_ERROR(pgClientQuery(client, STRDEF(TEST_QUERY)), DbQueryError, "query '" TEST_QUERY "' timed out after 500ms");
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
+            "query '" TEST_QUERY "' timed out after 500ms");
 
         #undef TEST_QUERY
 
@@ -200,7 +205,8 @@ testRun(void)
         });
 
         TEST_ERROR(
-            pgClientQuery(client, STRDEF(TEST_QUERY)), DbQueryError, "unable to cancel query '" TEST_QUERY "': " TEST_PQ_ERROR);
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
+            "unable to cancel query '" TEST_QUERY "': " TEST_PQ_ERROR);
 
         #undef TEST_PQ_ERROR
         #undef TEST_QUERY
@@ -224,11 +230,84 @@ testRun(void)
         });
 
         TEST_ERROR(
-            pgClientQuery(client, STRDEF(TEST_QUERY)), DbQueryError,
-            "unable to cancel query '" TEST_QUERY "': connection was lost");
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
+            "unable to cancel query 'select 1': connection was lost");
 
         #undef TEST_QUERY
 #endif
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when results expected");
+
+        #define TEST_QUERY                                          "set client_encoding = 'UTF8'"
+
+#ifndef HARNESS_PQ_REAL
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+            {.function = NULL}
+        });
+#endif
+
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
+            "result expected from '" TEST_QUERY "'");
+
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when no results expected");
+
+        #define TEST_QUERY                                          "select * from pg_class limit 1"
+
+#ifndef HARNESS_PQ_REAL
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+            {.function = NULL}
+        });
+#endif
+
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), DbQueryError,
+            "no result expected from '" TEST_QUERY "'");
+
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set with no results");
+
+        #define TEST_QUERY                                          "set client_encoding = 'UTF8'"
+
+#ifndef HARNESS_PQ_REAL
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+            {.function = NULL}
+        });
+#endif
+
+        TEST_RESULT_PTR(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultAny), NULL, "execute set");
+
+        #undef TEST_QUERY
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("execute do block and raise notice");
@@ -249,7 +328,7 @@ testRun(void)
         });
 #endif
 
-        TEST_RESULT_PTR(pgClientQuery(client, STRDEF(TEST_QUERY)), NULL, "execute do block");
+        TEST_RESULT_PTR(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), NULL, "execute do block");
 
         #undef TEST_QUERY
 
@@ -277,7 +356,7 @@ testRun(void)
 #endif
 
         TEST_ERROR(
-            pgClientQuery(client, STRDEF(TEST_QUERY)), FormatError,
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultAny), FormatError,
             "unable to parse type 1184 in column 0 for query '" TEST_QUERY "'");
 
         #undef TEST_QUERY
@@ -325,8 +404,133 @@ testRun(void)
 #endif
 
         TEST_RESULT_STR_Z(
-            jsonFromVar(varNewVarLst(pgClientQuery(client, STRDEF(TEST_QUERY)))),
-            "[[1259,null,\"pg_class\",true],[1255,\"\",\"pg_proc\",false]]", "simple query");
+            hrnPackToStr(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultAny)),
+            "1:array:[1:u32:1259, 3:str:pg_class, 4:bool:true], 2:array:[1:u32:1255, 2:str:, 3:str:pg_proc, 4:bool:false]",
+            "simple query");
+
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when result is not a single row");
+
+        #define TEST_QUERY                                          "select * from pg_class limit 2"
+
+#ifndef HARNESS_PQ_REAL
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+
+            {.function = HRNPQ_NTUPLES, .resultInt = 2},
+            {.function = HRNPQ_NFIELDS, .resultInt = 1},
+
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+            {.function = NULL}
+        });
+#endif
+
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultRow), DbQueryError,
+            "expected one row from '" TEST_QUERY "'");
+
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single row result");
+
+        #define TEST_QUERY                                          "select 1259::oid, -9223372036854775807::int8"
+
+#ifndef HARNESS_PQ_REAL
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+
+            {.function = HRNPQ_NTUPLES, .resultInt = 1},
+            {.function = HRNPQ_NFIELDS, .resultInt = 2},
+            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_OID},
+            {.function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_INT8},
+
+            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "1259"},
+            {.function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "-9223372036854775807"},
+
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+            {.function = NULL}
+        });
+#endif
+
+        TEST_RESULT_STR_Z(
+            hrnPackToStr(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultRow)),
+            "1:u32:1259, 2:i64:-9223372036854775807", "row result");
+
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when result is not a single column");
+
+        #define TEST_QUERY                                          "select * from pg_class limit 1"
+
+#ifndef HARNESS_PQ_REAL
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+
+            {.function = HRNPQ_NTUPLES, .resultInt = 1},
+            {.function = HRNPQ_NFIELDS, .resultInt = 2},
+
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+            {.function = NULL}
+        });
+#endif
+
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn), DbQueryError,
+            "expected one column from '" TEST_QUERY "'");
+
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("single column result");
+
+        #define TEST_QUERY                                          "select -2147483647::int4"
+
+#ifndef HARNESS_PQ_REAL
+        harnessPqScriptSet((HarnessPq [])
+        {
+            {.function = HRNPQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRNPQ_CONSUMEINPUT},
+            {.function = HRNPQ_ISBUSY},
+            {.function = HRNPQ_GETRESULT},
+            {.function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
+
+            {.function = HRNPQ_NTUPLES, .resultInt = 1},
+            {.function = HRNPQ_NFIELDS, .resultInt = 1},
+            {.function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT4},
+
+            {.function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "-2147483647"},
+
+            {.function = HRNPQ_CLEAR},
+            {.function = HRNPQ_GETRESULT, .resultNull = true},
+            {.function = NULL}
+        });
+#endif
+
+        TEST_RESULT_STR_Z(
+            hrnPackToStr(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultColumn)), "1:i32:-2147483647",
+            "column result");
 
         #undef TEST_QUERY
 

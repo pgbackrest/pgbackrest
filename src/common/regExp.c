@@ -90,7 +90,7 @@ regExpNew(const String *expression)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(REGEXP, this);
 }
 
 /**********************************************************************************************************************************/
@@ -125,7 +125,7 @@ regExpMatch(RegExp *this, const String *string)
         this->matchSize = 0;
     }
 
-    FUNCTION_TEST_RETURN(result == 0);
+    FUNCTION_TEST_RETURN(BOOL, result == 0);
 }
 
 /***********************************************************************************************************************************
@@ -140,7 +140,7 @@ regExpMatchPtr(RegExp *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->matchPtr);
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, this->matchPtr);
 }
 
 size_t
@@ -152,7 +152,7 @@ regExpMatchSize(RegExp *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->matchSize);
+    FUNCTION_TEST_RETURN(SIZE, this->matchSize);
 }
 
 String *
@@ -164,7 +164,7 @@ regExpMatchStr(RegExp *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->matchPtr == NULL ? NULL : strNewZN(regExpMatchPtr(this), regExpMatchSize(this)));
+    FUNCTION_TEST_RETURN(STRING, this->matchPtr == NULL ? NULL : strNewZN(regExpMatchPtr(this), regExpMatchSize(this)));
 }
 
 /**********************************************************************************************************************************/
@@ -192,7 +192,7 @@ regExpMatchOne(const String *expression, const String *string)
     }
     TRY_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
@@ -245,5 +245,5 @@ regExpPrefix(const String *expression)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }

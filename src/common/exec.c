@@ -294,7 +294,7 @@ execFdRead(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fdRead);
+    FUNCTION_TEST_RETURN(INT, this->fdRead);
 }
 
 /**********************************************************************************************************************************/
@@ -354,15 +354,19 @@ execOpen(Exec *this)
     this->fdWrite = pipeWrite[1];
     this->fdError = pipeError[0];
 
-    // Assign file descriptors to io interfaces
-    this->ioReadFd = ioFdReadNew(strNewFmt("%s read", strZ(this->name)), this->fdRead, this->timeout);
-    this->ioWriteFd = ioFdWriteNewOpen(strNewFmt("%s write", strZ(this->name)), this->fdWrite, this->timeout);
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        // Assign file descriptors to io interfaces
+        this->ioReadFd = ioFdReadNew(strNewFmt("%s read", strZ(this->name)), this->fdRead, this->timeout);
+        this->ioWriteFd = ioFdWriteNewOpen(strNewFmt("%s write", strZ(this->name)), this->fdWrite, this->timeout);
 
-    // Create wrapper interfaces that check process state
-    this->pub.ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .fd = execFdRead);
-    ioReadOpen(execIoRead(this));
-    this->pub.ioWriteExec = ioWriteNewP(this, .write = execWrite);
-    ioWriteOpen(execIoWrite(this));
+        // Create wrapper interfaces that check process state
+        this->pub.ioReadExec = ioReadNewP(this, .block = true, .read = execRead, .eof = execEof, .fd = execFdRead);
+        ioReadOpen(execIoRead(this));
+        this->pub.ioWriteExec = ioWriteNewP(this, .write = execWrite);
+        ioWriteOpen(execIoWrite(this));
+    }
+    MEM_CONTEXT_OBJ_END();
 
     // Set a callback so the file descriptors will get freed
     memContextCallbackSet(objMemContext(this), execFreeResource, this);

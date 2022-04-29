@@ -52,12 +52,12 @@ kvNew(void)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /**********************************************************************************************************************************/
 KeyValue *
-kvDup(const KeyValue *source)
+kvDup(const KeyValue *const source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, source);
@@ -65,25 +65,23 @@ kvDup(const KeyValue *source)
 
     ASSERT(source != NULL);
 
-    KeyValue *this = kvNew();
+    KeyValue *const this = kvNew();
 
-    // Duplicate all key/values
-    for (unsigned int listIdx = 0; listIdx < lstSize(source->list); listIdx++)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        const KeyValuePair *sourcePair = (const KeyValuePair *)lstGet(source->list, listIdx);
+        // Duplicate all key/values
+        for (unsigned int listIdx = 0; listIdx < lstSize(source->list); listIdx++)
+        {
+            const KeyValuePair *const sourcePair = (const KeyValuePair *)lstGet(source->list, listIdx);
+            lstAdd(this->list, &(KeyValuePair){.key = varDup(sourcePair->key), .value = varDup(sourcePair->value)});
+        }
 
-        // Copy the pair
-        KeyValuePair pair;
-        pair.key = varDup(sourcePair->key);
-        pair.value = varDup(sourcePair->value);
-
-        // Add to the list
-        lstAdd(this->list, &pair);
+        // Duplicate key list
+        this->pub.keyList = varLstDup(kvKeyList(source));
     }
+    MEM_CONTEXT_OBJ_END();
 
-    this->pub.keyList = varLstDup(kvKeyList(source));
-
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -113,7 +111,7 @@ kvGetIdx(const KeyValue *this, const Variant *key)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(UINT, result);
 }
 
 /***********************************************************************************************************************************
@@ -177,13 +175,13 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         kvPutInternal(this, key, varDup(value));
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -199,7 +197,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // Find the key
         unsigned int listIdx = kvGetIdx(this, key);
@@ -227,9 +225,9 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
                 varLstAdd(varVarLst(pair->value), varDup(value));
         }
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }
 
 /**********************************************************************************************************************************/
@@ -246,14 +244,14 @@ kvPutKv(KeyValue *this, const Variant *key)
 
     KeyValue *result = NULL;
 
-    MEM_CONTEXT_BEGIN(objMemContext(this))
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         result = kvNew();
         kvPutInternal(this, key, varNewKv(result));
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(KEY_VALUE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -276,12 +274,12 @@ kvGet(const KeyValue *this, const Variant *key)
     if (listIdx != KEY_NOT_FOUND)
         result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT, result);
 }
 
 /**********************************************************************************************************************************/
 const Variant *
-kvGetDefault(const KeyValue *this, const Variant *key, const Variant *defaultValue)
+kvGetDefault(const KeyValue *const this, const Variant *const key, const Variant *const defaultValue)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -292,23 +290,19 @@ kvGetDefault(const KeyValue *this, const Variant *key, const Variant *defaultVal
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    const Variant *result = NULL;
-
     // Find the key
-    unsigned int listIdx = kvGetIdx(this, key);
+    const unsigned int listIdx = kvGetIdx(this, key);
 
     // If key not found then return default, else return the value
     if (listIdx == KEY_NOT_FOUND)
-        result = defaultValue;
-    else
-        result = ((KeyValuePair *)lstGet(this->list, listIdx))->value;
+        FUNCTION_TEST_RETURN_CONST(VARIANT, defaultValue);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT, ((KeyValuePair *)lstGet(this->list, listIdx))->value);
 }
 
 /**********************************************************************************************************************************/
 VariantList *
-kvGetList(const KeyValue *this, const Variant *key)
+kvGetList(const KeyValue *const this, const Variant *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, this);
@@ -318,18 +312,24 @@ kvGetList(const KeyValue *this, const Variant *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    VariantList *result = NULL;
-
     // Get the value
-    const Variant *value = kvGet(this, key);
+    const Variant *const value = kvGet(this, key);
 
-    // Convert the value to a list if it is not already one
+    // Return the list if it already is one
     if (value != NULL && varType(value) == varTypeVariantList)
-        result = varLstDup(varVarLst(value));
-    else
-        result = varLstAdd(varLstNew(), varDup(value));
+        FUNCTION_TEST_RETURN(VARIANT_LIST, varLstDup(varVarLst(value)));
 
-    FUNCTION_TEST_RETURN(result);
+    // Create a list to return
+    VariantList *result;
+    VariantList *const list = varLstNew();
+
+    MEM_CONTEXT_OBJ_BEGIN(list)
+    {
+        result = varLstAdd(list, varDup(value));
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /**********************************************************************************************************************************/

@@ -47,14 +47,14 @@ storageReadAzureOpen(THIS_VOID)
     bool result = false;
 
     // Request the file
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->httpResponse = storageAzureRequestP(
             this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
             .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
             .allowMissing = true, .contentIo = true);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     if (httpResponseCodeOk(this->httpResponse))
     {
@@ -103,7 +103,7 @@ storageReadAzureEof(THIS_VOID)
     ASSERT(this != NULL && this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
-    FUNCTION_TEST_RETURN(ioReadEof(httpResponseIoRead(this->httpResponse)));
+    FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
 /**********************************************************************************************************************************/

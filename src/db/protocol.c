@@ -36,7 +36,7 @@ dbOpenProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // If the db list does not exist then create it in the prior context (which should be persistent)
+        // If the db list does not exist then create it in the top context
         if (dbProtocolLocal.pgClientList == NULL)
         {
             MEM_CONTEXT_BEGIN(memContextTop())
@@ -83,9 +83,10 @@ dbQueryProtocol(PackRead *const param, ProtocolServer *const server)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PgClient *const pgClient = *(PgClient **)lstGet(dbProtocolLocal.pgClientList, pckReadU32P(param));
+        const PgClientQueryResult resultType = (PgClientQueryResult)pckReadStrIdP(param);
         const String *const query = pckReadStrP(param);
 
-        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), jsonFromVar(varNewVarLst(pgClientQuery(pgClient, query)))));
+        protocolServerDataPut(server, pckWritePackP(protocolPackNew(), pgClientQuery(pgClient, query, resultType)));
         protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();

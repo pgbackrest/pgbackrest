@@ -329,7 +329,7 @@ tlsClientName(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(ioClientName(this->ioClient));
+    FUNCTION_TEST_RETURN_CONST(STRING, ioClientName(this->ioClient));
 }
 
 /***********************************************************************************************************************************

@@ -61,7 +61,7 @@ bufNew(size_t size)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -80,7 +80,7 @@ bufNewC(const void *buffer, size_t size)
     memcpy(this->pub.buffer, buffer, bufSize(this));
     this->pub.used = bufSize(this);
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -97,7 +97,7 @@ bufNewDecode(EncodeType type, const String *string)
     decodeToBin(type, strZ(string), bufPtr(this));
     bufUsedSet(this, bufSize(this));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -118,7 +118,7 @@ bufDup(const Buffer *buffer)
 
     this->pub.used = bufSize(this);
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -135,7 +135,7 @@ bufCat(Buffer *this, const Buffer *cat)
     if (cat != NULL)
         bufCatC(this, cat->pub.buffer, 0, bufUsed(cat));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -164,7 +164,7 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
         this->pub.used += catSize;
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -188,7 +188,7 @@ bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
         bufCatC(this, cat->pub.buffer, catOffset, catSize);
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -204,9 +204,9 @@ bufEq(const Buffer *this, const Buffer *compare)
     ASSERT(compare != NULL);
 
     if (bufUsed(this) == bufUsed(compare))
-        FUNCTION_TEST_RETURN(memcmp(bufPtrConst(this), bufPtrConst(compare), bufUsed(compare)) == 0);
+        FUNCTION_TEST_RETURN(BOOL, memcmp(bufPtrConst(this), bufPtrConst(compare), bufUsed(compare)) == 0);
 
-    FUNCTION_TEST_RETURN(false);
+    FUNCTION_TEST_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
@@ -224,7 +224,7 @@ bufHex(const Buffer *this)
     for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(this); bufferIdx++)
         strCatFmt(result, "%02x", bufPtrConst(this)[bufferIdx]);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -247,11 +247,11 @@ bufResize(Buffer *this, size_t size)
             // When setting size down to 0 the buffer should always be allocated
             ASSERT(bufPtrConst(this) != NULL);
 
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 memFree(bufPtr(this));
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             this->pub.buffer = NULL;
             this->pub.sizeAlloc = 0;
@@ -259,14 +259,14 @@ bufResize(Buffer *this, size_t size)
         // Else allocate or resize
         else
         {
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 if (bufPtrConst(this) == NULL)
                     this->pub.buffer = memNew(size);
                 else
                     this->pub.buffer = memResize(bufPtr(this), size);
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             this->pub.sizeAlloc = size;
         }
@@ -280,7 +280,7 @@ bufResize(Buffer *this, size_t size)
             this->pub.size = bufSizeAlloc(this);
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(BUFFER, this);
 }
 
 /**********************************************************************************************************************************/

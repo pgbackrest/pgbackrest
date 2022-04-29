@@ -125,7 +125,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             StringList *redactList = strLstNew();
-            strLstAdd(redactList, STRDEF("key2"));
+            strLstAddZ(redactList, "key2");
 
             TEST_ASSIGN(query, httpQueryNewP(.redactList = redactList), "new query");
 
@@ -158,7 +158,7 @@ testRun(void)
         TEST_TITLE("dup query with redaction");
 
         StringList *redactList = strLstNew();
-        strLstAdd(redactList, STRDEF("key1"));
+        strLstAddZ(redactList, "key1");
 
         TEST_ASSIGN(query, httpQueryDupP(query, .redactList = redactList), "dup query");
         TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: <redacted>, key2: 'value2a'}", "log output");
@@ -603,7 +603,7 @@ testRun(void)
                 hrnServerScriptClose(http);
 
                 StringList *headerRedact = strLstNew();
-                strLstAdd(headerRedact, STRDEF("hdr2"));
+                strLstAddZ(headerRedact, "hdr2");
                 headerRequest = httpHeaderNew(headerRedact);
                 httpHeaderAdd(headerRequest, STRDEF("hdr1"), STRDEF("1"));
                 httpHeaderAdd(headerRequest, STRDEF("hdr2"), STRDEF("2"));

@@ -56,7 +56,7 @@ backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timest
 
 /**********************************************************************************************************************************/
 String *
-backupRegExp(BackupRegExpParam param)
+backupRegExp(const BackupRegExpParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BOOL, param.full);
@@ -67,10 +67,8 @@ backupRegExp(BackupRegExpParam param)
 
     ASSERT(param.full || param.differential || param.incremental);
 
-    String *result = NULL;
-
     // Start the expression with the anchor, date/time regexp and full backup indicator
-    result = strCatZ(strNew(), "^" DATE_TIME_REGEX "F");
+    String *const result = strCatZ(strNew(), "^" DATE_TIME_REGEX "F");
 
     // Add the diff and/or incr expressions if requested
     if (param.differential || param.incremental)

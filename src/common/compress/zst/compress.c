@@ -142,7 +142,7 @@ zstCompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->flushing && !this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->flushing && !this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -159,7 +159,7 @@ zstCompressInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/

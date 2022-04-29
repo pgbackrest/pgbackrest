@@ -38,7 +38,7 @@ httpHeaderNew(const StringList *redactList)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -68,7 +68,7 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
         OBJ_NEW_END();
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -108,7 +108,7 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
     else
         kvPut(this->kv, keyVar, VARSTR(value));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -123,7 +123,7 @@ httpHeaderGet(const HttpHeader *this, const String *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(varStr(kvGet(this->kv, VARSTR(key))));
+    FUNCTION_TEST_RETURN_CONST(STRING, varStr(kvGet(this->kv, VARSTR(key))));
 }
 
 /**********************************************************************************************************************************/
@@ -136,7 +136,7 @@ httpHeaderList(const HttpHeader *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
+    FUNCTION_TEST_RETURN(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
 }
 
 /**********************************************************************************************************************************/
@@ -156,7 +156,7 @@ httpHeaderPut(HttpHeader *this, const String *key, const String *value)
     // Store the key
     kvPut(this->kv, VARSTR(key), VARSTR(value));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -180,9 +180,10 @@ httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant 
             strCatFmt(range, "%" PRIu64, offset + varUInt64(limit) - 1);
 
         httpHeaderPut(this, HTTP_HEADER_RANGE_STR, range);
+        strFree(range);
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_HEADER, this);
 }
 
 /**********************************************************************************************************************************/
@@ -197,7 +198,7 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(this->redactList != NULL && strLstExists(this->redactList, key));
+    FUNCTION_TEST_RETURN(BOOL, this->redactList != NULL && strLstExists(this->redactList, key));
 }
 
 /**********************************************************************************************************************************/

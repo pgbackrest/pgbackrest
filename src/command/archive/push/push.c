@@ -48,7 +48,7 @@ archivePushDropWarning(const String *walFile, uint64_t queueMax)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
-        strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strZ(walFile), strZ(strSizeFormat(queueMax))));
+        STRING, strNewFmt("dropped WAL file '%s' because archive queue exceeded %s", strZ(walFile), strZ(strSizeFormat(queueMax))));
 }
 
 /***********************************************************************************************************************************
@@ -66,17 +66,24 @@ archivePushDrop(const String *walPath, const StringList *const processList)
     uint64_t queueSize = 0;
     bool result = false;
 
-    for (unsigned int processIdx = 0; processIdx < strLstSize(processList); processIdx++)
+    MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        queueSize += storageInfoP(
-            storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, processIdx)))).size;
-
-        if (queueSize > queueMax)
+        for (unsigned int processIdx = 0; processIdx < strLstSize(processList); processIdx++)
         {
-            result = true;
-            break;
+            queueSize += storageInfoP(
+                storagePg(), strNewFmt("%s/%s", strZ(walPath), strZ(strLstGet(processList, processIdx)))).size;
+
+            if (queueSize > queueMax)
+            {
+                result = true;
+                break;
+            }
+
+            // Reset the memory context occasionally so we don't use too much memory or slow down processing
+            MEM_CONTEXT_TEMP_RESET(1000);
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -108,9 +115,8 @@ archivePushReadyList(const String *walPath)
 
         for (unsigned int readyIdx = 0; readyIdx < strLstSize(readyListRaw); readyIdx++)
         {
-            strLstAdd(
-                result,
-                strSubN(strLstGet(readyListRaw, readyIdx), 0, strSize(strLstGet(readyListRaw, readyIdx)) - STATUS_EXT_READY_SIZE));
+            const String *const ready = strLstGet(readyListRaw, readyIdx);
+            strLstAddSub(result, ready, strSize(ready) - STATUS_EXT_READY_SIZE);
         }
 
         strLstMove(result, memContextPrior());
@@ -156,7 +162,7 @@ archivePushProcessList(const String *walPath)
             const String *statusFile = strLstGet(statusList, statusIdx);
 
             if (strEndsWithZ(statusFile, STATUS_EXT_OK))
-                strLstAdd(okList, strSubN(statusFile, 0, strSize(statusFile) - STATUS_EXT_OK_SIZE));
+                strLstAddSub(okList, statusFile, strSize(statusFile) - STATUS_EXT_OK_SIZE);
             else
             {
                 storageRemoveP(
@@ -276,10 +282,9 @@ archivePushCheck(bool pgPathSet)
             }
             CATCH_ANY()
             {
-                strLstAdd(
-                    result.errorList,
-                    strNewFmt(
-                        "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+                strLstAddFmt(
+                    result.errorList, "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()),
+                    errorMessage());
             }
             TRY_END();
         }
@@ -502,7 +507,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 void

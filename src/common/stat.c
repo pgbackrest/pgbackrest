@@ -82,7 +82,7 @@ statGetOrCreate(const String *key)
         ASSERT(stat != NULL);
     }
 
-    FUNCTION_TEST_RETURN(stat);
+    FUNCTION_TEST_RETURN_TYPE_P(Stat, stat);
 }
 
 /**********************************************************************************************************************************/
@@ -98,7 +98,7 @@ statInc(const String *key)
 
     statGetOrCreate(key)->total++;
 
-    FUNCTION_TEST_RETURN();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -113,26 +113,25 @@ statToJson(void)
 
     if (!lstEmpty(statLocalData.stat))
     {
+        result = strNew();
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            KeyValue *const kv = kvNew();
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP(.json = result));
 
             for (unsigned int statIdx = 0; statIdx < lstSize(statLocalData.stat); statIdx++)
             {
                 const Stat *const stat = lstGet(statLocalData.stat, statIdx);
 
-                KeyValue *const statKv = kvPutKv(kv, VARSTR(stat->key));
-                kvPut(statKv, VARSTRDEF("total"), VARUINT64(stat->total));
+                jsonWriteObjectBegin(jsonWriteKey(json, stat->key));
+                jsonWriteUInt64(jsonWriteKeyZ(json, "total"), stat->total);
+                jsonWriteObjectEnd(json);
             }
 
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                result = jsonFromKv(kv);
-            }
-            MEM_CONTEXT_PRIOR_END();
+            jsonWriteObjectEnd(json);
         }
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }

@@ -31,11 +31,26 @@ double cvtZToDouble(const char *value);
 size_t cvtIntToZ(int value, char *buffer, size_t bufferSize);
 int cvtZToInt(const char *value);
 int cvtZToIntBase(const char *value, int base);
+int cvtZSubNToIntBase(const char *value, size_t offset, size_t size, int base);
+
+__attribute__((always_inline)) static inline int
+cvtZSubNToInt(const char *const value, const size_t offset, const size_t size)
+{
+    return cvtZSubNToIntBase(value, offset, size, 10);
+}
 
 // Convert int64 to zero-terminated string and vice versa
 size_t cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize);
 int64_t cvtZToInt64(const char *value);
 int64_t cvtZToInt64Base(const char *value, int base);
+int64_t cvtZSubNToInt64Base(const char *value, size_t offset, size_t size, int base);
+
+__attribute__((always_inline)) static inline int64_t
+cvtZSubNToInt64(const char *const value, const size_t offset, const size_t size)
+{
+    return cvtZSubNToInt64Base(value, offset, size, 10);
+}
+
 
 // Convert int32/64 to uint32/64 using zigzag encoding and vice versa. Zigzag encoding places the sign in the least significant bit
 // so that signed and unsigned values alternate, e.g. 0 = 0, -1 = 1, 1 = 2, -2 = 3, 2 = 4, -3 = 5, 3 = 6, etc. This moves as many
@@ -80,11 +95,25 @@ size_t cvtTimeToZ(time_t value, char *buffer, size_t bufferSize);
 size_t cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize);
 unsigned int cvtZToUInt(const char *value);
 unsigned int cvtZToUIntBase(const char *value, int base);
+unsigned int cvtZSubNToUIntBase(const char *value, size_t offset, size_t size, int base);
+
+__attribute__((always_inline)) static inline unsigned int
+cvtZSubNToUInt(const char *const value, const size_t offset, const size_t size)
+{
+    return cvtZSubNToUIntBase(value, offset, size, 10);
+}
 
 // Convert uint64 to zero-terminated string and vice versa
 size_t cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize);
 uint64_t cvtZToUInt64(const char *value);
 uint64_t cvtZToUInt64Base(const char *value, int base);
+uint64_t cvtZSubNToUInt64Base(const char* value, size_t offset, size_t size, int base);
+
+__attribute__((always_inline)) static inline uint64_t
+cvtZSubNToUInt64(const char *const value, const size_t offset, const size_t size)
+{
+    return cvtZSubNToUInt64Base(value, offset, size, 10);
+}
 
 // Convert uint64 to base-128 varint and vice versa
 void cvtUInt64ToVarInt128(uint64_t value, uint8_t *buffer, size_t *bufferPos, size_t bufferSize);

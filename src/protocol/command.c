@@ -41,7 +41,7 @@ protocolCommandNew(const StringId command)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(PROTOCOL_COMMAND, this);
 }
 
 /**********************************************************************************************************************************/
@@ -91,14 +91,14 @@ protocolCommandParam(ProtocolCommand *this)
 
     if (this->pack == NULL)
     {
-        MEM_CONTEXT_BEGIN(objMemContext(this))
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->pack = protocolPackNew();
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
-    FUNCTION_TEST_RETURN(this->pack);
+    FUNCTION_TEST_RETURN(PACK_WRITE, this->pack);
 }
 
 /**********************************************************************************************************************************/
