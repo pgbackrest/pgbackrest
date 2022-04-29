@@ -642,7 +642,7 @@ backupList(
 Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
-stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int repoIdxMin, unsigned int repoIdxMax)
+stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, unsigned int repoIdxMin, unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, stanzaRepoList);
