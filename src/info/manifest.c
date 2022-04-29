@@ -1563,6 +1563,7 @@ manifestBuildComplete(
 #define MANIFEST_SECTION_BACKUP_TARGET                              "backup:target"
 
 #define MANIFEST_SECTION_DB                                         "db"
+#define MANIFEST_SECTION_METADATA                                   "metadata"
 
 #define MANIFEST_SECTION_TARGET_FILE                                "target:file"
 #define MANIFEST_SECTION_TARGET_FILE_DEFAULT                        "target:file:default"
@@ -1571,6 +1572,7 @@ manifestBuildComplete(
 #define MANIFEST_SECTION_TARGET_PATH                                "target:path"
 #define MANIFEST_SECTION_TARGET_PATH_DEFAULT                        "target:path:default"
 
+#define MANIFEST_KEY_ANNOTATION                                     "annotation"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
 #define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
@@ -1940,6 +1942,17 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         db.lastSystemId = jsonReadUInt(jsonReadKeyRequireZ(json, MANIFEST_KEY_DB_LAST_SYSTEM_ID));
 
         manifestDbAdd(manifest, &db);
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEq(section, MANIFEST_SECTION_METADATA))
+    {
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+        {
+            if (strEq(key, MANIFEST_KEY_ANNOTATION))
+                manifest->pub.data.annotation = kvDup(varKv(value));
+        }
+        MEM_CONTEXT_END();
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -2370,6 +2383,17 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             }
         }
         MEM_CONTEXT_TEMP_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_METADATA, sectionNext))
+    {
+        if (manifest->pub.data.annotation != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_METADATA, MANIFEST_KEY_ANNOTATION,
+                jsonFromKv(manifest->pub.data.annotation));
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -2965,6 +2989,45 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+void
+manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(KEY_VALUE, annotationKv);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_BEGIN(this->pub.memContext)
+    {
+        if (this->pub.data.annotation == NULL)
+            this->pub.data.annotation = kvNew();
+
+        const VariantList *annotationKeyList = kvKeyList(annotationKv);
+
+        for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
+        {
+            const Variant *key = varLstGet(annotationKeyList, keyIdx);
+            const Variant *value = kvGet(annotationKv, key);
+
+            // Skip empty values
+            if (!strEmpty(varStr(value)))
+            {
+                kvPut(this->pub.data.annotation, key, value);
+            }
+            // Remove existing key if value is empty
+            else if (kvKeyExists(this->pub.data.annotation, key))
+            {
+                kvRemove(this->pub.data.annotation, key);
+            }
+        }
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 void
 manifestBackupLabelSet(Manifest *this, const String *backupLabel)
 {
