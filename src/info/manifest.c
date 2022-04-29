@@ -1950,7 +1950,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             if (strEqZ(key, MANIFEST_KEY_ANNOTATION))
-                manifest->pub.data.annotation = kvDup(varKv(jsonToVar(value)));
+                manifest->pub.data.annotation = jsonToVar(value);
         }
         MEM_CONTEXT_END();
     }
@@ -2392,7 +2392,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_METADATA, MANIFEST_KEY_ANNOTATION,
-                jsonFromVar(varNewKv(manifest->pub.data.annotation)));
+                jsonFromVar(manifest->pub.data.annotation));
         }
     }
 
@@ -3001,8 +3001,9 @@ manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
-        if (this->pub.data.annotation == NULL)
-            this->pub.data.annotation = kvNew();
+        KeyValue *test = kvNew();
+        if (this->pub.data.annotation != NULL)
+            test = varKv(this->pub.data.annotation);
 
         const VariantList *annotationKeyList = kvKeyList(annotationKv);
 
@@ -3014,14 +3015,16 @@ manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
             // Skip empty values
             if (!strEmpty(varStr(value)))
             {
-                kvPut(this->pub.data.annotation, key, value);
+                kvPut(test, key, value);
             }
             // Remove existing key if value is empty
-            else if (kvKeyExists(this->pub.data.annotation, key))
+            else if (kvKeyExists(test, key))
             {
-                kvRemove(this->pub.data.annotation, key);
+                kvRemove(test, key);
             }
         }
+
+        this->pub.data.annotation = varNewKv(test);
     }
     MEM_CONTEXT_END();
 

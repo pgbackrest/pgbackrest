@@ -365,5 +365,5 @@ kvRemove(KeyValue *this, const Variant *key)
     }
     MEM_CONTEXT_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
 }

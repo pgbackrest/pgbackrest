@@ -554,7 +554,7 @@ backupListAdd(
 
         // Get annotation metadata
         if (manifestData(repoData->manifest)->annotation != NULL)
-            kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, varNewKv(manifestData(repoData->manifest)->annotation));
+            kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, manifestData(repoData->manifest)->annotation);
 
         manifestFree(repoData->manifest);
         repoData->manifest = NULL;
