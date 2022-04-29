@@ -118,40 +118,33 @@ static const uint8_t memContextSizePossible[memContextAllocTypeMany + 1][memCont
       /* callbackOne */ sizeof(MemContextAllocMany) + sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
 };
 
-static void *
-memContextAllocOffset(MemContext *const memContext)
-{
-    return (unsigned char *)(memContext + 1) + memContext->allocExtra;
-}
+#define MEM_CONTEXT_ALLOC_OFFSET(memContext)                        ((unsigned char *)(memContext + 1) + memContext->allocExtra)
 
 static MemContextAllocOne *
 memContextAllocOne(MemContext *const memContext) // {uncovered}
 {
-    return (MemContextAllocOne *)memContextAllocOffset(memContext); // {uncovered}
+    return (MemContextAllocOne *)MEM_CONTEXT_ALLOC_OFFSET(memContext); // {uncovered}
 }
 
 static MemContextAllocMany *
 memContextAllocMany(MemContext *const memContext)
 {
-    return (MemContextAllocMany *)memContextAllocOffset(memContext);
+    return (MemContextAllocMany *)MEM_CONTEXT_ALLOC_OFFSET(memContext);
 }
 
-static void *
-memContextChildOffset(MemContext *const memContext)
-{
-    return (unsigned char *)(memContext + 1) + memContextSizePossible[memContext->allocType][0][0] + memContext->allocExtra;
-}
+#define MEM_CONTEXT_CHILD_OFFSET(memContext)                                                                                       \
+    ((unsigned char *)(memContext + 1) + memContextSizePossible[memContext->allocType][0][0] + memContext->allocExtra)
 
 static MemContextChildOne *
 memContextChildOne(MemContext *const memContext) // {uncovered}
 {
-    return (MemContextChildOne *)memContextChildOffset(memContext); // {uncovered}
+    return (MemContextChildOne *)MEM_CONTEXT_CHILD_OFFSET(memContext); // {uncovered}
 }
 
 static MemContextChildMany *
 memContextChildMany(MemContext *const memContext)
 {
-    return (MemContextChildMany *)memContextChildOffset(memContext);
+    return (MemContextChildMany *)MEM_CONTEXT_CHILD_OFFSET(memContext);
 }
 
 static MemContextCallback *
