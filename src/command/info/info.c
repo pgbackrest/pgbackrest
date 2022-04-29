@@ -464,6 +464,10 @@ backupListAdd(
         kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
     }
 
+    // Add annotations to json output or --set text
+    if ((outputJson || backupLabelMatch) && backupData->backupAnnotation != NULL)
+        kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, backupData->backupAnnotation);
+
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabelMatch)
     {
@@ -551,10 +555,6 @@ backupListAdd(
                 kvGet(varKv(backupInfo), BACKUP_KEY_ERROR_VAR) == NULL || varBool(kvGet(varKv(backupInfo), BACKUP_KEY_ERROR_VAR)));
             kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, BOOL_TRUE_VAR);
         }
-
-        // Get annotation metadata
-        if (manifestData(repoData->manifest)->annotation != NULL)
-            kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, manifestData(repoData->manifest)->annotation);
 
         manifestFree(repoData->manifest);
         repoData->manifest = NULL;

@@ -46,6 +46,7 @@ typedef struct InfoBackupData
     const String *backupLabel;                                      // backupLabel must be first to allow for built-in list sorting
     unsigned int backrestFormat;
     const String *backrestVersion;
+    const Variant *backupAnnotation;
     const String *backupArchiveStart;
     const String *backupArchiveStop;
     uint64_t backupInfoRepoSize;
@@ -135,6 +136,9 @@ Functions
 ***********************************************************************************************************************************/
 // Add backup to the current list
 void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
+
+// Set Annotation in the backup data for a specific backup label
+void infoBackupDataAnnotationSet(const InfoBackup *this, const String *const backupLabel, const KeyValue *annotationKv);
 
 // Delete backup from the current backup list
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);

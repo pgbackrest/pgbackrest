@@ -95,6 +95,7 @@ Create new object and load contents from a file
 #define INFO_BACKUP_SECTION                                         "backup"
 #define INFO_BACKUP_SECTION_BACKUP_CURRENT                          INFO_BACKUP_SECTION ":current"
 
+#define INFO_BACKUP_KEY_BACKUP_ANNOTATION                           "backup-annotation"
 #define INFO_BACKUP_KEY_BACKUP_ARCHIVE_START                        "backup-archive-start"
 #define INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP                         "backup-archive-stop"
 #define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE                       "backup-info-repo-size"
@@ -151,6 +152,10 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             // Format and version
             info.backrestFormat = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_FORMAT));
             info.backrestVersion = jsonReadStr(jsonReadKeyRequireZ(json, INFO_KEY_VERSION));
+
+            // Annotation
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_ANNOTATION))
+                info.backupAnnotation = jsonReadVar(json);
 
             // Archive start/stop
             if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START))
@@ -262,6 +267,9 @@ infoBackupSaveCallback(void *const data, const String *const sectionNext, InfoSa
 
             jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_FORMAT), backupData.backrestFormat);
             jsonWriteStr(jsonWriteKeyZ(json, INFO_KEY_VERSION), backupData.backrestVersion);
+
+            if (backupData.backupAnnotation != NULL)
+                jsonWriteVar(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_ANNOTATION), backupData.backupAnnotation);
 
             jsonWriteStr(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_START), backupData.backupArchiveStart);
             jsonWriteStr(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP), backupData.backupArchiveStop);
@@ -424,6 +432,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .backupType = manData->backupType,
                 .backupError = varNewBool(backupError),
 
+                .backupAnnotation = manData->annotation,
                 .backupArchiveStart = strDup(manData->archiveStart),
                 .backupArchiveStop = strDup(manData->archiveStop),
                 .backupLsnStart = strDup(manData->lsnStart),
@@ -457,6 +466,53 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+infoBackupDataAnnotationSet(const InfoBackup *this, const String *const backupLabel, const KeyValue *annotationKv)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
+        FUNCTION_TEST_PARAM(KEY_VALUE, annotationKv);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(infoBackupLabelExists(this, backupLabel));
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.backup))
+    {
+        InfoBackupData *infoBackupData = lstFind(this->pub.backup, &backupLabel);
+
+        KeyValue *tmpAnnotationKv = kvNew();
+        if (infoBackupData->backupAnnotation != NULL)
+            tmpAnnotationKv = varKv(infoBackupData->backupAnnotation);
+
+        const VariantList *annotationKeyList = kvKeyList(annotationKv);
+
+        for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
+        {
+            const Variant *key = varLstGet(annotationKeyList, keyIdx);
+            const Variant *value = kvGet(annotationKv, key);
+
+            // Skip empty values
+            if (!strEmpty(varStr(value)))
+            {
+                kvPut(tmpAnnotationKv, key, value);
+            }
+            // Remove existing key if value is empty
+            else if (kvKeyExists(tmpAnnotationKv, key))
+            {
+                kvRemove(tmpAnnotationKv, key);
+            }
+        }
+
+        infoBackupData->backupAnnotation = varNewKv(tmpAnnotationKv);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

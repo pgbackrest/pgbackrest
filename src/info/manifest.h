@@ -66,7 +66,7 @@ typedef struct ManifestData
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
     unsigned int pgCatalogVersion;                                  // PostgreSQL catalog version
 
-    Variant *annotation;                                            // Backup annotation(s) metadata
+    const Variant *annotation;                                      // Backup annotation(s) metadata
 
     bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
     bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?

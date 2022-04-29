@@ -44,42 +44,46 @@ cmdAnnotate(void)
             THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(backupLabel));
 
         // Track the number of backup manifests to update
-        unsigned int foundManifests = 0;
-
-        // Look through the repositories to find the requested backup set manifest
-        String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+        unsigned int backupTotalProcessed = 0;
 
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             const Storage *storageRepo = storageRepoIdx(repoIdx);
 
-            if (storageExistsP(storageRepo, manifestFileName))
+            TRY_BEGIN()
             {
-                LOG_INFO_FMT("backup set '%s' to annotate found in %s", strZ(backupLabel), cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
-
-                // Load the backup.info to get the cipher pass
+                // Attempt to load the backup info file
                 const CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
                 InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
                     storageRepo, INFO_BACKUP_PATH_FILE_STR, repoCipherType, cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
-                // Load the manifest file
-                const String *cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
-                Manifest *manifest = manifestLoadFile(storageRepo, manifestFileName, repoCipherType, cipherPassBackup);
-                foundManifests++;
+                if (infoBackup != NULL && infoBackupLabelExists(infoBackup, backupLabel))
+                {
+                    // Backup label found in backup.info
+                    backupTotalProcessed++;
+                    LOG_INFO_FMT(
+                        "backup set '%s' to annotate found in %s",
+                        strZ(backupLabel), cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-                // Update annotations
-                manifestAnnotationSet(manifest, cfgOptionKv(cfgOptAnnotation));
+                    // Update annotations
+                    infoBackupDataAnnotationSet(infoBackup, backupLabel, cfgOptionKv(cfgOptAnnotation));
 
-                // Write the updated manifest
-                IoWrite *write = storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestFileName));
-                cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), repoCipherType, cipherModeEncrypt, cipherPassBackup);
-                manifestSave(manifest, write);
+                    // Write the updated backup info
+                    infoBackupSaveFile(
+                        infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, repoCipherType,
+                        cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                }
             }
+            CATCH(FileMissingError)
+            {
+                THROW_FMT(FileMissingError, "%s", errorMessage());
+            }
+            TRY_END();
         }
 
-        if (foundManifests <= 0)
-            THROW(BackupSetInvalidError, "no backup manifest to update found");
+        if (backupTotalProcessed <= 0)
+            THROW(BackupSetInvalidError, "no backup set to annotate found");
     }
     MEM_CONTEXT_TEMP_END();
 
