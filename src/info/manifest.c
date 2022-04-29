@@ -1945,12 +1945,12 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_METADATA))
+    else if (strEqZ(section, MANIFEST_SECTION_METADATA))
     {
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
-            if (strEq(key, MANIFEST_KEY_ANNOTATION))
-                manifest->pub.data.annotation = kvDup(varKv(value));
+            if (strEqZ(key, MANIFEST_KEY_ANNOTATION))
+                manifest->pub.data.annotation = kvDup(varKv(jsonToVar(value)));
         }
         MEM_CONTEXT_END();
     }
@@ -2392,7 +2392,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_METADATA, MANIFEST_KEY_ANNOTATION,
-                jsonFromKv(manifest->pub.data.annotation));
+                jsonFromVar(varNewKv(manifest->pub.data.annotation)));
         }
     }
 
