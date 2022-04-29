@@ -18,6 +18,7 @@ Lock Handler
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/user.h"
 #include "common/wait.h"
 #include "storage/helper.h"
 #include "storage/storage.intern.h"
@@ -329,8 +330,12 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     errorHint = strNewZ("\nHINT: is another " PROJECT_NAME " process running?");
                 else if (errNo == EACCES)
                 {
+                    // Get information for the current user
+                    userInit();
+
                     errorHint = strNewFmt(
-                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?", strZ(lockFile));
+                        "\nHINT: does the '%s/%s' user/group running " PROJECT_NAME " have permissions on the '%s' file?",
+                        strZ(userName()), strZ(groupName()), strZ(lockFile));
                 }
 
                 THROW_FMT(

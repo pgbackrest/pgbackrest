@@ -94,20 +94,16 @@ testRun(void)
         HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(strPath(noPermLock)));
         HRN_SYSTEM_FMT("chmod 000 %s", strZ(strPath(noPermLock)));
 
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             lockAcquireFile(noPermLock, 100, true), LockAcquireError,
-            strZ(
-                strNewFmt(
-                    "unable to acquire lock on file '%s': Permission denied\n"
-                        "HINT: does the user running pgBackRest have permissions on the '%s' file?",
-                    strZ(noPermLock), strZ(noPermLock))));
-        TEST_ERROR(
+            "unable to acquire lock on file '%s': Permission denied\n"
+            "HINT: does the '" TEST_USER "/" TEST_GROUP "' user/group running pgBackRest have permissions on the '%s' file?",
+            strZ(noPermLock), strZ(noPermLock));
+        TEST_ERROR_FMT(
             lockAcquireFile(noPermLock, 100, false), LockAcquireError,
-            strZ(
-                strNewFmt(
-                    "unable to acquire lock on file '%s': Permission denied\n"
-                        "HINT: does the user running pgBackRest have permissions on the '%s' file?",
-                    strZ(noPermLock), strZ(noPermLock))));
+            "unable to acquire lock on file '%s': Permission denied\n"
+            "HINT: does the '" TEST_USER "/" TEST_GROUP "' user/group running pgBackRest have permissions on the '%s' file?",
+            strZ(noPermLock), strZ(noPermLock));
 
         // -------------------------------------------------------------------------------------------------------------------------
         String *backupLock = strNewZ(TEST_PATH "/main-backup" LOCK_FILE_EXT);
