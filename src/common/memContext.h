@@ -203,6 +203,7 @@ Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerpl
 ***********************************************************************************************************************************/
 // Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
 // memContextDisard() before switching back from the parent context.
+// !!! MAYBE THIS WOULD BE BETTER AS MemQty?
 typedef enum
 {
     memTypeNone = 0,
