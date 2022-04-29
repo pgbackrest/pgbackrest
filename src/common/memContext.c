@@ -108,8 +108,7 @@ static const uint8_t memContextSizePossible[memContextAllocTypeMany + 1][memCont
       /* callbackOne */ sizeof(MemContextAllocOne) + sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
     // memContextAllocTypeMany
     {// memContextChildTypeNone
-     {/* callbackNone */ sizeof(MemContextAllocMany),
-      /* callbackOne */ sizeof(MemContextAllocMany) + sizeof(MemContextCallback)},
+     {/* callbackNone */ sizeof(MemContextAllocMany), /* callbackOne */ sizeof(MemContextAllocMany) + sizeof(MemContextCallback)},
      // memContextChildTypeOne
      {/* callbackNone */ sizeof(MemContextAllocMany) + sizeof(MemContextChildOne),
       /* callbackOne */ sizeof(MemContextAllocMany) + sizeof(MemContextChildOne) + sizeof(MemContextCallback)},
