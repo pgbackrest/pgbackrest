@@ -118,6 +118,10 @@ static const uint8_t memContextSizePossible[memContextAllocTypeMany + 1][memCont
       /* callbackOne */ sizeof(MemContextAllocMany) + sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
 };
 
+/***********************************************************************************************************************************
+Get pointers to optional parts of the manifest
+***********************************************************************************************************************************/
+// Allocation parts
 #define MEM_CONTEXT_ALLOC_OFFSET(memContext)                        ((unsigned char *)(memContext + 1) + memContext->allocExtra)
 
 static MemContextAllocOne *
@@ -132,6 +136,7 @@ memContextAllocMany(MemContext *const memContext)
     return (MemContextAllocMany *)MEM_CONTEXT_ALLOC_OFFSET(memContext);
 }
 
+// Child parts
 #define MEM_CONTEXT_CHILD_OFFSET(memContext)                                                                                       \
     ((unsigned char *)(memContext + 1) + memContextSizePossible[memContext->allocType][0][0] + memContext->allocExtra)
 
@@ -147,6 +152,7 @@ memContextChildMany(MemContext *const memContext)
     return (MemContextChildMany *)MEM_CONTEXT_CHILD_OFFSET(memContext);
 }
 
+// Callback part
 static MemContextCallback *
 memContextCallback(MemContext *const memContext)
 {
