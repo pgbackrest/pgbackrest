@@ -20,6 +20,7 @@ Backup Command
 #include "common/compress/helper.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
+#include "common/lock.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/time.h"
