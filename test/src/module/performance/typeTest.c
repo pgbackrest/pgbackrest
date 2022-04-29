@@ -263,7 +263,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");
 
-        MemContext *testContext = memContextNewP("test", .childType = memContextChildTypeMany);
+        MemContext *testContext = memContextNewP("test", .childType = memTypeMany);
         memContextKeep();
         Manifest *manifest = NULL;
         TimeMSec timeBegin = timeMSec();
@@ -295,7 +295,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("load manifest");
 
-        testContext = memContextNewP("test", .childType = memContextChildTypeMany);
+        testContext = memContextNewP("test", .childType = memTypeMany);
         memContextKeep();
         timeBegin = timeMSec();
 

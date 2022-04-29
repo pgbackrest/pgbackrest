@@ -121,7 +121,7 @@ infoNew(const String *cipherPass)
 
     Info *this = NULL;
 
-    OBJ_NEW_BEGIN(Info, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(Info, .childType = memTypeMany)
     {
         this = infoNewInternal();
 
@@ -256,7 +256,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
 
     Info *this = NULL;
 
-    OBJ_NEW_BEGIN(Info, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(Info, .childType = memTypeMany)
     {
         this = infoNewInternal();
 

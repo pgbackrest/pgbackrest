@@ -92,7 +92,7 @@ jsonReadNew(const String *const json)
 
     JsonRead *this = NULL;
 
-    OBJ_NEW_BEGIN(JsonRead, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(JsonRead, .childType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -1309,7 +1309,7 @@ jsonWriteNew(JsonWriteNewParam param)
 
     JsonWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(JsonWrite, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(JsonWrite, .childType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

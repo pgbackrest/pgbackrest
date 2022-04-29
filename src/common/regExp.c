@@ -74,7 +74,7 @@ regExpNew(const String *expression)
 
     RegExp *this = NULL;
 
-    OBJ_NEW_BEGIN(RegExp, .childType = memContextChildTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(RegExp, .childType = memTypeMany, .callbackType = memTypeOne)
     {
         this = OBJ_NEW_ALLOC();
         *this = (RegExp){{0}};                                      // Extra braces are required for older gcc versions

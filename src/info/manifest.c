@@ -1111,7 +1111,7 @@ manifestNewBuild(
 
     Manifest *this = NULL;
 
-    OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(Manifest, .childType = memTypeMany)
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
@@ -2046,14 +2046,14 @@ manifestNewLoad(IoRead *read)
 
     Manifest *this = NULL;
 
-    OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(Manifest, .childType = memTypeMany)
     {
         this = manifestNewInternal();
 
         // Load the manifest
         ManifestLoadData loadData =
         {
-            .memContext = memContextNewP("load", .childType = memContextChildTypeMany),
+            .memContext = memContextNewP("load", .childType = memTypeMany),
             .manifest = this,
         };
 

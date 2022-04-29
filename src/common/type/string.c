@@ -83,7 +83,7 @@ strNew(void)
 
     String *this = NULL;
 
-    OBJ_NEW_BEGIN(String, .allocType = memContextAllocTypeOne)
+    OBJ_NEW_BEGIN(String, .allocType = memTypeOne)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -120,7 +120,7 @@ strNewFixed(const size_t size)
 
     if (allocExtra > MEM_CONTEXT_ALLOC_EXTRA_MAX)
     {
-        OBJ_NEW_BEGIN(String, .allocType = memContextAllocTypeOne)
+        OBJ_NEW_BEGIN(String, .allocType = memTypeOne)
         {
             this = OBJ_NEW_ALLOC();
 

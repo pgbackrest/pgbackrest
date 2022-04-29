@@ -34,7 +34,7 @@ userInitInternal(void)
 
     MEM_CONTEXT_BEGIN(memContextTop())
     {
-        MEM_CONTEXT_NEW_BEGIN(UserLocalData, .childType = memContextChildTypeMany)
+        MEM_CONTEXT_NEW_BEGIN(UserLocalData, .childType = memTypeMany)
         {
             userLocalData.memContext = MEM_CONTEXT_NEW();
 

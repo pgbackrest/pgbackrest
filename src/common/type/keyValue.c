@@ -36,7 +36,7 @@ kvNew(void)
 
     KeyValue *this = NULL;
 
-    OBJ_NEW_BEGIN(KeyValue, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(KeyValue, .childType = memTypeMany)
     {
         // Allocate state and set context
         this = OBJ_NEW_ALLOC();

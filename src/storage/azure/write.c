@@ -274,7 +274,7 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
 
     StorageWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteAzure, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(StorageWriteAzure, .childType = memTypeMany, .allocType = memTypeMany)
     {
         StorageWriteAzure *driver = OBJ_NEW_ALLOC();
 

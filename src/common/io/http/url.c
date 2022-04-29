@@ -62,7 +62,7 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 
     HttpUrl *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpUrl, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(HttpUrl, .childType = memTypeMany)
     {
         // Allocate state and set context
         this = OBJ_NEW_ALLOC();

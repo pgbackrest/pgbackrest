@@ -278,7 +278,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
     StorageWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteS3, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(StorageWriteS3, .childType = memTypeMany, .allocType = memTypeMany)
     {
         StorageWriteS3 *driver = OBJ_NEW_ALLOC();
 

@@ -89,7 +89,8 @@ testRun(void)
         // Context name length errors
         TEST_ERROR(memContextNewP(""), AssertError, "assertion 'name[0] != '\\0'' failed");
 
-        MemContext *memContext = memContextNewP("test1", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        MemContext *memContext = memContextNewP(
+            "test1", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         memContextKeep();
         TEST_RESULT_Z(memContextName(memContext), "test1", "test1 context name");
         TEST_RESULT_PTR(memContext->contextParent, memContextTop(), "test1 context parent is top");
@@ -107,7 +108,7 @@ testRun(void)
 
         for (int contextIdx = 1; contextIdx < MEM_CONTEXT_INITIAL_SIZE; contextIdx++)
         {
-            memContextNewP("test-filler", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+            memContextNewP("test-filler", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
             memContextKeep();
             TEST_RESULT_PTR_NE(memContextChildMany(memContextTop())->list[contextIdx], NULL, "new context exists");
             TEST_RESULT_BOOL(memContextChildMany(memContextTop())->list[contextIdx]->active, true, "new context is active");
@@ -116,7 +117,8 @@ testRun(void)
         }
 
         // This forces the child context array to grow
-        memContext = memContextNewP("test5", .allocExtra = 16, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        memContext = memContextNewP(
+            "test5", .allocExtra = 16, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         TEST_RESULT_PTR(memContextAllocExtra(memContext), memContext + 1, "mem context alloc extra");
         TEST_RESULT_PTR(memContextFromAllocExtra(memContext + 1), memContext, "mem context from alloc extra");
         TEST_RESULT_PTR(memContextConstFromAllocExtra(memContext + 1), memContext, "const mem context from alloc extra");
@@ -132,7 +134,7 @@ testRun(void)
         TEST_RESULT_UINT(memContextChildMany(memContextTop())->freeIdx, 1, "check context free idx");
 
         // Create a new context and it should end up in the same spot
-        memContextNewP("test-reuse", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        memContextNewP("test-reuse", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         memContextKeep();
         TEST_RESULT_BOOL(
             memContextChildMany(memContextTop())->list[1]->active, true, "new context in same index as freed context is active");
@@ -140,13 +142,13 @@ testRun(void)
         TEST_RESULT_UINT(memContextChildMany(memContextTop())->freeIdx, 2, "check context free idx");
 
         // Next context will be at the end
-        memContextNewP("test-at-end", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        memContextNewP("test-at-end", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         memContextKeep();
         TEST_RESULT_UINT(memContextChildMany(memContextTop())->freeIdx, MEM_CONTEXT_INITIAL_SIZE + 2, "check context free idx");
 
         // Create a child context to test recursive free
         memContextSwitch(memContextChildMany(memContextTop())->list[MEM_CONTEXT_INITIAL_SIZE]);
-        memContextNewP("test-reuse", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        memContextNewP("test-reuse", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         memContextKeep();
         TEST_RESULT_PTR_NE(
             memContextChildMany(memContextChildMany(memContextTop())->list[MEM_CONTEXT_INITIAL_SIZE])->list, NULL,
@@ -166,7 +168,8 @@ testRun(void)
         // memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
         TEST_RESULT_VOID(memContextFree(memContextTop()), "free top");
 
-        MemContext *noAllocation = memContextNewP("empty", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        MemContext *noAllocation = memContextNewP(
+            "empty", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         memContextKeep();
         // memContextAllocMany(noAllocation)->listSize = 0; !!! NO LONGER NEEDED?
         // free(memContextAllocMany(noAllocation->list)); !!! NO LONGER NEEDED?
@@ -188,7 +191,8 @@ testRun(void)
         memContextSwitch(memContextTop());
         memNewPtrArray(1);
 
-        MemContext *memContext = memContextNewP("test-alloc", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        MemContext *memContext = memContextNewP(
+            "test-alloc", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         TEST_ERROR(memContextSwitchBack(), AssertError, "current context expected but new context 'test-alloc' found");
         memContextKeep();
         memContextSwitch(memContext);
@@ -257,9 +261,11 @@ testRun(void)
     if (testBegin("memContextCallbackSet()"))
     {
         TEST_ERROR(
-            memContextCallbackSet(memContextTop(), testFree, NULL), AssertError, "assertion 'this->callback' failed");
+            memContextCallbackSet(memContextTop(), testFree, NULL), AssertError,
+            "assertion 'this->callbackType != memTypeNone' failed");
 
-        MemContext *memContext = memContextNewP("test-callback", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        MemContext *memContext = memContextNewP(
+            "test-callback", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         memContextKeep();
         memContextCallbackSet(memContext, testFree, memContext);
         TEST_ERROR(
@@ -275,7 +281,8 @@ testRun(void)
 
         // Now test with an error
         // -------------------------------------------------------------------------------------------------------------------------
-        memContext = memContextNewP("test-callback-error", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        memContext = memContextNewP(
+            "test-callback-error", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         TEST_RESULT_VOID(memContextKeep(), "keep mem context");
         testFreeThrow = true;
         TEST_RESULT_VOID(memContextCallbackSet(memContext, testFree, memContext), "    set callback");
@@ -286,7 +293,8 @@ testRun(void)
     if (testBegin("MEM_CONTEXT_BEGIN() and MEM_CONTEXT_END()"))
     {
         memContextSwitch(memContextTop());
-        MemContext *memContext = memContextNewP("test-block", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true);
+        MemContext *memContext = memContextNewP(
+            "test-block", .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne);
         memContextKeep();
 
         // Check normal block
@@ -334,7 +342,7 @@ testRun(void)
 
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
 
-        MEM_CONTEXT_NEW_BEGIN(test-new-block, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+        MEM_CONTEXT_NEW_BEGIN(test-new-block, .childType = memTypeMany, .allocType = memTypeMany)
         {
             memContext = MEM_CONTEXT_NEW();
             TEST_RESULT_PTR(memContext, memContextCurrent(), "new mem context is current");
@@ -354,7 +362,7 @@ testRun(void)
 
         TRY_BEGIN()
         {
-            MEM_CONTEXT_NEW_BEGIN(test-new-failed-block, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+            MEM_CONTEXT_NEW_BEGIN(test-new-failed-block, .childType = memTypeMany, .allocType = memTypeMany)
             {
                 memContext = MEM_CONTEXT_NEW();
                 TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check mem context name");
@@ -383,14 +391,14 @@ testRun(void)
         void *mem = NULL;
         void *mem2 = NULL;
 
-        MEM_CONTEXT_NEW_BEGIN("outer", .childType = memContextChildTypeMany)
+        MEM_CONTEXT_NEW_BEGIN("outer", .childType = memTypeMany)
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                memContextNewP("not-to-be-moved", .childType = memContextChildTypeMany);
+                memContextNewP("not-to-be-moved", .childType = memTypeMany);
                 memContextKeep();
 
-                MEM_CONTEXT_NEW_BEGIN("inner", .allocType = memContextAllocTypeMany)
+                MEM_CONTEXT_NEW_BEGIN("inner", .allocType = memTypeMany)
                 {
                     memContext = MEM_CONTEXT_NEW();
                     mem = memNew(sizeof(int));
@@ -412,7 +420,7 @@ testRun(void)
                 TEST_RESULT_VOID(memContextMove(memContext, memContextPrior()), "move context again");
 
                 // Move another context
-                MEM_CONTEXT_NEW_BEGIN("inner2", .allocType = memContextAllocTypeMany)
+                MEM_CONTEXT_NEW_BEGIN("inner2", .allocType = memTypeMany)
                 {
                     memContext2 = MEM_CONTEXT_NEW();
                     mem2 = memNew(sizeof(int));

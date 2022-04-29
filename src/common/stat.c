@@ -37,7 +37,7 @@ statInit(void)
 
     MEM_CONTEXT_BEGIN(memContextTop())
     {
-        MEM_CONTEXT_NEW_BEGIN(StatLocalData, .childType = memContextChildTypeMany)
+        MEM_CONTEXT_NEW_BEGIN(StatLocalData, .childType = memTypeMany)
         {
             statLocalData.memContext = MEM_CONTEXT_NEW();
             statLocalData.stat = lstNewP(sizeof(Stat), .sortOrder = sortOrderAsc, .comparator = lstComparatorStr);

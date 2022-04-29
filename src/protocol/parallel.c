@@ -47,7 +47,7 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
 
     ProtocolParallel *this = NULL;
 
-    OBJ_NEW_BEGIN(ProtocolParallel, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(ProtocolParallel, .childType = memTypeMany, .allocType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

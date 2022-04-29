@@ -421,7 +421,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     // Allocate memory to hold process state
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(CipherBlock, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(CipherBlock, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         CipherBlock *driver = OBJ_NEW_ALLOC();
 

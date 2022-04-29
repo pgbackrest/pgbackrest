@@ -35,7 +35,7 @@ ioReadNew(void *driver, IoReadInterface interface)
 
     IoRead *this = NULL;
 
-    OBJ_NEW_BEGIN(IoRead, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(IoRead, .childType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

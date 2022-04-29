@@ -32,7 +32,7 @@ waitNew(TimeMSec waitTime)
     // Allocate wait object
     Wait *this = NULL;
 
-    OBJ_NEW_BEGIN(Wait, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(Wait, .childType = memTypeMany)
     {
         // Create object
         this = OBJ_NEW_ALLOC();

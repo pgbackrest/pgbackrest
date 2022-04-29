@@ -232,7 +232,7 @@ storageReadRemoteNew(
 
     StorageReadRemote *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageReadRemote, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(StorageReadRemote, .childType = memTypeMany, .allocType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

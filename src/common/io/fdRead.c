@@ -156,7 +156,7 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 
     IoRead *this = NULL;
 
-    OBJ_NEW_BEGIN(IoFdRead, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(IoFdRead, .childType = memTypeMany, .allocType = memTypeMany)
     {
         IoFdRead *driver = OBJ_NEW_ALLOC();
 

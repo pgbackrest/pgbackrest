@@ -31,7 +31,7 @@ httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
 
     HttpSession *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpSession, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(HttpSession, .childType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

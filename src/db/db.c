@@ -76,7 +76,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const stora
 
     Db *this = NULL;
 
-    OBJ_NEW_BEGIN(Db, .childType = memContextChildTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(Db, .childType = memTypeMany, .callbackType = memTypeOne)
     {
         this = OBJ_NEW_ALLOC();
 

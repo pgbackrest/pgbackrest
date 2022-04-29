@@ -35,7 +35,7 @@ lstNew(size_t itemSize, ListParam param)
 
     List *this = NULL;
 
-    OBJ_NEW_BEGIN(List, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(List, .childType = memTypeMany, .allocType = memTypeMany)
     {
         // Create object
         this = OBJ_NEW_ALLOC();

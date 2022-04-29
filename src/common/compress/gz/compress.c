@@ -172,7 +172,7 @@ gzCompressNew(int level)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(GzCompress, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(GzCompress, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         GzCompress *driver = OBJ_NEW_ALLOC();
 

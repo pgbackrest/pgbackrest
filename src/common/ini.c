@@ -29,7 +29,7 @@ iniNew(void)
 
     Ini *this = NULL;
 
-    OBJ_NEW_BEGIN(Ini, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(Ini, .childType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

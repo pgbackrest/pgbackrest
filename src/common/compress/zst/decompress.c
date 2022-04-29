@@ -162,7 +162,7 @@ zstDecompressNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(ZstDecompress, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(ZstDecompress, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         ZstDecompress *driver = OBJ_NEW_ALLOC();
 

@@ -365,7 +365,7 @@ tlsClientNew(
 
     IoClient *this = NULL;
 
-    OBJ_NEW_BEGIN(TlsClient, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(TlsClient, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         TlsClient *driver = OBJ_NEW_ALLOC();
 

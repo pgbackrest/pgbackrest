@@ -155,7 +155,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
     IoServer *this = NULL;
 
-    OBJ_NEW_BEGIN(SocketServer, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(SocketServer, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         SocketServer *const driver = OBJ_NEW_ALLOC();
 

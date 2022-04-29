@@ -41,7 +41,7 @@ ioWriteNew(void *driver, IoWriteInterface interface)
 
     IoWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(IoWrite, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(IoWrite, .childType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

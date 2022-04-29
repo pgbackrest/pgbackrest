@@ -55,7 +55,7 @@ pgClientNew(const String *host, const unsigned int port, const String *database,
 
     PgClient *this = NULL;
 
-    OBJ_NEW_BEGIN(PgClient, .childType = memContextChildTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(PgClient, .childType = memTypeMany, .callbackType = memTypeOne)
     {
         this = OBJ_NEW_ALLOC();
 

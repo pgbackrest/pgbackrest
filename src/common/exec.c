@@ -127,7 +127,7 @@ execNew(const String *command, const StringList *param, const String *name, Time
 
     Exec *this = NULL;
 
-    OBJ_NEW_BEGIN(Exec, .childType = memContextChildTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(Exec, .childType = memTypeMany, .callbackType = memTypeOne)
     {
         this = OBJ_NEW_ALLOC();
 

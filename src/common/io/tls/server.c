@@ -282,7 +282,7 @@ tlsServerNew(
 
     IoServer *this = NULL;
 
-    OBJ_NEW_BEGIN(TlsServer, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(TlsServer, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         TlsServer *const driver = OBJ_NEW_ALLOC();
 

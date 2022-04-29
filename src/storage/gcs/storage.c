@@ -954,7 +954,7 @@ storageGcsNew(
 
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageGcs, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(StorageGcs, .childType = memTypeMany, .allocType = memTypeMany)
     {
         StorageGcs *driver = OBJ_NEW_ALLOC();
 

@@ -211,7 +211,7 @@ storageWriteRemoteNew(
 
     StorageWriteRemote *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteRemote, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(StorageWriteRemote, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         this = OBJ_NEW_ALLOC();
 

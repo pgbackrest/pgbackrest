@@ -43,11 +43,11 @@ struct MemContext
 {
     const char *name;                                               // Indicates what the context is being used for
     bool active:1;                                                  // Is the context currently active
-    MemContextAllocType allocType:2;                                // How many allocations can this context have?
+    MemType allocType:2;                                            // How many allocations can this context have?
     bool allocInitialized:1;                                        // Has the allocation list been initialized?
-    MemContextChildType childType:2;                                // How many child contexts can this context have?
+    MemType childType:2;                                            // How many child contexts can this context have?
     bool childInitialized:1;                                        // Has the child contest list been initialized?
-    bool callback:1;                                                // Is a callback allowed?
+    MemType callbackType:2;                                         // How many callbacks can this context have?
     bool callbackInitialized:1;                                     // Has the callback been initialized?
     size_t allocExtra:16;                                           // Size of extra allocation (1kB max)
 
@@ -88,33 +88,34 @@ typedef struct MemContextCallback
 /***********************************************************************************************************************************
 Possible sizes for the manifest based on options. Formatting has been compressed to save space.
 ***********************************************************************************************************************************/
-static const uint8_t memContextSizePossible[memContextAllocTypeMany + 1][memContextChildTypeMany + 1][true + 1] =
+static const uint8_t memContextSizePossible[memTypeMany + 1][memTypeMany + 1][memTypeOne + 1] =
 {
-    // memContextAllocTypeNone
-    {// memContextChildTypeNone
-     {/* callbackNone */ 0, /* callbackOne */ sizeof(MemContextCallback)},
-     // memContextChildTypeOne
-     {/* callbackNone */ sizeof(MemContextChildOne), /* callbackOne */ sizeof(MemContextChildOne) + sizeof(MemContextCallback)},
-     // memContextChildTypeMany
-     {/* callbackNone */ sizeof(MemContextChildMany), /* callbackOne */ sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
-    // memContextAllocTypeOne
-    {// memContextChildTypeNone
-     {/* callbackNone */ sizeof(MemContextAllocOne), /* callbackOne */ sizeof(MemContextAllocOne) + sizeof(MemContextCallback)},
-     // memContextChildTypeOne
-     {/* callbackNone */ sizeof(MemContextAllocOne) + sizeof(MemContextChildOne),
-      /* callbackOne */ sizeof(MemContextAllocOne) + sizeof(MemContextChildOne) + sizeof(MemContextCallback)},
-     // memContextChildTypeMany
-     {/* callbackNone */ sizeof(MemContextAllocOne) + sizeof(MemContextChildMany),
-      /* callbackOne */ sizeof(MemContextAllocOne) + sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
-    // memContextAllocTypeMany
-    {// memContextChildTypeNone
-     {/* callbackNone */ sizeof(MemContextAllocMany), /* callbackOne */ sizeof(MemContextAllocMany) + sizeof(MemContextCallback)},
-     // memContextChildTypeOne
-     {/* callbackNone */ sizeof(MemContextAllocMany) + sizeof(MemContextChildOne),
-      /* callbackOne */ sizeof(MemContextAllocMany) + sizeof(MemContextChildOne) + sizeof(MemContextCallback)},
-     // memContextChildTypeMany
-     {/* callbackNone */ sizeof(MemContextAllocMany) + sizeof(MemContextChildMany),
-      /* callbackOne */ sizeof(MemContextAllocMany) + sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
+    // alloc none
+    {// child none
+     {/* callback none */ 0, /* callback one */ sizeof(MemContextCallback)},
+     // child one
+     {/* callback none */ sizeof(MemContextChildOne), /* callback one */ sizeof(MemContextChildOne) + sizeof(MemContextCallback)},
+     // child many
+     {/* callback none */ sizeof(MemContextChildMany),
+      /* callback one */ sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
+    // alloc one
+    {// child none
+     {/* callback none */ sizeof(MemContextAllocOne), /* callback one */ sizeof(MemContextAllocOne) + sizeof(MemContextCallback)},
+     // child one
+     {/* callback none */ sizeof(MemContextAllocOne) + sizeof(MemContextChildOne),
+      /* callback one */ sizeof(MemContextAllocOne) + sizeof(MemContextChildOne) + sizeof(MemContextCallback)},
+     // child many
+     {/* callback none */ sizeof(MemContextAllocOne) + sizeof(MemContextChildMany),
+      /* callback one */ sizeof(MemContextAllocOne) + sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
+    // alloc many
+    {// child none
+     {/* callback none */ sizeof(MemContextAllocMany), /* callback one */ sizeof(MemContextAllocMany) + sizeof(MemContextCallback)},
+     // child one
+     {/* callback none */ sizeof(MemContextAllocMany) + sizeof(MemContextChildOne),
+      /* callback one */ sizeof(MemContextAllocMany) + sizeof(MemContextChildOne) + sizeof(MemContextCallback)},
+     // child many
+     {/* callback none */ sizeof(MemContextAllocMany) + sizeof(MemContextChildMany),
+      /* callback one */ sizeof(MemContextAllocMany) + sizeof(MemContextChildMany) + sizeof(MemContextCallback)}},
 };
 
 /***********************************************************************************************************************************
@@ -177,8 +178,8 @@ static struct MemContextTop
     {
         .name = "TOP",
         .active = true,
-        .allocType = memContextAllocTypeMany,
-        .childType = memContextChildTypeMany,
+        .allocType = memTypeMany,
+        .childType = memTypeMany,
     },
 };
 
@@ -370,13 +371,14 @@ memContextNew(const char *const name, const MemContextNewParam param)
         FUNCTION_TEST_PARAM(STRINGZ, name);
         FUNCTION_TEST_PARAM(ENUM, param.allocType);
         FUNCTION_TEST_PARAM(ENUM, param.childType);
-        FUNCTION_TEST_PARAM(BOOL, param.callback);
+        FUNCTION_TEST_PARAM(BOOL, param.callbackType);
         FUNCTION_TEST_PARAM(SIZE, param.allocExtra);
     FUNCTION_TEST_END();
 
     ASSERT(name != NULL);
-    ASSERT(param.allocType <= memContextAllocTypeMany);
-    ASSERT(param.childType <= memContextChildTypeMany);
+    ASSERT(param.allocType <= memTypeMany);
+    ASSERT(param.childType <= memTypeMany);
+    ASSERT(param.callbackType <= memTypeOne);
     // Check context name length
     ASSERT(name[0] != '\0');
 
@@ -384,17 +386,17 @@ memContextNew(const char *const name, const MemContextNewParam param)
     size_t allocExtra = param.allocExtra;
 
     if (allocExtra % sizeof(void *) != 0 && //{uncovered}
-        (param.allocType != memContextAllocTypeNone || param.childType != memContextChildTypeNone || param.callback)) //{uncovered}
+        (param.allocType != memTypeNone || param.childType != memTypeNone || param.callbackType != memTypeNone)) //{uncovered}
     {
         allocExtra += sizeof(void *) - allocExtra % sizeof(void *); //{uncovered}
     }
 
     // Create the new context
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
-    ASSERT(contextCurrent->childType != memContextChildTypeNone);
+    ASSERT(contextCurrent->childType != memTypeNone);
 
     MemContext *const this = memAllocInternal(
-        sizeof(MemContext) + allocExtra + memContextSizePossible[param.allocType][param.childType][param.callback]);
+        sizeof(MemContext) + allocExtra + memContextSizePossible[param.allocType][param.childType][param.callbackType]);
 
     *this = (MemContext)
     {
@@ -404,7 +406,7 @@ memContextNew(const char *const name, const MemContextNewParam param)
         // Set flags
         .allocType = param.allocType,
         .childType = param.childType,
-        .callback = param.callback,
+        .callbackType = param.callbackType,
 
         // Set extra allocation
         .allocExtra = (uint16_t)allocExtra,
@@ -417,7 +419,7 @@ memContextNew(const char *const name, const MemContextNewParam param)
     };
 
     // Find space for the new context
-    if (contextCurrent->childType == memContextChildTypeOne) // {uncovered}
+    if (contextCurrent->childType == memTypeOne) // {uncovered}
     {
         ASSERT(!contextCurrent->childInitialized || memContextChildOne(contextCurrent)->context == NULL); // {uncovered}
 
@@ -426,7 +428,7 @@ memContextNew(const char *const name, const MemContextNewParam param)
     }
     else
     {
-        ASSERT(contextCurrent->childType == memContextChildTypeMany);
+        ASSERT(contextCurrent->childType == memTypeMany);
         MemContextChildMany *const memContextChild = memContextChildMany(contextCurrent);
 
         this->contextParentIdx = memContextNewIndex(contextCurrent, memContextChild);
@@ -504,7 +506,7 @@ memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *
     ASSERT(this != NULL);
     ASSERT(callbackFunction != NULL);
     ASSERT(this->active);
-    ASSERT(this->callback);
+    ASSERT(this->callbackType != memTypeNone);
 
     // Error if callback has already been set - there may be valid use cases for this in the future but error until one is found
     if (this->callbackInitialized)
@@ -526,7 +528,7 @@ memContextCallbackClear(MemContext *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->callback);
+    ASSERT(this->callbackType != memTypeNone);
 
     // Top context cannot have a callback
     ASSERT(this != (MemContext *)&contextTop);
@@ -553,11 +555,11 @@ memContextAllocNew(const size_t size)
 
     // Find space for the new allocation
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
-    ASSERT(contextCurrent->allocType != memContextAllocTypeNone);
+    ASSERT(contextCurrent->allocType != memTypeNone);
 
     // fprintf(stdout, "!!!HERE\n"); fflush(stdout);
 
-    if (contextCurrent->allocType == memContextAllocTypeOne) // {uncovered}
+    if (contextCurrent->allocType == memTypeOne) // {uncovered}
     {
         MemContextAllocOne *const contextAlloc = memContextAllocOne(contextCurrent); // {uncovered}
         ASSERT(!contextCurrent->allocInitialized || contextAlloc->alloc == NULL); // {uncovered}
@@ -571,7 +573,7 @@ memContextAllocNew(const size_t size)
     }
     else
     {
-        ASSERT(contextCurrent->allocType == memContextAllocTypeMany);
+        ASSERT(contextCurrent->allocType == memTypeMany);
 
         MemContextAllocMany *const contextAlloc = memContextAllocMany(contextCurrent);
 
@@ -638,17 +640,17 @@ memContextAllocResize(MemContextAlloc *alloc, size_t size)
 
     // Update pointer in allocation list in case the realloc moved the allocation
     MemContext *const currentContext = memContextStack[memContextCurrentStackIdx].memContext;
-    ASSERT(currentContext->allocType != memContextAllocTypeNone);
+    ASSERT(currentContext->allocType != memTypeNone);
     ASSERT(currentContext->allocInitialized);
 
-    if (currentContext->allocType == memContextAllocTypeOne) // {uncovered}
+    if (currentContext->allocType == memTypeOne) // {uncovered}
     {
         ASSERT(memContextAllocOne(currentContext)->alloc != NULL); // {uncovered}
         memContextAllocOne(currentContext)->alloc = alloc; // {uncovered}
     }
     else
     {
-        ASSERT(currentContext->allocType == memContextAllocTypeMany);
+        ASSERT(currentContext->allocType == memTypeMany);
         memContextAllocMany(currentContext)->list[alloc->allocIdx] = alloc;
     }
 
@@ -710,18 +712,18 @@ memFree(void *const buffer)
 
     // Get the allocation
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
-    ASSERT(contextCurrent->allocType != memContextAllocTypeNone);
+    ASSERT(contextCurrent->allocType != memTypeNone);
     ASSERT(contextCurrent->allocInitialized);
     MemContextAlloc *const alloc = MEM_CONTEXT_ALLOC_HEADER(buffer);
 
-    if (contextCurrent->allocType == memContextAllocTypeOne) // {uncovered}
+    if (contextCurrent->allocType == memTypeOne) // {uncovered}
     {
         // ASSERT(memContextAllocOne(currentContext)->alloc != NULL); // {uncovered}
         memContextAllocOne(contextCurrent)->alloc = NULL; // {uncovered}
     }
     else
     {
-        ASSERT(contextCurrent->allocType == memContextAllocTypeMany);
+        ASSERT(contextCurrent->allocType == memTypeMany);
         MemContextAllocMany *const contextAlloc = memContextAllocMany(contextCurrent);
 
         // If this allocation is before the current free allocation then make it the current free allocation
@@ -753,18 +755,18 @@ memContextMove(MemContext *this, MemContext *parentNew)
     {
         ASSERT(this->active);
         ASSERT(this->contextParent->active);
-        ASSERT(this->contextParent->childType != memContextChildTypeNone);
+        ASSERT(this->contextParent->childType != memTypeNone);
         ASSERT(this->contextParent->childInitialized);
 
         // Null out the context in the old parent
-        if (this->contextParent->childType == memContextChildTypeOne) // {uncovered}
+        if (this->contextParent->childType == memTypeOne) // {uncovered}
         {
             ASSERT(memContextChildOne(this->contextParent)->context != NULL); // {uncovered}
             memContextChildOne(this->contextParent)->context = NULL; // {uncovered}
         }
         else
         {
-            ASSERT(this->contextParent->childType == memContextChildTypeMany);
+            ASSERT(this->contextParent->childType == memTypeMany);
             ASSERT(memContextChildMany(this->contextParent)->list[this->contextParentIdx] == this);
 
             memContextChildMany(this->contextParent)->list[this->contextParentIdx] = NULL;
@@ -773,9 +775,9 @@ memContextMove(MemContext *this, MemContext *parentNew)
         // Find a place in the new parent context and assign it. The child list may be moved while finding a new index so store the
         // index and use it with (what might be) the new pointer.
         ASSERT(parentNew->active);
-        ASSERT(parentNew->childType != memContextChildTypeNone);
+        ASSERT(parentNew->childType != memTypeNone);
 
-        if (parentNew->childType == memContextChildTypeOne) // {uncovered}
+        if (parentNew->childType == memTypeOne) // {uncovered}
         {
             ASSERT(!parentNew->childInitialized || memContextChildOne(parentNew)->context == NULL); // {uncovered}
 
@@ -784,7 +786,7 @@ memContextMove(MemContext *this, MemContext *parentNew)
         }
         else
         {
-            ASSERT(parentNew->childType == memContextChildTypeMany);
+            ASSERT(parentNew->childType == memTypeMany);
             MemContextChildMany *const memContextChild = memContextChildMany(parentNew);
 
             this->contextParent = parentNew;
@@ -957,7 +959,7 @@ memContextSize(const MemContext *const this)
     const unsigned char *offset = (unsigned char *)(this + 1) + this->allocExtra;
 
     // Size of allocations
-    if (this->allocType == memContextAllocTypeOne) // {uncovered}
+    if (this->allocType == memTypeOne) // {uncovered}
     {
         const MemContextAllocOne *const contextAlloc = (const MemContextAllocOne *const)offset; // {uncovered}
 
@@ -985,7 +987,7 @@ memContextSize(const MemContext *const this)
     }
 
     // Size of child contexts
-    if (this->childType == memContextChildTypeOne) // {uncovered}
+    if (this->childType == memTypeOne) // {uncovered}
     {
         const MemContextChildOne *const contextChild = (const MemContextChildOne *const)offset; // {uncovered}
 
@@ -1014,7 +1016,7 @@ memContextSize(const MemContext *const this)
     }
 
     // Size of callback accounting
-    if (this->callback)
+    if (this->callbackType != memTypeNone)
         offset += sizeof(MemContextCallback);
 
     FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (unsigned char*)this) + total);
@@ -1076,7 +1078,7 @@ memContextCallbackRecurse(MemContext *const this)
     // Child callbacks
     if (this->childInitialized)
     {
-        if (this->childType == memContextChildTypeOne) // {uncovered}
+        if (this->childType == memTypeOne) // {uncovered}
         {
             MemContextChildOne *const memContextChild = memContextChildOne(this); // {uncovered}
 
@@ -1085,7 +1087,7 @@ memContextCallbackRecurse(MemContext *const this)
         }
         else
         {
-            ASSERT(this->childType == memContextChildTypeMany);
+            ASSERT(this->childType == memTypeMany);
             MemContextChildMany *const memContextChild = memContextChildMany(this);
 
             for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
@@ -1128,7 +1130,7 @@ memContextFree(MemContext *this)
         // Free child contexts
         if (this->childInitialized)
         {
-            if (this->childType == memContextChildTypeOne) // {uncovered}
+            if (this->childType == memTypeOne) // {uncovered}
             {
                 MemContextChildOne *const memContextChild = memContextChildOne(this); // {uncovered}
 
@@ -1137,7 +1139,7 @@ memContextFree(MemContext *this)
             }
             else
             {
-                ASSERT(this->childType == memContextChildTypeMany);
+                ASSERT(this->childType == memTypeMany);
                 MemContextChildMany *const memContextChild = memContextChildMany(this);
 
                 for (unsigned int contextIdx = 0; contextIdx < memContextChild->listSize; contextIdx++)
@@ -1151,7 +1153,7 @@ memContextFree(MemContext *this)
         // Free child context allocation list
         if (this->childInitialized)
         {
-            if (this->childType == memContextChildTypeMany) // {uncovered}
+            if (this->childType == memTypeMany) // {uncovered}
                 memFreeInternal(memContextChildMany(this)->list);
 
             this->childInitialized = false;
@@ -1160,9 +1162,9 @@ memContextFree(MemContext *this)
         // Free memory allocations and list
         if (this->allocInitialized)
         {
-            ASSERT(this->allocType != memContextAllocTypeNone);
+            ASSERT(this->allocType != memTypeNone);
 
-            if (this->allocType == memContextAllocTypeOne) // {uncovered}
+            if (this->allocType == memTypeOne) // {uncovered}
             {
                 MemContextAllocOne *const contextAlloc = memContextAllocOne(this); // {uncovered}
 
@@ -1171,7 +1173,7 @@ memContextFree(MemContext *this)
             }
             else
             {
-                ASSERT(this->allocType == memContextAllocTypeMany);
+                ASSERT(this->allocType == memTypeMany);
 
                 MemContextAllocMany *const contextAlloc = memContextAllocMany(this);
 
@@ -1186,7 +1188,7 @@ memContextFree(MemContext *this)
         }
 
         // If the context index is lower than the current free index in the parent then replace it
-        if (this->contextParent != NULL && this->contextParent->childType == memContextChildTypeMany) // {uncovered}
+        if (this->contextParent != NULL && this->contextParent->childType == memTypeMany) // {uncovered}
         {
             MemContextChildMany *const memContextChild = memContextChildMany(this->contextParent);
 
@@ -1204,7 +1206,7 @@ memContextFree(MemContext *this)
         {
             ASSERT(this->contextParent != NULL);
 
-            if (this->contextParent->childType == memContextChildTypeOne) // {uncovered}
+            if (this->contextParent->childType == memTypeOne) // {uncovered}
                 memContextChildOne(this->contextParent)->context = NULL; // {uncovered}
             else
                 memContextChildMany(this->contextParent)->list[this->contextParentIdx] = NULL;

@@ -63,7 +63,7 @@ ioFilterGroupNew(void)
 
     IoFilterGroup *this = NULL;
 
-    OBJ_NEW_BEGIN(IoFilterGroup, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(IoFilterGroup, .childType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

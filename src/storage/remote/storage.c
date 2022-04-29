@@ -451,7 +451,7 @@ storageRemoteNew(
 
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageRemote, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(StorageRemote, .childType = memTypeMany, .allocType = memTypeMany)
     {
         StorageRemote *driver = OBJ_NEW_ALLOC();
 

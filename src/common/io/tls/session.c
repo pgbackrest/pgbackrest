@@ -371,7 +371,7 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 
     IoSession *this = NULL;
 
-    OBJ_NEW_BEGIN(TlsSession, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(TlsSession, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         TlsSession *driver = OBJ_NEW_ALLOC();
 

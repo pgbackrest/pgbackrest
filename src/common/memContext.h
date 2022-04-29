@@ -151,7 +151,7 @@ MEM_CONTEXT_TEMP_END();
     do                                                                                                                             \
     {                                                                                                                              \
         MemContext *MEM_CONTEXT_TEMP() = memContextNewP(                                                                           \
-            "temporary", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany);                              \
+            "temporary", .childType = memTypeMany, .allocType = memTypeMany);                                                      \
         memContextSwitch(MEM_CONTEXT_TEMP());
 
 #define MEM_CONTEXT_TEMP_RESET_BEGIN()                                                                                             \
@@ -168,7 +168,7 @@ MEM_CONTEXT_TEMP_END();
             memContextSwitchBack();                                                                                                \
             memContextDiscard();                                                                                                   \
             MEM_CONTEXT_TEMP() = memContextNewP(                                                                                   \
-                "temporary", .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany);                          \
+                "temporary", .childType = memTypeMany, .allocType = memTypeMany);                                                  \
             memContextSwitch(MEM_CONTEXT_TEMP());                                                                                  \
             MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                        \
         }                                                                                                                          \
@@ -205,27 +205,20 @@ Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerpl
 // memContextDisard() before switching back from the parent context.
 typedef enum
 {
-    memContextChildTypeNone = 0,
-    memContextChildTypeOne = 1,
-    memContextChildTypeMany = 2,
-} MemContextChildType;
-
-typedef enum
-{
-    memContextAllocTypeNone = 0,
-    memContextAllocTypeOne = 1,
-    memContextAllocTypeMany = 2,
-} MemContextAllocType;
+    memTypeNone = 0,
+    memTypeOne = 1,
+    memTypeMany = 2,
+} MemType;
 
 #define MEM_CONTEXT_ALLOC_EXTRA_MAX                                 UINT16_MAX // !!!
 
 typedef struct MemContextNewParam
 {
     VAR_PARAM_HEADER;
-    bool callback;                                                  // Is a callback allowed?
     uint16_t allocExtra;                                            // Extra memory to allocate with the context
-    MemContextAllocType allocType;                                  // How many allocations can this context have?
-    MemContextChildType childType;                                  // How many child contexts can this context have?
+    MemType allocType;                                              // How many allocations can this context have?
+    MemType childType;                                              // How many child contexts can this context have?
+    MemType callbackType;                                           // How many callbacks can this context have?
 } MemContextNewParam;
 
 #define memContextNewP(name, ...)                                                                                                  \

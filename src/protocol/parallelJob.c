@@ -27,7 +27,7 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 
     ProtocolParallelJob *this = NULL;
 
-    OBJ_NEW_BEGIN(ProtocolParallelJob, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(ProtocolParallelJob, .childType = memTypeMany)
     {
         this = OBJ_NEW_ALLOC();
 

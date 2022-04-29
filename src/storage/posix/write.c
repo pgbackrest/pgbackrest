@@ -245,7 +245,7 @@ storageWritePosixNew(
 
     StorageWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWritePosix, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany, .callback = true)
+    OBJ_NEW_BEGIN(StorageWritePosix, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
     {
         StorageWritePosix *driver = OBJ_NEW_ALLOC();
 

@@ -949,7 +949,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany)
+        OBJ_NEW_BEGIN(Manifest, .childType = memTypeMany)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.backupOptionOnline = true;
@@ -1033,7 +1033,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany)
+        OBJ_NEW_BEGIN(Manifest, .childType = memTypeMany)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -1070,7 +1070,7 @@ testRun(void)
 
         Manifest *manifestPrior = NULL;
 
-        OBJ_NEW_BEGIN(Manifest, .childType = memContextChildTypeMany)
+        OBJ_NEW_BEGIN(Manifest, .childType = memTypeMany)
         {
             manifestPrior = manifestNewInternal();
             manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");

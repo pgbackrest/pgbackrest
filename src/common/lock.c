@@ -375,7 +375,7 @@ lockAcquire(
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN(Lock, .childType = memContextChildTypeMany)
+            MEM_CONTEXT_NEW_BEGIN(Lock, .childType = memTypeMany)
             {
                 lockLocal.memContext = MEM_CONTEXT_NEW();
                 lockLocal.execId = strDup(execId);

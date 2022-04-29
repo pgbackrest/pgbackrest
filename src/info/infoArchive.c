@@ -69,7 +69,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 
     InfoArchive *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoArchive, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(InfoArchive, .childType = memTypeMany)
     {
         this = infoArchiveNewInternal();
 
@@ -94,7 +94,7 @@ infoArchiveNewLoad(IoRead *read)
 
     InfoArchive *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoArchive, .childType = memContextChildTypeMany)
+    OBJ_NEW_BEGIN(InfoArchive, .childType = memTypeMany)
     {
         this = infoArchiveNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);

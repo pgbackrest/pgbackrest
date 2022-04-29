@@ -41,7 +41,7 @@ bufNew(size_t size)
 
     Buffer *this = NULL;
 
-    OBJ_NEW_BEGIN(Buffer, .allocType = memContextAllocTypeOne)
+    OBJ_NEW_BEGIN(Buffer, .allocType = memTypeOne)
     {
         // Create object
         this = OBJ_NEW_ALLOC();

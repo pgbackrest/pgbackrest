@@ -94,7 +94,7 @@ ioBufferReadNew(const Buffer *buffer)
 
     IoRead *this = NULL;
 
-    OBJ_NEW_BEGIN(IoBufferRead, .childType = memContextChildTypeMany, .allocType = memContextAllocTypeMany)
+    OBJ_NEW_BEGIN(IoBufferRead, .childType = memTypeMany, .allocType = memTypeMany)
     {
         IoBufferRead *driver = OBJ_NEW_ALLOC();
 
