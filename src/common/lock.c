@@ -321,7 +321,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
         if (result == -1)
         {
             // Error when requested
-            if (failOnNoLock)
+            if (failOnNoLock || errNo != EWOULDBLOCK)
             {
                 const String *errorHint = NULL;
 

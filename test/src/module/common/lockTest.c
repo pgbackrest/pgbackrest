@@ -87,6 +87,8 @@ testRun(void)
             strZ(strNewFmt("unable to acquire lock on file '%s': Is a directory", strZ(dirLock))));
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("permissions error throw regardless of failOnLock");
+
         String *noPermLock = strNewZ(TEST_PATH "/noperm/noperm");
 
         HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(strPath(noPermLock)));
@@ -94,6 +96,13 @@ testRun(void)
 
         TEST_ERROR(
             lockAcquireFile(noPermLock, 100, true), LockAcquireError,
+            strZ(
+                strNewFmt(
+                    "unable to acquire lock on file '%s': Permission denied\n"
+                        "HINT: does the user running pgBackRest have permissions on the '%s' file?",
+                    strZ(noPermLock), strZ(noPermLock))));
+        TEST_ERROR(
+            lockAcquireFile(noPermLock, 100, false), LockAcquireError,
             strZ(
                 strNewFmt(
                     "unable to acquire lock on file '%s': Permission denied\n"
@@ -131,6 +140,8 @@ testRun(void)
                         strNewFmt(
                             "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
                             "HINT: is another pgBackRest process running?", strZ(backupLock))));
+
+                TEST_RESULT_VOID(lockAcquireFile(backupLock, 0, false), "success when failOnLock = false");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
