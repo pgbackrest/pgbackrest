@@ -334,8 +334,8 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     userInit();
 
                     errorHint = strNewFmt(
-                        "\nHINT: does the '%s/%s' user/group running " PROJECT_NAME " have permissions on the '%s' file?",
-                        strZ(userName()), strZ(groupName()), strZ(lockFile));
+                        "\nHINT: does '%s:%s' running " PROJECT_NAME " have permissions on the '%s' file?", strZ(userName()),
+                        strZ(groupName()), strZ(lockFile));
                 }
 
                 THROW_FMT(

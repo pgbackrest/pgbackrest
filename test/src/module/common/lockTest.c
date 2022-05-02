@@ -97,12 +97,12 @@ testRun(void)
         TEST_ERROR_FMT(
             lockAcquireFile(noPermLock, 100, true), LockAcquireError,
             "unable to acquire lock on file '%s': Permission denied\n"
-            "HINT: does the '" TEST_USER "/" TEST_GROUP "' user/group running pgBackRest have permissions on the '%s' file?",
+            "HINT: does '" TEST_USER ":" TEST_GROUP "' running pgBackRest have permissions on the '%s' file?",
             strZ(noPermLock), strZ(noPermLock));
         TEST_ERROR_FMT(
             lockAcquireFile(noPermLock, 100, false), LockAcquireError,
             "unable to acquire lock on file '%s': Permission denied\n"
-            "HINT: does the '" TEST_USER "/" TEST_GROUP "' user/group running pgBackRest have permissions on the '%s' file?",
+            "HINT: does '" TEST_USER ":" TEST_GROUP "' running pgBackRest have permissions on the '%s' file?",
             strZ(noPermLock), strZ(noPermLock));
 
         // -------------------------------------------------------------------------------------------------------------------------

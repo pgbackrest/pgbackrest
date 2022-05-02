@@ -116,6 +116,28 @@
 
                         <p>Improve error message for invalid <br-option>repo-azure-key</br-option>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1722"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hint to check the log on <cmd>archive-get</cmd>/<cmd>archive-push</cmd> async error.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1722"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add user:group to lock permission error.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
