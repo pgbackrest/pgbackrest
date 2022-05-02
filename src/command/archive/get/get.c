@@ -20,6 +20,7 @@ Archive Get Command
 #include "common/wait.h"
 #include "config/config.h"
 #include "config/exec.h"
+#include "config/load.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
@@ -776,8 +777,11 @@ cmdArchiveGet(void)
                 if (!foundOk)
                 {
                     THROW_FMT(
-                        ArchiveTimeoutError, "unable to get WAL file '%s' from the archive asynchronously after %s second(s)",
-                        strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
+                        ArchiveTimeoutError,
+                        "unable to get WAL file '%s' from the archive asynchronously after %s second(s)\n"
+                        "HINT: check '%s' for errors.",
+                        strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)),
+                        strZ(cfgLoadLogFileName(cfgCmdRoleAsync)));
                 }
                 // Else report that the WAL segment could not be found
                 else
