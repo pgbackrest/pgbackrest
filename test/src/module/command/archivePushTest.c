@@ -654,7 +654,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchivePush(), ArchiveTimeoutError,
-            "unable to push WAL file 'bogus' to the archive asynchronously after 1 second(s)");
+            "unable to push WAL file 'bogus' to the archive asynchronously after 1 second(s)\n"
+            "HINT: check '" HRN_PATH "/test-archive-push-async.log' for errors.");
 
         // Create pg_control and archive.info for next set of tests
         // -------------------------------------------------------------------------------------------------------------------------
@@ -728,7 +729,8 @@ testRun(void)
 
                 TEST_ERROR(
                     cmdArchivePush(), ArchiveTimeoutError,
-                    "unable to push WAL file '000000010000000100000001' to the archive asynchronously after 1 second(s)");
+                    "unable to push WAL file '000000010000000100000001' to the archive asynchronously after 1 second(s)\n"
+                    "HINT: check '" HRN_PATH "/test-archive-push-async.log' for errors.");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
