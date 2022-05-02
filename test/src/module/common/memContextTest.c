@@ -18,9 +18,7 @@ testFree(void *thisVoid)
     TEST_RESULT_INT(this->state, memContextStateFreeing, "state should still be freeing after memContextFree() in callback");
 
     TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "cannot assign callback to inactive context");
-
     TEST_ERROR(memContextSwitch(this), AssertError, "cannot switch to inactive context");
-    TEST_ERROR(memContextName(this), AssertError, "cannot get name for inactive context");
 
     memContextCallbackArgument = this;
 
@@ -80,7 +78,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Make sure top context was created
-        TEST_RESULT_Z(memContextName(memContextTop()), "TOP", "top context should exist");
+        TEST_RESULT_Z(memContextTop()->name, "TOP", "top context should exist");
         TEST_RESULT_INT(memContextTop()->contextChildListSize, 0, "top context should init with zero children");
         TEST_RESULT_PTR(memContextTop()->contextChildList, NULL, "top context child list empty");
 
@@ -92,7 +90,7 @@ testRun(void)
 
         MemContext *memContext = memContextNewP("test1");
         memContextKeep();
-        TEST_RESULT_Z(memContextName(memContext), "test1", "test1 context name");
+        TEST_RESULT_Z(memContext->name, "test1", "test1 context name");
         TEST_RESULT_PTR(memContext->contextParent, memContextTop(), "test1 context parent is top");
         TEST_RESULT_INT(memContextTop()->contextChildListSize, MEM_CONTEXT_INITIAL_SIZE, "initial top context child list size");
 
@@ -110,7 +108,7 @@ testRun(void)
             memContextKeep();
             TEST_RESULT_BOOL(
                 memContextTop()->contextChildList[contextIdx]->state == memContextStateActive, true, "new context is active");
-            TEST_RESULT_Z(memContextName(memContextTop()->contextChildList[contextIdx]), "test-filler", "new context name");
+            TEST_RESULT_Z(memContextTop()->contextChildList[contextIdx]->name, "test-filler", "new context name");
         }
 
         // This forces the child context array to grow
@@ -134,7 +132,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             memContextTop()->contextChildList[1]->state == memContextStateActive,
             true, "new context in same index as freed context is active");
-        TEST_RESULT_Z(memContextName(memContextTop()->contextChildList[1]), "test-reuse", "new context name");
+        TEST_RESULT_Z(memContextTop()->contextChildList[1]->name, "test-reuse", "new context name");
         TEST_RESULT_UINT(memContextTop()->contextChildFreeIdx, 2, "check context free idx");
 
         // Next context will be at the end
@@ -287,23 +285,23 @@ testRun(void)
         // Check normal block
         MEM_CONTEXT_BEGIN(memContext)
         {
-            TEST_RESULT_Z(memContextName(memContextCurrent()), "test-block", "context is now test-block");
+            TEST_RESULT_Z(memContextCurrent()->name, "test-block", "context is now test-block");
         }
         MEM_CONTEXT_END();
 
-        TEST_RESULT_Z(memContextName(memContextCurrent()), "TOP", "context is now top");
+        TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context is now top");
 
         // Check block that errors
         TEST_ERROR(
             MEM_CONTEXT_BEGIN(memContext)
             {
-                TEST_RESULT_Z(memContextName(memContextCurrent()), "test-block", "context is now test-block");
+                TEST_RESULT_Z(memContextCurrent()->name, "test-block", "context is now test-block");
                 THROW(AssertError, "error in test block");
             }
             MEM_CONTEXT_END(),
             AssertError, "error in test block");
 
-        TEST_RESULT_Z(memContextName(memContextCurrent()), "TOP", "context is now top");
+        TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context is now top");
 
         // Reset temp mem context after a single interaction
         // -------------------------------------------------------------------------------------------------------------------------
@@ -333,11 +331,11 @@ testRun(void)
         {
             memContext = MEM_CONTEXT_NEW();
             TEST_RESULT_PTR(memContext, memContextCurrent(), "new mem context is current");
-            TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check context name");
+            TEST_RESULT_Z(memContext->name, memContextTestName, "check context name");
         }
         MEM_CONTEXT_NEW_END();
 
-        TEST_RESULT_Z(memContextName(memContextCurrent()), "TOP", "context name is now 'TOP'");
+        TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context name is now 'TOP'");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
         TEST_RESULT_BOOL(memContext->state == memContextStateActive, true, "new mem context is still active");
         memContextFree(memContext);
@@ -352,7 +350,7 @@ testRun(void)
             MEM_CONTEXT_NEW_BEGIN(memContextTestName)
             {
                 memContext = MEM_CONTEXT_NEW();
-                TEST_RESULT_Z(memContextName(memContext), memContextTestName, "check mem context name");
+                TEST_RESULT_Z(memContext->name, memContextTestName, "check mem context name");
                 THROW(AssertError, "create failed");
             }
             MEM_CONTEXT_NEW_END();
