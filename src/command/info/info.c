@@ -571,8 +571,8 @@ For each current backup in the backup.info file of the stanza, set the data for 
 ***********************************************************************************************************************************/
 static void
 backupList(
-    VariantList *backupSection, InfoStanzaRepo *stanzaData, const String *backupLabel, unsigned int repoIdxMin,
-    unsigned int repoIdxMax)
+    VariantList *backupSection, InfoStanzaRepo *stanzaData, const String *backupLabel, const unsigned int repoIdxMin,
+    const unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
@@ -642,7 +642,7 @@ backupList(
 Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
-stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, unsigned int repoIdxMin, unsigned int repoIdxMax)
+stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, const unsigned int repoIdxMin, const unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, stanzaRepoList);

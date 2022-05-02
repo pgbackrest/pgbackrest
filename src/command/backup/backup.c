@@ -1188,7 +1188,7 @@ backupJobResult(
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
 
                 // Store percentComplete as an integer
-                percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(*sizeProgress * 10000 / sizeTotal);
+                percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)*sizeProgress / (double)sizeTotal) * 10000);
 
                 strCatFmt(
                     logProgress, "%s, %u.%02u%%", strZ(strSizeFormat(copySize)), percentComplete / 100, percentComplete % 100);
