@@ -355,7 +355,7 @@ cfgLoadUpdateOption(void)
 }
 
 /**********************************************************************************************************************************/
-static String *
+String *
 cfgLoadLogFileName(const ConfigCommandRole commandRole)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
