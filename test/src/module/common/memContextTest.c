@@ -153,9 +153,8 @@ testRun(void)
             memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
             AssertError, "cannot free current context 'test5'");
 
-        memContextSwitch(memContextTop());
-        // memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
-        memContextFree(memContextTop());
+        TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
+        TEST_RESULT_VOID(memContextFree(memContextTop()), "free top");
 
         MemContext *noAllocation = memContextNewP("empty");
         memContextKeep();

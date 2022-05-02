@@ -3,6 +3,7 @@ Memory Context Manager
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <stdio.h> // !!!
 #include <stdlib.h>
 #include <string.h>
 
@@ -793,13 +794,17 @@ memContextCallbackRecurse(MemContext *const this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->active);
+
+    fprintf(stdout, "!!! IN memContextCallbackRecurse %s\n", this->name);
+    fflush(stdout);
+
+    // Actions against the context are no longer allowed
+    this->active = false;
 
     // Callback
     if (this->callbackFunction)
-    {
         this->callbackFunction(this->callbackArgument);
-        this->callbackFunction = NULL;
-    }
 
     // Child callbacks
     for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
@@ -812,8 +817,76 @@ memContextCallbackRecurse(MemContext *const this)
 }
 
 /**********************************************************************************************************************************/
+static void
+memContextFreeRecurse(MemContext *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
+    FUNCTION_TEST_END();
+
+    fprintf(stdout, "!!! IN memContextFreeRecurse %s CURRENT %s\n", this->name, memContextStack[memContextCurrentStackIdx].memContext->name); fflush(stdout);
+
+    ASSERT(this != NULL);
+    ASSERT(!this->active);
+
+#ifdef DEBUG
+    // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
+    if (this == memContextStack[memContextCurrentStackIdx].memContext && this != &contextTop)
+    {
+        fprintf(stdout, "!!!ASSERT\n"); fflush(stdout);
+        THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
+    }
+#endif
+
+    // Free child contexts and list
+    if (this->contextChildListSize > 0)
+    {
+        // Free child contexts
+        for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
+        {
+            if (this->contextChildList[contextIdx] != NULL)
+                memContextFreeRecurse(this->contextChildList[contextIdx]);
+        }
+
+        // Free child context allocation list
+        memFreeInternal(this->contextChildList);
+        this->contextChildListSize = 0;
+    }
+
+    // Free memory allocations and list
+    if (this->allocListSize > 0)
+    {
+        for (unsigned int allocIdx = 0; allocIdx < this->allocListSize; allocIdx++)
+            if (this->allocList[allocIdx] != NULL)
+                memFreeInternal(this->allocList[allocIdx]);
+
+        memFreeInternal(this->allocList);
+        this->allocListSize = 0;
+    }
+
+    // If the context index is lower than the current free index in the parent then replace it
+    if (this->contextParent != NULL && this->contextParentIdx < this->contextParent->contextChildFreeIdx)
+        this->contextParent->contextChildFreeIdx = this->contextParentIdx;
+
+    // Make top context active again
+    if (this == &contextTop)
+    {
+        this->active = true;
+    }
+    // Else free the memory context so the slot can be reused
+    else
+    {
+        ASSERT(this->contextParent != NULL);
+
+        this->contextParent->contextChildList[this->contextParentIdx] = NULL;
+        memFreeInternal(this);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 void
-memContextFree(MemContext *this)
+memContextFree(MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -822,66 +895,17 @@ memContextFree(MemContext *this)
     ASSERT(this != NULL);
     ASSERT(this->active);
 
-#ifdef DEBUG
-    // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
-    if (this == memContextStack[memContextCurrentStackIdx].memContext && this != &contextTop)
-        THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
-#endif
-
-    // Set state to freeing so that actions against the context are now longer allowed
-    this->active = false;
-
-    // Execute callback if defined
+    // Execute callbacks
     TRY_BEGIN()
     {
+        fprintf(stdout, "!!!BEGIN\n"); fflush(stdout);
         memContextCallbackRecurse(this);
     }
-    // Finish cleanup even if the callback fails
+    // Finish cleanup even if a callback fails
     FINALLY()
     {
-        // Free child contexts and list
-        if (this->contextChildListSize > 0)
-        {
-            // Free child contexts
-            for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
-            {
-                if (this->contextChildList[contextIdx] != NULL)
-                    memContextFree(this->contextChildList[contextIdx]);
-            }
-
-            // Free child context allocation list
-            memFreeInternal(this->contextChildList);
-            this->contextChildListSize = 0;
-        }
-
-        // Free memory allocations and list
-        if (this->allocListSize > 0)
-        {
-            for (unsigned int allocIdx = 0; allocIdx < this->allocListSize; allocIdx++)
-                if (this->allocList[allocIdx] != NULL)
-                    memFreeInternal(this->allocList[allocIdx]);
-
-            memFreeInternal(this->allocList);
-            this->allocListSize = 0;
-        }
-
-        // If the context index is lower than the current free index in the parent then replace it
-        if (this->contextParent != NULL && this->contextParentIdx < this->contextParent->contextChildFreeIdx)
-            this->contextParent->contextChildFreeIdx = this->contextParentIdx;
-
-        // Make top context active again
-        if (this == &contextTop)
-        {
-            this->active = true;
-        }
-        // Else free the memory context so the slot can be reused
-        else
-        {
-            ASSERT(this->contextParent != NULL);
-
-            this->contextParent->contextChildList[this->contextParentIdx] = NULL;
-            memFreeInternal(this);
-        }
+        fprintf(stdout, "!!!FINALLY\n"); fflush(stdout);
+        memContextFreeRecurse(this);
     }
     TRY_END();
 
