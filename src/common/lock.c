@@ -237,7 +237,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build key value store for second line json
+        // Build the json object
         JsonWrite *json = jsonWriteNewP();
         jsonWriteObjectBegin(json);
 
