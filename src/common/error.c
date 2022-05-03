@@ -188,9 +188,6 @@ errorTypeExtends(const ErrorType *child, const ErrorType *parent)
 const ErrorType *
 errorType(void)
 {
-    // if (errorContext.error.errorType == NULL)
-    //     *(const char **)errorContext.error.errorType = "BOGUS";
-
     assert(errorContext.error.errorType != NULL);
 
     return errorContext.error.errorType;
@@ -305,8 +302,6 @@ errorInternalJump(void)
 bool
 errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
 {
-    // fprintf(stdout, "!!!CATCH\n"); fflush(stdout);
-
     // If just entering error state clean up the stack
     if (errorInternalState() == errorStateTry)
     {
@@ -353,32 +348,22 @@ bool
 errorInternalFinally(void)
 {
     // fprintf(stdout, "!!!FINALLY\n"); fflush(stdout);
-
-    // If just entering error state clean up the stack
-    if (errorInternalState() == errorStateTry)
+    if (errorInternalState() < errorStateEnd)
     {
-        for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
-            errorContext.handlerList[handlerIdx](errorTryDepth());
+        // If just entering error state clean up the stack
+        if (errorInternalState() == errorStateTry)
+        {
+            for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
+                errorContext.handlerList[handlerIdx](errorTryDepth());
+        }
+        else if (errorInternalState() == errorStateFinally)
+        {
+            // Any catch blocks have been processed and none of them called RETHROW() so clear the error
+            if (!errorContext.tryList[errorContext.tryTotal].uncaught)
+                errorContext.error = (Error){0};
+        }
 
-        errorContext.tryList[errorContext.tryTotal].state += 3;
-        return true;
-    }
-
-    // !!!
-    if (errorInternalState() == errorStateCatch)
-    {
-        errorContext.tryList[errorContext.tryTotal].state += 2;
-        return true;
-    }
-
-    // !!!
-    if (errorInternalState() == errorStateFinally)
-    {
-        // Any catch blocks have been processed and none of them called RETHROW() so clear the error
-        if (!errorContext.tryList[errorContext.tryTotal].uncaught)
-            errorContext.error = (Error){0};
-
-        errorContext.tryList[errorContext.tryTotal].state++;
+        errorContext.tryList[errorContext.tryTotal].state += errorStateEnd - errorContext.tryList[errorContext.tryTotal].state;
         return true;
     }
 
@@ -389,8 +374,6 @@ errorInternalFinally(void)
 void
 errorInternalTryEnd(void)
 {
-    // fprintf(stdout, "!!!END\n"); fflush(stdout);
-
     // Any catch blocks have been processed and none of them called RETHROW() so clear the error
     if (errorContext.tryList[errorContext.tryTotal].state == errorStateFinally &&
         !errorContext.tryList[errorContext.tryTotal].uncaught)

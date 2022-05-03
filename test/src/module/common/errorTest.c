@@ -192,12 +192,20 @@ testRun(void)
                     TRY_BEGIN()
                     {
                         assert(errorTryDepth() == 4);
-                        tryDone = true;
 
-                        char bigMessage[sizeof(messageBuffer) + 128];
-                        memset(bigMessage, 'A', sizeof(bigMessage));
+                        TRY_BEGIN()
+                        {
+                            assert(errorTryDepth() == 5);
+                            tryDone = true;
+                        }
+                        FINALLY()
+                        {
+                            char bigMessage[sizeof(messageBuffer) + 128];
+                            memset(bigMessage, 'A', sizeof(bigMessage));
 
-                        THROW(AssertError, bigMessage);
+                            THROW(AssertError, bigMessage);
+                        }
+                        TRY_END();
                     }
                     CATCH_ANY()
                     {
