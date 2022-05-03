@@ -13,7 +13,7 @@ testFree(void *thisVoid)
 {
     MemContext *this = thisVoid;
 
-    TEST_RESULT_BOOL(this->active, false, "state inactive in callback");
+    TEST_RESULT_BOOL(this->active, false, "mem context inactive in callback");
 
     TEST_ERROR(memContextFree(this), AssertError, "assertion 'this->active' failed");
     TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "assertion 'this->active' failed");
@@ -164,7 +164,6 @@ testRun(void)
             "cannot free current context 'test5'");
 
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
-        // memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
         TEST_RESULT_VOID(memContextFree(memContextTop()), "free top");
 
         MemContext *noAllocation = memContextNewP(
