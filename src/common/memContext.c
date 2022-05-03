@@ -860,21 +860,21 @@ memContextFreeRecurse(MemContext *const this)
     if (this->contextParent != NULL && this->contextParentIdx < this->contextParent->contextChildFreeIdx)
         this->contextParent->contextChildFreeIdx = this->contextParentIdx;
 
-#ifdef DEBUG
-    // Make top context active again
-    if (this == &contextTop)
-    {
-        this->active = true;
-    }
-    // Else free the memory context so the slot can be reused
-    else
-#endif
+    // Free the memory context so the slot can be reused (if not the top mem context)
+    if (this != &contextTop)
     {
         ASSERT(this->contextParent != NULL);
 
         this->contextParent->contextChildList[this->contextParentIdx] = NULL;
         memFreeInternal(this);
     }
+#ifdef DEBUG
+    // Else make the top mem context active again
+    else
+    {
+        this->active = true;
+    }
+#endif
 
     FUNCTION_TEST_RETURN_VOID();
 }
