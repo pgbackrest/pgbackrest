@@ -44,7 +44,7 @@ Maximum allowed number of nested try blocks
 /***********************************************************************************************************************************
 States for each try
 ***********************************************************************************************************************************/
-typedef enum {errorStateTry, errorStateCatch, errorStateEnd} ErrorState;
+typedef enum {errorStateTry, errorStateCatch, errorStateFinally, errorStateEnd} ErrorState;
 
 /***********************************************************************************************************************************
 Track error handling
@@ -298,6 +298,16 @@ errorInternalJump(void)
     return &errorContext.jumpList[errorContext.tryTotal - 1];
 }
 
+/***********************************************************************************************************************************
+Clean the error stack
+***********************************************************************************************************************************/
+static void
+errorInternalHandlerClean(void)
+{
+    for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
+        errorContext.handlerList[handlerIdx](errorTryDepth());
+}
+
 /**********************************************************************************************************************************/
 bool
 errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
@@ -305,9 +315,7 @@ errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
     // If just entering error state clean up the stack
     if (errorInternalState() == errorStateTry)
     {
-        for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
-            errorContext.handlerList[handlerIdx](errorTryDepth());
-
+        errorInternalHandlerClean();
         errorContext.tryList[errorContext.tryTotal].state++;
     }
 
@@ -344,15 +352,39 @@ errorInternalPropagate(void)
 }
 
 /**********************************************************************************************************************************/
+bool
+errorInternalFinally(void)
+{
+    // If finally has not already been processed
+    if (errorInternalState() < errorStateEnd)
+    {
+        // If just entering error state clean up the stack
+        if (errorInternalState() == errorStateTry)
+        {
+            errorInternalHandlerClean();
+        }
+        // Else any catch blocks have been processed and none of them called RETHROW() so clear the error
+        else if (errorInternalState() == errorStateFinally && !errorContext.tryList[errorContext.tryTotal].uncaught)
+            errorContext.error = (Error){0};
+
+        // Advance to end state
+        errorContext.tryList[errorContext.tryTotal].state += errorStateEnd - errorContext.tryList[errorContext.tryTotal].state;
+
+        // Process finally block
+        return true;
+    }
+
+    // Skip finally block
+    return false;
+}
+
+/**********************************************************************************************************************************/
 void
 errorInternalTryEnd(void)
 {
     // Any catch blocks have been processed and none of them called RETHROW() so clear the error
-    if (errorContext.tryList[errorContext.tryTotal].state == errorStateEnd &&
-        !errorContext.tryList[errorContext.tryTotal].uncaught)
-    {
+    if (errorInternalState() == errorStateFinally && !errorContext.tryList[errorContext.tryTotal].uncaught)
         errorContext.error = (Error){0};
-    }
 
     // Remove the try
     errorContext.tryTotal--;
