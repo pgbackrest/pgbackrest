@@ -96,13 +96,47 @@ testRun(void)
         }
         FINALLY()
         {
-            // assert(errorContext.tryList[1].state == errorStateTry);
+            assert(errorContext.tryList[1].state == errorStateEnd);
             finallyDone = true;
         }
         TRY_END();
 
         assert(tryDone);
         assert(!catchDone);
+        assert(finallyDone);
+        assert(errorContext.tryTotal == 0);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("error in FINALLY"))
+    {
+        volatile bool tryDone = false;
+        bool catchDone = false;
+        volatile bool finallyDone = false;
+
+        TRY_BEGIN()
+        {
+            TRY_BEGIN()
+            {
+                assert(errorContext.tryTotal == 2);
+                tryDone = true;
+            }
+            FINALLY()
+            {
+                assert(errorContext.tryList[2].state == errorStateEnd);
+                finallyDone = true;
+                THROW(AssertError, "ERROR");
+            }
+            TRY_END();
+        }
+        CATCH_FATAL()
+        {
+            catchDone = true;
+        }
+        TRY_END();
+
+        assert(tryDone);
+        assert(catchDone);
         assert(finallyDone);
         assert(errorContext.tryTotal == 0);
     }
@@ -200,7 +234,7 @@ testRun(void)
         {
             assert(testErrorHandlerTryDepth == 1);
             assert(errorTryDepth() == 1);
-            assert(errorContext.tryList[1].state == errorStateEnd);
+            assert(errorContext.tryList[1].state == errorStateFinally);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
 
             catchDone = true;
@@ -250,7 +284,6 @@ testRun(void)
         FINALLY()
         {
             finallyDone = true;
-            THROW(AssertError, "!!!EXIT");
         }
         TRY_END();
 

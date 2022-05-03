@@ -344,29 +344,49 @@ errorInternalPropagate(void)
 }
 
 /**********************************************************************************************************************************/
-void
+bool
 errorInternalFinally(void)
 {
-    // Any catch blocks have been processed and none of them called RETHROW() so clear the error
-    if (errorContext.tryList[errorContext.tryTotal].state == errorStateFinally &&
-        !errorContext.tryList[errorContext.tryTotal].uncaught)
+    // If just entering error state clean up the stack
+    if (errorInternalState() == errorStateTry)
     {
-        errorContext.error = (Error){0};
+        for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
+            errorContext.handlerList[handlerIdx](errorTryDepth());
+
+        errorContext.tryList[errorContext.tryTotal].state += 3;
+        return true;
     }
 
-    // Increment state
-    errorContext.tryList[errorContext.tryTotal].state++;
+    // !!!
+    if (errorInternalState() == errorStateCatch)
+    {
+        errorContext.tryList[errorContext.tryTotal].state += 2;
+        return true;
+    }
 
-    // Remove the try
-    errorContext.tryTotal--;
+    // !!!
+    if (errorInternalState() == errorStateFinally)
+    {
+        errorContext.tryList[errorContext.tryTotal].state++;
+        return true;
+    }
+
+    return false;
 }
 
 /**********************************************************************************************************************************/
 void
 errorInternalTryEnd(void)
 {
-    if (errorContext.tryList[errorContext.tryTotal + 1].state == errorStateFinally)
-        errorInternalFinally();
+    // Any catch blocks have been processed and none of them called RETHROW() so clear the error
+    if (errorContext.tryList[errorContext.tryTotal].state >= errorStateFinally &&
+        !errorContext.tryList[errorContext.tryTotal].uncaught)
+    {
+        errorContext.error = (Error){0};
+    }
+
+    // Remove the try
+    errorContext.tryTotal--;
 
     // If not caught in the last try then propagate
     if (errorContext.tryList[errorContext.tryTotal + 1].uncaught)
