@@ -1346,8 +1346,7 @@ restoreSelectiveExpression(Manifest *manifest)
             {
                 const ManifestDb *systemDb = manifestDb(manifest, systemDbIdx);
 
-                if (strEqZ(systemDb->name, "template0") || strEqZ(systemDb->name, "template1") ||
-                    strEqZ(systemDb->name, "postgres") || systemDb->id < PG_USER_OBJECT_MIN_ID)
+                if (pgDbIsSystem(systemDb->name) || pgDbIsSystemId(systemDb->id))
                 {
                     // Build the system id list and add to the dbList for logging and checking
                     const String *systemDbId = varStrForce(VARUINT(systemDb->id));
@@ -1366,7 +1365,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
                     // In the highly unlikely event that a system database was somehow added after the backup began, it will only be
                     // found in the file list and not the manifest db section, so add it to the system database list
-                    if (cvtZToUInt64(strZ(dbId)) < PG_USER_OBJECT_MIN_ID)
+                    if (pgDbIsSystemId(cvtZToUInt(strZ(dbId))))
                         strLstAddIfMissing(systemDbIdList, dbId);
 
                     strLstAddIfMissing(dbList, dbId);
