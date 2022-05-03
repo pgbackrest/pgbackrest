@@ -651,7 +651,9 @@ testRun(void)
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20181119-152138F_20181119-152155I={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-annotation\":{\"key1\":null},"
+            "\"backup-archive-start\":\"000000010000000000000003\","
             "\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
             "\"backup-lsn-start\":\"285/89000028\",\"backup-lsn-stop\":\"285/89001F88\","
@@ -670,6 +672,7 @@ testRun(void)
             "\"option-online\":true}\n"
             "20201116-155000F_20201119-152100I={"
             "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-annotation\":{\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"},"
             "\"backup-archive-start\":\"000000010000000000000005\",\"backup-archive-stop\":\"000000010000000000000005\","
             "\"backup-error\":false,\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
@@ -1129,6 +1132,9 @@ testRun(void)
                                     "\"type\":\"diff\""
                                 "},"
                                 "{"
+                                    "\"annotation\":{"
+                                        "\"key1\":null"
+                                    "},"
                                     "\"archive\":{"
                                         "\"start\":\"000000010000000000000003\","
                                         "\"stop\":null"
@@ -1226,6 +1232,10 @@ testRun(void)
                                     "\"type\":\"full\""
                                 "},"
                                 "{"
+                                    "\"annotation\":{"
+                                        "\"extra key\":\"this is an annotation\","
+                                        "\"source\":\"this is another annotation\""
+                                    "},"
                                     "\"archive\":{"
                                         "\"start\":\"000000010000000000000005\","
                                         "\"stop\":\"000000010000000000000005\""
@@ -1818,7 +1828,7 @@ testRun(void)
             "text - backup set requested, no db and no checksum error");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup set requested with missing backup lsn stop location and annotations");
+        TEST_TITLE("backup set requested with missing backup lsn stop location");
 
         argList2 = strLstDup(argListTextStanzaOpt);
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201116-155000F_20201119-152100I");
@@ -1830,9 +1840,6 @@ testRun(void)
             TEST_MANIFEST_HEADER2
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_NO_DB
-            "\n"                                                                                                                   \
-            "[metadata]\n"                                                                                                         \
-            "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"                     \
             TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
@@ -1861,43 +1868,6 @@ testRun(void)
             "                extra key: this is an annotation\n"
             "                source: this is another annotation\n",
             "text - backup set requested, no lsn start/stop location");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup set requested with null annotations");
-
-        HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201116-155000F_20201119-152100I/" BACKUP_MANIFEST_FILE,
-            TEST_MANIFEST_HEADER2
-            TEST_MANIFEST_TARGET_NO_LINK
-            TEST_MANIFEST_NO_DB
-            "\n"                                                                                                                   \
-            "[metadata]\n"                                                                                                         \
-            "annotation={\"key1\":null}\n"                                                                                         \
-            TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR
-            TEST_MANIFEST_FILE_DEFAULT
-            TEST_MANIFEST_LINK
-            TEST_MANIFEST_LINK_DEFAULT
-            TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT,
-            .comment = "write manifest - with null annotations");
-
-        TEST_RESULT_STR_Z(
-            infoRender(),
-            "stanza: stanza1\n"
-            "    status: ok\n"
-            "    cipher: none\n"
-            "\n"
-            "    db (current)\n"
-            "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
-            "\n"
-            "        incr backup: 20201116-155000F_20201119-152100I\n"
-            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
-            "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
-            "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20201116-155000F\n"
-            "            database list: none\n",
-            "text - backup set requested, null annotations");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: stanza found");

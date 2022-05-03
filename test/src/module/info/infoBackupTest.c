@@ -457,6 +457,24 @@ testRun(void)
         TEST_RESULT_UINT(backupData.backupInfoRepoSizeDelta, 8557, "repo backup size");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("infoBackupDataAnnotationSet()");
+
+        KeyValue *annotationKV = kvNew();
+        kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
+        kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
+        kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
+        kvPut(annotationKV, VARSTRDEF("key to remove"), VARSTRDEF("step 1"));
+        TEST_RESULT_VOID(
+            infoBackupDataAnnotationSet(
+                infoBackup, STRDEF("20190818-084502F_20190820-084502I"), annotationKV), "add annotations");
+
+        annotationKV = kvNew();
+        kvPut(annotationKV, VARSTRDEF("key to remove"), VARSTRDEF(""));
+        TEST_RESULT_VOID(
+            infoBackupDataAnnotationSet(
+                infoBackup, STRDEF("20190818-084502F_20190820-084502I"), annotationKV), "remove empty annotations");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoBackupLoadFileReconstruct - skip/add backups");
 
         // Load configuration to set repo-path and stanza

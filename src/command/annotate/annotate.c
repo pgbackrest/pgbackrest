@@ -43,7 +43,7 @@ cmdAnnotate(void)
         if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
             THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(backupLabel));
 
-        // Track the number of backup manifests to update
+        // Track the number of backup sets to update in the backup info file
         unsigned int backupTotalProcessed = 0;
 
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
@@ -58,7 +58,7 @@ cmdAnnotate(void)
                 InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
                     storageRepo, INFO_BACKUP_PATH_FILE_STR, repoCipherType, cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
-                if (infoBackup != NULL && infoBackupLabelExists(infoBackup, backupLabel))
+                if (infoBackupLabelExists(infoBackup, backupLabel))
                 {
                     // Backup label found in backup.info
                     backupTotalProcessed++;
