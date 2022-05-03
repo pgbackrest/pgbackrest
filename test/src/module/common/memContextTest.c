@@ -154,6 +154,11 @@ testRun(void)
             AssertError, "cannot free current context 'test5'");
 
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
+
+        TEST_RESULT_VOID(
+            memContextFreeRecurse(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
+            "free context left in a bad state above");
+
         TEST_RESULT_VOID(memContextFree(memContextTop()), "free top");
 
         MemContext *noAllocation = memContextNewP("empty");

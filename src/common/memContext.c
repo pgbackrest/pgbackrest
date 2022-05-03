@@ -3,7 +3,6 @@ Memory Context Manager
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdio.h> // !!!
 #include <stdlib.h>
 #include <string.h>
 
@@ -796,10 +795,7 @@ memContextCallbackRecurse(MemContext *const this)
     ASSERT(this != NULL);
     ASSERT(this->active);
 
-    fprintf(stdout, "!!! IN memContextCallbackRecurse %s\n", this->name);
-    fflush(stdout);
-
-    // Actions against the context are no longer allowed
+    // Certain actions against the context are no longer allowed
     this->active = false;
 
     // Callback
@@ -824,18 +820,13 @@ memContextFreeRecurse(MemContext *const this)
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
     FUNCTION_TEST_END();
 
-    fprintf(stdout, "!!! IN memContextFreeRecurse %s CURRENT %s\n", this->name, memContextStack[memContextCurrentStackIdx].memContext->name); fflush(stdout);
-
     ASSERT(this != NULL);
     ASSERT(!this->active);
 
 #ifdef DEBUG
     // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
     if (this == memContextStack[memContextCurrentStackIdx].memContext && this != &contextTop)
-    {
-        fprintf(stdout, "!!!ASSERT\n"); fflush(stdout);
         THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
-    }
 #endif
 
     // Free child contexts and list
@@ -898,13 +889,11 @@ memContextFree(MemContext *const this)
     // Execute callbacks
     TRY_BEGIN()
     {
-        fprintf(stdout, "!!!BEGIN\n"); fflush(stdout);
         memContextCallbackRecurse(this);
     }
     // Finish cleanup even if a callback fails
     FINALLY()
     {
-        fprintf(stdout, "!!!FINALLY\n"); fflush(stdout);
         memContextFreeRecurse(this);
     }
     TRY_END();
