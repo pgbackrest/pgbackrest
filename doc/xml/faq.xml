@@ -113,6 +113,12 @@ process-max=1
         <p>The suffix is the SHA1 checksum used to verify file integrity. There is no way to omit it.</p>
     </section>
 
+    <section id="restore-speed">
+        <title>Does it take longer to restore the specific backup types (full, differential, incremental)?</title>
+
+        <p>The various backup types take the same amount of time to restore; they each directly retrieve files based on the backup manifest, which may refer to files which were stored in a previous backup run (in the case of unchanged files for incremental or differential backups).  While this means that there could be differences in time spent <i>taking</i> the given backup (depending on the backup type), the time spent in the restore process itself depends only on the size of the underlying database, whatever the source of the original files.</p>
+    </section>
+
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 
