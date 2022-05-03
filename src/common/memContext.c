@@ -396,7 +396,6 @@ memContextCallbackClear(MemContext *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->active);
 
     // Top context cannot have a callback
     ASSERT(this != &contextTop);
@@ -782,9 +781,8 @@ memContextClean(unsigned int tryDepth)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Execute callbacks for the context and all its childrens
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
+// Helper to execute callbacks for the context and all its children
 static void
 memContextCallbackRecurse(MemContext *const this)
 {
@@ -814,7 +812,7 @@ memContextCallbackRecurse(MemContext *const this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
+// Helper to free the context and all its children
 static void
 memContextFreeRecurse(MemContext *const this)
 {
@@ -892,7 +890,7 @@ memContextFree(MemContext *const this)
     {
         memContextCallbackRecurse(this);
     }
-    // Finish cleanup even if a callback fails
+    // Free context even if a callback fails
     FINALLY()
     {
         memContextFreeRecurse(this);
