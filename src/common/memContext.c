@@ -42,8 +42,8 @@ struct MemContext
 {
 #ifdef DEBUG
     const char *name;                                               // Indicates what the context is being used for
-#endif
     bool active:1;                                                  // Is the context currently active?
+#endif
     size_t allocExtra:16;                                           // Size of extra allocation (1kB max)
 
     unsigned int contextParentIdx;                                  // Index in the parent context list
@@ -71,8 +71,8 @@ static MemContext contextTop =
 {
 #ifdef DEBUG
     .name = "TOP",
-#endif
     .active = true,
+#endif
 };
 
 /***********************************************************************************************************************************
@@ -286,10 +286,10 @@ memContextNew(
 #ifdef DEBUG
         // Set the context name
         .name = name,
-#endif
+
         // Set new context active
         .active = true,
-
+#endif
         // Set extra allocation
         .allocExtra = param.allocExtra,
 
@@ -792,8 +792,10 @@ memContextCallbackRecurse(MemContext *const this)
 
     ASSERT(this != NULL);
 
+#ifdef DEBUG
     // Certain actions against the context are no longer allowed
     this->active = false;
+#endif
 
     // Callback
     if (this->callbackFunction)
@@ -858,6 +860,7 @@ memContextFreeRecurse(MemContext *const this)
     if (this->contextParent != NULL && this->contextParentIdx < this->contextParent->contextChildFreeIdx)
         this->contextParent->contextChildFreeIdx = this->contextParentIdx;
 
+#ifdef DEBUG
     // Make top context active again
     if (this == &contextTop)
     {
@@ -865,6 +868,7 @@ memContextFreeRecurse(MemContext *const this)
     }
     // Else free the memory context so the slot can be reused
     else
+#endif
     {
         ASSERT(this->contextParent != NULL);
 
