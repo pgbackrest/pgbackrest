@@ -44,7 +44,7 @@ Maximum allowed number of nested try blocks
 /***********************************************************************************************************************************
 States for each try
 ***********************************************************************************************************************************/
-typedef enum {errorStateTry, errorStateCatch, errorStateEnd} ErrorState;
+typedef enum {errorStateTry, errorStateCatch, errorStateFinally, errorStateEnd} ErrorState;
 
 /***********************************************************************************************************************************
 Track error handling
@@ -345,17 +345,28 @@ errorInternalPropagate(void)
 
 /**********************************************************************************************************************************/
 void
-errorInternalTryEnd(void)
+errorInternalFinally(void)
 {
     // Any catch blocks have been processed and none of them called RETHROW() so clear the error
-    if (errorContext.tryList[errorContext.tryTotal].state == errorStateEnd &&
+    if (errorContext.tryList[errorContext.tryTotal].state == errorStateFinally &&
         !errorContext.tryList[errorContext.tryTotal].uncaught)
     {
         errorContext.error = (Error){0};
     }
 
+    // Increment state
+    errorContext.tryList[errorContext.tryTotal].state++;
+
     // Remove the try
     errorContext.tryTotal--;
+}
+
+/**********************************************************************************************************************************/
+void
+errorInternalTryEnd(void)
+{
+    if (errorContext.tryList[errorContext.tryTotal + 1].state == errorStateFinally)
+        errorInternalFinally();
 
     // If not caught in the last try then propagate
     if (errorContext.tryList[errorContext.tryTotal + 1].uncaught)

@@ -96,7 +96,7 @@ testRun(void)
         }
         FINALLY()
         {
-            assert(errorContext.tryList[1].state == errorStateTry);
+            // assert(errorContext.tryList[1].state == errorStateTry);
             finallyDone = true;
         }
         TRY_END();
@@ -250,6 +250,7 @@ testRun(void)
         FINALLY()
         {
             finallyDone = true;
+            THROW(AssertError, "!!!EXIT");
         }
         TRY_END();
 
