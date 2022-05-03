@@ -131,6 +131,7 @@ testRun(void)
         }
         CATCH_FATAL()
         {
+            assert(errorType() == &AssertError);
             catchDone = true;
         }
         TRY_END();
