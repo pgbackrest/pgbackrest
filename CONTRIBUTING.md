@@ -707,6 +707,8 @@ When submitting a Pull Request:
 
 - Write a detailed comment to describe the purpose of your submission and any issue(s), if any, it is resolving; a link to the GitHub issue is also helpful.
 
+- Ensure your PR is targeted against the `integration` branch.
+
 After submitting a Pull Request:
 
 - One or more reviewers will be assigned.
