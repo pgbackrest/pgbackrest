@@ -108,41 +108,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("error in FINALLY"))
-    {
-        volatile bool tryDone = false;
-        bool catchDone = false;
-        volatile bool finallyDone = false;
-
-        TRY_BEGIN()
-        {
-            TRY_BEGIN()
-            {
-                assert(errorContext.tryTotal == 2);
-                tryDone = true;
-            }
-            FINALLY()
-            {
-                assert(errorContext.tryList[2].state == errorStateEnd);
-                finallyDone = true;
-                THROW(AssertError, "ERROR");
-            }
-            TRY_END();
-        }
-        CATCH_FATAL()
-        {
-            assert(errorType() == &AssertError);
-            catchDone = true;
-        }
-        TRY_END();
-
-        assert(tryDone);
-        assert(catchDone);
-        assert(finallyDone);
-        assert(errorContext.tryTotal == 0);
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("errorInternalThrow()"))
     {
         TEST_TITLE("specify all parameters");
@@ -200,6 +165,8 @@ testRun(void)
                         }
                         FINALLY()
                         {
+                            assert(errorContext.tryList[5].state == errorStateEnd);
+
                             char bigMessage[sizeof(messageBuffer) + 128];
                             memset(bigMessage, 'A', sizeof(bigMessage));
 
