@@ -186,7 +186,6 @@ typedef struct
  * On the high end, we can only support pages up to 32KB because lp_off/lp_len
  * are 15 bits.
  */
-
 typedef struct PageHeaderData
 {
 	/* XXX LSN is member of *any* block, not only page-organized ones */
