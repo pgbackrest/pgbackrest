@@ -357,7 +357,7 @@ testRun(void)
         // ------------------------------------------------------------------------------------------------------------------------
         // Failed context new block
         memContextTestName = "test-new-failed-block";
-        bool bCatch = false;
+        bool catch = false;
 
         TRY_BEGIN()
         {
@@ -371,11 +371,11 @@ testRun(void)
         }
         CATCH(AssertError)
         {
-            bCatch = true;
+            catch = true;
         }
         TRY_END();
 
-        TEST_RESULT_BOOL(bCatch, true, "new context error was caught");
+        TEST_RESULT_BOOL(catch, true, "new context error was caught");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
     }
 

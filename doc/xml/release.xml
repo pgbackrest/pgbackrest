@@ -16,6 +16,34 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.39dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-pull-request id="1732"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix error thrown from <code>FINALLY()</code> causing an infinite loop.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1722"/>
+                        <github-pull-request id="1730"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="geir.raness"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="geir.raness"/>
+                        </release-item-contributor-list>
+
+                        <p>Error on all lock failures except another process holding the lock.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <commit subject="Refactor target type checking for clarity in restore module."/>
@@ -11248,6 +11276,11 @@
         <contributor id="vidhya.gurumoorthi">
             <contributor-name-display>Vidhya Gurumoorthi</contributor-name-display>
             <contributor-id type="github">fpa-postgres</contributor-id>
+        </contributor>
+
+        <contributor id="geir.raness">
+            <contributor-name-display>Geir R&amp;aring;ness</contributor-name-display>
+            <contributor-id type="github">geirra</contributor-id>
         </contributor>
 
         <contributor id="greg.sabino.mullane">
