@@ -1072,6 +1072,7 @@ option:
     type: boolean
     default: true
     command:
+      archive-push: {}
       backup:
         depend:
           option: online
@@ -1080,6 +1081,7 @@ option:
             - true
       check: {}
     command-role:
+      async: {}
       main: {}
 
   archive-copy:
@@ -1101,9 +1103,11 @@ option:
     type: boolean
     default: true
     command:
+      archive-push: {}
       backup: {}
       check: {}
     command-role:
+      async: {}
       main: {}
     depend:
       option: archive-check

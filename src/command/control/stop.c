@@ -19,11 +19,6 @@ Stop Command
 #include "storage/storage.h"
 #include "storage/storage.intern.h"
 
-/***********************************************************************************************************************************
-Read contents of lock file. ??? This should be merged into the lock code.
-***********************************************************************************************************************************/
-LockData lockReadDataFile(const String *lockFile, int fd);
-
 /**********************************************************************************************************************************/
 void
 cmdStop(void)
@@ -70,41 +65,22 @@ cmdStop(void)
                         continue;
                     }
 
-                    // Add path to the lock file
+                    // Read the lock file
                     lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFile));
+                    LockReadResult lockRead = lockReadFileP(lockFile, .remove = true);
 
-                    // If we cannot open the lock file for any reason then warn and continue to next file
-                    if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)
+                    // If we cannot read the lock file for any reason then warn and continue to next file
+                    if (lockRead.status != lockReadStatusValid)
                     {
-                        LOG_WARN_FMT("unable to open lock file %s", strZ(lockFile));
+                        LOG_WARN_FMT("unable to read lock file %s", strZ(lockFile));
                         continue;
                     }
 
-                    // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing
-                    // the lock file so remove it now
-                    if (flock(fd, LOCK_EX | LOCK_NB) == 0)
-                    {
-                        unlink(strZ(lockFile));
-                        close(fd);
-                        continue;
-                    }
-
-                    // The file is locked so that means there is a running process - read the process id and send it a term signal
-                    const pid_t processId = lockReadDataFile(lockFile, fd).processId;
-
-                    // If the process id is defined then assume this is a valid lock file
-                    if (processId != 0)
-                    {
-                        if (kill(processId, SIGTERM) != 0)
-                            LOG_WARN_FMT("unable to send term signal to process %d", processId);
-                        else
-                            LOG_INFO_FMT("sent term signal to process %d", processId);
-                    }
+                    // The lock file is valid so that means there is a running process -- send a term signal to the process
+                    if (kill(lockRead.data.processId, SIGTERM) != 0)
+                        LOG_WARN_FMT("unable to send term signal to process %d", lockRead.data.processId);
                     else
-                    {
-                        unlink(strZ(lockFile));
-                        close(fd);
-                    }
+                        LOG_INFO_FMT("sent term signal to process %d", lockRead.data.processId);
                 }
             }
         }

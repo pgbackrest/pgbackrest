@@ -18,6 +18,7 @@ Lock Handler
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/user.h"
 #include "common/wait.h"
 #include "storage/helper.h"
 #include "storage/storage.intern.h"
@@ -67,22 +68,20 @@ lockFileName(const String *const stanza, const LockType lockType)
         FUNCTION_TEST_PARAM(ENUM, lockType);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]));
+    FUNCTION_TEST_RETURN(STRING, strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]));
 }
 
 /***********************************************************************************************************************************
 Read contents of lock file
 
 If a seek is required to get to the beginning of the data, that must be done before calling this function.
-
-??? This function should not be extern'd, but need to fix dependency in cmdStop().
 ***********************************************************************************************************************************/
 // Size of initial buffer used to load lock file
 #define LOCK_BUFFER_SIZE                                            128
 
 // Helper to read data
-LockData
-lockReadDataFile(const String *const lockFile, const int fd)
+static LockData
+lockReadFileData(const String *const lockFile, const int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, lockFile);
@@ -94,25 +93,119 @@ lockReadDataFile(const String *const lockFile, const int fd)
 
     LockData result = {0};
 
+    TRY_BEGIN()
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Read contents of file
+            Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
+            IoWrite *const write = ioBufferWriteNewOpen(buffer);
+
+            ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
+            ioWriteClose(write);
+
+            // Parse the file
+            const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                if (strLstSize(parse) == 3)
+                    result.execId = strDup(strLstGet(parse, 1));
+
+                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+    CATCH_ANY()
+    {
+        THROWP_FMT(errorType(), "unable to read lock file '%s': %s", strZ(lockFile), errorMessage());
+    }
+    TRY_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/**********************************************************************************************************************************/
+LockReadResult
+lockReadFile(const String *const lockFile, const LockReadFileParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, lockFile);
+        FUNCTION_LOG_PARAM(BOOL, param.remove);
+    FUNCTION_LOG_END();
+
+    ASSERT(lockFile != NULL);
+
+    LockReadResult result = {.status = lockReadStatusValid};
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Read contents of file
-        Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
-        IoWrite *const write = ioBufferWriteNewOpen(buffer);
+        // If we cannot open the lock file for any reason then warn and continue to next file
+        int fd = -1;
 
-        ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
-        ioWriteClose(write);
+        if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)
+        {
+            result.status = lockReadStatusMissing;
+        }
+        else
+        {
+            // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing the lock
+            if (flock(fd, LOCK_EX | LOCK_NB) == 0)
+            {
+                result.status = lockReadStatusUnlocked;
+            }
+            // Else attempt to read the file
+            else
+            {
+                TRY_BEGIN()
+                {
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        result.data = lockReadFileData(lockFile, fd);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
+                CATCH_ANY()
+                {
+                    result.status = lockReadStatusInvalid;
+                }
+                TRY_END();
+            }
 
-        // Parse the file
-        const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+            // Remove lock file if requested but do not report failures
+            if (param.remove)
+                unlink(strZ(lockFile));
+
+            // Close after unlinking to prevent a race condition where another process creates the file as we remove it
+            close(fd);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/**********************************************************************************************************************************/
+LockReadResult
+lockRead(const String *const lockPath, const String *const stanza, const LockType lockType)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, lockPath);
+        FUNCTION_LOG_PARAM(STRING, stanza);
+        FUNCTION_LOG_PARAM(ENUM, lockType);
+    FUNCTION_LOG_END();
+
+    LockReadResult result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFileName(stanza, lockType)));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            if (!strEmpty(strTrim(strLstGet(parse, 0))))
-                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
-
-            if (strLstSize(parse) == 3)
-                result.execId = strDup(strLstGet(parse, 1));
+            result = lockReadFileP(lockFile);
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -199,7 +292,14 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 
                     TRY_BEGIN()
                     {
-                        execId = lockReadDataFile(lockFile, result).execId;
+                        execId = lockReadFileData(lockFile, result).execId;
+                    }
+                    CATCH_ANY()
+                    {
+                        // Any errors will be reported as unable to acquire a lock. If a process is trying to get a lock but is not
+                        // synchronized with the process holding the actual lock, it is possible that it could see a short read or
+                        // have some other problem reading. Reporting the error will likely be misleading when the actual problem is
+                        // that another process owns the lock file.
                     }
                     FINALLY()
                     {
@@ -222,7 +322,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
         if (result == -1)
         {
             // Error when requested
-            if (failOnNoLock)
+            if (failOnNoLock || errNo != EWOULDBLOCK)
             {
                 const String *errorHint = NULL;
 
@@ -230,8 +330,12 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     errorHint = strNewZ("\nHINT: is another " PROJECT_NAME " process running?");
                 else if (errNo == EACCES)
                 {
+                    // Get information for the current user
+                    userInit();
+
                     errorHint = strNewFmt(
-                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?", strZ(lockFile));
+                        "\nHINT: does '%s:%s' running " PROJECT_NAME " have permissions on the '%s' file?", strZ(userName()),
+                        strZ(groupName()), strZ(lockFile));
                 }
 
                 THROW_FMT(

@@ -99,7 +99,7 @@ ioBufferInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/

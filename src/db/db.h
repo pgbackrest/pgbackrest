@@ -123,7 +123,7 @@ typedef struct DbBackupStopResult
 DbBackupStopResult dbBackupStop(Db *this);
 
 // Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
-VariantList *dbList(Db *this);
+Pack *dbList(Db *this);
 
 // Waits for replay on the standby to equal the target LSN
 void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
@@ -135,7 +135,7 @@ void dbPing(Db *const this, bool force);
 TimeMSec dbTimeMSec(Db *this);
 
 // Get list of tablespaces in the cluster: select oid, datname, datlastsysoid from pg_database
-VariantList *dbTablespaceList(Db *this);
+Pack *dbTablespaceList(Db *this);
 
 // Switch the WAL segment and return the segment that should have been archived
 String *dbWalSwitch(Db *this);

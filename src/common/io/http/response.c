@@ -265,14 +265,14 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             if (spacePos != 3)
                 THROW_FMT(FormatError, "response status '%s' must have a space after the status code", strZ(status));
 
-            this->pub.code = cvtZToUInt(strZ(strSubN(status, 0, (size_t)spacePos)));
+            this->pub.code = cvtZSubNToUInt(strZ(status), 0, (size_t)spacePos);
 
             // Read reason phrase. A missing reason phrase will be represented as an empty string.
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->pub.reason = strSub(status, (size_t)spacePos + 1);
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             // Read headers
             do
@@ -339,12 +339,12 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
             // Create an io object, even if there is no content.  This makes the logic for readers easier -- they can just check eof
             // rather than also checking if the io object exists.
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->pub.contentRead = ioReadNewP(this, .eof = httpResponseEof, .read = httpResponseRead);
                 ioReadOpen(httpResponseIoRead(this));
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             // If there is no content then we are done with the client
             if (!this->contentExists)
@@ -354,11 +354,11 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
             // Else cache content when requested or on error
             else if (contentCache || !httpResponseCodeOk(this))
             {
-                MEM_CONTEXT_BEGIN(objMemContext(this))
+                MEM_CONTEXT_OBJ_BEGIN(this)
                 {
                     httpResponseContent(this);
                 }
-                MEM_CONTEXT_END();
+                MEM_CONTEXT_OBJ_END();
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -395,7 +395,7 @@ httpResponseContent(HttpResponse *this)
         }
     }
 
-    FUNCTION_TEST_RETURN(this->content);
+    FUNCTION_TEST_RETURN(BUFFER, this->content);
 }
 
 /**********************************************************************************************************************************/

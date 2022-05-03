@@ -72,7 +72,7 @@ httpSessionIoRead(HttpSession *const this, const HttpSessionIoReadParam param)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(ioSessionIoReadP(this->ioSession, .ignoreUnexpectedEof = param.ignoreUnexpectedEof));
+    FUNCTION_TEST_RETURN(IO_READ, ioSessionIoReadP(this->ioSession, .ignoreUnexpectedEof = param.ignoreUnexpectedEof));
 }
 
 /**********************************************************************************************************************************/
@@ -85,5 +85,5 @@ httpSessionIoWrite(HttpSession *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(ioSessionIoWrite(this->ioSession));
+    FUNCTION_TEST_RETURN(IO_WRITE, ioSessionIoWrite(this->ioSession));
 }

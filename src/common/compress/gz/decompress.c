@@ -122,7 +122,7 @@ gzDecompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->done);
+    FUNCTION_TEST_RETURN(BOOL, this->done);
 }
 
 /***********************************************************************************************************************************
@@ -139,7 +139,7 @@ gzDecompressInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/

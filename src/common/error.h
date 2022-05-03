@@ -166,6 +166,8 @@ Code to run whether the try block was successful or not
 ***********************************************************************************************************************************/
 #define FINALLY()                                                                                                                  \
         }                                                                                                                          \
+                                                                                                                                   \
+        if (errorInternalFinally())                                                                                                \
         {
 
 /***********************************************************************************************************************************
@@ -309,6 +311,9 @@ bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
 
 // Propagate the error up so it can be caught
 void errorInternalPropagate(void) __attribute__((__noreturn__));
+
+// Process finally block
+bool errorInternalFinally(void);
 
 // End the try block
 void errorInternalTryEnd(void);

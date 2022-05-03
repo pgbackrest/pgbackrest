@@ -45,7 +45,7 @@ cryptoErrorCode(unsigned long code, const char *description)
     const char *errorMessage = ERR_reason_error_string(code);
     THROW_FMT(CryptoError, "%s: [%lu] %s", description, code, errorMessage == NULL ? "no details available" : errorMessage);
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_NO_RETURN();
 }
 
 /**********************************************************************************************************************************/
@@ -81,7 +81,7 @@ bool
 cryptoIsInit(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(cryptoInitDone);
+    FUNCTION_TEST_RETURN(BOOL, cryptoInitDone);
 }
 
 /**********************************************************************************************************************************/

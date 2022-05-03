@@ -95,7 +95,7 @@ encodeToStrSizeBase64(size_t sourceSize)
         encodeGroupTotal++;
 
     // Four characters are needed to encode each group
-    FUNCTION_TEST_RETURN(encodeGroupTotal * 4);
+    FUNCTION_TEST_RETURN(SIZE, encodeGroupTotal * 4);
 }
 
 /**********************************************************************************************************************************/
@@ -221,7 +221,7 @@ decodeToBinSizeBase64(const char *source)
             destinationSize--;
     }
 
-    FUNCTION_TEST_RETURN(destinationSize);
+    FUNCTION_TEST_RETURN(SIZE, destinationSize);
 }
 
 /***********************************************************************************************************************************
@@ -311,7 +311,7 @@ encodeToStrSizeBase64Url(size_t sourceSize)
             break;
     }
 
-    FUNCTION_TEST_RETURN(encodeTotal);
+    FUNCTION_TEST_RETURN(SIZE, encodeTotal);
 }
 
 /***********************************************************************************************************************************
@@ -367,7 +367,7 @@ encodeToStrSize(EncodeType type, size_t sourceSize)
             break;
     }
 
-    FUNCTION_TEST_RETURN(destinationSize);
+    FUNCTION_TEST_RETURN(SIZE, destinationSize);
 }
 
 /**********************************************************************************************************************************/
@@ -418,5 +418,5 @@ decodeToBinSize(EncodeType type, const char *source)
             ASSERT_MSG("unsupported");
     }
 
-    FUNCTION_TEST_RETURN(destinationSize);
+    FUNCTION_TEST_RETURN(SIZE, destinationSize);
 }

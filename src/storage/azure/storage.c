@@ -289,12 +289,13 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(
-        HTTP_RESPONSE,
-        storageAzureResponseP(
-            storageAzureRequestAsyncP(
-                this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content),
-            .allowMissing = param.allowMissing, .contentIo = param.contentIo));
+    HttpRequest *const request = storageAzureRequestAsyncP(
+        this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content);
+    HttpResponse *const result = storageAzureResponseP(request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
+
+    httpRequestFree(request);
+
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
 /***********************************************************************************************************************************
@@ -488,7 +489,7 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    HttpResponse *httpResponse = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .path = file, .allowMissing = true);
+    HttpResponse *const httpResponse = storageAzureRequestP(this, HTTP_VERB_HEAD_STR, .path = file, .allowMissing = true);
 
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
@@ -499,6 +500,8 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
         result.size = cvtZToUInt64(strZ(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_CONTENT_LENGTH_STR)));
         result.timeModified = httpDateToTime(httpHeaderGet(httpResponseHeader(httpResponse), HTTP_HEADER_LAST_MODIFIED_STR));
     }
+
+    httpResponseFree(httpResponse);
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
@@ -581,7 +584,7 @@ typedef struct StorageAzurePathRemoveData
 } StorageAzurePathRemoveData;
 
 static void
-storageAzurePathRemoveCallback(void *callbackData, const StorageInfo *info)
+storageAzurePathRemoveCallback(void *const callbackData, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -591,13 +594,12 @@ storageAzurePathRemoveCallback(void *callbackData, const StorageInfo *info)
     ASSERT(callbackData != NULL);
     ASSERT(info != NULL);
 
-    StorageAzurePathRemoveData *data = callbackData;
+    StorageAzurePathRemoveData *const data = callbackData;
 
     // Get response from prior async request
     if (data->request != NULL)
     {
-        storageAzureResponseP(data->request, .allowMissing = true);
-
+        httpResponseFree(storageAzureResponseP(data->request, .allowMissing = true));
         httpRequestFree(data->request);
         data->request = NULL;
     }
@@ -667,7 +669,7 @@ storageAzureRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
-    storageAzureRequestP(this, HTTP_VERB_DELETE_STR, file, .allowMissing = true);
+    httpResponseFree(storageAzureRequestP(this, HTTP_VERB_DELETE_STR, file, .allowMissing = true));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -727,7 +729,7 @@ storageAzureNew(
             .container = strDup(container),
             .account = strDup(account),
             .blockSize = blockSize,
-            .host = uriStyle == storageAzureUriStyleHost ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : endpoint,
+            .host = uriStyle == storageAzureUriStyleHost ? strNewFmt("%s.%s", strZ(account), strZ(endpoint)) : strDup(endpoint),
             .pathPrefix = uriStyle == storageAzureUriStyleHost ?
                 strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };

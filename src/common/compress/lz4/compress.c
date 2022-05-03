@@ -103,7 +103,7 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
         result = this->buffer;
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }
 
 // Helper to flush output data to compressed buffer
@@ -221,7 +221,7 @@ lz4CompressDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->flushing && !this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->flushing && !this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -238,7 +238,7 @@ lz4CompressInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/

@@ -16,12 +16,41 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.39dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-pull-request id="1732"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix error thrown from <code>FINALLY()</code> causing an infinite loop.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1722"/>
+                        <github-pull-request id="1730"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="geir.raness"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="geir.raness"/>
+                        </release-item-contributor-list>
+
+                        <p>Error on all lock failures except another process holding the lock.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <commit subject="Refactor target type checking for clarity in restore module."/>
                         <commit subject="Auto-select backup for restore command --type=lsn.">
                             <github-pull-request id="1706"/>
                         </commit>
+                        <commit subject="Fix ordering of backup-lsn-stop field in command/restore unit test."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="reid.thompson"/>
@@ -30,6 +59,17 @@
                         </release-item-contributor-list>
 
                         <p>Auto-select backup for <cmd>restore</cmd> command <br-option>--type=lsn</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1711"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Suppress existing WAL warning when <br-option>archive-mode-check</br-option> is disabled.</p>
                     </release-item>
 
                     <release-item>
@@ -104,6 +144,28 @@
 
                         <p>Improve error message for invalid <br-option>repo-azure-key</br-option>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1722"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hint to check the log on <cmd>archive-get</cmd>/<cmd>archive-push</cmd> async error.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1722"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add user:group to lock permission error.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -132,6 +194,24 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Add test for protocol greeting when a field is missing."/>
+                        <commit subject="Return stats as a JSON string rather than a KeyValue object."/>
+                        <commit subject="Add size to info/manifest unit test."/>
+                        <commit subject="Handle missing archive start/stop in info/info backup unit test."/>
+                        <commit subject="Add JSON error when value does not parse in Ini object."/>
+                        <commit subject="Improve JSON handling.">
+                            <github-pull-request id="1721"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve JSON handling.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Set option-archive-copy flag in backup.manifest to false when offline."/>
                         <commit subject="Move cfgParseOptionalFilterDepend() and add comment block."/>
                         <commit subject="Add default for boolean options with unresolved dependencies.">
@@ -144,6 +224,38 @@
                         </release-item-contributor-list>
 
                         <p>Add default for boolean options with unresolved dependencies.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Add lockRead*() functions for reading locks from another process.">
+                            <github-pull-request id="1712"/>
+                        </commit>
+                        <commit subject="Throw error when unable to read process from lock file.">
+                            <github-pull-request id="1715"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Lock module refactoring.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Update postgres/client unit test for changes in libpq."/>
+                        <commit subject="Update postgres/client unit test to conform to current patterns."/>
+                        <commit subject="Use specific integer types in postgres/client and db unit tests."/>
+                        <commit subject="Refactor PgClient to return results in Pack format.">
+                            <github-pull-request id="1718"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Refactor <code>PgClient</code> to return results in <code>Pack</code> format.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -11164,6 +11276,11 @@
         <contributor id="vidhya.gurumoorthi">
             <contributor-name-display>Vidhya Gurumoorthi</contributor-name-display>
             <contributor-id type="github">fpa-postgres</contributor-id>
+        </contributor>
+
+        <contributor id="geir.raness">
+            <contributor-name-display>Geir R&amp;aring;ness</contributor-name-display>
+            <contributor-id type="github">geirra</contributor-id>
         </contributor>
 
         <contributor id="greg.sabino.mullane">

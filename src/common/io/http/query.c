@@ -40,7 +40,7 @@ httpQueryNew(HttpQueryNewParam param)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /**********************************************************************************************************************************/
@@ -92,7 +92,7 @@ httpQueryNewStr(const String *query)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /**********************************************************************************************************************************/
@@ -122,7 +122,7 @@ httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
         OBJ_NEW_END();
     }
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /**********************************************************************************************************************************/
@@ -148,7 +148,7 @@ httpQueryAdd(HttpQuery *this, const String *key, const String *value)
     // Store the key
     kvPut(this->kv, keyVar, VARSTR(value));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /**********************************************************************************************************************************/
@@ -163,7 +163,7 @@ httpQueryGet(const HttpQuery *this, const String *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(varStr(kvGet(this->kv, VARSTR(key))));
+    FUNCTION_TEST_RETURN_CONST(STRING, varStr(kvGet(this->kv, VARSTR(key))));
 }
 
 /**********************************************************************************************************************************/
@@ -176,7 +176,7 @@ httpQueryList(const HttpQuery *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
+    FUNCTION_TEST_RETURN(STRING_LIST, strLstSort(strLstNewVarLst(kvKeyList(this->kv)), sortOrderAsc));
 }
 
 /**********************************************************************************************************************************/
@@ -204,7 +204,7 @@ httpQueryMerge(HttpQuery *this, const HttpQuery *query)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /**********************************************************************************************************************************/
@@ -224,7 +224,7 @@ httpQueryPut(HttpQuery *this, const String *key, const String *value)
     // Store the key
     kvPut(this->kv, VARSTR(key), VARSTR(value));
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(HTTP_QUERY, this);
 }
 
 /**********************************************************************************************************************************/
@@ -239,7 +239,7 @@ httpQueryRedact(const HttpQuery *this, const String *key)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
-    FUNCTION_TEST_RETURN(this->redactList != NULL && strLstExists(this->redactList, key));
+    FUNCTION_TEST_RETURN(BOOL, this->redactList != NULL && strLstExists(this->redactList, key));
 }
 
 /**********************************************************************************************************************************/
@@ -284,7 +284,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

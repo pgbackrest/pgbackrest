@@ -276,9 +276,9 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
         HarnessLogReplace logReplace =
         {
             .expression = strNewZ(expression),
-            .regExp = regExpNew(STRDEF(expression)),
+            .regExp = regExpNew(STR(expression)),
             .expressionSub = expressionSub == NULL ? NULL : strNewZ(expressionSub),
-            .regExpSub = expressionSub == NULL ? NULL : regExpNew(STRDEF(expressionSub)),
+            .regExpSub = expressionSub == NULL ? NULL : regExpNew(STR(expressionSub)),
             .replacement = strNewZ(replacement),
             .matchList = strLstNew(),
             .version = version,

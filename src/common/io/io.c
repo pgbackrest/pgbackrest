@@ -27,7 +27,7 @@ size_t
 ioBufferSize(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(bufferSize);
+    FUNCTION_TEST_RETURN(SIZE, bufferSize);
 }
 
 void
@@ -47,7 +47,7 @@ TimeMSec
 ioTimeoutMs(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(timeoutMs);
+    FUNCTION_TEST_RETURN(TIME_MSEC, timeoutMs);
 }
 
 void
@@ -92,7 +92,7 @@ ioReadBuf(IoRead *read)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }
 
 /**********************************************************************************************************************************/
@@ -170,5 +170,5 @@ ioReadDrain(IoRead *read)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }

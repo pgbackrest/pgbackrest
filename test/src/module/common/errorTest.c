@@ -96,7 +96,7 @@ testRun(void)
         }
         FINALLY()
         {
-            assert(errorContext.tryList[1].state == errorStateTry);
+            assert(errorContext.tryList[1].state == errorStateEnd);
             finallyDone = true;
         }
         TRY_END();
@@ -134,7 +134,7 @@ testRun(void)
         TEST_TITLE("set error handler");
 
         static const ErrorHandlerFunction testErrorHandlerList[] = {testErrorHandler};
-        errorHandlerSet(testErrorHandlerList, sizeof(testErrorHandlerList) / sizeof(ErrorHandlerFunction));
+        errorHandlerSet(testErrorHandlerList, LENGTH_OF(testErrorHandlerList));
 
         assert(errorContext.handlerList[0] == testErrorHandler);
         assert(errorContext.handlerTotal == 1);
@@ -157,12 +157,22 @@ testRun(void)
                     TRY_BEGIN()
                     {
                         assert(errorTryDepth() == 4);
-                        tryDone = true;
 
-                        char bigMessage[sizeof(messageBuffer) + 128];
-                        memset(bigMessage, 'A', sizeof(bigMessage));
+                        TRY_BEGIN()
+                        {
+                            assert(errorTryDepth() == 5);
+                            tryDone = true;
+                        }
+                        FINALLY()
+                        {
+                            assert(errorContext.tryList[5].state == errorStateEnd);
 
-                        THROW(AssertError, bigMessage);
+                            char bigMessage[sizeof(messageBuffer) + 128];
+                            memset(bigMessage, 'A', sizeof(bigMessage));
+
+                            THROW(AssertError, bigMessage);
+                        }
+                        TRY_END();
                     }
                     CATCH_ANY()
                     {
@@ -200,7 +210,7 @@ testRun(void)
         {
             assert(testErrorHandlerTryDepth == 1);
             assert(errorTryDepth() == 1);
-            assert(errorContext.tryList[1].state == errorStateEnd);
+            assert(errorContext.tryList[1].state == errorStateFinally);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
 
             catchDone = true;

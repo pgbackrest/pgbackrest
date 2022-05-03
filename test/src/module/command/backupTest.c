@@ -65,7 +65,7 @@ testBackupValidateCallback(void *callbackData, const StorageInfo *info)
 
             if (bundle)
             {
-                const uint64_t bundleId = cvtZToUInt64(strZ(strSub(info->name, sizeof("bundle"))));
+                const uint64_t bundleId = cvtZToUInt64(strZ(info->name) + sizeof("bundle"));
 
                 for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(data->manifest); fileIdx++)
                 {
@@ -255,14 +255,14 @@ testBackupValidate(const Storage *storage, const String *path)
             {
                 const String *section = strSubN(line, 1, strSize(line) - 2);
 
-                if (strEq(section, INFO_SECTION_BACKREST_STR) ||
-                    strEq(section, MANIFEST_SECTION_BACKUP_STR) ||
-                    strEq(section, MANIFEST_SECTION_BACKUP_DB_STR) ||
-                    strEq(section, MANIFEST_SECTION_BACKUP_OPTION_STR) ||
-                    strEq(section, MANIFEST_SECTION_DB_STR) ||
-                    strEq(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR) ||
-                    strEq(section, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR) ||
-                    strEq(section, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR))
+                if (strEqZ(section, INFO_SECTION_BACKREST) ||
+                    strEqZ(section, MANIFEST_SECTION_BACKUP) ||
+                    strEqZ(section, MANIFEST_SECTION_BACKUP_DB) ||
+                    strEqZ(section, MANIFEST_SECTION_BACKUP_OPTION) ||
+                    strEqZ(section, MANIFEST_SECTION_DB) ||
+                    strEqZ(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT) ||
+                    strEqZ(section, MANIFEST_SECTION_TARGET_LINK_DEFAULT) ||
+                    strEqZ(section, MANIFEST_SECTION_TARGET_PATH_DEFAULT))
                 {
                     bSkipSection = true;
                 }
@@ -611,7 +611,7 @@ testRun(void)
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
-    hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     // The tests expect the timezone to be UTC
     setenv("TZ", "UTC", true);

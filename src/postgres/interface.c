@@ -210,9 +210,6 @@ static const PgInterface pgInterface[] =
     },
 };
 
-// Total PostgreSQL versions in pgInterface
-#define PG_INTERFACE_SIZE                                           (sizeof(pgInterface) / sizeof(PgInterface))
-
 /***********************************************************************************************************************************
 These pg_control fields are common to all versions of PostgreSQL, so we can use them to generate error messages when the pg_control
 version cannot be found.
@@ -236,7 +233,7 @@ pgInterfaceVersion(unsigned int pgVersion)
 
     const PgInterface *result = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
     {
         if (pgInterface[interfaceIdx].version == pgVersion)
         {
@@ -249,7 +246,7 @@ pgInterfaceVersion(unsigned int pgVersion)
     if (result == NULL)
         THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
 }
 
 /***********************************************************************************************************************************
@@ -286,7 +283,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     // Search for the version of PostgreSQL that uses this control file
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
     {
         if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
         {
@@ -353,7 +350,7 @@ pgControlVersion(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgInterfaceVersion(pgVersion)->controlVersion());
+    FUNCTION_TEST_RETURN(UINT32, pgInterfaceVersion(pgVersion)->controlVersion());
 }
 
 /***********************************************************************************************************************************
@@ -385,7 +382,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
     // Search for the version of PostgreSQL that uses this WAL magic
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < PG_INTERFACE_SIZE; interfaceIdx++)
+    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
     {
         if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
         {
@@ -460,7 +457,7 @@ pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -483,7 +480,7 @@ pgLsnFromStr(const String *lsn)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 String *
@@ -493,7 +490,7 @@ pgLsnToStr(uint64_t lsn)
         FUNCTION_TEST_PARAM(UINT64, lsn);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(strNewFmt("%x/%x", (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF)));
+    FUNCTION_TEST_RETURN(STRING, strNewFmt("%x/%x", (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF)));
 }
 
 /**********************************************************************************************************************************/
@@ -507,11 +504,11 @@ pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
-        strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF) / walSegmentSize));
+        STRING, strNewFmt("%08X%08X%08X", timeline, (unsigned int)(lsn >> 32), (unsigned int)(lsn & 0xFFFFFFFF) / walSegmentSize));
 }
 
 uint64_t
-pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
+pgLsnFromWalSegment(const String *const walSegment, const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, walSegment);
@@ -523,8 +520,9 @@ pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize)
     ASSERT(walSegmentSize > 0);
 
     FUNCTION_TEST_RETURN(
-        (cvtZToUInt64Base(strZ(strSubN(walSegment, 8, 8)), 16) << 32) +
-        (cvtZToUInt64Base(strZ(strSubN(walSegment, 16, 8)), 16) * walSegmentSize));
+        UINT64,
+        (cvtZSubNToUInt64Base(strZ(walSegment), 8, 8, 16) << 32) +
+        (cvtZSubNToUInt64Base(strZ(walSegment), 16, 8, 16) * walSegmentSize));
 }
 
 /**********************************************************************************************************************************/
@@ -538,18 +536,14 @@ pgTimelineFromWalSegment(const String *const walSegment)
     ASSERT(walSegment != NULL);
     ASSERT(strSize(walSegment) == 24);
 
-    char buffer[9];
-
-    strncpy(buffer, strZ(walSegment), sizeof(buffer) - 1);
-    buffer[sizeof(buffer) - 1] = '\0';
-
-    FUNCTION_TEST_RETURN(cvtZToUIntBase(buffer, 16));
+    FUNCTION_TEST_RETURN(UINT32, cvtZSubNToUIntBase(strZ(walSegment), 0, 8, 16));
 }
 
 /**********************************************************************************************************************************/
 StringList *
 pgLsnRangeToWalSegmentList(
-    unsigned int pgVersion, uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize)
+    const unsigned int pgVersion, const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop,
+    const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -565,26 +559,24 @@ pgLsnRangeToWalSegmentList(
     ASSERT(walSegmentSize != 0);
     ASSERT(pgVersion > PG_VERSION_92 || walSegmentSize == PG_WAL_SEGMENT_SIZE_DEFAULT);
 
-    StringList *result = NULL;
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strLstNew();
-
         // Skip the FF segment when PostgreSQL <= 9.2 (in this case segment size should always be 16MB)
-        bool skipFF = pgVersion <= PG_VERSION_92;
+        const bool skipFF = pgVersion <= PG_VERSION_92;
 
         // Calculate the start and stop segments
         unsigned int startMajor = (unsigned int)(lsnStart >> 32);
         unsigned int startMinor = (unsigned int)(lsnStart & 0xFFFFFFFF) / walSegmentSize;
 
-        unsigned int stopMajor = (unsigned int)(lsnStop >> 32);
-        unsigned int stopMinor = (unsigned int)(lsnStop & 0xFFFFFFFF) / walSegmentSize;
+        const unsigned int stopMajor = (unsigned int)(lsnStop >> 32);
+        const unsigned int stopMinor = (unsigned int)(lsnStop & 0xFFFFFFFF) / walSegmentSize;
 
-        unsigned int minorPerMajor = 0xFFFFFFFF / walSegmentSize;
+        const unsigned int minorPerMajor = 0xFFFFFFFF / walSegmentSize;
 
         // Create list
-        strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
+        strLstAddFmt(result, "%08X%08X%08X", timeline, startMajor, startMinor);
 
         while (!(startMajor == stopMajor && startMinor == stopMinor))
         {
@@ -596,14 +588,12 @@ pgLsnRangeToWalSegmentList(
                 startMinor = 0;
             }
 
-            strLstAdd(result, strNewFmt("%08X%08X%08X", timeline, startMajor, startMinor));
+            strLstAddFmt(result, "%08X%08X%08X", timeline, startMajor, startMinor);
         }
-
-        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -614,7 +604,7 @@ pgLsnName(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_LSN_STR : PG_NAME_LOCATION_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_LSN_STR : PG_NAME_LOCATION_STR);
 }
 
 /***********************************************************************************************************************************
@@ -627,7 +617,7 @@ pgWalName(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
 }
 
 /**********************************************************************************************************************************/
@@ -638,7 +628,7 @@ pgWalPath(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGWAL_STR : PG_PATH_PGXLOG_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGWAL_STR : PG_PATH_PGXLOG_STR);
 }
 
 /**********************************************************************************************************************************/
@@ -649,12 +639,12 @@ pgXactPath(unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
+    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
 }
 
 /**********************************************************************************************************************************/
 unsigned int
-pgVersionFromStr(const String *version)
+pgVersionFromStr(const String *const version)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, version);
@@ -662,33 +652,19 @@ pgVersionFromStr(const String *version)
 
     ASSERT(version != NULL);
 
-    unsigned int result = 0;
+    // If format not number.number (9.4) or number only (10) then error. No check for valid/supported PG version is on purpose.
+    if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
+        THROW_FMT(AssertError, "version %s format is invalid", strZ(version));
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // If format is not number.number (9.4) or number only (10) then error
-        if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
-            THROW_FMT(AssertError, "version %s format is invalid", strZ(version));
+    // If there is no dot then only the major version is needed
+    const int idxStart = strChr(version, '.');
 
-        // If there is a dot set the major and minor versions, else just the major
-        int idxStart = strChr(version, '.');
-        unsigned int major;
-        unsigned int minor = 0;
+    if (idxStart == -1)
+        FUNCTION_LOG_RETURN(UINT, cvtZToUInt(strZ(version)) * 10000);
 
-        if (idxStart != -1)
-        {
-            major = cvtZToUInt(strZ(strSubN(version, 0, (size_t)idxStart)));
-            minor = cvtZToUInt(strZ(strSub(version, (size_t)idxStart + 1)));
-        }
-        else
-            major = cvtZToUInt(strZ(version));
-
-        // No check to see if valid/supported PG version is on purpose
-        result = major * 10000 + minor * 100;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(UINT, result);
+    // Major and minor version are needed
+    FUNCTION_LOG_RETURN(
+        UINT, cvtZSubNToUInt(strZ(version), 0, (size_t)idxStart) * 10000 + cvtZToUInt(strZ(version) + (size_t)idxStart + 1) * 100);
 }
 
 String *

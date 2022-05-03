@@ -110,7 +110,7 @@ testRun(void)
 
         // Install local command handler shim
         static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST};
-        hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+        hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
         // Arguments that must be included
         StringList *argBaseList = strLstNew();
@@ -679,7 +679,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchiveGet(), ArchiveTimeoutError,
-            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
+            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
+            "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check for missing WAL");
@@ -688,7 +689,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchiveGet(), ArchiveTimeoutError,
-            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
+            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
+            "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok")), false,
@@ -758,7 +760,8 @@ testRun(void)
 
                 TEST_ERROR(
                     cmdArchiveGet(), ArchiveTimeoutError,
-                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
+                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
+                    "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);

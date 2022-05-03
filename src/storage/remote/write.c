@@ -8,7 +8,6 @@ Remote Storage File write
 #include "common/io/io.h"
 #include "common/io/write.h"
 #include "common/log.h"
-#include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/write.h"
@@ -51,7 +50,10 @@ storageWriteRemoteFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    protocolClientDataPut(this->client, pckWriteBoolP(protocolPackNew(), false));
+    PackWrite *const write = protocolPackNew();
+    protocolClientDataPut(this->client, pckWriteBoolP(write, false));
+    pckWriteFree(write);
+
     protocolClientDataPut(this->client, NULL);
     protocolClientDataEndGet(this->client);
 
@@ -108,7 +110,7 @@ storageWriteRemoteOpen(THIS_VOID)
         }
 
         // Set free callback to ensure remote file is freed
-        memContextCallbackSet(THIS_MEM_CONTEXT(), storageWriteRemoteFreeResource, this);
+        memContextCallbackSet(objMemContext(this), storageWriteRemoteFreeResource, this);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -172,7 +174,7 @@ storageWriteRemoteClose(THIS_VOID)
         MEM_CONTEXT_TEMP_END();
 
         this->client = NULL;
-        memContextCallbackClear(THIS_MEM_CONTEXT());
+        memContextCallbackClear(objMemContext(this));
     }
 
     FUNCTION_LOG_RETURN_VOID();

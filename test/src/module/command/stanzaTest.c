@@ -913,10 +913,6 @@ testRun(void)
         TEST_TITLE("stanza-delete - stanza already deleted");
 
         TEST_RESULT_VOID(cmdStanzaDelete(), "stanza delete - success on stanza does not exist");
-        TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), NULL, NULL), true, "archiveList=NULL, backupList=NULL");
-        TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), strLstNew(), NULL), true, "archiveList=0, backupList=NULL");
-        TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), NULL, strLstNew()), true, "archiveList=NULL, backupList=0");
-        TEST_RESULT_BOOL(stanzaDelete(storageRepoWrite(), strLstNew(), strLstNew()), true, "archiveList=0, backupList=0");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-delete - only archive exists");

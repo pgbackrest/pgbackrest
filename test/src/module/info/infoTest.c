@@ -60,11 +60,11 @@ Test save callbacks
 static void
 testInfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData)
 {
-    if (infoSaveSection(infoSaveData, STRDEF("c"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("c"), STRDEF("key"), (String *)data);
+    if (infoSaveSection(infoSaveData, "c", sectionNext))
+        infoSaveValue(infoSaveData, "c", "key", (String *)data);
 
-    if (infoSaveSection(infoSaveData, STRDEF("d"), sectionNext))
-        infoSaveValue(infoSaveData, STRDEF("d"), STRDEF("key"), (String *)data);
+    if (infoSaveSection(infoSaveData, "d", sectionNext))
+        infoSaveValue(infoSaveData, "d", "key", (String *)data);
 }
 
 /***********************************************************************************************************************************

@@ -120,12 +120,12 @@ getEpoch(const String *targetTime)
             // Strip off the date and time and put the remainder into another string
             String *datetime = strSubN(targetTime, 0, 19);
 
-            int dtYear = cvtZToInt(strZ(strSubN(datetime, 0, 4)));
-            int dtMonth = cvtZToInt(strZ(strSubN(datetime, 5, 2)));
-            int dtDay = cvtZToInt(strZ(strSubN(datetime, 8, 2)));
-            int dtHour = cvtZToInt(strZ(strSubN(datetime, 11, 2)));
-            int dtMinute = cvtZToInt(strZ(strSubN(datetime, 14, 2)));
-            int dtSecond = cvtZToInt(strZ(strSubN(datetime, 17, 2)));
+            int dtYear = cvtZSubNToInt(strZ(datetime), 0, 4);
+            int dtMonth = cvtZSubNToInt(strZ(datetime), 5, 2);
+            int dtDay = cvtZSubNToInt(strZ(datetime), 8, 2);
+            int dtHour = cvtZSubNToInt(strZ(datetime), 11, 2);
+            int dtMinute = cvtZSubNToInt(strZ(datetime), 14, 2);
+            int dtSecond = cvtZSubNToInt(strZ(datetime), 17, 2);
 
             // Confirm date and time parts are valid
             datePartsValid(dtYear, dtMonth, dtDay);
@@ -145,13 +145,13 @@ getEpoch(const String *targetTime)
                 String *timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
 
                 // Include the sign with the hour
-                int tzHour = cvtZToInt(strZ(strSubN(timezoneOffset, 0, 3)));
+                int tzHour = cvtZSubNToInt(strZ(timezoneOffset), 0, 3);
                 int tzMinute = 0;
 
                 // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
                 // the hour
                 if (strSize(timezoneOffset) > 3)
-                    tzMinute = cvtZToInt(strZ(strSubN(timezoneOffset, 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2)));
+                    tzMinute = cvtZSubNToInt(strZ(timezoneOffset), 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2);
 
                 result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
             }
@@ -684,7 +684,7 @@ restoreManifestOwnerReplace(const String *const owner, const String *const owner
         FUNCTION_TEST_PARAM(STRING, ownerDefaultRoot);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(userRoot() ? (owner == NULL ? ownerDefaultRoot : owner) : NULL);
+    FUNCTION_TEST_RETURN_CONST(STRING, userRoot() ? (owner == NULL ? ownerDefaultRoot : owner) : NULL);
 }
 
 // Helper to get list of owners from a file/link/path list
@@ -715,7 +715,7 @@ restoreManifestOwnerReplace(const String *const owner, const String *const owner
         {                                                                                                                          \
             const String *owner = strLstGet(type##List, ownerIdx);                                                                 \
                                                                                                                                    \
-            if (type##Name() == NULL || !strEq(type##Name(), owner))                                                              \
+            if (type##Name() == NULL || !strEq(type##Name(), owner))                                                               \
                 LOG_WARN_FMT("unknown " #type " '%s' in backup manifest mapped to current " #type, strZ(owner));                   \
         }                                                                                                                          \
     }                                                                                                                              \
@@ -908,17 +908,11 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 
     // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
     if (cleanData->basePath && info->type == storageTypeFile && strLstExists(cleanData->fileIgnore, info->name))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Skip all . paths because they have already been cleaned on the previous level of recursion
     if (strEq(info->name, DOT_STR))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
     if (!cleanData->delta)
@@ -1670,35 +1664,29 @@ restoreRecoveryOption(unsigned int pgVersion)
 
 // Helper to convert recovery options to text format
 static String *
-restoreRecoveryConf(unsigned int pgVersion, const String *restoreLabel)
+restoreRecoveryConf(const unsigned int pgVersion, const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
     FUNCTION_LOG_END();
 
-    String *result = NULL;
+    String *const result = strNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strCatFmt(strNew(), "# Recovery settings generated by " PROJECT_NAME " restore on %s\n", strZ(restoreLabel));
+        strCatFmt(result, "# Recovery settings generated by " PROJECT_NAME " restore on %s\n", strZ(restoreLabel));
 
         // Output all recovery options
-        KeyValue *optionKv = restoreRecoveryOption(pgVersion);
-        const VariantList *optionKeyList = kvKeyList(optionKv);
+        const KeyValue *const optionKv = restoreRecoveryOption(pgVersion);
+        const VariantList *const optionKeyList = kvKeyList(optionKv);
 
         for (unsigned int optionKeyIdx = 0; optionKeyIdx < varLstSize(optionKeyList); optionKeyIdx++)
         {
-            const Variant *optionKey = varLstGet(optionKeyList, optionKeyIdx);
+            const Variant *const optionKey = varLstGet(optionKeyList, optionKeyIdx);
+
             strCatFmt(result, "%s = '%s'\n", strZ(varStr(optionKey)), strZ(varStr(kvGet(optionKv, optionKey))));
         }
-
-        // Move to prior context
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strDup(result);
-        }
-        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1707,7 +1695,7 @@ restoreRecoveryConf(unsigned int pgVersion, const String *restoreLabel)
 
 // Helper to write recovery options into recovery.conf
 static void
-restoreRecoveryWriteConf(const Manifest *manifest, unsigned int pgVersion, const String *restoreLabel)
+restoreRecoveryWriteConf(const Manifest *const manifest, const unsigned int pgVersion, const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1718,18 +1706,22 @@ restoreRecoveryWriteConf(const Manifest *manifest, unsigned int pgVersion, const
     // Only write recovery.conf if recovery type != none
     if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
     {
-        LOG_INFO_FMT("write %s", strZ(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            LOG_INFO_FMT("write %s", strZ(storagePathP(storagePg(), PG_FILE_RECOVERYCONF_STR)));
 
-        // Use the data directory to set permissions and ownership for recovery file
-        const ManifestPath *dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
-        mode_t recoveryFileMode = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+            // Use the data directory to set permissions and ownership for recovery file
+            const ManifestPath *const dataPath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+            const mode_t recoveryFileMode = dataPath->mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-        // Write recovery.conf
-        storagePutP(
-            storageNewWriteP(
-                storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode, .noAtomic = true,
-                .noSyncPath = true, .user = dataPath->user, .group = dataPath->group),
-            BUFSTR(restoreRecoveryConf(pgVersion, restoreLabel)));
+            // Write recovery.conf
+            storagePutP(
+                storageNewWriteP(
+                    storagePgWrite(), PG_FILE_RECOVERYCONF_STR, .noCreatePath = true, .modeFile = recoveryFileMode,
+                    .noAtomic = true, .noSyncPath = true, .user = dataPath->user, .group = dataPath->group),
+                BUFSTR(restoreRecoveryConf(pgVersion, restoreLabel)));
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -1940,54 +1932,54 @@ restoreProcessQueueComparator(const void *item1, const void *item2)
     if (file1.size == 0)
     {
         if (file2.size != 0)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
     }
     else if (file2.size == 0)
-        FUNCTION_TEST_RETURN(1);
+        FUNCTION_TEST_RETURN(INT, 1);
 
     // If the bundle id differs that is enough to determine order
     if (file1.bundleId < file2.bundleId)
-        FUNCTION_TEST_RETURN(1);
+        FUNCTION_TEST_RETURN(INT, 1);
     else if (file1.bundleId > file2.bundleId)
-        FUNCTION_TEST_RETURN(-1);
+        FUNCTION_TEST_RETURN(INT, -1);
 
     // If the bundle ids are 0
     if (file1.bundleId == 0)
     {
         // If the size differs then that's enough to determine order
         if (file1.size < file2.size)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
         else if (file1.size > file2.size)
-            FUNCTION_TEST_RETURN(1);
+            FUNCTION_TEST_RETURN(INT, 1);
 
         // If size is the same then use name to generate a deterministic ordering (names must be unique)
         ASSERT(!strEq(file1.name, file2.name));
-        FUNCTION_TEST_RETURN(strCmp(file1.name, file2.name));
+        FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
     }
 
     // If the reference differs that is enough to determine order
     if (file1.reference == NULL)
     {
         if (file2.reference != NULL)
-            FUNCTION_TEST_RETURN(-1);
+            FUNCTION_TEST_RETURN(INT, -1);
     }
     else if (file2.reference == NULL)
-        FUNCTION_TEST_RETURN(1);
+        FUNCTION_TEST_RETURN(INT, 1);
     else
     {
         const int backupLabelCmp = strCmp(file1.reference, file2.reference) * -1;
 
         if (backupLabelCmp != 0)
-            FUNCTION_TEST_RETURN(backupLabelCmp);
+            FUNCTION_TEST_RETURN(INT, backupLabelCmp);
     }
 
     // Finally order by bundle offset
     ASSERT(file1.bundleOffset != file2.bundleOffset);
 
     if (file1.bundleOffset < file2.bundleOffset)
-        FUNCTION_TEST_RETURN(1);
+        FUNCTION_TEST_RETURN(INT, 1);
 
-    FUNCTION_TEST_RETURN(-1);
+    FUNCTION_TEST_RETURN(INT, -1);
 }
 
 static uint64_t
@@ -2009,14 +2001,14 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
 
         // Generate the list of processing queues (there is always at least one)
         StringList *targetList = strLstNew();
-        strLstAdd(targetList, STRDEF(MANIFEST_TARGET_PGDATA "/"));
+        strLstAddZ(targetList, MANIFEST_TARGET_PGDATA "/");
 
         for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
         {
             const ManifestTarget *target = manifestTarget(manifest, targetIdx);
 
             if (target->tablespaceId != 0)
-                strLstAdd(targetList, strNewFmt("%s/", strZ(target->name)));
+                strLstAddFmt(targetList, "%s/", strZ(target->name));
         }
 
         // Generate the processing queues
@@ -2087,12 +2079,13 @@ restoreFileZeroed(const String *manifestName, RegExp *zeroExp)
     ASSERT(manifestName != NULL);
 
     FUNCTION_TEST_RETURN(
+        BOOL,
         zeroExp == NULL ? false : regExpMatch(zeroExp, manifestName) && !strEndsWith(manifestName, STRDEF("/" PG_FILE_PGVERSION)));
 }
 
 // Helper function to construct the absolute pg path for any file
 static String *
-restoreFilePgPath(const Manifest *manifest, const String *manifestName)
+restoreFilePgPath(const Manifest *const manifest, const String *const manifestName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, manifest);
@@ -2102,12 +2095,14 @@ restoreFilePgPath(const Manifest *manifest, const String *manifestName)
     ASSERT(manifest != NULL);
     ASSERT(manifestName != NULL);
 
-    String *result = strNewFmt("%s/%s", strZ(manifestTargetBase(manifest)->path), strZ(manifestPathPg(manifestName)));
+    String *const pathPg = manifestPathPg(manifestName);
+    String *const result = strNewFmt(
+        "%s/%s%s", strZ(manifestTargetBase(manifest)->path), strZ(pathPg),
+        strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ? "." STORAGE_FILE_TEMP_EXT : "");
 
-    if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
-        result = strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(result));
+    strFree(pathPg);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 static uint64_t
@@ -2241,11 +2236,11 @@ restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTota
 
     // Deal with wrapping on either end
     if (queueIdx < 0)
-        FUNCTION_TEST_RETURN((int)queueTotal - 1);
+        FUNCTION_TEST_RETURN(INT, (int)queueTotal - 1);
     else if (queueIdx == (int)queueTotal)
-        FUNCTION_TEST_RETURN(0);
+        FUNCTION_TEST_RETURN(INT, 0);
 
-    FUNCTION_TEST_RETURN(queueIdx);
+    FUNCTION_TEST_RETURN(INT, queueIdx);
 }
 
 // Callback to fetch restore jobs for the parallel executor
@@ -2369,7 +2364,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 /**********************************************************************************************************************************/

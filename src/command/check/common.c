@@ -37,7 +37,7 @@ checkArchiveCommand(const String *archiveCommand)
             archiveCommand != NULL ? strZ(archiveCommand) : "[" NULL_Z "]", PROJECT_BIN);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/

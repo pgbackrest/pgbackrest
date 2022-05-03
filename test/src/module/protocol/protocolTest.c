@@ -180,10 +180,10 @@ static ProtocolParallelJob *testParallelJobCallback(void *data, unsigned int cli
         ProtocolParallelJob *job = *(ProtocolParallelJob **)lstGet(listData->jobList, listData->jobIdx);
         listData->jobIdx++;
 
-        FUNCTION_TEST_RETURN(protocolParallelJobMove(job, memContextCurrent()));
+        FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, protocolParallelJobMove(job, memContextCurrent()));
     }
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, NULL);
 }
 
 /***********************************************************************************************************************************
@@ -490,6 +490,8 @@ testRun(void)
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":null}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"bogus\"}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"pgBackRest\",\"service\":\"bogus\"}"));
@@ -518,22 +520,21 @@ testRun(void)
                 const ProtocolServerHandler commandHandler[] = {TEST_PROTOCOL_SERVER_HANDLER_LIST};
 
                 TEST_ERROR(
-                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
-                    ProtocolError, "invalid command 'BOGUS' (0x38eacd271)");
+                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), ProtocolError,
+                    "invalid command 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart and assert");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
                 TEST_ERROR(
-                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
-                    AssertError, "ERR_MESSAGE");
+                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), AssertError, "ERR_MESSAGE");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
-                protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
+                protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server with retries");
@@ -547,7 +548,7 @@ testRun(void)
                     "new server");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
-                protocolServerProcess(server, retryList, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler));
+                protocolServerProcess(server, retryList, commandHandler, LENGTH_OF(commandHandler));
             }
             HRN_FORK_CHILD_END();
 
@@ -558,7 +559,10 @@ testRun(void)
 
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
-                    JsonFormatError, "expected '{' at 'bogus greeting'");
+                    JsonFormatError, "invalid type at: bogus greeting");
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError, "greeting key 'name' must be string type");
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "greeting key 'name' must be string type");

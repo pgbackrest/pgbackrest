@@ -777,7 +777,7 @@ stanzaInfoList(List *stanzaRepoList, const String *backupLabel, unsigned int rep
         varLstAdd(result, stanzaInfo);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
 
 /***********************************************************************************************************************************
@@ -1189,12 +1189,9 @@ infoUpdateStanza(
                 // If a backup lock check has not already been performed, then do so
                 if (!stanzaRepo->backupLockChecked)
                 {
-                    // Try to acquire a lock. If not possible, assume another backup or expire is already running.
-                    stanzaRepo->backupLockHeld = !lockAcquire(
-                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, false);
-
-                    // Immediately release the lock acquired
-                    lockRelease(!stanzaRepo->backupLockHeld);
+                    // If there is a valid backup lock for this stanza then backup/expire must be running
+                    stanzaRepo->backupLockHeld = lockRead(
+                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).status == lockReadStatusValid;
                     stanzaRepo->backupLockChecked = true;
                 }
             }
