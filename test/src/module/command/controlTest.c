@@ -284,7 +284,7 @@ testRun(void)
 
         HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stanza stop file");
         HRN_STORAGE_PUT_Z(
-            hrnStorage, "lock/db-backup" LOCK_FILE_EXT, "{\"execId\":\"test-1\",\"procPid\":-32768}",
+            hrnStorage, "lock/db-backup" LOCK_FILE_EXT, "{\"execId\":\"test-1\",\"pid\":-32768}",
             .comment = "create lock file with invalid PID");
 
         HRN_FORK_BEGIN()

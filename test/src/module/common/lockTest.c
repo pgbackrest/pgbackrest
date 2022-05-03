@@ -275,7 +275,7 @@ testRun(void)
         TEST_STORAGE_LIST(storageTest, NULL, "unlocked.lock\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("execId && procPid valid file");
+        TEST_TITLE("execId && pid valid file");
 
         const String *stanza = STRDEF("1-test");
         lockLocal.execId = STRDEF("1-test");
@@ -292,7 +292,7 @@ testRun(void)
 
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockTypeBackup].name, lockLocal.file[lockTypeBackup].fd, 0);
 
-        ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("{\"execId\":\"1-test\",\"procPid\":12345}")), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("{\"execId\":\"1-test\",\"pid\":12345}")), write);
         ioWriteClose(write);
 
         // Seek to start of file before read

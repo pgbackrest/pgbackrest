@@ -33,7 +33,7 @@ Constants
 
 #define LOCK_KEY_EXEC_ID                                            STRID6("execId", 0x12e0c56051)
 #define LOCK_KEY_PERCENT_COMPLETE                                   STRID6("pctCplt", 0x14310a140d01)
-#define LOCK_KEY_PROCESS_ID                                         STRID6("procPid", 0x42750cf4901)
+#define LOCK_KEY_PROCESS_ID                                         STRID5("pid", 0x11300)
 
 /***********************************************************************************************************************************
 Lock type names
