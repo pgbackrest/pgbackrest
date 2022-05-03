@@ -793,14 +793,16 @@ memContextCallbackRecurse(MemContext *const this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->active);
 
     // Certain actions against the context are no longer allowed
     this->active = false;
 
     // Callback
     if (this->callbackFunction)
+    {
         this->callbackFunction(this->callbackArgument);
+        this->callbackFunction = NULL;
+    }
 
     // Child callbacks
     for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
@@ -821,7 +823,6 @@ memContextFreeRecurse(MemContext *const this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(!this->active);
 
 #ifdef DEBUG
     // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
