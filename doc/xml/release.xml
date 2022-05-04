@@ -46,6 +46,34 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Remove dependency on pg_database.datlastsysoid.">
+                            <github-pull-request id="1735"/>
+                        </commit>
+                        <commit subject="PostgreSQL 15 support.">
+                            <github-pull-request id="1736"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p><postgres/> 15 support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1490"/>
+                        <github-pull-request id="1621"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Show backup percent complete in <cmd>info</cmd> output.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Refactor target type checking for clarity in restore module."/>
                         <commit subject="Auto-select backup for restore command --type=lsn.">
                             <github-pull-request id="1706"/>

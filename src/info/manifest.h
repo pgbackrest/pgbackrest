@@ -87,7 +87,7 @@ typedef struct ManifestDb
 {
     const String *name;                                             // Db name (must be first member in struct)
     unsigned int id;                                                // Db oid
-    unsigned int lastSystemId;                                      // Highest oid used by system objects in this database
+    unsigned int lastSystemId;                                      // Highest oid used by system objects (deprecated - do not use)
 } ManifestDb;
 
 /***********************************************************************************************************************************

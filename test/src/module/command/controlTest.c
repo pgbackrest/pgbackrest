@@ -283,7 +283,9 @@ testRun(void)
         TEST_TITLE("lock file with another process lock, processId is invalid");
 
         HRN_STORAGE_REMOVE(hrnStorage, "lock/db" STOP_FILE_EXT, .errorOnMissing = true, .comment = "remove stanza stop file");
-        HRN_STORAGE_PUT_Z(hrnStorage, "lock/db-backup" LOCK_FILE_EXT, "-32768", .comment = "create lock file with invalid PID");
+        HRN_STORAGE_PUT_Z(
+            hrnStorage, "lock/db-backup" LOCK_FILE_EXT, "{\"execId\":\"test-1\",\"pid\":-32768}",
+            .comment = "create lock file with invalid PID");
 
         HRN_FORK_BEGIN()
         {
