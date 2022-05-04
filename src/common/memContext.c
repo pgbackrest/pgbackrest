@@ -11,15 +11,6 @@ Memory Context Manager
 #include "common/memContext.h"
 
 /***********************************************************************************************************************************
-Memory context states
-***********************************************************************************************************************************/
-typedef enum
-{
-    memContextStateFreeing = 0,
-    memContextStateActive
-} MemContextState;
-
-/***********************************************************************************************************************************
 Contains information about a memory allocation. This header is placed at the beginning of every memory allocation returned to the
 user by memNew(), etc. The advantage is that when an allocation is passed back by the user we know the location of the allocation
 header by doing some pointer arithmetic. This is much faster than searching through a list.
@@ -51,8 +42,8 @@ struct MemContext
 {
 #ifdef DEBUG
     const char *name;                                               // Indicates what the context is being used for
+    bool active:1;                                                  // Is the context currently active?
 #endif
-    MemContextState state:1;                                        // Current state of the context
     size_t allocExtra:16;                                           // Size of extra allocation (1kB max)
 
     unsigned int contextParentIdx;                                  // Index in the parent context list
@@ -78,9 +69,9 @@ generally used to allocate memory that exists for the life of the program.
 ***********************************************************************************************************************************/
 static MemContext contextTop =
 {
-    .state = memContextStateActive,
 #ifdef DEBUG
     .name = "TOP",
+    .active = true,
 #endif
 };
 
@@ -295,13 +286,12 @@ memContextNew(
 #ifdef DEBUG
         // Set the context name
         .name = name,
-#endif
-
-        // Set extra allocation
-        .allocExtra = param.allocExtra,
 
         // Set new context active
-        .state = memContextStateActive,
+        .active = true,
+#endif
+        // Set extra allocation
+        .allocExtra = param.allocExtra,
 
         // Set current context as the parent
         .contextParent = contextCurrent,
@@ -377,11 +367,8 @@ memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->active);
     ASSERT(callbackFunction != NULL);
-
-    // Error if context is not active
-    if (this->state != memContextStateActive)
-        THROW(AssertError, "cannot assign callback to inactive context");
 
     // Top context cannot have a callback
     if (this == &contextTop)
@@ -409,9 +396,6 @@ memContextCallbackClear(MemContext *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
-    // Error if context is not active or freeing
-    ASSERT(this->state == memContextStateActive || this->state == memContextStateFreeing);
 
     // Top context cannot have a callback
     ASSERT(this != &contextTop);
@@ -611,11 +595,8 @@ memContextSwitch(MemContext *this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->active);
     ASSERT(memContextCurrentStackIdx < MEM_CONTEXT_STACK_MAX - 1);
-
-    // Error if context is not active
-    if (this->state != memContextStateActive)
-        THROW(AssertError, "cannot switch to inactive context");
 
     memContextMaxStackIdx++;
     memContextCurrentStackIdx = memContextMaxStackIdx;
@@ -722,19 +703,6 @@ memContextCurrent(void)
 }
 
 /**********************************************************************************************************************************/
-bool
-memContextFreeing(const MemContext *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(BOOL, this->state == memContextStateFreeing);
-}
-
-/**********************************************************************************************************************************/
 MemContext *
 memContextPrior(void)
 {
@@ -814,8 +782,9 @@ memContextClean(unsigned int tryDepth)
 }
 
 /**********************************************************************************************************************************/
-void
-memContextFree(MemContext *this)
+// Helper to execute callbacks for the context and all its children
+static void
+memContextCallbackRecurse(MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -823,73 +792,114 @@ memContextFree(MemContext *this)
 
     ASSERT(this != NULL);
 
-    // If context is already freeing then return if memContextFree() is called again - this can happen in callbacks
-    if (this->state != memContextStateFreeing)
-    {
 #ifdef DEBUG
-        // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
-        if (this == memContextStack[memContextCurrentStackIdx].memContext && this != &contextTop)
-            THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
+    // Certain actions against the context are no longer allowed
+    this->active = false;
 #endif
 
+    // Callback
+    if (this->callbackFunction)
+    {
+        this->callbackFunction(this->callbackArgument);
+        this->callbackFunction = NULL;
+    }
+
+    // Child callbacks
+    for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
+    {
+        if (this->contextChildList[contextIdx] != NULL)
+            memContextCallbackRecurse(this->contextChildList[contextIdx]);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+// Helper to free the context and all its children
+static void
+memContextFreeRecurse(MemContext *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+#ifdef DEBUG
+    // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
+    if (this == memContextStack[memContextCurrentStackIdx].memContext && this != &contextTop)
+        THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
+#endif
+
+    // Free child contexts and list
+    if (this->contextChildListSize > 0)
+    {
         // Free child contexts
         for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)
         {
             if (this->contextChildList[contextIdx] != NULL)
-                memContextFree(this->contextChildList[contextIdx]);
+                memContextFreeRecurse(this->contextChildList[contextIdx]);
         }
 
-        // Set state to freeing now that there are no child contexts.  Child contexts might need to interact with their parent while
-        // freeing so the parent needs to remain active until they are all gone.
-        this->state = memContextStateFreeing;
-
-        // Execute callback if defined
-        TRY_BEGIN()
-        {
-            if (this->callbackFunction)
-                this->callbackFunction(this->callbackArgument);
-        }
-        // Finish cleanup even if the callback fails
-        FINALLY()
-        {
-            // Free child context allocation list
-            if (this->contextChildListSize > 0)
-            {
-                memFreeInternal(this->contextChildList);
-                this->contextChildListSize = 0;
-            }
-
-            // Free memory allocations and list
-            if (this->allocListSize > 0)
-            {
-                for (unsigned int allocIdx = 0; allocIdx < this->allocListSize; allocIdx++)
-                    if (this->allocList[allocIdx] != NULL)
-                        memFreeInternal(this->allocList[allocIdx]);
-
-                memFreeInternal(this->allocList);
-                this->allocListSize = 0;
-            }
-
-            // If the context index is lower than the current free index in the parent then replace it
-            if (this->contextParent != NULL && this->contextParentIdx < this->contextParent->contextChildFreeIdx)
-                this->contextParent->contextChildFreeIdx = this->contextParentIdx;
-
-            // Make top context active again
-            if (this == &contextTop)
-            {
-                this->state = memContextStateActive;
-            }
-            // Else free the memory context so the slot can be reused
-            else
-            {
-                ASSERT(this->contextParent != NULL);
-
-                this->contextParent->contextChildList[this->contextParentIdx] = NULL;
-                memFreeInternal(this);
-            }
-        }
-        TRY_END();
+        // Free child context allocation list
+        memFreeInternal(this->contextChildList);
+        this->contextChildListSize = 0;
     }
+
+    // Free memory allocations and list
+    if (this->allocListSize > 0)
+    {
+        for (unsigned int allocIdx = 0; allocIdx < this->allocListSize; allocIdx++)
+            if (this->allocList[allocIdx] != NULL)
+                memFreeInternal(this->allocList[allocIdx]);
+
+        memFreeInternal(this->allocList);
+        this->allocListSize = 0;
+    }
+
+    // If the context index is lower than the current free index in the parent then replace it
+    if (this->contextParent != NULL && this->contextParentIdx < this->contextParent->contextChildFreeIdx)
+        this->contextParent->contextChildFreeIdx = this->contextParentIdx;
+
+    // Free the memory context so the slot can be reused (if not the top mem context)
+    if (this != &contextTop)
+    {
+        ASSERT(this->contextParent != NULL);
+
+        this->contextParent->contextChildList[this->contextParentIdx] = NULL;
+        memFreeInternal(this);
+    }
+#ifdef DEBUG
+    // Else make the top mem context active again
+    else
+    {
+        this->active = true;
+    }
+#endif
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+void
+memContextFree(MemContext *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->active);
+
+    // Execute callbacks
+    TRY_BEGIN()
+    {
+        memContextCallbackRecurse(this);
+    }
+    // Free context even if a callback fails
+    FINALLY()
+    {
+        memContextFreeRecurse(this);
+    }
+    TRY_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }

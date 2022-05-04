@@ -107,7 +107,6 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_PTR(objMemContext(testObject), memContextFromAllocExtra(testObject), "mem context");
-        TEST_RESULT_BOOL(objMemContextFreeing(testObject), false, "not freeing");
         TEST_RESULT_VOID(testObjectFree(testObject), "free object");
         TEST_RESULT_VOID(testObjectFree(NULL), "free null object");
 

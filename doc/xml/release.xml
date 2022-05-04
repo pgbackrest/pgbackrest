@@ -271,6 +271,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1734"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent <code>memContextFree()</code> from freeing memory needed by callbacks.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Update postgres/client unit test for changes in libpq."/>
                         <commit subject="Update postgres/client unit test to conform to current patterns."/>
                         <commit subject="Use specific integer types in postgres/client and db unit tests."/>
