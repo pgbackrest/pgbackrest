@@ -197,7 +197,7 @@ Types from src/include/catalog/catversion.h
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	202204062
+#define CATALOG_VERSION_NO	202204076
 
 // Allow the catalog version to float during the PostgreSQL 15 beta/rc period
 #define CATALOG_VERSION_NO_MAX
