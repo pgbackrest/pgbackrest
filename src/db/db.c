@@ -581,7 +581,9 @@ dbList(Db *this)
         PACK,
         dbQuery(
             this, pgClientQueryResultAny,
-            STRDEF("select oid::oid, datname::text, datlastsysoid::oid from pg_catalog.pg_database")));
+            STRDEF(
+                "select oid::oid, datname::text, (select oid::oid from pg_catalog.pg_database where datname = 'template0')"
+                    " as datlastsysoid from pg_catalog.pg_database")));
 }
 
 /**********************************************************************************************************************************/

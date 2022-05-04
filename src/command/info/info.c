@@ -474,7 +474,7 @@ backupListAdd(
             const ManifestDb *db = manifestDb(repoData->manifest, dbIdx);
 
             // Do not display template databases
-            if (db->id > db->lastSystemId)
+            if (!pgDbIsTemplate(db->name))
             {
                 Variant *database = varNewKv(kvNew());
 
