@@ -571,8 +571,8 @@ For each current backup in the backup.info file of the stanza, set the data for 
 ***********************************************************************************************************************************/
 static void
 backupList(
-    VariantList *backupSection, InfoStanzaRepo *stanzaData, const String *backupLabel, const unsigned int repoIdxMin,
-    const unsigned int repoIdxMax)
+    VariantList *const backupSection, InfoStanzaRepo *const stanzaData, const String *const backupLabel,
+    const unsigned int repoIdxMin, const unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);           // The section to add the backup data to
@@ -1463,7 +1463,6 @@ infoRender(void)
                     KeyValue *backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
                     bool backupLockHeld = varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_HELD_VAR));
                     const Variant *const percentComplete = kvGet(backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR);
-
                     const String *const percentCompleteStr = percentComplete != NULL ?
                         strNewFmt(" - %u.%02u%% complete", varUInt(percentComplete) / 100, varUInt(percentComplete) % 100) :
                         EMPTY_STR;
