@@ -72,7 +72,7 @@ ioSessionFd(IoSession *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->pub.interface->fd == NULL ? -1 : this->pub.interface->fd(this->pub.driver));
+    FUNCTION_TEST_RETURN(INT, this->pub.interface->fd == NULL ? -1 : this->pub.interface->fd(this->pub.driver));
 }
 
 /**********************************************************************************************************************************/

@@ -9,6 +9,7 @@ Test Database
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessLog.h"
+#include "common/harnessPack.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
 
@@ -112,8 +113,7 @@ testRun(void)
                 };
 
                 TEST_RESULT_VOID(
-                    protocolServerProcess(server, NULL, commandHandler, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandHandler)),
-                    "run process loop");
+                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), "run process loop");
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
             }
             HRN_FORK_CHILD_END();
@@ -231,11 +231,11 @@ testRun(void)
             {.session = 1, .function = HRNPQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},
             {.session = 1, .function = HRNPQ_NTUPLES, .resultInt = 1},
             {.session = 1, .function = HRNPQ_NFIELDS, .resultInt = 5},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[0]", .resultInt = HRNPQ_TYPE_INT4},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[1]", .resultInt = HRNPQ_TYPE_TEXT},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[2]", .resultInt = HRNPQ_TYPE_TEXT},
             {.session = 1, .function = HRNPQ_FTYPE, .param = "[3]", .resultInt = HRNPQ_TYPE_TEXT},
-            {.session = 1, .function = HRNPQ_FTYPE, .param = "[4]", .resultInt = HRNPQ_TYPE_INT},
+            {.session = 1, .function = HRNPQ_FTYPE, .param = "[4]", .resultInt = HRNPQ_TYPE_INT4},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,0]", .resultZ = "0"},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,1]", .resultZ = "value"},
             {.session = 1, .function = HRNPQ_GETVALUE, .param = "[0,2]", .resultZ = "value"},
@@ -339,8 +339,8 @@ testRun(void)
         TEST_RESULT_STR_Z(backupStartResult.lsn, "2/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000200000003", "check wal segment name");
 
-        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(dbList(db.primary))), "[[16384,\"test1\",13777]]", "check db list");
-        TEST_RESULT_STR_Z(jsonFromVar(varNewVarLst(dbTablespaceList(db.primary))), "[]", "check tablespace list");
+        TEST_RESULT_STR_Z(hrnPackToStr(dbList(db.primary)), "1:array:[1:u32:16384, 2:str:test1, 3:u32:13777]", "check db list");
+        TEST_RESULT_STR_Z(hrnPackToStr(dbTablespaceList(db.primary)), "", "check tablespace list");
 
         DbBackupStopResult backupStopResult = {.lsn = NULL};
         TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");
@@ -671,6 +671,50 @@ testRun(void)
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("PostgreSQL 15 - non-exclusive flag dropped");
+
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_15, .timeline = 6, .checkpoint = pgLsnFromStr(STRDEF("6/6")));
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg1", false, NULL, NULL),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000060000000600000005"),
+            HRNPQ_MACRO_START_BACKUP_GE_15(1, false, "6/6", "000000060000000600000006"),
+
+            // Stop backup
+            HRNPQ_MACRO_STOP_BACKUP_GE_15(1, "6/7", "000000060000000600000006", false),
+
+            // Close primary
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
+        TEST_RESULT_STR_Z(backupStartResult.lsn, "6/6", "check lsn");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000060000000600000006", "check wal segment name");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000060000000600000005", "check wal segment check");
+
+        backupStopResult = (DbBackupStopResult){.lsn = NULL};
+        TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");
+        TEST_RESULT_STR_Z(backupStopResult.lsn, "6/7", "check lsn");
+        TEST_RESULT_STR_Z(backupStopResult.walSegmentName, "000000060000000600000006", "check wal segment name");
+        TEST_RESULT_STR_Z(backupStopResult.backupLabel, "BACKUP_LABEL_DATA", "check backup label");
+        TEST_RESULT_STR_Z(backupStopResult.tablespaceMap, NULL, "check tablespace map is not set");
+
+        TEST_RESULT_VOID(dbFree(db.primary), "free primary");
     }
 
     // *****************************************************************************************************************************
@@ -882,6 +926,8 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
     }
+
+    protocolFree();
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

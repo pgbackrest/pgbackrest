@@ -20,6 +20,7 @@ Archive Get Command
 #include "common/wait.h"
 #include "config/config.h"
 #include "config/exec.h"
+#include "config/load.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
@@ -647,11 +648,15 @@ cmdArchiveGet(void)
                 // Check if the WAL segment is already in the queue
                 found = storageExistsP(storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
+                // Determine whether a missing WAL segment will be retried. Retrying is safer, but not retrying lets PostgreSQL
+                // know that there are probably no more WAL segments in the archive which means it can switch to streaming.
+                const bool missingRetry = first && cfgOptionBool(cfgOptArchiveMissingRetry);
+
                 // Check for errors or missing files. For archive-get ok indicates that the process succeeded but there is no WAL
                 // file to download, or that there was a warning. Do not error on the first run so the async process can be spawned
                 // to correct any errors from a previous run. Do not warn on the first run if the segment was not found so the async
                 // process can be spawned to check for the file again.
-                if (archiveAsyncStatus(archiveModeGet, walSegment, !first, found || !first))
+                if (archiveAsyncStatus(archiveModeGet, walSegment, !first, found || !missingRetry))
                 {
                     storageRemoveP(
                         storageSpoolWrite(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s" STATUS_EXT_OK, strZ(walSegment)),
@@ -662,7 +667,7 @@ cmdArchiveGet(void)
                     // spawned by a prior archive-get execution, which means we should spawn the async process again to see if the
                     // file exists now. This also prevents spool files from a previous recovery interfering with the current
                     // recovery.
-                    if (!found && !first)
+                    if (!found && !missingRetry)
                     {
                         foundOk = true;
                         break;
@@ -711,7 +716,7 @@ cmdArchiveGet(void)
                 // If the WAL segment has not already been found then start the async process to get it.  There's no point in
                 // forking the async process off more than once so track that as well.  Use an archive lock to prevent forking if
                 // the async process was launched by another process.
-                if (!forked && (!found || !queueFull)  &&
+                if (!forked && (!found || !queueFull) &&
                     lockAcquire(
                         cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), cfgLockType(), 0,
                         false))
@@ -772,8 +777,11 @@ cmdArchiveGet(void)
                 if (!foundOk)
                 {
                     THROW_FMT(
-                        ArchiveTimeoutError, "unable to get WAL file '%s' from the archive asynchronously after %s second(s)",
-                        strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)));
+                        ArchiveTimeoutError,
+                        "unable to get WAL file '%s' from the archive asynchronously after %s second(s)\n"
+                        "HINT: check '%s' for errors.",
+                        strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)),
+                        strZ(cfgLoadLogFileName(cfgCmdRoleAsync)));
                 }
                 // Else report that the WAL segment could not be found
                 else
@@ -883,7 +891,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
 void

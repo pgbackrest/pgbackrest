@@ -31,10 +31,9 @@ typedef struct HarnessInfoChecksumData
 
 static void
 harnessInfoChecksumCallback(
-    void *callbackData, const String *section, const String *key, const String *value, const Variant *valueVar)
+    void *const callbackData, const String *const section, const String *const key, const String *const value)
 {
     HarnessInfoChecksumData *data = (HarnessInfoChecksumData *)callbackData;
-    (void)valueVar;
 
     // Calculate checksum
     if (data->sectionLast == NULL || !strEq(section, data->sectionLast))
@@ -55,7 +54,7 @@ harnessInfoChecksumCallback(
     else
         ioFilterProcessIn(data->checksum, BUFSTRDEF(","));
 
-    ioFilterProcessIn(data->checksum, BUFSTR(jsonFromStr(key)));
+    ioFilterProcessIn(data->checksum, BUFSTR(jsonFromVar(VARSTR(key))));
     ioFilterProcessIn(data->checksum, BUFSTRDEF(":"));
     ioFilterProcessIn(data->checksum, BUFSTR(value));
 }
@@ -84,9 +83,9 @@ harnessInfoChecksum(const String *info)
         result = bufNew(strSize(info) + 256);
 
         bufCat(result, BUFSTRDEF("[backrest]\nbackrest-format="));
-        bufCat(result, BUFSTR(jsonFromUInt(REPOSITORY_FORMAT)));
+        bufCat(result, BUFSTR(jsonFromVar(VARUINT(REPOSITORY_FORMAT))));
         bufCat(result, BUFSTRDEF("\nbackrest-version="));
-        bufCat(result, BUFSTR(jsonFromStr(STRDEF(PROJECT_VERSION))));
+        bufCat(result, BUFSTR(jsonFromVar(VARSTRDEF(PROJECT_VERSION))));
         bufCat(result, BUFSTRDEF("\n\n"));
         bufCat(result, BUFSTR(info));
 
@@ -97,7 +96,7 @@ harnessInfoChecksum(const String *info)
 
         // Append checksum to buffer
         bufCat(result, BUFSTRDEF("\n[backrest]\nbackrest-checksum="));
-        bufCat(result, BUFSTR(jsonFromStr(pckReadStrP(pckReadNew(ioFilterResult(data.checksum))))));
+        bufCat(result, BUFSTR(jsonFromVar(VARSTR(pckReadStrP(pckReadNew(ioFilterResult(data.checksum)))))));
         bufCat(result, BUFSTRDEF("\n"));
 
         bufMove(result, memContextPrior());
@@ -123,8 +122,9 @@ harnessInfoChecksumZ(const char *info)
 Test callback that logs the results to a string
 ***********************************************************************************************************************************/
 void
-harnessInfoLoadNewCallback(void *callbackData, const String *section, const String *key, const Variant *value)
+harnessInfoLoadNewCallback(
+    void *const callbackData, const String *const section, const String *const key, const String *const value)
 {
     if (callbackData != NULL)
-        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strZ(section), strZ(key), strZ(jsonFromVar(value)));
+        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strZ(section), strZ(key), strZ(value));
 }

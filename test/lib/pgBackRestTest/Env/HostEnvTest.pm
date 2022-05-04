@@ -146,7 +146,8 @@ sub setup
         bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
         strStorage => $oConfigParam->{strStorage},
-        iRepoTotal => $oConfigParam->{iRepoTotal}});
+        iRepoTotal => $oConfigParam->{iRepoTotal},
+        bBundle => $oConfigParam->{bBundle}});
 
     # Create backup config if backup host exists
     if (defined($oHostBackup))
@@ -156,7 +157,8 @@ sub setup
             strCompressType => $$oConfigParam{strCompressType},
             bHardlink => $$oConfigParam{bHardLink},
             strStorage => $oConfigParam->{strStorage},
-            iRepoTotal => $oConfigParam->{iRepoTotal}});
+            iRepoTotal => $oConfigParam->{iRepoTotal},
+            bBundle => $oConfigParam->{bBundle}});
     }
     # If backup host is not defined set it to db-primary
     else
@@ -184,7 +186,8 @@ sub setup
             bHardlink => $bHostBackup ? undef : $$oConfigParam{bHardLink},
             bArchiveAsync => $$oConfigParam{bArchiveAsync},
             strStorage => $oConfigParam->{strStorage},
-            iRepoTotal => $oConfigParam->{iRepoTotal}});
+            iRepoTotal => $oConfigParam->{iRepoTotal},
+            bBundle => $oConfigParam->{bBundle}});
     }
 
     # Create object storage
@@ -251,6 +254,7 @@ sub dbCatalogVersion
         &PG_VERSION_12 => 201909212,
         &PG_VERSION_13 => 202007201,
         &PG_VERSION_14 => 202105121,
+        &PG_VERSION_15 => 202204076,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
@@ -294,6 +298,7 @@ sub dbControlVersion
         &PG_VERSION_12 => 1201,
         &PG_VERSION_13 => 1300,
         &PG_VERSION_14 => 1300,
+        &PG_VERSION_15 => 1300,
     };
 
     if (!defined($hControlVersion->{$strPgVersion}))

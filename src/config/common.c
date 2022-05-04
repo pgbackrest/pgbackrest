@@ -49,7 +49,7 @@ cfgParseSizeQualifier(const char qualifier)
             THROW_FMT(AssertError, "'%c' is not a valid size qualifier", qualifier);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(INT64, result);
 }
 
 int64_t
@@ -101,7 +101,14 @@ cfgParseSize(const String *const value)
         }
 
         // Convert string to bytes
-        FUNCTION_TEST_RETURN(cvtZToInt64(strZ(valueLower)) * multiplier);
+        const int64_t valueInt = cvtZToInt64(strZ(valueLower));
+
+        if (valueInt > INT64_MAX / multiplier)
+            THROW_FMT(FormatError, "value '%s' is out of range", strZ(value));
+
+        strFree(valueLower);
+
+        FUNCTION_TEST_RETURN(INT64, valueInt * multiplier);
     }
 
     THROW_FMT(FormatError, "value '%s' is not valid", strZ(value));
@@ -117,5 +124,5 @@ cfgParseTime(const String *const value)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN((int64_t)(cvtZToDouble(strZ(value)) * MSEC_PER_SEC));
+    FUNCTION_TEST_RETURN(INT64, (int64_t)(cvtZToDouble(strZ(value)) * MSEC_PER_SEC));
 }

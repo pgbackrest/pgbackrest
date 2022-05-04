@@ -12,13 +12,7 @@ iterations of a loop would likely be a bad idea.
 #ifndef COMMON_STAT_H
 #define COMMON_STAT_H
 
-#include "common/type/variant.h"
-
-/***********************************************************************************************************************************
-Statistics output constants
-***********************************************************************************************************************************/
-#define STAT_VALUE_TOTAL                                            "total"
-    VARIANT_DECLARE(STAT_VALUE_TOTAL_VAR);
+#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Functions
@@ -29,7 +23,7 @@ void statInit(void);
 // Increment stat by one
 void statInc(const String *key);
 
-// Output stats to a KeyValue
-KeyValue *statToKv(void);
+// Output stats to JSON
+String *statToJson(void);
 
 #endif

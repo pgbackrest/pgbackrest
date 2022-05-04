@@ -355,6 +355,42 @@ cfgLoadUpdateOption(void)
 }
 
 /**********************************************************************************************************************************/
+String *
+cfgLoadLogFileName(const ConfigCommandRole commandRole)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, commandRole);
+    FUNCTION_LOG_END();
+
+    // Construct log filename prefix
+    String *const result = strCatFmt(
+        strNew(),
+        "%s/%s-%s", strZ(cfgOptionStr(cfgOptLogPath)),
+        cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName());
+
+    // ??? Append async for local/remote archive async commands. It would be good to find a more generic way to do this in case the
+    // async role is added to more commands.
+    if (commandRole == cfgCmdRoleLocal || commandRole == cfgCmdRoleRemote)
+    {
+        if (cfgOptionValid(cfgOptArchiveAsync) && cfgOptionBool(cfgOptArchiveAsync))
+            strCatZ(result, "-async");
+    }
+
+    // Add command role if it is not main
+    if (commandRole != cfgCmdRoleMain)
+        strCatFmt(result, "-%s", strZ(cfgParseCommandRoleStr(commandRole)));
+
+    // Add process id if local or remote role
+    if (commandRole == cfgCmdRoleLocal || commandRole == cfgCmdRoleRemote)
+        strCatFmt(result, "-%03u", cfgOptionUInt(cfgOptProcess));
+
+    // Add extension
+    strCatZ(result, ".log");
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
 void
 cfgLoadLogFile(void)
 {
@@ -362,33 +398,8 @@ cfgLoadLogFile(void)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Construct log filename prefix
-            String *logFile = strCatFmt(
-                strNew(),
-                "%s/%s-%s", strZ(cfgOptionStr(cfgOptLogPath)),
-                cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName());
-
-            // ??? Append async for local/remote archive async commands.  It would be good to find a more generic way to do this in
-            // case the async role is added to more commands.
-            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
-            {
-                if (cfgOptionValid(cfgOptArchiveAsync) && cfgOptionBool(cfgOptArchiveAsync))
-                    strCatFmt(logFile, "-async");
-            }
-
-            // Add command role if it is not main
-            if (cfgCommandRole() != cfgCmdRoleMain)
-                strCatFmt(logFile, "-%s", strZ(cfgParseCommandRoleStr(cfgCommandRole())));
-
-            // Add process id if local or remote role
-            if (cfgCommandRole() == cfgCmdRoleLocal || cfgCommandRole() == cfgCmdRoleRemote)
-                strCatFmt(logFile, "-%03u", cfgOptionUInt(cfgOptProcess));
-
-            // Add extension
-            strCatZ(logFile, ".log");
-
             // Attempt to open log file
-            if (!logFileSet(strZ(logFile)))
+            if (!logFileSet(strZ(cfgLoadLogFileName(cfgCommandRole()))))
                 cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARUINT64(CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF));
         }
         MEM_CONTEXT_TEMP_END();

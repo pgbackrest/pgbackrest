@@ -353,7 +353,8 @@ storagePosixNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
 /**********************************************************************************************************************************/
 void
 storagePosixPathCreate(
-    THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode, StorageInterfacePathCreateParam param)
+    THIS_VOID, const String *const path, const bool errorOnExists, const bool noParentCreate, const mode_t mode,
+    const StorageInterfacePathCreateParam param)
 {
     THIS(StoragePosix);
 
@@ -375,8 +376,12 @@ storagePosixPathCreate(
         // If the parent path does not exist then create it if allowed
         if (errno == ENOENT && !noParentCreate)
         {
-            storageInterfacePathCreateP(this, strPath(path), errorOnExists, noParentCreate, mode);
+            String *const pathParent = strPath(path);
+
+            storageInterfacePathCreateP(this, pathParent, errorOnExists, noParentCreate, mode);
             storageInterfacePathCreateP(this, path, errorOnExists, noParentCreate, mode);
+
+            strFree(pathParent);
         }
         // Ignore path exists if allowed
         else if (errno != EEXIST || errorOnExists)
@@ -394,7 +399,7 @@ typedef struct StoragePosixPathRemoveData
 } StoragePosixPathRemoveData;
 
 static void
-storagePosixPathRemoveCallback(void *callbackData, const StorageInfo *info)
+storagePosixPathRemoveCallback(void *const callbackData, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -406,8 +411,8 @@ storagePosixPathRemoveCallback(void *callbackData, const StorageInfo *info)
 
     if (!strEqZ(info->name, "."))
     {
-        StoragePosixPathRemoveData *data = callbackData;
-        String *file = strNewFmt("%s/%s", strZ(data->path), strZ(info->name));
+        StoragePosixPathRemoveData *const data = callbackData;
+        String *const file = strNewFmt("%s/%s", strZ(data->path), strZ(info->name));
 
         // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
         if (unlink(strZ(file)) == -1)                                                                               // {vm_covered}
@@ -421,6 +426,8 @@ storagePosixPathRemoveCallback(void *callbackData, const StorageInfo *info)
             else
                 THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));                   // {vm_covered}
         }
+
+        strFree(file);
     }
 
     FUNCTION_TEST_RETURN_VOID();

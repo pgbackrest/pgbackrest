@@ -180,7 +180,7 @@ sub new
     $self->{strLockPath} = $self->testPath() . '/' . HOST_PATH_LOCK;
 
     # Set conf file
-    $self->{strBackRestConfig} =  $self->testPath() . '/' . PROJECT_CONF;
+    $self->{strBackRestConfig} = $self->testPath() . '/' . PROJECT_CONF;
 
     # Set LogTest object
     $self->{oLogTest} = $$oParam{oLogTest};
@@ -413,7 +413,8 @@ sub backupEnd
         # Make sure tablespace links are correct
         if ($self->hasLink())
         {
-            if ($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink())
+            if (($strType eq CFGOPTVAL_BACKUP_TYPE_FULL || $self->hardLink()) &&
+                !$oExpectedManifest->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'})
             {
                 my $hTablespaceManifest = storageTest()->manifest(
                     $self->repoBackupPath("${strBackup}/" . MANIFEST_TARGET_PGDATA . '/' . DB_PATH_PGTBLSPC));
@@ -1173,6 +1174,14 @@ sub configCreate
         testRunGet()->logLevelTestFile() eq lc(OFF) ? 'n' : 'y';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-timestamp'} = 'n';
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'buffer-size'} = '64k';
+
+    if ($oParam->{bBundle})
+    {
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle'} = 'y';
+        # Set bundle size/limit smaller for testing and because FakeGCS does not do multi-part upload
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle-size'} = '1MiB';
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle-limit'} = '64KiB';
+    }
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'lock-path'} = $self->lockPath();
@@ -2070,9 +2079,13 @@ sub restoreCompare
                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{size});
         }
 
-        # Remove repo-size from the manifest.  ??? This could be improved to get actual sizes from the backup.
+        # Remove repo-size, bno, bni from the manifest
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bni");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bni"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bno");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
@@ -2132,6 +2145,8 @@ sub restoreCompare
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_CHECK});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_ARCHIVE_COPY, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_ARCHIVE_COPY});
+    $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef,
+                          ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BACKUP_STANDBY, undef,
                           ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_BACKUP_STANDBY});
     $oActualManifest->set(MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_BUFFER_SIZE, undef,
@@ -2200,6 +2215,13 @@ sub restoreCompare
         $oActualManifest->set(
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TYPE, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TYPE});
+
+        if (defined($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'}))
+        {
+            $oActualManifest->set(
+                MANIFEST_SECTION_BACKUP, 'backup-bundle', undef,
+                $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
+        }
 
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef,
                               ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LSN_START});

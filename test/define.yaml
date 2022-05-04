@@ -216,7 +216,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-json
-        total: 11
+        total: 2
 
         coverage:
           - common/type/json
@@ -401,6 +401,7 @@ unit:
           - postgres/interface/v120
           - postgres/interface/v130
           - postgres/interface/v140
+          - postgres/interface/v150
           - protocol/client
           - protocol/command
           - protocol/helper
@@ -413,7 +414,9 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: lock
-        total: 2
+        total: 3
+        feature: STORAGE
+        harness: storage
 
         coverage:
           - common/lock
@@ -491,8 +494,6 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
         total: 22
-        feature: STORAGE
-        harness: storage
 
         coverage:
           - storage/cifs/helper
@@ -580,7 +581,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: interface
-        total: 9
+        total: 10
         harness: postgres
 
         coverage:
@@ -687,7 +688,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: control
-        total: 3
+        total: 4
 
         coverage:
           - command/control/common
@@ -802,21 +803,14 @@ unit:
           - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: backup-common
-        total: 2
-
-        coverage:
-          - command/backup/common
-          - command/backup/pageChecksum
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 9
+        total: 11
 
         coverage:
           - command/backup/backup
           - command/backup/common
           - command/backup/file
+          - command/backup/pageChecksum
           - command/backup/protocol
 
         include:
@@ -829,6 +823,7 @@ unit:
         total: 4
 
         coverage:
+          - command/repo/common
           - command/repo/get
           - command/repo/ls
           - command/repo/put

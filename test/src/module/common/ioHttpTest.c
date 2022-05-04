@@ -125,7 +125,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             StringList *redactList = strLstNew();
-            strLstAdd(redactList, STRDEF("key2"));
+            strLstAddZ(redactList, "key2");
 
             TEST_ASSIGN(query, httpQueryNewP(.redactList = redactList), "new query");
 
@@ -158,7 +158,7 @@ testRun(void)
         TEST_TITLE("dup query with redaction");
 
         StringList *redactList = strLstNew();
-        strLstAdd(redactList, STRDEF("key1"));
+        strLstAddZ(redactList, "key1");
 
         TEST_ASSIGN(query, httpQueryDupP(query, .redactList = redactList), "dup query");
         TEST_RESULT_STR_Z(httpQueryToLog(query), "{key1: <redacted>, key2: 'value2a'}", "log output");
@@ -598,10 +598,12 @@ testRun(void)
                 TEST_TITLE("error with content");
 
                 hrnServerScriptExpectZ(http, "GET /?a=b HTTP/1.1\r\n" TEST_USER_AGENT "hdr1:1\r\nhdr2:2\r\n\r\n");
-                hrnServerScriptReplyZ(http, "HTTP/1.1 403 \r\ncontent-length:7\r\n\r\nCONTENT");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 403 \r\nconnection:close\r\ncontent-type:application/json\r\n\r\nCONTENT");
+
+                hrnServerScriptClose(http);
 
                 StringList *headerRedact = strLstNew();
-                strLstAdd(headerRedact, STRDEF("hdr2"));
+                strLstAddZ(headerRedact, "hdr2");
                 headerRequest = httpHeaderNew(headerRedact);
                 httpHeaderAdd(headerRequest, STRDEF("hdr1"), STRDEF("1"));
                 httpHeaderAdd(headerRequest, STRDEF("hdr2"), STRDEF("2"));
@@ -616,7 +618,8 @@ testRun(void)
                 TEST_RESULT_UINT(httpResponseCode(response), 403, "check response code");
                 TEST_RESULT_STR_Z(httpResponseReason(response), "", "check empty response message");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{content-length: '7'}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close', content-type: 'application/json'}",
+                    "check response headers");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "CONTENT", "check response content");
 
                 TEST_ERROR(
@@ -628,21 +631,67 @@ testRun(void)
                     "hdr1: 1\n"
                     "hdr2: <redacted>\n"
                     "*** Response Headers ***:\n"
-                    "content-length: 7\n"
+                    "connection: close\n"
+                    "content-type: application/json\n"
                     "*** Response Content ***:\n"
                     "CONTENT");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("end server process");
+
+                hrnServerScriptEnd(http);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        HRN_FORK_BEGIN()
+        {
+            // Start HTTPS test server
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                // Set buffer size large enough for server to read expect messages
+                ioBufferSizeSet(65536);
+
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "http server run");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *http = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("create client");
+
+                ioBufferSizeSet(35);
+
+                TEST_ASSIGN(
+                    client,
+                    httpClientNew(
+                        tlsClientNewP(
+                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER),
+                        5000),
+                    "new client");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("request with content using content-length");
+
+                hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(
                     http, "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "content-length:30\r\n\r\n"
                         "012345678901234567890123456789");
-                hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\nConnection:close\r\n\r\n01234567890123456789012345678901");
+                hrnServerScriptReplyZ(
+                    http,
+                    "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:application/xml\r\n\r\n01234567890123456789012345678901");
 
-                hrnServerScriptClose(http);
+                // Abort connect without proper TLS shutdown to show that all bytes are read correctly for content type xml
+                hrnServerScriptAbort(http);
 
                 ioBufferSizeSet(30);
+
+                HttpResponse *response = NULL;
 
                 TEST_ASSIGN(
                     response,
@@ -652,8 +701,10 @@ testRun(void)
                             .header = httpHeaderAdd(httpHeaderNew(NULL), STRDEF("content-length"), STRDEF("30")),
                             .content = BUFSTRDEF("012345678901234567890123456789")), true),
                     "request");
+                TEST_RESULT_BOOL(httpResponseReadIgnoreUnexpectedEof(response), true, "check unexpected eof allowed");
                 TEST_RESULT_STR_Z(
-                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close'}", "check response headers");
+                    httpHeaderToLog(httpResponseHeader(response)), "{connection: 'close', content-type: 'application/xml'}",
+                    "check response headers");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "01234567890123456789012345678901", "check response");
                 TEST_RESULT_UINT(httpResponseRead(response, bufNew(1), true), 0, "call internal read to check eof");
 
@@ -731,7 +782,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("statistics exist");
 
-        TEST_RESULT_BOOL(varLstEmpty(kvKeyList(statToKv())), false, "check");
+        TEST_RESULT_PTR_NE(statToJson(), NULL, "check");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

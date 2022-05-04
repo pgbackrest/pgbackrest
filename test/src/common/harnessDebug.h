@@ -50,11 +50,11 @@ C Debug Harness
         }                                                                                                                          \
         while (0)
 
-    #define FUNCTION_HARNESS_RETURN(typeMacroPrefix, result)                                                                       \
+    #define FUNCTION_HARNESS_RETURN(typeMacroPrefix, ...)                                                                          \
         do                                                                                                                         \
         {                                                                                                                          \
             STACK_TRACE_POP(false);                                                                                                \
-            return result;                                                                                                         \
+            return __VA_ARGS__;                                                                                                    \
         }                                                                                                                          \
         while (0)
 
@@ -71,8 +71,8 @@ C Debug Harness
     #define FUNCTION_HARNESS_VOID()
     #define FUNCTION_HARNESS_ASSERT(condition)
 
-    #define FUNCTION_HARNESS_RETURN(typeMacroPrefix, result)                                                                       \
-        return result
+    #define FUNCTION_HARNESS_RETURN(typeMacroPrefix, ...)                                                                          \
+        return __VA_ARGS__
 
     #define FUNCTION_HARNESS_RETURN_VOID();
 #endif

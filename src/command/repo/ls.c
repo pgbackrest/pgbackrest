@@ -5,6 +5,7 @@ Repository List Command
 
 #include <unistd.h>
 
+#include "command/repo/common.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/log.h"
@@ -40,10 +41,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
 
     // Skip . path if it is not first when json output
     if (info->type == storageTypePath && strEq(info->name, DOT_STR) && (!listData->first || !listData->json))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Add separator character
     if (!listData->first && listData->json)
@@ -54,7 +52,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
     // Render in json
     if (listData->json)
     {
-        ioWriteStr(listData->write, jsonFromStr(info->name));
+        ioWriteStr(listData->write, jsonFromVar(VARSTR(info->name)));
         ioWrite(listData->write, BUFSTRDEF(":{\"type\":\""));
 
         switch (info->type)
@@ -83,7 +81,7 @@ storageListRenderCallback(void *data, const StorageInfo *info)
         }
 
         if (info->type == storageTypeLink)
-            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strZ(jsonFromStr(info->linkDestination))));
+            ioWriteStr(listData->write, strNewFmt(",\"destination\":%s", strZ(jsonFromVar(VARSTR(info->linkDestination)))));
 
         ioWrite(listData->write, BRACER_BUF);
     }
@@ -124,8 +122,9 @@ storageListRender(IoWrite *write)
     // Get path
     const String *path = NULL;
 
+    // Get and validate if path is valid for repo
     if (strLstSize(cfgCommandParam()) == 1)
-        path = strLstGet(cfgCommandParam(), 0);
+        path = repoPathIsValid(strLstGet(cfgCommandParam(), 0));
     else if (strLstSize(cfgCommandParam()) > 1)
         THROW(ParamInvalidError, "only one path may be specified");
 

@@ -71,5 +71,5 @@ bz2Error(int error)
         THROWP_FMT(errorType, "bz2 error: [%d] %s", error, errorMsg);
     }
 
-    FUNCTION_TEST_RETURN(error);
+    FUNCTION_TEST_RETURN(INT, error);
 }

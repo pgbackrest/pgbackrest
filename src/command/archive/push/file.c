@@ -38,9 +38,7 @@ archivePushErrorAdd(StringList *errorList, unsigned int repoIdx)
         FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
-    strLstAdd(
-        errorList,
-        strNewFmt("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()));
+    strLstAddFmt(errorList, "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -88,18 +86,20 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
     }
     TRY_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
 ArchivePushFileResult
 archivePushFile(
-    const String *walSource, bool headerCheck, unsigned int pgVersion, uint64_t pgSystemId, const String *archiveFile,
-    CompressType compressType, int compressLevel, const List *const repoList, const StringList *const priorErrorList)
+    const String *const walSource, const bool headerCheck, const bool modeCheck, const unsigned int pgVersion,
+    const uint64_t pgSystemId, const String *const archiveFile, const CompressType compressType, const int compressLevel,
+    const List *const repoList, const StringList *const priorErrorList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSource);
         FUNCTION_LOG_PARAM(BOOL, headerCheck);
+        FUNCTION_LOG_PARAM(BOOL, modeCheck);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(STRING, archiveFile);
@@ -116,10 +116,11 @@ archivePushFile(
     ASSERT(lstSize(repoList) > 0);
 
     ArchivePushFileResult result = {.warnList = strLstNew()};
-    StringList *errorList = strLstDup(priorErrorList);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        StringList *const errorList = strLstDup(priorErrorList);
+
         // Is this a WAL segment?
         bool isSegment = walIsSegment(archiveFile);
 
@@ -190,20 +191,19 @@ archivePushFile(
                 {
                     String *walSegmentRepoChecksum = strSubN(walSegmentFile, strSize(archiveFile) + 1, HASH_TYPE_SHA1_SIZE_HEX);
 
-                    // If the checksums are the same then succeed but warn in case this is a symptom of some other issue
+                    // If the checksums are the same then succeed but warn if archive-mode-check is enabled in case this is a
+                    // symptom of some other issue
                     if (strEq(walSegmentChecksum, walSegmentRepoChecksum))
                     {
-                        MEM_CONTEXT_PRIOR_BEGIN()
+                        if (modeCheck)
                         {
                             // Add warning to the result that will be returned to the main process
-                            strLstAdd(
+                            strLstAddFmt(
                                 result.warnList,
-                                strNewFmt(
-                                    "WAL file '%s' already exists in the %s archive with the same checksum"
-                                    "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
-                                    strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx)));
+                                "WAL file '%s' already exists in the %s archive with the same checksum"
+                                "\nHINT: this is valid in some recovery scenarios but may also indicate a problem.",
+                                strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx));
                         }
-                        MEM_CONTEXT_PRIOR_END();
 
                         // No need to copy to this repo
                         destinationCopy[repoListIdx] = false;
@@ -323,13 +323,13 @@ archivePushFile(
                 }
             }
         }
+
+        // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
+        // remove the file.
+        if (strLstSize(errorList) > 0)
+            THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
     }
     MEM_CONTEXT_TEMP_END();
-
-    // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
-    // remove the file.
-    if (strLstSize(errorList) > 0)
-        THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
 
     FUNCTION_LOG_RETURN_STRUCT(result);
 }

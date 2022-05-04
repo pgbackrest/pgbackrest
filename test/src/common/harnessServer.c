@@ -82,7 +82,7 @@ hrnServerScriptCommand(IoWrite *write, HrnServerCmd cmd, const Variant *data)
 
     ASSERT(write != NULL);
 
-    ioWriteStrLine(write, jsonFromUInt(cmd));
+    ioWriteStrLine(write, jsonFromVar(VARUINT(cmd)));
     ioWriteStrLine(write, jsonFromVar(data));
     ioWriteFlush(write);
 
@@ -268,7 +268,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
 
     do
     {
-        HrnServerCmd cmd = jsonToUInt(ioReadLine(read));
+        HrnServerCmd cmd = varUIntForce(jsonToVar(ioReadLine(read)));
         const Variant *data = jsonToVar(ioReadLine(read));
 
         switch (cmd)
@@ -320,7 +320,7 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
 
                 TRY_BEGIN()
                 {
-                    ioRead(ioSessionIoRead(serverSession), buffer);
+                    ioRead(ioSessionIoReadP(serverSession), buffer);
                 }
                 CATCH(FileReadError)
                 {

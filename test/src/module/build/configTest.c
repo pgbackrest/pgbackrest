@@ -191,6 +191,23 @@ testRun(void)
 
         TEST_ERROR(bldCfgParse(storageTest), FormatError, "option 'stanza' command 'archive-get' may not depend on other option");
 
+        HRN_STORAGE_PUT_Z(
+            storageTest, "src/build/config/config.yaml",
+            TEST_COMMAND_VALID
+            TEST_OPTION_GROUP_VALID
+            "option:\n"
+            "  config:\n"
+            "    type: bool\n"
+            "  stanza:\n"
+            "    type: string\n"
+            "    command:\n"
+            "      archive-get:\n"
+            "        depend:\n"
+            "          option: config\n"
+            "          default: false\n");
+
+        TEST_ERROR(bldCfgParse(storageTest), FormatError, "dependency default invalid for non-boolean option 'stanza'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("parse and render config");
 
@@ -365,6 +382,7 @@ testRun(void)
             "    default: false\n"
             "    depend:\n"
             "      option: online\n"
+            "      default: true\n"
             "      list:\n"
             "        - true\n"
             "    command:\n"
@@ -742,6 +760,7 @@ testRun(void)
             "            (\n"
             "                PARSE_RULE_OPTIONAL_DEPEND\n"
             "                (\n"
+            "                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_TRUE),\n"
             "                    PARSE_RULE_VAL_OPT(cfgOptOnline),\n"
             "                    PARSE_RULE_VAL_BOOL_TRUE,\n"
             "                ),\n"

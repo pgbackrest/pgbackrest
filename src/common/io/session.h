@@ -51,10 +51,19 @@ ioSessionAuthenticated(const IoSession *const this)
 int ioSessionFd(IoSession *this);
 
 // Read interface
-__attribute__((always_inline)) static inline IoRead *
-ioSessionIoRead(IoSession *const this)
+typedef struct IoSessionIoReadParam
 {
-    return THIS_PUB(IoSession)->interface->ioRead(THIS_PUB(IoSession)->driver);
+    VAR_PARAM_HEADER;
+    bool ignoreUnexpectedEof;                                       // Allow unexpected EOF, e.g. TLS session improperly terminated
+} IoSessionIoReadParam;
+
+#define ioSessionIoReadP(this, ...)                                                                                                \
+    ioSessionIoRead(this, (IoSessionIoReadParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+__attribute__((always_inline)) static inline IoRead *
+ioSessionIoRead(IoSession *const this, const IoSessionIoReadParam param)
+{
+    return THIS_PUB(IoSession)->interface->ioRead(THIS_PUB(IoSession)->driver, param.ignoreUnexpectedEof);
 }
 
 // Write interface

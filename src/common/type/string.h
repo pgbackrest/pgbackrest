@@ -5,7 +5,7 @@ Strings are lightweight objects in that they do not have their own memory contex
 which they are instantiated. If a string is needed outside the current memory context, the memory context must be switched to the
 old context and then back. Below is a simplified example:
 
-    String *result = NULL;     <--- is created in the current memory context  (referred to as "old context" below)
+    String *result = NULL;     <--- is created in the current memory context (referred to as "old context" below)
     MEM_CONTEXT_TEMP_BEGIN()   <--- begins a new temporary context
     {
         String *resultStr = strNewZN("myNewStr"); <--- creates a string in the temporary memory context
@@ -213,13 +213,16 @@ String * will result in a segfault due to modifying read-only memory.
 
 By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
+#define STR_SIZE(bufferParam, sizeParam)                                                                                           \
+    ((const String *const)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)(sizeParam)})
+
 // Create a String constant inline from any zero-terminated string
-#define STR(bufferParam)                                                                                                           \
-    ((const String *)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)strlen(bufferParam)})
+#define STR(buffer)                                                                                                                \
+    STR_SIZE(buffer, strlen(buffer))
 
 // Create a String constant inline from a #define or inline string constant
-#define STRDEF(bufferParam)                                                                                                        \
-    ((const String *)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)sizeof(bufferParam) - 1})
+#define STRDEF(buffer)                                                                                                             \
+    STR_SIZE(buffer, sizeof(buffer) - 1)
 
 // Used to declare String constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
 #define STRING_EXTERN(name, buffer)                                                                                                \

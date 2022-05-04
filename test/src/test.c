@@ -5,6 +5,11 @@ This wrapper runs the C unit tests.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+// This must be before all includes except build.auto.h
+#ifdef HRN_FEATURE_MEMCONTEXT
+    #define DEBUG_MEM
+#endif
+
 /***********************************************************************************************************************************
 C files to be tested
 
@@ -25,6 +30,7 @@ The test code is included directly so it can freely interact with the included C
 
 #ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
+    #include "common/macro.h"
 #endif
 
 #ifdef HRN_FEATURE_DEBUG
@@ -162,12 +168,16 @@ main(int argListSize, const char *argList[])
 #endif
     };
 
-    errorHandlerSet(handlerList, sizeof(handlerList) / sizeof(ErrorHandlerFunction));
+    errorHandlerSet(handlerList, LENGTH_OF(handlerList));
 #endif
 
     // Initialize statistics
 #if defined(HRN_INTEST_STAT) || defined(HRN_FEATURE_STAT)
-    statInit();
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        statInit();
+    }
+    MEM_CONTEXT_TEMP_END();
 #endif
 
     // Set neutral umask for testing
@@ -211,8 +221,18 @@ main(int argListSize, const char *argList[])
         TRY_BEGIN()
         {
 #endif
-            // Run the tests
-            testRun();
+
+#ifdef HRN_FEATURE_MEMCONTEXT
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+#endif
+                // Run the tests
+                testRun();
+#ifdef HRN_FEATURE_MEMCONTEXT
+            }
+            MEM_CONTEXT_TEMP_END();
+#endif
+
 #ifdef HRN_FEATURE_ERROR
         }
         CATCH_ANY()
@@ -236,7 +256,7 @@ main(int argListSize, const char *argList[])
         fflush(stdout);
 #ifdef HRN_FEATURE_ERROR
     }
-    CATCH_ANY()
+    CATCH_FATAL()
     {
         // Make the error really obvious
         fprintf(

@@ -12,6 +12,7 @@ Page Checksum Filter
 #include "common/type/object.h"
 #include "postgres/interface.h"
 #include "postgres/interface/static.vendor.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -20,8 +21,9 @@ typedef struct PageChecksum
 {
     MemContext *memContext;                                         // Mem context of filter
 
+    unsigned int segmentPageTotal;                                  // Total pages in a segment
     unsigned int pageNoOffset;                                      // Page number offset for subsequent segments
-    uint64_t lsnLimit;                                              // Lower limit of pages that could be torn
+    const String *fileName;                                         // Used to load the file to retry pages
 
     unsigned char *pageBuffer;                                      // Buffer to hold a page while verifying the checksum
 
@@ -93,28 +95,64 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
             // Get a pointer to the page header
             const PageHeaderData *const pageHeader = (const PageHeaderData *)(bufPtrConst(input) + pageIdx * PG_PAGE_SIZE_DEFAULT);
 
-            // Skip new pages ??? Improved to exactly match what PostgreSQL does in PageIsVerifiedExtended()
-            if (pageHeader->pd_upper == 0)
-                continue;
-
-            // Get the page lsn
-            uint64_t pageLsn = PageXLogRecPtrGet(pageHeader->pd_lsn);
-
             // Block number relative to all segments in the relation
-            unsigned int blockNo = this->pageNoOffset + pageIdx;
-
-            // Skip pages after the backup start LSN since they may be torn
-            if (pageLsn >= this->lsnLimit)
-                continue;
+            const unsigned int blockNo = this->pageNoOffset + pageIdx;
 
             // Only validate page checksum if the page is complete
             if (this->align || pageIdx < pageTotal - 1)
             {
-                // Make a copy of the page since it will be modified by the page checksum function
-                memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
+                // Skip new pages indicated by pd_upper == 0
+                bool pdUpperValid = true;
 
-                // Continue if the checksum matches
-                if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
+                if (pageHeader->pd_upper == 0)
+                {
+                    // Check that the entire page is zero in case pd_upper is corrupted
+                    for (unsigned int pageIdx = 0; pageIdx < PG_PAGE_SIZE_DEFAULT / sizeof(size_t); pageIdx++)
+                    {
+                        if (((size_t *)pageHeader)[pageIdx] != 0)
+                        {
+                            pdUpperValid = false;
+                            break;
+                        }
+                    }
+
+                    // If the entire page is zero it is valid
+                    if (pdUpperValid)
+                        continue;
+                }
+
+                // Only validate the checksum if pd_upper is non-zero to avoid an assertion from pg_checksum_page()
+                if (pdUpperValid)
+                {
+                    // Make a copy of the page since it will be modified by the page checksum function
+                    memcpy(this->pageBuffer, pageHeader, PG_PAGE_SIZE_DEFAULT);
+
+                    // Continue if the checksum matches
+                    if (pageHeader->pd_checksum == pgPageChecksum(this->pageBuffer, blockNo))
+                        continue;
+                }
+
+                // On error retry the page
+                bool changed = false;
+
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    // Reload the page
+                    const Buffer *const pageRetry = storageGetP(
+                        storageNewReadP(
+                            storagePosixNewP(FSLASH_STR), this->fileName,
+                            .offset = (blockNo % this->segmentPageTotal) * PG_PAGE_SIZE_DEFAULT,
+                            .limit = VARUINT64(PG_PAGE_SIZE_DEFAULT)));
+
+                    // Check if the page has changed since it was last read
+                    changed = !bufEq(pageRetry, BUF(pageHeader, PG_PAGE_SIZE_DEFAULT));
+                }
+                MEM_CONTEXT_TEMP_END();
+
+                // If the page has changed then PostgreSQL must be updating it so we won't consider it to be invalid. We are not
+                // concerned about whether this new page has a valid checksum or not, since the page will be replayed from WAL on
+                // recovery. This prevents (theoretically) limitless retries for a hot page.
+                if (changed)
                     continue;
             }
 
@@ -131,7 +169,6 @@ pageChecksumProcess(THIS_VOID, const Buffer *input)
 
             // Add page number and lsn to the error list
             pckWriteObjBeginP(this->error, .id = blockNo + 1);
-            pckWriteU64P(this->error, pageLsn);
             pckWriteObjEndP(this->error);
         }
 
@@ -188,12 +225,12 @@ pageChecksumResult(THIS_VOID)
 
 /**********************************************************************************************************************************/
 IoFilter *
-pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t lsnLimit)
+pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTotal, const String *const fileName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT, segmentNo);
         FUNCTION_LOG_PARAM(UINT, segmentPageTotal);
-        FUNCTION_LOG_PARAM(UINT64, lsnLimit);
+        FUNCTION_LOG_PARAM(STRING, fileName);
     FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
@@ -205,8 +242,9 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
         *driver = (PageChecksum)
         {
             .memContext = memContextCurrent(),
+            .segmentPageTotal = segmentPageTotal,
             .pageNoOffset = segmentNo * segmentPageTotal,
-            .lsnLimit = lsnLimit,
+            .fileName = strDup(fileName),
             .pageBuffer = memNew(PG_PAGE_SIZE_DEFAULT),
             .valid = true,
             .align = true,
@@ -221,7 +259,7 @@ pageChecksumNew(unsigned int segmentNo, unsigned int segmentPageTotal, uint64_t 
 
             pckWriteU32P(packWrite, segmentNo);
             pckWriteU32P(packWrite, segmentPageTotal);
-            pckWriteU64P(packWrite, lsnLimit);
+            pckWriteStrP(packWrite, fileName);
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -245,9 +283,9 @@ pageChecksumNewPack(const Pack *const paramList)
         PackRead *const paramListPack = pckReadNew(paramList);
         const unsigned int segmentNo = pckReadU32P(paramListPack);
         const unsigned int segmentPageTotal = pckReadU32P(paramListPack);
-        const uint64_t lsnLimit = pckReadU64P(paramListPack);
+        const String *const fileName = pckReadStrP(paramListPack);
 
-        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, lsnLimit), memContextPrior());
+        result = ioFilterMove(pageChecksumNew(segmentNo, segmentPageTotal, fileName), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

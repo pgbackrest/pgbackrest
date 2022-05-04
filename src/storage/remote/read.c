@@ -11,7 +11,6 @@ Remote Storage Read
 #include "common/io/read.h"
 #include "common/log.h"
 #include "common/type/convert.h"
-#include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
@@ -75,7 +74,12 @@ storageReadRemoteOpen(THIS_VOID)
         pckWriteStrP(param, this->interface.name);
         pckWriteBoolP(param, this->interface.ignoreMissing);
         pckWriteU64P(param, this->interface.offset);
-        pckWriteStrP(param, jsonFromVar(this->interface.limit));
+
+        if (this->interface.limit == NULL)
+            pckWriteNullP(param);
+        else
+            pckWriteU64P(param, varUInt64(this->interface.limit));
+
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         protocolClientCommandPut(this->client, command, false);
@@ -136,12 +140,12 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
                     // If binary then read the next block
                     if (pckReadType(read) == pckTypeBin)
                     {
-                        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+                        MEM_CONTEXT_OBJ_BEGIN(this)
                         {
                             this->block = pckReadBinP(read);
                             this->remaining = bufUsed(this->block);
                         }
-                        MEM_CONTEXT_END();
+                        MEM_CONTEXT_OBJ_END();
                     }
                     // Else read is complete and get the filter list
                     else
@@ -202,7 +206,7 @@ storageReadRemoteEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->eof);
+    FUNCTION_TEST_RETURN(BOOL, this->eof);
 }
 
 /**********************************************************************************************************************************/

@@ -47,13 +47,12 @@ testComparator(const void *item1, const void *item2)
 Test callback to count ini load results
 ***********************************************************************************************************************************/
 static void
-testIniLoadCountCallback(void *data, const String *section, const String *key, const String *value, const Variant *valueVar)
+testIniLoadCountCallback(void *const data, const String *const section, const String *const key, const String *const value)
 {
     (*(unsigned int *)data)++;
     (void)section;
     (void)key;
     (void)value;
-    (void)valueVar;
 }
 
 /***********************************************************************************************************************************
@@ -271,7 +270,8 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(testContext)
         {
-            TEST_ASSIGN(manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, NULL, NULL), "build files");
+            TEST_ASSIGN(
+                manifest, manifestNewBuild(storagePg, PG_VERSION_91, 999999999, false, false, false, NULL, NULL), "build files");
         }
         MEM_CONTEXT_END();
 
@@ -351,18 +351,6 @@ testRun(void)
         }
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check stats have correct values");
-
-        KeyValue *statKv = statToKv();
-
-        for (unsigned int statIdx = 0; statIdx < TEST_STAT_TOTAL; statIdx++)
-        {
-            TEST_RESULT_UINT(
-                varUInt64(kvGet(varKv(kvGet(statKv, VARSTR(statList[statIdx]))), STAT_VALUE_TOTAL_VAR)), runTotal,
-                strZ(strNewFmt("check stat %u", statIdx)));
-        }
     }
 
     // *****************************************************************************************************************************

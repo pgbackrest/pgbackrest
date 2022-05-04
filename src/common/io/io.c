@@ -27,7 +27,7 @@ size_t
 ioBufferSize(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(bufferSize);
+    FUNCTION_TEST_RETURN(SIZE, bufferSize);
 }
 
 void
@@ -47,7 +47,7 @@ TimeMSec
 ioTimeoutMs(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(timeoutMs);
+    FUNCTION_TEST_RETURN(TIME_MSEC, timeoutMs);
 }
 
 void
@@ -92,29 +92,48 @@ ioReadBuf(IoRead *read)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BUFFER, result);
 }
 
 /**********************************************************************************************************************************/
 void
-ioCopy(IoRead *const source, IoWrite *const destination)
+ioCopy(IoRead *const source, IoWrite *const destination, const IoCopyParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, source);
         FUNCTION_TEST_PARAM(IO_WRITE, destination);
+        FUNCTION_TEST_PARAM(VARIANT, param.limit);
     FUNCTION_TEST_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         Buffer *const buffer = bufNew(ioBufferSize());
+        uint64_t copied = 0;
+        bool limitReached = false;
 
         do
         {
+            // If a limit was specified then limit the buffer size on the last iteration
+            if (param.limit != NULL)
+            {
+                const uint64_t bufferLimit = varUInt64(param.limit) - copied;
+
+                if (bufferLimit < bufSize(buffer))
+                {
+                    bufLimitSet(buffer, (size_t)bufferLimit);
+                    limitReached = true;
+                }
+            }
+
+            // Copy bytes
             ioRead(source, buffer);
             ioWrite(destination, buffer);
+
+            // Update bytes copied and clear the buffer
+            copied += bufUsed(buffer);
             bufUsedZero(buffer);
         }
-        while (!ioReadEof(source));
+        while (!limitReached && !ioReadEof(source));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -151,5 +170,5 @@ ioReadDrain(IoRead *read)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }

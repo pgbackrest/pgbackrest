@@ -26,7 +26,7 @@ zstError(size_t error)
     if (ZSTD_isError(error))
         THROW_FMT(FormatError, "zst error: [%zd] %s", (ssize_t)error, ZSTD_getErrorName(error));
 
-    FUNCTION_TEST_RETURN(error);
+    FUNCTION_TEST_RETURN(SIZE, error);
 }
 
 #endif // HAVE_LIBZST

@@ -47,6 +47,7 @@ Option constants
 #define CFGOPT_ARCHIVE_COPY                                         "archive-copy"
 #define CFGOPT_ARCHIVE_GET_QUEUE_MAX                                "archive-get-queue-max"
 #define CFGOPT_ARCHIVE_HEADER_CHECK                                 "archive-header-check"
+#define CFGOPT_ARCHIVE_MISSING_RETRY                                "archive-missing-retry"
 #define CFGOPT_ARCHIVE_MODE                                         "archive-mode"
 #define CFGOPT_ARCHIVE_MODE_CHECK                                   "archive-mode-check"
 #define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               "archive-push-queue-max"
@@ -127,7 +128,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            151
+#define CFG_OPTION_TOTAL                                            155
 
 /***********************************************************************************************************************************
 Option value constants
@@ -360,6 +361,7 @@ typedef enum
     cfgOptArchiveCopy,
     cfgOptArchiveGetQueueMax,
     cfgOptArchiveHeaderCheck,
+    cfgOptArchiveMissingRetry,
     cfgOptArchiveMode,
     cfgOptArchiveModeCheck,
     cfgOptArchivePushQueueMax,
@@ -437,6 +439,9 @@ typedef enum
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,
     cfgOptRepoAzureUriStyle,
+    cfgOptRepoBundle,
+    cfgOptRepoBundleLimit,
+    cfgOptRepoBundleSize,
     cfgOptRepoCipherPass,
     cfgOptRepoCipherType,
     cfgOptRepoGcsBucket,

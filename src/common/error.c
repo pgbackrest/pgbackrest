@@ -10,6 +10,7 @@ Error Handler
 #include <string.h>
 
 #include "common/error.h"
+#include "common/macro.h"
 #include "common/stackTrace.h"
 
 /***********************************************************************************************************************************
@@ -18,17 +19,18 @@ Represents an error type
 struct ErrorType
 {
     const int code;
+    const bool fatal;
     const char *name;
     const struct ErrorType *parentType;
 };
 
 // Macro for defining new error types
-#define ERROR_DEFINE(code, name, parentType)                                                                                       \
-    const ErrorType name = {code, #name, &parentType}
+#define ERROR_DEFINE(code, name, fatal, parentType)                                                                                \
+    const ErrorType name = {code, fatal, #name, &parentType}
 
 // Define test error
 #ifdef DEBUG
-    ERROR_DEFINE(1, TestError, RuntimeError);
+    ERROR_DEFINE(1, TestError, false, RuntimeError);
 #endif
 
 // Include error type definitions
@@ -42,7 +44,7 @@ Maximum allowed number of nested try blocks
 /***********************************************************************************************************************************
 States for each try
 ***********************************************************************************************************************************/
-typedef enum {errorStateTry, errorStateCatch, errorStateEnd} ErrorState;
+typedef enum {errorStateTry, errorStateCatch, errorStateFinally, errorStateEnd} ErrorState;
 
 /***********************************************************************************************************************************
 Track error handling
@@ -110,6 +112,13 @@ int
 errorTypeCode(const ErrorType *errorType)
 {
     return errorType->code;
+}
+
+/**********************************************************************************************************************************/
+bool
+errorTypeFatal(const ErrorType *const errorType)
+{
+    return errorType->fatal;
 }
 
 /**********************************************************************************************************************************/
@@ -189,6 +198,13 @@ int
 errorCode(void)
 {
     return errorTypeCode(errorType());
+}
+
+/**********************************************************************************************************************************/
+bool
+errorFatal(void)
+{
+    return errorTypeFatal(errorType());
 }
 
 /**********************************************************************************************************************************/
@@ -282,20 +298,28 @@ errorInternalJump(void)
     return &errorContext.jumpList[errorContext.tryTotal - 1];
 }
 
+/***********************************************************************************************************************************
+Clean the error stack
+***********************************************************************************************************************************/
+static void
+errorInternalHandlerClean(void)
+{
+    for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
+        errorContext.handlerList[handlerIdx](errorTryDepth());
+}
+
 /**********************************************************************************************************************************/
 bool
-errorInternalCatch(const ErrorType *const errorTypeCatch)
+errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
 {
     // If just entering error state clean up the stack
     if (errorInternalState() == errorStateTry)
     {
-        for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
-            errorContext.handlerList[handlerIdx](errorTryDepth());
-
+        errorInternalHandlerClean();
         errorContext.tryList[errorContext.tryTotal].state++;
     }
 
-    if (errorInternalState() == errorStateCatch && errorInstanceOf(errorTypeCatch))
+    if (errorInternalState() == errorStateCatch && errorInstanceOf(errorTypeCatch) && (fatalCatch || !errorFatal()))
     {
         errorContext.tryList[errorContext.tryTotal].uncaught = false;
         errorContext.tryList[errorContext.tryTotal].state++;
@@ -328,15 +352,39 @@ errorInternalPropagate(void)
 }
 
 /**********************************************************************************************************************************/
+bool
+errorInternalFinally(void)
+{
+    // If finally has not already been processed
+    if (errorInternalState() < errorStateEnd)
+    {
+        // If just entering error state clean up the stack
+        if (errorInternalState() == errorStateTry)
+        {
+            errorInternalHandlerClean();
+        }
+        // Else any catch blocks have been processed and none of them called RETHROW() so clear the error
+        else if (errorInternalState() == errorStateFinally && !errorContext.tryList[errorContext.tryTotal].uncaught)
+            errorContext.error = (Error){0};
+
+        // Advance to end state
+        errorContext.tryList[errorContext.tryTotal].state += errorStateEnd - errorContext.tryList[errorContext.tryTotal].state;
+
+        // Process finally block
+        return true;
+    }
+
+    // Skip finally block
+    return false;
+}
+
+/**********************************************************************************************************************************/
 void
 errorInternalTryEnd(void)
 {
     // Any catch blocks have been processed and none of them called RETHROW() so clear the error
-    if (errorContext.tryList[errorContext.tryTotal].state == errorStateEnd &&
-        !errorContext.tryList[errorContext.tryTotal].uncaught)
-    {
+    if (errorInternalState() == errorStateFinally && !errorContext.tryList[errorContext.tryTotal].uncaught)
         errorContext.error = (Error){0};
-    }
 
     // Remove the try
     errorContext.tryTotal--;

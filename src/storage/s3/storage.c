@@ -131,7 +131,7 @@ storageS3DateTime(time_t authTime)
         strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime_r(&authTime, &timePart)) != ISO_8601_DATE_TIME_SIZE, AssertError,
         "unable to format date");
 
-    FUNCTION_TEST_RETURN(strNewZ(buffer));
+    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
 }
 
 /***********************************************************************************************************************************
@@ -215,12 +215,12 @@ storageS3Auth(
             const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, S3_BUF);
 
             // Switch to the object context so signing key and date are not lost
-            MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->signingKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, serviceKey, AWS4_REQUEST_BUF);
                 this->signingKeyDate = strDup(date);
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
         }
 
         // Generate authorization header
@@ -241,23 +241,24 @@ Convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t. This format is very nearly I
 which are discarded here.
 ***********************************************************************************************************************************/
 static time_t
-storageS3CvtTime(const String *time)
+storageS3CvtTime(const String *const time)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, time);
     FUNCTION_TEST_END();
 
     FUNCTION_TEST_RETURN(
+        TIME,
         epochFromParts(
-            cvtZToInt(strZ(strSubN(time, 0, 4))), cvtZToInt(strZ(strSubN(time, 5, 2))),
-            cvtZToInt(strZ(strSubN(time, 8, 2))), cvtZToInt(strZ(strSubN(time, 11, 2))),
-            cvtZToInt(strZ(strSubN(time, 14, 2))), cvtZToInt(strZ(strSubN(time, 17, 2))), 0));
+            cvtZSubNToInt(strZ(time), 0, 4), cvtZSubNToInt(strZ(time), 5, 2), cvtZSubNToInt(strZ(time), 8, 2),
+            cvtZSubNToInt(strZ(time), 11, 2), cvtZSubNToInt(strZ(time), 14, 2), cvtZSubNToInt(strZ(time), 17, 2), 0));
 }
 
 /***********************************************************************************************************************************
 Automatically get credentials for an associated IAM role
 
 Documentation for the response format is found at: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+Documentation for IMDSv2 tokens: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_CREDENTIAL_HOST_STR,                               "169.254.169.254");
 #define S3_CREDENTIAL_PORT                                          80
@@ -273,86 +274,107 @@ VARIANT_STRDEF_STATIC(S3_JSON_TAG_TOKEN_VAR,                        "Token");
 VARIANT_STRDEF_STATIC(S3_JSON_VALUE_SUCCESS_VAR,                    "Success");
 
 static void
-storageS3AuthAuto(StorageS3 *const this, const HttpHeader *const header)
+storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(HTTP_HEADER, header);
     FUNCTION_LOG_END();
 
-    // If the role was not set explicitly or retrieved previously then retrieve it
-    if (this->credRole == NULL)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Request the role
+        // Retrieve the IMDSv2 token. Do not store the token because it will likely be expired by the time the credentials expire
+        // since credentials have a much longer default expiration. The TTL needs to be long enough to survive retries of the two
+        // metadata queries.
+        HttpHeader *const tokenHeader = httpHeaderDup(header, NULL);
+        httpHeaderAdd(
+            tokenHeader, STRDEF("x-aws-ec2-metadata-token-ttl-seconds"),
+            strNewFmt("%" PRIu64, httpClientTimeout(this->credHttpClient) / 1000 * 3));
+
         HttpRequest *request = httpRequestNewP(
-            this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_PATH), .header = header);
+            this->credHttpClient, HTTP_VERB_PUT_STR, STRDEF("/latest/api/token"), .header = tokenHeader);
         HttpResponse *response = httpRequestResponse(request, true);
 
-        // Not found likely means no role is associated with this instance
+        // Set IMDSv2 token on success. If the token request fails for any reason assume that IMDSv2 is not supported. If the
+        // instance only supports IMDSv2 then subsequent metadata requests will fail because of the missing token.
+        if (httpResponseCodeOk(response))
+            httpHeaderAdd(header, STRDEF("x-aws-ec2-metadata-token"), strNewBuf(httpResponseContent(response)));
+
+        // If the role was not set explicitly or retrieved previously then retrieve it
+        if (this->credRole == NULL)
+        {
+            // Request the role
+            HttpRequest *request = httpRequestNewP(
+                this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_PATH), .header = header);
+            HttpResponse *response = httpRequestResponse(request, true);
+
+            // Not found likely means no role is associated with this instance
+            if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
+            {
+                THROW(
+                    ProtocolError,
+                    "role to retrieve temporary credentials not found\n"
+                        "HINT: is a valid IAM role associated with this instance?");
+            }
+            // Else an error that we can't handle
+            else if (!httpResponseCodeOk(response))
+                httpRequestError(request, response);
+
+            // Get role from the text response
+            MEM_CONTEXT_OBJ_BEGIN(this)
+            {
+                this->credRole = strNewBuf(httpResponseContent(response));
+            }
+            MEM_CONTEXT_OBJ_END();
+        }
+
+        // Retrieve the temp credentials
+        request = httpRequestNewP(
+            this->credHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(this->credRole)), .header = header);
+        response = httpRequestResponse(request, true);
+
+        // Not found likely means the role is not valid
         if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
         {
-            THROW(
+            THROW_FMT(
                 ProtocolError,
-                "role to retrieve temporary credentials not found\n"
-                    "HINT: is a valid IAM role associated with this instance?");
+                "role '%s' not found\n"
+                    "HINT: is '%s' a valid IAM role associated with this instance?",
+                strZ(this->credRole), strZ(this->credRole));
         }
         // Else an error that we can't handle
         else if (!httpResponseCodeOk(response))
             httpRequestError(request, response);
 
-        // Get role from the text response
-        MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+        // Get credentials from the JSON response
+        KeyValue *credential = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            this->credRole = strNewBuf(httpResponseContent(response));
+            // Check the code field for errors
+            const Variant *code = kvGetDefault(credential, S3_JSON_TAG_CODE_VAR, VARSTRDEF("code field is missing"));
+            CHECK(FormatError, code != NULL, "error code missing");
+
+            if (!varEq(code, S3_JSON_VALUE_SUCCESS_VAR))
+                THROW_FMT(FormatError, "unable to retrieve temporary credentials: %s", strZ(varStr(code)));
+
+            // Make sure the required values are present
+            CHECK(FormatError, kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR) != NULL, "access key missing");
+            CHECK(FormatError, kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR) != NULL, "secret access key missing");
+            CHECK(FormatError, kvGet(credential, S3_JSON_TAG_TOKEN_VAR) != NULL, "token missing");
+
+            // Copy credentials
+            this->accessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR)));
+            this->secretAccessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR)));
+            this->securityToken = strDup(varStr(kvGet(credential, S3_JSON_TAG_TOKEN_VAR)));
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
+
+        // Update expiration time
+        CHECK(FormatError, kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR) != NULL, "expiration missing");
+        this->credExpirationTime = storageS3CvtTime(varStr(kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR)));
     }
-
-    // Retrieve the temp credentials
-    HttpRequest *request = httpRequestNewP(
-        this->credHttpClient, HTTP_VERB_GET_STR, strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(this->credRole)), .header = header);
-    HttpResponse *response = httpRequestResponse(request, true);
-
-    // Not found likely means the role is not valid
-    if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
-    {
-        THROW_FMT(
-            ProtocolError,
-            "role '%s' not found\n"
-                "HINT: is '%s' a valid IAM role associated with this instance?",
-            strZ(this->credRole), strZ(this->credRole));
-    }
-    // Else an error that we can't handle
-    else if (!httpResponseCodeOk(response))
-        httpRequestError(request, response);
-
-    // Get credentials from the JSON response
-    KeyValue *credential = jsonToKv(strNewBuf(httpResponseContent(response)));
-
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
-    {
-        // Check the code field for errors
-        const Variant *code = kvGetDefault(credential, S3_JSON_TAG_CODE_VAR, VARSTRDEF("code field is missing"));
-        CHECK(FormatError, code != NULL, "error code missing");
-
-        if (!varEq(code, S3_JSON_VALUE_SUCCESS_VAR))
-            THROW_FMT(FormatError, "unable to retrieve temporary credentials: %s", strZ(varStr(code)));
-
-        // Make sure the required values are present
-        CHECK(FormatError, kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR) != NULL, "access key missing");
-        CHECK(FormatError, kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR) != NULL, "secret access key missing");
-        CHECK(FormatError, kvGet(credential, S3_JSON_TAG_TOKEN_VAR) != NULL, "token missing");
-
-        // Copy credentials
-        this->accessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_ACCESS_KEY_ID_VAR)));
-        this->secretAccessKey = strDup(varStr(kvGet(credential, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR)));
-        this->securityToken = strDup(varStr(kvGet(credential, S3_JSON_TAG_TOKEN_VAR)));
-    }
-    MEM_CONTEXT_END();
-
-    // Update expiration time
-    CHECK(FormatError, kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR) != NULL, "expiration missing");
-    this->credExpirationTime = storageS3CvtTime(varStr(kvGet(credential, S3_JSON_TAG_EXPIRATION_VAR)));
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -373,41 +395,45 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
         FUNCTION_LOG_PARAM(HTTP_HEADER, header);
     FUNCTION_LOG_END();
 
-    // Get credentials
-    HttpQuery *const query = httpQueryNewP();
-    httpQueryAdd(query, STRDEF("Action"), STRDEF("AssumeRoleWithWebIdentity"));
-    httpQueryAdd(query, STRDEF("RoleArn"), this->credRole);
-    httpQueryAdd(query, STRDEF("RoleSessionName"), STRDEF(PROJECT_NAME));
-    httpQueryAdd(query, STRDEF("Version"), STRDEF("2011-06-15"));
-    httpQueryAdd(query, STRDEF("WebIdentityToken"), this->webIdToken);
-
-    HttpRequest *const request = httpRequestNewP(
-        this->credHttpClient, HTTP_VERB_GET_STR, FSLASH_STR, .header = header, .query = query);
-    HttpResponse *const response = httpRequestResponse(request, true);
-
-    CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
-
-    // Copy credentials
-    const XmlNode *const xmlCred =
-        xmlNodeChild(
-            xmlNodeChild(
-                xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), STRDEF("AssumeRoleWithWebIdentityResult"), true),
-            STRDEF("Credentials"), true);
-
-    const XmlNode *const accessKeyNode = xmlNodeChild(xmlCred, STRDEF("AccessKeyId"), true);
-    const XmlNode *const secretAccessKeyNode = xmlNodeChild(xmlCred, STRDEF("SecretAccessKey"), true);
-    const XmlNode *const securityTokenNode = xmlNodeChild(xmlCred, STRDEF("SessionToken"), true);
-
-    MEM_CONTEXT_BEGIN(THIS_MEM_CONTEXT())
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        this->accessKey = xmlNodeContent(accessKeyNode);
-        this->secretAccessKey = xmlNodeContent(secretAccessKeyNode);
-        this->securityToken = xmlNodeContent(securityTokenNode);
-    }
-    MEM_CONTEXT_END();
+        // Get credentials
+        HttpQuery *const query = httpQueryNewP();
+        httpQueryAdd(query, STRDEF("Action"), STRDEF("AssumeRoleWithWebIdentity"));
+        httpQueryAdd(query, STRDEF("RoleArn"), this->credRole);
+        httpQueryAdd(query, STRDEF("RoleSessionName"), STRDEF(PROJECT_NAME));
+        httpQueryAdd(query, STRDEF("Version"), STRDEF("2011-06-15"));
+        httpQueryAdd(query, STRDEF("WebIdentityToken"), this->webIdToken);
 
-    // Update expiration time
-    this->credExpirationTime = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xmlCred, STRDEF("Expiration"), true)));
+        HttpRequest *const request = httpRequestNewP(
+            this->credHttpClient, HTTP_VERB_GET_STR, FSLASH_STR, .header = header, .query = query);
+        HttpResponse *const response = httpRequestResponse(request, true);
+
+        CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
+
+        // Copy credentials
+        const XmlNode *const xmlCred =
+            xmlNodeChild(
+                xmlNodeChild(
+                    xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), STRDEF("AssumeRoleWithWebIdentityResult"), true),
+                STRDEF("Credentials"), true);
+
+        const XmlNode *const accessKeyNode = xmlNodeChild(xmlCred, STRDEF("AccessKeyId"), true);
+        const XmlNode *const secretAccessKeyNode = xmlNodeChild(xmlCred, STRDEF("SecretAccessKey"), true);
+        const XmlNode *const securityTokenNode = xmlNodeChild(xmlCred, STRDEF("SessionToken"), true);
+
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->accessKey = xmlNodeContent(accessKeyNode);
+            this->secretAccessKey = xmlNodeContent(secretAccessKeyNode);
+            this->securityToken = xmlNodeContent(securityTokenNode);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        // Update expiration time
+        this->credExpirationTime = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xmlCred, STRDEF("Expiration"), true)));
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -565,12 +591,14 @@ storageS3Request(StorageS3 *this, const String *verb, const String *path, Storag
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(
-        HTTP_RESPONSE,
-        storageS3ResponseP(
-            storageS3RequestAsyncP(
-                this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms),
-            .allowMissing = param.allowMissing, .contentIo = param.contentIo));
+    HttpRequest *const request = storageS3RequestAsyncP(
+        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms);
+    HttpResponse *const result = storageS3ResponseP(
+        request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
+
+    httpRequestFree(request);
+
+    FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
 /***********************************************************************************************************************************
@@ -743,7 +771,7 @@ storageS3ListInternal(
 
 /**********************************************************************************************************************************/
 static StorageInfo
-storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
+storageS3Info(THIS_VOID, const String *const file, const StorageInfoLevel level, const StorageInterfaceInfoParam param)
 {
     THIS(StorageS3);
 
@@ -758,7 +786,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     ASSERT(file != NULL);
 
     // Attempt to get file info
-    HttpResponse *httpResponse = storageS3RequestP(this, HTTP_VERB_HEAD_STR, file, .allowMissing = true);
+    HttpResponse *const httpResponse = storageS3RequestP(this, HTTP_VERB_HEAD_STR, file, .allowMissing = true);
 
     // Does the file exist?
     StorageInfo result = {.level = level, .exists = httpResponseCodeOk(httpResponse)};
@@ -766,7 +794,7 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
     // Add basic level info if requested and the file exists (no need to add type info since file is default type)
     if (result.level >= storageInfoLevelBasic && result.exists)
     {
-        const HttpHeader *httpHeader = httpResponseHeader(httpResponse);
+        const HttpHeader *const httpHeader = httpResponseHeader(httpResponse);
 
         const String *const contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
         CHECK(FormatError, contentLength != NULL, "content length missing");
@@ -776,6 +804,8 @@ storageS3Info(THIS_VOID, const String *file, StorageInfoLevel level, StorageInte
         CHECK(FormatError, lastModified != NULL, "last modified missing");
         result.timeModified = httpDateToTime(lastModified);
     }
+
+    httpResponseFree(httpResponse);
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
@@ -860,7 +890,7 @@ typedef struct StorageS3PathRemoveData
 } StorageS3PathRemoveData;
 
 static HttpRequest *
-storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *xml)
+storageS3PathRemoveInternal(StorageS3 *const this, HttpRequest *const request, XmlDocument *const xml)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_S3, this);
@@ -873,22 +903,27 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
     // Get response for async request
     if (request != NULL)
     {
-        const Buffer *response = httpResponseContent(storageS3ResponseP(request));
-
-        // Nothing is returned when there are no errors
-        if (!bufEmpty(response))
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
+            const Buffer *const response = httpResponseContent(storageS3ResponseP(request));
 
-            // Attempt to remove errored files one at a time rather than retrying the batch
-            for (unsigned int errorIdx = 0; errorIdx < xmlNodeLstSize(errorList); errorIdx++)
+            // Nothing is returned when there are no errors
+            if (!bufEmpty(response))
             {
-                storageS3RequestP(
-                    this, HTTP_VERB_DELETE_STR,
-                    strNewFmt(
-                        "/%s", strZ(xmlNodeContent(xmlNodeChild(xmlNodeLstGet(errorList, errorIdx), S3_XML_TAG_KEY_STR, true)))));
+                XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
+
+                // Attempt to remove errored files one at a time rather than retrying the batch
+                for (unsigned int errorIdx = 0; errorIdx < xmlNodeLstSize(errorList); errorIdx++)
+                {
+                    storageS3RequestP(
+                        this, HTTP_VERB_DELETE_STR,
+                        strNewFmt(
+                            "/%s",
+                            strZ(xmlNodeContent(xmlNodeChild(xmlNodeLstGet(errorList, errorIdx), S3_XML_TAG_KEY_STR, true)))));
+                }
             }
         }
+        MEM_CONTEXT_TEMP_END();
 
         httpRequestFree(request);
     }
@@ -898,12 +933,16 @@ storageS3PathRemoveInternal(StorageS3 *this, HttpRequest *request, XmlDocument *
 
     if (xml != NULL)
     {
-        result = storageS3RequestAsyncP(
-            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_DELETE_STR, EMPTY_STR),
-            .content = xmlDocumentBuf(xml));
+        HttpQuery *const query = httpQueryAdd(httpQueryNewP(), S3_QUERY_DELETE_STR, EMPTY_STR);
+        Buffer *const content = xmlDocumentBuf(xml);
+
+        result = storageS3RequestAsyncP(this, HTTP_VERB_POST_STR, FSLASH_STR, .query = query, .content = content);
+
+        httpQueryFree(query);
+        bufFree(content);
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(HTTP_REQUEST, result);
 }
 
 static void
@@ -934,9 +973,14 @@ storageS3PathRemoveCallback(void *callbackData, const StorageInfo *info)
         }
 
         // Add to delete list
-        xmlNodeContentSet(
-            xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
-            strNewFmt("%s%s", strZ(data->path), strZ(info->name)));
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            xmlNodeContentSet(
+                xmlNodeAdd(xmlNodeAdd(xmlDocumentRoot(data->xml), S3_XML_TAG_OBJECT_STR), S3_XML_TAG_KEY_STR),
+                strNewFmt("%s%s", strZ(data->path), strZ(info->name)));
+        }
+        MEM_CONTEXT_TEMP_END();
+
         data->size++;
 
         // Delete list when it is full
@@ -997,7 +1041,7 @@ storageS3PathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfac
 
 /**********************************************************************************************************************************/
 static void
-storageS3Remove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
+storageS3Remove(THIS_VOID, const String *const file, const StorageInterfaceRemoveParam param)
 {
     THIS(StorageS3);
 
@@ -1011,7 +1055,7 @@ storageS3Remove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
-    storageS3RequestP(this, HTTP_VERB_DELETE_STR, file);
+    httpResponseFree(storageS3RequestP(this, HTTP_VERB_DELETE_STR, file));
 
     FUNCTION_LOG_RETURN_VOID();
 }

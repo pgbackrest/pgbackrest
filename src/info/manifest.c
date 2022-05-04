@@ -27,119 +27,6 @@ STRING_EXTERN(BACKUP_MANIFEST_FILE_STR,                             BACKUP_MANIF
 STRING_EXTERN(MANIFEST_TARGET_PGDATA_STR,                           MANIFEST_TARGET_PGDATA);
 STRING_EXTERN(MANIFEST_TARGET_PGTBLSPC_STR,                         MANIFEST_TARGET_PGTBLSPC);
 
-STRING_STATIC(MANIFEST_TARGET_TYPE_LINK_STR,                        "link");
-STRING_STATIC(MANIFEST_TARGET_TYPE_PATH_STR,                        "path");
-
-STRING_STATIC(MANIFEST_SECTION_BACKUP_STR,                          "backup");
-STRING_STATIC(MANIFEST_SECTION_BACKUP_DB_STR,                       "backup:db");
-STRING_STATIC(MANIFEST_SECTION_BACKUP_OPTION_STR,                   "backup:option");
-STRING_STATIC(MANIFEST_SECTION_BACKUP_TARGET_STR,                   "backup:target");
-
-STRING_STATIC(MANIFEST_SECTION_DB_STR,                              "db");
-
-STRING_STATIC(MANIFEST_SECTION_TARGET_FILE_STR,                     "target:file");
-STRING_STATIC(MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR,             "target:file:default");
-
-STRING_STATIC(MANIFEST_SECTION_TARGET_LINK_STR,                     "target:link");
-STRING_STATIC(MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR,             "target:link:default");
-
-STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_STR,                     "target:path");
-STRING_STATIC(MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR,             "target:path:default");
-
-#define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_ARCHIVE_START_STR,            MANIFEST_KEY_BACKUP_ARCHIVE_START);
-#define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR,             MANIFEST_KEY_BACKUP_ARCHIVE_STOP);
-#define MANIFEST_KEY_BACKUP_LABEL                                   "backup-label"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_LABEL_STR,                    MANIFEST_KEY_BACKUP_LABEL);
-#define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_LSN_START_STR,                MANIFEST_KEY_BACKUP_LSN_START);
-#define MANIFEST_KEY_BACKUP_LSN_STOP                                "backup-lsn-stop"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_LSN_STOP_STR,                 MANIFEST_KEY_BACKUP_LSN_STOP);
-#define MANIFEST_KEY_BACKUP_PRIOR                                   "backup-prior"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_PRIOR_STR,                    MANIFEST_KEY_BACKUP_PRIOR);
-#define MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START                    "backup-timestamp-copy-start"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,     MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START);
-#define MANIFEST_KEY_BACKUP_TIMESTAMP_START                         "backup-timestamp-start"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,          MANIFEST_KEY_BACKUP_TIMESTAMP_START);
-#define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,           MANIFEST_KEY_BACKUP_TIMESTAMP_STOP);
-#define MANIFEST_KEY_BACKUP_TYPE                                    "backup-type"
-    STRING_STATIC(MANIFEST_KEY_BACKUP_TYPE_STR,                     MANIFEST_KEY_BACKUP_TYPE);
-#define MANIFEST_KEY_CHECKSUM                                       "checksum"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_VAR,                MANIFEST_KEY_CHECKSUM);
-#define MANIFEST_KEY_CHECKSUM_PAGE                                  "checksum-page"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_VAR,           MANIFEST_KEY_CHECKSUM_PAGE);
-#define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR,     MANIFEST_KEY_CHECKSUM_PAGE_ERROR);
-#define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
-    STRING_STATIC(MANIFEST_KEY_DB_CATALOG_VERSION_STR,              MANIFEST_KEY_DB_CATALOG_VERSION);
-#define MANIFEST_KEY_DB_ID                                          "db-id"
-    STRING_STATIC(MANIFEST_KEY_DB_ID_STR,                           MANIFEST_KEY_DB_ID);
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_DB_ID_VAR,                   MANIFEST_KEY_DB_ID);
-#define MANIFEST_KEY_DB_LAST_SYSTEM_ID                              "db-last-system-id"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR,       MANIFEST_KEY_DB_LAST_SYSTEM_ID);
-#define MANIFEST_KEY_DB_SYSTEM_ID                                   "db-system-id"
-    STRING_STATIC(MANIFEST_KEY_DB_SYSTEM_ID_STR,                    MANIFEST_KEY_DB_SYSTEM_ID);
-#define MANIFEST_KEY_DB_VERSION                                     "db-version"
-    STRING_STATIC(MANIFEST_KEY_DB_VERSION_STR,                      MANIFEST_KEY_DB_VERSION);
-#define MANIFEST_KEY_DESTINATION                                    "destination"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_DESTINATION_VAR,             MANIFEST_KEY_DESTINATION);
-#define MANIFEST_KEY_FILE                                           "file"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_FILE_VAR,                    MANIFEST_KEY_FILE);
-#define MANIFEST_KEY_GROUP                                          "group"
-    STRING_STATIC(MANIFEST_KEY_GROUP_STR,                           MANIFEST_KEY_GROUP);
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_GROUP_VAR,                   MANIFEST_KEY_GROUP);
-#define MANIFEST_KEY_MODE                                           "mode"
-    STRING_STATIC(MANIFEST_KEY_MODE_STR,                            MANIFEST_KEY_MODE);
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_MODE_VAR,                    MANIFEST_KEY_MODE);
-#define MANIFEST_KEY_PATH                                           "path"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_PATH_VAR,                    MANIFEST_KEY_PATH);
-#define MANIFEST_KEY_REFERENCE                                      "reference"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_REFERENCE_VAR,               MANIFEST_KEY_REFERENCE);
-#define MANIFEST_KEY_SIZE                                           "size"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_SIZE_VAR,                    MANIFEST_KEY_SIZE);
-#define MANIFEST_KEY_SIZE_REPO                                      "repo-size"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_SIZE_REPO_VAR,               MANIFEST_KEY_SIZE_REPO);
-#define MANIFEST_KEY_TABLESPACE_ID                                  "tablespace-id"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_TABLESPACE_ID_VAR,           MANIFEST_KEY_TABLESPACE_ID);
-#define MANIFEST_KEY_TABLESPACE_NAME                                "tablespace-name"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_TABLESPACE_NAME_VAR,         MANIFEST_KEY_TABLESPACE_NAME);
-#define MANIFEST_KEY_TIMESTAMP                                      "timestamp"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_TIMESTAMP_VAR,               MANIFEST_KEY_TIMESTAMP);
-#define MANIFEST_KEY_TYPE                                           "type"
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_TYPE_VAR,                    MANIFEST_KEY_TYPE);
-#define MANIFEST_KEY_USER                                           "user"
-    STRING_STATIC(MANIFEST_KEY_USER_STR,                            MANIFEST_KEY_USER);
-    VARIANT_STRDEF_STATIC(MANIFEST_KEY_USER_VAR,                    MANIFEST_KEY_USER);
-
-#define MANIFEST_KEY_OPTION_ARCHIVE_CHECK                           "option-archive-check"
-    STRING_STATIC(MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,            MANIFEST_KEY_OPTION_ARCHIVE_CHECK);
-#define MANIFEST_KEY_OPTION_ARCHIVE_COPY                            "option-archive-copy"
-    STRING_STATIC(MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR,             MANIFEST_KEY_OPTION_ARCHIVE_COPY);
-#define MANIFEST_KEY_OPTION_BACKUP_STANDBY                          "option-backup-standby"
-    STRING_STATIC(MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR,           MANIFEST_KEY_OPTION_BACKUP_STANDBY);
-#define MANIFEST_KEY_OPTION_BUFFER_SIZE                             "option-buffer-size"
-    STRING_STATIC(MANIFEST_KEY_OPTION_BUFFER_SIZE_STR,              MANIFEST_KEY_OPTION_BUFFER_SIZE);
-#define MANIFEST_KEY_OPTION_CHECKSUM_PAGE                           "option-checksum-page"
-    STRING_STATIC(MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,            MANIFEST_KEY_OPTION_CHECKSUM_PAGE);
-#define MANIFEST_KEY_OPTION_COMPRESS                                "option-compress"
-    STRING_STATIC(MANIFEST_KEY_OPTION_COMPRESS_STR,                 MANIFEST_KEY_OPTION_COMPRESS);
-#define MANIFEST_KEY_OPTION_COMPRESS_TYPE                           "option-compress-type"
-    STRING_STATIC(MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR,            MANIFEST_KEY_OPTION_COMPRESS_TYPE);
-#define MANIFEST_KEY_OPTION_COMPRESS_LEVEL                          "option-compress-level"
-    STRING_STATIC(MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,           MANIFEST_KEY_OPTION_COMPRESS_LEVEL);
-#define MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK                  "option-compress-level-network"
-    STRING_STATIC(MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,   MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK);
-#define MANIFEST_KEY_OPTION_DELTA                                   "option-delta"
-    STRING_STATIC(MANIFEST_KEY_OPTION_DELTA_STR,                    MANIFEST_KEY_OPTION_DELTA);
-#define MANIFEST_KEY_OPTION_HARDLINK                                "option-hardlink"
-    STRING_STATIC(MANIFEST_KEY_OPTION_HARDLINK_STR,                 MANIFEST_KEY_OPTION_HARDLINK);
-#define MANIFEST_KEY_OPTION_ONLINE                                  "option-online"
-    STRING_STATIC(MANIFEST_KEY_OPTION_ONLINE_STR,                   MANIFEST_KEY_OPTION_ONLINE);
-#define MANIFEST_KEY_OPTION_PROCESS_MAX                             "option-process-max"
-    STRING_STATIC(MANIFEST_KEY_OPTION_PROCESS_MAX_STR,              MANIFEST_KEY_OPTION_PROCESS_MAX);
-
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -169,9 +56,9 @@ manifestOwnerCache(Manifest *this, const String *owner)
     ASSERT(this != NULL);
 
     if (owner != NULL)
-        FUNCTION_TEST_RETURN(strLstAddIfMissing(this->ownerList, owner));
+        FUNCTION_TEST_RETURN_CONST(STRING, strLstAddIfMissing(this->ownerList, owner));
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN_CONST(STRING, NULL);
 }
 
 static void
@@ -209,6 +96,7 @@ static time_t manifestPackBaseTime = -1;
 typedef enum
 {
     manifestFilePackFlagReference,
+    manifestFilePackFlagBundle,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
     manifestFilePackFlagChecksumPageErrorList,
@@ -228,6 +116,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
+    ASSERT(manifest != NULL);
+    ASSERT(file != NULL);
+
     uint8_t buffer[512];
     size_t bufferPos = 0;
 
@@ -245,6 +136,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     if (file->reference != NULL)
         flag |= 1 << manifestFilePackFlagReference;
+
+    if (file->bundleId != 0)
+        flag |= 1 << manifestFilePackFlagBundle;
 
     if (file->mode != manifest->fileModeDefault)
         flag |= 1 << manifestFilePackFlagMode;
@@ -294,17 +188,26 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     // Repo size
     cvtUInt64ToVarInt128(file->sizeRepo, buffer, &bufferPos, sizeof(buffer));
 
+    // Bundle
+    if (flag & (1 << manifestFilePackFlagBundle))
+    {
+        cvtUInt64ToVarInt128(file->bundleId, buffer, &bufferPos, sizeof(buffer));
+        cvtUInt64ToVarInt128(file->bundleOffset, buffer, &bufferPos, sizeof(buffer));
+    }
+
     // Allocate memory for the file pack
+    const size_t nameSize = strSize(file->name) + 1;
+
     uint8_t *const result = memNew(
-        sizeof(StringPub) + strSize(file->name) + 1 + bufferPos + (file->checksumPageErrorList != NULL ?
-            sizeof(StringPub) + strSize(file->checksumPageErrorList) + 1 : 0));
+        sizeof(StringPub) + nameSize + bufferPos + (file->checksumPageErrorList != NULL ?
+            ALIGN_OFFSET(StringPub, nameSize + bufferPos) + sizeof(StringPub) + strSize(file->checksumPageErrorList) + 1 : 0));
 
     // Create string object for the file name
     *(StringPub *)result = (StringPub){.size = (unsigned int)strSize(file->name), .buffer = (char *)result + sizeof(StringPub)};
     size_t resultPos = sizeof(StringPub);
 
-    memcpy(result + resultPos, (uint8_t *)strZ(file->name), strSize(file->name) + 1);
-    resultPos += strSize(file->name) + 1;
+    memcpy(result + resultPos, (uint8_t *)strZ(file->name), nameSize);
+    resultPos += nameSize;
 
     // Copy pack data
     memcpy(result + resultPos, buffer, bufferPos);
@@ -312,7 +215,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     // Create string object for the checksum error list
     if (file->checksumPageErrorList != NULL)
     {
-        resultPos += bufferPos;
+        resultPos += bufferPos + ALIGN_OFFSET(StringPub, nameSize + bufferPos);
 
         *(StringPub *)(result + resultPos) = (StringPub)
             {.size = (unsigned int)strSize(file->checksumPageErrorList), .buffer = (char *)result + resultPos + sizeof(StringPub)};
@@ -321,7 +224,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
         memcpy(result + resultPos, (uint8_t *)strZ(file->checksumPageErrorList), strSize(file->checksumPageErrorList) + 1);
     }
 
-    FUNCTION_TEST_RETURN((ManifestFilePack *)result);
+    FUNCTION_TEST_RETURN_TYPE_P(ManifestFilePack, (ManifestFilePack *)result);
 }
 
 ManifestFile
@@ -383,35 +286,42 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     // Repo size
     result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
+    // Bundle
+    if (flag & (1 << manifestFilePackFlagBundle))
+    {
+        result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    }
+
     // Checksum page error
     result.checksumPageError = flag & (1 << manifestFilePackFlagChecksumPageError) ? true : false;
 
     if (flag & (1 << manifestFilePackFlagChecksumPageErrorList))
-        result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + bufferPos);
+        result.checksumPageErrorList = (const String *)((const uint8_t *)filePack + bufferPos + ALIGN_OFFSET(StringPub, bufferPos));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_TYPE(ManifestFile, result);
 }
 
 void
-manifestFileAdd(Manifest *this, ManifestFile file)
+manifestFileAdd(Manifest *const this, ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(VOID, file);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(file.name != NULL);
+    ASSERT(file->name != NULL);
 
-    file.user = manifestOwnerCache(this, file.user);
-    file.group = manifestOwnerCache(this, file.group);
+    file->user = manifestOwnerCache(this, file->user);
+    file->group = manifestOwnerCache(this, file->group);
 
-    if (file.reference != NULL)
-        file.reference = strLstAddIfMissing(this->referenceList, file.reference);
+    if (file->reference != NULL)
+        file->reference = strLstAddIfMissing(this->referenceList, file->reference);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
-        const ManifestFilePack *const filePack = manifestFilePack(this, &file);
+        const ManifestFilePack *const filePack = manifestFilePack(this, file);
         lstAdd(this->pub.fileList, &filePack);
     }
     MEM_CONTEXT_END();
@@ -560,7 +470,7 @@ manifestNewInternal(void)
         .referenceList = strLstNew(),
     };
 
-    FUNCTION_TEST_RETURN(this);
+    FUNCTION_TEST_RETURN(MANIFEST, this);
 }
 
 /***********************************************************************************************************************************
@@ -590,7 +500,8 @@ static ManifestLinkCheck
 manifestLinkCheckInit(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN((ManifestLinkCheck){.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)});
+    FUNCTION_TEST_RETURN_TYPE(
+        ManifestLinkCheck, (ManifestLinkCheck){.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)});
 }
 
 // Helper to check a single link specified by targetIdx
@@ -777,7 +688,7 @@ typedef struct ManifestBuildData
     const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
-    const VariantList *tablespaceList;                              // List of tablespaces in the database
+    const Pack *tablespaceList;                                     // List of tablespaces in the database
     ManifestLinkCheck linkCheck;                                    // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
@@ -802,18 +713,12 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
     // Skip all . paths because they have already been recorded on the previous level of recursion
     if (strEq(info->name, DOT_STR))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
     // are recreated.
     if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Get build data
     ManifestBuildData buildData = *(ManifestBuildData *)data;
@@ -830,7 +735,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             strZ(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
         FUNCTION_TEST_RETURN_VOID();
-        return;
     }
 
     // Process storage types
@@ -867,7 +771,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     strZ(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
                 FUNCTION_TEST_RETURN_VOID();
-                return;
             }
 
             // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
@@ -875,53 +778,33 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             {
                 // Skip pg_dynshmem/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_notify/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGNOTIFY))
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_replslot/* since these files are generally not useful after a restore
                 if (strEqZ(info->name, PG_PATH_PGREPLSLOT) && pgVersion >= PG_VERSION_94)
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_serial/* since these files are reset
                 if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_snapshots/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
-                // created there
+                // created there in PostgreSQL < 15. PostgreSQL >= 15 no longer uses this directory, but it may be used by
+                // extensions such as pg_stat_statements so it should still be excluded.
                 if (strEqZ(info->name, PG_PATH_PGSTATTMP))
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
 
                 // Skip pg_subtrans/* since these files are reset
                 if (strEqZ(info->name, PG_PATH_PGSUBTRANS))
-                {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
-                }
             }
 
             // Skip the contents of archive_status when online
@@ -929,7 +812,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 strEqZ(info->name, PG_PATH_ARCHIVE_STATUS))
             {
                 FUNCTION_TEST_RETURN_VOID();
-                return;
             }
 
             // Recurse into the path
@@ -965,7 +847,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
             {
                 FUNCTION_TEST_RETURN_VOID();
-                return;
             }
 
             // Skip files in the root data path
@@ -991,24 +872,17 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     strEqZ(info->name, PG_FILE_POSTMTRPID))
                 {
                     FUNCTION_TEST_RETURN_VOID();
-                    return;
                 }
             }
 
             // Skip the contents of the wal path when online. WAL will be restored from the archive or stored in the wal directory
             // at the end of the backup if the archive-copy option is set.
             if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName))
-            {
                 FUNCTION_TEST_RETURN_VOID();
-                return;
-            }
 
             // Skip temp relations in db paths
             if (buildData.dbPath && regExpMatch(buildData.tempRelationExp, info->name))
-            {
                 FUNCTION_TEST_RETURN_VOID();
-                return;
-            }
 
             // Add file to manifest
             ManifestFile file =
@@ -1030,7 +904,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     !strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
             }
 
-            manifestFileAdd(buildData.manifest, file);
+            manifestFileAdd(buildData.manifest, &file);
             break;
         }
 
@@ -1086,12 +960,16 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 if (buildData.tablespaceList != NULL)
                 {
                     // Search list
-                    for (unsigned int tablespaceIdx = 0; tablespaceIdx < varLstSize(buildData.tablespaceList); tablespaceIdx++)
-                    {
-                        const VariantList *tablespace = varVarLst(varLstGet(buildData.tablespaceList, tablespaceIdx));
+                    PackRead *const read = pckReadNew(buildData.tablespaceList);
 
-                        if (target.tablespaceId == varUIntForce(varLstGet(tablespace, 0)))
-                            target.tablespaceName = varStr(varLstGet(tablespace, 1));
+                    while (!pckReadNullP(read))
+                    {
+                        pckReadArrayBeginP(read);
+
+                        if (target.tablespaceId == pckReadU32P(read))
+                            target.tablespaceName = pckReadStrP(read);
+
+                        pckReadArrayEndP(read);
                     }
 
                     // Error if the tablespace could not be found.  ??? This seems excessive, perhaps just warn here?
@@ -1214,8 +1092,8 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
 Manifest *
 manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage,
-    const StringList *excludeList, const VariantList *tablespaceList)
+    const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const bool online,
+    const bool checksumPage, const bool bundle, const StringList *const excludeList, const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -1223,8 +1101,9 @@ manifestNewBuild(
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
+        FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, tablespaceList);
+        FUNCTION_LOG_PARAM(PACK, tablespaceList);
     FUNCTION_LOG_END();
 
     ASSERT(storagePg != NULL);
@@ -1243,6 +1122,7 @@ manifestNewBuild(
         this->pub.data.backupType = backupTypeFull;
         this->pub.data.backupOptionOnline = online;
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
+        this->pub.data.bundle = bundle;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1285,7 +1165,7 @@ manifestNewBuild(
                         if (buildData.excludeContent == NULL)
                             buildData.excludeContent = strLstNew();
 
-                        strLstAdd(buildData.excludeContent, strSubN(exclude, 0, strSize(exclude) - 1));
+                        strLstAddSub(buildData.excludeContent, exclude, strSize(exclude) - 1);
                     }
                     // Otherwise exclude a single file/link/path
                     else
@@ -1584,7 +1464,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     manifestFileUpdate(
                         this, file.name, file.size, filePrior.sizeRepo, filePrior.checksumSha1,
                         VARSTR(filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel),
-                        filePrior.checksumPage, filePrior.checksumPageError, filePrior.checksumPageErrorList);
+                        filePrior.checksumPage, filePrior.checksumPageError, filePrior.checksumPageErrorList,
+                        filePrior.bundleId, filePrior.bundleOffset);
                 }
             }
         }
@@ -1597,11 +1478,11 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 /**********************************************************************************************************************************/
 void
 manifestBuildComplete(
-    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax,
-    bool optionStandby)
+    Manifest *const this, const time_t timestampStart, const String *const lsnStart, const String *const archiveStart,
+    const time_t timestampStop, const String *const lsnStop, const String *const archiveStop, const unsigned int pgId,
+    const uint64_t pgSystemId, const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy,
+    const size_t optionBufferSize, const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork,
+    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1613,7 +1494,7 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(STRING, archiveStop);
         FUNCTION_LOG_PARAM(UINT, pgId);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(VARIANT_LIST, dbList);
+        FUNCTION_LOG_PARAM(PACK, dbList);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCheck);
         FUNCTION_LOG_PARAM(BOOL, optionArchiveCopy);
         FUNCTION_LOG_PARAM(SIZE, optionBufferSize);
@@ -1639,18 +1520,20 @@ manifestBuildComplete(
         // Save db list
         if (dbList != NULL)
         {
-            for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbList); dbIdx++)
+            PackRead *const read = pckReadNew(dbList);
+
+            while (!pckReadNullP(read))
             {
-                const VariantList *dbRow = varVarLst(varLstGet(dbList, dbIdx));
+                pckReadArrayBeginP(read);
 
-                ManifestDb db =
-                {
-                    .id = varUIntForce(varLstGet(dbRow, 0)),
-                    .name = varStr(varLstGet(dbRow, 1)),
-                    .lastSystemId = varUIntForce(varLstGet(dbRow, 2)),
-                };
+                const unsigned int id = pckReadU32P(read);
+                const String *const name = pckReadStrP(read);
+                const unsigned int lastSystemId = pckReadU32P(read);
 
-                manifestDbAdd(this, &db);
+                pckReadArrayEndP(read);
+
+                manifestDbAdd(this, &(ManifestDb){.id = id, .name = name, .lastSystemId = lastSystemId});
+
             }
 
             lstSort(this->pub.dbList, sortOrderAsc);
@@ -1672,6 +1555,72 @@ manifestBuildComplete(
 }
 
 /**********************************************************************************************************************************/
+#define MANIFEST_TARGET_TYPE_LINK                                   "link"
+#define MANIFEST_TARGET_TYPE_PATH                                   "path"
+
+#define MANIFEST_SECTION_BACKUP                                     "backup"
+#define MANIFEST_SECTION_BACKUP_DB                                  "backup:db"
+#define MANIFEST_SECTION_BACKUP_OPTION                              "backup:option"
+#define MANIFEST_SECTION_BACKUP_TARGET                              "backup:target"
+
+#define MANIFEST_SECTION_DB                                         "db"
+
+#define MANIFEST_SECTION_TARGET_FILE                                "target:file"
+#define MANIFEST_SECTION_TARGET_FILE_DEFAULT                        "target:file:default"
+#define MANIFEST_SECTION_TARGET_LINK                                "target:link"
+#define MANIFEST_SECTION_TARGET_LINK_DEFAULT                        "target:link:default"
+#define MANIFEST_SECTION_TARGET_PATH                                "target:path"
+#define MANIFEST_SECTION_TARGET_PATH_DEFAULT                        "target:path:default"
+
+#define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
+#define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
+#define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
+#define MANIFEST_KEY_BACKUP_LABEL                                   "backup-label"
+#define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
+#define MANIFEST_KEY_BACKUP_LSN_STOP                                "backup-lsn-stop"
+#define MANIFEST_KEY_BACKUP_PRIOR                                   "backup-prior"
+#define MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START                    "backup-timestamp-copy-start"
+#define MANIFEST_KEY_BACKUP_TIMESTAMP_START                         "backup-timestamp-start"
+#define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
+#define MANIFEST_KEY_BACKUP_TYPE                                    "backup-type"
+#define MANIFEST_KEY_BUNDLE_ID                                      STRID5("bni", 0x25c20)
+#define MANIFEST_KEY_BUNDLE_OFFSET                                  STRID5("bno", 0x3dc20)
+#define MANIFEST_KEY_CHECKSUM                                       STRID5("checksum", 0x6d66b195030)
+#define MANIFEST_KEY_CHECKSUM_PAGE                                  "checksum-page"
+#define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
+#define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
+#define MANIFEST_KEY_DB_ID                                          "db-id"
+#define MANIFEST_KEY_DB_LAST_SYSTEM_ID                              "db-last-system-id"
+#define MANIFEST_KEY_DB_SYSTEM_ID                                   "db-system-id"
+#define MANIFEST_KEY_DB_VERSION                                     "db-version"
+#define MANIFEST_KEY_DESTINATION                                    STRID5("destination", 0x39e9a05c9a4ca40)
+#define MANIFEST_KEY_FILE                                           STRID5("file", 0x2b1260)
+#define MANIFEST_KEY_GROUP                                          "group"
+#define MANIFEST_KEY_MODE                                           "mode"
+#define MANIFEST_KEY_PATH                                           STRID5("path", 0x450300)
+#define MANIFEST_KEY_REFERENCE                                      STRID5("reference", 0x51b8b2298b20)
+#define MANIFEST_KEY_SIZE                                           STRID5("size", 0x2e9330)
+#define MANIFEST_KEY_SIZE_REPO                                      STRID5("repo-size", 0x5d267b7c0b20)
+#define MANIFEST_KEY_TABLESPACE_ID                                  "tablespace-id"
+#define MANIFEST_KEY_TABLESPACE_NAME                                "tablespace-name"
+#define MANIFEST_KEY_TIMESTAMP                                      STRID5("timestamp", 0x10686932b5340)
+#define MANIFEST_KEY_TYPE                                           STRID5("type", 0x2c3340)
+#define MANIFEST_KEY_USER                                           "user"
+
+#define MANIFEST_KEY_OPTION_ARCHIVE_CHECK                           "option-archive-check"
+#define MANIFEST_KEY_OPTION_ARCHIVE_COPY                            "option-archive-copy"
+#define MANIFEST_KEY_OPTION_BACKUP_STANDBY                          "option-backup-standby"
+#define MANIFEST_KEY_OPTION_BUFFER_SIZE                             "option-buffer-size"
+#define MANIFEST_KEY_OPTION_CHECKSUM_PAGE                           "option-checksum-page"
+#define MANIFEST_KEY_OPTION_COMPRESS                                "option-compress"
+#define MANIFEST_KEY_OPTION_COMPRESS_TYPE                           "option-compress-type"
+#define MANIFEST_KEY_OPTION_COMPRESS_LEVEL                          "option-compress-level"
+#define MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK                  "option-compress-level-network"
+#define MANIFEST_KEY_OPTION_DELTA                                   "option-delta"
+#define MANIFEST_KEY_OPTION_HARDLINK                                "option-hardlink"
+#define MANIFEST_KEY_OPTION_ONLINE                                  "option-online"
+#define MANIFEST_KEY_OPTION_PROCESS_MAX                             "option-process-max"
+
 // Keep track of which values were found during load and which need to be loaded from defaults. There is no point in having
 // multiple structs since most of the fields are the same and the size shouldn't be more than 4/8 bytes.
 typedef struct ManifestLoadFound
@@ -1711,10 +1660,10 @@ manifestOwnerGet(const Variant *owner)
     if (varType(owner) == varTypeBool)
     {
         CHECK(FormatError, !varBool(owner), "owner bool must be false");
-        FUNCTION_TEST_RETURN(NULL);
+        FUNCTION_TEST_RETURN_CONST(STRING, NULL);
     }
 
-    FUNCTION_TEST_RETURN(varStr(owner));
+    FUNCTION_TEST_RETURN_CONST(STRING, varStr(owner));
 }
 
 // Helper to check the variant type of owner and duplicate (call in the containing context)
@@ -1732,297 +1681,296 @@ manifestOwnerDefaultGet(const Variant *ownerDefault)
     {
         // Value must be false
         CHECK(FormatError, !varBool(ownerDefault), "owner bool must be false");
-        FUNCTION_TEST_RETURN(BOOL_FALSE_VAR);
+        FUNCTION_TEST_RETURN_CONST(VARIANT, BOOL_FALSE_VAR);
     }
 
     // Return a duplicate of the owner passed in
-    FUNCTION_TEST_RETURN(varDup(ownerDefault));
+    FUNCTION_TEST_RETURN_CONST(VARIANT, varDup(ownerDefault));
 }
 
 static void
-manifestLoadCallback(void *callbackData, const String *section, const String *key, const Variant *value)
+manifestLoadCallback(void *callbackData, const String *const section, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(VARIANT, value);
+        FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
     ASSERT(callbackData != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
 
-    ManifestLoadData *loadData = (ManifestLoadData *)callbackData;
-    Manifest *manifest = loadData->manifest;
+    ManifestLoadData *const loadData = (ManifestLoadData *)callbackData;
+    Manifest *const manifest = loadData->manifest;
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (strEq(section, MANIFEST_SECTION_TARGET_FILE_STR))
+    if (strEqZ(section, MANIFEST_SECTION_TARGET_FILE))
     {
-        KeyValue *fileKv = varKv(value);
+        ManifestFile file = {.name = key};
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.fileList))
+        JsonRead *const json = jsonReadNew(value);
+        jsonReadObjectBegin(json);
+
+        // Bundle info
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_ID))
         {
-            ManifestFile file =
-            {
-                .name = key,
-                .reference = varStr(kvGetDefault(fileKv, MANIFEST_KEY_REFERENCE_VAR, NULL)),
-            };
+            file.bundleId = jsonReadUInt64(json);
 
-            // Timestamp is required so error if it is not present
-            const Variant *timestamp = kvGet(fileKv, MANIFEST_KEY_TIMESTAMP_VAR);
-
-            if (timestamp == NULL)
-                THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
-
-            file.timestamp = (time_t)varUInt64(timestamp);
-
-            // Size is required so error if it is not present.  Older versions removed the size before the backup to ensure that the
-            // manifest was updated during the backup, so size can be missing in partial manifests.  This error will prevent older
-            // partials from being resumed.
-            const Variant *size = kvGet(fileKv, MANIFEST_KEY_SIZE_VAR);
-
-            if (size == NULL)
-                THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
-
-            file.size = varUInt64(size);
-
-            // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
-            // the repo-size is only stored in the manifest file if it is different than size.
-            file.sizeRepo = varUInt64(kvGetDefault(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.size)));
-
-            // If file size is zero then assign the static zero hash
-            if (file.size == 0)
-            {
-                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
-            }
-            // Else if the key exists then load it.  The key might not exist if this is a partial save that was done during the
-            // backup to preserve checksums for already backed up files.
-            else if (kvKeyExists(fileKv, MANIFEST_KEY_CHECKSUM_VAR))
-                memcpy(file.checksumSha1, strZ(varStr(kvGet(fileKv, MANIFEST_KEY_CHECKSUM_VAR))), HASH_TYPE_SHA1_SIZE_HEX + 1);
-
-            const Variant *checksumPage = kvGetDefault(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_VAR, NULL);
-
-            if (checksumPage != NULL)
-            {
-                file.checksumPage = true;
-                file.checksumPageError = !varBool(checksumPage);
-
-                const Variant *checksumPageErrorList = kvGetDefault(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, NULL);
-
-                if (checksumPageErrorList != NULL)
-                    file.checksumPageErrorList = jsonFromVar(checksumPageErrorList);
-            }
-
-            // Group
-            const Variant *value = kvGet(fileKv, MANIFEST_KEY_GROUP_VAR);
-
-            if (value != NULL)
-                file.group = manifestOwnerGet(value);
-            else
-                file.group = manifest->fileGroupDefault;
-
-            // Mode
-            value = kvGet(fileKv, MANIFEST_KEY_MODE_VAR);
-
-            if (value != NULL)
-                file.mode = cvtZToMode(strZ(varStr(value)));
-            else
-                file.mode = manifest->fileModeDefault;
-
-            // User
-            value = kvGet(fileKv, MANIFEST_KEY_USER_VAR);
-
-            if (value != NULL)
-                file.user = manifestOwnerGet(value);
-            else
-                file.user = manifest->fileUserDefault;
-
-            manifestFileAdd(manifest, file);
+            if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_OFFSET))
+                file.bundleOffset = jsonReadUInt64(json);
         }
-        MEM_CONTEXT_END();
+
+        // The checksum might not exist if this is a partial save that was done during the backup to preserve checksums for already
+        // backed up files
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM))
+            memcpy(file.checksumSha1, strZ(jsonReadStr(json)), HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+        // Page checksum errors
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE))
+        {
+            file.checksumPage = true;
+            file.checksumPageError = !jsonReadBool(json);
+
+            if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR))
+                file.checksumPageErrorList = jsonFromVar(jsonReadVar(json));
+        }
+
+        // Group
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
+            file.group = manifestOwnerGet(jsonReadVar(json));
+        else
+            file.group = manifest->fileGroupDefault;
+
+        // Mode
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_MODE))
+            file.mode = cvtZToMode(strZ(jsonReadStr(json)));
+        else
+            file.mode = manifest->fileModeDefault;
+
+        // Reference
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
+            file.reference = jsonReadStr(json);
+
+        // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
+        // the repo-size is only stored in the manifest file if it is different than size.
+        const bool sizeRepoExists = jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE_REPO);
+
+        if (sizeRepoExists)
+            file.sizeRepo = jsonReadUInt64(json);
+
+        // Size is required so error if it is not present. Older versions removed the size before the backup to ensure that the
+        // manifest was updated during the backup, so size can be missing in partial manifests. This error will prevent older
+        // partials from being resumed.
+        if (!jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE))
+            THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
+
+        file.size = jsonReadUInt64(json);
+
+        // If repo size did not exist then
+        if (!sizeRepoExists)
+            file.sizeRepo = file.size;
+
+        // If file size is zero then assign the static zero hash
+        if (file.size == 0)
+            memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+
+        // Timestamp is required so error if it is not present
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_TIMESTAMP))
+            file.timestamp = (time_t)jsonReadInt64(json);
+        else
+            THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
+
+        // User
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
+            file.user = manifestOwnerGet(jsonReadVar(json));
+        else
+            file.user = manifest->fileUserDefault;
+
+        manifestFileAdd(manifest, &file);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_TARGET_PATH_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_TARGET_PATH))
     {
-        KeyValue *pathKv = varKv(value);
+        ManifestPath path = {.name = key};
+        ManifestLoadFound valueFound = {0};
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.pathList))
+        JsonRead *const json = jsonReadNew(value);
+        jsonReadObjectBegin(json);
+
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
         {
-            ManifestLoadFound valueFound = {0};
-
-            ManifestPath path =
-            {
-                .name = key,
-            };
-
-            if (kvKeyExists(pathKv, MANIFEST_KEY_GROUP_VAR))
-            {
-                valueFound.group = true;
-                path.group = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_GROUP_VAR));
-            }
-
-            if (kvKeyExists(pathKv, MANIFEST_KEY_MODE_VAR))
-            {
-                valueFound.mode = true;
-                path.mode = cvtZToMode(strZ(varStr(kvGet(pathKv, MANIFEST_KEY_MODE_VAR))));
-            }
-
-            if (kvKeyExists(pathKv, MANIFEST_KEY_USER_VAR))
-            {
-                valueFound.user = true;
-                path.user = manifestOwnerGet(kvGet(pathKv, MANIFEST_KEY_USER_VAR));
-            }
-
-            lstAdd(loadData->pathFoundList, &valueFound);
-            manifestPathAdd(manifest, &path);
+            valueFound.group = true;
+            path.group = manifestOwnerGet(jsonReadVar(json));
         }
-        MEM_CONTEXT_END();
+
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_MODE))
+        {
+            valueFound.mode = true;
+            path.mode = cvtZToMode(strZ(jsonReadStr(json)));
+        }
+
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
+        {
+            valueFound.user = true;
+            path.user = manifestOwnerGet(jsonReadVar(json));
+        }
+
+        lstAdd(loadData->pathFoundList, &valueFound);
+        manifestPathAdd(manifest, &path);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_TARGET_LINK_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_TARGET_LINK))
     {
-        KeyValue *linkKv = varKv(value);
+        ManifestLink link = {.name = key};
+        ManifestLoadFound valueFound = {0};
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.linkList))
+        JsonRead *const json = jsonReadNew(value);
+        jsonReadObjectBegin(json);
+
+        // Link destination
+        link.destination = jsonReadStr(jsonReadKeyRequireStrId(json, MANIFEST_KEY_DESTINATION));
+
+        // Group
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
         {
-            ManifestLoadFound valueFound = {0};
-
-            ManifestLink link =
-            {
-                .name = key,
-                .destination = varStr(kvGet(linkKv, MANIFEST_KEY_DESTINATION_VAR)),
-            };
-
-            if (kvKeyExists(linkKv, MANIFEST_KEY_GROUP_VAR))
-            {
-                valueFound.group = true;
-                link.group = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_GROUP_VAR));
-            }
-
-            if (kvKeyExists(linkKv, MANIFEST_KEY_USER_VAR))
-            {
-                valueFound.user = true;
-                link.user = manifestOwnerGet(kvGet(linkKv, MANIFEST_KEY_USER_VAR));
-            }
-
-            lstAdd(loadData->linkFoundList, &valueFound);
-            manifestLinkAdd(manifest, &link);
+            valueFound.group = true;
+            link.group = manifestOwnerGet(jsonReadVar(json));
         }
-        MEM_CONTEXT_END();
+
+        // User
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
+        {
+            valueFound.user = true;
+            link.user = manifestOwnerGet(jsonReadVar(json));
+        }
+
+        lstAdd(loadData->linkFoundList, &valueFound);
+        manifestLinkAdd(manifest, &link);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT))
     {
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
-            if (strEq(key, MANIFEST_KEY_GROUP_STR))
-                manifest->fileGroupDefault = strDup(manifestOwnerGet(value));
-            else if (strEq(key, MANIFEST_KEY_MODE_STR))
-                manifest->fileModeDefault = cvtZToMode(strZ(varStr(value)));
-            else if (strEq(key, MANIFEST_KEY_USER_STR))
-                manifest->fileUserDefault = strDup(manifestOwnerGet(value));
+            if (strEqZ(key, MANIFEST_KEY_GROUP))
+                manifest->fileGroupDefault = manifestOwnerGet(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_MODE))
+                manifest->fileModeDefault = cvtZToMode(strZ(varStr(jsonToVar(value))));
+            else if (strEqZ(key, MANIFEST_KEY_USER))
+                manifest->fileUserDefault = strDup(manifestOwnerGet(jsonToVar(value)));
         }
         MEM_CONTEXT_END();
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_TARGET_PATH_DEFAULT))
     {
         MEM_CONTEXT_BEGIN(loadData->memContext)
         {
-            if (strEq(key, MANIFEST_KEY_GROUP_STR))
-                loadData->pathGroupDefault = manifestOwnerDefaultGet(value);
-            else if (strEq(key, MANIFEST_KEY_MODE_STR))
-                loadData->pathModeDefault = cvtZToMode(strZ(varStr(value)));
-            else if (strEq(key, MANIFEST_KEY_USER_STR))
-                loadData->pathUserDefault = manifestOwnerDefaultGet(value);
+            if (strEqZ(key, MANIFEST_KEY_GROUP))
+                loadData->pathGroupDefault = manifestOwnerDefaultGet(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_MODE))
+                loadData->pathModeDefault = cvtZToMode(strZ(varStr(jsonToVar(value))));
+            else if (strEqZ(key, MANIFEST_KEY_USER))
+                loadData->pathUserDefault = manifestOwnerDefaultGet(jsonToVar(value));
         }
         MEM_CONTEXT_END();
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_TARGET_LINK_DEFAULT))
     {
         MEM_CONTEXT_BEGIN(loadData->memContext)
         {
-            if (strEq(key, MANIFEST_KEY_GROUP_STR))
-                loadData->linkGroupDefault = manifestOwnerDefaultGet(value);
-            else if (strEq(key, MANIFEST_KEY_USER_STR))
-                loadData->linkUserDefault = manifestOwnerDefaultGet(value);
+            if (strEqZ(key, MANIFEST_KEY_GROUP))
+                loadData->linkGroupDefault = manifestOwnerDefaultGet(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_USER))
+                loadData->linkUserDefault = manifestOwnerDefaultGet(jsonToVar(value));
         }
         MEM_CONTEXT_END();
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_BACKUP_TARGET_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_BACKUP_TARGET))
     {
-        KeyValue *targetKv = varKv(value);
-        const String *targetType = varStr(kvGet(targetKv, MANIFEST_KEY_TYPE_VAR));
+        ManifestTarget target = {.name = key};
 
-        ASSERT(strEq(targetType, MANIFEST_TARGET_TYPE_LINK_STR) || strEq(targetType, MANIFEST_TARGET_TYPE_PATH_STR));
+        JsonRead *const json = jsonReadNew(value);
+        jsonReadObjectBegin(json);
 
-        ManifestTarget target =
+        // File
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_FILE))
+            target.file = jsonReadStr(json);
+
+        // Path
+        target.path = jsonReadStr(jsonReadKeyRequireStrId(json, MANIFEST_KEY_PATH));
+
+        // Tablespace oid
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_TABLESPACE_ID))
         {
-            .name = key,
-            .file = varStr(kvGetDefault(targetKv, MANIFEST_KEY_FILE_VAR, NULL)),
-            .path = varStr(kvGet(targetKv, MANIFEST_KEY_PATH_VAR)),
-            .tablespaceId = cvtZToUInt(strZ(varStr(kvGetDefault(targetKv, MANIFEST_KEY_TABLESPACE_ID_VAR, VARSTRDEF("0"))))),
-            .tablespaceName = varStr(kvGetDefault(targetKv, MANIFEST_KEY_TABLESPACE_NAME_VAR, NULL)),
-            .type = strEq(targetType, MANIFEST_TARGET_TYPE_PATH_STR) ? manifestTargetTypePath : manifestTargetTypeLink,
-        };
+            target.tablespaceId = cvtZToUInt(strZ(jsonReadStr(json)));
+            target.tablespaceName = jsonReadStr(jsonReadKeyRequireZ(json, MANIFEST_KEY_TABLESPACE_NAME));
+        }
+
+        // Tablespace type
+        const String *const targetType = jsonReadStr(jsonReadKeyRequireStrId(json, MANIFEST_KEY_TYPE));
+        ASSERT(strEqZ(targetType, MANIFEST_TARGET_TYPE_LINK) || strEqZ(targetType, MANIFEST_TARGET_TYPE_PATH));
+
+        target.type = strEqZ(targetType, MANIFEST_TARGET_TYPE_PATH) ? manifestTargetTypePath : manifestTargetTypeLink;
 
         manifestTargetAdd(manifest, &target);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_DB_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_DB))
     {
-        KeyValue *dbKv = varKv(value);
+        ManifestDb db = {.name = key};
 
-        MEM_CONTEXT_BEGIN(lstMemContext(manifest->pub.dbList))
-        {
-            ManifestDb db =
-            {
-                .name = strDup(key),
-                .id = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_ID_VAR)),
-                .lastSystemId = varUIntForce(kvGet(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR)),
-            };
+        JsonRead *const json = jsonReadNew(value);
+        jsonReadObjectBegin(json);
 
-            manifestDbAdd(manifest, &db);
-        }
-        MEM_CONTEXT_END();
+        // Database oid
+        db.id = jsonReadUInt(jsonReadKeyRequireZ(json, MANIFEST_KEY_DB_ID));
+
+        // Last system oid
+        db.lastSystemId = jsonReadUInt(jsonReadKeyRequireZ(json, MANIFEST_KEY_DB_LAST_SYSTEM_ID));
+
+        manifestDbAdd(manifest, &db);
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_BACKUP_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_BACKUP))
     {
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
-            if (strEq(key, MANIFEST_KEY_BACKUP_ARCHIVE_START_STR))
-                manifest->pub.data.archiveStart = strDup(varStr(value));
-            else if (strEq(key, MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR))
-                manifest->pub.data.archiveStop = strDup(varStr(value));
-            else if (strEq(key, MANIFEST_KEY_BACKUP_LABEL_STR))
-                manifest->pub.data.backupLabel = strDup(varStr(value));
-            else if (strEq(key, MANIFEST_KEY_BACKUP_LSN_START_STR))
-                manifest->pub.data.lsnStart = strDup(varStr(value));
-            else if (strEq(key, MANIFEST_KEY_BACKUP_LSN_STOP_STR))
-                manifest->pub.data.lsnStop = strDup(varStr(value));
-            else if (strEq(key, MANIFEST_KEY_BACKUP_PRIOR_STR))
-                manifest->pub.data.backupLabelPrior = strDup(varStr(value));
-            else if (strEq(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR))
-                manifest->pub.data.backupTimestampCopyStart = (time_t)varUInt64(value);
-            else if (strEq(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR))
-                manifest->pub.data.backupTimestampStart = (time_t)varUInt64(value);
-            else if (strEq(key, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR))
-                manifest->pub.data.backupTimestampStop = (time_t)varUInt64(value);
-            else if (strEq(key, MANIFEST_KEY_BACKUP_TYPE_STR))
+            if (strEqZ(key, MANIFEST_KEY_BACKUP_ARCHIVE_START))
+                manifest->pub.data.archiveStart = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_ARCHIVE_STOP))
+                manifest->pub.data.archiveStop = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
+                manifest->pub.data.bundle = varBool(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
+                manifest->pub.data.backupLabel = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_START))
+                manifest->pub.data.lsnStart = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_STOP))
+                manifest->pub.data.lsnStop = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_PRIOR))
+                manifest->pub.data.backupLabelPrior = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START))
+                manifest->pub.data.backupTimestampCopyStart = (time_t)varUInt64(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START))
+                manifest->pub.data.backupTimestampStart = (time_t)varUInt64(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP))
+                manifest->pub.data.backupTimestampStop = (time_t)varUInt64(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_TYPE))
             {
-                manifest->pub.data.backupType = (BackupType)strIdFromStr(varStr(value));
+                manifest->pub.data.backupType = (BackupType)strIdFromStr(varStr(jsonToVar(value)));
                 ASSERT(
                     manifest->pub.data.backupType == backupTypeFull || manifest->pub.data.backupType == backupTypeDiff ||
                     manifest->pub.data.backupType == backupTypeIncr);
@@ -2032,55 +1980,55 @@ manifestLoadCallback(void *callbackData, const String *section, const String *ke
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_BACKUP_DB_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_BACKUP_DB))
     {
-        if (strEq(key, MANIFEST_KEY_DB_ID_STR))
-            manifest->pub.data.pgId = varUIntForce(value);
-        else if (strEq(key, MANIFEST_KEY_DB_SYSTEM_ID_STR))
-            manifest->pub.data.pgSystemId = varUInt64(value);
-        else if (strEq(key, MANIFEST_KEY_DB_CATALOG_VERSION_STR))
-            manifest->pub.data.pgCatalogVersion = varUIntForce(value);
-        else if (strEq(key, MANIFEST_KEY_DB_VERSION_STR))
-            manifest->pub.data.pgVersion = pgVersionFromStr(varStr(value));
+        if (strEqZ(key, MANIFEST_KEY_DB_ID))
+            manifest->pub.data.pgId = varUIntForce(jsonToVar(value));
+        else if (strEqZ(key, MANIFEST_KEY_DB_SYSTEM_ID))
+            manifest->pub.data.pgSystemId = varUInt64(jsonToVar(value));
+        else if (strEqZ(key, MANIFEST_KEY_DB_CATALOG_VERSION))
+            manifest->pub.data.pgCatalogVersion = varUIntForce(jsonToVar(value));
+        else if (strEqZ(key, MANIFEST_KEY_DB_VERSION))
+            manifest->pub.data.pgVersion = pgVersionFromStr(varStr(jsonToVar(value)));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    else if (strEq(section, MANIFEST_SECTION_BACKUP_OPTION_STR))
+    else if (strEqZ(section, MANIFEST_SECTION_BACKUP_OPTION))
     {
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             // Required options
-            if (strEq(key, MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR))
-                manifest->pub.data.backupOptionArchiveCheck = varBool(value);
-            else if (strEq(key, MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR))
-                manifest->pub.data.backupOptionArchiveCopy = varBool(value);
+            if (strEqZ(key, MANIFEST_KEY_OPTION_ARCHIVE_CHECK))
+                manifest->pub.data.backupOptionArchiveCheck = varBool(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_ARCHIVE_COPY))
+                manifest->pub.data.backupOptionArchiveCopy = varBool(jsonToVar(value));
             // Historically this option meant to add gz compression
-            else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_STR))
-                manifest->pub.data.backupOptionCompressType = varBool(value) ? compressTypeGz : compressTypeNone;
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS))
+                manifest->pub.data.backupOptionCompressType = varBool(jsonToVar(value)) ? compressTypeGz : compressTypeNone;
             // This new option allows any type of compression to be specified.  It must be parsed after the option above so the
             // value does not get overwritten.  Since options are stored in alpha order this should always be true.
-            else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR))
-                manifest->pub.data.backupOptionCompressType = compressTypeEnum(strIdFromStr(varStr(value)));
-            else if (strEq(key, MANIFEST_KEY_OPTION_HARDLINK_STR))
-                manifest->pub.data.backupOptionHardLink = varBool(value);
-            else if (strEq(key, MANIFEST_KEY_OPTION_ONLINE_STR))
-                manifest->pub.data.backupOptionOnline = varBool(value);
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE))
+                manifest->pub.data.backupOptionCompressType = compressTypeEnum(strIdFromStr(varStr(jsonToVar(value))));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_HARDLINK))
+                manifest->pub.data.backupOptionHardLink = varBool(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_ONLINE))
+                manifest->pub.data.backupOptionOnline = varBool(jsonToVar(value));
 
             // Options that were added after v1.00 and may not be present in every manifest
-            else if (strEq(key, MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR))
-                manifest->pub.data.backupOptionStandby = varNewBool(varBool(value));
-            else if (strEq(key, MANIFEST_KEY_OPTION_BUFFER_SIZE_STR))
-                manifest->pub.data.backupOptionBufferSize = varNewUInt(varUIntForce(value));
-            else if (strEq(key, MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR))
-                manifest->pub.data.backupOptionChecksumPage = varDup(value);
-            else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR))
-                manifest->pub.data.backupOptionCompressLevel = varNewUInt(varUIntForce(value));
-            else if (strEq(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR))
-                manifest->pub.data.backupOptionCompressLevelNetwork = varNewUInt(varUIntForce(value));
-            else if (strEq(key, MANIFEST_KEY_OPTION_DELTA_STR))
-                manifest->pub.data.backupOptionDelta = varDup(value);
-            else if (strEq(key, MANIFEST_KEY_OPTION_PROCESS_MAX_STR))
-                manifest->pub.data.backupOptionProcessMax = varNewUInt(varUIntForce(value));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_BACKUP_STANDBY))
+                manifest->pub.data.backupOptionStandby = varNewBool(varBool(jsonToVar(value)));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_BUFFER_SIZE))
+                manifest->pub.data.backupOptionBufferSize = varNewUInt(varUIntForce(jsonToVar(value)));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_CHECKSUM_PAGE))
+                manifest->pub.data.backupOptionChecksumPage = varDup(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL))
+                manifest->pub.data.backupOptionCompressLevel = varNewUInt(varUIntForce(jsonToVar(value)));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK))
+                manifest->pub.data.backupOptionCompressLevelNetwork = varNewUInt(varUIntForce(jsonToVar(value)));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_DELTA))
+                manifest->pub.data.backupOptionDelta = varDup(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_OPTION_PROCESS_MAX))
+                manifest->pub.data.backupOptionProcessMax = varNewUInt(varUIntForce(jsonToVar(value)));
         }
         MEM_CONTEXT_END();
     }
@@ -2196,11 +2144,11 @@ manifestOwnerVar(const String *ownerDefault)
         FUNCTION_TEST_PARAM(STRING, ownerDefault);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(ownerDefault == NULL ? BOOL_FALSE_VAR : varNewStr(ownerDefault));
+    FUNCTION_TEST_RETURN_CONST(VARIANT, ownerDefault == NULL ? BOOL_FALSE_VAR : varNewStr(ownerDefault));
 }
 
 static void
-manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *infoSaveData)
+manifestSaveCallback(void *const callbackData, const String *const sectionNext, InfoSave *const infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -2211,190 +2159,192 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     ASSERT(callbackData != NULL);
     ASSERT(infoSaveData != NULL);
 
-    ManifestSaveData *saveData = (ManifestSaveData *)callbackData;
-    Manifest *manifest = saveData->manifest;
+    ManifestSaveData *const saveData = (ManifestSaveData *)callbackData;
+    Manifest *const manifest = saveData->manifest;
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP, sectionNext))
     {
         if (manifest->pub.data.archiveStart != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_ARCHIVE_START_STR,
-                jsonFromStr(manifest->pub.data.archiveStart));
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_ARCHIVE_START,
+                jsonFromVar(VARSTR(manifest->pub.data.archiveStart)));
         }
 
         if (manifest->pub.data.archiveStop != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_ARCHIVE_STOP_STR,
-                jsonFromStr(manifest->pub.data.archiveStop));
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_ARCHIVE_STOP,
+                jsonFromVar(VARSTR(manifest->pub.data.archiveStop)));
+        }
+
+        if (manifest->pub.data.bundle)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BUNDLE, jsonFromVar(VARBOOL(manifest->pub.data.bundle)));
         }
 
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LABEL_STR,
-            jsonFromStr(manifest->pub.data.backupLabel));
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_LABEL, jsonFromVar(VARSTR(manifest->pub.data.backupLabel)));
 
         if (manifest->pub.data.lsnStart != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LSN_START_STR,
-                jsonFromStr(manifest->pub.data.lsnStart));
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_LSN_START, jsonFromVar(VARSTR(manifest->pub.data.lsnStart)));
         }
 
         if (manifest->pub.data.lsnStop != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_LSN_STOP_STR,
-                jsonFromStr(manifest->pub.data.lsnStop));
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_LSN_STOP,
+                jsonFromVar(VARSTR(manifest->pub.data.lsnStop)));
         }
 
         if (manifest->pub.data.backupLabelPrior != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_PRIOR_STR,
-                jsonFromStr(manifest->pub.data.backupLabelPrior));
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_PRIOR,
+                jsonFromVar(VARSTR(manifest->pub.data.backupLabelPrior)));
         }
 
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START_STR,
-            jsonFromInt64(manifest->pub.data.backupTimestampCopyStart));
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START,
+            jsonFromVar(VARINT64(manifest->pub.data.backupTimestampCopyStart)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_START_STR,
-            jsonFromInt64(manifest->pub.data.backupTimestampStart));
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TIMESTAMP_START,
+            jsonFromVar(VARINT64(manifest->pub.data.backupTimestampStart)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP_STR,
-            jsonFromInt64(manifest->pub.data.backupTimestampStop));
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP,
+            jsonFromVar(VARINT64(manifest->pub.data.backupTimestampStop)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_STR, MANIFEST_KEY_BACKUP_TYPE_STR,
-            jsonFromStr(strIdToStr(manifest->pub.data.backupType)));
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TYPE,
+            jsonFromVar(VARSTR(strIdToStr(manifest->pub.data.backupType))));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_DB, sectionNext))
     {
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_CATALOG_VERSION_STR,
-            jsonFromUInt(manifest->pub.data.pgCatalogVersion));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_CATALOG_VERSION,
+            jsonFromVar(VARUINT(manifest->pub.data.pgCatalogVersion)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, STRDEF("db-control-version"),
-            jsonFromUInt(pgControlVersion(manifest->pub.data.pgVersion)));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB, "db-control-version",
+            jsonFromVar(VARUINT(pgControlVersion(manifest->pub.data.pgVersion))));
+        infoSaveValue(infoSaveData, MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, jsonFromVar(VARUINT(manifest->pub.data.pgId)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_ID_STR, jsonFromUInt(manifest->pub.data.pgId));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_SYSTEM_ID,
+            jsonFromVar(VARUINT64(manifest->pub.data.pgSystemId)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_SYSTEM_ID_STR,
-            jsonFromUInt64(manifest->pub.data.pgSystemId));
-        infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_DB_STR, MANIFEST_KEY_DB_VERSION_STR,
-            jsonFromStr(pgVersionToStr(manifest->pub.data.pgVersion)));
+            infoSaveData, MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_VERSION,
+            jsonFromVar(VARSTR(pgVersionToStr(manifest->pub.data.pgVersion))));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, sectionNext))
     {
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ARCHIVE_CHECK_STR,
-            jsonFromBool(manifest->pub.data.backupOptionArchiveCheck));
+            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_ARCHIVE_CHECK,
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionArchiveCheck)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ARCHIVE_COPY_STR,
-            jsonFromBool(manifest->pub.data.backupOptionArchiveCopy));
+            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_ARCHIVE_COPY,
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionArchiveCopy)));
 
         if (manifest->pub.data.backupOptionStandby != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_BACKUP_STANDBY_STR,
+                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_BACKUP_STANDBY,
                 jsonFromVar(manifest->pub.data.backupOptionStandby));
         }
 
         if (manifest->pub.data.backupOptionBufferSize != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_BUFFER_SIZE_STR,
+                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_BUFFER_SIZE,
                 jsonFromVar(manifest->pub.data.backupOptionBufferSize));
         }
 
         if (manifest->pub.data.backupOptionChecksumPage != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_CHECKSUM_PAGE_STR,
+                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_CHECKSUM_PAGE,
                 jsonFromVar(manifest->pub.data.backupOptionChecksumPage));
         }
 
         // Set the option when compression is turned on.  In older versions this also implied gz compression but in newer versions
         // the type option must also be set if compression is not gz.
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_STR,
-            jsonFromBool(manifest->pub.data.backupOptionCompressType != compressTypeNone));
+            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_COMPRESS,
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionCompressType != compressTypeNone)));
 
         if (manifest->pub.data.backupOptionCompressLevel != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_STR,
+                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_COMPRESS_LEVEL,
                 jsonFromVar(manifest->pub.data.backupOptionCompressLevel));
         }
 
         if (manifest->pub.data.backupOptionCompressLevelNetwork != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK_STR,
+                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK,
                 jsonFromVar(manifest->pub.data.backupOptionCompressLevelNetwork));
         }
 
         // Set the compression type.  Older versions will ignore this and assume gz compression if the compress option is set.
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_COMPRESS_TYPE_STR,
-            jsonFromStr(compressTypeStr(manifest->pub.data.backupOptionCompressType)));
+            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_COMPRESS_TYPE,
+            jsonFromVar(VARSTR(compressTypeStr(manifest->pub.data.backupOptionCompressType))));
 
         if (manifest->pub.data.backupOptionDelta != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_DELTA_STR,
+                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_DELTA,
                 jsonFromVar(manifest->pub.data.backupOptionDelta));
         }
 
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_HARDLINK_STR,
-            jsonFromBool(manifest->pub.data.backupOptionHardLink));
+            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_HARDLINK,
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionHardLink)));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_ONLINE_STR,
-            jsonFromBool(manifest->pub.data.backupOptionOnline));
+            infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_ONLINE,
+            jsonFromVar(VARBOOL(manifest->pub.data.backupOptionOnline)));
 
         if (manifest->pub.data.backupOptionProcessMax != NULL)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION_STR, MANIFEST_KEY_OPTION_PROCESS_MAX_STR,
+                infoSaveData, MANIFEST_SECTION_BACKUP_OPTION, MANIFEST_KEY_OPTION_PROCESS_MAX,
                 jsonFromVar(manifest->pub.data.backupOptionProcessMax));
         }
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_TARGET_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_TARGET, sectionNext))
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
             {
-                const ManifestTarget *target = manifestTarget(manifest, targetIdx);
-                KeyValue *targetKv = kvNew();
+                const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 if (target->file != NULL)
-                    kvPut(targetKv, MANIFEST_KEY_FILE_VAR, VARSTR(target->file));
+                    jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_FILE), target->file);
 
-                kvPut(targetKv, MANIFEST_KEY_PATH_VAR, VARSTR(target->path));
+                jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_PATH), target->path);
 
                 if (target->tablespaceId != 0)
-                    kvPut(targetKv, MANIFEST_KEY_TABLESPACE_ID_VAR, VARSTR(strNewFmt("%u", target->tablespaceId)));
+                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_TABLESPACE_ID), "%u", target->tablespaceId);
 
                 if (target->tablespaceName != NULL)
-                    kvPut(targetKv, MANIFEST_KEY_TABLESPACE_NAME_VAR, VARSTR(target->tablespaceName));
+                    jsonWriteStr(jsonWriteKeyZ(json, MANIFEST_KEY_TABLESPACE_NAME), target->tablespaceName);
 
-                kvPut(
-                    targetKv, MANIFEST_KEY_TYPE_VAR,
-                    VARSTR(
-                        target->type == manifestTargetTypePath ?
-                            MANIFEST_TARGET_TYPE_PATH_STR : MANIFEST_TARGET_TYPE_LINK_STR));
+                jsonWriteZ(
+                    jsonWriteKeyStrId(json, MANIFEST_KEY_TYPE),
+                    target->type == manifestTargetTypePath ? MANIFEST_TARGET_TYPE_PATH : MANIFEST_TARGET_TYPE_LINK);
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_BACKUP_TARGET_STR, target->name, jsonFromKv(targetKv));
+                infoSaveValue(
+                    infoSaveData, MANIFEST_SECTION_BACKUP_TARGET, strZ(target->name), jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2403,19 +2353,19 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_DB_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_DB, sectionNext))
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             for (unsigned int dbIdx = 0; dbIdx < manifestDbTotal(manifest); dbIdx++)
             {
-                const ManifestDb *db = manifestDb(manifest, dbIdx);
-                KeyValue *dbKv = kvNew();
+                const ManifestDb *const db = manifestDb(manifest, dbIdx);
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-                kvPut(dbKv, MANIFEST_KEY_DB_ID_VAR, VARUINT(db->id));
-                kvPut(dbKv, MANIFEST_KEY_DB_LAST_SYSTEM_ID_VAR, VARUINT(db->lastSystemId));
+                jsonWriteUInt(jsonWriteKeyZ(json, MANIFEST_KEY_DB_ID), db->id);
+                jsonWriteUInt(jsonWriteKeyZ(json, MANIFEST_KEY_DB_LAST_SYSTEM_ID), db->lastSystemId);
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_DB_STR, db->name, jsonFromKv(dbKv));
+                infoSaveValue(infoSaveData, MANIFEST_SECTION_DB, strZ(db->name), jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2424,47 +2374,57 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_FILE, sectionNext))
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
                 const ManifestFile file = manifestFile(manifest, fileIdx);
-                KeyValue *fileKv = kvNew();
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+
+                // Bundle info
+                if (file.bundleId != 0)
+                {
+                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BUNDLE_ID), file.bundleId);
+
+                    if (file.bundleOffset != 0)
+                        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BUNDLE_OFFSET), file.bundleOffset);
+                }
 
                 // Save if the file size is not zero and the checksum exists.  The checksum might not exist if this is a partial
                 // save performed during a backup.
                 if (file.size != 0 && file.checksumSha1[0] != 0)
-                    kvPut(fileKv, MANIFEST_KEY_CHECKSUM_VAR, VARSTRZ(file.checksumSha1));
+                    jsonWriteZ(jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM), file.checksumSha1);
 
                 if (file.checksumPage)
                 {
-                    kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_VAR, VARBOOL(!file.checksumPageError));
+                    jsonWriteBool(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE), !file.checksumPageError);
 
                     if (file.checksumPageErrorList != NULL)
-                        kvPut(fileKv, MANIFEST_KEY_CHECKSUM_PAGE_ERROR_VAR, jsonToVar(file.checksumPageErrorList));
+                        jsonWriteJson(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR), file.checksumPageErrorList);
                 }
 
                 if (!varEq(manifestOwnerVar(file.group), saveData->groupDefault))
-                    kvPut(fileKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(file.group));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(file.group));
 
                 if (file.mode != saveData->fileModeDefault)
-                    kvPut(fileKv, MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", file.mode)));
+                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", file.mode);
 
                 if (file.reference != NULL)
-                    kvPut(fileKv, MANIFEST_KEY_REFERENCE_VAR, VARSTR(file.reference));
+                    jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_REFERENCE), file.reference);
 
                 if (file.sizeRepo != file.size)
-                    kvPut(fileKv, MANIFEST_KEY_SIZE_REPO_VAR, VARUINT64(file.sizeRepo));
+                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE_REPO), file.sizeRepo);
 
-                kvPut(fileKv, MANIFEST_KEY_SIZE_VAR, VARUINT64(file.size));
-                kvPut(fileKv, MANIFEST_KEY_TIMESTAMP_VAR, VARUINT64((uint64_t)file.timestamp));
+                jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE), file.size);
+                jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_TIMESTAMP), (uint64_t)file.timestamp);
 
                 if (!varEq(manifestOwnerVar(file.user), saveData->userDefault))
-                    kvPut(fileKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(file.user));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(file.user));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_STR, file.name, jsonFromKv(fileKv));
+                infoSaveValue(
+                    infoSaveData, MANIFEST_SECTION_TARGET_FILE, strZ(file.name), jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2473,38 +2433,35 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT, sectionNext))
     {
+        infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT, MANIFEST_KEY_GROUP, jsonFromVar(saveData->groupDefault));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-            jsonFromVar(saveData->groupDefault));
-        infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_MODE_STR,
-            jsonFromStr(strNewFmt("%04o", saveData->fileModeDefault)));
-        infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-            jsonFromVar(saveData->userDefault));
+            infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT, MANIFEST_KEY_MODE,
+            jsonFromVar(VARSTR(strNewFmt("%04o", saveData->fileModeDefault))));
+        infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_FILE_DEFAULT, MANIFEST_KEY_USER, jsonFromVar(saveData->userDefault));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_LINK_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_LINK, sectionNext))
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(manifest); linkIdx++)
             {
-                const ManifestLink *link = manifestLink(manifest, linkIdx);
-                KeyValue *linkKv = kvNew();
+                const ManifestLink *const link = manifestLink(manifest, linkIdx);
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-                if (!varEq(manifestOwnerVar(link->user), saveData->userDefault))
-                    kvPut(linkKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(link->user));
+                jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_DESTINATION), link->destination);
 
                 if (!varEq(manifestOwnerVar(link->group), saveData->groupDefault))
-                    kvPut(linkKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(link->group));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(link->group));
 
-                kvPut(linkKv, MANIFEST_KEY_DESTINATION_VAR, VARSTR(link->destination));
+                if (!varEq(manifestOwnerVar(link->user), saveData->userDefault))
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(link->user));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_LINK_STR, link->name, jsonFromKv(linkKv));
+                infoSaveValue(
+                    infoSaveData, MANIFEST_SECTION_TARGET_LINK, strZ(link->name), jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2513,39 +2470,38 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT, sectionNext))
     {
         if (manifestLinkTotal(manifest) > 0)
         {
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-                jsonFromVar(saveData->groupDefault));
+                infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT, MANIFEST_KEY_GROUP, jsonFromVar(saveData->groupDefault));
             infoSaveValue(
-                infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-                jsonFromVar(saveData->userDefault));
+                infoSaveData, MANIFEST_SECTION_TARGET_LINK_DEFAULT, MANIFEST_KEY_USER, jsonFromVar(saveData->userDefault));
         }
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_PATH, sectionNext))
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
             {
-                const ManifestPath *path = manifestPath(manifest, pathIdx);
-                KeyValue *pathKv = kvNew();
+                const ManifestPath *const path = manifestPath(manifest, pathIdx);
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 if (!varEq(manifestOwnerVar(path->group), saveData->groupDefault))
-                    kvPut(pathKv, MANIFEST_KEY_GROUP_VAR, manifestOwnerVar(path->group));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(path->group));
 
                 if (path->mode != saveData->pathModeDefault)
-                    kvPut(pathKv, MANIFEST_KEY_MODE_VAR, VARSTR(strNewFmt("%04o", path->mode)));
+                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", path->mode);
 
                 if (!varEq(manifestOwnerVar(path->user), saveData->userDefault))
-                    kvPut(pathKv, MANIFEST_KEY_USER_VAR, manifestOwnerVar(path->user));
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(path->user));
 
-                infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_PATH_STR, path->name, jsonFromKv(pathKv));
+                infoSaveValue(
+                    infoSaveData, MANIFEST_SECTION_TARGET_PATH, strZ(path->name), jsonWriteResult(jsonWriteObjectEnd(json)));
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -2554,17 +2510,13 @@ manifestSaveCallback(void *callbackData, const String *sectionNext, InfoSave *in
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
-    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, sectionNext))
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT, sectionNext))
     {
+        infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT, MANIFEST_KEY_GROUP, jsonFromVar(saveData->groupDefault));
         infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_GROUP_STR,
-            jsonFromVar(saveData->groupDefault));
-        infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_MODE_STR,
-            jsonFromStr(strNewFmt("%04o", saveData->pathModeDefault)));
-        infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT_STR, MANIFEST_KEY_USER_STR,
-            jsonFromVar(saveData->userDefault));
+            infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT, MANIFEST_KEY_MODE,
+            jsonFromVar(VARSTR(strNewFmt("%04o", saveData->pathModeDefault))));
+        infoSaveValue(infoSaveData, MANIFEST_SECTION_TARGET_PATH_DEFAULT, MANIFEST_KEY_USER, jsonFromVar(saveData->userDefault));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -2671,7 +2623,7 @@ manifestDbFind(const Manifest *this, const String *name)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest db list", strZ(name));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(MANIFEST_DB, result);
 }
 
 /***********************************************************************************************************************************
@@ -2693,7 +2645,7 @@ manifestFilePackFindInternal(const Manifest *this, const String *name)
     if (filePack == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
 
-    FUNCTION_TEST_RETURN(filePack);
+    FUNCTION_TEST_RETURN_TYPE_PP(ManifestFilePack, filePack);
 }
 
 const ManifestFilePack *
@@ -2707,7 +2659,7 @@ manifestFilePackFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    FUNCTION_TEST_RETURN(*manifestFilePackFindInternal(this, name));
+    FUNCTION_TEST_RETURN_TYPE_P(ManifestFilePack, *manifestFilePackFindInternal(this, name));
 }
 
 void
@@ -2731,7 +2683,7 @@ void
 manifestFileUpdate(
     Manifest *const this, const String *const name, const uint64_t size, const uint64_t sizeRepo, const char *const checksumSha1,
     const Variant *const reference, const bool checksumPage, const bool checksumPageError,
-    const String *const checksumPageErrorList)
+    const String *const checksumPageErrorList, const uint64_t bundleId, const uint64_t bundleOffset)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -2743,6 +2695,8 @@ manifestFileUpdate(
         FUNCTION_TEST_PARAM(BOOL, checksumPage);
         FUNCTION_TEST_PARAM(BOOL, checksumPageError);
         FUNCTION_TEST_PARAM(STRING, checksumPageErrorList);
+        FUNCTION_TEST_PARAM(UINT64, bundleId);
+        FUNCTION_TEST_PARAM(UINT64, bundleOffset);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -2765,7 +2719,10 @@ manifestFileUpdate(
 
     // Update checksum if set
     if (checksumSha1 != NULL)
+    {
+        ASSERT(strlen(checksumSha1) == HASH_TYPE_SHA1_SIZE_HEX);
         memcpy(file.checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+    }
 
     // Update repo size
     file.size = size;
@@ -2775,6 +2732,10 @@ manifestFileUpdate(
     file.checksumPage = checksumPage;
     file.checksumPageError = checksumPageError;
     file.checksumPageErrorList = checksumPageErrorList;
+
+    // Update bundle info
+    file.bundleId = bundleId;
+    file.bundleOffset = bundleOffset;
 
     manifestFilePackUpdate(this, filePack, &file);
 
@@ -2800,7 +2761,7 @@ manifestLinkFind(const Manifest *this, const String *name)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest link list", strZ(name));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(MANIFEST_LINK, result);
 }
 
 void
@@ -2864,7 +2825,7 @@ manifestPathFind(const Manifest *this, const String *name)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest path list", strZ(name));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(MANIFEST_PATH, result);
 }
 
 String *
@@ -2879,7 +2840,7 @@ manifestPathPg(const String *manifestPath)
     // If something in pg_data/
     if (strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGDATA "/")))
     {
-        FUNCTION_TEST_RETURN(strNewZ(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
+        FUNCTION_TEST_RETURN(STRING, strNewZ(strZ(manifestPath) + sizeof(MANIFEST_TARGET_PGDATA)));
     }
     // Else not pg_data (this is faster since the length of everything else will be different than pg_data)
     else if (!strEq(manifestPath, MANIFEST_TARGET_PGDATA_STR))
@@ -2888,10 +2849,10 @@ manifestPathPg(const String *manifestPath)
         ASSERT(
             strEq(manifestPath, MANIFEST_TARGET_PGTBLSPC_STR) || strBeginsWith(manifestPath, STRDEF(MANIFEST_TARGET_PGTBLSPC "/")));
 
-        FUNCTION_TEST_RETURN(strDup(manifestPath));
+        FUNCTION_TEST_RETURN(STRING, strDup(manifestPath));
     }
 
-    FUNCTION_TEST_RETURN(NULL);
+    FUNCTION_TEST_RETURN(STRING, NULL);
 }
 
 /***********************************************************************************************************************************
@@ -2913,7 +2874,7 @@ manifestTargetFind(const Manifest *this, const String *name)
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strZ(name));
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN_CONST(MANIFEST_TARGET, result);
 }
 
 String *
@@ -2929,7 +2890,7 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
 
     // If the target path is already absolute then just return it
     if (strBeginsWith(target->path, FSLASH_STR))
-        FUNCTION_TEST_RETURN(strDup(target->path));
+        FUNCTION_TEST_RETURN(STRING, strDup(target->path));
 
     // Construct it from the base pg path and a relative path
     String *result = NULL;
@@ -2951,7 +2912,7 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 void
@@ -3036,7 +2997,7 @@ typedef struct ManifestLoadFileData
 } ManifestLoadFileData;
 
 static bool
-manifestLoadFileCallback(void *data, unsigned int try)
+manifestLoadFileCallback(void *const data, const unsigned int try)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, data);
@@ -3045,24 +3006,28 @@ manifestLoadFileCallback(void *data, unsigned int try)
 
     ASSERT(data != NULL);
 
-    ManifestLoadFileData *loadData = (ManifestLoadFileData *)data;
+    ManifestLoadFileData *const loadData = data;
     bool result = false;
 
     if (try < 2)
     {
-        // Construct filename based on try
-        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
-
-        // Attempt to load the file
-        IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
-
-        MEM_CONTEXT_BEGIN(loadData->memContext)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            loadData->manifest = manifestNewLoad(read);
-            result = true;
+            // Construct filename based on try
+            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+
+            // Attempt to load the file
+            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
+
+            MEM_CONTEXT_BEGIN(loadData->memContext)
+            {
+                loadData->manifest = manifestNewLoad(read);
+                result = true;
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);

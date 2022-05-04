@@ -361,6 +361,23 @@ testRun(void)
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, "test-host", "check host");
         TEST_RESULT_STR_Z(
             ((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid shared key base64");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, BOGUS_STR);
+
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_ERROR(
+            storageRepoGet(0, false), OptionInvalidValueError,
+            "invalid value for 'repo1-azure-key' option: base64 size 5 is not evenly divisible by 4\n"
+            "HINT: value must be valid base64 when 'repo1-azure-key-type = shared'.");
     }
 
     // *****************************************************************************************************************************

@@ -77,15 +77,13 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                 // If the option was reset
                 if (value == NULL && cfgOptionValid(optionId) && cfgOptionIdxReset(optionId, optionIdx))
                 {
-                    strLstAdd(result, strNewFmt("--reset-%s", cfgOptionIdxName(optionId, optionIdx)));
+                    strLstAddFmt(result, "--reset-%s", cfgOptionIdxName(optionId, optionIdx));
                 }
                 // Else format the value if found, even if the option is not valid for the command
                 else if (value != NULL && (!local || exists || cfgOptionIdxSource(optionId, optionIdx) == cfgSourceParam))
                 {
                     if (varType(value) == varTypeBool)
-                    {
-                        strLstAdd(result, strNewFmt("--%s%s", varBool(value) ? "" : "no-", cfgOptionIdxName(optionId, optionIdx)));
-                    }
+                        strLstAddFmt(result, "--%s%s", varBool(value) ? "" : "no-", cfgOptionIdxName(optionId, optionIdx));
                     else
                     {
                         StringList *valueList = NULL;
@@ -99,11 +97,9 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
 
                             for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
                             {
-                                strLstAdd(
-                                    valueList,
-                                    strNewFmt(
-                                        "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                                        strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx))))));
+                                strLstAddFmt(
+                                    valueList, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
+                                    strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
                             }
                         }
                         else if (varType(value) == varTypeVariantList)
@@ -129,7 +125,7 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                             if (quote && strchr(strZ(value), ' ') != NULL)
                                 value = strNewFmt("\"%s\"", strZ(value));
 
-                            strLstAdd(result, strNewFmt("--%s=%s", cfgOptionIdxName(optionId, optionIdx), strZ(value)));
+                            strLstAddFmt(result, "--%s=%s", cfgOptionIdxName(optionId, optionIdx), strZ(value));
                         }
                     }
                 }

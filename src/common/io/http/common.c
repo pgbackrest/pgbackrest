@@ -18,38 +18,32 @@ static const char *const httpCommonMonthList[] =
 static const char *const httpCommonDayList[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 time_t
-httpDateToTime(const String *lastModified)
+httpDateToTime(const String *const lastModified)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, lastModified);
     FUNCTION_TEST_END();
 
-    time_t result = 0;
+    // Find the month
+    const char *const month = strZ(lastModified) + 8;
+    unsigned int monthIdx = 0;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    for (; monthIdx < LENGTH_OF(httpCommonMonthList); monthIdx++)
     {
-        // Find the month
-        const char *month = strZ(strSubN(lastModified, 8, 3));
-        unsigned int monthIdx = 0;
-
-        for (; monthIdx < sizeof(httpCommonMonthList) / sizeof(char *); monthIdx++)
-        {
-            if (strcmp(month, httpCommonMonthList[monthIdx]) == 0)
-                break;
-        }
-
-        if (monthIdx == sizeof(httpCommonMonthList) / sizeof(char *))
-            THROW_FMT(FormatError, "invalid month '%s'", month);
-
-        // Convert to time_t
-        result = epochFromParts(
-            cvtZToInt(strZ(strSubN(lastModified, 12, 4))), (int)monthIdx + 1, cvtZToInt(strZ(strSubN(lastModified, 5, 2))),
-            cvtZToInt(strZ(strSubN(lastModified, 17, 2))), cvtZToInt(strZ(strSubN(lastModified, 20, 2))),
-            cvtZToInt(strZ(strSubN(lastModified, 23, 2))), 0);
+        if (strncmp(month, httpCommonMonthList[monthIdx], 3) == 0)
+            break;
     }
-    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(result);
+    if (monthIdx == LENGTH_OF(httpCommonMonthList))
+        THROW_FMT(FormatError, "invalid month '%.3s'", month);
+
+    // Convert to time_t
+    FUNCTION_TEST_RETURN(
+        TIME,
+        epochFromParts(
+            cvtZSubNToInt(strZ(lastModified), 12, 4), (int)monthIdx + 1, cvtZSubNToInt(strZ(lastModified), 5, 2),
+            cvtZSubNToInt(strZ(lastModified), 17, 2), cvtZSubNToInt(strZ(lastModified), 20, 2),
+            cvtZSubNToInt(strZ(lastModified), 23, 2), 0));
 }
 
 String *
@@ -63,6 +57,7 @@ httpDateFromTime(const time_t time)
     gmtime_r(&time, &timePart);
 
     FUNCTION_TEST_RETURN(
+        STRING,
         strNewFmt(
             "%s, %02d %s %04d %02d:%02d:%02d GMT", httpCommonDayList[timePart.tm_wday], timePart.tm_mday,
             httpCommonMonthList[timePart.tm_mon], timePart.tm_year + 1900, timePart.tm_hour, timePart.tm_min,
@@ -71,7 +66,7 @@ httpDateFromTime(const time_t time)
 
 /**********************************************************************************************************************************/
 String *
-httpUriDecode(const String *uri)
+httpUriDecode(const String *const uri)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, uri);
@@ -84,34 +79,30 @@ httpUriDecode(const String *uri)
     {
         result = strNew();
 
-        MEM_CONTEXT_TEMP_BEGIN()
+        // Iterate all characters in the string
+        for (unsigned uriIdx = 0; uriIdx < strSize(uri); uriIdx++)
         {
-            // Iterate all characters in the string
-            for (unsigned uriIdx = 0; uriIdx < strSize(uri); uriIdx++)
+            char uriChar = strZ(uri)[uriIdx];
+
+            // Convert escaped characters
+            if (uriChar == '%')
             {
-                char uriChar = strZ(uri)[uriIdx];
+                // Sequence must be exactly three characters (% and two hex digits)
+                if (strSize(uri) - uriIdx < 3)
+                    THROW_FMT(FormatError, "invalid escape sequence length in '%s'", strZ(uri));
 
-                // Convert escaped characters
-                if (uriChar == '%')
-                {
-                    // Sequence must be exactly three characters (% and two hex digits)
-                    if (strSize(uri) - uriIdx < 3)
-                        THROW_FMT(FormatError, "invalid escape sequence length in '%s'", strZ(uri));
+                // Convert hex digits
+                uriChar = (char)cvtZSubNToUIntBase(strZ(uri), uriIdx + 1, 2, 16);
 
-                    // Convert hex digits
-                    uriChar = (char)cvtZToUIntBase(strZ(strSubN(uri, uriIdx + 1, 2)), 16);
-
-                    // Skip to next character or escape
-                    uriIdx += 2;
-                }
-
-                strCatChr(result, uriChar);
+                // Skip to next character or escape
+                uriIdx += 2;
             }
+
+            strCatChr(result, uriChar);
         }
-        MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -147,5 +138,5 @@ httpUriEncode(const String *uri, bool path)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }

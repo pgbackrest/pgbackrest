@@ -158,10 +158,43 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(output), "aaa\n", "check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("subdirectory");
+        TEST_TITLE("error on /");
 
         StringList *argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "/");
+        HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
+
+        TEST_ERROR(
+            storageListRender(ioBufferWriteNew(output)), ParamInvalidError,
+            "absolute path '/' is not in base path '" TEST_PATH "/repo'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on //");
+
+        argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "bbb//");
+        HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
+
+        TEST_ERROR(
+            storageListRender(ioBufferWriteNew(output)), ParamInvalidError, "path 'bbb//' cannot contain //");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("subdirectory");
+
+        argListTmp = strLstDup(argList);
         strLstAddZ(argListTmp, "bbb");
+        HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "subdirectory");
+        TEST_RESULT_STR_Z(strNewBuf(output), "ccc\n", "check output");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("subdirectory with /");
+
+        argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, "bbb/");
         HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
 
         output = bufNew(0);
@@ -466,7 +499,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         hrnCfgArgRawZ(argList, cfgOptCipherPass, "custom2");
-        strLstAdd(argList, STRDEF(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label");
         HRN_CFG_LOAD(cfgCmdRepoPut, argList);
 
         TEST_RESULT_VOID(storagePutProcess(ioBufferReadNew(backupLabelBuffer)), "put");
@@ -495,7 +528,7 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
-        strLstAdd(argList, strNewFmt(TEST_PATH "/repo/%s", strZ(fileName)));
+        strLstAddFmt(argList, TEST_PATH "/repo/%s", strZ(fileName));
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
@@ -572,7 +605,7 @@ testRun(void)
 
         writeBuffer = bufNew(0);
         TEST_ERROR(
-            storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
+            storageGetProcess(ioBufferWriteNew(writeBuffer)), ParamInvalidError,
             "absolute path '/somewhere/" INFO_ARCHIVE_FILE "' is not in base path '" TEST_PATH "/repo'");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -668,11 +701,9 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
-        strLstAdd(
-            argList,
-            strNewFmt(
-                "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                TEST_PATH));
+        strLstAddFmt(
+            argList, "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            TEST_PATH);
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);
@@ -724,7 +755,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
-        strLstAdd(argList, STRDEF(STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label"));
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label");
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);

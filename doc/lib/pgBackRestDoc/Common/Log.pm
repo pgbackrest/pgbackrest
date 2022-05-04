@@ -472,7 +472,7 @@ sub logDebugBuild
                 (defined($strValueHash) ? ', ' : '{') . "${strSubValue} => " . ${logDebugBuild($strValue->{$strSubValue})};
         }
 
-        $rResult = \(defined($strValueHash) ?  $strValueHash . '}' : '{}');
+        $rResult = \(defined($strValueHash) ? $strValueHash . '}' : '{}');
     }
     # Value is an array
     elsif (ref($strValue) eq 'ARRAY')
@@ -484,7 +484,7 @@ sub logDebugBuild
             $strValueArray .= (defined($strValueArray) ? ', ' : '(') . ${logDebugBuild($strSubValue)};
         }
 
-        $rResult = \(defined($strValueArray) ?  $strValueArray . ')' : '()');
+        $rResult = \(defined($strValueArray) ? $strValueArray . ')' : '()');
     }
     # Else some other type ??? For the moment this is forced to object to not make big log changes
     else

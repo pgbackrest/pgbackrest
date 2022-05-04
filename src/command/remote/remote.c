@@ -71,10 +71,7 @@ cmdRemote(ProtocolServer *const server)
 
         // If not successful we'll just exit
         if (success)
-        {
-            protocolServerProcess(
-                server, NULL, commandRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(commandRemoteHandlerList));
-        }
+            protocolServerProcess(server, NULL, commandRemoteHandlerList, LENGTH_OF(commandRemoteHandlerList));
     }
     MEM_CONTEXT_TEMP_END();
 

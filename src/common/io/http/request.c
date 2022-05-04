@@ -29,6 +29,8 @@ STRING_EXTERN(HTTP_HEADER_CONTENT_MD5_STR,                          HTTP_HEADER_
 STRING_EXTERN(HTTP_HEADER_CONTENT_RANGE_STR,                        HTTP_HEADER_CONTENT_RANGE);
 STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_STR,                         HTTP_HEADER_CONTENT_TYPE);
 STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR,            HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL);
+STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_JSON_STR,                    HTTP_HEADER_CONTENT_TYPE_JSON);
+STRING_EXTERN(HTTP_HEADER_CONTENT_TYPE_XML_STR,                     HTTP_HEADER_CONTENT_TYPE_XML);
 STRING_EXTERN(HTTP_HEADER_ETAG_STR,                                 HTTP_HEADER_ETAG);
 STRING_EXTERN(HTTP_HEADER_DATE_STR,                                 HTTP_HEADER_DATE);
 STRING_EXTERN(HTTP_HEADER_HOST_STR,                                 HTTP_HEADER_HOST);
@@ -207,12 +209,12 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
             .client = client,
             .content = param.content == NULL ? NULL : bufDup(param.content),
         };
-
-        // Send the request
-        httpRequestProcess(this, false, false);
-        statInc(HTTP_STAT_REQUEST_STR);
     }
     OBJ_NEW_END();
+
+    // Send the request
+    httpRequestProcess(this, false, false);
+    statInc(HTTP_STAT_REQUEST_STR);
 
     FUNCTION_LOG_RETURN(HTTP_REQUEST, this);
 }

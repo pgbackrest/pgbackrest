@@ -25,7 +25,8 @@ Parse error list
 typedef struct BldErrErrorRaw
 {
     const String *const name;                                       // See BldErrError for comments
-    unsigned int code;                                        
+    unsigned int code;
+    bool fatal;
 } BldErrErrorRaw;
 
 static List *
@@ -48,9 +49,38 @@ bldErrParseErrorList(Yaml *const yaml)
                 .name = err.value,
             };
 
-            // Parse error code and check that it is valid
-            YamlEvent errVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
-            errRaw.code = cvtZToUInt(strZ(errVal.value));
+            YamlEvent errDef = yamlEventNext(yaml);
+
+            // If scalar then it is an error code
+            if (errDef.type == yamlEventTypeScalar)
+            {
+                errRaw.code = cvtZToUInt(strZ(errDef.value));
+            }
+            // Else there may be multiple definitions
+            else
+            {
+                yamlEventCheck(errDef, yamlEventTypeMapBegin);
+                YamlEvent errDef = yamlEventNextCheck(yaml, yamlEventTypeScalar);
+
+                do
+                {
+                    YamlEvent errDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
+
+                    if (strEqZ(errDef.value, "code"))
+                    {
+                        errRaw.code = cvtZToUInt(strZ(errDefVal.value));
+                    }
+                    else if (strEqZ(errDef.value, "fatal"))
+                    {
+                        errRaw.fatal = yamlBoolParse(errDefVal);
+                    }
+                    else
+                        THROW_FMT(FormatError, "unknown error definition '%s'", strZ(errDef.value));
+
+                    errDef = yamlEventNext(yaml);
+                }
+                while (errDef.type != yamlEventTypeMapEnd);
+            }
 
             if (errRaw.code < ERROR_CODE_MIN || errRaw.code > ERROR_CODE_MAX)
             {
@@ -68,6 +98,7 @@ bldErrParseErrorList(Yaml *const yaml)
                     {
                         .name = strDup(errRaw.name),
                         .code = errRaw.code,
+                        .fatal = errRaw.fatal,
                     });
             }
             MEM_CONTEXT_END();

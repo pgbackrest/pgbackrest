@@ -110,7 +110,7 @@ testRun(void)
 
         // Install local command handler shim
         static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST};
-        hrnProtocolLocalShimInstall(testLocalHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testLocalHandlerList));
+        hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
         // Arguments that must be included
         StringList *argBaseList = strLstNew();
@@ -679,7 +679,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchiveGet(), ArchiveTimeoutError,
-            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
+            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
+            "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check for missing WAL");
@@ -688,7 +689,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdArchiveGet(), ArchiveTimeoutError,
-            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
+            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
+            "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok")), false,
@@ -758,7 +760,8 @@ testRun(void)
 
                 TEST_ERROR(
                     cmdArchiveGet(), ArchiveTimeoutError,
-                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)");
+                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
+                    "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
@@ -1118,6 +1121,41 @@ testRun(void)
 
         // Check that the ok file is missing since it should have been removed on the first loop and removed again on a subsequent
         // loop once the async process discovered that the file was missing and wrote the ok file again.
+        TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("do not retry missing segment");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "10");
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawBool(argList, cfgOptArchiveMissingRetry, false);
+        strLstAddZ(argList, "000000010000000100000001");
+        strLstAddZ(argList, "pg_wal/RECOVERYXLOG");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // Make sure that a WAL segment is found when the ok file is missing
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+
+        TEST_RESULT_VOID(cmdArchiveGet(), "get async");
+        TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001 in the archive asynchronously");
+
+        // Remove the ok file created by the async process
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002.ok\n", .remove = true);
+
+        // Write an ok file
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok");
+
+        // Missing should be returned since archive-missing-retry=n
+        TEST_RESULT_VOID(cmdArchiveGet(), "get async");
+        TEST_RESULT_LOG("P00   INFO: unable to find 000000010000000100000001 in the archive asynchronously");
+
+        // Check that the ok file was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
     }
 

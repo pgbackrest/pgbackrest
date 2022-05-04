@@ -299,7 +299,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
         if (destinationSize > bufRemains(destination))
         {
             // Allocate the buffer if needed
-            MEM_CONTEXT_BEGIN(objMemContext(this))
+            MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 if (this->buffer == NULL)
                 {
@@ -309,7 +309,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
                 else
                     bufResize(this->buffer, destinationSize);
             }
-            MEM_CONTEXT_END();
+            MEM_CONTEXT_OBJ_END();
 
             outputActual = this->buffer;
         }
@@ -360,7 +360,7 @@ cipherBlockDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->done && !this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->done && !this->inputSame);
 }
 
 /***********************************************************************************************************************************
@@ -377,7 +377,7 @@ cipherBlockInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
 /**********************************************************************************************************************************/
@@ -399,10 +399,13 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
 
     // Lookup cipher by name.  This means the ciphers passed in must exactly match a name expected by OpenSSL.  This is a good
     // thing since the name required by the openssl command-line tool will match what is used by pgBackRest.
-    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(strIdToStr(cipherType)));
+    String *const cipherTypeStr = strIdToStr(cipherType);
+    const EVP_CIPHER *cipher = EVP_get_cipherbyname(strZ(cipherTypeStr));
 
     if (!cipher)
-        THROW_FMT(AssertError, "unable to load cipher '%s'", strZ(strIdToStr(cipherType)));
+        THROW_FMT(AssertError, "unable to load cipher '%s'", strZ(cipherTypeStr));
+
+    strFree(cipherTypeStr);
 
     // Lookup digest.  If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;

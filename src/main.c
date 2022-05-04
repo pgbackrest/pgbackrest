@@ -58,7 +58,7 @@ main(int argListSize, const char *argList[])
 {
     // Set stack trace and mem context error cleanup handlers
     static const ErrorHandlerFunction errorHandlerList[] = {stackTraceClean, memContextClean};
-    errorHandlerSet(errorHandlerList, sizeof(errorHandlerList) / sizeof(ErrorHandlerFunction));
+    errorHandlerSet(errorHandlerList, LENGTH_OF(errorHandlerList));
 
     // Set storage helpers
     static const StorageHelper storageHelperList[] =
@@ -171,6 +171,9 @@ main(int argListSize, const char *argList[])
                         cfgCommandSet(cfgCmdExpire, cfgCmdRoleMain);
                         cfgLoadLogFile();
                         cmdBegin();
+
+                        // Null out any backup percent complete value in the backup lock file
+                        lockWriteDataP(lockTypeBackup);
 
                         // Run expire
                         cmdExpire();
@@ -296,7 +299,7 @@ main(int argListSize, const char *argList[])
             }
         }
     }
-    CATCH_ANY()
+    CATCH_FATAL()
     {
         error = true;
         result = exitSafe(result, true, 0);

@@ -101,22 +101,23 @@ sckSessionFd(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->fd);
+    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/
 static IoRead *
-sckSessionIoRead(THIS_VOID)
+sckSessionIoRead(THIS_VOID, const bool ignoreUnexpectedEof)
 {
     THIS(SocketSession);
 
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SOCKET_SESSION, this);
+        (void)ignoreUnexpectedEof;                                  // Unused
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->read);
+    FUNCTION_TEST_RETURN(IO_READ, this->read);
 }
 
 /**********************************************************************************************************************************/
@@ -131,7 +132,7 @@ sckSessionIoWrite(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->write);
+    FUNCTION_TEST_RETURN(IO_WRITE, this->write);
 }
 
 /**********************************************************************************************************************************/
@@ -146,7 +147,7 @@ sckSessionRole(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->role);
+    FUNCTION_TEST_RETURN(STRING_ID, this->role);
 }
 
 /**********************************************************************************************************************************/

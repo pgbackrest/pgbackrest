@@ -264,7 +264,7 @@ ioReadSmall(IoRead *this, Buffer *buffer)
     }
     while (!bufFull(buffer) && !ioReadEof(this));
 
-    FUNCTION_TEST_RETURN(outputRemains - bufRemains(buffer));
+    FUNCTION_TEST_RETURN(SIZE, outputRemains - bufRemains(buffer));
 }
 
 /***********************************************************************************************************************************

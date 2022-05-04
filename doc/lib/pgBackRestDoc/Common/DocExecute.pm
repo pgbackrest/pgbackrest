@@ -282,7 +282,7 @@ sub execute
                             $iFilterFirst = $iFilterFirst < 0 ? 0 : $iFilterFirst;
 
                             # Don't repeat lines that have already been output
-                            $iFilterFirst  = $iFilterFirst <= $iLastOutput ? $iLastOutput + 1 : $iFilterFirst;
+                            $iFilterFirst = $iFilterFirst <= $iLastOutput ? $iLastOutput + 1 : $iFilterFirst;
 
                             # Determine the last line to output
                             my $iFilterLast = $iIndex + $iFilterContext;
@@ -1023,7 +1023,9 @@ sub sectionChildProcess
                     $self->{oManifest}{oStorage}->put(
                         $strDockerfile,
                         "FROM ${strFrom}\n\n" . trim($self->{oManifest}->variableReplace($strCommandList)) . "\n");
-                    executeTest("docker build -f ${strDockerfile} -t ${strPreImage} " . $self->{oManifest}{oStorage}->pathGet());
+                    executeTest(
+                        "docker build -f ${strDockerfile} -t ${strPreImage} " . $self->{oManifest}{oStorage}->pathGet(),
+                        {bSuppressStdErr => true});
 
                     # Use the pre-built image
                     $strImage = $strPreImage;

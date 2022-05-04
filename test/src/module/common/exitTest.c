@@ -69,7 +69,7 @@ testRun(void)
         {
             THROW(RuntimeError, "test error message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             exitSafe(0, true, signalTypeNone);
             TEST_RESULT_LOG(
@@ -90,7 +90,7 @@ testRun(void)
         {
             hrnErrorThrowP(.errorType = &RuntimeError, .message = "test debug error message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             exitSafe(0, true, signalTypeNone);
             TEST_RESULT_LOG(
@@ -120,7 +120,7 @@ testRun(void)
         {
             hrnErrorThrowP(.message = "test assert message");
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             exitSafe(0, true, signalTypeNone);
             TEST_RESULT_LOG(

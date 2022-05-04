@@ -389,7 +389,7 @@ sub docGet
 
             # Get the end commit of the last release
             my $strReleaseLastVersion = $oyRelease[$iReleaseIdx + 1]->paramGet('version');
-            my $rhReleaseLastCommitEnd =  $self->commitFindSubject(\@hyGitLog, "v${strReleaseLastVersion}\\: .+");
+            my $rhReleaseLastCommitEnd = $self->commitFindSubject(\@hyGitLog, "v${strReleaseLastVersion}\\: .+");
 
             if (!defined($rhReleaseLastCommitEnd))
             {

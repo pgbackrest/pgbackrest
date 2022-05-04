@@ -27,35 +27,50 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Backup file
-        const String *const pgFile = pckReadStrP(param);
-        const bool pgFileIgnoreMissing = pckReadBoolP(param);
-        const uint64_t pgFileSize = pckReadU64P(param);
-        const bool pgFileCopyExactSize = pckReadBoolP(param);
-        const String *const pgFileChecksum = pckReadStrP(param);
-        const bool pgFileChecksumPage = pckReadBoolP(param);
-        const uint64_t pgFileChecksumPageLsnLimit = pckReadU64P(param);
+        // Backup options that apply to all files
         const String *const repoFile = pckReadStrP(param);
-        const bool repoFileHasReference = pckReadBoolP(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
-        const String *const backupLabel = pckReadStrP(param);
         const bool delta = pckReadBoolP(param);
         const CipherType cipherType = (CipherType)pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
 
-        const BackupFileResult result = backupFile(
-            pgFile, pgFileIgnoreMissing, pgFileSize, pgFileCopyExactSize, pgFileChecksum, pgFileChecksumPage,
-            pgFileChecksumPageLsnLimit, repoFile, repoFileHasReference, repoFileCompressType, repoFileCompressLevel,
-            backupLabel, delta, cipherType, cipherPass);
+        // Build the file list
+        List *fileList = lstNewP(sizeof(BackupFile));
+
+        while (!pckReadNullP(param))
+        {
+            BackupFile file = {.pgFile = pckReadStrP(param)};
+            file.pgFileIgnoreMissing = pckReadBoolP(param);
+            file.pgFileSize = pckReadU64P(param);
+            file.pgFileCopyExactSize = pckReadBoolP(param);
+            file.pgFileChecksum = pckReadStrP(param);
+            file.pgFileChecksumPage = pckReadBoolP(param);
+            file.manifestFile = pckReadStrP(param);
+            file.manifestFileHasReference = pckReadBoolP(param);
+
+            lstAdd(fileList, &file);
+        }
+
+        // Backup file
+        const List *const result = backupFile(
+            repoFile, repoFileCompressType, repoFileCompressLevel, delta, cipherType, cipherPass, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();
-        pckWriteU32P(resultPack, result.backupCopyResult);
-        pckWriteU64P(resultPack, result.copySize);
-        pckWriteU64P(resultPack, result.repoSize);
-        pckWriteStrP(resultPack, result.copyChecksum);
-        pckWritePackP(resultPack, result.pageChecksumResult);
+
+        for (unsigned int resultIdx = 0; resultIdx < lstSize(result); resultIdx++)
+        {
+            const BackupFileResult *const fileResult = lstGet(result, resultIdx);
+
+            pckWriteStrP(resultPack, fileResult->manifestFile);
+            pckWriteU32P(resultPack, fileResult->backupCopyResult);
+            pckWriteU64P(resultPack, fileResult->copySize);
+            pckWriteU64P(resultPack, fileResult->bundleOffset);
+            pckWriteU64P(resultPack, fileResult->repoSize);
+            pckWriteStrP(resultPack, fileResult->copyChecksum);
+            pckWritePackP(resultPack, fileResult->pageChecksumResult);
+        }
 
         protocolServerDataPut(server, resultPack);
         protocolServerDataEndPut(server);

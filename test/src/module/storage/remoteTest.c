@@ -28,7 +28,7 @@ testRun(void)
         PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
     };
 
-    hrnProtocolRemoteShimInstall(testRemoteHandlerList, PROTOCOL_SERVER_HANDLER_LIST_SIZE(testRemoteHandlerList));
+    hrnProtocolRemoteShimInstall(testRemoteHandlerList, LENGTH_OF(testRemoteHandlerList));
 
     // Test storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);

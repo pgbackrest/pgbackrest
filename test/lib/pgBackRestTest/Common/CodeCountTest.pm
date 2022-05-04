@@ -80,7 +80,7 @@ sub codeCountScan
         {
             $strClass = 'doc/core';
         }
-        elsif ($strFile =~ '^build/' ||  $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
+        elsif ($strFile =~ '^build/' || $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
                $strFile =~ '^src/build/')
         {
             $strClass = 'build';

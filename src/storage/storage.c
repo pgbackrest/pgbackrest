@@ -115,7 +115,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
             ioWriteOpen(storageWriteIo(destination));
 
             // Copy data from source to destination
-            ioCopy(storageReadIo(source), storageWriteIo(destination));
+            ioCopyP(storageReadIo(source), storageWriteIo(destination));
 
             // Close the source and destination files
             ioReadClose(storageReadIo(source));
@@ -400,10 +400,7 @@ storageInfoListCallback(void *data, const StorageInfo *info)
 
     // Skip . paths when getting info for subpaths (since info was already reported in the parent path)
     if (dotPath && listData->subPath != NULL)
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     // Update the name in info with the subpath
     StorageInfo infoUpdate = *info;
@@ -510,10 +507,7 @@ storageListCallback(void *data, const StorageInfo *info)
 
     // Skip . path
     if (strEq(info->name, DOT_STR))
-    {
         FUNCTION_TEST_RETURN_VOID();
-        return;
-    }
 
     strLstAdd((StringList *)data, info->name);
 
@@ -767,7 +761,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
         }
     }
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

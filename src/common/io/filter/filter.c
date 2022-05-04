@@ -123,7 +123,7 @@ ioFilterDone(const IoFilter *this)
     if (this->flushing)
         result = this->pub.interface.done != NULL ? this->pub.interface.done(this->pub.driver) : !ioFilterInputSame(this);
 
-    FUNCTION_TEST_RETURN(result);
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
@@ -136,7 +136,7 @@ ioFilterInputSame(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->pub.interface.inputSame != NULL ? this->pub.interface.inputSame(this->pub.driver) : false);
+    FUNCTION_TEST_RETURN(BOOL, this->pub.interface.inputSame != NULL ? this->pub.interface.inputSame(this->pub.driver) : false);
 }
 
 /**********************************************************************************************************************************/
@@ -149,7 +149,7 @@ ioFilterResult(const IoFilter *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(this->pub.interface.result ? this->pub.interface.result(this->pub.driver) : NULL);
+    FUNCTION_TEST_RETURN(PACK, this->pub.interface.result ? this->pub.interface.result(this->pub.driver) : NULL);
 }
 
 /**********************************************************************************************************************************/

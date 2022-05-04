@@ -312,7 +312,7 @@ bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, con
 
         if (first)
         {
-            strCatFmt(help, "    ");
+            strCatZ(help, "    ");
             lineSize = 0;
         }
 

@@ -6,7 +6,6 @@ Remote Storage
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/type/json.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "storage/remote/protocol.h"

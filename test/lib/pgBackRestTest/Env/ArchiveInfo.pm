@@ -283,7 +283,7 @@ sub archiveIdList
     # Get the version and system-id for all known databases
     my $hDbList = $self->dbHistoryList();
 
-    foreach my $iDbHistoryId (sort  {$a <=> $b} keys %$hDbList)
+    foreach my $iDbHistoryId (sort {$a <=> $b} keys %$hDbList)
     {
         # If the version and system-id match then construct the archive id so that the constructed array has the newest match first
         if (($hDbList->{$iDbHistoryId}{&INFO_DB_VERSION} eq $strDbVersion) &&

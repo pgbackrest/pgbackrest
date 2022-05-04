@@ -1,32 +1,42 @@
-**May 3, 2021**: [Crunchy Data](https://www.crunchydata.com) is pleased to announce the release of [pgBackRest](https://pgbackrest.org/) 2.33, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.
+**February 10, 2022**: [Crunchy Data](https://www.crunchydata.com) is pleased to announce the release of [pgBackRest](https://pgbackrest.org/) 2.37, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.
 
-pgBackRest has recently introduced many exciting new features including multiple repository support, GCS support for repository storage, automatic temporary S3 credentials, repository list/get commands, and page checksum error reporting.
+pgBackRest has recently introduced many exciting new features including a built-in TLS server, binary protocol, new authentication methods, backup history retention, restore enhancements, backup integrity enhancements, and increased option indexes.
 
-pgBackRest supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, multiple repositories, delta restore, parallel asynchronous archiving, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS support, backup expiration, local/remote operation via SSH, flexible configuration, and more.
+IMPORTANT NOTE: pgBackRest 2.37 is the last version to support PostgreSQL 8.3/8.4.
+
+pgBackRest supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, multiple repositories, delta restore, parallel asynchronous archiving, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS support, backup expiration, local/remote operation via SSH or TLS, flexible configuration, and more.
 
 You can install pgBackRest from the [PostgreSQL Yum Repository](https://yum.postgresql.org/) or the [PostgreSQL APT Repository](https://apt.postgresql.org). Source code can be downloaded from [releases](https://github.com/pgbackrest/pgbackrest/releases).
 
 ## Major New Features
 
-### Multiple Repository Support
+### TLS Server
 
-Backups already provide redundancy by creating an offline copy of a PostgreSQL cluster that can be used in disaster recovery. Multiple repositories allow multiple copies of backups and WAL archives in separate locations to increase redundancy and provide even more protection for valuable data. See [User Guide](https://pgbackrest.org/user-guide.html#multi-repo) and [Blog](https://blog.crunchydata.com/blog/introducing-pgbackrest-multiple-repository-support).
+The TLS server provides an alternative to SSH for remote operations such as backup. Containers benefit because pgBackRest can be used as the entry point without any need for SSH. In addition, performance tests have shown TLS to be significantly faster than SSH. See [User Guide](https://pgbackrest.org/user-guide-rhel.html#repo-host/setup-tls).
 
-### GCS Support for Repository Storage
+### Binary Protocol
 
-Repositories may now be located on Google Cloud Storage using service key authentication. See [User Guide](https://pgbackrest.org/user-guide.html#gcs-support) and [Blog](https://blog.crunchydata.com/blog/announcing-google-cloud-storage-gcs-support-for-pgbackrest).
+The binary protocol provides a faster and more memory efficient way for pgBackRest to communicate with local and remote processes while maintaining the ability to communicate between different architectures.
 
-### Automatic Temporary S3 Credentials
+### New Authentication Methods
 
-Temporary credentials will automatically be retrieved when a role with the required permissions is associated with an instance in AWS. See [User Guide](https://pgbackrest.org/user-guide.html#s3-support).
+The GCS storage driver now supports automatic authentication on GCE instances and the S3 storage driver supports WebIdentity authentication. See [Config Reference](https://pgbackrest.org/configuration.html#section-repository/option-repo-gcs-key-type).
 
-### Repository List/Get Commands
+### Additional Backup Integrity Checks
 
-The `repo-ls` and `repo-get` commands allow the contents of any repository to be listed and fetched, respectively, regardless of which storage type is used for the repository. See [Command Reference](https://pgbackrest.org/command.html).
+A number of integrity checks were added to ensure the backup is valid or errors are detected as early as possible, including: loop while waiting for checkpoint LSN to reach replay LSN, check archive immediately after backup start, timeline and checkpoint checks before backup, check that clusters are alive and correctly configured during a backup, and warn when checkpoint_timeout exceeds db-timeout.
 
-### Page Checksum Error Reporting
+### Increase Maximum Index Allowed for PG/REPO Options to 256
 
-Page checksum errors are included when getting detailed information for a backup using the `--set` option of the `info` command. See [Command Reference](https://pgbackrest.org/command.html#command-info).
+Up to 256 PostgreSQL clusters and repositories may now be configured.
+
+### Restore Enhancements
+
+The restore command has a number of new features, including: db-exclude option (see [Config Reference](https://pgbackrest.org/configuration.html#section-restore/option-db-exclude)), link-map option can create new links (see [Config Reference](https://pgbackrest.org/configuration.html#section-restore/option-link-map)), automatically create data directory, restore --type=lsn (See [Command Reference](https://pgbackrest.org/command.html#command-restore/category-command/option-type)), and error when restore is unable to find a backup to match the time target.
+
+### Backup History Retention
+
+The backup manifest history can now be expired. See [Config Reference](https://pgbackrest.org/configuration.html#section-repository/option-repo-retention-history).
 
 ## Links
 - [Website](https://pgbackrest.org)

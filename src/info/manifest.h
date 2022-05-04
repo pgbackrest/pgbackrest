@@ -16,6 +16,9 @@ Constants
 #define BACKUP_MANIFEST_FILE                                        "backup.manifest"
     STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
 
+#define MANIFEST_PATH_BUNDLE                                        "bundle"
+    STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
+
 #define MANIFEST_TARGET_PGDATA                                      "pg_data"
     STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
@@ -30,7 +33,7 @@ typedef struct Manifest Manifest;
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/type/variantList.h"
+#include "common/type/variant.h"
 #include "common/type/object.h"
 #include "info/info.h"
 #include "info/infoBackup.h"
@@ -49,6 +52,7 @@ typedef struct ManifestData
     time_t backupTimestampStart;                                    // When did the backup start?
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
+    bool bundle;                                                    // Does the backup bundle files?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -83,7 +87,7 @@ typedef struct ManifestDb
 {
     const String *name;                                             // Db name (must be first member in struct)
     unsigned int id;                                                // Db oid
-    unsigned int lastSystemId;                                      // Highest oid used by system objects in this database
+    unsigned int lastSystemId;                                      // Highest oid used by system objects (deprecated - do not use)
 } ManifestDb;
 
 /***********************************************************************************************************************************
@@ -100,6 +104,8 @@ typedef struct ManifestFile
     const String *user;                                             // User name
     const String *group;                                            // Group name
     const String *reference;                                        // Reference to a prior backup
+    uint64_t bundleId;                                              // Bundle id
+    uint64_t bundleOffset;                                          // Bundle offset
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
@@ -151,8 +157,8 @@ Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
 Manifest *manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage,
-    const StringList *excludeList, const VariantList *tablespaceList);
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
+    const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);
@@ -207,7 +213,7 @@ void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, c
 // Set remaining values before the final save
 void manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const VariantList *dbList,
+    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
     bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
     unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
 
@@ -285,7 +291,7 @@ manifestFile(const Manifest *const this, const unsigned int fileIdx)
 }
 
 // Add a file
-void manifestFileAdd(Manifest *this, ManifestFile file);
+void manifestFileAdd(Manifest *this, ManifestFile *file);
 
 // Find file in pack format by name
 const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
@@ -317,7 +323,7 @@ manifestFileTotal(const Manifest *const this)
 // Update a file with new data
 void manifestFileUpdate(
     Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const String *checksumPageErrorList);
+    bool checksumPage, bool checksumPageError, const String *checksumPageErrorList, uint64_t bundleId, uint64_t bundleOffset);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters

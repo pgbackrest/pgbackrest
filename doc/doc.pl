@@ -263,7 +263,7 @@ eval
                         $oStorageDoc->put(
                             $strDockerfile,
                             "FROM ${strFrom}\n\n" . trim($oManifest->variableReplace($oHostDefine->valueGet())) . "\n");
-                        executeTest("docker build -f ${strDockerfile} -t ${strImage} ${strBasePath}");
+                        executeTest("docker build -f ${strDockerfile} -t ${strImage} ${strBasePath}", {bSuppressStdErr => true});
                     }
                 }
             }

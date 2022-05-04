@@ -809,7 +809,7 @@ sub dbSectionSet
 
     # Fill db history
     $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CATALOG, $iCatalogVersion);
-    $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CONTROL,  $iControlVersion);
+    $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_CONTROL, $iControlVersion);
     $self->numericSet(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_SYSTEM_ID, $ullDbSysId);
     $self->set(INFO_BACKUP_SECTION_DB_HISTORY, $iDbHistoryId, INFO_BACKUP_KEY_DB_VERSION, $strDbVersion . '');
 
