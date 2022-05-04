@@ -2428,6 +2428,7 @@
 
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
+
                     <!-- OPERATION - VERIFY COMMAND - OUTPUT OPTION -->
                     <option id="output" name="Output">
                         <summary>Output type.</summary>
@@ -2438,6 +2439,7 @@
 
                         <example>text</example>
                     </option>
+
                     <!-- OPERATION - VERIFY COMMAND - VERBOSE OPTION -->
                     <option id="verbose" name="Verbose">
                         <summary>Output verbose result.</summary>
