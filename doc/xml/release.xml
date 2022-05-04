@@ -170,6 +170,19 @@
 
                 <release-development-list>
                     <release-item>
+                        <commit subject="Remove dependency on pg_database.datlastsysoid.">
+                            <github-pull-request id="1735"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p><postgres/> 15 support.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Remove redundant restoreFile() test and improve coverage."/>
                         <commit subject="Add limit parameter to ioCopyP()."/>
                         <commit subject="Optimize restore command for file bundling.">
