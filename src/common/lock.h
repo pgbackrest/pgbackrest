@@ -15,13 +15,14 @@ typedef enum
     lockTypeNone,
 } LockType;
 
-#include "common/type/string.h"
+#include "common/type/variant.h"
 
 // Lock data
 typedef struct LockData
 {
     pid_t processId;                                                // Process holding the lock
     const String *execId;                                           // Exec id of process holding the lock
+    Variant *percentComplete;                                       // Percentage of backup complete * 100 (when not NULL)
 } LockData;
 
 #include "common/time.h"
@@ -44,6 +45,18 @@ bool lockRelease(bool failOnNoLock);
 
 // Build lock file name
 String *lockFileName(const String *stanza, LockType lockType);
+
+// Write data to a lock file
+typedef struct LockWriteDataParam
+{
+    VAR_PARAM_HEADER;
+    const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
+} LockWriteDataParam;
+
+#define lockWriteDataP(lockType, ...)                                                                                              \
+    lockWriteData(lockType, (LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
+
+void lockWriteData(LockType lockType, LockWriteDataParam param);
 
 // Read a lock file held by another process to get information about what the process is doing. This is a lower-level version to use
 // when the lock file name is already known and the lock file may need to be removed.
