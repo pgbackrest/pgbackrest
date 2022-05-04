@@ -797,7 +797,8 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
-                // created there
+                // created there in PostgreSQL < 15. PostgreSQL >= 15 no longer uses this directory, but it may be used by
+                // extensions such as pg_stat_statements so it should still be excluded.
                 if (strEqZ(info->name, PG_PATH_PGSTATTMP))
                     FUNCTION_TEST_RETURN_VOID();
 
