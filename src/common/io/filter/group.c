@@ -520,11 +520,11 @@ ioFilterGroupResultAllSet(IoFilterGroup *const this, const Pack *const filterRes
 
     if (filterResultPack != NULL)
     {
-        PackRead *const packRead = pckReadNew(filterResultPack);
-
         // Unpack the results into a list
         MEM_CONTEXT_TEMP_BEGIN()
         {
+            PackRead *const packRead = pckReadNew(filterResultPack);
+
             MEM_CONTEXT_BEGIN(lstMemContext(this->filterResult))
             {
                 while (!pckReadNullP(packRead))

@@ -248,6 +248,26 @@ cvtZToInt(const char *value)
     FUNCTION_TEST_RETURN(INT, cvtZToIntBase(value, 10));
 }
 
+int
+cvtZSubNToIntBase(const char *const value, const size_t offset, const size_t size, const int base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(SIZE, offset);
+        FUNCTION_TEST_PARAM(SIZE, size);
+        FUNCTION_TEST_PARAM(INT, base);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+
+    char buffer[CVT_BASE10_BUFFER_SIZE + 1];
+    ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
+    strncpy(buffer, value + offset, size);
+    buffer[size] = '\0';
+
+    FUNCTION_TEST_RETURN(INT, cvtZToIntBase(buffer, base));
+}
+
 /**********************************************************************************************************************************/
 size_t
 cvtInt64ToZ(int64_t value, char *buffer, size_t bufferSize)
@@ -290,6 +310,26 @@ cvtZToInt64(const char *value)
     ASSERT(value != NULL);
 
     FUNCTION_TEST_RETURN(INT64, cvtZToInt64Base(value, 10));
+}
+
+int64_t
+cvtZSubNToInt64Base(const char *const value, const size_t offset, const size_t size, const int base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(SIZE, offset);
+        FUNCTION_TEST_PARAM(SIZE, size);
+        FUNCTION_TEST_PARAM(INT, base);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+
+    char buffer[CVT_BASE10_BUFFER_SIZE + 1];
+    ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
+    strncpy(buffer, value + offset, size);
+    buffer[size] = '\0';
+
+    FUNCTION_TEST_RETURN(INT64, cvtZToInt64Base(buffer, base));
 }
 
 /**********************************************************************************************************************************/
@@ -434,6 +474,26 @@ cvtZToUInt(const char *value)
     FUNCTION_TEST_RETURN(UINT, cvtZToUIntBase(value, 10));
 }
 
+unsigned int
+cvtZSubNToUIntBase(const char *const value, const size_t offset, const size_t size, const int base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(SIZE, offset);
+        FUNCTION_TEST_PARAM(SIZE, size);
+        FUNCTION_TEST_PARAM(INT, base);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+
+    char buffer[CVT_BASE10_BUFFER_SIZE + 1];
+    ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
+    strncpy(buffer, value + offset, size);
+    buffer[size] = '\0';
+
+    FUNCTION_TEST_RETURN(UINT, cvtZToUIntBase(buffer, base));
+}
+
 /**********************************************************************************************************************************/
 size_t
 cvtUInt64ToZ(uint64_t value, char *buffer, size_t bufferSize)
@@ -482,6 +542,26 @@ cvtZToUInt64(const char *value)
     ASSERT(value != NULL);
 
     FUNCTION_TEST_RETURN(UINT64, cvtZToUInt64Base(value, 10));
+}
+
+uint64_t
+cvtZSubNToUInt64Base(const char *const value, const size_t offset, const size_t size, const int base)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, value);
+        FUNCTION_TEST_PARAM(SIZE, offset);
+        FUNCTION_TEST_PARAM(SIZE, size);
+        FUNCTION_TEST_PARAM(INT, base);
+    FUNCTION_TEST_END();
+
+    ASSERT(value != NULL);
+
+    char buffer[CVT_BASE10_BUFFER_SIZE + 1];
+    ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
+    strncpy(buffer, value + offset, size);
+    buffer[size] = '\0';
+
+    FUNCTION_TEST_RETURN(UINT64, cvtZToUInt64Base(buffer, base));
 }
 
 /**********************************************************************************************************************************/

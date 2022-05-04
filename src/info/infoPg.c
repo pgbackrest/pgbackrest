@@ -374,7 +374,7 @@ infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, voi
 
 /**********************************************************************************************************************************/
 String *
-infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
+infoPgArchiveId(const InfoPg *const this, const unsigned int pgDataIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_PG, this);
@@ -383,9 +383,14 @@ infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx)
 
     ASSERT(this != NULL);
 
-    InfoPgData pgData = infoPgData(this, pgDataIdx);
+    const InfoPgData pgData = infoPgData(this, pgDataIdx);
+    String *const version = pgVersionToStr(pgData.version);
 
-    FUNCTION_LOG_RETURN(STRING, strNewFmt("%s-%u", strZ(pgVersionToStr(pgData.version)), pgData.id));
+    String *const result = strNewFmt("%s-%u", strZ(version), pgData.id);
+
+    strFree(version);
+
+    FUNCTION_LOG_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

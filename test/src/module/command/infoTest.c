@@ -741,10 +741,10 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
-            "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                                 \
-            "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
-            "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
-            "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
+            "mail={\"db-id\":16456,\"db-last-system-id\":99999}\n"                                                                 \
+            "postgres={\"db-id\":12173,\"db-last-system-id\":99999}\n"                                                             \
+            "template0={\"db-id\":12168,\"db-last-system-id\":99999}\n"                                                            \
+            "template1={\"db-id\":1,\"db-last-system-id\":99999}\n"                                                                \
 
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
@@ -1768,8 +1768,8 @@ testRun(void)
         #define TEST_MANIFEST_NO_DB                                                                                                \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
-            "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
-            "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
+            "template0={\"db-id\":12168,\"db-last-system-id\":99999}\n"                                                            \
+            "template1={\"db-id\":1,\"db-last-system-id\":99999}\n"                                                                \
 
         #define TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR                                                                               \
         "\n"                                                                                                                       \

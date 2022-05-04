@@ -87,20 +87,22 @@ exitErrorDetail(void)
 {
     FUNCTION_TEST_VOID();
 
-    FUNCTION_TEST_RETURN(
-        STRING,
-        strCatFmt(
-            strNew(),
-            "--------------------------------------------------------------------\n"
-            "If SUBMITTING AN ISSUE please provide the following information:\n"
-            "\n"
-            "version: " PROJECT_VERSION "\n"
-            "command: %s\n"
-            "options:%s\n"
-            "\n"
-            "stack trace:\n%s\n"
-            "--------------------------------------------------------------------",
-            strZ(cfgCommandRoleName()), strZ(cmdOption()), errorStackTrace()));
+    String *const role = cfgCommandRoleName();
+    String *const result = strNewFmt(
+        "--------------------------------------------------------------------\n"
+        "If SUBMITTING AN ISSUE please provide the following information:\n"
+        "\n"
+        "version: " PROJECT_VERSION "\n"
+        "command: %s\n"
+        "options:%s\n"
+        "\n"
+        "stack trace:\n%s\n"
+        "--------------------------------------------------------------------",
+        strZ(role), strZ(cmdOption()), errorStackTrace());
+
+    strFree(role);
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 int
@@ -117,21 +119,21 @@ exitSafe(int result, bool error, SignalType signalType)
     {
         LogLevel logLevel = errorCode() == errorTypeCode(&AssertError) ? logLevelAssert : logLevelError;
 
-        // Assert errors always output a stack trace
-        if (logLevel == logLevelAssert)
-            LOG_FMT(logLevel, errorCode(), "%s\n%s", errorMessage(), strZ(exitErrorDetail()));
-        else
+        // Output stack track on assert or when an output (e.g. console) is at least debug level
+        if (logLevel == logLevelAssert || logAny(logLevelDebug))
         {
-            // Log just the error to non-debug levels
-            LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, 0, errorCode(), errorMessage());
+            String *const detail = exitErrorDetail();
 
-            // Log the stack trace debug levels
-            if (logAny(logLevelDebug))
-            {
-                LOG_INTERNAL_FMT(
-                    logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\n%s", errorMessage(), strZ(exitErrorDetail()));
-            }
+            LOG_INTERNAL_FMT(
+                logLevel, logLevel == logLevelAssert ? LOG_LEVEL_MIN : logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\n%s",
+                errorMessage(), strZ(detail));
+
+            strFree(detail);
         }
+
+        // Log just the error to non-debug levels
+        if (logLevel != logLevelAssert)
+            LOG_INTERNAL(logLevel, LOG_LEVEL_MIN, logLevelDetail, 0, errorCode(), errorMessage());
 
         result = errorCode();
     }
@@ -165,6 +167,7 @@ exitSafe(int result, bool error, SignalType signalType)
         }
 
         cmdEnd(result, errorMessage);
+        strFree(errorMessage);
     }
 
     // Release any locks but ignore errors

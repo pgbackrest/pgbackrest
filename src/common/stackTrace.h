@@ -62,7 +62,7 @@ LogLevel stackTracePush(const char *fileName, const char *functionName, LogLevel
 // Generate the stack trace
 size_t stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char *functionName, unsigned int fileLine);
 
-// Mark that parameters are being logged -- it none appear then the function is void
+// Mark that parameters are being logged -- if none appear then the function is void
 void stackTraceParamLog(void);
 
 // Get parameters for the top function on the stack

@@ -2075,7 +2075,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             // Build type dependent error data
                             const String *errorValue = EMPTY_STR;
 
-                            switch(cfgParseOptionDataType(dependId))
+                            switch (cfgParseOptionDataType(dependId))
                             {
                                 case cfgOptDataTypeBoolean:
                                 {

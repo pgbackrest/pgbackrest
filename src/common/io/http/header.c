@@ -180,6 +180,7 @@ httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant 
             strCatFmt(range, "%" PRIu64, offset + varUInt64(limit) - 1);
 
         httpHeaderPut(this, HTTP_HEADER_RANGE_STR, range);
+        strFree(range);
     }
 
     FUNCTION_TEST_RETURN(HTTP_HEADER, this);

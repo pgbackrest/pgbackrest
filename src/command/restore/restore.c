@@ -120,12 +120,12 @@ getEpoch(const String *targetTime)
             // Strip off the date and time and put the remainder into another string
             String *datetime = strSubN(targetTime, 0, 19);
 
-            int dtYear = cvtZToInt(strZ(strSubN(datetime, 0, 4)));
-            int dtMonth = cvtZToInt(strZ(strSubN(datetime, 5, 2)));
-            int dtDay = cvtZToInt(strZ(strSubN(datetime, 8, 2)));
-            int dtHour = cvtZToInt(strZ(strSubN(datetime, 11, 2)));
-            int dtMinute = cvtZToInt(strZ(strSubN(datetime, 14, 2)));
-            int dtSecond = cvtZToInt(strZ(strSubN(datetime, 17, 2)));
+            int dtYear = cvtZSubNToInt(strZ(datetime), 0, 4);
+            int dtMonth = cvtZSubNToInt(strZ(datetime), 5, 2);
+            int dtDay = cvtZSubNToInt(strZ(datetime), 8, 2);
+            int dtHour = cvtZSubNToInt(strZ(datetime), 11, 2);
+            int dtMinute = cvtZSubNToInt(strZ(datetime), 14, 2);
+            int dtSecond = cvtZSubNToInt(strZ(datetime), 17, 2);
 
             // Confirm date and time parts are valid
             datePartsValid(dtYear, dtMonth, dtDay);
@@ -145,13 +145,13 @@ getEpoch(const String *targetTime)
                 String *timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
 
                 // Include the sign with the hour
-                int tzHour = cvtZToInt(strZ(strSubN(timezoneOffset, 0, 3)));
+                int tzHour = cvtZSubNToInt(strZ(timezoneOffset), 0, 3);
                 int tzMinute = 0;
 
                 // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
                 // the hour
                 if (strSize(timezoneOffset) > 3)
-                    tzMinute = cvtZToInt(strZ(strSubN(timezoneOffset, 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2)));
+                    tzMinute = cvtZSubNToInt(strZ(timezoneOffset), 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2);
 
                 result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
             }
@@ -1346,8 +1346,7 @@ restoreSelectiveExpression(Manifest *manifest)
             {
                 const ManifestDb *systemDb = manifestDb(manifest, systemDbIdx);
 
-                if (strEqZ(systemDb->name, "template0") || strEqZ(systemDb->name, "template1") ||
-                    strEqZ(systemDb->name, "postgres") || systemDb->id < PG_USER_OBJECT_MIN_ID)
+                if (pgDbIsSystem(systemDb->name) || pgDbIsSystemId(systemDb->id))
                 {
                     // Build the system id list and add to the dbList for logging and checking
                     const String *systemDbId = varStrForce(VARUINT(systemDb->id));
@@ -1366,7 +1365,7 @@ restoreSelectiveExpression(Manifest *manifest)
 
                     // In the highly unlikely event that a system database was somehow added after the backup began, it will only be
                     // found in the file list and not the manifest db section, so add it to the system database list
-                    if (cvtZToUInt64(strZ(dbId)) < PG_USER_OBJECT_MIN_ID)
+                    if (pgDbIsSystemId(cvtZToUInt(strZ(dbId))))
                         strLstAddIfMissing(systemDbIdList, dbId);
 
                     strLstAddIfMissing(dbList, dbId);

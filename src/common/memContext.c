@@ -49,7 +49,9 @@ Contains information about the memory context
 ***********************************************************************************************************************************/
 struct MemContext
 {
+#ifdef DEBUG
     const char *name;                                               // Indicates what the context is being used for
+#endif
     MemContextState state:1;                                        // Current state of the context
     size_t allocExtra:16;                                           // Size of extra allocation (1kB max)
 
@@ -74,7 +76,13 @@ Top context
 The top context always exists and can never be freed.  All other contexts are children of the top context. The top context is
 generally used to allocate memory that exists for the life of the program.
 ***********************************************************************************************************************************/
-static MemContext contextTop = {.state = memContextStateActive, .name = "TOP"};
+static MemContext contextTop =
+{
+    .state = memContextStateActive,
+#ifdef DEBUG
+    .name = "TOP",
+#endif
+};
 
 /***********************************************************************************************************************************
 Memory context stack types
@@ -257,7 +265,11 @@ memContextNewIndex(MemContext *memContext)
 
 /**********************************************************************************************************************************/
 MemContext *
-memContextNew(const char *const name, const MemContextNewParam param)
+memContextNew(
+#ifdef DEBUG
+    const char *const name,
+#endif
+    const MemContextNewParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, name);
@@ -280,8 +292,10 @@ memContextNew(const char *const name, const MemContextNewParam param)
 
     *this = (MemContext)
     {
+#ifdef DEBUG
         // Set the context name
         .name = name,
+#endif
 
         // Set extra allocation
         .allocExtra = param.allocExtra,
@@ -373,9 +387,11 @@ memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *
     if (this == &contextTop)
         THROW(AssertError, "top context may not have a callback");
 
+#ifdef DEBUG
     // Error if callback has already been set - there may be valid use cases for this but error until one is found
     if (this->callbackFunction)
         THROW_FMT(AssertError, "callback is already set for context '%s'", this->name);
+#endif
 
     // Set callback function and argument
     this->callbackFunction = callbackFunction;
@@ -629,7 +645,7 @@ memContextSwitchBack(void)
     {
         THROW_FMT(
             AssertError, "current context expected but new context '%s' found",
-            memContextName(memContextStack[memContextMaxStackIdx].memContext));
+            memContextStack[memContextMaxStackIdx].memContext->name);
     }
 #endif
 
@@ -658,7 +674,7 @@ memContextKeep(void)
     {
         THROW_FMT(
             AssertError, "new context expected but current context '%s' found",
-            memContextName(memContextStack[memContextMaxStackIdx].memContext));
+            memContextStack[memContextMaxStackIdx].memContext->name);
     }
 #endif
 
@@ -679,7 +695,7 @@ memContextDiscard(void)
     {
         THROW_FMT(
             AssertError, "new context expected but current context '%s' found",
-            memContextName(memContextStack[memContextMaxStackIdx].memContext));
+            memContextStack[memContextMaxStackIdx].memContext->name);
     }
 #endif
 
@@ -716,23 +732,6 @@ memContextFreeing(const MemContext *const this)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, this->state == memContextStateFreeing);
-}
-
-/**********************************************************************************************************************************/
-const char *
-memContextName(const MemContext *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    // Error if context is not active
-    if (this->state != memContextStateActive)
-        THROW(AssertError, "cannot get name for inactive context");
-
-    FUNCTION_TEST_RETURN_CONST(STRINGZ, this->name);
 }
 
 /**********************************************************************************************************************************/
@@ -827,9 +826,11 @@ memContextFree(MemContext *this)
     // If context is already freeing then return if memContextFree() is called again - this can happen in callbacks
     if (this->state != memContextStateFreeing)
     {
+#ifdef DEBUG
         // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
         if (this == memContextStack[memContextCurrentStackIdx].memContext && this != &contextTop)
             THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
+#endif
 
         // Free child contexts
         for (unsigned int contextIdx = 0; contextIdx < this->contextChildListSize; contextIdx++)

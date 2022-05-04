@@ -96,7 +96,7 @@ storageWriteAzureBlock(StorageWriteAzure *this)
     // nothing to do except make sure the request did not error.
     if (this->request != NULL)
     {
-        storageAzureResponseP(this->request);
+        httpResponseFree(storageAzureResponseP(this->request));
         httpRequestFree(this->request);
         this->request = NULL;
     }

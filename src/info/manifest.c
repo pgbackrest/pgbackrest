@@ -2996,7 +2996,7 @@ typedef struct ManifestLoadFileData
 } ManifestLoadFileData;
 
 static bool
-manifestLoadFileCallback(void *data, unsigned int try)
+manifestLoadFileCallback(void *const data, const unsigned int try)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, data);
@@ -3005,24 +3005,28 @@ manifestLoadFileCallback(void *data, unsigned int try)
 
     ASSERT(data != NULL);
 
-    ManifestLoadFileData *loadData = (ManifestLoadFileData *)data;
+    ManifestLoadFileData *const loadData = data;
     bool result = false;
 
     if (try < 2)
     {
-        // Construct filename based on try
-        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
-
-        // Attempt to load the file
-        IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
-
-        MEM_CONTEXT_BEGIN(loadData->memContext)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            loadData->manifest = manifestNewLoad(read);
-            result = true;
+            // Construct filename based on try
+            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+
+            // Attempt to load the file
+            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
+
+            MEM_CONTEXT_BEGIN(loadData->memContext)
+            {
+                loadData->manifest = manifestNewLoad(read);
+                result = true;
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);

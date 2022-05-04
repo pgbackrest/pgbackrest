@@ -19,6 +19,7 @@ Lock Handler
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
+#include "common/user.h"
 #include "common/wait.h"
 #include "storage/helper.h"
 #include "storage/storage.intern.h"
@@ -356,7 +357,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
         if (result == -1)
         {
             // Error when requested
-            if (failOnNoLock)
+            if (failOnNoLock || errNo != EWOULDBLOCK)
             {
                 const String *errorHint = NULL;
 
@@ -364,8 +365,12 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     errorHint = strNewZ("\nHINT: is another " PROJECT_NAME " process running?");
                 else if (errNo == EACCES)
                 {
+                    // Get information for the current user
+                    userInit();
+
                     errorHint = strNewFmt(
-                        "\nHINT: does the user running " PROJECT_NAME " have permissions on the '%s' file?", strZ(lockFile));
+                        "\nHINT: does '%s:%s' running " PROJECT_NAME " have permissions on the '%s' file?", strZ(userName()),
+                        strZ(groupName()), strZ(lockFile));
                 }
 
                 THROW_FMT(

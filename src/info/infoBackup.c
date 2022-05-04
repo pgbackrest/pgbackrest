@@ -561,7 +561,7 @@ typedef struct InfoBackupLoadFileData
 } InfoBackupLoadFileData;
 
 static bool
-infoBackupLoadFileCallback(void *data, unsigned int try)
+infoBackupLoadFileCallback(void *const data, const unsigned int try)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, data);
@@ -570,24 +570,28 @@ infoBackupLoadFileCallback(void *data, unsigned int try)
 
     ASSERT(data != NULL);
 
-    InfoBackupLoadFileData *loadData = (InfoBackupLoadFileData *)data;
+    InfoBackupLoadFileData *const loadData = data;
     bool result = false;
 
     if (try < 2)
     {
-        // Construct filename based on try
-        const String *fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
-
-        // Attempt to load the file
-        IoRead *read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
-
-        MEM_CONTEXT_BEGIN(loadData->memContext)
+        MEM_CONTEXT_TEMP_BEGIN()
         {
-            loadData->infoBackup = infoBackupNewLoad(read);
-            result = true;
+            // Construct filename based on try
+            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+
+            // Attempt to load the file
+            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
+
+            MEM_CONTEXT_BEGIN(loadData->memContext)
+            {
+                loadData->infoBackup = infoBackupNewLoad(read);
+                result = true;
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);

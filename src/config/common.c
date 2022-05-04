@@ -106,6 +106,8 @@ cfgParseSize(const String *const value)
         if (valueInt > INT64_MAX / multiplier)
             THROW_FMT(FormatError, "value '%s' is out of range", strZ(value));
 
+        strFree(valueLower);
+
         FUNCTION_TEST_RETURN(INT64, valueInt * multiplier);
     }
 

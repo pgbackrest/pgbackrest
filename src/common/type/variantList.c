@@ -14,42 +14,50 @@ Variant List Handler
 
 /**********************************************************************************************************************************/
 VariantList *
-varLstNewStrLst(const StringList *stringList)
+varLstNewStrLst(const StringList *const stringList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, stringList);
     FUNCTION_TEST_END();
 
-    VariantList *result = NULL;
+    VariantList *this = NULL;
 
     if (stringList != NULL)
     {
-        result = varLstNew();
+        this = varLstNew();
 
-        for (unsigned int listIdx = 0; listIdx < strLstSize(stringList); listIdx++)
-            varLstAdd(result, varNewStr(strLstGet(stringList, listIdx)));
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            for (unsigned int listIdx = 0; listIdx < strLstSize(stringList); listIdx++)
+                varLstAdd(this, varNewStr(strLstGet(stringList, listIdx)));
+        }
+        MEM_CONTEXT_OBJ_END();
     }
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, this);
 }
 
 /**********************************************************************************************************************************/
 VariantList *
-varLstDup(const VariantList *source)
+varLstDup(const VariantList *const source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, source);
     FUNCTION_TEST_END();
 
-    VariantList *result = NULL;
+    VariantList *this = NULL;
 
     if (source != NULL)
     {
-        result = varLstNew();
+        this = varLstNew();
 
-        for (unsigned int listIdx = 0; listIdx < varLstSize(source); listIdx++)
-            varLstAdd(result, varDup(varLstGet(source, listIdx)));
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            for (unsigned int listIdx = 0; listIdx < varLstSize(source); listIdx++)
+                varLstAdd(this, varDup(varLstGet(source, listIdx)));
+        }
+        MEM_CONTEXT_OBJ_END();
     }
 
-    FUNCTION_TEST_RETURN(VARIANT_LIST, result);
+    FUNCTION_TEST_RETURN(VARIANT_LIST, this);
 }

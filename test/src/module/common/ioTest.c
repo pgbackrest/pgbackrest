@@ -54,10 +54,10 @@ testIoWriteOpen(void *driver)
 }
 
 static void
-testIoWrite(void *driver, const Buffer *buffer)
+testIoWrite(void *const driver, const Buffer *const buffer)
 {
     ASSERT(driver == (void *)999);
-    ASSERT(strEq(strNewBuf(buffer), STRDEF("ABC")));
+    ASSERT(strncmp((const char *)bufPtrConst(buffer), "ABC", bufSize(buffer)) == 0);
 }
 
 static bool testIoWriteCloseCalled = false;
@@ -106,7 +106,11 @@ ioTestFilterSizeResult(THIS_VOID)
     pckWriteU64P(packWrite, this->size);
     pckWriteEndP(packWrite);
 
-    return pckWriteResult(packWrite);
+    Pack *const result = pckDup(pckWriteResult(packWrite));
+
+    pckWriteFree(packWrite);
+
+    return result;
 }
 
 static IoFilter *
@@ -140,7 +144,7 @@ typedef struct IoTestFilterMultiply
 } IoTestFilterMultiply;
 
 static void
-ioTestFilterMultiplyProcess(THIS_VOID, const Buffer *input, Buffer *output)
+ioTestFilterMultiplyProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 {
     THIS(IoTestFilterMultiply);
 
@@ -163,7 +167,7 @@ ioTestFilterMultiplyProcess(THIS_VOID, const Buffer *input, Buffer *output)
         else
         {
             char flushZ[] = {this->flushChar, 0};
-            bufCat(output, bufNewC(flushZ, 1));
+            bufCat(output, BUF(flushZ, 1));
             this->flushTotal--;
         }
     }
@@ -171,7 +175,12 @@ ioTestFilterMultiplyProcess(THIS_VOID, const Buffer *input, Buffer *output)
     {
         if (this->multiplyBuffer == NULL)
         {
-            this->multiplyBuffer = bufNew(bufUsed(input) * this->multiplier);
+            MEM_CONTEXT_OBJ_BEGIN(this)
+            {
+                this->multiplyBuffer = bufNew(bufUsed(input) * this->multiplier);
+            }
+            MEM_CONTEXT_OBJ_END();
+
             const unsigned char *inputPtr = bufPtrConst(input);
             unsigned char *bufferPtr = bufPtr(this->multiplyBuffer);
 

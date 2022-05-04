@@ -17,6 +17,7 @@ Archive Push Command
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "config/config.h"
+#include "config/load.h"
 #include "config/exec.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
@@ -393,8 +394,10 @@ cmdArchivePush(void)
             if (!pushed)
             {
                 THROW_FMT(
-                    ArchiveTimeoutError, "unable to push WAL file '%s' to the archive asynchronously after %s second(s)",
-                    strZ(archiveFile), strZ(cfgOptionDisplay(cfgOptArchiveTimeout)));
+                    ArchiveTimeoutError,
+                    "unable to push WAL file '%s' to the archive asynchronously after %s second(s)\n"
+                    "HINT: check '%s' for errors.",
+                    strZ(archiveFile), strZ(cfgOptionDisplay(cfgOptArchiveTimeout)), strZ(cfgLoadLogFileName(cfgCmdRoleAsync)));
             }
 
             // Log success

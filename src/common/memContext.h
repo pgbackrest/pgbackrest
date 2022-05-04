@@ -207,10 +207,19 @@ typedef struct MemContextNewParam
     uint16_t allocExtra;                                            // Extra memory to allocate with the context
 } MemContextNewParam;
 
-#define memContextNewP(name, ...)                                                                                                  \
-    memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#ifdef DEBUG
+    #define memContextNewP(name, ...)                                                                                              \
+        memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#else
+    #define memContextNewP(name, ...)                                                                                              \
+        memContextNew((MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#endif
 
-MemContext *memContextNew(const char *name, MemContextNewParam param);
+MemContext *memContextNew(
+#ifdef DEBUG
+    const char *name,
+#endif
+    MemContextNewParam param);
 
 // Switch to a context making it the current mem context
 void memContextSwitch(MemContext *this);
@@ -267,9 +276,6 @@ MemContext *memContextPrior(void);
 // "top" context.  This context is created at initialization and is always present, i.e. it is never freed.  The top context is a
 // good place to put long-lived mem contexts since they won't be automatically freed until the program exits.
 MemContext *memContextTop(void);
-
-// Mem context name
-const char *memContextName(const MemContext *this);
 
 // Get total size of mem context and all children
 size_t memContextSize(const MemContext *this);

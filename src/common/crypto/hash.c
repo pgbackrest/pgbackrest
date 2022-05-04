@@ -241,6 +241,10 @@ cryptoHashNew(const String *type)
 IoFilter *
 cryptoHashNewPack(const Pack *const paramList)
 {
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK, paramList);
+    FUNCTION_TEST_END();
+
     IoFilter *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -249,7 +253,7 @@ cryptoHashNewPack(const Pack *const paramList)
     }
     MEM_CONTEXT_TEMP_END();
 
-    return result;
+    FUNCTION_TEST_RETURN(IO_FILTER, result);
 }
 
 /**********************************************************************************************************************************/
