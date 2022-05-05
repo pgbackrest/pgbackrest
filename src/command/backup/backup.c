@@ -88,10 +88,14 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
 
             if (!strLstEmpty(historyList))
             {
-                const String *historyLabelLatest = strLstGet(historyList, 0);
+                const String *const historyLabelLatest = strLstGet(historyList, 0);
 
                 if (backupLabelLatest == NULL || strCmp(historyLabelLatest, backupLabelLatest) > 0)
-                    backupLabelLatest = historyLabelLatest;
+                {
+                    // Strip off the compression and manifest extensions in case this ends up in an error message
+                    backupLabelLatest = compressExtStrip(historyLabelLatest, compressTypeFromName(historyLabelLatest));
+                    backupLabelLatest = strSubN(backupLabelLatest, 0, strSize(backupLabelLatest) - sizeof(BACKUP_MANIFEST_EXT) + 1);
+                }
             }
         }
 
