@@ -2109,13 +2109,9 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 }
                             }
 
-                            THROW(
-                                OptionInvalidError,
-                                strZ(
-                                    strNewFmt(
-                                        "option '%s' not valid without option '%s'%s",
-                                        cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(dependOptionName),
-                                        strZ(errorValue))));
+                            THROW_FMT(
+                                OptionInvalidError, "option '%s' not valid without option '%s'%s",
+                                cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(dependOptionName), strZ(errorValue));
                         }
 
                         pckReadFree(filter);
