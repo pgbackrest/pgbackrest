@@ -1716,7 +1716,7 @@ verifyProcess(const bool verboseText)
         String *outputStr = strNew();
 
         // If text output or errors then output stanza/status
-        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT || errorTotal != 0)
+        if (verboseText || errorTotal != 0)
         {
             strCat(
                 outputStr, strNewFmt("stanza: %s\nstatus: %s", strZ(cfgOptionStr(cfgOptStanza)),
@@ -1746,17 +1746,21 @@ cmdVerify(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *result = verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT);
+        const String *const result = verifyProcess(cfgOptionBool(cfgOptVerbose));
 
         // Output results if any
-        if (strSize(result) > 0)
+        if (!strEmpty(result))
+        {
+            // Log results
             LOG_INFO_FMT("%s", strZ(result));
 
-        // Output results to console if any
-        ioFdWriteOneStr(STDOUT_FILENO, result);
-
-        if (strSize(result) > 0)
-            ioFdWriteOneStr(STDOUT_FILENO, LF_STR);
+            // Output to console when requested
+            if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
+            {
+                ioFdWriteOneStr(STDOUT_FILENO, result);
+                ioFdWriteOneStr(STDOUT_FILENO, LF_STR);
+            }
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
