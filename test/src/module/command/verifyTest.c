@@ -259,7 +259,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
                 " for read\n"
-            "P00  ERROR: [028]: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.2, system-id "
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.2, system-id "
                 HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -294,8 +294,8 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
-            "P00  ERROR: [028]: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is "
-                "not in the backup.info history, skipping");
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not in the "
+                "backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun copy test with db-id invalid");
@@ -328,7 +328,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
-            "P00  ERROR: [028]: '20181119-152138F' may not be recoverable - PG data (id 0, version 9.4, system-id "
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 0, version 9.4, system-id "
                 HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -433,7 +433,7 @@ testRun(void)
         TEST_RESULT_UINT(errTotal, 1, "duplicate WAL error");
         TEST_RESULT_UINT(strLstSize(walFileList), 0, "all WAL removed from WAL file list");
         TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 0, "no range");
-        TEST_RESULT_LOG("P00  ERROR: [028]: duplicate WAL '000000020000000200000000' for '9.4-1' exists, skipping");
+        TEST_RESULT_LOG("P00   INFO: duplicate WAL '000000020000000200000000' for '9.4-1' exists, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("FF Wal not skipped > 9.2, duplicates at beginning and end of list are removed");
@@ -460,8 +460,8 @@ testRun(void)
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_RESULT_LOG(
-            "P00  ERROR: [028]: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping\n"
-            "P00  ERROR: [028]: duplicate WAL '000000020000000200000001' for '9.4-1' exists, skipping");
+            "P00   INFO: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping\n"
+            "P00   INFO: duplicate WAL '000000020000000200000001' for '9.4-1' exists, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("FF Wal skipped <= 9.2, duplicates in middle of list removed");
@@ -491,8 +491,8 @@ testRun(void)
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
 
         TEST_RESULT_LOG(
-            "P00  ERROR: [028]: invalid WAL '0000000200000001000000FF' for '9.2-1' exists, skipping\n"
-            "P00  ERROR: [028]: duplicate WAL '000000020000000200000001' for '9.2-1' exists, skipping");
+            "P00   INFO: invalid WAL '0000000200000001000000FF' for '9.2-1' exists, skipping\n"
+            "P00   INFO: duplicate WAL '000000020000000200000001' for '9.2-1' exists, skipping");
 
         TEST_RESULT_STRLST_Z(
             walFileList,
@@ -669,7 +669,7 @@ testRun(void)
             verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
             "20181119-153000F", "current backup, missing archive");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
-        TEST_RESULT_LOG("P00  ERROR: [044]: archiveIds '12-3' are not in the archive.info history list");
+        TEST_RESULT_LOG("P00   INFO: archiveIds '12-3' are not in the archive.info history list");
 
         errTotal = 0;
         strLstAddZ(archiveIdList, "13-4");
@@ -677,7 +677,7 @@ testRun(void)
             verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
             "20181119-153000F", "test multiple archiveIds on disk not in archive.info");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
-        TEST_RESULT_LOG("P00  ERROR: [044]: archiveIds '12-3, 13-4' are not in the archive.info history list");
+        TEST_RESULT_LOG("P00   INFO: archiveIds '12-3, 13-4' are not in the archive.info history list");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyLogInvalidResult() - missing file");
@@ -775,11 +775,7 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "  No usable backup.info file\n"
-            "  No usable archive.info file\n", .remove = true);
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
             "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
                 "<REPO:BACKUP>/backup.info\n"
@@ -822,10 +818,7 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "  No usable archive.info file\n", .remove = true);
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
             "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
                 " <REPO:BACKUP>/backup.info\n"
@@ -859,13 +852,7 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.4, system-id = 10000000000000090400\n"
-            "backup : id = 2, version = 11, system-id = 10000000000000110000\n"
-            "HINT: this may be a symptom of repository corruption!\n", .remove = true);
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
             "P00 DETAIL: backup.info.copy does not match backup.info\n"
             "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
@@ -923,10 +910,7 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "  No usable backup.info file\n", .remove = true);
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info' for read\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
@@ -1049,13 +1033,10 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "  archiveId: 11-2, total WAL checked: 2, total valid WAL: 0\n", .remove = true);
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
-            "P00  ERROR: [028]: duplicate WAL '000000020000000700000FFE' for '11-2' exists, skipping\n"
+            "P00   INFO: duplicate WAL '000000020000000700000FFE' for '11-2' exists, skipping\n"
             "P00 DETAIL: path '11-2/0000000200000007' does not contain any valid WAL to be processed\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
@@ -1094,7 +1075,7 @@ testRun(void)
 
         // Test verifyProcess directly
         TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
@@ -1103,9 +1084,9 @@ testRun(void)
             "P00 DETAIL: no backups exist in the repo\n"
             "P00 DETAIL: archive path '9.4-1' is empty\n"
             "P00 DETAIL: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
-            "P01  ERROR: [028]: invalid checksum "
+            "P01   INFO: invalid checksum "
                 "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-            "P01  ERROR: [028]: invalid size "
+            "P01   INFO: invalid size "
                 "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000");
 
@@ -1119,15 +1100,17 @@ testRun(void)
 
         // Verify text output, verbose, with verify failures
         TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
+            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
-            "    checksum invalid: 1, size invalid: 1", "verify no text output, verbose, with failures");
+            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
+            "  backup: none found" , "verbose, with failures");
         TEST_RESULT_LOG(
-            "P01  ERROR: [028]: invalid checksum "
+            "P01   INFO: invalid checksum "
                 "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-            "P01  ERROR: [028]: invalid size "
+            "P01   INFO: invalid size "
                 "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1138,7 +1121,7 @@ testRun(void)
 
         // Verify text output, verbose, with verify failures
         TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
@@ -1146,9 +1129,9 @@ testRun(void)
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
             "  backup: none found", "verify text output, verbose, with verify failures");
         TEST_RESULT_LOG(
-            "P01  ERROR: [028]: invalid checksum "
+            "P01   INFO: invalid checksum "
                 "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-            "P01  ERROR: [028]: invalid size "
+            "P01   INFO: invalid size "
                 "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -1190,16 +1173,8 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "  archiveId: 11-2, total WAL checked: 7, total valid WAL: 5\n"
-            "    checksum invalid: 1, size invalid: 1\n", .remove = true);
-        TEST_RESULT_LOG(
-            "P01  ERROR: [028]: invalid checksum "
-                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-            "P01  ERROR: [028]: invalid size "
-                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
+        TEST_RESULT_LOG("");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("none output, with verify failures");
@@ -1209,17 +1184,12 @@ testRun(void)
 
         // Verify none output
         TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 11-2, total WAL checked: 7, total valid WAL: 5\n"
             "    checksum invalid: 1, size invalid: 1", "verify none output");
-
-        TEST_RESULT_LOG(
-            "P01  ERROR: [028]: invalid checksum "
-                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-            "P01  ERROR: [028]: invalid size "
-                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
+        TEST_RESULT_LOG("");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files - various archive/backup errors");
@@ -1362,25 +1332,15 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "  archiveId: 11-2, total WAL checked: 8, total valid WAL: 5\n"
-            "    checksum invalid: 1, size invalid: 1, other: 1\n"
-            "  backup: 20181119-152800F, status: manifest missing, total files checked: 0, total valid files: 0\n"
-            "  backup: 20181119-152810F, status: invalid, total files checked: 0, total valid files: 0\n"
-            "  backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 2\n"
-            "    checksum invalid: 1\n"
-            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 5, total valid files: 2\n"
-            "    missing: 1, checksum invalid: 1, other: 1\n", .remove = true);
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
                 "P00 DETAIL: archive path '9.4-1' is empty\n"
                 "P00 DETAIL: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
-                "P01  ERROR: [028]: invalid checksum "
+                "P01   INFO: invalid checksum "
                     "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-                "P01  ERROR: [028]: invalid size "
+                "P01   INFO: invalid size "
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
-                "P01  ERROR: [039]: invalid result "
+                "P01   INFO: invalid result "
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
                     "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db/"
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
@@ -1392,12 +1352,12 @@ testRun(void)
                 "P00 DETAIL: manifest missing for '20181119-152800F' - backup may have expired\n"
                 "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152810F/backup.manifest.copy'"
                     " for read\n"
-                "P00  ERROR: [028]: backup '20181119-152810F' manifest does not contain any target files to verify\n"
-                "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
-                "P01  ERROR: [028]: file missing '20181119-152900F_20181119-152909D/pg_data/testmissing'\n"
+                "P00   INFO: backup '20181119-152810F' manifest does not contain any target files to verify\n"
+                "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+                "P01   INFO: file missing '20181119-152900F_20181119-152909D/pg_data/testmissing'\n"
                 "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-153000F/backup.manifest' for read\n"
                 "P00   INFO: backup '20181119-153000F' appears to be in progress, skipping\n"
-                "P01  ERROR: [039]: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
+                "P01   INFO: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
                     " unable to open file '" TEST_PATH "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
                     " Permission denied\n"
                 "            [FileOpenError] on retry after 0ms\n"
@@ -1426,7 +1386,7 @@ testRun(void)
 
         // Verify text output, not verbose, with failures
         TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
             "  archiveId: 11-2, total WAL checked: 8, total valid WAL: 5\n"
@@ -1438,20 +1398,20 @@ testRun(void)
             "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 5, total valid files: 2\n"
             "    missing: 1, checksum invalid: 1, other: 1", "verify text output, not verbose, with verify failures");
         TEST_RESULT_LOG(
-                "P01  ERROR: [028]: invalid checksum "
+                "P01   INFO: invalid checksum "
                     "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-                "P01  ERROR: [028]: invalid size "
+                "P01   INFO: invalid size "
                     "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
-                "P01  ERROR: [039]: invalid result "
+                "P01   INFO: invalid result "
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
                     "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db/"
                     "11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
                     " [13] Permission denied\n"
-                "P00  ERROR: [028]: backup '20181119-152810F' manifest does not contain any target files to verify\n"
-                "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
-                "P01  ERROR: [028]: file missing '20181119-152900F_20181119-152909D/pg_data/testmissing'\n"
+                "P00   INFO: backup '20181119-152810F' manifest does not contain any target files to verify\n"
+                "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+                "P01   INFO: file missing '20181119-152900F_20181119-152909D/pg_data/testmissing'\n"
                 "P00   INFO: backup '20181119-153000F' appears to be in progress, skipping\n"
-                "P01  ERROR: [039]: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
+                "P01   INFO: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
                     " unable to open file '" TEST_PATH "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
                     " Permission denied");
     }
@@ -1572,18 +1532,12 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "  backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 0\n"
-            "    checksum invalid: 1\n"
-            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1, total valid files: 0\n"
-            "    checksum invalid: 1\n", .remove = true);
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         // The error for the referenced file is logged twice because it is checked again by the second backup since the first backup
         // verification had not yet completed before the second backup verification began
         TEST_RESULT_LOG(
-            "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
-            "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
             "              backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 0\n"
@@ -1707,17 +1661,11 @@ testRun(void)
         dup2(stdoutSave, STDOUT_FILENO);
 
         // Check output of verify command stored in file
-        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
-            "stanza: db\n"
-            "status: error\n"
-            "  backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 0\n"
-            "    missing: 1, checksum invalid: 1, size invalid: 1\n"
-            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1, total valid files: 0\n"
-            "    checksum invalid: 1\n", .remove = true);
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
-            "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
-            "P01  ERROR: [028]: invalid size '20181119-152900F/pg_data/base/1/555_init'\n"
-            "P01  ERROR: [028]: file missing '20181119-152900F/pg_data/base/1/555_init.1'\n"
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+            "P01   INFO: invalid size '20181119-152900F/pg_data/base/1/555_init'\n"
+            "P01   INFO: file missing '20181119-152900F/pg_data/base/1/555_init.1'\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
             "              backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 0\n"
@@ -1855,8 +1803,8 @@ testRun(void)
         // The error for the referenced file is logged twice because it is checked again by the second backup since the first backup
         // verification had not yet completed before the second backup verification began
         TEST_RESULT_LOG(
-            "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
-            "P01  ERROR: [028]: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
             "              archiveId: none found\n"
@@ -1915,9 +1863,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // Verify text output with no verify errors
-        TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), "",
-            "verify none output, not verbose, with no failures");
+        TEST_RESULT_STR_Z(verifyProcess(cfgOptionBool(cfgOptVerbose)), "", "verify none output, not verbose, with no failures");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
@@ -1928,7 +1874,12 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
         TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), "",
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: ok\n"
+            "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: none found",
             "verify none output, verbose, with no failures");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
@@ -1983,10 +1934,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // Verify text output with no verify errors
-        TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
-            "stanza: db\n"
-            "status: ok", "verify text output, not verbose, with no failures");
+        TEST_RESULT_STR_Z(verifyProcess(cfgOptionBool(cfgOptVerbose)), "", "verify text output, not verbose, with no failures");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
@@ -2042,7 +1990,7 @@ testRun(void)
 
         // Verify text output with no verify errors
         TEST_RESULT_STR_Z(
-            verifyProcess(cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: ok\n"
             "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"

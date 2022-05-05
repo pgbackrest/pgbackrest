@@ -459,8 +459,7 @@ verifyManifestFile(
             // If the PG data is not found in the backup.info history, then error and reset the result
             if (!found)
             {
-                LOG_ERROR_FMT(
-                    errorTypeCode(&FileInvalidError),
+                LOG_INFO_FMT(
                     "'%s' may not be recoverable - PG data (id %u, version %s, system-id %" PRIu64 ") is not in the backup.info"
                         " history, skipping",
                     strZ(backupResult->backupLabel), manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId);
@@ -568,9 +567,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         // PostgreSQL will ignore it
         if (archiveIdResult->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
         {
-            LOG_ERROR_FMT(
-                errorTypeCode(&FileInvalidError), "invalid WAL '%s' for '%s' exists, skipping", strZ(walSegment),
-                strZ(archiveIdResult->archiveId));
+            LOG_INFO_FMT("invalid WAL '%s' for '%s' exists, skipping", strZ(walSegment), strZ(archiveIdResult->archiveId));
 
             (*jobErrorTotal)++;
 
@@ -584,9 +581,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         {
             if (strEq(walSegment, strSubN(strLstGet(walFileList, walFileIdx + 1), 0, WAL_SEGMENT_NAME_SIZE)))
             {
-                LOG_ERROR_FMT(
-                    errorTypeCode(&FileInvalidError), "duplicate WAL '%s' for '%s' exists, skipping", strZ(walSegment),
-                    strZ(archiveIdResult->archiveId));
+                LOG_INFO_FMT("duplicate WAL '%s' for '%s' exists, skipping", strZ(walSegment), strZ(archiveIdResult->archiveId));
 
                 (*jobErrorTotal)++;
 
@@ -1051,9 +1046,7 @@ verifyBackup(VerifyJobData *const jobData)
             {
                 // Nothing to process so report an error, free the manifest, set the status, and remove the backup from processing
                 // list
-                LOG_ERROR_FMT(
-                    errorTypeCode(&FileInvalidError), "backup '%s' manifest does not contain any target files to verify",
-                    strZ(backupResult->backupLabel));
+                LOG_INFO_FMT("backup '%s' manifest does not contain any target files to verify", strZ(backupResult->backupLabel));
 
                 jobData->jobErrorTotal++;
 
@@ -1163,8 +1156,7 @@ verifyLogInvalidResult(const String *fileType, VerifyResult verifyResult, unsign
         FUNCTION_TEST_RETURN(UINT, 0);
     }
 
-    LOG_ERROR_PID_FMT(
-        processId, errorTypeCode(&FileInvalidError), "%s '%s'", verifyErrorMsg(verifyResult), strZ(filePathName));
+    LOG_INFO_PID_FMT(processId, "%s '%s'", verifyErrorMsg(verifyResult), strZ(filePathName));
     FUNCTION_TEST_RETURN(UINT, 1);
 }
 
@@ -1230,9 +1222,7 @@ verifySetBackupCheckArchive(
 
             if (!strEmpty(missingFromHistory))
             {
-                LOG_ERROR_FMT(
-                    errorTypeCode(&ArchiveMismatchError), "archiveIds '%s' are not in the archive.info history list",
-                    strZ(missingFromHistory));
+                LOG_INFO_FMT("archiveIds '%s' are not in the archive.info history list", strZ(missingFromHistory));
 
                 (*jobErrorTotal)++;
             }
@@ -1662,8 +1652,8 @@ verifyProcess(const bool verboseText)
                             else
                             {
                                 // Log a protocol error and increment the jobErrorTotal
-                                LOG_ERROR_PID_FMT(
-                                    processId, errorTypeCode(&ProtocolError),
+                                LOG_INFO_PID_FMT(
+                                    processId,
                                     "%s %s: [%d] %s", verifyErrorMsg(verifyOtherError), strZ(filePathName),
                                     protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
 
