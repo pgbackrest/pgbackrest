@@ -1510,7 +1510,7 @@ verifyProcess(const bool verboseText)
             }
             CATCH_ANY()
             {
-                strCatFmt(resultStr, "%s%s", LF_Z, errorMessage());
+                strCatFmt(resultStr, "%s%s", strZ(LF_STR), errorMessage());
                 errorTotal++;
             }
             TRY_END();
