@@ -112,7 +112,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
             if (strCmp(result, backupLabelLatest) <= 0)
             {
                 THROW_FMT(
-                    FormatError,
+                    ClockError,
                     "new backup label '%s' is not later than latest backup label '%s'\n"
                     "HINT: has the timezone changed?\n"
                     "HINT: is there clock skew?",

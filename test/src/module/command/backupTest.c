@@ -1458,7 +1458,7 @@ testRun(void)
                 strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 1)))));
 
         TEST_ERROR(
-            backupLabelCreate(backupTypeFull, NULL, timestamp), FormatError,
+            backupLabelCreate(backupTypeFull, NULL, timestamp), ClockError,
             "new backup label '20191203-193413F' is not later than latest backup label '20191203-193413F'\n"
             "HINT: has the timezone changed?\n"
             "HINT: is there clock skew?");
@@ -1472,7 +1472,7 @@ testRun(void)
                 strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 3600)))));
 
         TEST_ERROR(
-            backupLabelCreate(backupTypeFull, NULL, timestamp), FormatError,
+            backupLabelCreate(backupTypeFull, NULL, timestamp), ClockError,
             "new backup label '20191203-193413F' is not later than latest backup label '20191203-203412F'\n"
             "HINT: has the timezone changed?\n"
             "HINT: is there clock skew?");
