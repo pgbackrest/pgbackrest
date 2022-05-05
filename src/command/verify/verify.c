@@ -1718,7 +1718,8 @@ verifyProcess(const bool verboseText)
         // If text output or errors then output stanza/status
         if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT || errorTotal != 0)
         {
-            strCat(outputStr, strNewFmt("stanza: %s%sstatus: %s", strZ(cfgOptionStr(cfgOptStanza)), LF_Z,
+            strCat(
+                outputStr, strNewFmt("stanza: %s\nstatus: %s", strZ(cfgOptionStr(cfgOptStanza)),
                 errorTotal > 0 ? VERIFY_STATUS_ERROR : VERIFY_STATUS_OK));
         }
 
@@ -1751,7 +1752,7 @@ cmdVerify(void)
         if (strSize(result) > 0)
             LOG_INFO_FMT("%s", strZ(result));
 
-        // Output resutls to console if any
+        // Output results to console if any
         ioFdWriteOneStr(STDOUT_FILENO, result);
 
         if (strSize(result) > 0)
