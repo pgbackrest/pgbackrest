@@ -239,7 +239,6 @@ By convention all string constant identifiers are appended with _STR.
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
-STRING_DECLARE(COLON_STR);
 STRING_DECLARE(CR_STR);
 STRING_DECLARE(CRLF_STR);
 STRING_DECLARE(DOT_STR);
