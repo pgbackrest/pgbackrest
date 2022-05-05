@@ -62,8 +62,11 @@
                     </release-item>
 
                     <release-item>
-                        <github-issue id="1490"/>
-                        <github-pull-request id="1621"/>
+                        <commit subject="Remove dependency on pg_database.datlastsysoid.">
+                            <github-issue id="1490"/>
+                            <github-pull-request id="1621"/>
+                        </commit>
+                        <commit subject="Remove extraneous linefeed when writing a lock file."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="reid.thompson"/>
