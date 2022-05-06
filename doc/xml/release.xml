@@ -73,6 +73,21 @@
                     </release-item>
 
                     <release-item>
+                        <commit subject="Add verify output and verbose options.">
+                            <github-pull-request id="1607"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Verify command to validate the contents of a repository.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Remove dependency on pg_database.datlastsysoid.">
                             <github-pull-request id="1735"/>
                         </commit>
