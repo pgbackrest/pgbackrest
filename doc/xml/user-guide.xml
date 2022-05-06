@@ -1564,7 +1564,7 @@
                 </execute>
             </execute-list>
 
-            <p>The <br-option>repo-bundle-size</br-option> and <br-option>repo-bundle-limit</br-option> options can be used to for tuning, though the defaults should be optimal in most cases.</p>
+            <p>The <br-option>repo-bundle-size</br-option> and <br-option>repo-bundle-limit</br-option> options can be used for tuning, though the defaults should be optimal in most cases.</p>
 
             <p>While file bundling is generally more efficient, the downside is that it is more difficult to manually retrieve files from the repository. It may not be ideal for deduplicated storage since each full backup will arrange files in the bundles differently. Lastly, file bundles cannot be resumed, so be careful not to set <br-option>repo-bundle-size</br-option> too high.</p>
         </section>
