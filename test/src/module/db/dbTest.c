@@ -251,7 +251,10 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(true, true, false), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
 
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg1: [DbQueryError] unable to select some rows from pg_settings\n"
@@ -744,7 +747,10 @@ testRun(void)
             {.function = NULL}
         });
 
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(true, true, false), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
                 " error");
@@ -764,7 +770,10 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(true, true, false), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby cluster required but not found");
@@ -845,7 +854,10 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(false, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(false, true, false), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two standbys and primary not required");
