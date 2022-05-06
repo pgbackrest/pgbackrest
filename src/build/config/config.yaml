@@ -1754,7 +1754,6 @@ option:
     depend: repo-azure-account
 
   repo-bundle:
-    internal: true
     section: global
     group: repo
     type: boolean
@@ -1765,7 +1764,6 @@ option:
       main: {}
 
   repo-bundle-size:
-    internal: true
     section: global
     group: repo
     type: size
