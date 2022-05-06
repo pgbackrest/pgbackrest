@@ -46,6 +46,33 @@
 
                 <release-feature-list>
                     <release-item>
+                        <commit subject="Remove redundant restoreFile() test and improve coverage."/>
+                        <commit subject="Add limit parameter to ioCopyP()."/>
+                        <commit subject="Optimize restore command for file bundling.">
+                            <github-issue id="1149"/>
+                            <github-pull-request id="1683"/>
+                        </commit>
+                        <commit subject="Add bundle logging to backup command."/>
+                        <commit subject="Rename bundle-* options to repo-bundle-*.">
+                            <github-pull-request id="1694"/>
+                        </commit>
+                        <commit subject="Disable repo-hardlink option when repo-bundle option is enabled."/>
+                        <commit subject="Allow files that become zero-length after the backup manifest is built."/>
+                        <commit subject="Backup file bundling documentation.">
+                            <github-pull-request id="1740"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="chris.bandy"/>
+                        </release-item-contributor-list>
+
+                        <p>Backup file bundling for improved small file support.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Remove dependency on pg_database.datlastsysoid.">
                             <github-pull-request id="1735"/>
                         </commit>
@@ -224,30 +251,6 @@
                 </release-improvement-list>
 
                 <release-development-list>
-                    <release-item>
-                        <commit subject="Remove redundant restoreFile() test and improve coverage."/>
-                        <commit subject="Add limit parameter to ioCopyP()."/>
-                        <commit subject="Optimize restore command for file bundling.">
-                            <github-issue id="1149"/>
-                            <github-pull-request id="1683"/>
-                        </commit>
-                        <commit subject="Add bundle logging to backup command."/>
-                        <commit subject="Rename bundle-* options to repo-bundle-*.">
-                            <github-pull-request id="1694"/>
-                        </commit>
-                        <commit subject="Disable repo-hardlink option when repo-bundle option is enabled."/>
-                        <commit subject="Allow files that become zero-length after the backup manifest is built."/>
-
-                        <release-item-contributor-list>
-                            <release-item-contributor id="david.steele"/>
-                            <release-item-reviewer id="reid.thompson"/>
-                            <release-item-reviewer id="stefan.fercot"/>
-                            <release-item-reviewer id="chris.bandy"/>
-                        </release-item-contributor-list>
-
-                        <p>Improve small file support.</p>
-                    </release-item>
-
                     <release-item>
                         <commit subject="Add test for protocol greeting when a field is missing."/>
                         <commit subject="Return stats as a JSON string rather than a KeyValue object."/>
