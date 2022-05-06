@@ -2411,7 +2411,7 @@
 
             <!-- OPERATION - VERIFY COMMAND -->
             <command id="verify" name="Verify">
-                <summary>Verify the contents of the repository.</summary>
+                <summary>Verify contents of the repository.</summary>
 
                 <text>
                     <p>Verify determines if the backups and archives in the repository are valid.</p>
