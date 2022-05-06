@@ -3,12 +3,14 @@
 <doc title="{[project]}" subtitle="Frequently Asked Questions" toc="y">
     <description>{[project]} Frequently Asked Questions (FAQ).</description>
 
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
         <p>Frequently Asked Questions are intended to provide details for specific questions that may or may not be covered in the User Guide, Configuration, or Command reference. If you are unable to find details for your specific issue here, remember that the <backrest/> <link url="https://github.com/pgbackrest/pgbackrest/issues">Issues List in GitHub</link> is also a valuable resource.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="timeout">
         <title>What if I get the <quote>could not find WAL segment</quote> error?</title>
 
@@ -29,12 +31,14 @@
         </list>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="manual-expire">
         <title>How do I manually purge a backup set?</title>
 
         <p>A full backup set can be expired using the <br-setting>{[dash]}-set</br-setting> option as explained in <link url="https://pgbackrest.org/command.html#command-expire">Command Reference: Expire</link>.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="optimize-config">
         <title>How can I configure options independently for each command?</title>
 
@@ -64,18 +68,21 @@ process-max=1
         </code-block>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="s3-bucket">
         <title>Can I use dots (periods) in my S3 bucket name?</title>
 
         <p><proper>RFC-2818</proper> does not allow wildcards to match on a dot (.) so s3 bucket names must not contain dots. If there are dots in the S3 bucket name then an error such as <quote>unable to find hostname 'my.backup.bucket.s3.amazonaws.com' in certificate common name or subject alternative names</quote> will occur.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="old-package">
         <title>Where can I find packages for older versions of <backrest/>?</title>
 
         <p>The <link url="https://apt.postgresql.org">apt.postgresql.org</link> repository maintains an <link url="https://apt-archive.postgresql.org">archive of older versions</link>. Debian also maintains <link url="https://snapshot.debian.org/binary/pgbackrest/">snapshots</link> of all test builds.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="backup-standby">
         <title>Why does a backup attempt fail when <br-option>backup-standby=y</br-option> and the standby database is down?</title>
 
@@ -84,6 +91,7 @@ process-max=1
         <p>If you really need a backup, the solution is to have more standbys or remove <br-option>backup-standby</br-option>. This can be overridden on the command line with <br-option>--no-backup-standby</br-option>, so there is no need to reconfigure for a one-off backup.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="standby-repo">
         <title>Should I setup my repository on a standby host?</title>
 
@@ -92,6 +100,7 @@ process-max=1
         <p>See the <link url="user-guide.html#repo-host">Dedicated Repository Host</link> section of the <proper>User Guide</proper> for more information.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="time-based-pitr">
         <title>Time-based Point-in-Time Recovery does not appear to work, why?</title>
 
@@ -102,6 +111,7 @@ process-max=1
         <p>See the <link url="user-guide.html#pitr">Point-in-Time Recovery</link> section of the <proper>User Guide</proper> for more information.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <!--
         At least these issues have been asking about this:
             https://github.com/pgbackrest/pgbackrest/issues/1485
@@ -113,30 +123,33 @@ process-max=1
         <p>The suffix is the SHA1 checksum used to verify file integrity. There is no way to omit it.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 
         <p>It is often desirable to restore the latest backup from a production server to a development server. In principal, the instructions are the same as in <link url="https://pgbackrest.org/user-guide.html#replication/hot-standby">setting up a hot standby</link> with a few exceptions.</p>
 
         <p>NEED TO ELABORATE HERE:  Need an example of the restore command - what settings are different? Would they be {[dash]}-target, {[dash]}-target-action=promote, {[dash]}-type=immediate on the command-line? What about in the POSTGRES (e.g. hot_standby = on / wal_level = hot_standby - these would be different, no?) and PGBACKREST (e.g. would recovery-option=standby_mode=on still be set?) config files</p>
-    </section>
+    </section> -->
 
-    <section id="minio">
+    <!-- ======================================================================================================================= -->
+    <!-- <section id="minio">
         <title>Setting up Minio for pgBackRest</title>
 
         <p>Setting up Minio for pgBackRest https://github.com/pgbackrest/pgbackrest/issues/645/</p>
-    </section>
+    </section> -->
 
-    <section id="patroni">
+    <!-- ======================================================================================================================= -->
+    <!-- <section id="patroni">
         <title>Patroni</title>
 
         <p>Patroni: https://github.com/pgbackrest/pgbackrest/issues/702</p>
-    </section>
+    </section> -->
 
-    <section id="SOMETHING">
+    <!-- ======================================================================================================================= -->
+    <!-- <section id="SOMETHING">
         <title>SOMETHING</title>
 
         <p>Issue 610 - has come up a couple times, so distill it and point to this as a resource  https://github.com/pgbackrest/pgbackrest/issues/610</p>
-    </section>
--->
+    </section> -->
 </doc>
