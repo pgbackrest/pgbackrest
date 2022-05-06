@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]} Command &amp; Configuration Reference">
-    <!-- CONFIG -->
     <config title="{[project]} Configuration Reference">
         <description>The {[project]} Configuration Reference details all configuration options.</description>
 
@@ -10,7 +9,6 @@
         </text>
 
         <config-section-list title="Settings">
-            <!-- CONFIG - LOG -->
             <config-section id="log" name="Log">
                 <text>
                     <p>The <setting>log</setting> section defines logging-related settings.</p>
@@ -18,7 +16,6 @@
                     <admonition type="caution">Trace-level logging may expose secrets such as keys and passwords. Use with caution!</admonition>
                 </text>
 
-                <!-- CONFIG - LOG SECTION - LOG-LEVEL-FILE KEY -->
                 <config-key-list>
                     <config-key id="log-level-file" name="File Log Level">
                         <summary>Level for file logging.</summary>
@@ -40,7 +37,6 @@
                         <example>debug</example>
                     </config-key>
 
-                    <!-- CONFIG - LOG SECTION - LOG-LEVEL-CONSOLE KEY -->
                     <config-key id="log-level-console" name="Console Log Level">
                         <summary>Level for console logging.</summary>
 
@@ -61,7 +57,6 @@
                         <example>error</example>
                     </config-key>
 
-                    <!-- CONFIG - LOG SECTION - LOG-LEVEL-STDERR KEY -->
                     <config-key id="log-level-stderr" name="Std Error Log Level">
                         <summary>Level for stderr logging.</summary>
 
@@ -84,7 +79,6 @@
                         <example>error</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - LOG-PATH KEY -->
                     <config-key id="log-path" name="Log Path">
                         <summary>Path where log files are stored.</summary>
 
@@ -95,7 +89,6 @@
                         <example>/backup/db/log</example>
                     </config-key>
 
-                    <!-- CONFIG - LOG SECTION - LOG-TIMESTAMP KEY -->
                     <config-key id="log-timestamp" name="Log Timestamp">
                         <summary>Enable timestamp in logging.</summary>
 
@@ -106,7 +99,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - LOG SECTION - LOG-SUBPROCESS KEY -->
                     <config-key id="log-subprocess" name="Log Subprocesses">
                         <summary>Enable logging in subprocesses.</summary>
 
@@ -119,7 +111,6 @@
                 </config-key-list>
             </config-section>
 
-            <!-- CONFIG - GENERAL -->
             <config-section id="general" name="General">
                 <text>
                     <p>The <setting>general</setting> section defines options that are common for many commands.</p>
@@ -141,7 +132,6 @@
                         <example>2MiB</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - CMD KEY -->
                     <config-key id="cmd" name="{[project]} Command">
                         <summary><backrest/> command.</summary>
 
@@ -154,7 +144,6 @@
                         <example>/var/lib/pgsql/bin/pgbackrest_wrapper.sh</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - CMD-SSH KEY -->
                     <config-key id="cmd-ssh" name="SSH Client Command">
                         <summary>SSH client command.</summary>
 
@@ -165,7 +154,6 @@
                         <example>/usr/bin/ssh</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - COMPRESS -->
                     <config-key id="compress" name="Compress">
                         <summary>Use file compression.</summary>
 
@@ -178,7 +166,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - COMPRESS-TYPE -->
                     <config-key id="compress-type" name="Compress Type">
                         <summary>File compression type.</summary>
 
@@ -197,7 +184,6 @@
                         <example>none</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - COMPRESS-LEVEL KEY -->
                     <config-key id="compress-level" name="Compress Level">
                         <summary>File compression level.</summary>
 
@@ -218,7 +204,6 @@
                         <example>9</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - COMPRESS-LEVEL-NETWORK KEY -->
                     <config-key id="compress-level-network" name="Network Compress Level">
                         <summary>Network compression level.</summary>
 
@@ -230,7 +215,6 @@
                         <example>1</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - DB-TIMEOUT KEY -->
                     <config-key id="db-timeout" name="Database Timeout">
                         <summary>Database query timeout.</summary>
 
@@ -243,7 +227,6 @@
                         <example>600</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - DELTA OPTION -->
                     <config-key id="delta" name="Delta">
                         <summary>Restore or backup using checksums.</summary>
 
@@ -256,7 +239,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - IO-TIMEOUT KEY -->
                     <config-key id="io-timeout" name="I/O Timeout">
                         <summary>I/O timeout.</summary>
 
@@ -269,7 +251,6 @@
                         <example>120</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="job-retry" name="Job Retry Count">
                         <summary>Retry count for local jobs.</summary>
 
@@ -280,7 +261,6 @@
                         <example>5</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="job-retry-interval" name="Job Retry Interval">
                         <summary>Retry interval after first retry.</summary>
 
@@ -291,7 +271,6 @@
                         <example>30</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - LOCK-PATH KEY -->
                     <config-key id="lock-path" name="Lock Path">
                         <summary>Path where lock files are stored.</summary>
 
@@ -302,7 +281,6 @@
                         <example>/backup/db/lock</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - NEUTRAL-UMASK -->
                     <config-key id="neutral-umask" name="Neutral Umask">
                         <summary>Use a neutral umask.</summary>
 
@@ -315,7 +293,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - LOG-PATH KEY -->
                     <config-key id="spool-path" name="Spool Path">
                         <summary>Path where transient data is stored.</summary>
 
@@ -334,7 +311,6 @@
                         <example>/backup/db/spool</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - PROCESS-MAX -->
                     <config-key id="process-max" name="Process Maximum">
                         <summary>Max processes to use for compress/transfer.</summary>
 
@@ -345,7 +321,6 @@
                         <example>4</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - PROTOCOL-TIMEOUT KEY -->
                     <config-key id="protocol-timeout" name="Protocol Timeout">
                         <summary>Protocol timeout.</summary>
 
@@ -358,7 +333,6 @@
                         <example>630</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="sck-block" name="Socket Blocking">
                         <summary>Socket blocking enable.</summary>
 
@@ -369,7 +343,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - SCK-KEEP-ALIVE KEY -->
                     <config-key id="sck-keep-alive" name="Keep Alive">
                         <summary>Keep-alive enable.</summary>
 
@@ -380,8 +353,7 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - TCP-KEEP-ALIVE-COUNT KEY -->
-                    <config-key id="tcp-keep-alive-count" name="Keep Alive Count">
+                   <config-key id="tcp-keep-alive-count" name="Keep Alive Count">
                         <summary>Keep-alive count.</summary>
 
                         <text>
@@ -393,7 +365,6 @@
                         <example>3</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - TCP-KEEP-ALIVE-IDLE KEY -->
                     <config-key id="tcp-keep-alive-idle" name="Keep Alive Idle">
                         <summary>Keep-alive idle time.</summary>
 
@@ -406,7 +377,6 @@
                         <example>60</example>
                     </config-key>
 
-                    <!-- CONFIG - GENERAL SECTION - TCP-KEEP-ALIVE-INTERVAL KEY -->
                     <config-key id="tcp-keep-alive-interval" name="Keep Alive Interval">
                         <summary>Keep-alive interval time.</summary>
 
@@ -421,7 +391,6 @@
                 </config-key-list>
             </config-section>
 
-            <!-- CONFIG - REPO -->
             <config-section id="repository" name="Repository">
                 <text>
                     <p>The <setting>repository</setting> section defines options used to configure the repository.</p>
@@ -432,7 +401,6 @@
                 </text>
 
                 <config-key-list>
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-account" name="Azure Repository Account">
                         <summary>Azure repository account.</summary>
 
@@ -443,7 +411,6 @@
                         <example>pg-backup</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-container" name="Azure Repository Container">
                         <summary>Azure repository container.</summary>
 
@@ -456,7 +423,6 @@
                         <example>pg-backup</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-endpoint" name="Azure Repository Endpoint">
                         <summary>Azure repository endpoint.</summary>
 
@@ -469,7 +435,6 @@
                         <example>blob.core.usgovcloudapi.net</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-key" name="Azure Repository Key">
                         <summary>Azure repository key.</summary>
 
@@ -480,7 +445,6 @@
                         <example>T+9+aov82qNhrcXSNGZCzm9mjd4d75/oxxOr6r1JVpgTLA==</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-key-type" name="Azure Repository Key Type">
                         <summary>Azure repository key type.</summary>
 
@@ -496,7 +460,6 @@
                         <example>sas</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-azure-uri-style" name="Azure Repository URI Style">
                         <summary>Azure URI Style.</summary>
 
@@ -513,7 +476,6 @@
                     </config-key>
 
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-bundle" name="Repository Bundles">
                         <summary>Bundle files in repository.</summary>
 
@@ -524,7 +486,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-bundle-size" name="Repository Bundle Size">
                         <summary>Target size for file bundles.</summary>
 
@@ -537,7 +498,6 @@
                         <example>10MiB</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-bundle-limit" name="Repository Bundle Limit">
                         <summary>Limit for file bundles.</summary>
 
@@ -550,7 +510,6 @@
                         <example>10MiB</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-gcs-bucket" name="GCS Repository Bucket">
                         <summary>GCS repository bucket.</summary>
 
@@ -563,7 +522,6 @@
                         <example>/pg-backup</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-gcs-endpoint" name="GCS Repository Endpoint">
                         <summary>GCS repository endpoint.</summary>
 
@@ -574,7 +532,6 @@
                         <example>localhost</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-gcs-key" name="GCS Repository Key">
                         <summary>GCS repository key.</summary>
 
@@ -585,7 +542,6 @@
                         <example>/etc/pgbackrest/gcs-key.json</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-gcs-key-type" name="GCS Repository Key Type">
                         <summary>GCS repository key type.</summary>
 
@@ -602,7 +558,6 @@
                         <example>auto</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-host-type" name="Repository Host Protocol Type">
                         <summary>Repository host protocol type.</summary>
 
@@ -618,7 +573,6 @@
                         <example>tls</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-HOST KEY -->
                     <config-key id="repo-host" name="Repository Host">
                         <summary>Repository host when operating remotely via SSH.</summary>
 
@@ -631,7 +585,6 @@
                         <example>repo1.domain.com</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-host-ca-file" name="Repository Host Certificate Authority File">
                         <summary>Repository host certificate authority file.</summary>
 
@@ -642,7 +595,6 @@
                         <example>/etc/pki/tls/certs/ca-bundle.crt</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-host-ca-path" name="Repository Host Certificate Authority Path">
                         <summary>Repository host certificate authority path.</summary>
 
@@ -653,7 +605,6 @@
                         <example>/etc/pki/tls/certs</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-host-cert-file" name="Repository Host Certificate File">
                         <summary>Repository host certificate file.</summary>
 
@@ -664,7 +615,6 @@
                         <example>/path/to/client.crt</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-host-key-file" name="Repository Host Key File">
                         <summary>Repository host key file.</summary>
 
@@ -675,7 +625,6 @@
                         <example>/path/to/client.key</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-HOST-CMD KEY -->
                     <config-key id="repo-host-cmd" name="Repository Host Command">
                         <summary>Repository host <backrest/> command.</summary>
 
@@ -687,7 +636,6 @@
                         <example>/usr/lib/backrest/bin/pgbackrest</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-HOST-CONFIG KEY -->
                     <config-key id="repo-host-config" name="Repository Host Configuration">
                         <summary><backrest/> repository host configuration file.</summary>
 
@@ -698,7 +646,6 @@
                         <example>/conf/pgbackrest/pgbackrest.conf</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-HOST-CONFIG-INCLUDE-PATH KEY -->
                     <config-key id="repo-host-config-include-path" name="Repository Host Configuration Include Path">
                         <summary><backrest/> repository host configuration include path.</summary>
 
@@ -709,7 +656,6 @@
                         <example>/conf/pgbackrest/conf.d</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-HOST-CONFIG-PATH KEY -->
                     <config-key id="repo-host-config-path" name="Repository Host Configuration Path">
                         <summary><backrest/> repository host configuration path.</summary>
 
@@ -720,7 +666,6 @@
                         <example>/conf/pgbackrest</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-HOST-USER KEY -->
                     <config-key id="repo-host-user" name="Repository Host User">
                         <summary>Repository host user when <setting>repo-host</setting> is set.</summary>
 
@@ -731,7 +676,6 @@
                         <example>repo-user</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-HOST-PORT KEY -->
                     <config-key id="repo-host-port" name="Repository Host Port">
                         <summary>Repository host port when <setting>repo-host</setting> is set.</summary>
 
@@ -742,7 +686,6 @@
                         <example>25</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-HARDLINK -->
                     <config-key id="repo-hardlink" name="Repository Hardlink">
                         <summary>Hardlink files between backups in the repository.</summary>
 
@@ -753,7 +696,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-local" name="Repository Locality">
                         <summary>Repository is local.</summary>
 
@@ -764,7 +706,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-PATH KEY -->
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Path where backups and archive are stored.</summary>
 
@@ -777,7 +718,6 @@
                         <example>/backup/db/backrest</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - REPO-RETENTION-FULL KEY -->
                     <config-key id="repo-retention-full" name="Full Retention">
                         <summary>Full backup retention count/time.</summary>
 
@@ -788,7 +728,6 @@
                         <example>2</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - REPO-RETENTION-FULL-TYPE KEY -->
                     <config-key id="repo-retention-full-type" name="Full Retention Type">
                         <summary>Retention type for full backups.</summary>
 
@@ -799,7 +738,6 @@
                         <example>time</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - REPO-DIFFERENTIAL-RETENTION KEY -->
                     <config-key id="repo-retention-diff" name="Differential Retention">
                         <summary>Number of differential backups to retain.</summary>
 
@@ -810,7 +748,6 @@
                         <example>3</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - REPO-ARCHIVE-RETENTION-TYPE KEY -->
                     <config-key id="repo-retention-archive-type" name="Archive Retention Type">
                         <summary>Backup type for WAL retention.</summary>
 
@@ -821,7 +758,6 @@
                         <example>diff</example>
                     </config-key>
 
-                    <!-- CONFIG - RETENTION SECTION - REPO-ARCHIVE-RETENTION KEY -->
                     <config-key id="repo-retention-archive" name="Archive Retention">
                         <summary>Number of backups worth of continuous WAL to retain.</summary>
 
@@ -836,7 +772,6 @@
                         <example>2</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-retention-history" name="Backup History Retention">
                         <summary>Days of backup history manifests to retain.</summary>
 
@@ -851,7 +786,6 @@
                         <example>365</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-KEY KEY -->
                     <config-key id="repo-s3-key" name="S3 Repository Access Key">
                         <summary>S3 repository access key.</summary>
 
@@ -862,7 +796,6 @@
                         <example>AKIAIOSFODNN7EXAMPLE</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-KEY-SECRET KEY -->
                     <config-key id="repo-s3-key-secret" name="S3 Repository Secret Access Key">
                         <summary>S3 repository secret access key.</summary>
 
@@ -873,7 +806,6 @@
                         <example>wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-s3-key-type" name="S3 Repository Key Type">
                         <summary>S3 repository key type.</summary>
 
@@ -890,7 +822,6 @@
                         <example>auto</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-TOKEN KEY -->
                     <config-key id="repo-s3-token" name="S3 Repository Security Token">
                         <summary>S3 repository security token.</summary>
 
@@ -901,7 +832,6 @@
                         <example>AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22 ...</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-KMS-KEY-ID KEY -->
                     <config-key id="repo-s3-kms-key-id" name="S3 Repository KMS Key ID">
                         <summary>S3 repository KMS key.</summary>
 
@@ -912,7 +842,6 @@
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-BUCKET KEY -->
                     <config-key id="repo-s3-bucket" name="S3 Repository Bucket">
                         <summary>S3 repository bucket.</summary>
 
@@ -925,7 +854,6 @@
                         <example>pg-backup</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-ENDPOINT KEY -->
                     <config-key id="repo-s3-endpoint" name="S3 Repository Endpoint">
                         <summary>S3 repository endpoint.</summary>
 
@@ -938,7 +866,6 @@
                         <example>s3.amazonaws.com</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-s3-role" name="S3 Repository Role">
                         <summary>S3 repository role.</summary>
 
@@ -949,7 +876,6 @@
                         <example>authrole</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-REGION KEY -->
                     <config-key id="repo-s3-region" name="S3 Repository Region">
                         <summary>S3 repository region.</summary>
 
@@ -960,7 +886,6 @@
                         <example>us-east-1</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-S3-URI-STYLE KEY -->
                     <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
                         <summary>S3 URI Style.</summary>
 
@@ -976,7 +901,6 @@
                         <example>path</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-storage-ca-file" name="Repository Storage CA File">
                         <summary>Repository storage CA file.</summary>
 
@@ -987,7 +911,6 @@
                         <example>/etc/pki/tls/certs/ca-bundle.crt</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-storage-ca-path" name="Repository Storage TLS CA Path">
                         <summary>Repository storage CA path.</summary>
 
@@ -998,7 +921,6 @@
                         <example>/etc/pki/tls/certs</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-storage-host" name="Repository Storage Host">
                         <summary>Repository storage host.</summary>
 
@@ -1009,7 +931,6 @@
                         <example>127.0.0.1</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-storage-port" name="Repository Storage Port">
                         <summary>Repository storage port.</summary>
 
@@ -1020,7 +941,6 @@
                         <example>9000</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">
                         <summary>Repository storage certificate verify.</summary>
 
@@ -1031,7 +951,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-TYPE KEY -->
                     <config-key id="repo-type" name="Repository Type">
                         <summary>Type of storage used for the repository.</summary>
 
@@ -1052,7 +971,6 @@
                         <example>cifs</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-CIPHER-TYPE KEY -->
                     <config-key id="repo-cipher-type" name="Repository Cipher Type">
                         <summary>Cipher used to encrypt the repository.</summary>
 
@@ -1071,7 +989,6 @@
                         <example>aes-256-cbc</example>
                     </config-key>
 
-                    <!-- CONFIG - REPO SECTION - REPO-CIPHER-PASS KEY -->
                     <config-key id="repo-cipher-pass" name="Repository Cipher Passphrase">
                         <summary>Repository cipher passphrase.</summary>
 
@@ -1084,14 +1001,12 @@
                 </config-key-list>
             </config-section>
 
-            <!-- CONFIG - BACKUP -->
             <config-section id="backup" name="Backup">
                 <text>
                     <p>The <setting>backup</setting> section defines settings related to backup.</p>
                 </text>
 
                 <config-key-list>
-                    <!-- CONFIG - BACKUP SECTION - ARCHIVE-CHECK -->
                     <config-key id="archive-check" name="Check Archive">
                         <summary>Check that WAL segments are in the archive before backup completes.</summary>
 
@@ -1104,7 +1019,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - ARCHIVE-COPY -->
                     <config-key id="archive-copy" name="Copy Archive">
                         <summary>Copy WAL segments needed for consistency to the backup.</summary>
 
@@ -1121,7 +1035,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="archive-mode-check" name="Check Archive Mode">
                         <summary>Check the <postgres/> <setting>archive_mode</setting> setting.</summary>
 
@@ -1136,7 +1049,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - BACKUP-STANDBY KEY -->
                     <config-key id="backup-standby" name="Backup from Standby">
                         <summary>Backup from the standby cluster.</summary>
 
@@ -1147,7 +1059,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - CHECKSUM-PAGE KEY -->
                     <config-key id="checksum-page" name="Page Checksums">
                         <summary>Validate data page checksums.</summary>
 
@@ -1160,7 +1071,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - EXCLUDE KEY -->
                     <config-key id="exclude" name="Path/File Exclusions">
                         <summary>Exclude paths/files from the backup.</summary>
 
@@ -1181,7 +1091,6 @@
                         <example>junk/</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - MANIFEST-SAVE-THRESHOLD -->
                     <config-key id="manifest-save-threshold" name="Manifest Save Threshold">
                         <summary>Manifest save threshold during backup.</summary>
 
@@ -1195,7 +1104,6 @@
                         <example>8GiB</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - EXPIRE-AUTO -->
                     <config-key id="expire-auto" name="Expire Auto">
                         <summary>Automatically run the <cmd>expire</cmd> command after a successful backup.</summary>
 
@@ -1206,7 +1114,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - RESUME -->
                     <config-key id="resume" name="Resume">
                         <summary>Allow resume of failed backup.</summary>
 
@@ -1217,7 +1124,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - START-FAST -->
                     <config-key id="start-fast" name="Start Fast">
                         <summary>Force a checkpoint to start backup quickly.</summary>
 
@@ -1228,7 +1134,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - BACKUP SECTION - STOP-AUTO -->
                     <config-key id="stop-auto" name="Stop Auto">
                         <summary>Stop prior failed backup on new backup.</summary>
 
@@ -1247,14 +1152,12 @@
                 </config-key-list>
             </config-section>
 
-            <!-- CONFIG - ARCHIVE -->
             <config-section id="archive" name="Archive">
                 <text>
                     <p>The <setting>archive</setting> section defines options for the <cmd>archive-push</cmd> and <cmd>archive-get</cmd> commands.</p>
                 </text>
 
                 <config-key-list>
-                    <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-ASYNC KEY -->
                     <config-key id="archive-async" name="Asynchronous Archiving">
                         <summary>Push/get WAL segments asynchronously.</summary>
 
@@ -1267,7 +1170,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-GET-QUEUE-MAX KEY -->
                     <config-key id="archive-get-queue-max" name="Maximum Archive Get Queue Size">
                         <summary>Maximum size of the <backrest/> archive-get queue.</summary>
 
@@ -1281,7 +1183,6 @@
                         <example>1GiB</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="archive-header-check" name="Check WAL Headers">
                         <summary>Check PostgreSQL version/id in WAL headers.</summary>
 
@@ -1294,7 +1195,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
                         <summary>Retry missing WAL segment</summary>
 
@@ -1309,7 +1209,6 @@
                         <example>n</example>
                     </config-key>
 
-                    <!-- CONFIG - ARCHIVE SECTION - ARCHIVE-QUEUE-MAX KEY -->
                     <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
                         <summary>Maximum size of the <postgres/> archive queue.</summary>
 
@@ -1334,7 +1233,6 @@
                         <example>1TiB</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="archive-timeout" name="Archive Timeout">
                         <summary>Archive timeout.</summary>
 
@@ -1347,14 +1245,12 @@
                 </config-key-list>
             </config-section>
 
-            <!-- CONFIG - RESTORE -->
             <config-section id="restore" name="Restore">
                 <text>
                     <p>The <setting>restore</setting> section defines settings used for restoring backups.</p>
                 </text>
 
                 <config-key-list>
-                    <!-- ======================================================================================================= -->
                     <config-key id="archive-mode" name="Archive Mode">
                         <summary>Preserve or disable archiving on restored cluster.</summary>
 
@@ -1374,7 +1270,6 @@
                         <example>off</example>
                     </config-key>
 
-                    <!-- CONFIG - RESTORE SECTION - DB-EXCLUDE KEY -->
                     <config-key id="db-exclude" name="Exclude Database">
                         <summary>Restore excluding the specified databases.</summary>
 
@@ -1387,7 +1282,6 @@
                         <example>db_main</example>
                     </config-key>
 
-                    <!-- CONFIG - RESTORE SECTION - DB-INCLUDE KEY -->
                     <config-key id="db-include" name="Include Database">
                         <summary>Restore only specified databases.</summary>
 
@@ -1404,7 +1298,6 @@
                         <example>db_main</example>
                     </config-key>
 
-                    <!-- CONFIG - RESTORE SECTION - LINK-ALL KEY -->
                     <config-key id="link-all" name="Link All">
                         <summary>Restore all symlinks.</summary>
 
@@ -1415,7 +1308,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - RESTORE SECTION - LINK-MAP KEY -->
                     <config-key id="link-map" name="Link Map">
                         <summary>Modify the destination of a symlink.</summary>
 
@@ -1426,7 +1318,6 @@
                         <example>pg_xlog=/data/xlog</example>
                     </config-key>
 
-                    <!-- CONFIG - RESTORE SECTION - RECOVERY-OPTION KEY -->
                     <config-key id="recovery-option" name="Recovery Option">
                         <summary>Set an option in <file>recovery.conf</file>.</summary>
 
@@ -1441,7 +1332,6 @@
                         <example>primary_conninfo=db.mydomain.com</example>
                     </config-key>
 
-                    <!-- CONFIG - RESTORE SECTION - TABLESPACE-MAP KEY -->
                     <config-key id="tablespace-map" name="Tablespace Map">
                         <summary>Restore a tablespace into the specified directory.</summary>
 
@@ -1454,7 +1344,6 @@
                         <example>ts_01=/db/ts_01</example>
                     </config-key>
 
-                    <!-- CONFIG - RESTORE SECTION - TABLESPACE KEY -->
                     <config-key id="tablespace-map-all" name="Map All Tablespaces">
                         <summary>Restore all tablespaces into the specified directory.</summary>
 
@@ -1469,14 +1358,12 @@
                 </config-key-list>
             </config-section>
 
-            <!-- =============================================================================================================== -->
             <config-section id="server" name="Server">
                 <text>
                     <p>The <setting>server</setting> section defines options used for configuring the <proper>TLS</proper> server.</p>
                 </text>
 
                 <config-key-list>
-                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-auth" name="TLS Server Authorized Clients">
                         <summary>TLS server authorized clients.</summary>
 
@@ -1489,7 +1376,6 @@
                         <example>client-cn=stanza1</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-ca-file" name="TLS Server Certificate Authorities">
                         <summary>TLS server certificate authorities.</summary>
 
@@ -1500,7 +1386,6 @@
                         <example>/path/to/server.ca</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-cert-file" name="TLS Server Certificate">
                         <summary>TLS server certificate file.</summary>
 
@@ -1511,7 +1396,6 @@
                         <example>/path/to/server.crt</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-key-file" name="TLS Server Key">
                         <summary>TLS server key file.</summary>
 
@@ -1522,7 +1406,6 @@
                         <example>/path/to/server.key</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-address" name="TLS Server Address">
                         <summary>TLS server address.</summary>
 
@@ -1533,7 +1416,6 @@
                         <example>::*</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="tls-server-port" name="TLS Server Port">
                         <summary>TLS server port.</summary>
 
@@ -1546,7 +1428,6 @@
                 </config-key-list>
             </config-section>
 
-            <!-- CONFIG - STANZA -->
             <config-section id="stanza" name="Stanza">
                 <text>
                     <p>A stanza defines the backup configuration for a specific <postgres/> database cluster. The stanza section must define the database cluster path and host/user if the database cluster is remote. Also, any global configuration sections can be overridden to define stanza-specific settings.</p>
@@ -1555,7 +1436,6 @@
                 </text>
 
                 <config-key-list>
-                    <!-- CONFIG - STANZA SECTION - PG-HOST-CMD KEY -->
                     <config-key id="pg-host-cmd" name="PostgreSQL Host Command">
                         <summary><postgres/> host <backrest/> command.</summary>
 
@@ -1567,7 +1447,6 @@
                         <example>/usr/lib/backrest/bin/pgbackrest</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-HOST-CONFIG KEY -->
                     <config-key id="pg-host-config" name="PostgreSQL Host Configuration">
                         <summary><backrest/> database host configuration file.</summary>
 
@@ -1578,7 +1457,6 @@
                         <example>/conf/pgbackrest/pgbackrest.conf</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-HOST-CONFIG-INCLUDE-PATH KEY -->
                     <config-key id="pg-host-config-include-path" name="PostgreSQL Host Configuration Include Path">
                         <summary><backrest/> database host configuration include path.</summary>
 
@@ -1589,7 +1467,6 @@
                         <example>/conf/pgbackrest/conf.d</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-HOST-CONFIG-PATH KEY -->
                     <config-key id="pg-host-config-path" name="PostgreSQL Host Configuration Path">
                         <summary><backrest/> database host configuration path.</summary>
 
@@ -1600,7 +1477,6 @@
                         <example>/conf/pgbackrest</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-HOST KEY -->
                     <config-key id="pg-host" name="PostgreSQL Host">
                         <summary><postgres/> host for operating remotely via SSH.</summary>
 
@@ -1611,7 +1487,6 @@
                         <example>db.domain.com</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-host-ca-file" name="PostgreSQL Host Certificate Authority File">
                         <summary><postgres/> host certificate authority file.</summary>
 
@@ -1622,7 +1497,6 @@
                         <example>/etc/pki/tls/certs/ca-bundle.crt</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-host-ca-path" name="PostgreSQL Host Certificate Authority Path">
                         <summary><postgres/> host certificate authority path.</summary>
 
@@ -1633,7 +1507,6 @@
                         <example>/etc/pki/tls/certs</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-host-cert-file" name="PostgreSQL Host Certificate File">
                         <summary><postgres/> host certificate file.</summary>
 
@@ -1644,7 +1517,6 @@
                         <example>/path/to/client.crt</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-host-key-file" name="PostgreSQL Host Key File">
                         <summary><postgres/> host key file.</summary>
 
@@ -1655,7 +1527,6 @@
                         <example>/path/to/client.key</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-host-type" name="PostgreSQL Host Protocol Type">
                         <summary><postgres/> host protocol type.</summary>
 
@@ -1671,7 +1542,6 @@
                         <example>tls</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-HOST-USER KEY -->
                     <config-key id="pg-host-user" name="PostgreSQL Host User">
                         <summary><postgres/> host logon user when <setting>pg-host</setting> is set.</summary>
 
@@ -1682,7 +1552,6 @@
                         <example>db_owner</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-database" name="PostgreSQL Database">
                         <summary><postgres/> database.</summary>
 
@@ -1695,7 +1564,6 @@
                         <example>backupdb</example>
                     </config-key>
 
-                    <!-- ======================================================================================================= -->
                     <config-key id="pg-local" name="PostgreSQL Locality">
                         <summary><postgres/> is local.</summary>
 
@@ -1706,7 +1574,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-PATH KEY -->
                     <config-key id="pg-path" name="PostgreSQL Path">
                         <summary><postgres/> data directory.</summary>
 
@@ -1719,7 +1586,6 @@
                         <example>/data/db</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-PORT KEY -->
                     <config-key id="pg-port" name="PostgreSQL Port">
                         <summary><postgres/> port.</summary>
 
@@ -1730,7 +1596,6 @@
                         <example>6543</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-SOCKET-PATH KEY -->
                     <config-key id="pg-socket-path" name="PostgreSQL Socket Path">
                         <summary><postgres/> unix socket path.</summary>
 
@@ -1741,7 +1606,6 @@
                         <example>/var/run/postgresql</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-USER KEY -->
                     <config-key id="pg-user" name="PostgreSQL Database User">
                         <summary><postgres/> database user.</summary>
 
@@ -1752,7 +1616,6 @@
                         <example>backupuser</example>
                     </config-key>
 
-                    <!-- CONFIG - STANZA SECTION - PG-HOST-PORT KEY -->
                     <config-key id="pg-host-port" name="PostgreSQL Host Port">
                         <summary><postgres/> host port when <setting>pg-host</setting> is set.</summary>
 
@@ -1767,7 +1630,6 @@
         </config-section-list>
     </config>
 
-    <!-- COMMAND -->
     <operation title="{[project]} Command Reference">
         <description>The {[project]} Command Reference details all commands and options.</description>
 
@@ -1785,7 +1647,6 @@
 
         <operation-general title="General Options">
             <option-list>
-                <!-- OPERATION - GENERAL - CIPHER-PASS OPTION -->
                 <option id="cipher-pass" name="Ad Hoc Cipher Passphrase">
                     <summary>Cipher passphrase for current command.</summary>
 
@@ -1796,7 +1657,6 @@
                     <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
                 </option>
 
-                <!-- OPERATION - GENERAL - CONFIG OPTION -->
                 <option id="config" name="Config">
                     <summary><backrest/> configuration file.</summary>
 
@@ -1807,7 +1667,6 @@
                     <example>/conf/pgbackrest/pgbackrest.conf</example>
                 </option>
 
-                <!-- OPERATION - GENERAL - CONFIG INCLUDE PATH OPTION -->
                 <option id="config-include-path" name="Config Include Path">
                     <summary>Path to additional <backrest/> configuration files.</summary>
 
@@ -1818,7 +1677,6 @@
                     <example>/conf/pgbackrest/conf.d</example>
                 </option>
 
-                <!-- OPERATION - GENERAL - CONFIG PATH OPTION -->
                 <option id="config-path" name="Config Path">
                     <summary>Base path of <backrest/> configuration files.</summary>
 
@@ -1831,7 +1689,6 @@
                     <example>/conf/pgbackrest</example>
                 </option>
 
-                <!-- OPERATION - GENERAL - DRY-RUN OPTION -->
                 <option id="dry-run" name="Dry Run">
                     <summary>Execute a dry-run for the command.</summary>
 
@@ -1842,7 +1699,6 @@
                     <example>y</example>
                 </option>
 
-                <!-- =========================================================================================================== -->
                 <option id="exec-id" name="Execution Identifier">
                     <summary>Unique identifier for the process.</summary>
 
@@ -1855,7 +1711,6 @@
                     <example>y</example>
                 </option>
 
-                <!-- OPERATION - GENERAL - RAW -->
                 <option id="raw" name="Raw Data">
                     <summary>Do not transform data.</summary>
 
@@ -1866,7 +1721,6 @@
                     <example>y</example>
                 </option>
 
-                <!-- =========================================================================================================== -->
                 <option id="repo" section="repository" name="Set Repository">
                     <summary>Set repository.</summary>
 
@@ -1879,7 +1733,6 @@
                     <example>1</example>
                 </option>
 
-                <!-- OPERATION - GENERAL - STANZA OPTION -->
                 <option id="stanza" name="Stanza">
                     <summary>Defines the stanza.</summary>
 
@@ -1895,7 +1748,6 @@
         </operation-general>
 
         <command-list title="Commands">
-            <!-- OPERATION - BACKUP COMMAND -->
             <command id="backup" name="Backup">
                 <summary>Backup a database cluster.</summary>
 
@@ -1908,7 +1760,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - BACKUP COMMAND - TYPE OPTION -->
                     <option id="type" name="Type">
                         <summary>Backup type.</summary>
 
@@ -1925,7 +1776,6 @@
                         <example>full</example>
                     </option>
 
-                    <!-- OPERATION - BACKUP COMMAND - FORCE OPTION -->
                     <option id="force" name="Force">
                         <summary>Force an offline backup.</summary>
 
@@ -1938,7 +1788,6 @@
                         <example>y</example>
                     </option>
 
-                    <!-- ======================================================================================================= -->
                     <option id="online" name="Online">
                         <summary>Perform an online backup.</summary>
 
@@ -1953,7 +1802,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - ARCHIVE-PUSH COMMAND -->
             <command id="archive-push" name="Archive Push">
                 <summary>Push a WAL segment to the archive.</summary>
 
@@ -1964,7 +1812,6 @@
                 </text>
             </command>
 
-            <!-- OPERATION - ARCHIVE-GET COMMAND -->
             <command id="archive-get" name="Archive Get">
                 <summary>Get a WAL segment from the archive.</summary>
 
@@ -1977,7 +1824,6 @@
                 </text>
             </command>
 
-            <!-- OPERATION - CHECK COMMAND -->
             <command id="check" name="Check">
                 <summary>Check the configuration.</summary>
 
@@ -1990,7 +1836,6 @@
                 </text>
             </command>
 
-            <!-- OPERATION - EXPIRE COMMAND -->
             <command id="expire" name="Expire">
                 <summary>Expire backups that exceed retention.</summary>
 
@@ -2001,7 +1846,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - EXPIRE COMMAND - SET OPTION -->
                     <option id="set" name="Set">
                         <summary>Backup set to expire.</summary>
 
@@ -2016,7 +1860,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - REPO-CREATE COMMAND -->
             <command id="repo-create" name="Create Repository">
                 <summary>Create the repository.</summary>
 
@@ -2025,7 +1868,6 @@
                 </text>
             </command>
 
-            <!-- OPERATION - REPO-GET COMMAND -->
             <command id="repo-get" name="Repository Get">
                 <summary>Get a file from a repository.</summary>
 
@@ -2038,7 +1880,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - REPO-GET COMMAND - IGNORE-MISSING OPTION -->
                     <option id="ignore-missing" name="Ignore Missing">
                         <summary>Ignore missing source file.</summary>
 
@@ -2051,7 +1892,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - REPO-LS COMMAND -->
             <command id="repo-ls" name="Repository List">
                 <summary>List files in a repository.</summary>
 
@@ -2064,7 +1904,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - LS COMMAND - FILTER OPTION -->
                     <option id="filter" name="Filter Output">
                         <summary>Filter output with a regular expression.</summary>
 
@@ -2075,7 +1914,6 @@
                         <example>"(F|D|I)$"</example>
                     </option>
 
-                    <!-- OPERATION - LS COMMAND - OUTPUT OPTION -->
                     <option id="output" name="Output">
                         <summary>Output format.</summary>
 
@@ -2101,7 +1939,6 @@
                         <example>json</example>
                     </option>
 
-                    <!-- OPERATION - LS COMMAND - RECURSE OPTION -->
                     <option id="recurse" name="Recurse Subpaths">
                         <summary>Include all subpaths in output.</summary>
 
@@ -2112,7 +1949,6 @@
                         <example>y</example>
                     </option>
 
-                    <!-- OPERATION - LS COMMAND - SORT OPTION -->
                     <option id="sort" name="Sort Output">
                         <summary>Sort output ascending, descending, or none.</summary>
 
@@ -2131,7 +1967,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - REPO-PUT COMMAND -->
             <command id="repo-put" name="Repository Put File">
                 <summary>Put a file in the repository.</summary>
 
@@ -2142,7 +1977,6 @@
                 </text>
             </command>
 
-            <!-- OPERATION - REPO-RM COMMAND -->
             <command id="repo-rm" name="Repository Remove Paths/Files">
                 <summary>Remove paths/files in the repository.</summary>
 
@@ -2153,7 +1987,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - REPO-RM COMMAND - RECURSE OPTION -->
                     <option id="recurse" name="Recurse Subpaths">
                         <summary>Remove all sub file/paths.</summary>
 
@@ -2166,7 +1999,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - RESTORE COMMAND -->
             <command id="restore" name="Restore">
                 <summary>Restore a database cluster.</summary>
 
@@ -2179,7 +2011,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - RESTORE COMMAND - SET OPTION -->
                     <option id="set" name="Set">
                         <summary>Backup set to restore.</summary>
 
@@ -2190,7 +2021,6 @@
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
 
-                    <!-- OPERATION - RESTORE COMMAND - FORCE OPTION -->
                     <option id="force" name="Force">
                         <summary>Force a restore.</summary>
 
@@ -2201,7 +2031,6 @@
                         <example>y</example>
                     </option>
 
-                    <!-- OPERATION - RESTORE COMMAND - TYPE OPTION -->
                     <option id="type" name="Type">
                         <summary>Recovery type.</summary>
 
@@ -2224,7 +2053,6 @@
                         <example>xid</example>
                     </option>
 
-                    <!-- OPERATION - RESTORE COMMAND - TARGET OPTION -->
                     <option id="target" name="Target">
                         <summary>Recovery target.</summary>
 
@@ -2235,7 +2063,6 @@
                         <example>2015-01-30 14:15:11 EST</example>
                     </option>
 
-                    <!-- OPERATION - RESTORE COMMAND - TARGET-EXCLUSIVE OPTION -->
                     <option id="target-exclusive" name="Target Exclusive">
                         <summary>Stop just before the recovery target is reached.</summary>
 
@@ -2246,7 +2073,6 @@
                         <example>n</example>
                     </option>
 
-                    <!-- OPERATION - RESTORE COMMAND - TARGET-RESUME OPTION -->
                     <option id="target-action" name="Target Action">
                         <summary>Action to take when recovery target is reached.</summary>
 
@@ -2265,7 +2091,6 @@
                         <example>promote</example>
                     </option>
 
-                    <!-- OPERATION - RESTORE COMMAND - TARGET-TIMELINE OPTION -->
                     <option id="target-timeline" name="Target Timeline">
                         <summary>Recover along a timeline.</summary>
 
@@ -2278,7 +2103,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - INFO COMMAND -->
             <command id="info" name="Info">
                 <summary>Retrieve information about backups.</summary>
 
@@ -2307,7 +2131,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - INFO COMMAND - OUTPUT OPTION -->
                     <option id="output" name="Output">
                         <summary>Output format.</summary>
 
@@ -2323,7 +2146,6 @@
                         <example>json</example>
                     </option>
 
-                    <!-- ======================================================================================================= -->
                     <option id="set" name="Set">
                         <summary>Backup set to detail.</summary>
 
@@ -2334,7 +2156,6 @@
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
 
-                    <!-- ======================================================================================================= -->
                     <option id="type" name="Type">
                         <summary>Filter on backup type.</summary>
 
@@ -2347,7 +2168,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - HELP COMMAND -->
             <command id="help" name="Help">
                 <summary>Get help.</summary>
 
@@ -2356,7 +2176,6 @@
                 </text>
             </command>
 
-            <!-- =============================================================================================================== -->
             <command id="server" name="Server">
                 <summary><backrest/> server.</summary>
 
@@ -2365,7 +2184,6 @@
                 </text>
             </command>
 
-            <!-- =============================================================================================================== -->
             <command id="server-ping" name="Server Ping">
                 <summary>Ping <backrest/> server.</summary>
 
@@ -2376,7 +2194,6 @@
                 </text>
             </command>
 
-            <!-- OPERATION - START COMMAND -->
             <command id="start" name="Start">
                 <summary>Allow <backrest/> processes to run.</summary>
 
@@ -2385,7 +2202,6 @@
                 </text>
             </command>
 
-            <!-- OPERATION - STOP COMMAND -->
             <command id="stop" name="Stop">
                 <summary>Stop <backrest/> processes from running.</summary>
 
@@ -2396,7 +2212,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - STOP COMMAND - FORCE OPTION -->
                     <option id="force" name="Force">
                         <summary>Force all <backrest/> processes to stop.</summary>
 
@@ -2409,7 +2224,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - VERIFY COMMAND -->
             <command id="verify" name="Verify">
                 <summary>Verify contents of the repository.</summary>
 
@@ -2418,7 +2232,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - VERIFY COMMAND - SET OPTION -->
                     <option id="set" name="Set">
                         <summary>Backup set to verify.</summary>
 
@@ -2429,7 +2242,6 @@
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
 
-                    <!-- ======================================================================================================= -->
                     <option id="output" name="Output">
                         <summary>Output type.</summary>
 
@@ -2439,7 +2251,6 @@
                         <example>text</example>
                     </option>
 
-                    <!-- ======================================================================================================= -->
                     <option id="verbose" name="Verbose">
                         <summary>Verbose output.</summary>
 
@@ -2452,7 +2263,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - VERSION COMMAND -->
             <command id="version" name="Version">
                 <summary>Get version.</summary>
 
@@ -2461,7 +2271,6 @@
                 </text>
             </command>
 
-            <!-- OPERATION - STANZA-CREATE COMMAND -->
             <command id="stanza-create" name="Stanza Create">
                 <summary>Create the required stanza data.</summary>
 
@@ -2470,7 +2279,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
                     <option id="force" name="Force">
                         <summary>Force stanza creation.</summary>
 
@@ -2481,7 +2289,6 @@
                         <example>n</example>
                     </option>
 
-                    <!-- ======================================================================================================= -->
                     <option id="online" name="Online">
                         <summary>Create on an online cluster.</summary>
 
@@ -2494,7 +2301,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - STANZA-UPGRADE COMMAND -->
             <command id="stanza-upgrade" name="Stanza Upgrade">
                 <summary>Upgrade a stanza.</summary>
 
@@ -2505,7 +2311,6 @@
                 </text>
 
                 <option-list>
-                    <!-- ======================================================================================================= -->
                     <option id="online" name="Online">
                         <summary>Update an online cluster.</summary>
 
@@ -2518,7 +2323,6 @@
                 </option-list>
             </command>
 
-            <!-- OPERATION - STANZA-DELETE COMMAND -->
             <command id="stanza-delete" name="Stanza Delete">
                 <summary>Delete a stanza.</summary>
 
@@ -2543,7 +2347,6 @@
                 </text>
 
                 <option-list>
-                    <!-- OPERATION - STANZA-CREATE COMMAND - FORCE OPTION -->
                     <option id="force" name="Force">
                         <summary>Force stanza delete.</summary>
 
