@@ -8,6 +8,7 @@ TLS Server
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <openssl/decoder.h>
 #include <openssl/err.h>
 
 #include "common/crypto/common.h"
@@ -102,26 +103,36 @@ tlsServerDh(SSL_CTX *const context)
 
     SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
 
-	BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
-    cryptoError(bio == NULL, "unable create buffer for DH parameters");
+	// BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
+    // cryptoError(bio == NULL, "unable create buffer for DH parameters");
+
+    EVP_PKEY *dh = NULL;
+    const unsigned char *data = (const unsigned char *)DH_2048;
+    size_t dataSize = sizeof(DH_2048) - 1;
+
+    OSSL_DECODER_CTX *const decoder = OSSL_DECODER_CTX_new_for_pkey(
+        &dh, "PEM", NULL, "DH", OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS, NULL, NULL);
+    cryptoError(decoder == NULL, "unable to create dh decoder");
 
     TRY_BEGIN()
     {
-    	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+        cryptoError(OSSL_DECODER_from_data(decoder, &data, &dataSize) != 1, "unable to decode dh");
+
+    	// DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
 
         TRY_BEGIN()
         {
-            cryptoError(SSL_CTX_set_tmp_dh(context, dh) != 1, "unable to set temp dh parameters");
+            cryptoError(SSL_CTX_set0_tmp_dh_pkey(context, dh) != 1, "unable to set temp dh parameters");
         }
         FINALLY()
         {
-            DH_free(dh);
+            EVP_PKEY_free(dh);
         }
         TRY_END();
     }
     FINALLY()
     {
-        BIO_free(bio);
+        OSSL_DECODER_CTX_free(decoder);
     }
     TRY_END();
 

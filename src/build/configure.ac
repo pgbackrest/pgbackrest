@@ -11,7 +11,11 @@ AC_CONFIG_AUX_DIR(build)
 
 # Check compiler supports C99 standard
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_PROG_CC_C99
+AC_PROG_CC
+#
+#if test ${ac_cv_prog_cc_c99?} == no
+#then
+#fi
 
 # Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
 # ----------------------------------------------------------------------------------------------------------------------------------
@@ -132,7 +136,7 @@ AC_ARG_WITH(
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough")
+AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-deprecated-declarations")
 
 # -Wno-clobbered is not supported on all compilers
 AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])
