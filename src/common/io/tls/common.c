@@ -112,7 +112,7 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
             // Load certificate
             cryptoError(
                 SSL_CTX_use_certificate_chain_file(context, strZ(certFile)) != 1,
-                strZ(strNewFmt("unable to load cert file '%s'", strZ(certFile))));
+                zNewFmt("unable to load cert file '%s'", strZ(certFile)));
 
             // Check that key has the correct permissions
             const StorageInfo keyInfo = storageInfoP(
@@ -141,13 +141,13 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
             // Load key and verify that the key and cert go together
             cryptoError(
                 SSL_CTX_use_PrivateKey_file(context, strZ(keyFile), SSL_FILETYPE_PEM) != 1,
-                strZ(strNewFmt("unable to load key file '%s'", strZ(keyFile))));
+                zNewFmt("unable to load key file '%s'", strZ(keyFile)));
 
             // Verify again that the cert and key go together. It is not clear why this is needed since the key has already been
             // verified in SSL_CTX_use_PrivateKey_file(), but it may be that older versions of OpenSSL need it.
             cryptoError(
                 SSL_CTX_check_private_key(context) != 1,
-                strZ(strNewFmt("cert '%s' and key '%s' do not match", strZ(certFile), strZ(keyFile))));
+                zNewFmt("cert '%s' and key '%s' do not match", strZ(certFile), strZ(keyFile)));
         }
         MEM_CONTEXT_TEMP_END();
     }

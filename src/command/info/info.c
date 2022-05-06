@@ -1476,12 +1476,13 @@ infoRender(void)
                             // Stanza status
                             strCatFmt(
                                 resultStr, "%s%s\n",
-                                statusCode == INFO_STANZA_STATUS_CODE_MIXED ? INFO_STANZA_MIXED :
-                                    strZ(strNewFmt(INFO_STANZA_STATUS_ERROR " (%s)",
-                                    strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))))),
+                                statusCode == INFO_STANZA_STATUS_CODE_MIXED ?
+                                    INFO_STANZA_MIXED :
+                                    zNewFmt(
+                                        INFO_STANZA_STATUS_ERROR " (%s)",
+                                        strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)))),
                                 backupLockHeld == true ?
-                                    strZ(strNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(percentCompleteStr))) :
-                                    "");
+                                    zNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(percentCompleteStr)) : "");
 
                             // Output the status per repo
                             VariantList *repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
@@ -1509,7 +1510,7 @@ infoRender(void)
                                         strCatFmt(
                                             resultStr, "%s%s%s\n",
                                             multiRepo ? INFO_STANZA_STATUS_ERROR " (" INFO_STANZA_STATUS_MESSAGE_OTHER ")\n" : "",
-                                            formatSpacer, strZ(strLstJoin(repoError, strZ(strNewFmt("\n%s", formatSpacer)))));
+                                            formatSpacer, strZ(strLstJoin(repoError, zNewFmt("\n%s", formatSpacer))));
                                     }
                                     else
                                     {
@@ -1527,8 +1528,7 @@ infoRender(void)
                                 resultStr, "%s (%s%s\n", INFO_STANZA_STATUS_ERROR,
                                 strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))),
                                 backupLockHeld == true ?
-                                    strZ(strNewFmt(", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(percentCompleteStr))) :
-                                    ")");
+                                    zNewFmt(", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(percentCompleteStr)) : ")");
                         }
                     }
                     else

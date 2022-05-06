@@ -23,12 +23,12 @@ testOptionFind(const char *optionName, unsigned int optionId, unsigned int optio
 {
     CfgParseOptionResult option = cfgParseOptionP(STR(optionName));
 
-    TEST_RESULT_BOOL(option.found, true, strZ(strNewFmt("check %s found", optionName)));
-    TEST_RESULT_UINT(option.id, optionId, strZ(strNewFmt("check %s id %u", optionName, optionId)));
-    TEST_RESULT_UINT(option.keyIdx, optionKeyIdx, strZ(strNewFmt("check %s key idx %u", optionName, optionKeyIdx)));
-    TEST_RESULT_BOOL(option.negate, negate, strZ(strNewFmt("check %s negate %d", optionName, negate)));
-    TEST_RESULT_BOOL(option.reset, reset, strZ(strNewFmt("check %s reset %d", optionName, reset)));
-    TEST_RESULT_BOOL(option.deprecated, deprecated, strZ(strNewFmt("check %s deprecated %d", optionName, deprecated)));
+    TEST_RESULT_BOOL(option.found, true, zNewFmt("check %s found", optionName));
+    TEST_RESULT_UINT(option.id, optionId, zNewFmt("check %s id %u", optionName, optionId));
+    TEST_RESULT_UINT(option.keyIdx, optionKeyIdx, zNewFmt("check %s key idx %u", optionName, optionKeyIdx));
+    TEST_RESULT_BOOL(option.negate, negate, zNewFmt("check %s negate %d", optionName, negate));
+    TEST_RESULT_BOOL(option.reset, reset, zNewFmt("check %s reset %d", optionName, reset));
+    TEST_RESULT_BOOL(option.deprecated, deprecated, zNewFmt("check %s deprecated %d", optionName, deprecated));
 }
 
 /***********************************************************************************************************************************
@@ -2109,14 +2109,14 @@ testRun(void)
         // Only check 1-8 since 8 was the max index when these option names were deprecated
         for (unsigned int optionIdx = 0; optionIdx < 8; optionIdx++)
         {
-            testOptionFind(strZ(strNewFmt("db%u-cmd", optionIdx + 1)), cfgOptPgHostCmd, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-config", optionIdx + 1)), cfgOptPgHostConfig, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-host", optionIdx + 1)), cfgOptPgHost, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-path", optionIdx + 1)), cfgOptPgPath, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-port", optionIdx + 1)), cfgOptPgPort, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-socket-path", optionIdx + 1)), cfgOptPgSocketPath, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-ssh-port", optionIdx + 1)), cfgOptPgHostPort, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-user", optionIdx + 1)), cfgOptPgHostUser, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-cmd", optionIdx + 1), cfgOptPgHostCmd, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-config", optionIdx + 1), cfgOptPgHostConfig, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-host", optionIdx + 1), cfgOptPgHost, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-path", optionIdx + 1), cfgOptPgPath, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-port", optionIdx + 1), cfgOptPgPort, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-socket-path", optionIdx + 1), cfgOptPgSocketPath, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-ssh-port", optionIdx + 1), cfgOptPgHostPort, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-user", optionIdx + 1), cfgOptPgHostUser, optionIdx, false, false, true);
         }
     }
 

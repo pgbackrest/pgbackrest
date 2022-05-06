@@ -1008,7 +1008,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1)), walBuffer,
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1), walBuffer,
             .comment = "valid WAL");
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
@@ -1058,15 +1058,14 @@ testRun(void)
             walBuffer, .compressType = compressTypeGz, .comment = "first WAL compressed - but checksum failure");
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(
-                strNewFmt(
-                    STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFF-%s",
-                    strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, BUFSTRDEF("invalidsize")))))),
+            zNewFmt(
+                STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFF-%s",
+                strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, BUFSTRDEF("invalidsize"))))),
             BUFSTRDEF("invalidsize"), .comment = "WAL - invalid size");
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000008/000000020000000800000000-%s", walBufferSha1)),
-            walBuffer, .comment = "WAL - continue range");
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000008/000000020000000800000000-%s", walBufferSha1), walBuffer,
+            .comment = "WAL - continue range");
 
         // Set log detail level to capture ranges
         harnessLogLevelSet(logLevelDetail);
@@ -1141,15 +1140,15 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000008/000000020000000800000002-%s", walBufferSha1)),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000008/000000020000000800000002-%s", walBufferSha1),
             walBuffer, .comment = "WAL - starts next range");
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000300000000/000000030000000000000000-%s", walBufferSha1)),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000300000000/000000030000000000000000-%s", walBufferSha1),
             walBuffer, .comment = "WAL - starts next timeline");
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000300000000/000000030000000000000001-%s", walBufferSha1)),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000300000000/000000030000000000000001-%s", walBufferSha1),
             walBuffer, .comment = "WAL - end next timeline");
 
         // Set log level to errors only
@@ -1631,7 +1630,7 @@ testRun(void)
             .comment = "valid manifest copy - full");
 
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/bundle/1", strZ(strNewFmt("XXX%s", fileContents)),
+            storageRepoWrite(), STORAGE_REPO_BACKUP  "/20201119-163000F/bundle/1", zNewFmt("XXX%s", fileContents),
             .comment = "valid file");
 
         // Create WAL file with just header info and small WAL size
@@ -1643,7 +1642,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoWrite(),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000000/000000020000000000000001-%s", walBufferSha1)), walBuffer,
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000000/000000020000000000000001-%s", walBufferSha1), walBuffer,
             .comment = "valid WAL");
 
         // Redirect stdout to a file
@@ -1855,7 +1854,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1)), walBuffer,
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1), walBuffer,
             .comment = "valid WAL");
 
         harnessLogLevelSet(logLevelDetail);
@@ -1926,7 +1925,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1)), walBuffer,
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1), walBuffer,
             .comment = "valid WAL");
 
         harnessLogLevelSet(logLevelDetail);
@@ -1981,7 +1980,7 @@ testRun(void)
 
         HRN_STORAGE_PUT(
             storageRepoIdxWrite(0),
-            strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1)), walBuffer,
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000200000007/000000020000000700000FFE-%s", walBufferSha1), walBuffer,
             .comment = "valid WAL");
 
         harnessLogLevelSet(logLevelDetail);

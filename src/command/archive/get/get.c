@@ -914,7 +914,7 @@ cmdArchiveGetAsync(void)
                 "get %u WAL file(s) from archive: %s%s",
                 strLstSize(cfgCommandParam()), strZ(strLstGet(cfgCommandParam(), 0)),
                 strLstSize(cfgCommandParam()) == 1 ?
-                    "" : strZ(strNewFmt("...%s", strZ(strLstGet(cfgCommandParam(), strLstSize(cfgCommandParam()) - 1)))));
+                    "" : zNewFmt("...%s", strZ(strLstGet(cfgCommandParam(), strLstSize(cfgCommandParam()) - 1))));
 
             // Check for archive files
             ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
@@ -1010,7 +1010,7 @@ cmdArchiveGetAsync(void)
                                     archiveModeGet, walSegment, protocolParallelJobErrorCode(job),
                                     strNewFmt(
                                         "%s%s", strZ(protocolParallelJobErrorMessage(job)),
-                                        strSize(warning) == 0 ? "" : strZ(strNewFmt("\n%s", strZ(warning)))));
+                                        strSize(warning) == 0 ? "" : zNewFmt("\n%s", strZ(warning))));
                             }
 
                             protocolParallelJobFree(job);

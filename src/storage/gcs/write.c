@@ -195,7 +195,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
             strNewFmt(
                 HTTP_HEADER_CONTENT_RANGE_BYTES " %" PRIu64 "-%" PRIu64 "/%s", this->uploadTotal,
                 this->uploadTotal + bufUsed(this->chunkBuffer) - 1,
-                done ? strZ(strNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer))) : "*"));
+                done ? zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer)) : "*"));
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
 

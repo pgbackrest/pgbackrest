@@ -986,9 +986,9 @@ testRun(void)
                         protocolClientNew(
                             strNewFmt("local client %u", clientIdx), STRDEF("test"), HRN_FORK_PARENT_READ(clientIdx),
                             HRN_FORK_PARENT_WRITE(clientIdx)),
-                        strZ(strNewFmt("local client %u new", clientIdx)));
+                        zNewFmt("local client %u new", clientIdx));
                     TEST_RESULT_VOID(
-                        protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("local client %u add", clientIdx)));
+                        protocolParallelClientAdd(parallel, client[clientIdx]), zNewFmt("local client %u add", clientIdx));
                 }
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -1104,7 +1104,7 @@ testRun(void)
                 TEST_TITLE("free clients");
 
                 for (unsigned int clientIdx = 0; clientIdx < HRN_FORK_PROCESS_TOTAL(); clientIdx++)
-                    TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), strZ(strNewFmt("free client %u", clientIdx)));
+                    TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), zNewFmt("free client %u", clientIdx));
             }
             HRN_FORK_PARENT_END();
         }

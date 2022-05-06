@@ -136,11 +136,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
-        total: 26
+        total: 27
         feature: string
 
         coverage:
           - common/type/string
+          - common/type/stringZ
           - common/type/stringId
           - common/type/stringList
 

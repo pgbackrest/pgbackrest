@@ -273,7 +273,7 @@ testRun(void)
 
         while (pckReadNext(packRead))
         {
-            TEST_RESULT_UINT(pckReadU64P(packRead, .id = pckReadId(packRead)), value, strZ(strNewFmt("read %u", value)));
+            TEST_RESULT_UINT(pckReadU64P(packRead, .id = pckReadId(packRead)), value, zNewFmt("read %u", value));
             value++;
         }
 
