@@ -710,8 +710,7 @@ testRun(void)
         lstAdd(archiveIdResultList, &archiveIdResult);
 
         TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList, backupResultList,
-            cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyRender(archiveIdResultList, backupResultList, cfgOptionBool(cfgOptVerbose)),
             "\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0", "archive: no invalid file list");
 
@@ -733,8 +732,7 @@ testRun(void)
         lstAdd(backupResultList, &backupResult);
 
         TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList, backupResultList,
-            cfgOptionBool(cfgOptVerbose) && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT),
+            verifyRender(archiveIdResultList, backupResultList, cfgOptionBool(cfgOptVerbose)),
             "\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
             "    missing: 1\n"
