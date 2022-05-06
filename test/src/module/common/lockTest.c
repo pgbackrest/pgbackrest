@@ -36,11 +36,11 @@ testRun(void)
 
         lockLocal.execId = STRDEF("2-test");
 
-        TEST_ERROR(lockAcquireFile(archiveLock, 0, true), LockAcquireError,
-            strZ(
-                strNewFmt(
-                    "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                    "HINT: is another pgBackRest process running?", strZ(archiveLock))));
+        TEST_ERROR_FMT(
+            lockAcquireFile(archiveLock, 0, true), LockAcquireError,
+            "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+            "HINT: is another pgBackRest process running?",
+            strZ(archiveLock));
         TEST_RESULT_BOOL(lockAcquireFile(archiveLock, 0, false) == -1, true, "lock is already held");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -55,11 +55,11 @@ testRun(void)
 
         HRN_SYSTEM_FMT("echo '' > %s", strZ(archiveLock));
 
-        TEST_ERROR(lockAcquireFile(archiveLock, 0, true), LockAcquireError,
-            strZ(
-                strNewFmt(
-                    "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                    "HINT: is another pgBackRest process running?", strZ(archiveLock))));
+        TEST_ERROR_FMT(
+            lockAcquireFile(archiveLock, 0, true), LockAcquireError,
+            "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+            "HINT: is another pgBackRest process running?",
+            strZ(archiveLock));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLock), "release lock");
@@ -82,9 +82,9 @@ testRun(void)
 
         HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(dirLock));
 
-        TEST_ERROR(
-            lockAcquireFile(dirLock, 0, true), LockAcquireError,
-            strZ(strNewFmt("unable to acquire lock on file '%s': Is a directory", strZ(dirLock))));
+        TEST_ERROR_FMT(
+            lockAcquireFile(dirLock, 0, true), LockAcquireError, "unable to acquire lock on file '%s': Is a directory",
+            strZ(dirLock));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("permissions error throw regardless of failOnLock");
@@ -129,13 +129,11 @@ testRun(void)
 
                 lockLocal.execId = STRDEF("2-test");
 
-                TEST_ERROR(
-                    lockAcquireFile(backupLock, 0, true),
-                    LockAcquireError,
-                    strZ(
-                        strNewFmt(
-                            "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                            "HINT: is another pgBackRest process running?", strZ(backupLock))));
+                TEST_ERROR_FMT(
+                    lockAcquireFile(backupLock, 0, true), LockAcquireError,
+                    "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+                    "HINT: is another pgBackRest process running?",
+                    strZ(backupLock));
 
                 TEST_RESULT_VOID(lockAcquireFile(backupLock, 0, false), "success when failOnLock = false");
 
@@ -165,16 +163,15 @@ testRun(void)
         TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, 0, true), "archive lock by file");
         TEST_RESULT_BOOL(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeArchive, 0, false), false, "archive already locked");
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeArchive, 0, true), LockAcquireError,
-            strZ(strNewFmt(
-                "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                "HINT: is another pgBackRest process running?", strZ(archiveLockFile))));
-        TEST_ERROR(
+            "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+            "HINT: is another pgBackRest process running?",
+            strZ(archiveLockFile));
+        TEST_ERROR_FMT(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeAll, 0, true), LockAcquireError,
-            strZ(strNewFmt(
-                "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                "HINT: is another pgBackRest process running?", strZ(archiveLockFile))));
+            "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+            "HINT: is another pgBackRest process running?", strZ(archiveLockFile));
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLockFile), "release lock");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -192,16 +189,14 @@ testRun(void)
 
         TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
 
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeBackup, 0, true), LockAcquireError,
-            strZ(strNewFmt(
-                "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                "HINT: is another pgBackRest process running?", strZ(backupLockFile))));
-        TEST_ERROR(
+            "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+            "HINT: is another pgBackRest process running?", strZ(backupLockFile));
+        TEST_ERROR_FMT(
             lockAcquire(TEST_PATH_STR, stanza, STRDEF("2-test"), lockTypeAll, 0, true), LockAcquireError,
-            strZ(strNewFmt(
-                "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
-                "HINT: is another pgBackRest process running?", strZ(backupLockFile))));
+            "unable to acquire lock on file '%s': Resource temporarily unavailable\n"
+            "HINT: is another pgBackRest process running?", strZ(backupLockFile));
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLockFile), "release archive lock");
         TEST_RESULT_VOID(lockReleaseFile(lockFdTest, backupLockFile), "release backup lock");
 

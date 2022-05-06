@@ -46,8 +46,7 @@ void configParse(const Storage *storage, unsigned int argListSize, const char *a
 const char *cfgParseCommandName(ConfigCommand commandId);
 
 // Get command/role name with custom separator
-String *cfgParseCommandRoleName(
-    const ConfigCommand commandId, const ConfigCommandRole commandRoleId, const String *separator);
+String *cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole commandRoleId);
 
 // Convert command role enum to String
 const String *cfgParseCommandRoleStr(ConfigCommandRole commandRole);

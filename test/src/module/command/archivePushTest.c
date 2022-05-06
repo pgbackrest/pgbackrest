@@ -512,13 +512,12 @@ testRun(void)
 
         HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001", .mode = 0500);
 
-        TEST_ERROR(
+        TEST_ERROR_FMT(
             cmdArchivePush(), CommandError,
-            strZ(
-                strNewFmt(
-                    "archive-push command encountered error(s):\n"
-                    "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
-                        "/000000010000000100000002-%s' for write: [13] Permission denied", walBuffer2Sha1)));
+            "archive-push command encountered error(s):\n"
+            "repo2: [FileOpenError] unable to open file '" TEST_PATH "/repo2/archive/test/11-1/0000000100000001"
+                "/000000010000000100000002-%s' for write: [13] Permission denied",
+            walBuffer2Sha1);
 
         TEST_STORAGE_LIST_EMPTY(storageTest, "repo2/archive/test/11-1/0000000100000001", .comment = "check repo2 for no WAL file");
         TEST_STORAGE_LIST(
