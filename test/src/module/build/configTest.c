@@ -1554,7 +1554,7 @@ testRun(void)
             COMMENT_BLOCK_BEGIN "\n"
             "Order for option parse resolution\n"
             COMMENT_BLOCK_END "\n"
-            "static const ConfigOption optionResolveOrder[] =\n"
+            "static const uint8_t optionResolveOrder[] =\n"
             "{\n"
             "    cfgOptStanza,\n"
             "    cfgOptBufferSize,\n"
