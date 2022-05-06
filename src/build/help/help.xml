@@ -2411,10 +2411,10 @@
 
             <!-- OPERATION - VERIFY COMMAND -->
             <command id="verify" name="Verify">
-                <summary>Verify the contents of the repository.</summary>
+                <summary>Verify contents of the repository.</summary>
 
                 <text>
-                    <p>Verify will attempt to determine if the backups and archives in the repository are valid.</p>
+                    <p>Verify determines if the backups and archives in the repository are valid.</p>
                 </text>
 
                 <option-list>
@@ -2427,6 +2427,27 @@
                         </text>
 
                         <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+
+                    <!-- ======================================================================================================= -->
+                    <option id="output" name="Output">
+                        <summary>Output type.</summary>
+
+                        <text> <p>Output may be none (default) or text. Requesting text generates ouput to stdout.</p>
+                        </text>
+
+                        <example>text</example>
+                    </option>
+
+                    <!-- ======================================================================================================= -->
+                    <option id="verbose" name="Verbose">
+                        <summary>Verbose output.</summary>
+
+                        <text>
+                            <p>Verbose defaults to false, providing a minimal response with important information about errors in the repository. Specifying true provides more information about what was successfully verified.</p>
+                        </text>
+
+                        <example>y</example>
                     </option>
                 </option-list>
             </command>
