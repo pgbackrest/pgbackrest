@@ -1293,25 +1293,17 @@ verifyCreateFileErrorsStr(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *resultStr = strNew();
-
         // List all if verbose text, otherwise only list if type has errors
         strCatFmt(
-            resultStr, "\n    %s%s%s%s",
+            result, "\n    %s%s%s%s",
             verboseText || errMissing ? strZ(strNewFmt("missing: %u, ", errMissing)) : "",
             verboseText || errChecksum ? strZ(strNewFmt("checksum invalid: %u, ", errChecksum)) : "",
             verboseText || errSize ? strZ(strNewFmt("size invalid: %u, ", errSize)) : "",
             verboseText || errOther ? strZ(strNewFmt("other: %u", errOther)) : "");
 
-        // Clean up trailing chars when necessary
-        if (strEndsWith(resultStr, STRDEF(", ")))
-            strTrunc(resultStr, (int)strSize(resultStr) - 2);
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = strDup(resultStr);
-        }
-        MEM_CONTEXT_PRIOR_END();
+        // Clean up trailing comma when necessary
+        if (strEndsWithZ(result, ", "))
+            strTrunc(result, (int)strSize(result) - 2);
     }
     MEM_CONTEXT_TEMP_END();
 
