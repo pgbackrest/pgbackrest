@@ -3,7 +3,7 @@
 <doc title="{[project]} User Guide" subtitle="{[user-guide-subtitle]}" cmd-line-len="85">
     <description>The {[project]} User Guide demonstrates how to quickly and easily setup {[project]} for your {[postgres]} database. Step-by-step instructions lead the user through all the important features of the fastest, most reliable {[postgres]} backup and restore solution.</description>
 
-    <!-- Variables used by the rest of the script -->
+    <!-- ======================================================================================================================= -->
     <variable-list>
         <!-- Defined OS types -->
         <variable key="os-debian">debian</variable>
@@ -283,8 +283,7 @@
         <variable key="sudo-disable-core-dump">RUN echo "Set disable_coredump false" >> /etc/sudo.conf</variable>
     </variable-list>
 
-    <!-- Setup hosts used to build the documentation
-    ============================================================================================================================ -->
+    <!-- Setup hosts used to build the documentation =========================================================================== -->
     <host-define if="{[os-type-is-debian]}" image="{[host-image]}" from="{[os-image]}">
         {[copy-ca-cert]}
 
@@ -765,7 +764,7 @@
         <admonition type="note">The region and endpoint will need to be configured to where the bucket is located.  The values given here are for the <id>{[s3-region]}</id> region.</admonition>
     </block-define>
 
-    <!-- SECTION => INTRODUCTION -->
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
@@ -786,13 +785,13 @@
         <p>All commands are intended to be run as an unprivileged user that has sudo privileges for both the <user>root</user> and <user>postgres</user> users.  It's also possible to run the commands directly as their respective users without modification and in that case the <cmd>sudo</cmd> commands can be stripped off.</p>
     </section>
 
-    <!-- SECTION => CONCEPTS -->
+    <!-- ======================================================================================================================= -->
     <section id="concept">
         <title>Concepts</title>
 
         <p>The following concepts are defined as they are relevant to <backrest/>, <postgres/>, and this user guide.</p>
 
-        <!-- SECTION => CONCEPTS - BACKUP -->
+        <!-- =================================================================================================================== -->
         <section id="backup">
             <title>Backup</title>
 
@@ -805,14 +804,14 @@
             <p><b>Incremental Backup</b>: <backrest/> copies only those database cluster files that have changed since the last backup (which can be another incremental backup, a differential backup, or a full backup). As an incremental backup only includes those files changed since the prior backup, they are generally much smaller than full or differential backups. As with the differential backup, the incremental backup depends on other backups to be valid to restore the incremental backup. Since the incremental backup includes only those files since the last backup, all prior incremental backups back to the prior differential, the prior differential backup, and the prior full backup must all be valid to perform a restore of the incremental backup. If no differential backup exists then all prior incremental backups back to the prior full backup, which must exist, and the full backup itself must be valid to restore the incremental backup.</p>
         </section>
 
-        <!-- SECTION => CONCEPTS - RESTORE -->
+        <!-- =================================================================================================================== -->
         <section id="restore">
             <title>Restore</title>
 
             <p>A restore is the act of copying a backup to a system where it will be started as a live database cluster.  A restore requires the backup files and one or more WAL segments in order to work correctly.</p>
         </section>
 
-        <!-- SECTION => CONCEPTS - WAL -->
+        <!-- =================================================================================================================== -->
         <section id="wal">
             <title>Write Ahead Log (WAL)</title>
 
@@ -822,7 +821,7 @@
 
         </section>
 
-        <!-- SECTION => CONCEPTS - ENCRYPTION -->
+        <!-- =================================================================================================================== -->
         <section id="encryption">
             <title>Encryption</title>
 
@@ -832,10 +831,11 @@
         </section>
     </section>
 
-    <!-- SECTION => UPGRADING -->
+    <!-- ======================================================================================================================= -->
     <section id="upgrading">
         <title>Upgrading {[project]}</title>
 
+        <!-- =================================================================================================================== -->
         <section id="v1-v2">
             <title>Upgrading {[project]} from v1 to v2</title>
 
@@ -933,7 +933,7 @@
         </execute-list>
     </section>
 
-    <!-- SECTION => INSTALLATION -->
+    <!-- ======================================================================================================================= -->
     <section id="installation">
         <title>Installation</title>
 
@@ -969,13 +969,13 @@
         </execute-list>
     </section>
 
-    <!-- SECTION => QUICKSTART -->
+    <!-- ======================================================================================================================= -->
     <section id="quickstart">
         <title>Quick Start</title>
 
         <p>The Quick Start section will cover basic configuration of <backrest/> and <postgres/> and introduce the <cmd>backup</cmd>, <cmd>restore</cmd>, and <cmd>info</cmd> commands.</p>
 
-        <!-- SECTION => QUICKSTART - SETUP DEMO CLUSTER -->
+        <!-- =================================================================================================================== -->
         <section id="setup-demo-cluster">
             <title>Setup Demo Cluster</title>
 
@@ -1009,7 +1009,7 @@
             </postgres-config>
         </section>
 
-        <!-- SECTION => QUICKSTART - CONFIGURE STANZA -->
+        <!-- =================================================================================================================== -->
         <section id="configure-stanza">
             <title>Configure Cluster Stanza</title>
 
@@ -1068,7 +1068,7 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => QUICKSTART - CREATE REPOSITORY -->
+        <!-- =================================================================================================================== -->
         <section id="create-repository">
             <title>Create the Repository</title>
 
@@ -1131,7 +1131,7 @@
             </block>
         </section>
 
-        <!-- SECTION => QUICKSTART - CONFIGURE ARCHIVING -->
+        <!-- =================================================================================================================== -->
         <section id="configure-archiving">
             <title>Configure Archiving</title>
 
@@ -1191,7 +1191,7 @@
             <p>This configuration technique can be used for any command and can even target a specific stanza, e.g. <code>demo:archive-push</code>.</p>
         </section>
 
-        <!-- SECTION => QUICKSTART - RETENTION -->
+        <!-- =================================================================================================================== -->
         <section id="retention">
             <title>Configure Retention</title>
 
@@ -1206,8 +1206,7 @@
             <p>More information about retention can be found in the <link section="/retention">Retention</link> section.</p>
         </section>
 
-        <!-- SECTION => QUICKSTART - CONFIGURE ENCRYPTION -->
-        <!-- Since S3 and repository host require configure-archiving, this section must come after. -->
+        <!-- Since S3 and repository host require configure-archiving, this section must come after ============================ -->
         <section if="'{[encrypt]}' eq 'y'" id="configure-encryption">
             <title>Configure Repository Encryption</title>
 
@@ -1225,7 +1224,7 @@
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
         </section>
 
-        <!-- SECTION => QUICKSTART - STANZA CREATE -->
+        <!-- =================================================================================================================== -->
         <section id="create-stanza">
             <title>Create the Stanza</title>
 
@@ -1241,7 +1240,7 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => QUICKSTART - CHECK CONFIGURATION -->
+        <!-- =================================================================================================================== -->
         <section id="check-configuration">
             <title>Check the Configuration</title>
             <cmd-description key="check"/>
@@ -1266,7 +1265,7 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => QUICKSTART - PERFORM BACKUP -->
+        <!-- =================================================================================================================== -->
         <section id="perform-backup">
             <title>Perform a Backup</title>
 
@@ -1313,7 +1312,7 @@
             <p>During an online backup <backrest/> waits for WAL segments that are required for backup consistency to be archived. This wait time is governed by the <backrest/> <br-option>archive-timeout</br-option> option which defaults to 60 seconds. If archiving an individual segment is known to take longer then this option should be increased.</p>
         </section>
 
-        <!-- SECTION => QUICKSTART - SCHEDULE BACKUP -->
+        <!-- =================================================================================================================== -->
         <section id="schedule-backup">
             <title>Schedule a Backup</title>
 
@@ -1330,7 +1329,7 @@
             <p>Once backups are scheduled it's important to configure retention so backups are expired on a regular schedule, see <link section="/retention">Retention</link>.</p>
         </section>
 
-        <!-- SECTION => QUICKSTART - BACKUP INFO -->
+        <!-- =================================================================================================================== -->
         <section id="backup-info" depend="perform-backup">
             <title>Backup Information</title>
 
@@ -1348,7 +1347,7 @@
             <cmd-description key="info"/>
         </section>
 
-        <!-- SECTION => QUICKSTART - PERFORM RESTORE -->
+        <!-- =================================================================================================================== -->
         <section id="perform-restore" depend="perform-backup">
             <title>Restore a Backup</title>
 
@@ -1418,7 +1417,7 @@
         </section>
     </section>
 
-    <!-- *********************************************************************************************************************** -->
+    <!-- ======================================================================================================================= -->
     <section id="monitor" depend="/quickstart/perform-backup">
         <title>Monitoring</title>
 
@@ -1426,6 +1425,7 @@
 
         <p><backrest/> can output information about the repository in JSON format which includes a list of all backups for each stanza and WAL archive info.</p>
 
+        <!-- =================================================================================================================== -->
         <section id="postgresql">
             <title>In <postgres/></title>
 
@@ -1471,6 +1471,7 @@
             </execute-list>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section if="{[os-type-is-debian]}" id="jq">
             <title>Using <proper>jq</proper></title>
 
@@ -1560,7 +1561,7 @@
         </section>
     </section>
 
-    <!-- SECTION => RETENTION -->
+    <!-- ======================================================================================================================= -->
     <section id="retention" depend="quickstart/perform-backup">
         <title>Retention</title>
 
@@ -1568,7 +1569,7 @@
 
         <cmd-description key="expire"/>
 
-        <!-- SECTION => RETENTION - FULL -->
+        <!-- =================================================================================================================== -->
         <section id="full">
             <title>Full Backup Retention</title>
 
@@ -1611,7 +1612,7 @@
             <p>The <id>{[backup-full-first]}</id> full backup is expired and archive retention is based on the <id>{[backup-full-second]}</id> which is now the oldest full backup.</p>
         </section>
 
-        <!-- SECTION => RETENTION - DIFF -->
+        <!-- =================================================================================================================== -->
         <section id="diff">
             <title>Differential Backup Retention</title>
 
@@ -1654,7 +1655,7 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => RETENTION - ARCHIVE -->
+        <!-- =================================================================================================================== -->
         <section id="archive">
             <title>Archive Retention</title>
 
@@ -1709,7 +1710,7 @@
         </section>
     </section>
 
-    <!-- SECTION => RESTORE -->
+    <!-- ======================================================================================================================= -->
     <section id="restore" depend="quickstart/perform-backup">
         <title>Restore</title>
 
@@ -1717,7 +1718,7 @@
 
         <p>The following sections introduce additional <cmd>restore</cmd> command features.</p>
 
-        <!-- ******************************************************************************************************************* -->
+        <!-- =================================================================================================================== -->
         <section id="ownership">
             <title>File Ownership</title>
 
@@ -1726,7 +1727,7 @@
             <p>If a <cmd>restore</cmd> is run as the <id>root</id> user then <backrest/> will attempt to recreate the ownership recorded in the manifest when the backup was made.  Only user/group <b>names</b> are stored in the manifest so the same names must exist on the restore host for this to work.  If the user/group name cannot be found locally then the user/group of the <postgres/> data directory will be used and finally <id>root</id> if the data directory user/group cannot be mapped to a name.</p>
         </section>
 
-        <!-- SECTION => RESTORE - DELTA -->
+        <!-- =================================================================================================================== -->
         <section id="option-delta">
             <title>Delta Option</title>
 
@@ -1759,7 +1760,7 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => RESTORE - DELTA -->
+        <!-- =================================================================================================================== -->
         <section id="option-db-include">
             <title>Restore Selected Databases</title>
 
@@ -1938,7 +1939,7 @@
         </section>
     </section>
 
-    <!-- SECTION => PITR -->
+    <!-- ======================================================================================================================= -->
     <section id="pitr" depend="quickstart/perform-backup">
         <title>Point-in-Time Recovery</title>
 
@@ -2227,7 +2228,7 @@
         </execute-list>
     </section>
 
-    <!-- SECTION => S3-SUPPORT -->
+    <!-- ======================================================================================================================= -->
     <section id="s3-support" if="!{[object-any-all]}" depend="/azure-support">
         <title>S3-Compatible Object Store Support</title>
 
@@ -2378,7 +2379,7 @@
         </execute-list>
     </section>
 
-    <!-- SECTION => REPOSITORY HOST -->
+    <!-- ======================================================================================================================= -->
     <section id="repo-host" depend="/quickstart/configure-archiving">
         <title>Dedicated Repository Host</title>
 
@@ -2386,6 +2387,7 @@
 
         <p>On <postgres/> hosts, <br-option>pg1-path</br-option> is required to be the path of the local PostgreSQL cluster and no <br-option>pg1-host</br-option> should be configured. When configuring a repository host, the pgbackrest configuration file must have the <br-option>pg-host</br-option> option configured to connect to the primary and standby (if any) hosts. The repository host has the only pgbackrest configuration that should be aware of more than one <postgres/> host. Order does not matter, e.g. pg1-path/pg1-host, pg2-path/pg2-host can be primary or standby.</p>
 
+        <!-- =================================================================================================================== -->
         <section id="install">
             <title>Installation</title>
 
@@ -2424,6 +2426,7 @@
             </block>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section if="{[protocol-ssh]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
@@ -2459,7 +2462,7 @@
             </block> -->
         </section>
 
-        <!-- SECTION => REPOSITORY HOST - INSTALL/CONFIGURE -->
+        <!-- =================================================================================================================== -->
         <section id="config">
             <title>Configuration</title>
 
@@ -2574,6 +2577,7 @@
             </block>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section if="{[protocol-tls]}" id="setup-tls">
             <title>Setup TLS Server</title>
 
@@ -2592,6 +2596,7 @@
             </block>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="stanza-create">
             <title>Create and Check Stanza</title>
 
@@ -2625,7 +2630,7 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => REPOSITORY HOST - PERFORM BACKUP -->
+        <!-- =================================================================================================================== -->
         <section id="perform-backup">
             <title>Perform a Backup</title>
 
@@ -2642,7 +2647,7 @@
             <p>Since a new repository was created on the <host>repository</host> host the warning about the incremental backup changing to a full backup was emitted.</p>
         </section>
 
-        <!-- SECTION => REPOSITORY HOST - PERFORM RESTORE -->
+        <!-- =================================================================================================================== -->
         <section id="perform-restore">
             <title>Restore a Backup</title>
 
@@ -2670,7 +2675,7 @@
         </section>
     </section>
 
-    <!-- SECTION => PARALLEL BACKUP-RESTORE -->
+    <!-- ======================================================================================================================= -->
     <section id="parallel-backup-restore" depend="repo-host/config">
         <title>Parallel Backup / Restore</title>
 
@@ -2714,7 +2719,7 @@
         <p>The performance of the last backup should be improved by using multiple processes.  For very small backups the difference may not be very apparent, but as the size of the database increases so will time savings.</p>
     </section>
 
-    <!-- SECTION => START/STOP -->
+    <!-- ======================================================================================================================= -->
     <section id="start-stop" depend="/repo-host/config">
         <title>Starting and Stopping</title>
 
@@ -2791,13 +2796,13 @@
         </execute-list>
     </section>
 
-    <!-- SECTION => REPLICATION -->
+    <!-- ======================================================================================================================= -->
     <section id="replication" depend="/repo-host/perform-backup">
         <title>Replication</title>
 
         <p>Replication allows multiple copies of a <postgres/> cluster (called standbys) to be created from a single primary.  The standbys are useful for balancing reads and to provide redundancy in case the primary host fails.</p>
 
-        <!-- SECTION => REPLICATION - INSTALLATION -->
+        <!-- =================================================================================================================== -->
         <section id="installation">
             <title>Installation</title>
 
@@ -2823,7 +2828,7 @@
             </block>
         </section>
 
-        <!-- SECTION => REPLICATION - SETUP-SSH -->
+        <!-- =================================================================================================================== -->
         <section if="{[protocol-ssh]}" id="setup-ssh">
             <title>Setup Passwordless SSH</title>
 
@@ -2845,7 +2850,7 @@
             </block> -->
         </section>
 
-        <!-- SECTION => REPLICATION - HOT-STANDBY -->
+        <!-- =================================================================================================================== -->
         <section id="hot-standby">
             <title>Hot Standby</title>
 
@@ -3036,7 +3041,7 @@
             </execute-list>
         </section>
 
-        <!-- SECTION => REPLICATION - STREAMING -->
+        <!-- =================================================================================================================== -->
         <section id="streaming">
             <title>Streaming Replication</title>
 
@@ -3184,7 +3189,7 @@
         </section>
     </section>
 
-    <!-- SECTION => ASYNCHRONOUS ARCHIVING -->
+    <!-- ======================================================================================================================= -->
     <section id="async-archiving" depend="/replication">
         <title>Asynchronous Archiving</title>
 
@@ -3256,6 +3261,7 @@
             </execute>
         </execute-list>
 
+        <!-- =================================================================================================================== -->
         <section id="async-archive-push">
             <title>Archive Push</title>
 
@@ -3303,6 +3309,7 @@
             </execute-list>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="async-archive-get">
             <title>Archive Get</title>
 
@@ -3336,7 +3343,7 @@
         </execute-list>
     </section>
 
-    <!-- SECTION => STANDBY-BACKUP -->
+    <!-- ======================================================================================================================= -->
     <section id="standby-backup" depend="/replication/streaming">
         <title>Backup from a Standby</title>
 
@@ -3388,6 +3395,7 @@
     <section id="stress" if="'{[stress]}' eq 'y'">
         <title>Stress Testing</title>
 
+        <!-- =================================================================================================================== -->
         <section id="configuration">
             <title>Configuration</title>
 
@@ -3450,9 +3458,11 @@
             </backrest-config>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="data-load">
             <title>Create Tables and Load Data</title>
 
+            <!-- =============================================================================================================== -->
             <section id="streaming-break">
                 <title>Break Streaming Replication</title>
 
@@ -3477,6 +3487,7 @@
                 </execute-list>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="table-create">
                 <title>Create Tables</title>
 
@@ -3493,6 +3504,7 @@
                 </execute-list>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="data-load">
                 <title>Load Data</title>
 
@@ -3506,6 +3518,7 @@
                 </execute-list>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="streaming-fix">
                 <title>Fix Streaming Replication</title>
 
@@ -3523,9 +3536,11 @@
             </section>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="test">
             <title>Testing</title>
 
+            <!-- =============================================================================================================== -->
             <section id="backup-full">
                 <title>Full Backup</title>
 
@@ -3542,6 +3557,7 @@
                 </execute-list>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="backup-diff-delta">
                 <title>Diff Backup with Delta</title>
 
@@ -3558,6 +3574,7 @@
                 </execute-list>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="restore-delta">
                 <title>Restore with Delta</title>
 
@@ -3582,6 +3599,7 @@
                 </execute-list>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="restore">
                 <title>Restore</title>
 
@@ -3626,7 +3644,7 @@
         </section>
     </section>
 
-    <!-- SECTION => STANZA UPGRADE -->
+    <!-- ======================================================================================================================= -->
     <section id="upgrade-stanza">
         <title>Upgrading <postgres/></title>
         <cmd-description key="stanza-upgrade"/>
