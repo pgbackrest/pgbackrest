@@ -652,7 +652,7 @@ testRun(void)
             "archive.info multi-history");
         InfoPg *pgHistory = infoArchivePg(archiveInfo);
 
-        StringList *backupList= strLstNew();
+        StringList *backupList = strLstNew();
         strLstAddZ(backupList, "20181119-152138F");
         strLstAddZ(backupList, "20181119-152900F");
         StringList *archiveIdList = strLstComparatorSet(strLstNew(), archiveIdComparator);
