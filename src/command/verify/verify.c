@@ -856,8 +856,8 @@ verifyBackup(VerifyJobData *const jobData)
 
                 // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the
                 // backup.info file was read) and this is the same label, then set inProgessBackup to true, else false.
-                // inProgressBackup may be changed in verifyManifestFile if a main backup.manifest exists since that would indicate the
-                // backup completed during the verify process.
+                // inProgressBackup may be changed in verifyManifestFile if a main backup.manifest exists since that would indicate
+                // the backup completed during the verify process.
                 bool inProgressBackup = strEq(jobData->currentBackup, backupResult->backupLabel);
 
                 // Get a usable backup manifest file
