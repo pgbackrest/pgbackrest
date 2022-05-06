@@ -1526,6 +1526,50 @@
         </section>
     </section>
 
+    <!-- ======================================================================================================================= -->
+    <section id="backup" depend="quickstart/perform-backup">
+        <title>Backup</title>
+
+        <cmd-description key="backup"/>
+
+        <!-- =================================================================================================================== -->
+        <section id="bundle">
+            <title>File Bundling</title>
+
+            <p>Bundling files together in the repository saves time during the backup and some space in the repository. This is especially pronounced when the repository is stored on an object store such as <proper>S3</proper>. Per-file creation time on object stores is higher and very small files might cost as much to store as larger files.</p>
+
+            <p>The file bundling feature is enabled with the <br-option>repo-bundle</br-option> option.</p>
+
+            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
+                <title>Configure <br-option>repo1-bundle</br-option></title>
+
+                <backrest-config-option section="global" key="repo1-bundle">y</backrest-config-option>
+            </backrest-config>
+
+            <p>A full backup without file bundling will have 1000+ files in the backup path, but with bundling the total number of files is greatly reduced. An additional benefit is that zero-length files are not stored (except in the manifest), whereas in a normal backup each zero-length file is stored individually.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Perform a full backup</title>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=full backup</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Check file total</title>
+
+                <execute user="postgres" output="y">
+                    <exe-cmd>find {[backrest-repo-path]}/backup/demo/latest/ -type f | wc -l</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>The <br-option>repo-bundle-size</br-option> and <br-option>repo-bundle-limit</br-option> options can be used for tuning, though the defaults should be optimal in most cases.</p>
+
+            <p>While file bundling is generally more efficient, the downside is that it is more difficult to manually retrieve files from the repository. It may not be ideal for deduplicated storage since each full backup will arrange files in the bundles differently. Lastly, file bundles cannot be resumed, so be careful not to set <br-option>repo-bundle-size</br-option> too high.</p>
+        </section>
+    </section>
+
     <!-- SECTION => RETENTION -->
     <section id="retention" depend="quickstart/perform-backup">
         <title>Retention</title>
