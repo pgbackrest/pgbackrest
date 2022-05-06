@@ -1319,7 +1319,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, archiveIdResultList);             // Result list for all archive Ids in the repo
         FUNCTION_TEST_PARAM(LIST, backupResultList);                // Result list for all backups in the repo
-        FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested
+        FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested?
     FUNCTION_TEST_END();
 
     ASSERT(archiveIdResultList != NULL);
@@ -1461,10 +1461,10 @@ static String *
 verifyProcess(const bool verboseText)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested
+        FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested?
     FUNCTION_LOG_END();
 
-    String *result = NULL;
+    String *const result = strNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1697,25 +1697,13 @@ verifyProcess(const bool verboseText)
             errorTotal += jobData.jobErrorTotal;
         }
 
-        String *outputStr = strNew();
-
-        // If text output or errors then output stanza/status
-        if (verboseText || errorTotal != 0)
-        {
-            strCat(
-                outputStr, strNewFmt("stanza: %s\nstatus: %s", strZ(cfgOptionStr(cfgOptStanza)),
-                errorTotal > 0 ? VERIFY_STATUS_ERROR : VERIFY_STATUS_OK));
-        }
-
-        // If verbose text is requested or errors exist then add verify results
+        // If verbose output or errors then output results
         if (verboseText || errorTotal > 0)
-            strCatZ(outputStr, strZ(resultStr));
-
-        MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = strDup(outputStr);
+            strCatFmt(
+                result, "stanza: %s\nstatus: %s%s", strZ(cfgOptionStr(cfgOptStanza)),
+                errorTotal > 0 ? VERIFY_STATUS_ERROR : VERIFY_STATUS_OK, strZ(resultStr));
         }
-        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
