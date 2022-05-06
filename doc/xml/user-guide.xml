@@ -14,7 +14,7 @@
         <variable key="os-rhel-title">RHEL</variable>
 
         <!-- Base PostgreSQL versions -->
-        <variable key="os-debian-pg-version">13</variable>
+        <variable key="os-debian-pg-version">12</variable>
         <variable key="os-rhel-pg-version">10</variable>
 
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
