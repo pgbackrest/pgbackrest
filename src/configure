@@ -2332,7 +2332,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # ----------------------------------------------------------------------------------------------------------------------------------
 : ${CFLAGS=""}
 
-# Check compiler supports C99 standard
+# Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
 # ----------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -3329,13 +3329,6 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-#
-#if test ${ac_cv_prog_cc_c99?} == no
-#then
-#fi
-
-# Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
-# ----------------------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -5606,4 +5599,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 printf "%s\n" "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 cfa8ffa6eae17bfd90344bef8e6c2aa39c615776
+# Generated from src/build/configure.ac sha1 fba11d687ddeb125f5d2614cd1ebe93a72965bd5

@@ -9,16 +9,9 @@ AC_CONFIG_AUX_DIR(build)
 # ----------------------------------------------------------------------------------------------------------------------------------
 : ${CFLAGS=""}
 
-# Check compiler supports C99 standard
-# ----------------------------------------------------------------------------------------------------------------------------------
-AC_PROG_CC
-#
-#if test ${ac_cv_prog_cc_c99?} == no
-#then
-#fi
-
 # Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
 # ----------------------------------------------------------------------------------------------------------------------------------
+AC_PROG_CC
 AC_CANONICAL_HOST
 AC_SUBST(CFLAGS, "${CFLAGS} -std=c99")
 
