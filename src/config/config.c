@@ -123,7 +123,7 @@ String *
 cfgCommandRoleName(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(STRING, cfgParseCommandRoleName(cfgCommand(), cfgCommandRole(), COLON_STR));
+    FUNCTION_TEST_RETURN(STRING, cfgParseCommandRoleName(cfgCommand(), cfgCommandRole()));
 }
 
 /**********************************************************************************************************************************/

@@ -1458,8 +1458,22 @@ testRun(void)
                 strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 1)))));
 
         TEST_ERROR(
-            backupLabelCreate(backupTypeFull, NULL, timestamp), FormatError,
+            backupLabelCreate(backupTypeFull, NULL, timestamp), ClockError,
             "new backup label '20191203-193413F' is not later than latest backup label '20191203-193413F'\n"
+            "HINT: has the timezone changed?\n"
+            "HINT: is there clock skew?");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when new label is in the past even with advanced time (from history)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), strZ(
+                strNewFmt(STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 3600)))));
+
+        TEST_ERROR(
+            backupLabelCreate(backupTypeFull, NULL, timestamp), ClockError,
+            "new backup label '20191203-193413F' is not later than latest backup label '20191203-203412F'\n"
             "HINT: has the timezone changed?\n"
             "HINT: is there clock skew?");
     }

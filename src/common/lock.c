@@ -267,7 +267,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         // Write lock file data
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
 
-        ioCopyP(ioBufferReadNewOpen(BUFSTR(strNewFmt("%s" LF_Z, strZ(jsonWriteResult(json))))), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTR(jsonWriteResult(json))), write);
         ioWriteClose(write);
     }
     MEM_CONTEXT_TEMP_END();

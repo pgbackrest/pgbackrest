@@ -109,6 +109,9 @@ command: 104
 # Unable to authenticate or authorize
 access: 105
 
+# Unexpected clock skew or timezone change
+clock: 106
+
 # This error should not be thrown directly -- it serves as a parent for the C errors
 runtime: 122
 

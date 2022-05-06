@@ -97,13 +97,6 @@ objMemContext(void *const this)
     return memContextFromAllocExtra(this);
 }
 
-// Is the object mem context currently being freed?
-__attribute__((always_inline)) static inline bool
-objMemContextFreeing(const void *const this)
-{
-    return memContextFreeing(memContextConstFromAllocExtra(this));
-}
-
 // Move an object to a new context if this != NULL
 void *objMove(THIS_VOID, MemContext *parentNew);
 

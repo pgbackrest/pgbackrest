@@ -9292,7 +9292,7 @@ static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPREC
 /***********************************************************************************************************************************
 Order for option parse resolution
 ***********************************************************************************************************************************/
-static const ConfigOption optionResolveOrder[] =
+static const uint8_t optionResolveOrder[] =
 {
     cfgOptStanza,
     cfgOptArchiveAsync,

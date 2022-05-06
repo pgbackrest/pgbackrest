@@ -62,8 +62,11 @@
                     </release-item>
 
                     <release-item>
-                        <github-issue id="1490"/>
-                        <github-pull-request id="1621"/>
+                        <commit subject="Remove dependency on pg_database.datlastsysoid.">
+                            <github-issue id="1490"/>
+                            <github-pull-request id="1621"/>
+                        </commit>
+                        <commit subject="Remove extraneous linefeed when writing a lock file."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="reid.thompson"/>
@@ -185,6 +188,30 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1739"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="greg.sabino.mullane"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>ClockError</code> for unexpected clock skew and timezone changes.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1738"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Strip extensions from history manifest before showing in error message.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1722"/>
 
                         <release-item-contributor-list>
@@ -268,6 +295,17 @@
                         </release-item-contributor-list>
 
                         <p>Lock module refactoring.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1734"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent <code>memContextFree()</code> from freeing memory needed by callbacks.</p>
                     </release-item>
 
                     <release-item>

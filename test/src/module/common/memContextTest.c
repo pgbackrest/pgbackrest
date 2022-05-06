@@ -13,12 +13,10 @@ testFree(void *thisVoid)
 {
     MemContext *this = thisVoid;
 
-    TEST_RESULT_BOOL(memContextFreeing(this), true, "state should be freeing before memContextFree() in callback");
-    memContextFree(this);
-    TEST_RESULT_INT(this->state, memContextStateFreeing, "state should still be freeing after memContextFree() in callback");
-
-    TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "cannot assign callback to inactive context");
-    TEST_ERROR(memContextSwitch(this), AssertError, "cannot switch to inactive context");
+    TEST_RESULT_BOOL(this->active, false, "mem context should be inactive while freeing");
+    TEST_ERROR(memContextFree(this), AssertError, "assertion 'this->active' failed");
+    TEST_ERROR(memContextCallbackSet(this, testFree, this), AssertError, "assertion 'this->active' failed");
+    TEST_ERROR(memContextSwitch(this), AssertError, "assertion 'this->active' failed");
 
     memContextCallbackArgument = this;
 
@@ -106,8 +104,7 @@ testRun(void)
             memContextSwitch(memContextTop());
             memContextNewP("test-filler");
             memContextKeep();
-            TEST_RESULT_BOOL(
-                memContextTop()->contextChildList[contextIdx]->state == memContextStateActive, true, "new context is active");
+            TEST_RESULT_BOOL(memContextTop()->contextChildList[contextIdx]->active, true, "new context is active");
             TEST_RESULT_Z(memContextTop()->contextChildList[contextIdx]->name, "test-filler", "new context name");
         }
 
@@ -130,8 +127,7 @@ testRun(void)
         memContextNewP("test-reuse");
         memContextKeep();
         TEST_RESULT_BOOL(
-            memContextTop()->contextChildList[1]->state == memContextStateActive,
-            true, "new context in same index as freed context is active");
+            memContextTop()->contextChildList[1]->active, true, "new context in same index as freed context is active");
         TEST_RESULT_Z(memContextTop()->contextChildList[1]->name, "test-reuse", "new context name");
         TEST_RESULT_UINT(memContextTop()->contextChildFreeIdx, 2, "check context free idx");
 
@@ -157,9 +153,8 @@ testRun(void)
             memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]),
             AssertError, "cannot free current context 'test5'");
 
-        memContextSwitch(memContextTop());
-        // memContextFree(memContextTop()->contextChildList[MEM_CONTEXT_INITIAL_SIZE]);
-        memContextFree(memContextTop());
+        TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
+        TEST_RESULT_VOID(memContextFree(memContextTop()), "free top");
 
         MemContext *noAllocation = memContextNewP("empty");
         memContextKeep();
@@ -337,7 +332,7 @@ testRun(void)
 
         TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context name is now 'TOP'");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
-        TEST_RESULT_BOOL(memContext->state == memContextStateActive, true, "new mem context is still active");
+        TEST_RESULT_BOOL(memContext->active, true, "new mem context is still active");
         memContextFree(memContext);
 
         // ------------------------------------------------------------------------------------------------------------------------
