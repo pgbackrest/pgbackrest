@@ -3,6 +3,7 @@
 <doc title="{[project]}" subtitle="Building Documentation" toc="y">
     <description>Building {[project]} Documentation</description>
 
+    <!-- ======================================================================================================================= -->
     <section id="general">
         <title>General Builds</title>
 
@@ -60,6 +61,7 @@ sudo usermod -aG docker testdoc
         </code-block>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="package">
         <title>Building with Packages</title>
 

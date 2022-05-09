@@ -620,7 +620,7 @@ testRun(void)
         writeBuffer = bufNew(0);
         TEST_ERROR(
             storageGetProcess(ioBufferWriteNew(writeBuffer)), OptionInvalidValueError,
-            strZ(strNewFmt("unable to determine cipher passphrase for '%s'", strZ(fileEncCustomName))));
+            zNewFmt("unable to determine cipher passphrase for '%s'", strZ(fileEncCustomName)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get encrypted archive.info - stanza mismatch");

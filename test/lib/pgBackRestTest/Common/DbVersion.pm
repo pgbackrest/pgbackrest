@@ -39,6 +39,8 @@ use constant PG_VERSION_13                                          => '13';
     push @EXPORT, qw(PG_VERSION_13);
 use constant PG_VERSION_14                                          => '14';
     push @EXPORT, qw(PG_VERSION_14);
+use constant PG_VERSION_15                                          => '15';
+    push @EXPORT, qw(PG_VERSION_15);
 
 use constant PG_VERSION_HOT_STANDBY                                 => PG_VERSION_91;
     push @EXPORT, qw(PG_VERSION_HOT_STANDBY);
@@ -56,7 +58,8 @@ sub versionSupport
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->versionSupport');
 
     my @strySupportVersion = (PG_VERSION_90, PG_VERSION_91, PG_VERSION_92, PG_VERSION_93, PG_VERSION_94, PG_VERSION_95,
-                              PG_VERSION_96, PG_VERSION_10, PG_VERSION_11, PG_VERSION_12, PG_VERSION_13, PG_VERSION_14);
+                              PG_VERSION_96, PG_VERSION_10, PG_VERSION_11, PG_VERSION_12, PG_VERSION_13, PG_VERSION_14,
+                              PG_VERSION_15);
 
     # Return from function and log return values if any
     return logDebugReturn

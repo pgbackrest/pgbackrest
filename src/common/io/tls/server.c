@@ -327,14 +327,13 @@ tlsServerNew(
             // Load CA store
             cryptoError(                                                                                            // {vm_covered}
                 SSL_CTX_load_verify_locations(driver->context, strZ(caFile), NULL) != 1,                            // {vm_covered}
-                strZ(strNewFmt("unable to load CA file '%s'", strZ(caFile))));                                      // {vm_covered}
+                zNewFmt("unable to load CA file '%s'", strZ(caFile)));                                              // {vm_covered}
 
             // Tell OpenSSL to send the list of root certs we trust to clients in CertificateRequests. This lets a client with a
             // keystore select the appropriate client certificate to send to us. Also, this ensures that the SSL context will own
             // the rootCertList and free it when no longer needed.
             STACK_OF(X509_NAME) *rootCertList = SSL_load_client_CA_file(strZ(caFile));                              // {vm_covered}
-            cryptoError(                                                                                            // {vm_covered}
-                rootCertList == NULL, strZ(strNewFmt("unable to generate CA list from '%s'", strZ(caFile))));       // {vm_covered}
+            cryptoError(rootCertList == NULL, zNewFmt("unable to generate CA list from '%s'", strZ(caFile)));       // {vm_covered}
 
             SSL_CTX_set_client_CA_list(driver->context, rootCertList);                                              // {vm_covered}
 

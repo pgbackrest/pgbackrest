@@ -88,6 +88,7 @@ ERROR_DECLARE(ExecuteError);
 ERROR_DECLARE(RepoInvalidError);
 ERROR_DECLARE(CommandError);
 ERROR_DECLARE(AccessError);
+ERROR_DECLARE(ClockError);
 ERROR_DECLARE(RuntimeError);
 ERROR_DECLARE(InvalidError);
 ERROR_DECLARE(UnhandledError);

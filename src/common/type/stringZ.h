@@ -1,5 +1,8 @@
 /***********************************************************************************************************************************
 Zero-Terminated String Handler
+
+These functions are shortcuts for creating/modifying zero-terminated strings without needing to wrap a strNew*() call in strZ().
+The benefit is simpler code with less indentation, but be aware that memory is still being allocated.
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_STRINGZ_H
 #define COMMON_TYPE_STRINGZ_H
@@ -7,30 +10,14 @@ Zero-Terminated String Handler
 /***********************************************************************************************************************************
 Zero-terminated strings that are generally useful
 ***********************************************************************************************************************************/
-#define AMPERSAND_Z                                                 "&"
-#define BRACEL_Z                                                    "{"
-#define BRACER_Z                                                    "}"
-#define BRACKETL_Z                                                  "["
-#define BRACKETR_Z                                                  "]"
-#define COLON_Z                                                     ":"
-#define COMMA_Z                                                     ","
-#define CR_Z                                                        "\r"
-#define CRLF_Z                                                      "\r\n"
-#define DASH_Z                                                      "-"
-#define DOT_Z                                                       "."
-#define DOTDOT_Z                                                    ".."
-#define EMPTY_Z                                                     ""
-#define EQ_Z                                                        "="
 #define FALSE_Z                                                     "false"
-#define FSLASH_Z                                                    "/"
-#define LF_Z                                                        "\n"
-#define N_Z                                                         "n"
 #define NULL_Z                                                      "null"
-#define ONE_Z                                                       "1"
-#define QUESTION_Z                                                  "?"
-#define QUOTED_Z                                                    "\""
 #define TRUE_Z                                                      "true"
-#define Y_Z                                                         "y"
-#define ZERO_Z                                                      "0"
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Format a zero-terminated string
+char *zNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 #endif

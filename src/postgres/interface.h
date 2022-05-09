@@ -68,13 +68,6 @@ Page size can only be changed at compile time and is not known to be well-tested
 #define PG_PAGE_SIZE_DEFAULT                                        ((unsigned int)(8 * 1024))
 
 /***********************************************************************************************************************************
-Define the minimum oid that can be used for a user object
-
-Everything below this number should have been created at initdb time.
-***********************************************************************************************************************************/
-#define PG_USER_OBJECT_MIN_ID                                       16384
-
-/***********************************************************************************************************************************
 Define default segment size and pages per segment
 
 Segment size can only be changed at compile time and is not known to be well-tested, so only the default segment size is supported.
@@ -127,6 +120,15 @@ typedef struct PgWal
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Is this a template database?
+bool pgDbIsTemplate(const String *name);
+
+// Is this a system database, i.e. template or postgres?
+bool pgDbIsSystem(const String *name);
+
+// Does this database have a system id, i.e. less than the minimum assignable user id?
+bool pgDbIsSystemId(unsigned int id);
+
 // Get info from pg_control
 PgControl pgControlFromFile(const Storage *storage);
 
