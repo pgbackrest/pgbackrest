@@ -377,6 +377,21 @@
                         <p>Fix <br-option>tls-server-auth</br-option> example and add clarifications.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1742"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                        </release-item-contributor-list>
+
+                        <p>Simplify messaging around supported versions in the documentation.</p>
+                    </release-item>
+                </release-improvement-list>
             </release-doc-list>
         </release>
 
