@@ -391,6 +391,17 @@
 
                         <p>Simplify messaging around supported versions in the documentation.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1722"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Document required base branch for pull requests.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-doc-list>
         </release>
