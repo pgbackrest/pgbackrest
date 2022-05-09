@@ -81,22 +81,17 @@ sub run
         my $iRepoTotal = $rhRun->{repo};
         my $bBundle = $rhRun->{bnd};
 
-        # Use a specific VM and version of PostgreSQL for expect testing. This version will also be used to run tests that are not
-        # version specific.
-        my $bExpectVersion = $self->vm() eq VM_EXPECT && $self->pgVersion() eq PG_VERSION_96;
-
         # Increment the run, log, and decide whether this unit test should be run
-        next if (!$self->begin(
+        next if !$self->begin(
             "bkp ${bHostBackup}, sby ${bHostStandby}, tls ${bTls}, dst ${strBackupDestination}, cmp ${strCompressType}" .
-                ", storage ${strStorage}, enc ${bRepoEncrypt}",
-            $bExpectVersion));
+                ", storage ${strStorage}, enc ${bRepoEncrypt}");
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            false, $self->expect(),
+            false,
             {bHostBackup => $bHostBackup, bStandby => $bHostStandby, bTls => $bTls, strBackupDestination => $strBackupDestination,
-             strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
-             bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal, bBundle => $bBundle});
+                strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
+                bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal, bBundle => $bBundle});
 
         # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
         # so it won't interfere with commands that won't tolerate a connection failure.

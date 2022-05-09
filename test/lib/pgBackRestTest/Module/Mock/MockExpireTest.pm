@@ -67,7 +67,7 @@ sub run
         {
             # Create hosts, file object, and config
             my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-                true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
+                true, {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
@@ -159,7 +159,7 @@ sub run
         {
             # Create hosts, file object, and config
             my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-                true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
+                true, {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(

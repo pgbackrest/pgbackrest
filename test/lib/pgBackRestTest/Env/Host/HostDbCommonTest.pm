@@ -75,7 +75,6 @@ sub new
             strImage => $$oParam{strImage},
             bTls => $oParam->{bTls},
             strBackupDestination => $$oParam{strBackupDestination},
-            oLogTest => $$oParam{oLogTest},
             bSynthetic => $$oParam{bSynthetic},
             bRepoLocal => $oParam->{bRepoLocal},
             bRepoEncrypt => $oParam->{bRepoEncrypt},
@@ -154,7 +153,7 @@ sub archivePush
         ($bAsync ? '' : ' --no-archive-async') .
         " archive-push" . (defined($strSourceFile) ? " ${strSourceFile}" : '') .
         (defined($strOptionalParam) ? " ${strOptionalParam}" : ''),
-        {iExpectedExitStatus => $iExpectedError, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
+        {iExpectedExitStatus => $iExpectedError, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

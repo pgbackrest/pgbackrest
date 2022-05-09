@@ -81,7 +81,6 @@ test.pl [options]
    --no-gen             do not run code generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
    --code-count         generate code counts
-   --expect             --vm=rh7 --pg-version=9.6 --log-force
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-coverage-report run coverage but don't generate coverage report (saves time)
@@ -143,7 +142,6 @@ my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
 my $strPgVersion = 'minimal';
-my $bLogForce = false;
 my $strVm;
 my $bVmBuild = false;
 my $bVmForce = false;
@@ -163,7 +161,6 @@ my $bNoGen = false;
 my $bCodeCount = false;
 my $bBackTrace = false;
 my $bProfile = false;
-my $bExpect = false;
 my $bNoValgrind = false;
 my $bNoOptimize = false;
 my $bNoDebug = false;
@@ -198,7 +195,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'dry-run' => \$bDryRun,
             'no-cleanup' => \$bNoCleanup,
             'pg-version=s' => \$strPgVersion,
-            'log-force' => \$bLogForce,
             'build-only' => \$bBuildOnly,
             'build-package' => \$bBuildPackage,
             'build-max=s' => \$iBuildMax,
@@ -215,7 +211,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'code-count' => \$bCodeCount,
             'backtrace' => \$bBackTrace,
             'profile' => \$bProfile,
-            'expect' => \$bExpect,
             'no-valgrind' => \$bNoValgrind,
             'no-optimize' => \$bNoOptimize,
             'no-debug', => \$bNoDebug,
@@ -277,16 +272,6 @@ eval
     {
         $bNoValgrind = true;
         $bNoCoverage = true;
-    }
-
-    ################################################################################################################################
-    # Update options for --expect
-    ################################################################################################################################
-    if ($bExpect)
-    {
-        $strVm = VM_EXPECT;
-        $strPgVersion = '9.6';
-        $bLogForce = true;
     }
 
     ################################################################################################################################
@@ -1032,8 +1017,8 @@ eval
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx, $iVmMax,
                         $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, !$bNoLogTimestamp,
-                        $bLogForce, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary,
-                        !$bNoOptimize, $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize,
+                        $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
                         $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 
@@ -1096,7 +1081,7 @@ eval
         $strPgVersion ne 'minimal' ? $strPgSqlBin: undef,           # Pg bin path
         $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
-        $bVmOut, $bDryRun, $bNoCleanup, $bLogForce,                 # Test options
+        $bVmOut, $bDryRun, $bNoCleanup,                             # Test options
         $strLogLevelTestFile,                                       # Log options
         TEST_USER, TEST_GROUP);                                     # User/group info
 

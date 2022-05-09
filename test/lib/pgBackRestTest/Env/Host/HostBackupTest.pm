@@ -182,9 +182,6 @@ sub new
     # Set conf file
     $self->{strBackRestConfig} = $self->testPath() . '/' . PROJECT_CONF;
 
-    # Set LogTest object
-    $self->{oLogTest} = $$oParam{oLogTest};
-
     # Set synthetic
     $self->{bSynthetic} = defined($$oParam{bSynthetic}) && $$oParam{bSynthetic} ? true : false;
 
@@ -341,8 +338,7 @@ sub backupBegin
         (defined($oParam->{iRepo}) ? ' --repo=' . $oParam->{iRepo} : '') .
         ($strType ne 'incr' ? " --type=${strType}" : '') .
         ' --stanza=' . (defined($oParam->{strStanza}) ? $oParam->{strStanza} : $self->stanza()) . ' backup',
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus},
-         oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, bLogOutput => $self->synthetic()});
 
     $oExecuteBackup->begin();
 
@@ -506,39 +502,6 @@ sub backupEnd
 
                 $self->backupCompare($strBackup, $oExpectedManifest);
             }
-        }
-    }
-
-    # Add files to expect log
-    if (defined($self->{oLogTest}) && (!defined($$oParam{bSupplemental}) || $$oParam{bSupplemental}))
-    {
-        my $oHostGroup = hostGroupGet();
-
-        if (defined($oHostGroup->hostGet(HOST_DB_PRIMARY, true)))
-        {
-            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_PRIMARY)->testPath() . '/' . PROJECT_CONF);
-        }
-
-        if (defined($oHostGroup->hostGet(HOST_DB_STANDBY, true)))
-        {
-            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_DB_STANDBY)->testPath() . '/' . PROJECT_CONF);
-        }
-
-        if (defined($oHostGroup->hostGet(HOST_BACKUP, true)))
-        {
-            $self->{oLogTest}->supplementalAdd($oHostGroup->hostGet(HOST_BACKUP)->testPath() . '/' . PROJECT_CONF);
-        }
-
-        if ($self->synthetic() && $bManifestCompare)
-        {
-            $self->{oLogTest}->supplementalAdd(
-                $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), undef,
-                ${storageRepo()->get(
-                    storageRepo()->openRead(
-                        $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST),
-                        {strCipherPass => $self->cipherPassManifest()}))});
-            $self->{oLogTest}->supplementalAdd(
-                $self->repoBackupPath(FILE_BACKUP_INFO), undef, ${storageRepo->get($self->repoBackupPath(FILE_BACKUP_INFO))});
         }
     }
 
@@ -805,8 +768,7 @@ sub check
         (defined($$oParam{iTimeout}) ? " --archive-timeout=$$oParam{iTimeout}" : '') .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' --stanza=' . $self->stanza() . ' check',
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
-         bLogOutput => $self->synthetic()});
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -850,8 +812,7 @@ sub expire
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' --repo=' . (defined($oParam->{iRepo}) ? $oParam->{iRepo} : '1') .
         '  --stanza=' . $self->stanza() . ' expire',
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
-         bLogOutput => $self->synthetic()});
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, bLogOutput => $self->synthetic()});
 }
 
 ####################################################################################################################################
@@ -886,7 +847,7 @@ sub info
         ' --log-level-console=warn' .
         (defined($$oParam{strStanza}) ? " --stanza=$$oParam{strStanza}" : '') .
         (defined($$oParam{strOutput}) ? " --output=$$oParam{strOutput}" : '') . ' info',
-        {strComment => $strComment, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
+        {strComment => $strComment, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -924,30 +885,16 @@ sub stanzaCreate
         ' --stanza=' . $self->stanza() .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-create',
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
-         bLogOutput => $self->synthetic()});
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, bLogOutput => $self->synthetic()});
 
     if (storageRepo()->exists('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO))
     {
-        # If the info file was created, then add it to the expect log
-        if (defined($self->{oLogTest}) && $self->synthetic())
-        {
-            $self->{oLogTest}->supplementalAdd(
-                $self->repoBackupPath(FILE_BACKUP_INFO), undef, ${storageRepo()->get($self->repoBackupPath(FILE_BACKUP_INFO))});
-        }
-
         # Get the passphrase for accessing the manifest file
         $self->{strCipherPassManifest} = (new pgBackRestTest::Env::BackupInfo($self->repoBackupPath()))->cipherPassSub();
     }
 
     if (storageRepo()->exists('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
     {
-        # If the info file was created, then add it to the expect log
-        if (defined($self->{oLogTest}) && $self->synthetic())
-        {
-            $self->{oLogTest}->supplementalAdd(
-                $self->repoArchivePath(ARCHIVE_INFO_FILE), undef, ${storageRepo()->get($self->repoArchivePath(ARCHIVE_INFO_FILE))});
-        }
 
         # Get the passphrase for accessing the archived files
         $self->{strCipherPassArchive} =
@@ -990,23 +937,7 @@ sub stanzaUpgrade
         ' --stanza=' . $self->stanza() .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-upgrade',
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
-         bLogOutput => $self->synthetic()});
-
-    # If the info file was created, then add it to the expect log
-    if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageRepo()->exists('backup/' . $self->stanza() . qw{/} . FILE_BACKUP_INFO))
-    {
-        $self->{oLogTest}->supplementalAdd(
-            $self->repoBackupPath(FILE_BACKUP_INFO), undef, ${storageRepo()->get($self->repoBackupPath(FILE_BACKUP_INFO))});
-    }
-
-    if (defined($self->{oLogTest}) && $self->synthetic() &&
-        storageRepo()->exists('archive/' . $self->stanza() . qw{/} . ARCHIVE_INFO_FILE))
-    {
-        $self->{oLogTest}->supplementalAdd(
-            $self->repoArchivePath(ARCHIVE_INFO_FILE), undef, ${storageRepo()->get($self->repoArchivePath(ARCHIVE_INFO_FILE))});
-    }
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1045,18 +976,7 @@ sub stanzaDelete
         ' --stanza=' . $self->stanza() .
         (defined($$oParam{strOptionalParam}) ? " $$oParam{strOptionalParam}" : '') .
         ' stanza-delete',
-        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, oLogTest => $self->{oLogTest},
-         bLogOutput => $self->synthetic()});
-
-    if (defined($self->{oLogTest}) && $self->synthetic())
-    {
-        $self->{oLogTest}->logAdd(
-            'list backup', $self->stanza() . ' must not exist for successful delete',
-            join("\n", storageRepo()->list('backup')));
-        $self->{oLogTest}->logAdd(
-            'list archive', $self->stanza() . ' must not exist for successful delete',
-            join("\n", storageRepo()->list('archive')));
-    }
+        {strComment => $strComment, iExpectedExitStatus => $$oParam{iExpectedExitStatus}, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1090,7 +1010,7 @@ sub start
         $self->backrestExe() .
         ' --config=' . $self->backrestConfig() .
         (defined($$oParam{strStanza}) ? " --stanza=$$oParam{strStanza}" : '') . ' start',
-        {strComment => $strComment, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
+        {strComment => $strComment, bLogOutput => $self->synthetic()});
 }
 
 ####################################################################################################################################
@@ -1122,7 +1042,7 @@ sub stop
         ' --config=' . $self->backrestConfig() .
         (defined($$oParam{strStanza}) ? " --stanza=$$oParam{strStanza}" : '') .
         (defined($$oParam{bForce}) && $$oParam{bForce} ? ' --force' : '') . ' stop',
-        {strComment => $strComment, oLogTest => $self->{oLogTest}, bLogOutput => $self->synthetic()});
+        {strComment => $strComment, bLogOutput => $self->synthetic()});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
@@ -1904,8 +1824,7 @@ sub restore
         (defined($strTargetAction) && $strTargetAction ne 'pause' ? " --target-action=${strTargetAction}" : '') .
         (defined($iRepo) ? " --repo=${iRepo}" : '') .
         " --stanza=" . $self->stanza() . ' restore',
-        {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, oLogTest => $self->{oLogTest},
-         bLogOutput => $self->synthetic()},
+        {strComment => $strComment, iExpectedExitStatus => $iExpectedExitStatus, bLogOutput => $self->synthetic()},
         $strUser);
 
     if (!defined($iExpectedExitStatus))
@@ -1915,13 +1834,6 @@ sub restore
         if ($iRepoDefault == 1)
         {
             $self->restoreCompare($strBackupExpected, dclone($rhExpectedManifest), $bTablespace);
-        }
-
-        if (defined($self->{oLogTest}))
-        {
-            $self->{oLogTest}->supplementalAdd(
-                $rhExpectedManifest->{&MANIFEST_SECTION_BACKUP_TARGET}{&MANIFEST_TARGET_PGDATA}{&MANIFEST_SUBKEY_PATH} .
-                "/recovery.conf");
         }
     }
 }

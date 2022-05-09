@@ -93,10 +93,6 @@ use constant VM_U20                                                 => 'u20';
 use constant VM_D9                                                  => 'd9';
     push @EXPORT, qw(VM_D9);
 
-# Defines the vm that will be used for expect testing
-use constant VM_EXPECT                                              => VM_RH7;
-    push @EXPORT, qw(VM_EXPECT);
-
 # VM aliases for run matrices (numbered oldest to newest)
 use constant VM2                                                    => VM_D9;
     push @EXPORT, qw(VM2);

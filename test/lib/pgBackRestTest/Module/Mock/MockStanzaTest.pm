@@ -64,7 +64,7 @@ sub run
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(),
+            true,
             {bHostBackup => $bRemote, bTls => $bTls, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
                 strCompressType => $strCompressType});
 
@@ -129,7 +129,7 @@ sub run
 
         my $strCommand = $oHostDbPrimary->backrestExe() . ' --config=' . $oHostDbPrimary->backrestConfig() .
             ' --stanza=db archive-push';
-        $oHostDbPrimary->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
+        $oHostDbPrimary->executeSimple($strCommand . " ${strSourceFile}");
 
         # With data existing in the archive dir, move the info files and confirm failure
         forceStorageMove(storageRepo(), $strArchiveInfoFile, $strArchiveInfoOldFile, {bRecurse => false});
@@ -149,7 +149,7 @@ sub run
         #--------------------------------------------------------------------------------------------------------------------------
         $strArchiveFile = $self->walSegment(1, 1, 2);
         $strSourceFile = $self->walGenerate($strWalPath, PG_VERSION_93, 1, $strArchiveFile);
-        $oHostDbPrimary->executeSimple($strCommand . " ${strSourceFile}", {oLogTest => $self->expect()});
+        $oHostDbPrimary->executeSimple($strCommand . " ${strSourceFile}");
 
         # Fail on archive push due to mismatch of DB since stanza not upgraded
         #--------------------------------------------------------------------------------------------------------------------------
@@ -178,8 +178,7 @@ sub run
         # Attempt to get the last archive log that was pushed to this repo
         $oHostDbPrimary->executeSimple(
             $oHostDbPrimary->backrestExe() . ' --config=' . $oHostDbPrimary->backrestConfig() .
-                " --stanza=db archive-get ${strArchiveFile} " . $oHostDbPrimary->dbBasePath() . '/pg_xlog/RECOVERYXLOG',
-            {oLogTest => $self->expect()});
+                " --stanza=db archive-get ${strArchiveFile} " . $oHostDbPrimary->dbBasePath() . '/pg_xlog/RECOVERYXLOG');
 
         # Copy the new pg_control back so the tests can continue with the upgraded stanza
         $self->controlGenerate($oHostDbPrimary->dbBasePath(), PG_VERSION_94);
