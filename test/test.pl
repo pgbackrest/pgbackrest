@@ -70,7 +70,6 @@ test.pl [options]
    --clean              clean working and result paths for a completely fresh build
    --clean-only         execute --clean and exit
    --pg-version         version of postgres to test (all, defaults to minimal)
-   --log-force          force overwrite of current test log files
    --build-only         build the binary (and honor --build-package) but don't run tests
    --build-package      build the package
    --build-max          max processes to use for builds (default 4)
