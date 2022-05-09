@@ -81,6 +81,9 @@ sub run
         my $iRepoTotal = $rhRun->{repo};
         my $bBundle = $rhRun->{bnd};
 
+        # Some tests are not version specific so only run them on a single version of PostgreSQL
+        my $bNonVersionSpecific = $self->pgVersion() eq PG_VERSION_96;
+
         # Increment the run, log, and decide whether this unit test should be run
         next if !$self->begin(
             "bkp ${bHostBackup}, sby ${bHostStandby}, tls ${bTls}, dst ${strBackupDestination}, cmp ${strCompressType}" .
@@ -204,9 +207,9 @@ sub run
         }
 
         # Make a new backup with expire-auto disabled then run the expire command and compare backup numbers to ensure that expire
-        # was really disabled. This test is not version specific so is run on only the expect version.
+        # was really disabled. This test is not version specific so is run on only one version.
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bExpectVersion)
+        if ($bNonVersionSpecific)
         {
             my $oBackupInfo = new pgBackRestTest::Env::BackupInfo($oHostBackup->repoBackupPath());
             push(my @backupLst1, $oBackupInfo->list());
@@ -345,8 +348,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and the
         # logs will to be deleted to avoid causing issues further down the line. This test is not version specific so is run on only
-        # the expect version.
-        if ($bExpectVersion)
+        # one version.
+        if ($bNonVersionSpecific)
         {
             confess "test must be performed on posix storage" if $strStorage ne POSIX;
 
@@ -747,9 +750,9 @@ sub run
         $oHostDbPrimary->clusterStop();
 
         # Stanza-delete --force without access to pgbackrest on database host. This test is not version specific so is run on only
-        # the expect version.
+        # one version.
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($bExpectVersion)
+        if ($bNonVersionSpecific)
         {
             # Make sure this test has a backup host to work with
             confess "test must run with backup dst = " . HOST_BACKUP if !$bHostBackup;

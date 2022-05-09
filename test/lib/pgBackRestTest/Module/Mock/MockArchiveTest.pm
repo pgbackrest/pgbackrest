@@ -136,7 +136,7 @@ sub run
         my $strArchiveFile1 = $self->walGenerate($strWalPath, PG_VERSION_94, 1, $strSourceFile1);
 
         $oHostDbPrimary->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile1}", {iExpectedExitStatus => ERROR_REPO_INVALID);
+            $strCommandPush . " ${strWalPath}/${strSourceFile1}", {iExpectedExitStatus => ERROR_REPO_INVALID});
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG", {iExpectedExitStatus => ERROR_REPO_INVALID});

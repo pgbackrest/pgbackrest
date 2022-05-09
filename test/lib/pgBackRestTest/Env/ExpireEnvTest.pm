@@ -607,8 +607,6 @@ sub process
 
     my $oStanza = $self->{oStanzaHash}{$strStanza};
 
-    $self->supplementalLog($strStanza);
-
     undef($$oStanza{strBackupDescription});
 
     my $strCommand =
@@ -641,8 +639,6 @@ sub process
     $strCommand .= ' expire';
 
     $self->{oHostBackup}->executeSimple($strCommand, {strComment => $strDescription});
-
-    $self->supplementalLog($strStanza);
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);

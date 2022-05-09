@@ -851,12 +851,6 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
 
-        if (!$bRemote)
-        {
-            # Remove the size-changed test file to avoid expect log churn
-            $oHostDbPrimary->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
-        }
-
         # Drop tablespace 11
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;

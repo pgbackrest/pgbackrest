@@ -239,7 +239,6 @@ sub testResult
         $strExpected,
         $strDescription,
         $iWaitSeconds,
-        $strLogLevel,
     ) =
         logDebugParam
         (
@@ -257,10 +256,6 @@ sub testResult
 
     my $oWait = waitInit($iWaitSeconds);
     my $bDone = false;
-
-    # Save the current log levels and set the file level to strLogLevel, console to off, and timestamp false
-    my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
-    logLevelSet($strLogLevel, OFF, undef, false);
 
     # Clear the cache for this test
     logFileCacheClear();
@@ -282,15 +277,10 @@ sub testResult
                 $strActual = ${logDebugBuild(\@stryResult)};
             }
 
-            # Restore the log level
-            logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
             return true;
         }
         or do
         {
-            # Restore the log level
-            logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
-
             if (!isException(\$EVAL_ERROR))
             {
                 confess "unexpected standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
