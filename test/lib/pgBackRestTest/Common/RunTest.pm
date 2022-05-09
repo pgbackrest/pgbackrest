@@ -247,7 +247,6 @@ sub testResult
             {name => 'strExpected', required => false, trace => true},
             {name => 'strDescription', trace => true},
             {name => 'iWaitSeconds', optional => true, default => 0, trace => true},
-            {name => 'strLogLevel', optional => true, default => WARN, trace => true},
         );
 
     &log(INFO, '    ' . $strDescription);
