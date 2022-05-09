@@ -22,6 +22,9 @@
                             <github-pull-request id="1732"/>
                         </commit>
                         <commit subject="Remove unnecessary TRY() block in common/regExp module."/>
+                        <commit subject="Use variable instead of function to track FINALLY() state.">
+                            <github-pull-request id="1744"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
