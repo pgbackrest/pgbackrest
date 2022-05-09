@@ -193,7 +193,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 
         cryptoInit();
 
-        TRY_FINALLY_BEGIN()
+        TRY_BEGIN()
         {
             // Load key
             bio = BIO_new(BIO_s_mem());

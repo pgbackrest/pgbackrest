@@ -890,7 +890,7 @@ memContextFree(MemContext *const this)
     ASSERT(this->active);
 
     // Execute callbacks
-    TRY_FINALLY_BEGIN()
+    TRY_BEGIN()
     {
         memContextCallbackRecurse(this);
     }

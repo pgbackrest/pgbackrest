@@ -185,7 +185,7 @@ testRun(void)
                 HostConnectError, "unable to get address for '%s': [%d] %s", hostBad, result, gai_strerror(result));
         }
 
-        TRY_FINALLY_BEGIN()
+        TRY_BEGIN()
         {
             int fd = socket(hostBadAddress->ai_family, hostBadAddress->ai_socktype, hostBadAddress->ai_protocol);
             THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");

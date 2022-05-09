@@ -3,7 +3,7 @@ Error Handler
 
 Implement a try ... catch ... finally error handler.
 
-TRY_FINALLY_BEGIN()
+TRY_BEGIN()
 {
     <Do something that might throw an error>
 }
@@ -132,18 +132,8 @@ Begin a block where errors can be thrown
 #define TRY_BEGIN()                                                                                                                \
     do                                                                                                                             \
     {                                                                                                                              \
-        errorInternalTryBegin(__FILE__, __func__, __LINE__);                                                                       \
-                                                                                                                                   \
-        if (setjmp(*errorInternalJump()) == 0)                                                                                     \
-        {
-
-/***********************************************************************************************************************************
-Begin a block where errors can be thrown and a finally block will always be run
-***********************************************************************************************************************************/
-#define TRY_FINALLY_BEGIN()                                                                                                        \
-    do                                                                                                                             \
-    {                                                                                                                              \
         volatile bool TRY_finally = false;                                                                                         \
+        (void)TRY_finally;                                          /* Will be unused if there is no finally block */              \
                                                                                                                                    \
         errorInternalTryBegin(__FILE__, __func__, __LINE__);                                                                       \
                                                                                                                                    \
