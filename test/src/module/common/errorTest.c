@@ -26,7 +26,7 @@ static bool testTryRecurseFinally = false;
 static void
 testTryRecurse(void)
 {
-    TRY_BEGIN()
+    TRY_FINALLY_BEGIN()
     {
         testTryRecurseTotal++;
         assert(errorContext.tryTotal == testTryRecurseTotal + 1);
@@ -85,7 +85,7 @@ testRun(void)
         bool catchDone = false;
         bool finallyDone = false;
 
-        TRY_BEGIN()
+        TRY_FINALLY_BEGIN()
         {
             assert(errorContext.tryTotal == 1);
             tryDone = true;
@@ -150,7 +150,7 @@ testRun(void)
             {
                 assert(errorTryDepth() == 2);
 
-                TRY_BEGIN()
+                TRY_FINALLY_BEGIN()
                 {
                     assert(errorTryDepth() == 3);
 
@@ -158,7 +158,7 @@ testRun(void)
                     {
                         assert(errorTryDepth() == 4);
 
-                        TRY_BEGIN()
+                        TRY_FINALLY_BEGIN()
                         {
                             assert(errorTryDepth() == 5);
                             tryDone = true;
@@ -233,7 +233,7 @@ testRun(void)
         bool catchDone = false;
         bool finallyDone = false;
 
-        TRY_BEGIN()
+        TRY_FINALLY_BEGIN()
         {
             tryDone = true;
             testTryRecurse();

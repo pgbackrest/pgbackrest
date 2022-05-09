@@ -183,7 +183,7 @@ storagePosixInfoList(
         // Directory was found
         result = true;
 
-        TRY_BEGIN()
+        TRY_FINALLY_BEGIN()
         {
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {

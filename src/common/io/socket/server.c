@@ -170,7 +170,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         // Lookup address
         struct addrinfo *addressFound = sckHostLookup(driver->address, driver->port);
 
-        TRY_BEGIN()
+        TRY_FINALLY_BEGIN()
         {
             // Create socket
             THROW_ON_SYS_ERROR(

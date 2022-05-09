@@ -140,7 +140,7 @@ testRun(void)
                     protocolClientNew(STRDEF("db test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     "create client");
 
-                TRY_BEGIN()
+                TRY_FINALLY_BEGIN()
                 {
                     // -------------------------------------------------------------------------------------------------------------
                     TEST_TITLE("open and free database");
@@ -166,7 +166,7 @@ testRun(void)
 
                     TEST_ASSIGN(db, dbNew(NULL, client, storagePgIdx(0), STRDEF(PROJECT_NAME " [" CFGCMD_BACKUP "]")), "create db");
 
-                    TRY_BEGIN()
+                    TRY_FINALLY_BEGIN()
                     {
                         TEST_RESULT_VOID(dbOpen(db), "open db");
                         TEST_RESULT_UINT(db->remoteIdx, 1, "check idx");

@@ -105,11 +105,11 @@ tlsServerDh(SSL_CTX *const context)
 	BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
     cryptoError(bio == NULL, "unable create buffer for DH parameters");
 
-    TRY_BEGIN()
+    TRY_FINALLY_BEGIN()
     {
     	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
 
-        TRY_BEGIN()
+        TRY_FINALLY_BEGIN()
         {
             cryptoError(SSL_CTX_set_tmp_dh(context, dh) != 1, "unable to set temp dh parameters");
         }
@@ -150,7 +150,7 @@ tlsServerEcdh(SSL_CTX *const context)
 
     SSL_CTX_set_options(context, SSL_OP_SINGLE_ECDH_USE);
 
-    TRY_BEGIN()
+    TRY_FINALLY_BEGIN()
     {
         cryptoError(SSL_CTX_set_tmp_ecdh(context, ecdh) != 1, "unable to set temp ecdh key");
     }

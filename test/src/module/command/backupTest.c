@@ -610,7 +610,7 @@ void testCmdBackup(void)
 
     lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
 
-    TRY_BEGIN()
+    TRY_FINALLY_BEGIN()
     {
         cmdBackup();
     }

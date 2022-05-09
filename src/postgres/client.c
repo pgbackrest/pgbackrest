@@ -211,7 +211,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             if (cancel == NULL)
                 THROW_FMT(DbQueryError, "unable to cancel query '%s': connection was lost", strZ(query));
 
-            TRY_BEGIN()
+            TRY_FINALLY_BEGIN()
             {
                 char error[256];
 
@@ -228,7 +228,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
         // Get the result (even if query was cancelled -- to prevent the connection being left in a bad state)
         PGresult *pgResult = PQgetResult(this->connection);
 
-        TRY_BEGIN()
+        TRY_FINALLY_BEGIN()
         {
             // Throw timeout error if cancelled
             if (busy)

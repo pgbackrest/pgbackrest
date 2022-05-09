@@ -325,7 +325,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     // Get execId from lock file and close it
                     const String *execId = NULL;
 
-                    TRY_BEGIN()
+                    TRY_FINALLY_BEGIN()
                     {
                         execId = lockReadFileData(lockFile, result).execId;
                     }

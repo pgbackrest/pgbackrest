@@ -216,7 +216,7 @@ main(int argListSize, const char *argList[])
     {[C_TEST_LIST]}
 
 #ifdef HRN_FEATURE_ERROR
-    TRY_BEGIN()
+    TRY_FINALLY_BEGIN()
     {
         TRY_BEGIN()
         {

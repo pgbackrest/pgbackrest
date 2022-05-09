@@ -86,7 +86,7 @@ sckClientOpen(THIS_VOID)
                 struct addrinfo *addressFound = sckHostLookup(this->host, this->port);
 
                 // Connect to the host
-                TRY_BEGIN()
+                TRY_FINALLY_BEGIN()
                 {
                     fd = socket(addressFound->ai_family, addressFound->ai_socktype, addressFound->ai_protocol);
                     THROW_ON_SYS_ERROR(fd == -1, HostConnectError, "unable to create socket");
