@@ -349,19 +349,20 @@ testRun(void)
         memset(bufPtr(walBuffer1), 0, bufSize(walBuffer1));
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11}, walBuffer1);
 
-        // Check sha1 checksum against fixed values once to make sure they are not getting munged. After this we'll calculate them
-        // directly from the buffers to reduce the cost of maintaining checksums.
-        walBuffer1Sha1 = TEST_64BIT() ?
-            (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "858a9ef24b79468eb2a61543b58140addfede0fc") :
-            "044ec0576dc4e59d460aa3a8ac796ba4874ddff3";
-
         HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000001", walBuffer1);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
 
-        TEST_STORAGE_EXISTS(
-            storageRepoIdxWrite(0), zNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1),
+        // Check sha1 checksum against fixed values once to make sure they are not getting munged. After this we'll calculate them
+        // directly from the buffers to reduce the cost of maintaining checksums.
+        TEST_STORAGE_LIST(
+            storageRepoIdx(0), STORAGE_REPO_ARCHIVE "/11-1/0000000100000001",
+            zNewFmt(
+                "000000010000000100000001-%s.gz\n",
+                TEST_64BIT() ?
+                    (TEST_BIG_ENDIAN() ? "4dc9df63290935f68f43b7d02005716a98800ce0" : "858a9ef24b79468eb2a61543b58140addfede0fc") :
+                    "044ec0576dc4e59d460aa3a8ac796ba4874ddff3"),
             .comment = "check repo for WAL file");
 
         // No warning emitted re WAL file already existing with the same checksum due to --no-archive-mode-check

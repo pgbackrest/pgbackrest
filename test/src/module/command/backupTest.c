@@ -2006,7 +2006,7 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "b7ec43e4646f5d06c95881df0c572630a1221377") :
+                (TEST_BIG_ENDIAN() ? "ec84602c8b4f62bd0ef10bd3dfcb04c3b3ce4a35" : "b7ec43e4646f5d06c95881df0c572630a1221377") :
                 "f21ff9abdcd1ec2f600d4ee8e5792c9b61eb2e37");
 
         // Make pg no longer appear to be running
@@ -2835,6 +2835,7 @@ testRun(void)
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
+            const char *rel1_2Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, relation)));
 
             // File with bad page checksums
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 5);
@@ -2954,8 +2955,7 @@ testRun(void)
                         ",\"timestamp\":1572200002}\n"
                     "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
                         ",\"size\":8192,\"timestamp\":1572200000}\n"
-                    "pg_data/base/1/2={\"checksum\":\"2deafa7ae60279a54a09422b985a8025f5e125fb\",\"checksum-page\":false"
-                        ",\"size\":8704,\"timestamp\":1572200000}\n"
+                    "pg_data/base/1/2={\"checksum\":\"%s\",\"checksum-page\":false,\"size\":8704,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,[2,4]]"
                         ",\"size\":40960,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/4={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[1],\"size\":24576"
@@ -2984,7 +2984,7 @@ testRun(void)
                     "pg_tblspc/32768={}\n"
                     "pg_tblspc/32768/PG_11_201809051={}\n"
                     "pg_tblspc/32768/PG_11_201809051/1={}\n",
-                    rel1_3Sha1, rel1_4Sha1),
+                    rel1_2Sha1, rel1_3Sha1, rel1_4Sha1),
                 "compare file list");
 
             // Remove test files
