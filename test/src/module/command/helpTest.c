@@ -45,7 +45,7 @@ testRun(void)
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
 
     // General help text is used in more than one test
-    const char *generalHelp = strZ(strNewFmt(
+    const char *generalHelp = zNewFmt(
         "%s - General help\n"
         "\n"
         "Usage:\n"
@@ -73,7 +73,7 @@ testRun(void)
         "    version         Get version.\n"
         "\n"
         "Use 'pgbackrest help [command]' for more information.\n",
-        helpVersion));
+        helpVersion);
 
     // *****************************************************************************************************************************
     if (testBegin("helpRenderSplitSize()"))
@@ -144,14 +144,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("version command");
 
-        const char *commandHelp = strZ(strNewFmt(
+        const char *commandHelp = zNewFmt(
             "%s%s",
             helpVersion,
             " - 'version' command help\n"
             "\n"
             "Get version.\n"
             "\n"
-            "Displays installed pgBackRest version.\n"));
+            "Displays installed pgBackRest version.\n");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -164,7 +164,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restore command");
 
-        commandHelp = strZ(strNewFmt(
+        commandHelp = zNewFmt(
             "%s%s%s",
             helpVersion,
             " - 'restore' command help\n"
@@ -318,7 +318,7 @@ testRun(void)
             "\n"
             "  --pg-path                        postgreSQL data directory\n"
             "\n"
-            "Use 'pgbackrest help restore [option]' for more information.\n"));
+            "Use 'pgbackrest help restore [option]' for more information.\n");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -367,7 +367,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default and current option value");
 
-        const char *optionHelp = strZ(strNewFmt(
+        const char *optionHelp = zNewFmt(
             "%s - 'archive-push' command - 'buffer-size' option help\n"
             "\n"
             "Buffer size for I/O operations.\n"
@@ -383,7 +383,7 @@ testRun(void)
             "\n"
             "Allowed values are 16KiB, 32KiB, 64KiB, 128KiB, 256KiB, 512KiB, 1MiB, 2MiB,\n"
             "4MiB, 8MiB, and 16MiB.\n",
-            helpVersion));
+            helpVersion);
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -414,10 +414,10 @@ testRun(void)
         #define HELP_OPTION_DEPRECATED_NAMES                                                                                       \
             "deprecated names: repo-azure-host, repo-s3-host\n"
 
-        optionHelp = strZ(strNewFmt(
+        optionHelp = zNewFmt(
             HELP_OPTION
             HELP_OPTION_DEPRECATED_NAMES,
-            helpVersion));
+            helpVersion);
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -427,12 +427,12 @@ testRun(void)
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
 
-        optionHelp = strZ(strNewFmt(
+        optionHelp = zNewFmt(
             HELP_OPTION
             "current: s3-host\n"
             "\n"
             HELP_OPTION_DEPRECATED_NAMES,
-            helpVersion));
+            helpVersion);
 
         // Set a current value for deprecated option name
         hrnCfgArgRawZ(argList, cfgOptRepoType, "s3");
@@ -443,7 +443,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cipher pass redacted");
 
-        optionHelp = strZ(strNewFmt(
+        optionHelp = zNewFmt(
             "%s - 'archive-push' command - 'repo-cipher-pass' option help\n"
             "\n"
             "Repository cipher passphrase.\n"
@@ -451,7 +451,7 @@ testRun(void)
             "Passphrase used to encrypt/decrypt files of the repository.\n"
             "\n"
             "current: <redacted>\n",
-            helpVersion));
+            helpVersion);
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -467,7 +467,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated and new option name produce same results");
 
-        optionHelp = strZ(strNewFmt(
+        optionHelp = zNewFmt(
             "%s - 'backup' command - 'repo-hardlink' option help\n"
             "\n"
             "Hardlink files between backups in the repository.\n"
@@ -480,7 +480,7 @@ testRun(void)
             "default: n\n"
             "\n"
             "deprecated name: hardlink\n",
-            helpVersion));
+            helpVersion);
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -501,7 +501,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check admonition");
 
-        optionHelp = strZ(strNewFmt(
+        optionHelp = zNewFmt(
             "%s - 'backup' command - 'repo-retention-archive' option help\n"
             "\n"
             "Number of backups worth of continuous WAL to retain.\n"
@@ -524,7 +524,7 @@ testRun(void)
             "expired WAL and is therefore not recommended.\n"
             "\n"
             "deprecated name: retention-archive\n",
-            helpVersion));
+            helpVersion);
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");

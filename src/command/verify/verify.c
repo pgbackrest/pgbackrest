@@ -1296,10 +1296,10 @@ verifyCreateFileErrorsStr(
         // List all if verbose text, otherwise only list if type has errors
         strCatFmt(
             result, "\n    %s%s%s%s",
-            verboseText || errMissing ? strZ(strNewFmt("missing: %u, ", errMissing)) : "",
-            verboseText || errChecksum ? strZ(strNewFmt("checksum invalid: %u, ", errChecksum)) : "",
-            verboseText || errSize ? strZ(strNewFmt("size invalid: %u, ", errSize)) : "",
-            verboseText || errOther ? strZ(strNewFmt("other: %u", errOther)) : "");
+            verboseText || errMissing ? zNewFmt("missing: %u, ", errMissing) : "",
+            verboseText || errChecksum ? zNewFmt("checksum invalid: %u, ", errChecksum) : "",
+            verboseText || errSize ? zNewFmt("size invalid: %u, ", errSize) : "",
+            verboseText || errOther ? zNewFmt("other: %u", errOther) : "");
 
         // Clean up trailing comma when necessary
         if (strEndsWithZ(result, ", "))

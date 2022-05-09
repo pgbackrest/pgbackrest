@@ -23,12 +23,12 @@ testOptionFind(const char *optionName, unsigned int optionId, unsigned int optio
 {
     CfgParseOptionResult option = cfgParseOptionP(STR(optionName));
 
-    TEST_RESULT_BOOL(option.found, true, strZ(strNewFmt("check %s found", optionName)));
-    TEST_RESULT_UINT(option.id, optionId, strZ(strNewFmt("check %s id %u", optionName, optionId)));
-    TEST_RESULT_UINT(option.keyIdx, optionKeyIdx, strZ(strNewFmt("check %s key idx %u", optionName, optionKeyIdx)));
-    TEST_RESULT_BOOL(option.negate, negate, strZ(strNewFmt("check %s negate %d", optionName, negate)));
-    TEST_RESULT_BOOL(option.reset, reset, strZ(strNewFmt("check %s reset %d", optionName, reset)));
-    TEST_RESULT_BOOL(option.deprecated, deprecated, strZ(strNewFmt("check %s deprecated %d", optionName, deprecated)));
+    TEST_RESULT_BOOL(option.found, true, zNewFmt("check %s found", optionName));
+    TEST_RESULT_UINT(option.id, optionId, zNewFmt("check %s id %u", optionName, optionId));
+    TEST_RESULT_UINT(option.keyIdx, optionKeyIdx, zNewFmt("check %s key idx %u", optionName, optionKeyIdx));
+    TEST_RESULT_BOOL(option.negate, negate, zNewFmt("check %s negate %d", optionName, negate));
+    TEST_RESULT_BOOL(option.reset, reset, zNewFmt("check %s reset %d", optionName, reset));
+    TEST_RESULT_BOOL(option.deprecated, deprecated, zNewFmt("check %s deprecated %d", optionName, deprecated));
 }
 
 /***********************************************************************************************************************************
@@ -51,13 +51,12 @@ testRun(void)
         TEST_RESULT_UINT(sizeof(ParseRuleOption), TEST_64BIT() ? 40 : 28, "ParseRuleOption size");
         TEST_RESULT_UINT(sizeof(ParseRuleOptionDeprecate), TEST_64BIT() ? 16 : 12, "ParseRuleOptionDeprecate size");
 
-        // Each pack must be <= 127 bytes because only one byte is used for the size. If this check fails then the size of
-        // PARSE_RULE_PACK_SIZE must be increased. There would be little cost of increasing this as a preventative measure but a
-        // check would still be required, so may as well be as efficient as possible.
+        // Each pack must be <= 127 bytes because only one varint byte is used for the size. The compiler will catch packs larger
+        // than 127 bytes and in that case PARSE_RULE_PACK_SIZE must be increased. There would be little cost to increasing this as
+        // a preventative measure but a check would still be required, so may as well be as efficient as possible.
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check that no packs are > 127 bytes");
+        TEST_TITLE("gather pack size statistics");
 
-        unsigned int packOver127 = 0;
         unsigned int packTotal = 0;
         size_t packMaxSize = 0;
         const char *packMaxName = NULL;
@@ -65,7 +64,6 @@ testRun(void)
 
         for (unsigned int optIdx = 0; optIdx < CFG_OPTION_TOTAL; optIdx++)
         {
-            packOver127 += parseRuleOption[optIdx].packSize > 127;
             packTotal += parseRuleOption[optIdx].pack != NULL;
             packTotalSize += parseRuleOption[optIdx].packSize;
 
@@ -76,7 +74,6 @@ testRun(void)
             }
         }
 
-        TEST_RESULT_UINT(packOver127, 0, "no packs over 127 bytes");
         TEST_LOG_FMT("total size of option packs is %zu bytes", packTotalSize);
         TEST_LOG_FMT("avg option pack size is %0.2f bytes", (float)packTotalSize / (float)packTotal);
         TEST_LOG_FMT("max option pack size is '%s' at %zu bytes", packMaxName, packMaxSize);
@@ -2109,14 +2106,14 @@ testRun(void)
         // Only check 1-8 since 8 was the max index when these option names were deprecated
         for (unsigned int optionIdx = 0; optionIdx < 8; optionIdx++)
         {
-            testOptionFind(strZ(strNewFmt("db%u-cmd", optionIdx + 1)), cfgOptPgHostCmd, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-config", optionIdx + 1)), cfgOptPgHostConfig, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-host", optionIdx + 1)), cfgOptPgHost, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-path", optionIdx + 1)), cfgOptPgPath, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-port", optionIdx + 1)), cfgOptPgPort, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-socket-path", optionIdx + 1)), cfgOptPgSocketPath, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-ssh-port", optionIdx + 1)), cfgOptPgHostPort, optionIdx, false, false, true);
-            testOptionFind(strZ(strNewFmt("db%u-user", optionIdx + 1)), cfgOptPgHostUser, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-cmd", optionIdx + 1), cfgOptPgHostCmd, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-config", optionIdx + 1), cfgOptPgHostConfig, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-host", optionIdx + 1), cfgOptPgHost, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-path", optionIdx + 1), cfgOptPgPath, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-port", optionIdx + 1), cfgOptPgPort, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-socket-path", optionIdx + 1), cfgOptPgSocketPath, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-ssh-port", optionIdx + 1), cfgOptPgHostPort, optionIdx, false, false, true);
+            testOptionFind(zNewFmt("db%u-user", optionIdx + 1), cfgOptPgHostUser, optionIdx, false, false, true);
         }
     }
 

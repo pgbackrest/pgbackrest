@@ -1975,8 +1975,8 @@ testRun(void)
         TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
             STRDEF("20181119-152850F"), "latest link updated");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/12-2/0000000100000000", strZ(strNewFmt(
-                "%s%s", archiveExpectList(2, 4, "0000000100000000"), archiveExpectList(6, 10, "0000000100000000"))),
+            storageRepo(), STORAGE_REPO_ARCHIVE "/12-2/0000000100000000",
+            zNewFmt("%s%s", archiveExpectList(2, 4, "0000000100000000"), archiveExpectList(6, 10, "0000000100000000")),
             .comment = "no archives removed from latest except what was already removed");
 
         //--------------------------------------------------------------------------------------------------------------------------

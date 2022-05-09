@@ -335,7 +335,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
 
         TEST_STORAGE_EXISTS(
-            storageRepoIdxWrite(0), strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)),
+            storageRepoIdxWrite(0), zNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1),
             .remove = true, .comment = "check repo for WAL file, then remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -361,7 +361,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive");
 
         TEST_STORAGE_EXISTS(
-            storageRepoIdxWrite(0), strZ(strNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1)),
+            storageRepoIdxWrite(0), zNewFmt(STORAGE_REPO_ARCHIVE "/11-1/000000010000000100000001-%s.gz", walBuffer1Sha1),
             .comment = "check repo for WAL file");
 
         // No warning emitted re WAL file already existing with the same checksum due to --no-archive-mode-check
@@ -396,8 +396,7 @@ testRun(void)
         // Create tmp file to make it look like a prior push failed partway through to ensure that retries work
         HRN_STORAGE_PUT_Z(
             storageTest,
-            strZ(
-                strNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", walBuffer2Sha1)),
+            zNewFmt("repo/archive/test/11-1/0000000100000001/000000010000000100000002-%s.gz.pgbackrest.tmp", walBuffer2Sha1),
             "PARTIAL", .comment = "write WAL tmp file");
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
@@ -405,9 +404,7 @@ testRun(void)
 
         TEST_STORAGE_EXISTS(
             storageRepoIdxWrite(0),
-            strZ(
-                strNewFmt(
-                    STORAGE_REPO_ARCHIVE "/11-1/0000000100000001/000000010000000100000002-%s.gz", walBuffer2Sha1)),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-1/0000000100000001/000000010000000100000002-%s.gz", walBuffer2Sha1),
             .comment = "check repo for WAL file");
         TEST_RESULT_BOOL(
             storageExistsP(
@@ -500,11 +497,11 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            storageTest, zNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .remove = true, .comment = "check repo2 for WAL file then remove");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            storageTest, zNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .remove = true, .comment = "check repo3 for WAL file then remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -521,8 +518,8 @@ testRun(void)
 
         TEST_STORAGE_LIST_EMPTY(storageTest, "repo2/archive/test/11-1/0000000100000001", .comment = "check repo2 for no WAL file");
         TEST_STORAGE_LIST(
-            storageTest, "repo3/archive/test/11-1/0000000100000001",
-            strZ(strNewFmt("000000010000000100000002-%s\n", walBuffer2Sha1)), .comment = "check repo3 for WAL file");
+            storageTest, "repo3/archive/test/11-1/0000000100000001", zNewFmt("000000010000000100000002-%s\n", walBuffer2Sha1),
+            .comment = "check repo3 for WAL file");
 
         HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001");
 
@@ -536,8 +533,8 @@ testRun(void)
             "P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_STORAGE_LIST(
-            storageTest, "repo2/archive/test/11-1/0000000100000001",
-            strZ(strNewFmt("000000010000000100000002-%s\n", walBuffer2Sha1)), .comment = "check repo2 for WAL file");
+            storageTest, "repo2/archive/test/11-1/0000000100000001", zNewFmt("000000010000000100000002-%s\n", walBuffer2Sha1),
+            .comment = "check repo2 for WAL file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("WAL already exists in both repos");
@@ -554,10 +551,10 @@ testRun(void)
         TEST_TITLE("push succeeds on one repo when other repo fails to load archive.info");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            storageTest, zNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .remove = true);
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            storageTest, zNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .remove = true);
         HRN_STORAGE_MODE(storageTest, "repo2", .mode = 0200);
 
@@ -576,7 +573,7 @@ testRun(void)
 
         // Make sure WAL got pushed to repo3
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            storageTest, zNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .remove = true);
 
         HRN_STORAGE_MODE(storageTest, "repo2");
@@ -594,7 +591,7 @@ testRun(void)
 
         // Make sure WAL got pushed to repo3
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            storageTest, zNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .remove = true);
 
         HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1");
@@ -760,7 +757,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive asynchronously");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo for WAL file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -818,7 +815,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000001.ready");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo1 for WAL 1 file");
 
         // Create a ready file for WAL 2 but don't create the segment yet -- this will test the file error
@@ -836,11 +833,11 @@ testRun(void)
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo1 for WAL 1 file");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1)),
+            storageTest, zNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo3 for WAL 1 file");
 
         TEST_STORAGE_LIST(
@@ -871,10 +868,10 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .comment = "check repo1 for WAL 2 file");
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)),
+            storageTest, zNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .comment = "check repo3 for WAL 2 file");
 
         TEST_STORAGE_LIST(
@@ -919,10 +916,10 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000003' to the archive");
 
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1)),
+            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1),
             .comment = "check repo1 for WAL 3 file");
         TEST_STORAGE_EXISTS(
-            storageTest, strZ(strNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1)),
+            storageTest, zNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1),
             .comment = "check repo3 for WAL 3 file");
 
         // Remove the ready file to prevent WAL 3 from being considered for the next test

@@ -368,7 +368,7 @@ bufToLog(const Buffer *this)
 {
     String *result = strNewFmt(
         "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this),
-        bufSizeLimit(this) ? strZ(strNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this))) : "}");
+        bufSizeLimit(this) ? zNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this)) : "}");
 
     return result;
 }

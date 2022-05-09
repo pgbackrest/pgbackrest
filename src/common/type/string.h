@@ -38,6 +38,7 @@ typedef struct String String;
 #include "common/assert.h"
 #include "common/encode.h"
 #include "common/type/buffer.h"
+#include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
 Constructors
