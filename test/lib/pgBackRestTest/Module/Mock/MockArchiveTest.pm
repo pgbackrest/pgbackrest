@@ -105,7 +105,7 @@ sub run
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(),
+            true,
             {bHostBackup => $bRemote, bTls => $bTls, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
                 strCompressType => NONE});
 
@@ -136,12 +136,10 @@ sub run
         my $strArchiveFile1 = $self->walGenerate($strWalPath, PG_VERSION_94, 1, $strSourceFile1);
 
         $oHostDbPrimary->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile1}",
-            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
+            $strCommandPush . " ${strWalPath}/${strSourceFile1}", {iExpectedExitStatus => ERROR_REPO_INVALID});
 
         $oHostDbPrimary->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG", {iExpectedExitStatus => ERROR_REPO_INVALID});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $oHostBackup->stanzaCreate('stanza create', {strOptionalParam => '--no-online'});
@@ -155,8 +153,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandPush . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') .
-                " --compress-type=${strCompressType} ${strWalPath}/${strSourceFile}",
-            {oLogTest => $self->expect()});
+                " --compress-type=${strCompressType} ${strWalPath}/${strSourceFile}");
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.${strCompressType}");
 
         # Test that the WAL was pushed
@@ -172,14 +169,13 @@ sub run
         &log(INFO, '    get missing WAL');
 
         $oHostDbPrimary->executeSimple(
-            $strCommandGet . " 700000007000000070000000 ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => 1, oLogTest => $self->expect()});
+            $strCommandGet . " 700000007000000070000000 ${strWalPath}/RECOVERYXLOG", {iExpectedExitStatus => 1});
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    get first WAL');
 
         $oHostDbPrimary->executeSimple(
-            $strCommandGet . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG", {oLogTest => $self->expect()});
+            $strCommandGet . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG");
 
         # Check that the destination file exists
         if (storageTest()->exists("${strWalPath}/RECOVERYXLOG"))
@@ -221,9 +217,7 @@ sub run
 
         # Push the WAL
         $oHostDbPrimary->executeSimple(
-            "${strCommandPush} --compress-type=${strCompressType} --archive-async --process-max=2" .
-                " ${strWalPath}/${strSourceFile}",
-            {oLogTest => $self->expect()});
+            "${strCommandPush} --compress-type=${strCompressType} --archive-async --process-max=2 ${strWalPath}/${strSourceFile}");
         push(@stryExpectedWAL, "${strSourceFile}-${strArchiveChecksum}.${strCompressType}");
 
         # Make sure the temp file no longer exists if it was created
@@ -259,9 +253,7 @@ sub run
         storageTest()->put("${strWalPath}/00000002.history", 'HISTORYDATA');
         storageTest()->put("${strWalPath}/archive_status/00000002.history.ready", undef);
 
-        $oHostDbPrimary->executeSimple(
-            "${strCommandPush} --archive-async ${strWalPath}/00000002.history",
-            {oLogTest => $self->expect()});
+        $oHostDbPrimary->executeSimple("${strCommandPush} --archive-async ${strWalPath}/00000002.history");
 
         if (!storageRepo()->exists($oHostBackup->repoArchivePath(PG_VERSION_94 . '-1/00000002.history')))
         {
@@ -279,8 +271,7 @@ sub run
             {&INFO_ARCHIVE_SECTION_DB_HISTORY => {'1' => {&INFO_ARCHIVE_KEY_DB_VERSION => '8.0'}}});
 
         $oHostDbPrimary->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG", {iExpectedExitStatus => ERROR_REPO_INVALID});
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
@@ -294,12 +285,10 @@ sub run
             &INFO_ARCHIVE_SECTION_DB_HISTORY => {'1' => {&INFO_ARCHIVE_KEY_DB_ID => 5000900090001855000}}});
 
         $oHostDbPrimary->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile}",
-            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
+            $strCommandPush . " ${strWalPath}/${strSourceFile}", {iExpectedExitStatus => ERROR_REPO_INVALID});
 
         $oHostDbPrimary->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_REPO_INVALID, oLogTest => $self->expect()});
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG", {iExpectedExitStatus => ERROR_REPO_INVALID});
 
         # Restore the file to its original condition
         $oHostBackup->infoRestore($oHostBackup->repoArchivePath(ARCHIVE_INFO_FILE));
@@ -309,13 +298,10 @@ sub run
 
         $oHostDbPrimary->stop({strStanza => $oHostDbPrimary->stanza()});
 
-        $oHostDbPrimary->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile}",
-            {iExpectedExitStatus => ERROR_STOP, oLogTest => $self->expect()});
+        $oHostDbPrimary->executeSimple($strCommandPush . " ${strWalPath}/${strSourceFile}", {iExpectedExitStatus => ERROR_STOP});
 
         $oHostDbPrimary->executeSimple(
-            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG",
-            {iExpectedExitStatus => ERROR_STOP, oLogTest => $self->expect()});
+            $strCommandGet . " ${strSourceFile1} ${strWalPath}/RECOVERYXLOG", {iExpectedExitStatus => ERROR_STOP});
 
         $oHostDbPrimary->start({strStanza => $oHostDbPrimary->stanza()});
 
@@ -324,7 +310,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    WAL duplicate ok');
 
-        $oHostDbPrimary->executeSimple($strCommandPush . " ${strWalPath}/${strSourceFile}", {oLogTest => $self->expect()});
+        $oHostDbPrimary->executeSimple($strCommandPush . " ${strWalPath}/${strSourceFile}");
 
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    WAL duplicate error');
@@ -332,8 +318,7 @@ sub run
         $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 1, $strSourceFile);
 
         $oHostDbPrimary->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile}",
-            {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $self->expect()});
+            $strCommandPush . " ${strWalPath}/${strSourceFile}", {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE});
 
         # Remove WAL
         storageTest()->remove("${strWalPath}/${strSourceFile}", {bIgnoreMissing => false});
@@ -343,8 +328,7 @@ sub run
 
         $oHostDbPrimary->executeSimple(
             $strCommandGet . ($bRemote ? ' --cmd-ssh=/usr/bin/ssh' : '') . " --archive-async" .
-            ($strStorage eq POSIX ? " --repo-type=cifs" : '') . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG",
-            {oLogTest => $self->expect()});
+                ($strStorage eq POSIX ? " --repo-type=cifs" : '') . " ${strSourceFile} ${strWalPath}/RECOVERYXLOG");
 
         # Check that the destination file exists
         if (storageTest()->exists("${strWalPath}/RECOVERYXLOG"))
@@ -365,12 +349,9 @@ sub run
         &log(INFO, "    get history file");
 
         $oHostDbPrimary->executeSimple(
-            $strCommandGet . " --archive-async 00000001.history ${strWalPath}/00000001.history",
-            {iExpectedExitStatus => 1, oLogTest => $self->expect()});
+            $strCommandGet . " --archive-async 00000001.history ${strWalPath}/00000001.history", {iExpectedExitStatus => 1});
 
-        $oHostDbPrimary->executeSimple(
-            $strCommandGet . " --archive-async 00000002.history ${strWalPath}/00000002.history",
-            {oLogTest => $self->expect()});
+        $oHostDbPrimary->executeSimple($strCommandGet . " --archive-async 00000002.history ${strWalPath}/00000002.history");
 
         if (${storageTest()->get("${strWalPath}/00000002.history")} ne 'HISTORYDATA')
         {
@@ -381,9 +362,7 @@ sub run
         &log(INFO, '    .partial WAL');
 
         $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 2, "${strSourceFile}.partial");
-        $oHostDbPrimary->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile}.partial",
-            {oLogTest => $self->expect()});
+        $oHostDbPrimary->executeSimple($strCommandPush . " ${strWalPath}/${strSourceFile}.partial");
         $self->archiveCheck($oHostBackup, "${strSourceFile}.partial", $strArchiveChecksum);
 
         push(@stryExpectedWAL, "${strSourceFile}.partial-${strArchiveChecksum}");
@@ -391,8 +370,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         &log(INFO, '    .partial WAL duplicate');
 
-        $oHostDbPrimary->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile}.partial", {oLogTest => $self->expect()});
+        $oHostDbPrimary->executeSimple($strCommandPush . " ${strWalPath}/${strSourceFile}.partial");
         $self->archiveCheck($oHostBackup, "${strSourceFile}.partial", $strArchiveChecksum);
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -400,8 +378,7 @@ sub run
 
         $strArchiveFile = $self->walGenerate($strWalPath, PG_VERSION_94, 1, "${strSourceFile}.partial");
         $oHostDbPrimary->executeSimple(
-            $strCommandPush . " ${strWalPath}/${strSourceFile}.partial",
-            {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE, oLogTest => $self->expect()});
+            $strCommandPush . " ${strWalPath}/${strSourceFile}.partial", {iExpectedExitStatus => ERROR_ARCHIVE_DUPLICATE});
 
         #---------------------------------------------------------------------------------------------------------------------------
         $self->testResult(

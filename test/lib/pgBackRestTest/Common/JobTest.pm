@@ -62,7 +62,6 @@ sub new
         $self->{strLogLevelTest},
         $self->{strLogLevelTestFile},
         $self->{bLogTimestamp},
-        $self->{bLogForce},
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
         $self->{iRetry},
@@ -96,7 +95,6 @@ sub new
             {name => 'strLogLevelTest'},
             {name => 'strLogLevelTestFile'},
             {name => 'bLogTimestamp'},
-            {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
@@ -748,7 +746,6 @@ sub run
                     ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
                     ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
-                    ($self->{bLogForce} ? ' --log-force' : '') .
                     ($self->{bDryRun} ? ' --dry-run' : '') .
                     ($self->{bDryRun} ? ' --vm-out' : '') .
                     ($self->{bNoCleanup} ? " --no-cleanup" : '');

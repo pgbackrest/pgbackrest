@@ -393,6 +393,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1731"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add FAQ about backup types and restore speed.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1722"/>
 
                         <release-item-contributor-list>
@@ -404,6 +415,21 @@
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1745"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove integration expect log testing.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2022-03-06" version="2.38" title="Minor Bug Fixes and Improvements">

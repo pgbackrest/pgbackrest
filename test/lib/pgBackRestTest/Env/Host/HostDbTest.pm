@@ -64,7 +64,6 @@ sub new
             strImage => containerRepo() . ':' . testRunGet()->vm() . "-test",
             bTls => $oParam->{bTls},
             strBackupDestination => $$oParam{strBackupDestination},
-            oLogTest => $$oParam{oLogTest},
             bStandby => $$oParam{bStandby},
             bRepoLocal => $oParam->{bRepoLocal},
             bRepoEncrypt => $oParam->{bRepoEncrypt},
