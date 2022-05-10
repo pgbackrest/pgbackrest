@@ -116,7 +116,7 @@ process-max=1
     <section id="restore-speed">
         <title>Does it take longer to restore the specific backup types (full, differential, incremental)?</title>
 
-        <p>The various backup types take the same amount of time to restore; they each directly retrieve files based on the backup manifest, which may refer to files which were stored in a previous backup run (in the case of unchanged files for incremental or differential backups).  While this means that there could be differences in time spent <i>taking</i> the given backup (depending on the backup type), the time spent in the restore process itself depends only on the size of the underlying database, whatever the source of the original files.</p>
+        <p>The various backup types require the same amount of time to restore; restore retrieves files based on the backup manifest, which may reference files from a previous backup in the case of incremental or differential backups. While there could be differences in time spent <i>taking</i> a given backup (depending on backup type), database size determines restore time (disk I/O, network I/O, etc being equal).</p>
     </section>
 
     <!-- <section id="different-server">
