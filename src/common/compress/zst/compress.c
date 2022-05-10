@@ -174,7 +174,7 @@ zstCompressNew(int level)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(ZstCompress, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
+    OBJ_NEW_BEGIN(ZstCompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         ZstCompress *driver = OBJ_NEW_ALLOC();
 

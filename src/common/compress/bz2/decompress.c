@@ -150,7 +150,7 @@ bz2DecompressNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(Bz2Decompress, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
+    OBJ_NEW_BEGIN(Bz2Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         // Allocate state and set context
         Bz2Decompress *driver = OBJ_NEW_ALLOC();

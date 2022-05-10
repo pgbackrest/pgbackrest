@@ -76,7 +76,7 @@ infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalo
 
     InfoBackup *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoBackup, .childType = memTypeMany)
+    OBJ_NEW_BEGIN(InfoBackup, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoBackupNewInternal();
 
@@ -225,7 +225,7 @@ infoBackupNewLoad(IoRead *read)
 
     InfoBackup *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoBackup, .childType = memTypeMany)
+    OBJ_NEW_BEGIN(InfoBackup, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoBackupNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);

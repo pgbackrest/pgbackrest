@@ -771,7 +771,7 @@ varNewKv(KeyValue *data)
 
     VariantKeyValue *this = NULL;
 
-    OBJ_NEW_BEGIN(VariantKeyValue, .childType = memTypeOne)
+    OBJ_NEW_BEGIN(VariantKeyValue, .childQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -824,7 +824,7 @@ varNewStr(const String *data)
     {
         ASSERT(data != NULL);
 
-        OBJ_NEW_BEGIN(VariantString, .childType = memTypeOne)
+        OBJ_NEW_BEGIN(VariantString, .childQty = 1)
         {
             this = OBJ_NEW_ALLOC();
 
@@ -980,7 +980,7 @@ varNewVarLst(const VariantList *data)
 
     VariantVariantList *this = NULL;
 
-    OBJ_NEW_BEGIN(VariantVariantList, .childType = memTypeOne)
+    OBJ_NEW_BEGIN(VariantVariantList, .childQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 

@@ -118,7 +118,7 @@ testIoRateNew(uint64_t bytesPerSec)
 {
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(TestIoRate, .childType = memTypeMany, .allocType = memTypeMany)
+    OBJ_NEW_BEGIN(TestIoRate, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         TestIoRate *driver = OBJ_NEW_ALLOC();
 

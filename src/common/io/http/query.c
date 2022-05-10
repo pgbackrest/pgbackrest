@@ -27,7 +27,7 @@ httpQueryNew(HttpQueryNewParam param)
 
     HttpQuery *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpQuery, .childType = memTypeMany)
+    OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         // Allocate state and set context
         this = OBJ_NEW_ALLOC();
@@ -55,7 +55,7 @@ httpQueryNewStr(const String *query)
 
     HttpQuery *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpQuery, .childType = memTypeMany)
+    OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -108,7 +108,7 @@ httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
 
     if (query != NULL)
     {
-        OBJ_NEW_BEGIN(HttpQuery, .childType = memTypeMany)
+        OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             // Allocate state and set context
             this = OBJ_NEW_ALLOC();

@@ -71,7 +71,7 @@ storageHelperContextInit(void)
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN(StorageHelper, .childType = memTypeMany, .allocType = memTypeMany)
+            MEM_CONTEXT_NEW_BEGIN(StorageHelper, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
             {
                 storageHelper.memContext = MEM_CONTEXT_NEW();
             }

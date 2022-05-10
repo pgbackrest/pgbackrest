@@ -128,7 +128,7 @@ storageReadS3New(
 
     StorageRead *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageReadS3, .childType = memTypeMany, .allocType = memTypeMany)
+    OBJ_NEW_BEGIN(StorageReadS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageReadS3 *driver = OBJ_NEW_ALLOC();
 

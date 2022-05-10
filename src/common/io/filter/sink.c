@@ -54,7 +54,7 @@ ioSinkNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(IoSink, .childType = memTypeMany, .allocType = memTypeMany)
+    OBJ_NEW_BEGIN(IoSink, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         IoSink *driver = OBJ_NEW_ALLOC();
         this = ioFilterNewP(SINK_FILTER_TYPE, driver, NULL, .inOut = ioSinkProcess);

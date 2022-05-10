@@ -110,7 +110,7 @@ ioBufferNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(IoBuffer, .childType = memTypeMany, .allocType = memTypeMany)
+    OBJ_NEW_BEGIN(IoBuffer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         IoBuffer *driver = OBJ_NEW_ALLOC();
         *driver = (IoBuffer){0};

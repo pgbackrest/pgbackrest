@@ -253,7 +253,7 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     {
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN(HarnessLog, .childType = memTypeMany, .allocType = memTypeMany)
+            MEM_CONTEXT_NEW_BEGIN(HarnessLog, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
             {
                 harnessLog.memContext = MEM_CONTEXT_NEW();
             }

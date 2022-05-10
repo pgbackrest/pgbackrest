@@ -90,7 +90,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
 
     ProtocolClient *this = NULL;
 
-    OBJ_NEW_BEGIN(ProtocolClient, .childType = memTypeMany, .callbackType = memTypeOne)
+    OBJ_NEW_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 

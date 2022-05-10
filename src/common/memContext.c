@@ -3,7 +3,6 @@ Memory Context Manager
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-// #include <stdio.h> // !!! REMOVE
 #include <stdlib.h>
 #include <string.h>
 
@@ -39,6 +38,13 @@ typedef struct MemContextAlloc
 /***********************************************************************************************************************************
 Contains information about the memory context !!! MORE COMMENTS ON STRUCTURES
 ***********************************************************************************************************************************/
+typedef enum
+{
+    memTypeNone = 0,
+    memTypeOne = 1,
+    memTypeMany = 2,
+} MemType;
+
 struct MemContext
 {
 #ifdef DEBUG
@@ -377,34 +383,35 @@ memContextNew(
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, name);
-        FUNCTION_TEST_PARAM(ENUM, param.allocType);
-        FUNCTION_TEST_PARAM(ENUM, param.childType);
-        FUNCTION_TEST_PARAM(BOOL, param.callbackType);
+        FUNCTION_TEST_PARAM(UINT, param.allocQty);
+        FUNCTION_TEST_PARAM(UINT, param.childQty);
+        FUNCTION_TEST_PARAM(UINT, param.callbackQty);
         FUNCTION_TEST_PARAM(SIZE, param.allocExtra);
     FUNCTION_TEST_END();
 
     ASSERT(name != NULL);
-    ASSERT(param.allocType <= memTypeMany);
-    ASSERT(param.childType <= memTypeMany);
-    ASSERT(param.callbackType <= memTypeOne);
+    ASSERT(param.allocQty <= 1 || param.allocQty == UINT8_MAX);
+    ASSERT(param.childQty <= 1 || param.childQty == UINT8_MAX);
+    ASSERT(param.callbackQty <= 1);
     // Check context name length
     ASSERT(name[0] != '\0');
 
     // Fix alignment !!! WORTH MAKING THIS RIGHT? THE SYSTEM WILL PROBABLY ALIGN ANYWAY !!! ALSO FIND ALIGN MACRO
     size_t allocExtra = param.allocExtra;
 
-    if (allocExtra % sizeof(void *) != 0 && //{uncovered}
-        (param.allocType != memTypeNone || param.childType != memTypeNone || param.callbackType != memTypeNone)) //{uncovered}
-    {
+    if (allocExtra % sizeof(void *) != 0 && (param.allocQty > 0 || param.childQty > 0 || param.callbackQty > 0)) //{uncovered}
         allocExtra += sizeof(void *) - allocExtra % sizeof(void *); //{uncovered}
-    }
 
     // Create the new context
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     ASSERT(contextCurrent->childType != memTypeNone);
 
+    const MemType allocType = param.allocQty > 1 ? memTypeMany : (MemType)param.allocQty;
+    const MemType childType = param.childQty > 1 ? memTypeMany : (MemType)param.childQty;
+    const MemType callbackType = (MemType)param.callbackQty;
+
     MemContext *const this = memAllocInternal(
-        sizeof(MemContext) + allocExtra + memContextSizePossible[param.allocType][param.childType][param.callbackType]);
+        sizeof(MemContext) + allocExtra + memContextSizePossible[allocType][childType][callbackType]);
 
     *this = (MemContext)
     {
@@ -416,9 +423,9 @@ memContextNew(
         .active = true,
 
         // Set flags
-        .allocType = param.allocType,
-        .childType = param.childType,
-        .callbackType = param.callbackType,
+        .allocType = allocType,
+        .childType = childType,
+        .callbackType = callbackType,
 
         // Set extra allocation
         .allocExtra = (uint16_t)allocExtra,

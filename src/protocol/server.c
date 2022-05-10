@@ -42,7 +42,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
     ProtocolServer *this = NULL;
 
-    OBJ_NEW_BEGIN(ProtocolServer, .childType = memTypeMany)
+    OBJ_NEW_BEGIN(ProtocolServer, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = OBJ_NEW_ALLOC();
 

@@ -235,7 +235,7 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(PageChecksum, .childType = memTypeMany, .allocType = memTypeMany)
+    OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         PageChecksum *driver = OBJ_NEW_ALLOC();
 

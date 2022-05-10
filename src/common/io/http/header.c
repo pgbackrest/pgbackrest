@@ -25,7 +25,7 @@ httpHeaderNew(const StringList *redactList)
 
     HttpHeader *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpHeader, .childType = memTypeMany)
+    OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         // Allocate state and set context
         this = OBJ_NEW_ALLOC();
@@ -54,7 +54,7 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 
     if (header != NULL)
     {
-        OBJ_NEW_BEGIN(HttpHeader, .childType = memTypeMany)
+        OBJ_NEW_BEGIN(HttpHeader, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             // Allocate state and set context
             this = OBJ_NEW_ALLOC();

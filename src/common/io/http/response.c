@@ -220,7 +220,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 
     HttpResponse *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpResponse, .childType = memTypeMany)
+    OBJ_NEW_BEGIN(HttpResponse, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = OBJ_NEW_ALLOC();
 

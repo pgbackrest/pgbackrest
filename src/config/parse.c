@@ -1380,7 +1380,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
         // Create the config struct
         Config *config;
 
-        OBJ_NEW_BEGIN(Config, .childType = memTypeMany, .allocType = memTypeMany)
+        OBJ_NEW_BEGIN(Config, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
         {
             config = OBJ_NEW_ALLOC();
 

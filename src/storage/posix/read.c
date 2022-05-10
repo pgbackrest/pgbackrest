@@ -223,7 +223,7 @@ storageReadPosixNew(
 
     StorageRead *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageReadPosix, .childType = memTypeMany, .allocType = memTypeMany, .callbackType = memTypeOne)
+    OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         StorageReadPosix *driver = OBJ_NEW_ALLOC();
 
