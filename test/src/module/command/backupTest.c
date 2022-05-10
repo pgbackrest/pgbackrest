@@ -602,6 +602,28 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
 };
 
 /***********************************************************************************************************************************
+Wrap cmdBackup() with lock acquire and release
+***********************************************************************************************************************************/
+void testCmdBackup(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
+
+    TRY_BEGIN()
+    {
+        cmdBackup();
+    }
+    FINALLY()
+    {
+        lockRelease(true);
+    }
+    TRY_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -1154,7 +1176,7 @@ testRun(void)
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
         TEST_STORAGE_EXISTS(
-            storageRepo(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))),
+            storageRepo(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile)),
             .comment = "copy file to repo compress success");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1185,7 +1207,7 @@ testRun(void)
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "checksum file");
         TEST_RESULT_STR_Z(result.copyChecksum, "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "compressed repo file checksum matches");
         TEST_STORAGE_EXISTS(
-            storageRepo(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile))),
+            storageRepo(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile)),
             .comment = "compressed file exists");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1404,9 +1426,10 @@ testRun(void)
         TEST_TITLE("assign label when history is older");
 
         HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), strZ(
-                strNewFmt(STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
-                strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 4)))));
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 4))));
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
@@ -1414,8 +1437,7 @@ testRun(void)
         TEST_TITLE("assign label when backup is older");
 
         HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), strZ(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2)))));
+            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2))));
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
 
@@ -1423,8 +1445,7 @@ testRun(void)
         TEST_TITLE("advance time when backup is same");
 
         HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), strZ(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp)))));
+            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp))));
 
         TEST_RESULT_STR_Z(backupLabelCreate(backupTypeFull, NULL, timestamp), "20191203-193413F", "create label");
 
@@ -1432,12 +1453,26 @@ testRun(void)
         TEST_TITLE("error when new label is in the past even with advanced time");
 
         HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), strZ(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 1)))));
+            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 1))));
 
         TEST_ERROR(
-            backupLabelCreate(backupTypeFull, NULL, timestamp), FormatError,
+            backupLabelCreate(backupTypeFull, NULL, timestamp), ClockError,
             "new backup label '20191203-193413F' is not later than latest backup label '20191203-193413F'\n"
+            "HINT: has the timezone changed?\n"
+            "HINT: is there clock skew?");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when new label is in the past even with advanced time (from history)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeFull, NULL, timestamp + 3600))));
+
+        TEST_ERROR(
+            backupLabelCreate(backupTypeFull, NULL, timestamp), ClockError,
+            "new backup label '20191203-193413F' is not later than latest backup label '20191203-203412F'\n"
             "HINT: has the timezone changed?\n"
             "HINT: is there clock skew?");
     }
@@ -1851,8 +1886,11 @@ testRun(void)
         ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
+        unsigned int currentPercentComplete = 0;
+
         TEST_ERROR(
-            backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL), AssertError, "error message");
+            backupJobResult((Manifest *)1, NULL, storageTest, strLstNew(), job, false, 0, NULL, &currentPercentComplete),
+            AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report host/100% progress on noop result");
@@ -1882,9 +1920,15 @@ testRun(void)
         OBJ_NEW_END();
 
         uint64_t sizeProgress = 0;
+        currentPercentComplete = 4567;
 
         TEST_RESULT_VOID(
-            backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress), "log noop result");
+            lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true),
+            "acquire backup lock");
+        TEST_RESULT_VOID(
+            backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress,
+            &currentPercentComplete), "log noop result");
+        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");
     }
@@ -1929,7 +1973,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTMTRPID, "PID");
 
         TEST_ERROR(
-            cmdBackup(), PgRunningError,
+            testCmdBackup(), PgRunningError,
             "--no-online passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and"
                 " try again, or use --force.");
 
@@ -1950,19 +1994,19 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF");
 
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
 
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and " PG_FILE_POSTMTRPID " exists but --force was passed so backup will continue though"
                 " it looks like " PG_NAME " is running and the backup will probably not be consistent\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99.87%%) checksum %s\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99.86%%) checksum %s\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100.00%%) checksum"
                 " e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" : "b7ec43e4646f5d06c95881df0c572630a1221377") :
+                (TEST_BIG_ENDIAN() ? "ec84602c8b4f62bd0ef10bd3dfcb04c3b3ce4a35" : "b7ec43e4646f5d06c95881df0c572630a1221377") :
                 "f21ff9abdcd1ec2f600d4ee8e5792c9b61eb2e37");
 
         // Make pg no longer appear to be running
@@ -1981,7 +2025,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_ERROR(cmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
+        TEST_ERROR(testCmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2003,7 +2047,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2031,7 +2075,7 @@ testRun(void)
         sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR2");
 
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2065,7 +2109,8 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
+
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2079,7 +2124,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
+
         TEST_RESULT_LOG(
             "P00   INFO: repo option not specified, defaulting to repo1\n"
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2101,7 +2147,8 @@ testRun(void)
 
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
-        TEST_RESULT_VOID(cmdBackup(), "backup");
+        TEST_RESULT_VOID(testCmdBackup(), "backup");
+
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
@@ -2191,7 +2238,7 @@ testRun(void)
             // Copy a file to be resumed that has not changed in the repo
             HRN_STORAGE_COPY(
                 storagePg(), PG_FILE_PGVERSION, storageRepoWrite(),
-                strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel))));
+                zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION", strZ(resumeLabel)));
 
             ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/PG_VERSION"));
             ManifestFile file = manifestFileUnpack(manifestResume, *filePack);
@@ -2210,7 +2257,8 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
@@ -2282,11 +2330,11 @@ testRun(void)
             // File exists in cluster and repo but not in the resume manifest
             HRN_STORAGE_PUT_Z(storagePgWrite(), "not-in-resume", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/not-in-resume.gz", strZ(resumeLabel))));
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/not-in-resume.gz", strZ(resumeLabel)));
 
             // Remove checksum from file so it won't be resumed
             HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel))));
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/pg_control.gz", strZ(resumeLabel)));
 
             ManifestFilePack **const filePack = manifestFilePackFindInternal(manifestResume, STRDEF("pg_data/global/pg_control"));
             ManifestFile file = manifestFileUnpack(manifestResume, *filePack);
@@ -2298,7 +2346,7 @@ testRun(void)
             // Size does not match between cluster and resume manifest
             HRN_STORAGE_PUT_Z(storagePgWrite(), "size-mismatch", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/size-mismatch.gz", strZ(resumeLabel))));
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/size-mismatch.gz", strZ(resumeLabel)));
             manifestFileAdd(
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/size-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
@@ -2307,7 +2355,7 @@ testRun(void)
             // Time does not match between cluster and resume manifest
             HRN_STORAGE_PUT_Z(storagePgWrite(), "time-mismatch", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch.gz", strZ(resumeLabel))));
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch.gz", strZ(resumeLabel)));
             manifestFileAdd(
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch"), .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", .size = 4,
@@ -2316,22 +2364,19 @@ testRun(void)
             // Size is zero in cluster and resume manifest. ??? We'd like to remove this requirement after the migration.
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero-size", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_Z(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/zero-size.gz", strZ(resumeLabel))),
-                "ZERO-SIZE");
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/zero-size.gz", strZ(resumeLabel)), "ZERO-SIZE");
             manifestFileAdd(
                 manifestResume, &(ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = backupTimeStart});
 
             // Path is not in manifest
-            HRN_STORAGE_PATH_CREATE(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/bogus_path", strZ(resumeLabel))));
+            HRN_STORAGE_PATH_CREATE(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/bogus_path", strZ(resumeLabel)));
 
             // File is not in manifest
             HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus.gz", strZ(resumeLabel))));
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus.gz", strZ(resumeLabel)));
 
             // File has incorrect compression type
-            HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus", strZ(resumeLabel))));
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/global/bogus", strZ(resumeLabel)));
 
             // Save the resume manifest
             manifestSave(
@@ -2349,7 +2394,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             // Enable storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePath;
@@ -2472,13 +2517,11 @@ testRun(void)
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
             // Reference in manifest
-            HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strZ(resumeLabel))));
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strZ(resumeLabel)));
 
             // Reference in resumed manifest
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "resume-ref", .timeModified = backupTimeStart);
-            HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strZ(resumeLabel))));
+            HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strZ(resumeLabel)));
             manifestFileAdd(
                 manifestResume, &(ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
 
@@ -2486,7 +2529,7 @@ testRun(void)
             // also that the repo file is intenionally corrupt to generate a warning about corruption in the repository.
             HRN_STORAGE_PUT_Z(storagePgWrite(), "time-mismatch2", "TEST", .timeModified = backupTimeStart + 100);
             HRN_STORAGE_PUT_EMPTY(
-                storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strZ(resumeLabel))));
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strZ(resumeLabel)));
             manifestFileAdd(
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch2"), .checksumSha1 = "984816fd329622876e14907634264e6f332e9fb3", .size = 4,
@@ -2514,7 +2557,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             // Check log
             TEST_RESULT_LOG(
@@ -2653,7 +2696,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
-                cmdBackup(), ArchiveTimeoutError,
+                testCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69BF000000FF was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
@@ -2663,7 +2706,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
-                cmdBackup(), ArchiveTimeoutError,
+                testCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
@@ -2674,7 +2717,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             // Set log level back to detail
             harnessLogLevelSet(logLevelDetail);
@@ -2792,6 +2835,7 @@ testRun(void)
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
+            const char *rel1_2Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, relation)));
 
             // File with bad page checksums
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 5);
@@ -2828,7 +2872,7 @@ testRun(void)
 
             HRN_STORAGE_PUT_EMPTY(
                 storageTest,
-                strZ(strNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, hrnPgCatalogVersion(PG_VERSION_11))))),
+                zNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, hrnPgCatalogVersion(PG_VERSION_11)))),
                 .timeModified = backupTimeStart);
 
             // Disable storageFeatureSymLink so tablespace (and latest) symlinks will not be created
@@ -2839,7 +2883,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             // Reset storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureSymLink;
@@ -2911,8 +2955,7 @@ testRun(void)
                         ",\"timestamp\":1572200002}\n"
                     "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
                         ",\"size\":8192,\"timestamp\":1572200000}\n"
-                    "pg_data/base/1/2={\"checksum\":\"2deafa7ae60279a54a09422b985a8025f5e125fb\",\"checksum-page\":false"
-                        ",\"size\":8704,\"timestamp\":1572200000}\n"
+                    "pg_data/base/1/2={\"checksum\":\"%s\",\"checksum-page\":false,\"size\":8704,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,[2,4]]"
                         ",\"size\":40960,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/4={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[1],\"size\":24576"
@@ -2941,7 +2984,7 @@ testRun(void)
                     "pg_tblspc/32768={}\n"
                     "pg_tblspc/32768/PG_11_201809051={}\n"
                     "pg_tblspc/32768/PG_11_201809051/1={}\n",
-                    rel1_3Sha1, rel1_4Sha1),
+                    rel1_2Sha1, rel1_3Sha1, rel1_4Sha1),
                 "compare file list");
 
             // Remove test files
@@ -2970,7 +3013,7 @@ testRun(void)
 
             // Run backup
             TEST_ERROR(
-                cmdBackup(), FileMissingError,
+                testCmdBackup(), FileMissingError,
                 "pg_control must be present in all online backups\n"
                 "HINT: is something wrong with the clock or filesystem timestamps?");
 
@@ -3008,7 +3051,7 @@ testRun(void)
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
@@ -3135,7 +3178,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
-            TEST_RESULT_VOID(cmdBackup(), "backup");
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"

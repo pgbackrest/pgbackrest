@@ -101,7 +101,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                         String *requestStr =
                             strCatFmt(
                                 strNew(),
-                                "%s %s%s%s " HTTP_VERSION CRLF_Z HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION CRLF_Z,
+                                "%s %s%s%s " HTTP_VERSION "\r\n" HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION "\r\n",
                                 strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)), httpRequestQuery(this) == NULL ? "" : "?",
                                 httpRequestQuery(this) == NULL ? "" : strZ(httpQueryRenderP(httpRequestQuery(this))));
 
@@ -113,8 +113,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
                             const String *headerKey = strLstGet(headerList, headerIdx);
 
                             strCatFmt(
-                                requestStr, "%s:%s" CRLF_Z, strZ(headerKey),
-                                strZ(httpHeaderGet(httpRequestHeader(this), headerKey)));
+                                requestStr, "%s:%s\r\n", strZ(headerKey), strZ(httpHeaderGet(httpRequestHeader(this), headerKey)));
                         }
 
                         // Add blank line to end of headers and write the request as a buffer so secrets do not show up in logs

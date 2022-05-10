@@ -257,7 +257,7 @@ archivePushCheck(bool pgPathSet)
                             ArchiveMismatchError,
                             "%s version %s, system-id %" PRIu64 " do not match %s stanza version %s, system-id %" PRIu64
                             "\nHINT: are you archiving to the correct stanza?",
-                            pgPathSet ? PG_NAME : strZ(strNewFmt("%s stanza", cfgOptionGroupName(cfgOptGrpRepo, 0))),
+                            pgPathSet ? PG_NAME : zNewFmt("%s stanza", cfgOptionGroupName(cfgOptGrpRepo, 0)),
                             strZ(pgVersionToStr(result.pgVersion)), result.pgSystemId,
                             cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(pgVersionToStr(archiveInfo.version)),
                             archiveInfo.systemId);
@@ -553,7 +553,7 @@ cmdArchivePushAsync(void)
             LOG_INFO_FMT(
                 "push %u WAL file(s) to archive: %s%s", strLstSize(jobData.walFileList), strZ(strLstGet(jobData.walFileList, 0)),
                 strLstSize(jobData.walFileList) == 1 ?
-                    "" : strZ(strNewFmt("...%s", strZ(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1)))));
+                    "" : zNewFmt("...%s", strZ(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1))));
 
             // Drop files if queue max has been exceeded
             if (cfgOptionTest(cfgOptArchivePushQueueMax) && archivePushDrop(jobData.walPath, jobData.walFileList))

@@ -560,7 +560,7 @@ testRun(void)
                 hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, zNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole)));
                 testResponseP(auth, .http = "1.0", .code = 300);
 
                 hrnServerScriptClose(auth);
@@ -586,7 +586,7 @@ testRun(void)
                 hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))));
+                testRequestP(auth, NULL, HTTP_VERB_GET, zNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole)));
                 testResponseP(auth, .http = "1.0", .code = 404);
 
                 hrnServerScriptClose(auth);
@@ -609,7 +609,7 @@ testRun(void)
                 hrnServerScriptAccept(auth);
 
                 testRequestP(
-                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "XtokenX");
+                    auth, NULL, HTTP_VERB_GET, zNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole)), .token = "XtokenX");
                 testResponseP(auth, .http = "1.0", .content = "{\"Code\":\"IAM role is not configured\"}");
 
                 hrnServerScriptClose(auth);
@@ -630,14 +630,13 @@ testRun(void)
                 hrnServerScriptAccept(auth);
 
                 testRequestP(
-                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "YtokenY");
+                    auth, NULL, HTTP_VERB_GET, zNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole)), .token = "YtokenY");
                 testResponseP(
                     auth,
-                    .content = strZ(
-                        strNewFmt(
-                            "{\"Code\":\"Success\",\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\""
-                                ",\"Expiration\":\"%s\"}",
-                            strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1))))));
+                    .content = zNewFmt(
+                        "{\"Code\":\"Success\",\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\""
+                            ",\"Expiration\":\"%s\"}",
+                        strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1)))));
 
                 hrnServerScriptClose(auth);
 
@@ -682,15 +681,13 @@ testRun(void)
                 hrnServerScriptClose(auth);
                 hrnServerScriptAccept(auth);
 
-                testRequestP(
-                    auth, NULL, HTTP_VERB_GET, strZ(strNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole))), .token = "ZtokenZ");
+                testRequestP(auth, NULL, HTTP_VERB_GET, zNewFmt(S3_CREDENTIAL_PATH "/%s", strZ(credRole)), .token = "ZtokenZ");
                 testResponseP(
                     auth,
-                    .content = strZ(
-                        strNewFmt(
-                            "{\"Code\":\"Success\",\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\""
-                                ",\"Expiration\":\"%s\"}",
-                            strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
+                    .content = zNewFmt(
+                        "{\"Code\":\"Success\",\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\""
+                            ",\"Expiration\":\"%s\"}",
+                        strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2)))));
 
                 hrnServerScriptClose(auth);
 
@@ -939,8 +936,7 @@ testRun(void)
                 testRequestP(auth, NULL, HTTP_VERB_GET, TEST_SERVICE_URI);
                 testResponseP(
                     auth,
-                    .content = strZ(
-                        strNewFmt(TEST_SERVICE_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1))))));
+                    .content = zNewFmt(TEST_SERVICE_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1)))));
 
                 hrnServerScriptClose(auth);
 
@@ -959,8 +955,7 @@ testRun(void)
                 testRequestP(auth, NULL, HTTP_VERB_GET, TEST_SERVICE_URI);
                 testResponseP(
                     auth,
-                    .content = strZ(
-                        strNewFmt(TEST_SERVICE_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2))))));
+                    .content = zNewFmt(TEST_SERVICE_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2)))));
 
                 hrnServerScriptClose(auth);
 

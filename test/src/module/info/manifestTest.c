@@ -1476,14 +1476,14 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
-            " mail\t={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                              \
-            "#={\"db-id\":16453,\"db-last-system-id\":12168}\n"                                                                    \
-            "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"                                                                    \
-            "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"                                                                    \
-            "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
-            "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
-            "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
-            SHRUG_EMOJI "={\"db-id\":18000,\"db-last-system-id\":12168}\n"
+            " mail\t={\"db-id\":16456,\"db-last-system-id\":99999}\n"                                                              \
+            "#={\"db-id\":16453,\"db-last-system-id\":99999}\n"                                                                    \
+            "=={\"db-id\":16455,\"db-last-system-id\":99999}\n"                                                                    \
+            "[={\"db-id\":16454,\"db-last-system-id\":99999}\n"                                                                    \
+            "postgres={\"db-id\":12173,\"db-last-system-id\":99999}\n"                                                             \
+            "template0={\"db-id\":12168,\"db-last-system-id\":99999}\n"                                                            \
+            "template1={\"db-id\":1,\"db-last-system-id\":99999}\n"                                                                \
+            SHRUG_EMOJI "={\"db-id\":18000,\"db-last-system-id\":99999}\n"
 
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
@@ -1576,11 +1576,11 @@ testRun(void)
                 TEST_MANIFEST_TARGET
                 "\n"
                 "[db]\n"
-                " mail\t={\"db-id\":16456,\"db-last-system-id\":12168}\n"
-                "#={\"db-id\":16453,\"db-last-system-id\":12168}\n"
-                "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
-                "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"
-                "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
+                " mail\t={\"db-id\":16456,\"db-last-system-id\":99999}\n"
+                "#={\"db-id\":16453,\"db-last-system-id\":99999}\n"
+                "=={\"db-id\":16455,\"db-last-system-id\":99999}\n"
+                "[={\"db-id\":16454,\"db-last-system-id\":99999}\n"
+                "postgres={\"db-id\":12173,\"db-last-system-id\":99999}\n"
                 TEST_MANIFEST_FILE
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
@@ -1631,19 +1631,19 @@ testRun(void)
         pckWriteArrayBeginP(dbList);
         pckWriteU32P(dbList, 12168);
         pckWriteStrP(dbList, STRDEF("template0"));
-        pckWriteU32P(dbList, 12168);
+        pckWriteU32P(dbList, 99999);
         pckWriteArrayEndP(dbList);
 
         pckWriteArrayBeginP(dbList);
         pckWriteU32P(dbList, 1);
         pckWriteStrP(dbList, STRDEF("template1"));
-        pckWriteU32P(dbList, 12168);
+        pckWriteU32P(dbList, 99999);
         pckWriteArrayEndP(dbList);
 
         pckWriteArrayBeginP(dbList);
         pckWriteU32P(dbList, 18000);
         pckWriteStrP(dbList, STRDEF(SHRUG_EMOJI));
-        pckWriteU32P(dbList, 12168);
+        pckWriteU32P(dbList, 99999);
         pckWriteArrayEndP(dbList);
 
         pckWriteEndP(dbList);

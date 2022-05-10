@@ -18,6 +18,7 @@ Lock Handler
 #include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/type/json.h"
 #include "common/user.h"
 #include "common/wait.h"
 #include "storage/helper.h"
@@ -30,6 +31,10 @@ Constants
 // Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
 // general system error.
 #define LOCK_ON_EXEC_ID                                             -2
+
+#define LOCK_KEY_EXEC_ID                                            STRID6("execId", 0x12e0c56051)
+#define LOCK_KEY_PERCENT_COMPLETE                                   STRID6("pctCplt", 0x14310a140d01)
+#define LOCK_KEY_PROCESS_ID                                         STRID5("pid", 0x11300)
 
 /***********************************************************************************************************************************
 Lock type names
@@ -104,15 +109,17 @@ lockReadFileData(const String *const lockFile, const int fd)
             ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
             ioWriteClose(write);
 
-            // Parse the file
-            const StringList *const parse = strLstNewSplitZ(strNewBuf(buffer), LF_Z);
+            JsonRead *const json = jsonReadNew(strNewBuf(buffer));
+            jsonReadObjectBegin(json);
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                if (strLstSize(parse) == 3)
-                    result.execId = strDup(strLstGet(parse, 1));
+                result.execId = jsonReadStr(jsonReadKeyRequireStrId(json, LOCK_KEY_EXEC_ID));
 
-                result.processId = cvtZToInt(strZ(strLstGet(parse, 0)));
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_PERCENT_COMPLETE))
+                    result.percentComplete = varNewUInt(jsonReadUInt(json));
+
+                result.processId = jsonReadInt(jsonReadKeyRequireStrId(json, LOCK_KEY_PROCESS_ID));
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -217,11 +224,12 @@ lockRead(const String *const lockPath, const String *const stanza, const LockTyp
 /***********************************************************************************************************************************
 Write contents of lock file
 ***********************************************************************************************************************************/
-static void
-lockWriteData(const LockType lockType)
+void
+lockWriteData(const LockType lockType, const LockWriteDataParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
+        FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -230,9 +238,36 @@ lockWriteData(const LockType lockType)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Build the json object
+        JsonWrite *json = jsonWriteNewP();
+        jsonWriteObjectBegin(json);
+
+        jsonWriteStr(jsonWriteKeyStrId(json, LOCK_KEY_EXEC_ID), lockLocal.execId);
+
+        if (param.percentComplete != NULL)
+            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
+
+        jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
+
+        jsonWriteObjectEnd(json);
+
+        if (lockType == lockTypeBackup && lockLocal.held != lockTypeNone)
+        {
+            // Seek to beginning of backup lock file
+            THROW_ON_SYS_ERROR_FMT(
+                lseek(lockLocal.file[lockType].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
+                strZ(lockLocal.file[lockType].name));
+
+            // In case the current write is ever shorter than the previous one
+            THROW_ON_SYS_ERROR_FMT(
+                ftruncate(lockLocal.file[lockType].fd, 0) == -1, FileWriteError, "unable to truncate '%s'",
+                strZ(lockLocal.file[lockType].name));
+        }
+
+        // Write lock file data
         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockType].name, lockLocal.file[lockType].fd, 0);
 
-        ioCopyP(ioBufferReadNewOpen(BUFSTR(strNewFmt("%d" LF_Z "%s" LF_Z, getpid(), strZ(lockLocal.execId)))), write);
+        ioCopyP(ioBufferReadNewOpen(BUFSTR(jsonWriteResult(json))), write);
         ioWriteClose(write);
     }
     MEM_CONTEXT_TEMP_END();
@@ -418,7 +453,7 @@ lockAcquire(
         }
         // Else write lock data unless we locked an execId match
         else if (lockLocal.file[lockIdx].fd != LOCK_ON_EXEC_ID)
-            lockWriteData(lockIdx);
+            lockWriteDataP(lockIdx);
     }
 
     if (result)

@@ -351,8 +351,7 @@ testRun(void)
                 else
                 {
                     TEST_RESULT_STR(
-                        strLstAddFmt(list, "STR%02d", listIdx), strNewFmt("STR%02d", listIdx),
-                        strZ(strNewFmt("add item %d", listIdx)));
+                        strLstAddFmt(list, "STR%02d", listIdx), strNewFmt("STR%02d", listIdx), zNewFmt("add item %d", listIdx));
                 }
             }
 
@@ -367,11 +366,9 @@ testRun(void)
         for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
         {
             if (listIdx == 0)
-            {
                 TEST_RESULT_STR(strLstGet(list, listIdx), NULL, "check null item");
-            }
             else
-                TEST_RESULT_STR(strLstGet(list, listIdx), strNewFmt("STR%02u", listIdx), strZ(strNewFmt("check item %u", listIdx)));
+                TEST_RESULT_STR(strLstGet(list, listIdx), strNewFmt("STR%02u", listIdx), zNewFmt("check item %u", listIdx));
         }
 
         TEST_RESULT_VOID(strLstFree(list), "free string list");
@@ -438,13 +435,9 @@ testRun(void)
         for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)
         {
             if (listIdx == 0)
-            {
                 TEST_RESULT_PTR(szList[listIdx], NULL, "check null item");
-            }
             else
-            {
-                TEST_RESULT_Z_STR(szList[listIdx], strNewFmt("STR%02u", listIdx), strZ(strNewFmt("check item %u", listIdx)));
-            }
+                TEST_RESULT_Z_STR(szList[listIdx], strNewFmt("STR%02u", listIdx), zNewFmt("check item %u", listIdx));
         }
 
         TEST_RESULT_PTR(szList[strLstSize(list)], NULL, "check null terminator");
@@ -703,6 +696,12 @@ testRun(void)
         TEST_RESULT_UINT(strIdToLog(TEST_STR5ID2, buffer, sizeof(buffer)), 2, "string id with limited buffer");
         TEST_RESULT_UINT(strlen(buffer), 2, "    check length");
         TEST_RESULT_Z(buffer, "ab", "    check buffer");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("z*()"))
+    {
+        TEST_RESULT_Z(zNewFmt("id=%d", 777), "id=777", "format");
     }
 
     // *****************************************************************************************************************************

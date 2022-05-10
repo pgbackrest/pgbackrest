@@ -251,7 +251,10 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(true, true, false), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
 
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg1: [DbQueryError] unable to select some rows from pg_settings\n"
@@ -671,6 +674,50 @@ testRun(void)
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("PostgreSQL 15 - non-exclusive flag dropped");
+
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_15, .timeline = 6, .checkpoint = pgLsnFromStr(STRDEF("6/6")));
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        harnessPqScriptSet((HarnessPq [])
+        {
+            // Connect to primary
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg1", false, NULL, NULL),
+
+            // Start backup
+            HRNPQ_MACRO_ADVISORY_LOCK(1, true),
+            HRNPQ_MACRO_CURRENT_WAL_GE_10(1, "000000060000000600000005"),
+            HRNPQ_MACRO_START_BACKUP_GE_15(1, false, "6/6", "000000060000000600000006"),
+
+            // Stop backup
+            HRNPQ_MACRO_STOP_BACKUP_GE_15(1, "6/7", "000000060000000600000006", false),
+
+            // Close primary
+            HRNPQ_MACRO_CLOSE(1),
+
+            HRNPQ_MACRO_DONE()
+        });
+
+        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, false, true), "start backup");
+        TEST_RESULT_STR_Z(backupStartResult.lsn, "6/6", "check lsn");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000060000000600000006", "check wal segment name");
+        TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000060000000600000005", "check wal segment check");
+
+        backupStopResult = (DbBackupStopResult){.lsn = NULL};
+        TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");
+        TEST_RESULT_STR_Z(backupStopResult.lsn, "6/7", "check lsn");
+        TEST_RESULT_STR_Z(backupStopResult.walSegmentName, "000000060000000600000006", "check wal segment name");
+        TEST_RESULT_STR_Z(backupStopResult.backupLabel, "BACKUP_LABEL_DATA", "check backup label");
+        TEST_RESULT_STR_Z(backupStopResult.tablespaceMap, NULL, "check tablespace map is not set");
+
+        TEST_RESULT_VOID(dbFree(db.primary), "free primary");
     }
 
     // *****************************************************************************************************************************
@@ -700,7 +747,10 @@ testRun(void)
             {.function = NULL}
         });
 
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(true, true, false), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
                 " error");
@@ -720,7 +770,10 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(true, true, false), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby cluster required but not found");
@@ -801,7 +854,10 @@ testRun(void)
             HRNPQ_MACRO_DONE()
         });
 
-        TEST_ERROR(dbGet(false, true, false), DbConnectError, "unable to find primary cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(false, true, false), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two standbys and primary not required");

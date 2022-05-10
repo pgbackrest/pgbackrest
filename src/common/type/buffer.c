@@ -12,16 +12,14 @@ Buffer Handler
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
 ***********************************************************************************************************************************/
-BUFFER_STRDEF_EXTERN(BRACEL_BUF,                                    BRACEL_Z);
-BUFFER_STRDEF_EXTERN(BRACER_BUF,                                    BRACER_Z);
-BUFFER_STRDEF_EXTERN(BRACKETL_BUF,                                  BRACKETL_Z);
-BUFFER_STRDEF_EXTERN(BRACKETR_BUF,                                  BRACKETR_Z);
-BUFFER_STRDEF_EXTERN(COMMA_BUF,                                     COMMA_Z);
-BUFFER_STRDEF_EXTERN(CR_BUF,                                        CR_Z);
-BUFFER_STRDEF_EXTERN(DOT_BUF,                                       DOT_Z);
-BUFFER_STRDEF_EXTERN(EQ_BUF,                                        EQ_Z);
-BUFFER_STRDEF_EXTERN(LF_BUF,                                        LF_Z);
-BUFFER_STRDEF_EXTERN(QUOTED_BUF,                                    QUOTED_Z);
+BUFFER_STRDEF_EXTERN(BRACEL_BUF,                                    "{");
+BUFFER_STRDEF_EXTERN(BRACER_BUF,                                    "}");
+BUFFER_STRDEF_EXTERN(BRACKETL_BUF,                                  "[");
+BUFFER_STRDEF_EXTERN(BRACKETR_BUF,                                  "]");
+BUFFER_STRDEF_EXTERN(COMMA_BUF,                                     ",");
+BUFFER_STRDEF_EXTERN(EQ_BUF,                                        "=");
+BUFFER_STRDEF_EXTERN(LF_BUF,                                        "\n");
+BUFFER_STRDEF_EXTERN(QUOTED_BUF,                                    "\"");
 
 /***********************************************************************************************************************************
 Contains information about the buffer
@@ -370,7 +368,7 @@ bufToLog(const Buffer *this)
 {
     String *result = strNewFmt(
         "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this),
-        bufSizeLimit(this) ? strZ(strNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this))) : "}");
+        bufSizeLimit(this) ? zNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this)) : "}");
 
     return result;
 }

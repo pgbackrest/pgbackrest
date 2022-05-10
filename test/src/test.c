@@ -239,9 +239,9 @@ main(int argListSize, const char *argList[])
         {
             // If a test was running then throw a detailed result exception
 #ifdef DEBUG
-        if (!errorInstanceOf(&TestError))
+            if (!errorInstanceOf(&TestError))
 #endif
-            hrnTestResultException();
+                hrnTestResultException();
 
             // Else rethrow the original error
             RETHROW();

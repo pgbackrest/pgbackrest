@@ -18,7 +18,13 @@
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <github-pull-request id="1732"/>
+                        <commit subject="Fix error thrown from FINALLY() causing an infinite loop.">
+                            <github-pull-request id="1732"/>
+                        </commit>
+                        <commit subject="Remove unnecessary TRY() block in common/regExp module."/>
+                        <commit subject="Use variable instead of function to track FINALLY() state.">
+                            <github-pull-request id="1744"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -45,6 +51,79 @@
                 </release-bug-list>
 
                 <release-feature-list>
+                    <release-item>
+                        <commit subject="Remove redundant restoreFile() test and improve coverage."/>
+                        <commit subject="Add limit parameter to ioCopyP()."/>
+                        <commit subject="Optimize restore command for file bundling.">
+                            <github-issue id="1149"/>
+                            <github-pull-request id="1683"/>
+                        </commit>
+                        <commit subject="Add bundle logging to backup command."/>
+                        <commit subject="Rename bundle-* options to repo-bundle-*.">
+                            <github-pull-request id="1694"/>
+                        </commit>
+                        <commit subject="Disable repo-hardlink option when repo-bundle option is enabled."/>
+                        <commit subject="Allow files that become zero-length after the backup manifest is built."/>
+                        <commit subject="Backup file bundling documentation.">
+                            <github-pull-request id="1740"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="chris.bandy"/>
+                        </release-item-contributor-list>
+
+                        <p>Backup file bundling for improved small file support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Add verify output and verbose options.">
+                            <github-pull-request id="1607"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Verify command to validate the contents of a repository.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Remove dependency on pg_database.datlastsysoid.">
+                            <github-pull-request id="1735"/>
+                        </commit>
+                        <commit subject="PostgreSQL 15 support.">
+                            <github-pull-request id="1736"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p><postgres/> 15 support.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Remove dependency on pg_database.datlastsysoid.">
+                            <github-issue id="1490"/>
+                            <github-pull-request id="1621"/>
+                        </commit>
+                        <commit subject="Remove extraneous linefeed when writing a lock file."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Show backup percent complete in <cmd>info</cmd> output.</p>
+                    </release-item>
+
                     <release-item>
                         <commit subject="Refactor target type checking for clarity in restore module."/>
                         <commit subject="Auto-select backup for restore command --type=lsn.">
@@ -157,6 +236,30 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1739"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="greg.sabino.mullane"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>ClockError</code> for unexpected clock skew and timezone changes.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1738"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Strip extensions from history manifest before showing in error message.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1722"/>
 
                         <release-item-contributor-list>
@@ -169,30 +272,6 @@
                 </release-improvement-list>
 
                 <release-development-list>
-                    <release-item>
-                        <commit subject="Remove redundant restoreFile() test and improve coverage."/>
-                        <commit subject="Add limit parameter to ioCopyP()."/>
-                        <commit subject="Optimize restore command for file bundling.">
-                            <github-issue id="1149"/>
-                            <github-pull-request id="1683"/>
-                        </commit>
-                        <commit subject="Add bundle logging to backup command."/>
-                        <commit subject="Rename bundle-* options to repo-bundle-*.">
-                            <github-pull-request id="1694"/>
-                        </commit>
-                        <commit subject="Disable repo-hardlink option when repo-bundle option is enabled."/>
-                        <commit subject="Allow files that become zero-length after the backup manifest is built."/>
-
-                        <release-item-contributor-list>
-                            <release-item-contributor id="david.steele"/>
-                            <release-item-reviewer id="reid.thompson"/>
-                            <release-item-reviewer id="stefan.fercot"/>
-                            <release-item-reviewer id="chris.bandy"/>
-                        </release-item-contributor-list>
-
-                        <p>Improve small file support.</p>
-                    </release-item>
-
                     <release-item>
                         <commit subject="Add test for protocol greeting when a field is missing."/>
                         <commit subject="Return stats as a JSON string rather than a KeyValue object."/>
@@ -243,6 +322,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1734"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Prevent <code>memContextFree()</code> from freeing memory needed by callbacks.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Update postgres/client unit test for changes in libpq."/>
                         <commit subject="Update postgres/client unit test to conform to current patterns."/>
                         <commit subject="Use specific integer types in postgres/client and db unit tests."/>
@@ -287,6 +377,32 @@
                         <p>Fix <br-option>tls-server-auth</br-option> example and add clarifications.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1742"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                        </release-item-contributor-list>
+
+                        <p>Simplify messaging around supported versions in the documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1722"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Document required base branch for pull requests.</p>
+                    </release-item>
+                </release-improvement-list>
             </release-doc-list>
         </release>
 

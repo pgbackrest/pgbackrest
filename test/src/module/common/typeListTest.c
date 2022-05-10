@@ -87,7 +87,7 @@ testRun(void)
             // Add ints to the list
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
             {
-                TEST_RESULT_VOID(lstAdd(list, &listIdx), strZ(strNewFmt("add item %d", listIdx)));
+                TEST_RESULT_VOID(lstAdd(list, &listIdx), zNewFmt("add item %d", listIdx));
             }
 
             lstMove(list, memContextPrior());
@@ -96,7 +96,7 @@ testRun(void)
 
         // Insert an int at the beginning
         int insertIdx = 0;
-        TEST_RESULT_INT(*(int *)lstInsert(list, 0, &insertIdx), 0, strZ(strNewFmt("insert item %d", insertIdx)));
+        TEST_RESULT_INT(*(int *)lstInsert(list, 0, &insertIdx), 0, zNewFmt("insert item %d", insertIdx));
 
         // Check the size
         TEST_RESULT_INT(lstSize(list), 9, "list size");
@@ -106,7 +106,7 @@ testRun(void)
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
             int *item = lstGet(list, listIdx);
-            TEST_RESULT_INT(*item, listIdx, strZ(strNewFmt("check item %u", listIdx)));
+            TEST_RESULT_INT(*item, listIdx, zNewFmt("check item %u", listIdx));
         }
 
         // Remove first item
@@ -117,7 +117,7 @@ testRun(void)
         {
             int *item = listIdx == lstSize(list) - 1 ? lstGetLast(list) : lstGet(list, listIdx);
 
-            TEST_RESULT_INT(*item, listIdx + 1, strZ(strNewFmt("check item %u", listIdx)));
+            TEST_RESULT_INT(*item, listIdx + 1, zNewFmt("check item %u", listIdx));
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ testRun(void)
         for (int listIdx = 0; listIdx < 8; listIdx++)
         {
             int item = listIdx + 9;
-            TEST_RESULT_VOID(lstAdd(list, &item), strZ(strNewFmt("add item %d", item)));
+            TEST_RESULT_VOID(lstAdd(list, &item), zNewFmt("add item %d", item));
         }
 
         TEST_RESULT_UINT(lstSize(list), list->listSizeMax, "size equals max size");
@@ -141,7 +141,7 @@ testRun(void)
         for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
         {
             int *item = lstGet(list, listIdx);
-            TEST_RESULT_INT(*item, listIdx + 1, strZ(strNewFmt("check item %u", listIdx)));
+            TEST_RESULT_INT(*item, listIdx + 1, zNewFmt("check item %u", listIdx));
         }
 
         TEST_ERROR(lstGet(list, lstSize(list)), AssertError, "cannot get index 15 from list with 15 value(s)");
