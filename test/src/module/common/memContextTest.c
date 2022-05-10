@@ -133,21 +133,39 @@ testRun(void)
         TEST_RESULT_UINT(memContextChildMany(memContextTop())->freeIdx, 1, "check context free idx");
 
         // Create a new context and it should end up in the same spot
-        memContextNewP("test-reuse", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1);
+        MemContext *const memContextOneChild = memContextNewP("test-reuse", .childQty = 1);
         memContextKeep();
         TEST_RESULT_BOOL(
             memContextChildMany(memContextTop())->list[1]->active, true, "new context in same index as freed context is active");
         TEST_RESULT_Z(memContextChildMany(memContextTop())->list[1]->name, "test-reuse", "new context name");
         TEST_RESULT_UINT(memContextChildMany(memContextTop())->freeIdx, 2, "check context free idx");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("child context in context with only one child allowed");
+
+        TEST_RESULT_VOID(memContextSwitch(memContextOneChild), "switch");
+        MemContext *memContextSingleChild;
+        TEST_ASSIGN(memContextSingleChild, memContextNewP("single-child", .childQty = 1, .allocQty = 1), "new");
+        TEST_RESULT_VOID(memContextKeep(), "keep");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("child context freed in context with only one child allowed");
+
+        TEST_RESULT_VOID(memContextSwitch(memContextSingleChild), "switch");
+        TEST_RESULT_VOID(memContextNewP("free-child", .childQty = 1), "new");
+        TEST_RESULT_VOID(memContextDiscard(), "discard");
+
+        TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         // Next context will be at the end
-        memContextNewP("test-at-end", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1);
+        memContextNewP("test-at-end");
         memContextKeep();
         TEST_RESULT_UINT(memContextChildMany(memContextTop())->freeIdx, MEM_CONTEXT_INITIAL_SIZE + 2, "check context free idx");
 
         // Create a child context to test recursive free
         memContextSwitch(memContextChildMany(memContextTop())->list[MEM_CONTEXT_INITIAL_SIZE]);
-        memContextNewP("test-reuse", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1);
+        memContextNewP("test-reuse", .childQty = 1);
         memContextKeep();
         TEST_RESULT_PTR_NE(
             memContextChildMany(memContextChildMany(memContextTop())->list[MEM_CONTEXT_INITIAL_SIZE])->list, NULL,
@@ -157,7 +175,7 @@ testRun(void)
             MEM_CONTEXT_INITIAL_SIZE, "context child list initial size");
 
         // This test will change if the contexts above change
-        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 672 : 440, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 584 : 440, "check size");
 
         TEST_ERROR(
             memContextFree(memContextChildMany(memContextTop())->list[MEM_CONTEXT_INITIAL_SIZE]), AssertError,
@@ -172,6 +190,13 @@ testRun(void)
         // memContextAllocMany(noAllocation)->listSize = 0; !!! NO LONGER NEEDED?
         // free(memContextAllocMany(noAllocation->list)); !!! NO LONGER NEEDED?
         TEST_RESULT_VOID(memContextFree(noAllocation), "free context with no allocations");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("alloc extra not aligned");
+
+        TEST_ASSIGN(memContext, memContextNewP("test-alloc", .allocExtra = 7), "no aligned");
+        TEST_RESULT_UINT(memContext->allocExtra, 8, "check");
+        TEST_RESULT_VOID(memContextDiscard(), "discard");
     }
 
     // *****************************************************************************************************************************
@@ -189,8 +214,7 @@ testRun(void)
         memContextSwitch(memContextTop());
         memNewPtrArray(1);
 
-        MemContext *memContext = memContextNewP(
-            "test-alloc", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1);
+        MemContext *memContext = memContextNewP("test-alloc", .allocQty = MEM_CONTEXT_QTY_MAX);
         TEST_ERROR(memContextSwitchBack(), AssertError, "current context expected but new context 'test-alloc' found");
         memContextKeep();
         memContextSwitch(memContext);
@@ -239,7 +263,7 @@ testRun(void)
             memContextAllocMany(memContextCurrent())->freeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 3, "check alloc free idx");
 
         // This test will change if the allocations above change
-        // TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 241 : 165, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 209 : 165, "check size");
 
         // TEST_ERROR(
         //     memFree(NULL), AssertError,
@@ -253,6 +277,41 @@ testRun(void)
 
         memContextSwitch(memContextTop());
         memContextFree(memContext);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("mem context with one allocation");
+
+        TEST_ASSIGN(memContext, memContextNewP("test-alloc", .allocQty = 1), "new");
+        TEST_RESULT_VOID(memContextKeep(), "keep new");
+        TEST_RESULT_VOID(memContextSwitch(memContext), "switch to new");
+
+        TEST_ASSIGN(buffer, memNew(100), "new");
+        TEST_ASSIGN(buffer, memResize(buffer, 150), "resize");
+        TEST_RESULT_VOID(memFree(buffer), "free");
+
+        TEST_ASSIGN(buffer, memNew(200), "new");
+
+        // This test will change if the allocations above change
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 240 : 165, "check size");
+
+        TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
+        TEST_RESULT_VOID(memContextFree(memContext), "context free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("mem context with one allocation freed before context free");
+
+        TEST_ASSIGN(memContext, memContextNewP("test-alloc", .allocQty = 1), "new");
+        TEST_RESULT_VOID(memContextKeep(), "keep new");
+        TEST_RESULT_VOID(memContextSwitch(memContext), "switch to new");
+
+        TEST_ASSIGN(buffer, memNew(100), "new");
+        TEST_RESULT_VOID(memFree(buffer), "free");
+
+        // This test will change if the allocations above change
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 32 : 165, "check size");
+
+        TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
+        TEST_RESULT_VOID(memContextFree(memContext), "context free");
     }
 
     // *****************************************************************************************************************************
@@ -436,6 +495,29 @@ testRun(void)
             TEST_RESULT_PTR(memContextChildMany(memContextCurrent())->list[2], memContext2, "check memory context 2");
         }
         MEM_CONTEXT_NEW_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("outer and inner contexts allow one child");
+
+        MemContext *memContextParent1;
+        TEST_ASSIGN(memContextParent1, memContextNewP("parent1", .childQty = 1), "new parent1");
+        TEST_RESULT_VOID(memContextKeep(), "keep parent1");
+
+        TEST_RESULT_VOID(memContextSwitch(memContextParent1), "switch to parent1");
+
+        MemContext *memContextChild;
+        TEST_ASSIGN(memContextChild, memContextNewP("child", .allocQty = 0), "new child");
+        TEST_RESULT_VOID(memContextKeep(), "keep child");
+
+        TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
+
+        MemContext *memContextParent2;
+        TEST_ASSIGN(memContextParent2, memContextNewP("parent2", .childQty = 1), "new parent2");
+        TEST_RESULT_VOID(memContextKeep(), "keep parent2");
+
+        TEST_RESULT_VOID(memContextMove(memContextChild, memContextParent2), "move");
+        TEST_RESULT_PTR(memContextChildOne(memContextParent1)->context, NULL, "check parent1");
+        TEST_RESULT_PTR(memContextChildOne(memContextParent2)->context, memContextChild, "check parent2");
     }
 
     memContextFree(memContextTop());
