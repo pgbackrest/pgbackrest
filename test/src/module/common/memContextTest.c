@@ -184,13 +184,6 @@ testRun(void)
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
         TEST_RESULT_VOID(memContextFree(memContextTop()), "free top");
 
-        MemContext *noAllocation = memContextNewP(
-            "empty", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1);
-        memContextKeep();
-        // memContextAllocMany(noAllocation)->listSize = 0; !!! NO LONGER NEEDED?
-        // free(memContextAllocMany(noAllocation->list)); !!! NO LONGER NEEDED?
-        TEST_RESULT_VOID(memContextFree(noAllocation), "free context with no allocations");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("alloc extra not aligned");
 
