@@ -419,10 +419,10 @@ memContextNew(
 #ifdef DEBUG
         // Set the context name
         .name = name,
-#endif
+
         // Set new context active
         .active = true,
-
+#endif
         // Set flags
         .allocType = allocType,
         .childType = childType,
