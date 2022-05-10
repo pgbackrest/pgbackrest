@@ -1078,8 +1078,10 @@ memContextCallbackRecurse(MemContext *const this)
 
     ASSERT(this != NULL);
 
+#ifdef DEBUG
     // Certain actions against the context are no longer allowed
     this->active = false;
+#endif
 
     // Callback
     if (this->callbackInitialized)
