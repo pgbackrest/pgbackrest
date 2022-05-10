@@ -155,12 +155,6 @@ testRun(void)
 
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
         TEST_RESULT_VOID(memContextFree(memContextTop()), "free top");
-
-        MemContext *noAllocation = memContextNewP("empty");
-        memContextKeep();
-        noAllocation->allocListSize = 0;
-        free(noAllocation->allocList);
-        TEST_RESULT_VOID(memContextFree(noAllocation), "free context with no allocations");
     }
 
     // *****************************************************************************************************************************
