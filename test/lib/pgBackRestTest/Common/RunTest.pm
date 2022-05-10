@@ -23,7 +23,6 @@ use pgBackRestDoc::ProjectInfo;
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::LogTest;
 use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
@@ -124,7 +123,6 @@ sub process
         $self->{bOutput},
         $self->{bDryRun},
         $self->{bCleanup},
-        $self->{bLogForce},
         $self->{strLogLevelTestFile},
         $self->{strPgUser},
         $self->{strGroup},
@@ -146,7 +144,6 @@ sub process
             {name => 'bOutput'},
             {name => 'bDryRun'},
             {name => 'bCleanup'},
-            {name => 'bLogForce'},
             {name => 'strLogLevelTestFile'},
             {name => 'strPgUser'},
             {name => 'strGroup'},
@@ -159,10 +156,9 @@ sub process
     $oStorage = new pgBackRestTest::Common::Storage(
         $self->testPath(), new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
-    # Init, run, and end the test(s)
+    # Init, run, and clean the test(s)
     $self->initModule();
     $self->run();
-    $self->end();
     $self->cleanModule();
 
     # Make sure the correct number of tests ran
@@ -193,33 +189,12 @@ sub begin
     (
         $strOperation,
         $strDescription,
-        $bExpect,
     ) =
         logDebugParam
         (
             __PACKAGE__ . '->begin', \@_,
             {name => 'strDescription'},
-            {name => 'bExpect', required => false},
         );
-
-    # Save the previous expect log
-    $self->end();
-
-    # If bExpect is defined then it is an override of the default
-    $self->{bExpect} = false;
-
-    if ($self->vm() eq VM_EXPECT)
-    {
-        if (defined($bExpect))
-        {
-            $self->{bExpect} = $bExpect;
-        }
-        # Else get the default expect setting
-        else
-        {
-            $self->{bExpect} = (testDefModuleTest($self->{strModule}, $self->{strModuleTest}))->{&TESTDEF_EXPECT};
-        }
-    }
 
     # Increment the run counter;
     $self->{iRun}++;
@@ -238,17 +213,6 @@ sub begin
         return false;
     }
 
-    # Create an ExpectTest object
-    if ($self->doExpect())
-    {
-        $self->{oExpect} = new pgBackRestTest::Common::LogTest(
-            $self->module(), $self->moduleTest(), $self->runCurrent(), $self->doLogForce(), $strDescription,
-            $self->{strBackRestExe}, $self->pgBinPath(), $self->testPath(), $self->basePath());
-
-        &log(INFO, '          expect log: ' . $self->{oExpect}->{strFileName});
-    }
-
-
     if (!$self->{bFirstTest})
     {
         $self->cleanTest();
@@ -258,21 +222,6 @@ sub begin
     $self->{bFirstTest} = false;
 
     return true;
-}
-
-####################################################################################################################################
-# end
-####################################################################################################################################
-sub end
-{
-    my $self = shift;
-
-    # Save the previous test log
-    if (defined($self->expect()))
-    {
-        $self->expect()->logWrite($self->basePath(), $self->testPath());
-        delete($self->{oExpect});
-    }
 }
 
 ####################################################################################################################################
@@ -290,8 +239,6 @@ sub testResult
         $strExpected,
         $strDescription,
         $iWaitSeconds,
-        $strLogExpect,
-        $strLogLevel,
     ) =
         logDebugParam
         (
@@ -300,8 +247,6 @@ sub testResult
             {name => 'strExpected', required => false, trace => true},
             {name => 'strDescription', trace => true},
             {name => 'iWaitSeconds', optional => true, default => 0, trace => true},
-            {name => 'strLogExpect', optional => true, trace => true},
-            {name => 'strLogLevel', optional => true, default => WARN, trace => true},
         );
 
     &log(INFO, '    ' . $strDescription);
@@ -310,10 +255,6 @@ sub testResult
 
     my $oWait = waitInit($iWaitSeconds);
     my $bDone = false;
-
-    # Save the current log levels and set the file level to strLogLevel, console to off, and timestamp false
-    my ($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp) = logLevel();
-    logLevelSet($strLogLevel, OFF, undef, false);
 
     # Clear the cache for this test
     logFileCacheClear();
@@ -335,15 +276,10 @@ sub testResult
                 $strActual = ${logDebugBuild(\@stryResult)};
             }
 
-            # Restore the log level
-            logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
             return true;
         }
         or do
         {
-            # Restore the log level
-            logLevelSet($strLogLevelFile, $strLogLevelConsole, $strLogLevelStdErr, $bLogTimestamp);
-
             if (!isException(\$EVAL_ERROR))
             {
                 confess "unexpected standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
@@ -367,83 +303,12 @@ sub testResult
         }
     } while (!$bDone);
 
-    # If we get here then test any warning message
-    if (defined($strLogExpect))
-    {
-        my $strLogMessage = trim(logFileCache());
-
-        # Strip leading Process marker and whitespace from each line
-        $strLogMessage =~ s/^(P[0-9]{2})*\s+//mg;
-
-        # If the expected message does not exactly match the logged message or is not at least contained in it, then error
-        if (!($strLogMessage eq $strLogExpect || $strLogMessage =~ $strLogExpect))
-        {
-            confess &log(ERROR,
-                "the log message:\n$strLogMessage\ndoes not match or does not contain the expected message:\n" .
-                $strLogExpect);
-        }
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'result', value => \@stryResult, trace => true}
     );
-}
-
-####################################################################################################################################
-# testException
-####################################################################################################################################
-sub testException
-{
-    my $self = shift;
-    my $fnSub = shift;
-    my $iCodeExpected = shift;
-    my $strMessageExpected = shift;
-
-    # Output first line of the error message
-    &log(INFO,
-        "    [${iCodeExpected}] " . (defined($strMessageExpected) ? (split('\n', $strMessageExpected))[0] : 'undef error message'));
-
-    my $bError = false;
-    my $strError =
-        "exception ${iCodeExpected}, " . (defined($strMessageExpected) ? "'${strMessageExpected}'" : '[UNDEF]') . " was expected";
-
-    eval
-    {
-        logDisable();
-        $fnSub->();
-        logEnable();
-        return true;
-    }
-    or do
-    {
-        logEnable();
-
-        if (!isException(\$EVAL_ERROR))
-        {
-            confess "${strError} but actual was standard Perl exception" . (defined($EVAL_ERROR) ? ": ${EVAL_ERROR}" : '');
-        }
-
-        if (!($EVAL_ERROR->code() == $iCodeExpected &&
-            (!defined($strMessageExpected) && !defined($EVAL_ERROR->message()) ||
-                (defined($strMessageExpected) && defined($EVAL_ERROR->message()) &&
-                    ($EVAL_ERROR->message() eq $strMessageExpected || $EVAL_ERROR->message() =~ "^${strMessageExpected}" ||
-                     $EVAL_ERROR->message() =~ "^${strMessageExpected} at ")))))
-        {
-            confess
-                "${strError} but actual was " . $EVAL_ERROR->code() . ', ' .
-                (defined($EVAL_ERROR->message()) ? qw{'} . $EVAL_ERROR->message() . qw{'} : '[UNDEF]');
-        }
-
-        $bError = true;
-    };
-
-    if (!$bError)
-    {
-        confess "${strError} but no exception was thrown";
-    }
 }
 
 ####################################################################################################################################
@@ -544,12 +409,9 @@ sub backrestExeHelper {return shift->{strBackRestExeHelper}}
 sub basePath {return shift->{strBasePath}}
 sub dataPath {return shift->basePath() . '/test/data'}
 sub doCleanup {return shift->{bCleanup}}
-sub doExpect {return shift->{bExpect}}
-sub doLogForce {return shift->{bLogForce}}
 sub logLevelTestFile {return shift->{strLogLevelTestFile}}
 sub group {return shift->{strGroup}}
 sub isDryRun {return shift->{bDryRun}}
-sub expect {return shift->{oExpect}}
 sub module {return shift->{strModule}}
 sub moduleTest {return shift->{strModuleTest}}
 sub pgBinPath {return shift->{strPgBinPath}}

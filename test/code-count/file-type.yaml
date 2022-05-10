@@ -1859,10 +1859,6 @@ test/lib/pgBackRestTest/Common/ListTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/LogTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/RunTest.pm:
   class: test/harness
   type: perl

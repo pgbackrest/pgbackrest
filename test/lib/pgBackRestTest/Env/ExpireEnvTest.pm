@@ -49,7 +49,6 @@ sub new
         $self->{strBackRestExe},
         $self->{oStorageRepo},
         $self->{strPgPath},
-        $self->{oLogTest},
         $self->{oRunTest},
     ) =
         logDebugParam
@@ -59,7 +58,6 @@ sub new
             {name => 'strBackRestExe', trace => true},
             {name => 'oStorageRepo', trace => true},
             {name => 'strPgPath', trace => true},
-            {name => 'oLogTest', required => false, trace => true},
             {name => 'oRunTest', required => false, trace => true},
         );
 
@@ -579,70 +577,6 @@ sub archiveCreate
 }
 
 ####################################################################################################################################
-# supplementalLog
-####################################################################################################################################
-sub supplementalLog
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strStanza
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->supplementalLog', \@_,
-            {name => 'strStanza'}
-        );
-
-    my $oStanza = $self->{oStanzaHash}{$strStanza};
-
-    if (defined($self->{oLogTest}))
-    {
-        $self->{oLogTest}->supplementalAdd(
-            $self->{oHostBackup}->repoPath() . "/backup/${strStanza}/backup.info", $$oStanza{strBackupDescription},
-            ${storageRepo->get($self->{oHostBackup}->repoPath() . "/backup/${strStanza}/backup.info")});
-
-        # Output backup list
-        $self->{oLogTest}->logAdd(
-            'ls ' . $self->{oHostBackup}->repoPath() . "/backup/${strStanza} | grep -v \"backup.*\"", undef,
-            join("\n", grep(!/^backup\.info.*$/i, storageRepo()->list("backup/${strStanza}"))));
-
-        # Output archive manifest
-        my $rhManifest = storageRepo()->manifest($self->{oHostBackup}->repoArchivePath());
-        my $strManifest;
-        my $strPrefix = '';
-
-        foreach my $strEntry (sort(keys(%{$rhManifest})))
-        {
-            # Skip files
-            next if $strEntry eq ARCHIVE_INFO_FILE || $strEntry eq ARCHIVE_INFO_FILE . INI_COPY_EXT;
-
-            if ($rhManifest->{$strEntry}->{type} eq 'd')
-            {
-                $strEntry = $self->{oHostBackup}->repoArchivePath($strEntry eq '.' ? undef : $strEntry);
-
-                # &log(WARN, "DIR $strEntry");
-                $strManifest .= (defined($strManifest) ? "\n" : '') . "${strEntry}:\n";
-                $strPrefix = $strEntry;
-            }
-            else
-            {
-                # &log(WARN, "FILE $strEntry");
-                $strManifest .= basename($strEntry) . "\n";
-            }
-        }
-
-        $self->{oLogTest}->logAdd(
-            'ls -R ' . $self->{oHostBackup}->repoPath() . "/archive/${strStanza} | grep -v \"archive.info\"", undef, $strManifest);
-    }
-
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
 # process
 ####################################################################################################################################
 sub process
@@ -672,8 +606,6 @@ sub process
         );
 
     my $oStanza = $self->{oStanzaHash}{$strStanza};
-
-    $self->supplementalLog($strStanza);
 
     undef($$oStanza{strBackupDescription});
 
@@ -706,9 +638,7 @@ sub process
 
     $strCommand .= ' expire';
 
-    $self->{oHostBackup}->executeSimple($strCommand, {strComment => $strDescription, oLogTest => $self->{oLogTest}});
-
-    $self->supplementalLog($strStanza);
+    $self->{oHostBackup}->executeSimple($strCommand, {strComment => $strDescription});
 
     # Return from function and log return values if any
     return logDebugReturn($strOperation);
