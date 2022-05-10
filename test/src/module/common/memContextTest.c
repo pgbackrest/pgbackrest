@@ -175,7 +175,7 @@ testRun(void)
             MEM_CONTEXT_INITIAL_SIZE, "context child list initial size");
 
         // This test will change if the contexts above change
-        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 584 : 440, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextTop()), TEST_64BIT() ? 584 : 376, "check size");
 
         TEST_ERROR(
             memContextFree(memContextChildMany(memContextTop())->list[MEM_CONTEXT_INITIAL_SIZE]), AssertError,
@@ -256,7 +256,7 @@ testRun(void)
             memContextAllocMany(memContextCurrent())->freeIdx, MEM_CONTEXT_ALLOC_INITIAL_SIZE + 3, "check alloc free idx");
 
         // This test will change if the allocations above change
-        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 209 : 165, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 209 : 145, "check size");
 
         // TEST_ERROR(
         //     memFree(NULL), AssertError,
@@ -285,7 +285,7 @@ testRun(void)
         TEST_ASSIGN(buffer, memNew(200), "new");
 
         // This test will change if the allocations above change
-        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 240 : 165, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 240 : 228, "check size");
 
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
         TEST_RESULT_VOID(memContextFree(memContext), "context free");
@@ -301,7 +301,7 @@ testRun(void)
         TEST_RESULT_VOID(memFree(buffer), "free");
 
         // This test will change if the allocations above change
-        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 32 : 165, "check size");
+        TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 32 : 20, "check size");
 
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
         TEST_RESULT_VOID(memContextFree(memContext), "context free");
