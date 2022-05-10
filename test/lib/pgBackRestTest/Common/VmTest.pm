@@ -93,10 +93,6 @@ use constant VM_U20                                                 => 'u20';
 use constant VM_D9                                                  => 'd9';
     push @EXPORT, qw(VM_D9);
 
-# Defines the vm that will be used for expect testing
-use constant VM_EXPECT                                              => VM_RH7;
-    push @EXPORT, qw(VM_EXPECT);
-
 # VM aliases for run matrices (numbered oldest to newest)
 use constant VM2                                                    => VM_D9;
     push @EXPORT, qw(VM2);
@@ -205,6 +201,8 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
         ],
     },
 
@@ -275,12 +273,11 @@ my $oyVm =
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_91,
-            PG_VERSION_92,
             PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
@@ -289,6 +286,7 @@ my $oyVm =
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
     },
 };

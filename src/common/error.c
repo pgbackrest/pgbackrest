@@ -348,11 +348,8 @@ void
 errorInternalTryEnd(void)
 {
     // Any catch blocks have been processed and none of them called RETHROW() so clear the error
-    if (errorContext.tryList[errorContext.tryTotal].state == errorStateEnd &&
-        !errorContext.tryList[errorContext.tryTotal].uncaught)
-    {
+    if (errorInternalState() == errorStateEnd && !errorContext.tryList[errorContext.tryTotal].uncaught)
         errorContext.error = (Error){0};
-    }
 
     // Remove the try
     errorContext.tryTotal--;

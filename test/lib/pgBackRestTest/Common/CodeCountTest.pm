@@ -62,7 +62,6 @@ sub codeCountScan
                  $strFile =~ '^test/certificate/' ||
                  $strFile =~ '^test/code-count/' ||
                  $strFile =~ '^test/data/' ||
-                 $strFile =~ '^test/expect/' ||
                  $strFile =~ '^test/patch/' ||
                  $strFile =~ '^test/result/' ||
                  $strFile =~ '^test/scratch' ||

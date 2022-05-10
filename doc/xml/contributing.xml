@@ -57,6 +57,7 @@
         <p><link section="/pr">Submitting a Pull Request</link></p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
@@ -145,17 +146,20 @@
         <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>test.pl</file> and <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-main]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL 7 configuration that can be used for building the documentation</quote>. NOTE that the <quote>Install latex (for building PDF)</quote> section is not required since testing of the docs need only be run for HTML output.</p>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="coding">
         <title>Coding</title>
 
         <p>The following sections provide information on some important concepts needed for coding within <backrest/>.</p>
 
+        <!-- =================================================================================================================== -->
         <section id="memory-context">
             <title>Memory Contexts</title>
 
             <p>Memory is allocated inside contexts and can be long lasting (for objects) or temporary (for functions). In general, use <code>OBJ_NEW_BEGIN(MyObj)</code> for objects and <code>MEM_CONTEXT_TEMP_BEGIN()</code> for functions. See <link url="{[github-url-src-common]}/memContext.h">memContext.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="message-logging">
             <title>Logging</title>
 
@@ -164,11 +168,13 @@
             <p>Logging is also used for providing information to the user via the <code>LOG_*()</code> macros, such as <code>LOG_INFO("some informational message")</code> and <code>LOG_WARN_FMT("no prior backup exists, %s backup has been changed to full", strZ(cfgOptionDisplay(cfgOptType)))</code> and also via <code>THROW_*()</code> macros for throwing an error. See <link url="{[github-url-src-common]}/log.h">log.h</link> and <link url="{[github-url-src-common]}/error.h">error.h</link> for more details and the <link section="/coding/coding-example">Coding Example</link> below.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="coding-example">
             <title>Coding Example</title>
 
             <p>The example below is not structured like an actual implementation and is intended only to provide an understanding of some of the more common coding practices. The comments in the example are only here to explain the example and are not representative of the coding standards. Refer to the Coding Standards document (<link url="{[github-url-main]}/CODING.md">CODING.md</link>) and sections above for an introduction to the concepts provided here. For an actual implementation, see <link url="{[github-url-src]}/db/db.h">db.h</link> and <link url="{[github-url-src]}/db/db.c">db.c</link>.</p>
 
+            <!-- =============================================================================================================== -->
             <section id="coding-ex1">
                 <title>Example: hypothetical basic object construction</title>
 
@@ -294,6 +300,7 @@ myObjToLog(const MyObj *this)
         </section>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="testing">
         <title>Testing</title>
 
@@ -316,6 +323,7 @@ myObjToLog(const MyObj *this)
 
         <admonition type="note"><code>ERROR: [028]</code> regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.</admonition>
 
+        <!-- =================================================================================================================== -->
         <section id="running">
             <title>Running Tests</title>
 
@@ -336,6 +344,7 @@ pgbackrest/test/test.pl --help
 pgbackrest/doc/doc.pl --help
             </code-block>
 
+            <!-- =============================================================================================================== -->
             <section id="without-docker">
                 <title>Without Docker</title>
 
@@ -372,6 +381,7 @@ pgbackrest/doc/doc.pl --help
                 </execute-list>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="with-docker" depend="/environment">
                 <title>With Docker</title>
 
@@ -399,6 +409,7 @@ pgbackrest/doc/doc.pl --help
             </section>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="unit-test">
             <title>Writing a Unit Test</title>
 
@@ -409,6 +420,7 @@ pgbackrest/doc/doc.pl --help
                 <list-item><b>src/module/somefileTest.c</b> - where <quote>somefile</quote> is the path and name of the test file where the unit tests are located for the code being updated (e.g. <file>src/module/command/expireTest.c</file>).</list-item>
             </list>
 
+            <!-- =============================================================================================================== -->
             <section id="define-yaml">
                 <title>define.yaml</title>
 
@@ -430,6 +442,7 @@ pgbackrest/doc/doc.pl --help
                 </code-block>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="test-file">
                 <title>somefileTest.c</title>
 
@@ -446,6 +459,7 @@ if (testBegin("expireBackup()"))
                 </code-block>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="test-command">
                 <title>Setting up the command to be run</title>
 
@@ -461,6 +475,7 @@ HRN_CFG_LOAD(cfgCmdInfo, argList);                                  // Load the 
                 </code-block>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="test-store">
                 <title>Storing a file</title>
 
@@ -472,6 +487,7 @@ HRN_STORAGE_PUT_EMPTY(
                 </code-block>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="test-results">
                 <title>Testing results</title>
 
@@ -489,6 +505,7 @@ HRN_STORAGE_PUT_EMPTY(
                 <admonition type="note"><code>HRN_*</code> macros should be used only for test setup and cleanup. <code>TEST_*</code> macros must be used for testing results.</admonition>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="test-log">
                 <title>Testing a log message</title>
 
@@ -502,6 +519,7 @@ TEST_RESULT_LOG(
                 <p>In the above, <code>Pxx</code> indicates the process (P) and the process number (xx), e.g. P00, P01.</p>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="test-child">
                 <title>Testing using child process</title>
 
@@ -551,6 +569,7 @@ HRN_FORK_END();
                 </code-block>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="test-shim">
                 <title>Testing using a shim</title>
 
@@ -575,6 +594,7 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
             </section>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="unit-test-run">
             <title>Running a Unit Test</title>
 
@@ -600,6 +620,7 @@ pgbackrest/test/test.pl --vm-out --module=command --test=check --run=1 --no-clea
             </code-block>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="test-output">
             <title>Understanding Test Output</title>
 
@@ -623,6 +644,7 @@ run 8/1 ------------- L2285 no current backups
         </section>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="option">
         <title>Adding an Option</title>
 
@@ -636,6 +658,7 @@ run 8/1 ------------- L2285 no current backups
 
         <p>These files are discussed in the following sections along with how to verify the <code>help</code> command output.</p>
 
+        <!-- =================================================================================================================== -->
         <section id="config-file">
             <title>config.yaml</title>
 
@@ -643,6 +666,7 @@ run 8/1 ------------- L2285 no current backups
 
             <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, two hypothetical examples will be discussed. For more details, see <link url="{[github-url-src]}/build/config/config.yaml">config.yaml</link>.</p>
 
+            <!-- =============================================================================================================== -->
             <section id="option-ex1">
                 <title>EXAMPLE 1 hypothetical command line only option</title>
 
@@ -672,6 +696,7 @@ run 8/1 ------------- L2285 no current backups
                 <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.</list-item>
             </list>
 
+            <!-- =============================================================================================================== -->
             <section id="option-ex2">
                 <title>EXAMPLE 2 hypothetical configuration file option</title>
 
@@ -707,6 +732,7 @@ run 8/1 ------------- L2285 no current backups
             <p>At compile time, the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="help-file">
             <title>help.xml</title>
 
@@ -726,6 +752,7 @@ run 8/1 ------------- L2285 no current backups
             <admonition type="important">A period (.) is required to end the <code>summary</code> section.</admonition>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="help-test">
             <title>Testing the help</title>
 
@@ -748,6 +775,7 @@ test/bin/none/pgbackrest help backup repo-type
             </code-block>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="doc-test">
             <title>Testing the documentation</title>
 
@@ -771,6 +799,7 @@ pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --va
         </section>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="pr">
         <title>Submitting a Pull Request</title>
 
@@ -787,6 +816,7 @@ pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --va
         <list>
             <list-item>Provide a short submission title.</list-item>
             <list-item>Write a detailed comment to describe the purpose of your submission and any issue(s), if any, it is resolving; a link to the GitHub issue is also helpful.</list-item>
+            <list-item>Select the <code>integration</code> branch as the base for your PR, do not select <code>main</code> nor any other branch.</list-item>
         </list>
 
         <p>After submitting a Pull Request:</p>

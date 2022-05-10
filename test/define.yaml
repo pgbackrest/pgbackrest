@@ -136,11 +136,12 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
-        total: 26
+        total: 27
         feature: string
 
         coverage:
           - common/type/string
+          - common/type/stringZ
           - common/type/stringId
           - common/type/stringList
 
@@ -401,6 +402,7 @@ unit:
           - postgres/interface/v120
           - postgres/interface/v130
           - postgres/interface/v140
+          - postgres/interface/v150
           - protocol/client
           - protocol/command
           - protocol/helper
@@ -580,7 +582,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: interface
-        total: 9
+        total: 10
         harness: postgres
 
         coverage:
@@ -835,7 +837,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify
-        total: 8
+        total: 12
 
         coverage:
           - command/verify/file

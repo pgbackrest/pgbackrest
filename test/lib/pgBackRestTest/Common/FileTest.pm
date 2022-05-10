@@ -27,7 +27,6 @@ use pgBackRestDoc::Common::String;
 
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::HostGroupTest;
-use pgBackRestTest::Common::LogTest;
 use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::StorageBase;
 use pgBackRestTest::Common::VmTest;

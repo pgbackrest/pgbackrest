@@ -1085,7 +1085,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         COMMENT_BLOCK_BEGIN "\n"
         "Order for option parse resolution\n"
         COMMENT_BLOCK_END "\n"
-        "static const ConfigOption optionResolveOrder[] =\n"
+        "static const uint8_t optionResolveOrder[] =\n"
         "{\n");
 
     // Render resolve order
@@ -1137,8 +1137,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
     for (unsigned int ruleStrIdx = 0; ruleStrIdx < strLstSize(ruleStrList); ruleStrIdx++)
     {
         strCatFmt(
-            configVal, "    %s,\n",
-            strZ(strNewFmt("parseRuleValStr%s", strZ(bldCfgRenderEnumStr(strLstGet(ruleStrList, ruleStrIdx))))));
+            configVal, "    %s,\n", zNewFmt("parseRuleValStr%s", strZ(bldCfgRenderEnumStr(strLstGet(ruleStrList, ruleStrIdx)))));
     }
 
     strCatZ(configVal, "} ParseRuleValueStr;\n");

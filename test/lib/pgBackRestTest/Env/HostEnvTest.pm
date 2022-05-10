@@ -52,7 +52,6 @@ sub setup
 {
     my $self = shift;
     my $bSynthetic = shift;
-    my $oLogTest = shift;
     my $oConfigParam = shift;
 
     # Start object server first since it takes the longest
@@ -87,7 +86,7 @@ sub setup
         $strBackupDestination = defined($$oConfigParam{strBackupDestination}) ? $$oConfigParam{strBackupDestination} : HOST_BACKUP;
 
         $oHostBackup = new pgBackRestTest::Env::Host::HostBackupTest(
-            {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic, oLogTest => $oLogTest,
+            {strBackupDestination => $strBackupDestination, bSynthetic => $bSynthetic,
                 bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
         $oHostGroup->hostAdd($oHostBackup);
     }
@@ -103,14 +102,14 @@ sub setup
     if ($bSynthetic)
     {
         $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbSyntheticTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest,
+            {strBackupDestination => $strBackupDestination,
                 bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
     }
     else
     {
         $oHostDbPrimary = new pgBackRestTest::Env::Host::HostDbTest(
-            {strBackupDestination => $strBackupDestination, oLogTest => $oLogTest, bRepoLocal =>
-                $oConfigParam->{strStorage} eq POSIX, bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
+            {strBackupDestination => $strBackupDestination, bRepoLocal => $oConfigParam->{strStorage} eq POSIX,
+                bRepoEncrypt => $bRepoEncrypt, bTls => $oConfigParam->{bTls}});
     }
 
     $oHostGroup->hostAdd($oHostDbPrimary);
@@ -121,8 +120,8 @@ sub setup
     if (defined($$oConfigParam{bStandby}) && $$oConfigParam{bStandby})
     {
         $oHostDbStandby = new pgBackRestTest::Env::Host::HostDbTest(
-            {strBackupDestination => $strBackupDestination, bStandby => true, oLogTest => $oLogTest,
-                bRepoLocal => $oConfigParam->{strStorage} eq POSIX, bTls => $oConfigParam->{bTls}});
+            {strBackupDestination => $strBackupDestination, bStandby => true, bRepoLocal => $oConfigParam->{strStorage} eq POSIX,
+                bTls => $oConfigParam->{bTls}});
 
         $oHostGroup->hostAdd($oHostDbStandby);
     }
@@ -254,6 +253,7 @@ sub dbCatalogVersion
         &PG_VERSION_12 => 201909212,
         &PG_VERSION_13 => 202007201,
         &PG_VERSION_14 => 202105121,
+        &PG_VERSION_15 => 202204076,
     };
 
     if (!defined($hCatalogVersion->{$strPgVersion}))
@@ -297,6 +297,7 @@ sub dbControlVersion
         &PG_VERSION_12 => 1201,
         &PG_VERSION_13 => 1300,
         &PG_VERSION_14 => 1300,
+        &PG_VERSION_15 => 1300,
     };
 
     if (!defined($hControlVersion->{$strPgVersion}))
