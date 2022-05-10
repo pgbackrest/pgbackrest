@@ -349,8 +349,8 @@ sub run
         # Execute stop and make sure the backup fails
         #---------------------------------------------------------------------------------------------------------------------------
         # Restart the cluster to check for any errors before continuing since the stop tests will definitely create errors and the
-        # logs will to be deleted to avoid causing issues further down the line. This test is not version specific so is run on only
-        # the expect version.
+        # logs will need to be deleted to avoid causing issues further down the line. This test is not version specific so is run on
+        # only the expect version.
         if ($bExpectVersion)
         {
             confess "test must be performed on posix storage" if $strStorage ne POSIX;
