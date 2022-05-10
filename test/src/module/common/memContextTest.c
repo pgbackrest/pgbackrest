@@ -76,7 +76,7 @@ testRun(void)
         TEST_RESULT_UINT(sizeof(MemContext), TEST_64BIT() ? 24 : 16, "MemContext size");
         TEST_RESULT_UINT(sizeof(MemContextChildMany), TEST_64BIT() ? 16 : 12, "MemContextChildMany size");
         TEST_RESULT_UINT(sizeof(MemContextAllocMany), TEST_64BIT() ? 16 : 12, "MemContextAllocMany size");
-        TEST_RESULT_UINT(sizeof(MemContextCallback), TEST_64BIT() ? 16 : 8, "MemContextCallback size");
+        TEST_RESULT_UINT(sizeof(MemContextCallbackOne), TEST_64BIT() ? 16 : 8, "MemContextCallbackOne size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Make sure top context was created
@@ -258,14 +258,12 @@ testRun(void)
         // This test will change if the allocations above change
         TEST_RESULT_UINT(memContextSize(memContextCurrent()), TEST_64BIT() ? 209 : 145, "check size");
 
-        // TEST_ERROR(
-        //     memFree(NULL), AssertError,
-        //     "assertion '((MemContextAlloc *)buffer - 1) != NULL"
-        //         " && (uintptr_t)((MemContextAlloc *)buffer - 1) != (uintptr_t)-sizeof(MemContextAlloc)"
-        //         " && ((MemContextAlloc *)buffer - 1)->allocIdx <"
-        //         " memContextStack[memContextCurrentStackIdx].memContext->allocListSize"
-        //         " && memContextStack[memContextCurrentStackIdx].memContext->allocList[((MemContextAlloc *)buffer - 1)->allocIdx]'"
-        //         " failed");
+        TEST_ERROR(
+            memFree(NULL), AssertError,
+            "assertion 'alloc != NULL && "
+                "(uintptr_t)alloc != (uintptr_t)-sizeof(MemContextAlloc) && "
+                "alloc->allocIdx < memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->listSize && "
+                "memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->list[alloc->allocIdx]' failed");
         memFree(buffer);
 
         memContextSwitch(memContextTop());
@@ -312,7 +310,7 @@ testRun(void)
     {
         TEST_ERROR(
             memContextCallbackSet(memContextTop(), testFree, NULL), AssertError,
-            "assertion 'this->callbackType != memTypeNone' failed");
+            "assertion 'this->callbackQty != memQtyNone' failed");
 
         MemContext *memContext = memContextNewP(
             "test-callback", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1);

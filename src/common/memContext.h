@@ -167,8 +167,7 @@ MEM_CONTEXT_TEMP_END();
         {                                                                                                                          \
             memContextSwitchBack();                                                                                                \
             memContextDiscard();                                                                                                   \
-            MEM_CONTEXT_TEMP() = memContextNewP(                                                                                   \
-                "temporary", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX);                                    \
+            MEM_CONTEXT_TEMP() = memContextNewP("temporary", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX);    \
             memContextSwitch(MEM_CONTEXT_TEMP());                                                                                  \
             MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                        \
         }                                                                                                                          \
@@ -203,9 +202,6 @@ Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerpl
 ***********************************************************************************************************************************/
 // Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
 // memContextDisard() before switching back from the parent context.
-#define MEM_CONTEXT_ALLOC_EXTRA_MAX                                 UINT16_MAX // !!!
-#define MEM_CONTEXT_QTY_MAX                                         UINT8_MAX // !!!
-
 typedef struct MemContextNewParam
 {
     VAR_PARAM_HEADER;
@@ -214,6 +210,12 @@ typedef struct MemContextNewParam
     uint8_t callbackQty;                                            // How many callbacks can this context have?
     uint16_t allocExtra;                                            // Extra memory to allocate with the context
 } MemContextNewParam;
+
+// Maximum amount of extra memory that can be allocated with the context using allocExtra
+#define MEM_CONTEXT_ALLOC_EXTRA_MAX                                 UINT16_MAX
+
+// Specify maximum quantity of child contexts or allocations using childQty or allocQty
+#define MEM_CONTEXT_QTY_MAX                                         UINT8_MAX
 
 #ifdef DEBUG
     #define memContextNewP(name, ...)                                                                                              \
