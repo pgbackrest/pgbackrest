@@ -393,6 +393,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1731"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add FAQ about backup types and restore speed.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1722"/>
 
                         <release-item-contributor-list>
