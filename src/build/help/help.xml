@@ -6,6 +6,26 @@
 
         <text>
             <p><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pgbackrest/pgbackrest.conf</file>. If no file exists in that location then the old default of <file>/etc/pgbackrest.conf</file> will be checked.</p>
+
+            <p>The following option types are supported:</p>
+
+            <list>
+                <list-item><b>String</b>: A text string, commonly an identifier, password, etc. Command line example: --stanza=demo. Configuration file example: repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO.</list-item>
+
+                <list-item><b>Path</b>: Used to uniquely identify a location in a directory structure. With a starting delimiter, without an ending delimiter and without doubled delimiters. Command line example: --repo1-path=/var/lib/pgbackrest. Configuration file example: repo1-path=/var/lib/pgbackrest.</list-item>
+
+                <list-item><b>Boolean</b>: Enables or disables the option. Command line examples: --start-fast, --no-start-fast, --start-fast=y, --start-fast=n. Configuration file examples: start-fast=y, start-fast=n. Only y/n are valid argument values.</list-item>
+
+                <list-item><b>Integer</b>: A whole number value, no fractional portion. Used for ports, retention/retry counts, parallel processes allowed, etc. Command line example: --compress-level=3. Configuration file example: pg-port=5432.</list-item>
+
+                <list-item><b>Size</b>: An integer. Used for buffers, disk usage, etc. Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead. Command line example: --archive-get-queue-max=1GiB. Configuration file example: buffer-size=2MiB.</list-item>
+
+                <list-item><b>Time</b>: A unit of measure of time, i.e. seconds. Some options allow fractional values. Command line example: --io-timeout=0.7. Configuration file example: db-timeout=600.</list-item>
+
+                <list-item><b>List</b>: Option may be provided multiple times. Command line example: --db-exclude=db1 --db-exclude=db2 --db-exclude=db5. Configuration file example, each on it's own line: db-exclude=db1 db-exclude=db2 db-exclude=db5.</list-item>
+
+                <list-item><b>Hash</b>: Option value is of the form key=value. Command line example: --recovery-option=primary_conninfo=db.mydomain.com. Configuration file example: recovery-option=primary_conninfo=db.mydomain.com.</list-item>
+            </list>
         </text>
 
         <config-section-list title="Settings">
@@ -1643,17 +1663,6 @@
             <p>Any option may be set in an environment variable using the <id>PGBACKREST_</id> prefix and the option name in all caps replacing <id>-</id> with <id>_</id>, e.g. <br-option>pg1-path</br-option> becomes <id>PGBACKREST_PG1_PATH</id> and <br-option>stanza</br-option> becomes <id>PGBACKREST_STANZA</id>. Boolean options are represented as they would be in a configuration file, e.g. <id>PGBACKREST_COMPRESS="n"</id>, and <id>reset-*</id> variants are not allowed. Options that can be specified multiple times on the command-line or in a config file can be represented by separating the values with colons, e.g. <id>PGBACKREST_DB_INCLUDE="db1:db2"</id>.</p>
 
             <p>Command-line options override environment options which override config file options.</p>
-
-            <p>Option type descriptions.</p>
-
-            <p><b>String: </b>A text string, commonly an identifier, password, etc. Command line example: --stanza=demo. Configuration file example: repo1-cipher-pass=zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO.</p>
-            <p><b>Path: </b>Used to uniquely identify a location in a directory structure. With a starting delimiter, without an ending delimiter and without doubled delimiters. Command line example: --repo1-path=/var/lib/pgbackrest. Configuration file example: repo1-path=/var/lib/pgbackrest.</p>
-            <p><b>Boolean: </b>Enables or disables the option. Command line examples: --start-fast, --no-start-fast, --start-fast=y, --start-fast=n. Configuration file examples: start-fast=y, start-fast=n. Only y/n are valid argument values.</p>
-            <p><b>Integer: </b>A whole number value, no fractional portion. Used for ports, retention/retry counts, parallel processes allowed, etc. Command line example: --compress-level=3. Configuration file example: pg-port=5432.</p>
-            <p><b>Size: </b>An integer. Used for buffers, disk usage, etc. Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead. Command line example: --archive-get-queue-max=1GiB. Configuration file example: buffer-size=2MiB.</p>
-            <p><b>Time: </b>A unit of measure of time, i.e. seconds. Some options allow fractional values. Command line example: --io-timeout=0.7. Configuration file example: db-timeout=600.</p>
-            <p><b>List: </b>Option may be provided multiple times. Command line example: --db-exclude=db1 --db-exclude=db2 --db-exclude=db5. Configuration file example, each on it's own line: db-exclude=db1 db-exclude=db2 db-exclude=db5.</p>
-            <p><b>Hash: </b>Option value is of the form key=value. Command line example: --recovery-option=primary_conninfo=db.mydomain.com. Configuration file example: recovery-option=primary_conninfo=db.mydomain.com.</p>
         </text>
 
         <operation-general title="General Options">
