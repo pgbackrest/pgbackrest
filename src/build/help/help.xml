@@ -1634,13 +1634,13 @@
         <description>The {[project]} Command Reference details all commands and options.</description>
 
         <text>
-            <p>Commands are used to execute the various <backrest/> functions. Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands. This includes all the options that may also configured in <file>pgbackrest.conf</file>.</p>
+            <p>Commands are used to execute the various <backrest/> functions. Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands. This includes all the options that may also be configured in <file>pgbackrest.conf</file>.</p>
 
             <p>Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>reset-</id> prefix. This feature may be used to restore a backup directly on a repository host. Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely. By adding <br-option>--reset-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally. It may be necessary to pass a new <br-option>--pg1-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.</p>
 
             <p>The <id>no-</id> prefix may be used to set a boolean option to false on the command-line.</p>
 
-            <p>Any option may be set in an environment variable using the <id>PGBACKREST_</id> prefix and the option name in all caps replacing <id>-</id> with <id>_</id>, e.g. <br-option>pg1-path</br-option> becomes <id>PGBACKREST_PG1_PATH</id> and <br-option>stanza</br-option> becomes <id>PGBACKREST_STANZA</id>. Boolean options are represented as they would be in a configuration file, e.g. <id>PGBACKREST_COMPRESS="n"</id>, and <id>reset-*</id> variants are not allowed. Options that that can be specified multiple times on the command-line or in a config file can be represented by separating the values with colons, e.g. <id>PGBACKREST_DB_INCLUDE="db1:db2"</id>.</p>
+            <p>Any option may be set in an environment variable using the <id>PGBACKREST_</id> prefix and the option name in all caps replacing <id>-</id> with <id>_</id>, e.g. <br-option>pg1-path</br-option> becomes <id>PGBACKREST_PG1_PATH</id> and <br-option>stanza</br-option> becomes <id>PGBACKREST_STANZA</id>. Boolean options are represented as they would be in a configuration file, e.g. <id>PGBACKREST_COMPRESS="n"</id>, and <id>reset-*</id> variants are not allowed. Options that can be specified multiple times on the command-line or in a config file can be represented by separating the values with colons, e.g. <id>PGBACKREST_DB_INCLUDE="db1:db2"</id>.</p>
 
             <p>Command-line options override environment options which override config file options.</p>
         </text>
