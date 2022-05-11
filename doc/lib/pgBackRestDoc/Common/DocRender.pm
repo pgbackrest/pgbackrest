@@ -31,6 +31,7 @@ my $oRenderTag =
 {
     'markdown' =>
     {
+        'br' => ['\n', ''],
         'quote' => ['"', '"'],
         'b' => ['**', '**'],
         'i' => ['_', '_'],
@@ -55,6 +56,7 @@ my $oRenderTag =
 
     'text' =>
     {
+        'br' => ['\n', ''],
         'quote' => ['"', '"'],
         'p' => ['', "\n\n"],
         'b' => ['', ''],
@@ -82,6 +84,7 @@ my $oRenderTag =
 
     'latex' =>
     {
+        'br' => ['\\\vspace{1em}', ''],
         'quote' => ['``', '"'],
         'p' => ["\n\\begin{sloppypar}", "\\end{sloppypar}\n"],
         'b' => ['\textbf{', '}'],
@@ -115,6 +118,7 @@ my $oRenderTag =
 
     'html' =>
     {
+        'br' => ['<br/>', ''],
         'quote' => ['<q>', '</q>'],
         'b' => ['<b>', '</b>'],
         'i' => ['<i>', '</i>'],
