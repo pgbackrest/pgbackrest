@@ -998,16 +998,13 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                 MEM_CONTEXT_END();
             }
 
-            const BldCfgOption *const opt = lstGet(result, optRawIdx);
+            BldCfgOption *const opt = lstGet(result, optRawIdx);
             CHECK(AssertError, strEq(opt->name, optRaw->name), "option name does not equal raw option name");
 
-            // Assigning to const pointers this way is definitely cheating, but since we allocated the memory and know exactly where
-            // it is so this is the easiest way to avoid a lot of indirection due to the dependency of BldCfgOptionDepend on
-            // BldCfgOption. This would be completely unacceptable in production code but feels OK in this context.
             MEM_CONTEXT_BEGIN(lstMemContext(result))
             {
-                *((List **)&opt->cmdList) = lstMove(cmdOptList, memContextCurrent());
-                *((const BldCfgOptionDepend **)&opt->depend) = bldCfgParseDependReconcile(optRaw, optRaw->depend, result);
+                opt->cmdList = lstMove(cmdOptList, memContextCurrent());
+                opt->depend = bldCfgParseDependReconcile(optRaw, optRaw->depend, result);
             }
             MEM_CONTEXT_END();
         }
