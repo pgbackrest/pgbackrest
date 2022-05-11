@@ -37,7 +37,7 @@
 
             <p>Command line example: <br-setting>--db-exclude=db1 --db-exclude=db2 --db-exclude=db5</br-setting><br/>Configuration file example, each on its own line: <br-setting>db-exclude=db1 db-exclude=db2 db-exclude=db5</br-setting></p>
 
-            <p><b>Key/Value</b>: Option maybe provided multiple times in the form <id>key=value</id>.</p>
+            <p><b>Key/Value</b>: Option may be provided multiple times in the form <id>key=value</id>.</p>
 
             <p>Command line example: <br-setting>--recovery-option=primary_conninfo=db.mydomain.com</br-setting><br/>Configuration file example: <br-setting>recovery-option=primary_conninfo=db.mydomain.com</br-setting></p>
         </text>
