@@ -237,9 +237,10 @@
                    br-setting|pg-option|pg-setting|link|user|proper)*>
 <!ELEMENT p ANY>
     <!ATTLIST p if CDATA "">
-<!ELEMENT text (p|list|admonition)*>
+<!ELEMENT text (p|list|admonition|br)*>
 <!ELEMENT i ANY>
 <!ELEMENT b ANY>
+<!ELEMENT br ANY>
 <!ELEMENT list (list-item+)>
     <!ATTLIST list if CDATA "">
 <!ELEMENT list-item ANY>
