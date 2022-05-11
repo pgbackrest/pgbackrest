@@ -7,7 +7,7 @@
         <text>
             <p><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pgbackrest/pgbackrest.conf</file>. If no file exists in that location then the old default of <file>/etc/pgbackrest.conf</file> will be checked.</p>
 
-            <p>The following option types are supported:</p>
+            <p>The following option types are used:</p>
 
             <p><b>String</b>: A text string, commonly an identifier, password, etc.</p>
 
@@ -1665,6 +1665,8 @@
             <p>Any option may be set in an environment variable using the <id>PGBACKREST_</id> prefix and the option name in all caps replacing <id>-</id> with <id>_</id>, e.g. <br-option>pg1-path</br-option> becomes <id>PGBACKREST_PG1_PATH</id> and <br-option>stanza</br-option> becomes <id>PGBACKREST_STANZA</id>. Boolean options are represented as they would be in a configuration file, e.g. <id>PGBACKREST_COMPRESS="n"</id>, and <id>reset-*</id> variants are not allowed. Options that can be specified multiple times on the command-line or in a config file can be represented by separating the values with colons, e.g. <id>PGBACKREST_DB_INCLUDE="db1:db2"</id>.</p>
 
             <p>Command-line options override environment options which override config file options.</p>
+
+            <p>See <link page="configuration" section="/introduction">Configuration Introduction</link> for information on option types</p>
         </text>
 
         <operation-general title="General Options">
