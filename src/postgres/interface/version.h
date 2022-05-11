@@ -81,4 +81,10 @@ uint32_t pgInterfaceControlVersion140(void);
 bool pgInterfaceWalIs140(const unsigned char *walFile);
 PgWal pgInterfaceWal140(const unsigned char *controlFile);
 
+bool pgInterfaceControlIs150(const unsigned char *controlFile);
+PgControl pgInterfaceControl150(const unsigned char *controlFile);
+uint32_t pgInterfaceControlVersion150(void);
+bool pgInterfaceWalIs150(const unsigned char *walFile);
+PgWal pgInterfaceWal150(const unsigned char *controlFile);
+
 #endif

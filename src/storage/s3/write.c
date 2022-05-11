@@ -78,7 +78,7 @@ storageWriteS3Open(THIS_VOID)
 Flush bytes to upload part
 ***********************************************************************************************************************************/
 static void
-storageWriteS3Part(StorageWriteS3 *this)
+storageWriteS3Part(StorageWriteS3 *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
@@ -89,10 +89,12 @@ storageWriteS3Part(StorageWriteS3 *this)
     // If there is an outstanding async request then wait for the response and store the part id
     if (this->request != NULL)
     {
-        strLstAdd(
-            this->uploadPartList, httpHeaderGet(httpResponseHeader(storageS3ResponseP(this->request)), HTTP_HEADER_ETAG_STR));
+        HttpResponse *const response = storageS3ResponseP(this->request);
+
+        strLstAdd(this->uploadPartList, httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_ETAG_STR));
         ASSERT(strLstGet(this->uploadPartList, strLstSize(this->uploadPartList) - 1) != NULL);
 
+        httpResponseFree(response);
         httpRequestFree(this->request);
         this->request = NULL;
     }

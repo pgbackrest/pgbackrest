@@ -40,8 +40,7 @@ tlsSessionToLog(const THIS_VOID)
     THIS(const TlsSession);
 
     return strNewFmt(
-        "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}",
-        objMemContextFreeing(this) ? NULL_Z : strZ(ioSessionToLog(this->ioSession)), this->timeout,
+        "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}", strZ(ioSessionToLog(this->ioSession)), this->timeout,
         cvtBoolToConstZ(this->shutdownOnClose));
 }
 

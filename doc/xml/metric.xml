@@ -3,6 +3,7 @@
 <doc title="{[project]}" subtitle="Metrics">
     <description>{[project]} project metrics.</description>
 
+    <!-- ======================================================================================================================= -->
     <section id="code-coverage">
         <title>Code Coverage</title>
 

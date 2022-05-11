@@ -3,15 +3,18 @@
 <doc title="{[project]}" subtitle="Coding Standards" toc="y">
     <description>{[project]} Coding Standard.</description>
 
+    <!-- ======================================================================================================================= -->
     <section id="standards">
         <title>Standards</title>
 
+        <!-- =================================================================================================================== -->
         <section id="indentation">
             <title>Indentation</title>
 
             <p>Indentation is four spaces -- no tabs.  Only file types that absolutely require tabs (e.g. `Makefile`) may use them.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="line-length">
             <title>Line Length</title>
 
@@ -41,12 +44,14 @@ if (archiveInfoPgHistory.id != backupInfoPgHistory.id || archiveInfoPgHistory.sy
             </code-block>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="function-comment">
             <title>Function Comments</title>
 
             <p>Comments for <code>extern</code> functions should be included in the <file>.h</file> file. Comments for <code>static</code> functions and implementation-specific notes for <code>extern</code> functions (i.e., not of interest to the general user) should be included in the <file>.c</file> file.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="inline-comment">
             <title>Inline Comment</title>
 
@@ -62,9 +67,11 @@ typedef struct InlineCommentExample
             </code-block>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="naming">
             <title>Naming</title>
 
+            <!-- =============================================================================================================== -->
             <section id="variables">
                 <title>Variables</title>
 
@@ -78,6 +85,7 @@ typedef struct InlineCommentExample
                 <p>Variable names should be descriptive.  Avoid <id>i</id>, <id>j</id>, etc.</p>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="types">
                 <title>Types</title>
 
@@ -88,6 +96,7 @@ typedef struct InlineCommentExample
                 <p><code>typedef enum {&lt;...&gt;} ErrorState;</code></p>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="constants">
                 <title>Constants</title>
 
@@ -137,6 +146,7 @@ typedef enum
                 <p>Note the comma after the last element.  This reduces diff churn when new elements are added.</p>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="macros">
                 <title>Macros</title>
 
@@ -165,12 +175,14 @@ typedef enum
                 <p><link section="/language-elements/variadic-functions">Variadic functions</link> are an exception to the capitalization rule.</p>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="begin-end">
                 <title>Begin / End</title>
 
                 <p>Use <id>Begin</id> / <id>End</id> for names rather than <id>Start</id> / <id>Finish</id>, etc.</p>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="new-free">
                 <title>New / Free</title>
 
@@ -178,9 +190,11 @@ typedef enum
             </section>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="formatting">
             <title>Formatting</title>
 
+            <!-- =============================================================================================================== -->
             <section id="braces">
                 <title>Braces</title>
 
@@ -235,6 +249,7 @@ switch (int)
                 </code-block>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="hints-warnings-errors">
                 <title>Hints, Warnings, and Errors</title>
 
@@ -245,9 +260,11 @@ switch (int)
         </section>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="language-elements">
         <title>Language Elements</title>
 
+        <!-- =================================================================================================================== -->
         <section id="data-types">
             <title>Data Types</title>
 
@@ -256,12 +273,14 @@ switch (int)
             <p>Use <id>int</id> or <id>unsigned int</id> for general cases. <id>int</id> will be at least 32 bits. When not using <id>int</id> use one of the types defined in <file>common/type.h</file>.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="macros">
             <title>Macros</title>
 
             <p>Don't use a macro when a function could be used instead.  Macros make it hard to measure code coverage.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="objects">
             <title>Objects</title>
 
@@ -303,6 +322,7 @@ struct List
             <p>The public struct must be the first member of the private struct. The naming convention for the public struct is to add <id>Pub</id> to the end of the private struct name.</p>
         </section>
 
+        <!-- =================================================================================================================== -->
         <section id="variadic-functions">
             <title>Variadic Functions</title>
 
@@ -344,12 +364,15 @@ storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mo
         </section>
     </section>
 
+    <!-- ======================================================================================================================= -->
     <section id="testing">
         <title>Testing</title>
 
+        <!-- =================================================================================================================== -->
         <section id="uncoverable-uncovered">
             <title>Uncoverable/Uncovered Code</title>
 
+            <!-- =============================================================================================================== -->
             <section id="uncoverable">
                 <title>Uncoverable Code</title>
 
@@ -362,6 +385,7 @@ storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mo
                 <p>Subsequent code that is uncoverable for the same reason is marked with <code>// {+uncoverable}</code>.</p>
             </section>
 
+            <!-- =============================================================================================================== -->
             <section id="uncovered">
                 <title>Uncovered Code</title>
 

@@ -13,7 +13,8 @@ nothing is missing or corrupt.  It is also useful for reporting, e.g. size of ba
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define BACKUP_MANIFEST_FILE                                        "backup.manifest"
+#define BACKUP_MANIFEST_EXT                                         ".manifest"
+#define BACKUP_MANIFEST_FILE                                        "backup" BACKUP_MANIFEST_EXT
     STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
 
 #define MANIFEST_PATH_BUNDLE                                        "bundle"
@@ -87,7 +88,7 @@ typedef struct ManifestDb
 {
     const String *name;                                             // Db name (must be first member in struct)
     unsigned int id;                                                // Db oid
-    unsigned int lastSystemId;                                      // Highest oid used by system objects in this database
+    unsigned int lastSystemId;                                      // Highest oid used by system objects (deprecated - do not use)
 } ManifestDb;
 
 /***********************************************************************************************************************************

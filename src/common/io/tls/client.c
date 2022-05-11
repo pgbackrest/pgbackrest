@@ -48,8 +48,7 @@ tlsClientToLog(const THIS_VOID)
 
     return strNewFmt(
         "{ioClient: %s, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 ", verifyPeer: %s}",
-        objMemContextFreeing(this) ? NULL_Z : strZ(ioClientToLog(this->ioClient)), this->timeoutConnect, this->timeoutSession,
-        cvtBoolToConstZ(this->verifyPeer));
+        strZ(ioClientToLog(this->ioClient)), this->timeoutConnect, this->timeoutSession, cvtBoolToConstZ(this->verifyPeer));
 }
 
 #define FUNCTION_LOG_TLS_CLIENT_TYPE                                                                                               \

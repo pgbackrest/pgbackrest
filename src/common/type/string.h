@@ -38,6 +38,7 @@ typedef struct String String;
 #include "common/assert.h"
 #include "common/encode.h"
 #include "common/type/buffer.h"
+#include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
 Constructors
@@ -239,22 +240,16 @@ By convention all string constant identifiers are appended with _STR.
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
-STRING_DECLARE(BRACKETL_STR);
-STRING_DECLARE(BRACKETR_STR);
-STRING_DECLARE(COLON_STR);
 STRING_DECLARE(CR_STR);
 STRING_DECLARE(CRLF_STR);
-STRING_DECLARE(DASH_STR);
 STRING_DECLARE(DOT_STR);
 STRING_DECLARE(DOTDOT_STR);
 STRING_DECLARE(EMPTY_STR);
-STRING_DECLARE(EQ_STR);
 STRING_DECLARE(FALSE_STR);
 STRING_DECLARE(FSLASH_STR);
 STRING_DECLARE(LF_STR);
 STRING_DECLARE(N_STR);
 STRING_DECLARE(NULL_STR);
-STRING_DECLARE(QUOTED_STR);
 STRING_DECLARE(TRUE_STR);
 STRING_DECLARE(Y_STR);
 STRING_DECLARE(ZERO_STR);

@@ -5,6 +5,11 @@ This wrapper runs the C unit tests.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+// This must be before all includes except build.auto.h
+#ifdef HRN_FEATURE_MEMCONTEXT
+    #define DEBUG_MEM
+#endif
+
 /***********************************************************************************************************************************
 C files to be tested
 
@@ -168,7 +173,11 @@ main(int argListSize, const char *argList[])
 
     // Initialize statistics
 #if defined(HRN_INTEST_STAT) || defined(HRN_FEATURE_STAT)
-    statInit();
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        statInit();
+    }
+    MEM_CONTEXT_TEMP_END();
 #endif
 
     // Set neutral umask for testing
@@ -212,17 +221,27 @@ main(int argListSize, const char *argList[])
         TRY_BEGIN()
         {
 #endif
-            // Run the tests
-            testRun();
+
+#ifdef HRN_FEATURE_MEMCONTEXT
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+#endif
+                // Run the tests
+                testRun();
+#ifdef HRN_FEATURE_MEMCONTEXT
+            }
+            MEM_CONTEXT_TEMP_END();
+#endif
+
 #ifdef HRN_FEATURE_ERROR
         }
         CATCH_ANY()
         {
             // If a test was running then throw a detailed result exception
 #ifdef DEBUG
-        if (!errorInstanceOf(&TestError))
+            if (!errorInstanceOf(&TestError))
 #endif
-            hrnTestResultException();
+                hrnTestResultException();
 
             // Else rethrow the original error
             RETHROW();

@@ -57,7 +57,6 @@ sub new
             strImage => containerRepo() . ':' . testRunGet()->vm() . "-test",
             bTls => $oParam->{bTls},
             strBackupDestination => $$oParam{strBackupDestination},
-            oLogTest => $$oParam{oLogTest},
             bSynthetic => true,
             bStandby => $$oParam{bStandby},
             bRepoLocal => $oParam->{bRepoLocal},

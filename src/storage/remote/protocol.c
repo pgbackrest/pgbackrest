@@ -33,7 +33,7 @@ static struct
 Set filter group based on passed filters
 ***********************************************************************************************************************************/
 static void
-storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Pack *const filterPack)
+storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const filterPack)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_FILTER_GROUP, filterGroup);
@@ -43,46 +43,50 @@ storageRemoteFilterGroup(IoFilterGroup *filterGroup, const Pack *const filterPac
     ASSERT(filterGroup != NULL);
     ASSERT(filterPack != NULL);
 
-    PackRead *const filterList = pckReadNew(filterPack);
-
-    while (!pckReadNullP(filterList))
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        const StringId filterKey = pckReadStrIdP(filterList);
-        const Pack *const filterParam = pckReadPackP(filterList);
+        PackRead *const filterList = pckReadNew(filterPack);
 
-        IoFilter *filter = compressFilterPack(filterKey, filterParam);
-
-        if (filter != NULL)
-            ioFilterGroupAdd(filterGroup, filter);
-        else
+        while (!pckReadNullP(filterList))
         {
-            switch (filterKey)
+            const StringId filterKey = pckReadStrIdP(filterList);
+            const Pack *const filterParam = pckReadPackP(filterList);
+
+            IoFilter *filter = compressFilterPack(filterKey, filterParam);
+
+            if (filter != NULL)
+                ioFilterGroupAdd(filterGroup, filter);
+            else
             {
-                case CIPHER_BLOCK_FILTER_TYPE:
-                    ioFilterGroupAdd(filterGroup, cipherBlockNewPack(filterParam));
-                    break;
+                switch (filterKey)
+                {
+                    case CIPHER_BLOCK_FILTER_TYPE:
+                        ioFilterGroupAdd(filterGroup, cipherBlockNewPack(filterParam));
+                        break;
 
-                case CRYPTO_HASH_FILTER_TYPE:
-                    ioFilterGroupAdd(filterGroup, cryptoHashNewPack(filterParam));
-                    break;
+                    case CRYPTO_HASH_FILTER_TYPE:
+                        ioFilterGroupAdd(filterGroup, cryptoHashNewPack(filterParam));
+                        break;
 
-                case PAGE_CHECKSUM_FILTER_TYPE:
-                    ioFilterGroupAdd(filterGroup, pageChecksumNewPack(filterParam));
-                    break;
+                    case PAGE_CHECKSUM_FILTER_TYPE:
+                        ioFilterGroupAdd(filterGroup, pageChecksumNewPack(filterParam));
+                        break;
 
-                case SINK_FILTER_TYPE:
-                    ioFilterGroupAdd(filterGroup, ioSinkNew());
-                    break;
+                    case SINK_FILTER_TYPE:
+                        ioFilterGroupAdd(filterGroup, ioSinkNew());
+                        break;
 
-                case SIZE_FILTER_TYPE:
-                    ioFilterGroupAdd(filterGroup, ioSizeNew());
-                    break;
+                    case SIZE_FILTER_TYPE:
+                        ioFilterGroupAdd(filterGroup, ioSizeNew());
+                        break;
 
-                default:
-                    THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
+                    default:
+                        THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
+                }
             }
         }
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -283,7 +287,7 @@ typedef struct StorageRemoteProtocolInfoListCallbackData
 } StorageRemoteProtocolInfoListCallbackData;
 
 static void
-storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
+storageRemoteProtocolInfoListCallback(void *const dataVoid, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_LOG_PARAM_P(VOID, dataVoid);
@@ -293,12 +297,13 @@ storageRemoteProtocolInfoListCallback(void *dataVoid, const StorageInfo *info)
     ASSERT(dataVoid != NULL);
     ASSERT(info != NULL);
 
-    StorageRemoteProtocolInfoListCallbackData *data = dataVoid;
+    StorageRemoteProtocolInfoListCallbackData *const data = dataVoid;
 
-    PackWrite *write = protocolPackNew();
+    PackWrite *const write = protocolPackNew();
     pckWriteStrP(write, info->name);
     storageRemoteInfoProtocolPut(&data->writeData, write, info);
     protocolServerDataPut(data->server, write);
+    pckWriteFree(write);
 
     FUNCTION_TEST_RETURN_VOID();
 }

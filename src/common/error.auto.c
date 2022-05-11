@@ -86,6 +86,7 @@ ERROR_DEFINE(102, ExecuteError, false, RuntimeError);
 ERROR_DEFINE(103, RepoInvalidError, false, RuntimeError);
 ERROR_DEFINE(104, CommandError, false, RuntimeError);
 ERROR_DEFINE(105, AccessError, false, RuntimeError);
+ERROR_DEFINE(106, ClockError, false, RuntimeError);
 ERROR_DEFINE(122, RuntimeError, false, RuntimeError);
 ERROR_DEFINE(123, InvalidError, false, RuntimeError);
 ERROR_DEFINE(124, UnhandledError, false, RuntimeError);
@@ -175,6 +176,7 @@ static const ErrorType *errorTypeList[] =
     &RepoInvalidError,
     &CommandError,
     &AccessError,
+    &ClockError,
     &RuntimeError,
     &InvalidError,
     &UnhandledError,

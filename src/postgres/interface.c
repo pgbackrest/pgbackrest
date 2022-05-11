@@ -10,6 +10,7 @@ PostgreSQL Interface
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "postgres/interface.h"
+#include "postgres/interface/static.vendor.h"
 #include "postgres/interface/version.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
@@ -78,6 +79,16 @@ typedef struct PgInterface
 
 static const PgInterface pgInterface[] =
 {
+    {
+        .version = PG_VERSION_15,
+
+        .controlIs = pgInterfaceControlIs150,
+        .control = pgInterfaceControl150,
+        .controlVersion = pgInterfaceControlVersion150,
+
+        .walIs = pgInterfaceWalIs150,
+        .wal = pgInterfaceWal150,
+    },
     {
         .version = PG_VERSION_14,
 
@@ -237,6 +248,39 @@ pgInterfaceVersion(unsigned int pgVersion)
         THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
 
     FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
+}
+
+/**********************************************************************************************************************************/
+bool
+pgDbIsTemplate(const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, strEqZ(name, "template0") || strEqZ(name, "template1"));
+}
+
+/**********************************************************************************************************************************/
+bool
+pgDbIsSystem(const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, strEqZ(name, "postgres") || pgDbIsTemplate(name));
+}
+
+/**********************************************************************************************************************************/
+bool
+pgDbIsSystemId(const unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, id < FirstNormalObjectId);
 }
 
 /***********************************************************************************************************************************
@@ -509,17 +553,10 @@ pgLsnFromWalSegment(const String *const walSegment, const unsigned int walSegmen
     ASSERT(strSize(walSegment) == 24);
     ASSERT(walSegmentSize > 0);
 
-    uint64_t result;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result =
-            (cvtZToUInt64Base(strZ(strSubN(walSegment, 8, 8)), 16) << 32) +
-            (cvtZToUInt64Base(strZ(strSubN(walSegment, 16, 8)), 16) * walSegmentSize);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(UINT64, result);
+    FUNCTION_TEST_RETURN(
+        UINT64,
+        (cvtZSubNToUInt64Base(strZ(walSegment), 8, 8, 16) << 32) +
+        (cvtZSubNToUInt64Base(strZ(walSegment), 16, 8, 16) * walSegmentSize));
 }
 
 /**********************************************************************************************************************************/
@@ -533,12 +570,7 @@ pgTimelineFromWalSegment(const String *const walSegment)
     ASSERT(walSegment != NULL);
     ASSERT(strSize(walSegment) == 24);
 
-    char buffer[9];
-
-    strncpy(buffer, strZ(walSegment), sizeof(buffer) - 1);
-    buffer[sizeof(buffer) - 1] = '\0';
-
-    FUNCTION_TEST_RETURN(UINT32, cvtZToUIntBase(buffer, 16));
+    FUNCTION_TEST_RETURN(UINT32, cvtZSubNToUIntBase(strZ(walSegment), 0, 8, 16));
 }
 
 /**********************************************************************************************************************************/
@@ -646,7 +678,7 @@ pgXactPath(unsigned int pgVersion)
 
 /**********************************************************************************************************************************/
 unsigned int
-pgVersionFromStr(const String *version)
+pgVersionFromStr(const String *const version)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, version);
@@ -654,33 +686,19 @@ pgVersionFromStr(const String *version)
 
     ASSERT(version != NULL);
 
-    unsigned int result = 0;
+    // If format not number.number (9.4) or number only (10) then error. No check for valid/supported PG version is on purpose.
+    if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
+        THROW_FMT(AssertError, "version %s format is invalid", strZ(version));
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // If format is not number.number (9.4) or number only (10) then error
-        if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
-            THROW_FMT(AssertError, "version %s format is invalid", strZ(version));
+    // If there is no dot then only the major version is needed
+    const int idxStart = strChr(version, '.');
 
-        // If there is a dot set the major and minor versions, else just the major
-        int idxStart = strChr(version, '.');
-        unsigned int major;
-        unsigned int minor = 0;
+    if (idxStart == -1)
+        FUNCTION_LOG_RETURN(UINT, cvtZToUInt(strZ(version)) * 10000);
 
-        if (idxStart != -1)
-        {
-            major = cvtZToUInt(strZ(strSubN(version, 0, (size_t)idxStart)));
-            minor = cvtZToUInt(strZ(strSub(version, (size_t)idxStart + 1)));
-        }
-        else
-            major = cvtZToUInt(strZ(version));
-
-        // No check to see if valid/supported PG version is on purpose
-        result = major * 10000 + minor * 100;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(UINT, result);
+    // Major and minor version are needed
+    FUNCTION_LOG_RETURN(
+        UINT, cvtZSubNToUInt(strZ(version), 0, (size_t)idxStart) * 10000 + cvtZToUInt(strZ(version) + (size_t)idxStart + 1) * 100);
 }
 
 String *

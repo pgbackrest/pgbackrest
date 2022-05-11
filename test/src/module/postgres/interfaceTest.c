@@ -32,6 +32,21 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("pgDbIs*()"))
+    {
+        TEST_RESULT_BOOL(pgDbIsTemplate(STRDEF("template0")), true, "template0 is template");
+        TEST_RESULT_BOOL(pgDbIsTemplate(STRDEF("template1")), true, "template1 is template");
+        TEST_RESULT_BOOL(pgDbIsTemplate(STRDEF("postgres")), false, "postgres is not template");
+
+        TEST_RESULT_BOOL(pgDbIsSystem(STRDEF("postgres")), true, "postgres is system");
+        TEST_RESULT_BOOL(pgDbIsSystem(STRDEF("template0")), true, "template0 is system");
+        TEST_RESULT_BOOL(pgDbIsSystem(STRDEF("app")), false, "app is not system");
+
+        TEST_RESULT_BOOL(pgDbIsSystemId(16383), true, "16383 is system");
+        TEST_RESULT_BOOL(pgDbIsSystemId(16384), false, "16384 is not system");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("pgControlVersion()"))
     {
         TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");

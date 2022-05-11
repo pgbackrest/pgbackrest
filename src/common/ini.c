@@ -319,8 +319,10 @@ iniLoad(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Track the current section
-        String *section = NULL;
+        // Track the current section/key/value
+        String *const section = strNew();
+        String *const key = strNew();
+        String *const value = strNew();
 
         // Keep track of the line number for error reporting
         unsigned int lineIdx = 0;
@@ -340,17 +342,15 @@ iniLoad(
                     // The line is a section. Since the value must be valid JSON this means that the value must never be an array.
                     if (linePtr[0] == '[' && linePtr[strSize(line) - 1] == ']')
                     {
-                        // Assign section
-                        MEM_CONTEXT_PRIOR_BEGIN()
-                        {
-                            section = strNewZN(linePtr + 1, strSize(line) - 2);
-                        }
-                        MEM_CONTEXT_PRIOR_END();
+                        strCatZN(strTrunc(section, 0), linePtr + 1, strSize(line) - 2);
+
+                        if (strEmpty(section))
+                            THROW_FMT(FormatError, "invalid empty section at line %u: %s", lineIdx + 1, linePtr);
                     }
                     // Else it is a key/value
                     else
                     {
-                        if (section == NULL)
+                        if (strEmpty(section))
                             THROW_FMT(FormatError, "key/value found outside of section at line %u: %s", lineIdx + 1, linePtr);
 
                         // Find the =
@@ -363,9 +363,6 @@ iniLoad(
                         // also the separator. We know the value must be valid JSON so if it isn't then add the characters up to
                         // the next = to the key and try to parse the value as JSON again. If the value never becomes valid JSON
                         // then an error is thrown.
-                        String *key;
-                        String *value;
-
                         bool retry;
 
                         do
@@ -373,8 +370,8 @@ iniLoad(
                             retry = false;
 
                             // Get key/value
-                            key = strNewZN(linePtr, (size_t)(lineEqual - linePtr));
-                            value = strNewZ(lineEqual + 1);
+                            strCatZN(strTrunc(key, 0), linePtr, (size_t)(lineEqual - linePtr));
+                            strCatZ(strTrunc(value, 0), lineEqual + 1);
 
                             // Check that the value is valid JSON
                             TRY_BEGIN()
