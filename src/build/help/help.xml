@@ -6,6 +6,40 @@
 
         <text>
             <p><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pgbackrest/pgbackrest.conf</file>. If no file exists in that location then the old default of <file>/etc/pgbackrest.conf</file> will be checked.</p>
+
+            <p>The following option types are used:</p>
+
+            <p><b>String</b>: A text string, commonly an identifier, password, etc.</p>
+
+            <p>Command line example: <br-setting>--stanza=demo</br-setting><br/>Configuration file example: <br-setting>repo1-cipher-pass=zWaf6XtpjIVZC5444yXB...</br-setting></p>
+
+            <p><b>Path</b>: Used to uniquely identify a location in a directory structure. Paths must begin with /, double // is not allowed, and no ending / is expected.</p>
+
+            <p>Command line example: <br-setting>--repo1-path=/var/lib/pgbackrest</br-setting><br/>Configuration file example: <br-setting>repo1-path=/var/lib/pgbackrest</br-setting></p>
+
+            <p><b>Boolean</b>: Enables or disables the option. Only y/n are valid argument values.</p>
+
+            <p>Command line examples: <br-setting>--start-fast</br-setting>, <br-setting>--no-start-fast</br-setting>, <br-setting>--start-fast=y</br-setting>, <br-setting>--start-fast=n</br-setting><br/>Configuration file examples: <br-setting>start-fast=y</br-setting>, <br-setting>start-fast=n</br-setting></p>
+
+            <p><b>Integer</b>: Used for ports, retention/retry counts, parallel processes allowed, etc.</p>
+
+            <p>Command line example: <br-setting>--compress-level=3</br-setting><br/>Configuration file example: <br-setting>pg1-port=5432</br-setting></p>
+
+            <p><b>Size</b>: Used for buffer sizes, disk usage, etc. Size can be specified in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
+
+            <p>Command line example: <br-setting>--archive-get-queue-max=1GiB</br-setting><br/>Configuration file example: <br-setting>buffer-size=2MiB</br-setting></p>
+
+            <p><b>Time</b>: Time in seconds.</p>
+
+            <p>Command line example: <br-setting>--io-timeout=90</br-setting><br/>Configuration file example: <br-setting>db-timeout=600</br-setting></p>
+
+            <p><b>List</b>: Option may be provided multiple times.</p>
+
+            <p>Command line example: <br-setting>--db-exclude=db1 --db-exclude=db2 --db-exclude=db5</br-setting><br/>Configuration file example, each on its own line: <br-setting>db-exclude=db1 db-exclude=db2 db-exclude=db5</br-setting></p>
+
+            <p><b>Key/Value</b>: Option may be provided multiple times in the form <id>key=value</id>.</p>
+
+            <p>Command line example: <br-setting>--tablespace-map=ts_01=/db/ts_01 --tablespace-map=ts_02=/db/ts_02</br-setting><br/>Configuration file example, each on its own line: <br-setting>tablespace-map=ts_01=/db/ts_01 tablespace-map=ts_02=/db/ts_02</br-setting></p>
         </text>
 
         <config-section-list title="Settings">
@@ -122,9 +156,6 @@
 
                         <text>
                             <p>Buffer size used for copy, compress, encrypt, and other operations. The number of buffers used depends on options and each operation may use additional memory, e.g. <id>gz</id> compression may use an additional 256KiB of memory.</p>
-
-                            <!-- Be sure to update other copies of this block when modifying -->
-                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
 
                             <p>Allowed values are <id>16KiB</id>, <id>32KiB</id>, <id>64KiB</id>, <id>128KiB</id>, <id>256KiB</id>, <id>512KiB</id>, <id>1MiB</id>, <id>2MiB</id>, <id>4MiB</id>, <id>8MiB</id>, and <id>16MiB</id>.</p>
                         </text>
@@ -1096,9 +1127,6 @@
 
                         <text>
                             <p>Defines how often the manifest will be saved during a backup. Saving the manifest is important because it stores the checksums and allows the resume function to work efficiently. The actual threshold used is 1% of the backup size or <setting>manifest-save-threshold</setting>, whichever is greater.</p>
-
-                            <!-- Be sure to update other copies of this block when modifying -->
-                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
                         <example>8GiB</example>
@@ -1175,9 +1203,6 @@
 
                         <text>
                             <p>Specifies the maximum size of the <cmd>archive-get</cmd> queue when <br-option>archive-async</br-option> is enabled. The queue is stored in the <br-option>spool-path</br-option> and is used to speed providing WAL to <postgres/>.</p>
-
-                            <!-- Be sure to update other copies of this block when modifying -->
-                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
                         <example>1GiB</example>
@@ -1225,9 +1250,6 @@
                             <p>In asynchronous mode the entire queue will be dropped to prevent spurts of WAL getting through before the queue limit is exceeded again.</p>
 
                             <p>The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely. Better to lose the backup than have <postgres/> go down.</p>
-
-                            <!-- Be sure to update other copies of this block when modifying -->
-                            <p>Size can be entered in bytes (default) or KiB, MiB, GiB, TiB, or PiB where the multiplier is a power of 1024. For example, the case-insensitive value 5GiB (or 5GB, 5g) can be used instead of 5368709120. Fractional values such as 2.5GiB are not allowed, use 2560MiB instead.</p>
                         </text>
 
                         <example>1TiB</example>
@@ -1643,6 +1665,8 @@
             <p>Any option may be set in an environment variable using the <id>PGBACKREST_</id> prefix and the option name in all caps replacing <id>-</id> with <id>_</id>, e.g. <br-option>pg1-path</br-option> becomes <id>PGBACKREST_PG1_PATH</id> and <br-option>stanza</br-option> becomes <id>PGBACKREST_STANZA</id>. Boolean options are represented as they would be in a configuration file, e.g. <id>PGBACKREST_COMPRESS="n"</id>, and <id>reset-*</id> variants are not allowed. Options that can be specified multiple times on the command-line or in a config file can be represented by separating the values with colons, e.g. <id>PGBACKREST_DB_INCLUDE="db1:db2"</id>.</p>
 
             <p>Command-line options override environment options which override config file options.</p>
+
+            <p>See <link page="configuration" section="/introduction">Configuration Introduction</link> for information on option types</p>
         </text>
 
         <operation-general title="General Options">
