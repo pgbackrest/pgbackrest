@@ -39,7 +39,7 @@
 
             <p><b>Key/Value</b>: Option may be provided multiple times in the form <id>key=value</id>.</p>
 
-            <p>Command line example: <br-setting>--recovery-option=primary_conninfo=db.mydomain.com</br-setting><br/>Configuration file example: <br-setting>recovery-option=primary_conninfo=db.mydomain.com</br-setting></p>
+            <p>Command line example: <br-setting>--tablespace-map=ts_01=/db/ts_01 --tablespace-map=ts_02=/db/ts_02</br-setting><br/>Configuration file example, each on its own line: <br-setting>tablespace-map=ts_01=/db/ts_01 tablespace-map=ts_02=/db/ts_02</br-setting></p>
         </text>
 
         <config-section-list title="Settings">
