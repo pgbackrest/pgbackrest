@@ -55,7 +55,7 @@ struct MemContext
     bool active:1;                                                  // Is the context currently active?
 #endif
     MemQty childQty:2;                                              // How many child contexts can this context have?
-    bool childInitialized:1;                                        // Has the child contest list been initialized?
+    bool childInitialized:1;                                        // Has the child context list been initialized?
     MemQty allocQty:2;                                              // How many allocations can this context have?
     bool allocInitialized:1;                                        // Has the allocation list been initialized?
     MemQty callbackQty:2;                                           // How many callbacks can this context have?
@@ -1141,7 +1141,7 @@ memContextFreeRecurse(MemContext *const this)
 
 #ifdef DEBUG
     // Current context cannot be freed unless it is top (top is never really freed, just the stuff under it)
-    if (this == memContextStack[memContextCurrentStackIdx].memContext && this != (MemContext *)&contextTop)
+    if (this == memContextStack[memContextCurrentStackIdx].memContext && this != memContextTop())
         THROW_FMT(AssertError, "cannot free current context '%s'", this->name);
 #endif
 
@@ -1198,7 +1198,7 @@ memContextFreeRecurse(MemContext *const this)
     }
 
     // Free the memory context so the slot can be reused (if not the top mem context)
-    if (this != (MemContext *)&contextTop)
+    if (this != memContextTop())
     {
         ASSERT(this->contextParent != NULL);
 
