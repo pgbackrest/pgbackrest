@@ -11,14 +11,14 @@ Types
 ***********************************************************************************************************************************/
 typedef struct BldErrError
 {
-    const String *const name;                                       // Name
-    const unsigned int code;                                        // Code
-    const bool fatal;                                               // Is the error fatal?
+    const String *name;                                             // Name
+    unsigned int code;                                              // Code
+    bool fatal;                                                     // Is the error fatal?
 } BldErrError;
 
 typedef struct BldErr
 {
-    const List *const errList;                                      // Command list
+    const List *errList;                                            // Command list
 } BldErr;
 
 /***********************************************************************************************************************************

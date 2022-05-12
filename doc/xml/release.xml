@@ -393,6 +393,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1747"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add option type descriptions.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1731"/>
 
                         <release-item-contributor-list>
@@ -11006,7 +11017,7 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>The <cmd>archive-get</cmd> command now returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.)  This lets <postgres/> know that that the archive stream has terminated normally.  However, this does not take into account possible holes in the archive stream.</p>
+                        <p>The <cmd>archive-get</cmd> command now returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.) This lets <postgres/> know that the archive stream has terminated normally. However, this does not take into account possible holes in the archive stream.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
