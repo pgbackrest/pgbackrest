@@ -29,10 +29,10 @@ jobs:
       matrix:
         include:
           # All unit tests (without coverage) for 32-bit
-          - param: test --vm=d9 --param=no-performance --param=c-only
+          - param: test --vm=u18 --param=no-performance --param=c-only
 
           # All integration tests for 32-bit
-          - param: test --vm=d9 --param=module=mock --param=module=real
+          - param: test --vm=u18 --param=module=mock --param=module=real
 
           # Debian/Ubuntu documentation
           - param: doc --vm=u18
