@@ -459,6 +459,14 @@ testRun(void)
         // Remove old repo
         HRN_STORAGE_PATH_REMOVE(storageTest, "repo", .errorOnMissing = true, .recurse = true);
 
+        // Create an artificially small WAL file to save time on encryption
+        walBuffer2 = bufNew(1024);
+        bufUsedSet(walBuffer2, bufSize(walBuffer2));
+        memset(bufPtr(walBuffer2), 0xFF, bufSize(walBuffer2));
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_11}, walBuffer2);
+        walBuffer2Sha1 = strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA1_STR, walBuffer2)));
+        HRN_STORAGE_PUT(storageTest, "pg/pg_wal/000000010000000100000002", walBuffer2, .comment = "write WAL");
+
         argListTemp = strLstNew();
         hrnCfgArgRawZ(argListTemp, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argListTemp, cfgOptPgPath, 1, TEST_PATH "/pg");

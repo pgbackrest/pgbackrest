@@ -436,9 +436,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("put encrypted WAL archive file");
 
-        // Create WAL segment
+        // Create WAL segment. Keep it small since encryption/decryption takes time (esp on 32-bit).
         ioBufferSizeSet(oldBufferSize);
-        Buffer *archiveFileBuffer = bufNew(16 * 1024 * 1024);
+        Buffer *archiveFileBuffer = bufNew(1024);
         memset(bufPtr(archiveFileBuffer), 0, bufSize(archiveFileBuffer));
         bufUsedSet(archiveFileBuffer, bufSize(archiveFileBuffer));
 
