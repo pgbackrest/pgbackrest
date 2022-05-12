@@ -106,58 +106,42 @@ Possible sizes for the manifest based on options. Formatting has been compressed
 ***********************************************************************************************************************************/
 static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQtyOne + 1] =
 {
-    // alloc none
-    {// child none
+    // child none
+    {// alloc none
      {/* callback none */ 0, /* callback one */ sizeof(MemContextCallbackOne)},
-     // child one
-     {/* callback none */ sizeof(MemContextChildOne),
-      /* callback one */ sizeof(MemContextChildOne) + sizeof(MemContextCallbackOne)},
-     // child many
-     {/* callback none */ sizeof(MemContextChildMany),
-      /* callback one */ sizeof(MemContextChildMany) + sizeof(MemContextCallbackOne)}},
-    // alloc one
-    {// child none
+     // alloc one
      {/* callback none */ sizeof(MemContextAllocOne),
       /* callback one */ sizeof(MemContextAllocOne) + sizeof(MemContextCallbackOne)},
-     // child one
-     {/* callback none */ sizeof(MemContextAllocOne) + sizeof(MemContextChildOne),
-      /* callback one */ sizeof(MemContextAllocOne) + sizeof(MemContextChildOne) + sizeof(MemContextCallbackOne)},
-     // child many
-     {/* callback none */ sizeof(MemContextAllocOne) + sizeof(MemContextChildMany),
-      /* callback one */ sizeof(MemContextAllocOne) + sizeof(MemContextChildMany) + sizeof(MemContextCallbackOne)}},
-    // alloc many
-    {// child none
+     // alloc many
      {/* callback none */ sizeof(MemContextAllocMany),
-      /* callback one */ sizeof(MemContextAllocMany) + sizeof(MemContextCallbackOne)},
-     // child one
-     {/* callback none */ sizeof(MemContextAllocMany) + sizeof(MemContextChildOne),
-      /* callback one */ sizeof(MemContextAllocMany) + sizeof(MemContextChildOne) + sizeof(MemContextCallbackOne)},
-     // child many
-     {/* callback none */ sizeof(MemContextAllocMany) + sizeof(MemContextChildMany),
-      /* callback one */ sizeof(MemContextAllocMany) + sizeof(MemContextChildMany) + sizeof(MemContextCallbackOne)}},
+      /* callback one */ sizeof(MemContextAllocMany) + sizeof(MemContextCallbackOne)}},
+    // child one
+    {// alloc none
+     {/* callback none */ sizeof(MemContextChildOne),
+      /* callback one */ sizeof(MemContextChildOne) + sizeof(MemContextCallbackOne)},
+     // alloc one
+     {/* callback none */ sizeof(MemContextChildOne) + sizeof(MemContextAllocOne),
+      /* callback one */ sizeof(MemContextChildOne) + sizeof(MemContextAllocOne) + sizeof(MemContextCallbackOne)},
+     // alloc many
+     {/* callback none */ sizeof(MemContextChildOne) + sizeof(MemContextAllocMany),
+      /* callback one */ sizeof(MemContextChildOne) + sizeof(MemContextAllocMany) + sizeof(MemContextCallbackOne)}},
+    // child many
+    {// alloc none
+     {/* callback none */ sizeof(MemContextChildMany),
+      /* callback one */ sizeof(MemContextChildMany) + sizeof(MemContextCallbackOne)},
+     // alloc one
+     {/* callback none */ sizeof(MemContextChildMany) + sizeof(MemContextAllocOne),
+      /* callback one */ sizeof(MemContextChildMany) + sizeof(MemContextAllocOne) + sizeof(MemContextCallbackOne)},
+     // alloc many
+     {/* callback none */ sizeof(MemContextChildMany) + sizeof(MemContextAllocMany),
+      /* callback one */ sizeof(MemContextChildMany) + sizeof(MemContextAllocMany) + sizeof(MemContextCallbackOne)}},
 };
 
 /***********************************************************************************************************************************
 Get pointers to optional parts of the manifest
 ***********************************************************************************************************************************/
-// Get pointer to allocation part
-#define MEM_CONTEXT_ALLOC_OFFSET(memContext)                        ((unsigned char *)(memContext + 1) + memContext->allocExtra)
-
-static MemContextAllocOne *
-memContextAllocOne(MemContext *const memContext)
-{
-    return (MemContextAllocOne *)MEM_CONTEXT_ALLOC_OFFSET(memContext);
-}
-
-static MemContextAllocMany *
-memContextAllocMany(MemContext *const memContext)
-{
-    return (MemContextAllocMany *)MEM_CONTEXT_ALLOC_OFFSET(memContext);
-}
-
 // Get pointer to child part
-#define MEM_CONTEXT_CHILD_OFFSET(memContext)                                                                                       \
-    ((unsigned char *)(memContext + 1) + memContextSizePossible[memContext->allocQty][0][0] + memContext->allocExtra)
+#define MEM_CONTEXT_CHILD_OFFSET(memContext)                        ((unsigned char *)(memContext + 1) + memContext->allocExtra)
 
 static MemContextChildOne *
 memContextChildOne(MemContext *const memContext)
@@ -171,13 +155,29 @@ memContextChildMany(MemContext *const memContext)
     return (MemContextChildMany *)MEM_CONTEXT_CHILD_OFFSET(memContext);
 }
 
+// Get pointer to allocation part
+#define MEM_CONTEXT_ALLOC_OFFSET(memContext)                                                                                       \
+    ((unsigned char *)(memContext + 1) + memContextSizePossible[memContext->childQty][0][0] + memContext->allocExtra)
+
+static MemContextAllocOne *
+memContextAllocOne(MemContext *const memContext)
+{
+    return (MemContextAllocOne *)MEM_CONTEXT_ALLOC_OFFSET(memContext);
+}
+
+static MemContextAllocMany *
+memContextAllocMany(MemContext *const memContext)
+{
+    return (MemContextAllocMany *)MEM_CONTEXT_ALLOC_OFFSET(memContext);
+}
+
 // Get pointer to callback part
 static MemContextCallbackOne *
 memContextCallbackOne(MemContext *const memContext)
 {
     return
         (MemContextCallbackOne *)((unsigned char *)(memContext + 1) +
-            memContextSizePossible[memContext->allocQty][memContext->childQty][0] + memContext->allocExtra);
+            memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
 }
 
 /***********************************************************************************************************************************
@@ -189,8 +189,8 @@ generally used to allocate memory that exists for the life of the program.
 static struct MemContextTop
 {
     MemContext memContext;
-    MemContextAllocMany memContextAllocMany;
     MemContextChildMany memContextChildMany;
+    MemContextAllocMany memContextAllocMany;
 } contextTop =
 {
     .memContext =
@@ -423,7 +423,7 @@ memContextNew(
     const MemQty callbackQty = (MemQty)param.callbackQty;
 
     MemContext *const this = memAllocInternal(
-        sizeof(MemContext) + allocExtra + memContextSizePossible[allocQty][childQty][callbackQty]);
+        sizeof(MemContext) + allocExtra + memContextSizePossible[childQty][allocQty][callbackQty]);
 
     *this = (MemContext)
     {
@@ -976,37 +976,6 @@ memContextSize(const MemContext *const this)
     size_t total = 0;
     const unsigned char *offset = (unsigned char *)(this + 1) + this->allocExtra;
 
-    // Size of allocations
-    if (this->allocQty == memQtyOne)
-    {
-        if (this->allocInitialized)
-        {
-            const MemContextAllocOne *const contextAlloc = (const MemContextAllocOne *const)offset;
-
-            if (contextAlloc->alloc != NULL)
-                total += contextAlloc->alloc->size;
-        }
-
-        offset += sizeof(MemContextAllocOne);
-    }
-    else if (this->allocQty == memQtyMany)
-    {
-        if (this->allocInitialized)
-        {
-            const MemContextAllocMany *const contextAlloc = (const MemContextAllocMany *const)offset;
-
-            for (unsigned int allocIdx = 0; allocIdx < contextAlloc->listSize; allocIdx++)
-            {
-                if (contextAlloc->list[allocIdx] != NULL)
-                    total += contextAlloc->list[allocIdx]->size;
-            }
-
-            total += contextAlloc->listSize * sizeof(MemContextAllocMany *);
-        }
-
-        offset += sizeof(MemContextAllocMany);
-    }
-
     // Size of child contexts
     if (this->childQty == memQtyOne)
     {
@@ -1036,6 +1005,37 @@ memContextSize(const MemContext *const this)
         }
 
         offset += sizeof(MemContextChildMany);
+    }
+
+    // Size of allocations
+    if (this->allocQty == memQtyOne)
+    {
+        if (this->allocInitialized)
+        {
+            const MemContextAllocOne *const contextAlloc = (const MemContextAllocOne *const)offset;
+
+            if (contextAlloc->alloc != NULL)
+                total += contextAlloc->alloc->size;
+        }
+
+        offset += sizeof(MemContextAllocOne);
+    }
+    else if (this->allocQty == memQtyMany)
+    {
+        if (this->allocInitialized)
+        {
+            const MemContextAllocMany *const contextAlloc = (const MemContextAllocMany *const)offset;
+
+            for (unsigned int allocIdx = 0; allocIdx < contextAlloc->listSize; allocIdx++)
+            {
+                if (contextAlloc->list[allocIdx] != NULL)
+                    total += contextAlloc->list[allocIdx]->size;
+            }
+
+            total += contextAlloc->listSize * sizeof(MemContextAllocMany *);
+        }
+
+        offset += sizeof(MemContextAllocMany);
     }
 
     // Size of callback
