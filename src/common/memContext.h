@@ -205,8 +205,8 @@ Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerpl
 typedef struct MemContextNewParam
 {
     VAR_PARAM_HEADER;
-    uint8_t allocQty;                                               // How many allocations can this context have?
     uint8_t childQty;                                               // How many child contexts can this context have?
+    uint8_t allocQty;                                               // How many allocations can this context have?
     uint8_t callbackQty;                                            // How many callbacks can this context have?
     uint16_t allocExtra;                                            // Extra memory to allocate with the context
 } MemContextNewParam;

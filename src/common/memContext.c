@@ -28,8 +28,8 @@ typedef struct MemContextAlloc
 // Get the allocation header pointer given the allocation buffer pointer
 #define MEM_CONTEXT_ALLOC_HEADER(buffer)                            ((MemContextAlloc *)buffer - 1)
 
-// Make sure the allocation is valid for the current memory context.  This check only works correctly if the allocation is valid but
-// belongs to another context.  Otherwise, there is likely to be a segfault.
+// Make sure the allocation is valid for the current memory context. This check only works correctly if the allocation is valid and
+// allocated as one of many but belongs to another context. Otherwise, there is likely to be a segfault.
 #define ASSERT_ALLOC_MANY_VALID(alloc)                                                                                             \
     ASSERT(                                                                                                                        \
         alloc != NULL && (uintptr_t)alloc != (uintptr_t)-sizeof(MemContextAlloc) &&                                                \
@@ -54,10 +54,10 @@ struct MemContext
     const char *name;                                               // Indicates what the context is being used for
     bool active:1;                                                  // Is the context currently active?
 #endif
-    MemQty allocQty:2;                                              // How many allocations can this context have?
-    bool allocInitialized:1;                                        // Has the allocation list been initialized?
     MemQty childQty:2;                                              // How many child contexts can this context have?
     bool childInitialized:1;                                        // Has the child contest list been initialized?
+    MemQty allocQty:2;                                              // How many allocations can this context have?
+    bool allocInitialized:1;                                        // Has the allocation list been initialized?
     MemQty callbackQty:2;                                           // How many callbacks can this context have?
     bool callbackInitialized:1;                                     // Has the callback been initialized?
     size_t allocExtra:16;                                           // Size of extra allocation (1kB max)
@@ -199,8 +199,8 @@ static struct MemContextTop
         .name = "TOP",
         .active = true,
 #endif
-        .allocQty = memQtyMany,
         .childQty = memQtyMany,
+        .allocQty = memQtyMany,
     },
 };
 
@@ -338,17 +338,18 @@ memFreeInternal(void *buffer)
 Find space for a new mem context
 ***********************************************************************************************************************************/
 static unsigned int
-memContextNewIndex(MemContext *const context, MemContextChildMany *memContextChild)
+memContextNewIndex(MemContext *const memContext, MemContextChildMany *const memContextChild)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MEM_CONTEXT, context);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, memContext);
         FUNCTION_TEST_PARAM_P(VOID, memContextChild);
     FUNCTION_TEST_END();
 
+    ASSERT(memContext != NULL);
     ASSERT(memContextChild != NULL);
 
     // Initialize (free space will always be index 0)
-    if (!context->childInitialized)
+    if (!memContext->childInitialized)
     {
         *memContextChild = (MemContextChildMany)
         {
@@ -356,7 +357,7 @@ memContextNewIndex(MemContext *const context, MemContextChildMany *memContextChi
             .listSize = MEM_CONTEXT_INITIAL_SIZE,
         };
 
-        context->childInitialized = true;
+        memContext->childInitialized = true;
     }
     else
     {
@@ -394,15 +395,15 @@ memContextNew(
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, name);
-        FUNCTION_TEST_PARAM(UINT, param.allocQty);
         FUNCTION_TEST_PARAM(UINT, param.childQty);
+        FUNCTION_TEST_PARAM(UINT, param.allocQty);
         FUNCTION_TEST_PARAM(UINT, param.callbackQty);
         FUNCTION_TEST_PARAM(SIZE, param.allocExtra);
     FUNCTION_TEST_END();
 
     ASSERT(name != NULL);
-    ASSERT(param.allocQty <= 1 || param.allocQty == UINT8_MAX);
     ASSERT(param.childQty <= 1 || param.childQty == UINT8_MAX);
+    ASSERT(param.allocQty <= 1 || param.allocQty == UINT8_MAX);
     ASSERT(param.callbackQty <= 1);
     // Check context name length
     ASSERT(name[0] != '\0');
@@ -418,8 +419,8 @@ memContextNew(
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
     ASSERT(contextCurrent->childQty != memQtyNone);
 
-    const MemQty allocQty = param.allocQty > 1 ? memQtyMany : (MemQty)param.allocQty;
     const MemQty childQty = param.childQty > 1 ? memQtyMany : (MemQty)param.childQty;
+    const MemQty allocQty = param.allocQty > 1 ? memQtyMany : (MemQty)param.allocQty;
     const MemQty callbackQty = (MemQty)param.callbackQty;
 
     MemContext *const this = memAllocInternal(
@@ -435,8 +436,8 @@ memContextNew(
         .active = true,
 #endif
         // Set flags
-        .allocQty = allocQty,
         .childQty = childQty,
+        .allocQty = allocQty,
         .callbackQty = callbackQty,
 
         // Set extra allocation
