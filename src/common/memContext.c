@@ -1169,8 +1169,6 @@ memContextFreeRecurse(MemContext *const this)
             // Free child context allocation list
             memFreeInternal(memContextChildMany(this)->list);
         }
-
-        this->childInitialized = false;
     }
 
     // Free memory allocations and list
@@ -1197,8 +1195,6 @@ memContextFreeRecurse(MemContext *const this)
 
             memFreeInternal(contextAlloc->list);
         }
-
-        this->allocInitialized = false;
     }
 
     // Free the memory context so the slot can be reused (if not the top mem context)
@@ -1223,11 +1219,17 @@ memContextFreeRecurse(MemContext *const this)
 
         memFreeInternal(this);
     }
-#ifdef DEBUG
-    // Else make the top mem context active again
+    // Else reset top context. In practice it is uncommon for the top mem context to be freed and then used again.
     else
+    {
+        this->childInitialized = false;
+        this->allocInitialized = false;
+
+#ifdef DEBUG
+        // Make the top mem context active again
         this->active = true;
 #endif
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
