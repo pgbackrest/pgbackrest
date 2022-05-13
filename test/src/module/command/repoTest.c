@@ -97,6 +97,18 @@ testRun(void)
         cfgOptionSet(cfgOptFilter, cfgSourceParam, NULL);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exact repo path");
+
+        StringList *argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, TEST_PATH "/repo");
+        HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
+
+        output = bufNew(0);
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory (text)");
+        TEST_RESULT_STR_Z(strNewBuf(output), "", "check output");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add path and file");
 
         cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_ASC));
@@ -160,13 +172,24 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on /");
 
-        StringList *argListTmp = strLstDup(argList);
+        argListTmp = strLstDup(argList);
         strLstAddZ(argListTmp, "/");
         HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
 
         TEST_ERROR(
             storageListRender(ioBufferWriteNew(output)), ParamInvalidError,
             "absolute path '/' is not in base path '" TEST_PATH "/repo'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on path that starts with repo path");
+
+        argListTmp = strLstDup(argList);
+        strLstAddZ(argListTmp, TEST_PATH "/reposub");
+        HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
+
+        TEST_ERROR(
+            storageListRender(ioBufferWriteNew(output)), ParamInvalidError,
+            "absolute path '" TEST_PATH "/reposub' is not in base path '" TEST_PATH "/repo'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on //");
