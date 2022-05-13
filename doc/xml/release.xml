@@ -188,7 +188,12 @@
                     </release-item>
 
                     <release-item>
-                        <github-pull-request id="1697"/>
+                        <commit subject="Improve path validation for repo-* commands.">
+                            <github-pull-request id="1697"/>
+                        </commit>
+                        <commit subject="Fix issues in improved path validation for repo-* commands.">
+                            <github-pull-request id="1751"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="reid.thompson"/>
