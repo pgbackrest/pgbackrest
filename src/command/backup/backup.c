@@ -1414,6 +1414,8 @@ typedef struct BackupJobData
     uint64_t bundleSize;                                            // Target bundle size
     uint64_t bundleLimit;                                           // Limit on files to bundle
     uint64_t bundleId;                                              // Bundle id
+    const bool blockIncr;                                           // Block incremental?
+    size_t blockIncrSize;                                           // Block incremental size
 
     List *queueList;                                                // List of processing queues
 } BackupJobData;
@@ -1701,6 +1703,8 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                     }
 
                     pckWriteStrP(param, repoFile);
+                    pckWriteBoolP(param, jobData->blockIncr);
+                    pckWriteU64P(param, jobData->blockIncrSize);
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
                     pckWriteBoolP(param, jobData->delta);
@@ -1791,6 +1795,7 @@ backupProcess(
             .delta = cfgOptionBool(cfgOptDelta),
             .bundle = cfgOptionBool(cfgOptRepoBundle),
             .bundleId = 1,
+            .blockIncr = cfgOptionBool(cfgOptRepoBlock),
 
             // Build expression to identify files that can be copied from the standby when standby backup is supported
             .standbyExp = regExpNew(
@@ -1805,6 +1810,9 @@ backupProcess(
             jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
             jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
         }
+
+        if (jobData.blockIncr)
+            jobData.blockIncrSize = (size_t)cfgOptionUInt64(cfgOptRepoBlockSize);
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
         // exist in to repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to

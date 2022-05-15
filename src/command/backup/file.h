@@ -48,7 +48,7 @@ typedef struct BackupFileResult
 } BackupFileResult;
 
 List *backupFile(
-    const String *repoFile, CompressType repoFileCompressType, int repoFileCompressLevel, bool delta, CipherType cipherType,
-    const String *cipherPass, const List *fileList);
+    const String *repoFile, bool blockIncr, size_t blockIncrSize, CompressType repoFileCompressType, int repoFileCompressLevel,
+    bool delta, CipherType cipherType, const String *cipherPass, const List *fileList);
 
 #endif

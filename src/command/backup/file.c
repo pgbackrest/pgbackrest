@@ -5,6 +5,7 @@ Backup File
 
 #include <string.h>
 
+#include "command/backup/blockIncr.h"
 #include "command/backup/file.h"
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
@@ -38,11 +39,14 @@ segmentNumber(const String *pgFile)
 /**********************************************************************************************************************************/
 List *
 backupFile(
-    const String *const repoFile, const CompressType repoFileCompressType, const int repoFileCompressLevel,
-    const bool delta, const CipherType cipherType, const String *const cipherPass, const List *const fileList)
+    const String *const repoFile, const bool blockIncr, const size_t blockIncrSize, const CompressType repoFileCompressType,
+    const int repoFileCompressLevel, const bool delta, const CipherType cipherType, const String *const cipherPass,
+    const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
+        FUNCTION_LOG_PARAM(BOOL, blockIncr);                        // Block incremental?
+        FUNCTION_LOG_PARAM(SIZE, blockIncrSize);                    // Block incremental size
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
@@ -222,8 +226,14 @@ backupFile(
                             segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, storagePathP(storagePg(), file->pgFile)));
                 }
 
-                // Add compression
-                if (repoFileCompressType != compressTypeNone)
+                // Add block incremental filter
+                if (blockIncr)
+                {
+                    ioFilterGroupAdd(
+                        ioReadFilterGroup(storageReadIo(read)), blockIncrNew(blockIncrSize));
+                }
+                // Else add compression
+                else if (repoFileCompressType != compressTypeNone)
                 {
                     ioFilterGroupAdd(
                         ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
@@ -237,7 +247,7 @@ backupFile(
                         cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
                 }
 
-                    // Add size filter last to calculate repo size
+                // Add size filter last to calculate repo size
                 ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 
                 // Open the source and destination and copy the file
