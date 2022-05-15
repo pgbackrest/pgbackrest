@@ -814,6 +814,9 @@ unit:
           - command/backup/pageChecksum
           - command/backup/protocol
 
+        depend:
+          - command/backup/blockIncr
+
         include:
           - info/info
           - info/manifest
