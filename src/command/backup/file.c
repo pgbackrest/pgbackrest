@@ -237,7 +237,7 @@ backupFile(
                         cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
                 }
 
-                    // Add size filter last to calculate repo size
+                // Add size filter last to calculate repo size
                 ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 
                 // Open the source and destination and copy the file
