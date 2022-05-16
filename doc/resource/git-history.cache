@@ -1,5 +1,1047 @@
 [
     {
+        "commit": "19dd015d589ed3efd31a2a238249a150fb3748c1",
+        "date": "2022-05-13 09:41:53 -0400",
+        "subject": "Fix issues in improved path validation for repo-* commands.",
+        "body": "If the user requested the exact repo path then strSub() would be passed an invalid start value leading to an assertion:\r\n\r\n$ pgbackrest --stanza=test repo-ls /var/lib/pgbackrest\r\nASSERT: [025]: start <= this->pub.size (on dev builds)\r\nASSERT: [025]: string size must be <= 1073741824 bytes (on prod builds)\r\n\r\nFix this by checking if the requested path exactly equals the repo path and returning an empty relative path in this case.\r\n\r\nAnother issue was that invalid subpaths were not detected if they started with the repo path. For example, /var/lib/pgbackrestsub would not generate an error if the repo path was /var/lib/pgbackrest. Fix this by explictly checking for a / between the repo path and the subpath. This also requires special handling when the repo path is /.\r\n\r\nThis is not a live bug since the issues were found in an unreleased feature introduced in 5ae84d5."
+    },
+    {
+        "commit": "024500782e9fde91cf236db70a584beb52586d38",
+        "date": "2022-05-12 17:02:08 -0400",
+        "subject": "Reduce encrypted WAL segments sizes in command tests.",
+        "body": "The encrypted archive-push and repo tests were running very slowly on 32-bit with Valgrind enabled. This appears to be an issue with a newer version of Valgrind, but it has been going on long enough that bisecting does not seem to be worthwhile.\n\nReduce the size of the encrypted test segments where possible to improve overall test performance."
+    },
+    {
+        "commit": "7d9b2e267c3f68463000cfcfec6018cc12203f23",
+        "date": "2022-05-12 11:57:12 -0400",
+        "subject": "Move 32-bit CI testing from Debian 9 to Ubuntu 18.04.",
+        "body": "Debian 9 will be EOL before our next release, so move 32-bit testing to Ubuntu 18.04, which is older than Debian 10."
+    },
+    {
+        "commit": "24f138b0672ed55aeef1673b816b803487bca932",
+        "date": "2022-05-11 16:20:41 -0400",
+        "subject": "Remove excessive const usage in build module.",
+        "body": "This was an experiment that attempted to create immutable structs (at least without casting). It turned out to be a bit burdensome and required unsafe-looking casting in some cases."
+    },
+    {
+        "commit": "3d8ee552fe85aae6f2f00cd2a9436fb6b34513e1",
+        "date": "2022-05-11 15:59:37 -0400",
+        "subject": "Move some PostgreSQL integration tests to rh7.",
+        "body": "This makes the u20 test run faster. Since u20 is currently the longest running test, the time to complete all tests is also improved."
+    },
+    {
+        "commit": "a913113fda5886ffd2ff136cdd52a3f469eca026",
+        "date": "2022-05-11 15:23:41 -0400",
+        "subject": "Add option type descriptions.",
+        "body": "This cuts down on repetition of the size descriptions and adds basic descriptions for the other option types."
+    },
+    {
+        "commit": "5fbea6da811ee93dcd966b8f7d84d6da2e65c6c5",
+        "date": "2022-05-11 10:39:31 -0400",
+        "subject": "Add br tag for documentation.",
+        "body": "This tag allows for a simple linefeed in a p tag instead of being forced to start a new paragraph."
+    },
+    {
+        "commit": "8ee85bc605da4aff5069bd1b965bbb585d9fe851",
+        "date": "2022-05-11 08:46:23 -0400",
+        "subject": "Fix \"that that\" typos."
+    },
+    {
+        "commit": "c4f7edef2b6a9b541e94793c1dabbff7db854a9b",
+        "date": "2022-05-11 08:42:46 -0400",
+        "subject": "Fix typos in help."
+    },
+    {
+        "commit": "50d409a812be577f2c296f3d6096cf97fab049ff",
+        "date": "2022-05-10 14:17:05 -0400",
+        "subject": "Add FAQ about backup types and restore speed.",
+        "body": "Based on several questions/misunderstandings, provide clarification about the backup type only affecting the backup action, and not the restore."
+    },
+    {
+        "commit": "de816a0f5793747a774b98af627776112cc7cb2d",
+        "date": "2022-05-10 13:18:26 -0400",
+        "subject": "Remove integration expect log testing.",
+        "body": "Integration expect log testing was originally used as a rough-and-ready way to make sure that certain code paths were being executed before the unit tests existed. Now that we have 100% unit test coverage (with expect log testing) the value of the integration expect tests seems minimal at best.\r\n\r\nBut they do cause numerous issues:\r\n\r\n- Maintenance of the expect code and replacements that are required to keep logs reproducible.\r\n- Even a trivial change can cause massive churn in the expect logs, e.g. d9088b2. These changes should be minutely audited but since the expect logs have little value now it is seldom worth the effort.\r\n- The OS version used to do expect testing (RHEL7) can only be used to test one version of PostgreSQL. This makes it hard to balance the PostgreSQL version testing between OS versions.\r\n- When a commit affects expect logs it is not clear (especially for new developers) how to regenerate them and our contributing guide is silent on the issue.\r\n\r\nThe goal is to migrate the integration tests to C and expect testing is not part of that plan. It seems best to get rid of them now."
+    },
+    {
+        "commit": "3a403944729e03c66de83e6750c38cab97743333",
+        "date": "2022-05-10 11:18:12 -0400",
+        "subject": "Remove obsolete test in common/memContext.",
+        "body": "Once upon a time the allocation array was allocated up front so this test was required for the top context, which did not allocate up front.\n\nNow allocations are done on demand so this case is covered for every context that does not allocate memory."
+    },
+    {
+        "commit": "6b98b3534e15a8d277547eb2932c085bc7515eec",
+        "date": "2022-05-10 06:52:56 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "cc5b0614894e1b5ef78f1ceba3bc8e4760a40a24",
+        "date": "2022-05-09 18:07:11 -0400",
+        "subject": "Document required base branch for pull requests.",
+        "body": "Be explicit when submitting a PR about which branch to use as the base."
+    },
+    {
+        "commit": "b4c1ca7b807a906d42d540307da3603052c4a674",
+        "date": "2022-05-09 14:19:05 -0400",
+        "subject": "Split 32-bit CI tests.",
+        "body": "This helps rebalance some of the tests that are running long, i.e. d9 and u20.\n\nI would be better to move more PostgreSQL versions to d9, but the base VM does not contain more versions. New minor versions will be out later in the week so that seems a better time to be rebuilding containers."
+    },
+    {
+        "commit": "39dddbb6bc7d296fe25a7210468b2f51ea6b1816",
+        "date": "2022-05-09 12:48:19 -0400",
+        "subject": "Add limited CI for ppc64le/s390x using emulation.",
+        "body": "The emulation is so slow that running all the unit tests would be too expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to test on one big-endian architecture to be sure that checksums are correct.\n\nUpdate checksums in the tests where they had gotten out of date since the last time we were testing on s390x. Also use a different test in command/archivePushTest to show the name of the file when a checksum does not match to aid in debugging.\n\nThe command/archive-push test was updated but not included because there is also a permissions issue, which looks to be the same as what we see on MacOS/FreedBSD. Hopefully we'll be able to fix all of those at the same time."
+    },
+    {
+        "commit": "eefa0b161a6a02b7843e18455443a4bce41cd4b9",
+        "date": "2022-05-09 11:59:08 -0400",
+        "subject": "Simplify messaging around supported versions in the documentation.",
+        "body": "The version ranges given in the user guides caused confusion. For example, because the user guide for RHEL specified PostgreSQL 9.6-11, users questioned whether pgBackRest worked for PostgreSQL 12 on RHEL.\r\n\r\nRemove these ranges and add more explanatory text to the introduction to try and make it clearer how the user guides work and which versions are covered (basically all of them)."
+    },
+    {
+        "commit": "ef4c4ab8525f81c9ed22c7e82ed12096e81703c5",
+        "date": "2022-05-09 10:39:43 -0400",
+        "subject": "Use variable instead of function to track FINALLY() state.",
+        "body": "The function worked fine, but Coverity was unable to determine that the finally block was run, which led to false positives about unfreed memory.\r\n\r\nUsing a boolean in the block makes it clear to Coverity that the finally block will always be run no matter what else happens.\r\n\r\nWe'll depend on the compiler to optimize away the boolean if it is not used in a finally block. The cost of the boolean is fairly low in comparison to everything else being done in these macros, so it does not seem worth having a separate block even if the compiler is not able to eliminate the boolean.\r\n\r\nThis reverts most of 9a271e9 that fixed a bug caused by c5b5b58, which was also attempting to help Coverity understand FINALLY() blocks."
+    },
+    {
+        "commit": "e8c40a24df14fcf281de672c19d0a55dc7cb50f6",
+        "date": "2022-05-09 09:56:19 -0400",
+        "subject": "Remove unnecessary TRY() block in common/regExp module.",
+        "body": "This code was written before MEM_CONTEXT_TEMP*() was available, which is a better solution."
+    },
+    {
+        "commit": "4d8c36715ddd67c11d1ab166dcd0b4850631d83d",
+        "date": "2022-05-06 19:44:46 -0400",
+        "subject": "Remove legacy Travis-CI configuration.",
+        "body": "Travis-CI is now strictly a paid service. Multiple attempts to use their \"free\" service have failed due to lack of community credit and general issues with their plugin.\n\nRemove the configuration so it does not appear we are testing on Travis-CI."
+    },
+    {
+        "commit": "46b7b7287446d0bb5ed0963fd01c51fb2b08893f",
+        "date": "2022-05-06 18:23:36 -0400",
+        "subject": "Add hint when unable to find the primary cluster.",
+        "body": "If all available clusters are in recovery, pgBackRest will not be able to find a primary for the backup."
+    },
+    {
+        "commit": "53bfdbc01ece396c802022fea2216d3b9d7beaa1",
+        "date": "2022-05-06 16:02:44 -0400",
+        "subject": "Remove useless test in config/parse unit test.",
+        "body": "Since the packSize field is 7 bits, it could never fail the check for > 127.\n\nThe compiler will catch any packs that are larger than 7 bits and then the pack size will need to be adjusted. For now just adjust the comment to reflect what the test does and give a clearer indication of what to do when a pack grows too large."
+    },
+    {
+        "commit": "77311a9af7870e79d7a3c9ecadc268c2364458c8",
+        "date": "2022-05-06 15:38:03 -0400",
+        "subject": "Fix indentation.",
+        "body": "gcc11 complains about this indentation being misleading."
+    },
+    {
+        "commit": "efbcd975c4c5b4c29c937154e2b1e221aa3ea156",
+        "date": "2022-05-06 13:56:58 -0400",
+        "subject": "Update Docker test image for Debian 9.",
+        "body": "A change invalidated the current image which has been causing the d9 test to run longer."
+    },
+    {
+        "commit": "68a410779ad92a91f6e8bfe504a9acd7fecd06f2",
+        "date": "2022-05-06 12:32:49 -0400",
+        "subject": "Add zNewFmt().",
+        "body": "This replaces strZ(strNewFmt()), making the code simpler and reducing indentation."
+    },
+    {
+        "commit": "475e7c692d7e54b9417de74cb566c2ccc7158997",
+        "date": "2022-05-06 12:11:04 -0400",
+        "subject": "Clean up dividers in the documentation.",
+        "body": "Dividers were used in some files, but not others, and some had section names (which are hard to maintain) and others did not.\n\nTry to make this more consistent by putting a divider on front of every section, variable block, and wherever else seems appropriate."
+    },
+    {
+        "commit": "356bc27bf200762148afb7b495b5a54efeea0159",
+        "date": "2022-05-06 11:41:28 -0400",
+        "subject": "Remove key dividers in help.xml.",
+        "body": "The idea was to make this file easier to browse and edit, but in fact it is much easier to just search for the command/option needed.\n\nThe dividers were never applied consistently and at some point we decided to get rid of the comments because they were hard to keep updated. The result was a mix of styles which did nobody any favors."
+    },
+    {
+        "commit": "65d22e43257d46ff6523ffbdb3af59e30deeaea5",
+        "date": "2022-05-06 11:11:36 -0400",
+        "subject": "Add verify output and verbose options.",
+        "body": "These options allow the user to control how the verify results will be output to the console and log."
+    },
+    {
+        "commit": "f405fc6ae281eebf4d61abb39963a9830fe2fa2f",
+        "date": "2022-05-06 10:21:20 -0400",
+        "subject": "Backup file bundling documentation.",
+        "body": "Make the feature user visible and add documentation to the user guide."
+    },
+    {
+        "commit": "4cc0d46d606382e6b00493e73ee401ecfe5b9f3e",
+        "date": "2022-05-06 09:34:39 -0400",
+        "subject": "Fix comment wrapping."
+    },
+    {
+        "commit": "e70c71049ec1ff3bf1f3e6a1987c82d9b95bce82",
+        "date": "2022-05-06 07:49:23 -0400",
+        "subject": "Use uint8_t for optionResolveOrder.",
+        "body": "This saves a bit of space and should not affect processing speed.\n\nOn MacOS (clang) this unexpectedly reduces the size of the binary by 16kiB but on Linux (gcc) there are no savings at all."
+    },
+    {
+        "commit": "808f7bf11c367a5be2130ea573c9447d8ea2dda8",
+        "date": "2022-05-05 20:14:13 -0400",
+        "subject": "Replace strNewFmt() with TEST_ERROR_FMT() in command/archive-push module.",
+        "body": "This test was likely written before TEST_ERROR_FMT() existed."
+    },
+    {
+        "commit": "efe0a39a75ed40f5568b1f5f566fee84d76fe094",
+        "date": "2022-05-05 20:01:02 -0400",
+        "subject": "Use TEST_ERROR_FMT() rather than strNewFmt() in common/lock module.",
+        "body": "These tests were likely written before TEST_ERROR_FMT() existed."
+    },
+    {
+        "commit": "5089a26633c965c4d9293d3de527a02b42d9b88d",
+        "date": "2022-05-05 18:35:00 -0400",
+        "subject": "Convert strNewFmt() to THROW_FMT() in config/parse module.",
+        "body": "It's not clear why strNewFmt() was used here, but there is no need for it."
+    },
+    {
+        "commit": "876f3bbd1cd46af7f7d3dc2e9d454b77d51fff80",
+        "date": "2022-05-05 18:15:05 -0400",
+        "subject": "Remove COLON_STR and separator parameter from cfgParseCommandRoleName().",
+        "body": "The separator parameter in cfgParseCommandRoleName() was useless since it was always set to : and COLON_STR did not provide any clarity its the single other usage."
+    },
+    {
+        "commit": "7ae5478d9840d8b64a1211466e49d2835853ee55",
+        "date": "2022-05-05 12:09:21 -0400",
+        "subject": "Remove most _Z constants.",
+        "body": "Most of the time these were not making the code any clearer.\n\nFor cases where they were used to construct Strings and Buffers, replace with constants.\n\nAlso cleanup unused Buffers and Strings."
+    },
+    {
+        "commit": "a6b1adb5fd533b4b9aca29646c8acf647d872959",
+        "date": "2022-05-05 11:15:14 -0400",
+        "subject": "Remove extraneous linefeed when writing a lock file.",
+        "body": "Linefeeds are no longer part of the lock file format."
+    },
+    {
+        "commit": "5f8c9cd66a1b39a47acaddfbc3cf443ae8057519",
+        "date": "2022-05-05 10:19:11 -0400",
+        "subject": "Add ClockError for unexpected clock skew and timezone changes.",
+        "body": "A distinct result code should help debugging of clock skew and timezone issues."
+    },
+    {
+        "commit": "b6bfd9f99d74b1f5e631cf6462b68342589d2b80",
+        "date": "2022-05-05 09:20:49 -0400",
+        "subject": "Strip extensions from history manifest before showing in error message.",
+        "body": "In cases where clock skew or timezone issues are preventing backup label generation the user could see an error like this:\r\n\r\nnew backup label '20220504-152308F' is not later than latest backup label '20220504-222042F_20220504-222141I.manifest.gz'\r\n\r\nThis will happen if the most recent label is drawn from the history. It is cleaner (and probably less confusing) to strip off the extensions so the user sees:\r\n\r\nnew backup label '20220504-152308F' is not later than latest backup label '20220504-222042F_20220504-222141I'"
+    },
+    {
+        "commit": "ef672c74adf871f17f6e14f5f0d6ab70e8fa3d52",
+        "date": "2022-05-04 14:53:05 -0400",
+        "subject": "Prevent memContextFree() from freeing memory needed by callbacks.",
+        "body": "The order of callbacks and frees meant that memory needed during a callback (for logging in all known cases) might end up being freed before a callback needed it.\r\n\r\nRequiring callbacks and logging to check the validity of their allocations is pretty risky and it is not clear that all possible cases have been accounted for.\r\n\r\nInstead recursively execute all the callbacks first and then come back and recursively free the context. This is safer and it removes the need to check if a context is freeing so a simple active flag (in debug builds) will do. The caller no longer needs this information at all so remove memContextFreeing() and objMemContextFreeing()."
+    },
+    {
+        "commit": "d9088b2e2b16a89d29b967187a547976f96061fc",
+        "date": "2022-05-04 12:52:05 -0400",
+        "subject": "Show backup percent complete in info output.",
+        "body": "In the JSON output the percent complete is storage as an integer of the percent complete * 100. So, before display it should be converted to double and divided by 100, or split using integer mod and div.\r\n\r\nNote that percent complete will only be displayed on the host where the backup was executed. Remote hosts will show a backup/expire running with no percent complete."
+    },
+    {
+        "commit": "20782c88bc8d0842d547bd5f4fecdb292e69d1f7",
+        "date": "2022-05-04 11:55:59 -0400",
+        "subject": "PostgreSQL 15 support.",
+        "body": "PostgreSQL 15 drops support for exclusive backup and renames the start/stop backup commands.\r\n\r\nThis is based on the pgdg-testing repo since beta1 has not been released yet, but it seems unlikely that breaking changes will be made at this point. beta1 should be tagged just before our next release so we'll retest before the release."
+    },
+    {
+        "commit": "8e849ae85d6ad0ecbd1f34649be4a664712fd40c",
+        "date": "2022-05-04 10:28:39 -0400",
+        "subject": "Add PRs to thread locking on Github actions.",
+        "body": "It also makes sense to lock old PRs. They can be manually unlocked if they are needed for some reason.\n\nAlso add output logging to make it easier to determine if thread locking is completing."
+    },
+    {
+        "commit": "09b387fccddb658ae93acc6ec8dc490155c4fdea",
+        "date": "2022-05-04 09:24:35 -0400",
+        "subject": "Move issue locking to Github actions.",
+        "body": "The old plugin has been defunct for some time so there are currently a lot of unlocked issues.\n\nRunning this once per week seems sufficient for now. Worst case it can be run manually if it gets behind."
+    },
+    {
+        "commit": "692fe496bdb5fa6dcffeb9f85b6188ceb1df707a",
+        "date": "2022-05-04 08:22:45 -0400",
+        "subject": "Remove dependency on pg_database.datlastsysoid.",
+        "body": "This column has been removed in PostgreSQL 15. Rather than add a lot of special handling, it seems better just to update all versions to not depend on this column.\r\n\r\nAdd centralized functions to identify the type of database (i.e. system or user) by name and use FirstNormalObjectId when a name is not available.\r\n\r\nThe new query in the db module will still return the prior result for PostgreSQL <= 15, which will be stored in the manifest. This is important to preserve behavior when downgrading pgBackRest. There are no concerns here for PostgreSQL 15 since older versions of pgBackRest won't be able to restore backups for PostgreSQL 15 anyway."
+    },
+    {
+        "commit": "302e0c09217a2c5c11145e84976b54677f7a544e",
+        "date": "2022-05-03 16:53:29 -0400",
+        "subject": "Remove extra linefeed."
+    },
+    {
+        "commit": "9a271e925c6239fbd3577f9827c34940e7e43ae4",
+        "date": "2022-05-03 14:34:05 -0400",
+        "subject": "Fix error thrown from FINALLY() causing an infinite loop.",
+        "body": "Any error thrown resets execution to the last setjmp(), which means that parts of the try block need to make sure they don't get run again. FINALLY() was not doing this so if it threw an error it would end up back in the FINALLY() block, where the error would likely be thrown again, causing an infinite loop.\r\n\r\nFix this by tracking the state of FINALLY() and only running it once. This requires cleaning the error stack like CATCH*() and clearing the error like TRY_END() depending on the order of execution."
+    },
+    {
+        "commit": "b89c568b5fefd1ea0e8319402bab0f4fba6bfa2e",
+        "date": "2022-05-03 10:50:48 -0400",
+        "subject": "Fix obsolete variable naming."
+    },
+    {
+        "commit": "962990869454b15db058f4037dbc0b1b611fc95e",
+        "date": "2022-05-03 10:13:32 -0400",
+        "subject": "Error on all lock failures except another process holding the lock.",
+        "body": "The archive-get/archive-push commands would not error for, .e.g permissions errors, when attempting to get a lock before launching the async process. Since the async process was not launched there would be no error status file and the user would get a generic failure message. Also, there would be no async log.\r\n\r\nRefactor lockAcquireFile() to throw an error when failOnNoLock = false unless the file is locked by another process. This seems to be the original intent of this parameter and there may have been a mistake when porting from Perl. In any case it looks wrong enough to be considered a bug."
+    },
+    {
+        "commit": "eb435becb3e4d3dd8ea01b0e8899654a268d3867",
+        "date": "2022-05-02 15:17:34 -0400",
+        "subject": "Exclude mem context name from production builds.",
+        "body": "The mem context name is used to produce clearer debug errors but it has no purpose in production builds.\n\nAlso remove memContextName() and access the struct directly since the name is only used within the common/memContext module.\n\nNote that a few errors that were thrown in production builds (and required the name) are now only thrown in debug builds. In practice we have not seen these errors in production builds due to extensive coverage so it does not seem worth modifying the error to work without the context name.\n\nThis saves some memory, which is worthwhile, but the goal is to refactor Strings and Variants to have their own mem contexts and this change will prevent them from using more memory than they are now, along with other changes that will be coming later."
+    },
+    {
+        "commit": "0055fa40fee2636fed88699f52e9e67cd2803f71",
+        "date": "2022-05-02 09:45:57 -0400",
+        "subject": "Add user:group to lock permission error.",
+        "body": "This will help debug permissions errors when the lock file cannot be created."
+    },
+    {
+        "commit": "03c71aa606bc0dc89303b3907e7fcbd83ace79d6",
+        "date": "2022-05-02 08:49:13 -0400",
+        "subject": "Add hint to check the log on archive-get/archive-push async error.",
+        "body": "If this error is thrown rather than a specific error returned from the async process, it means the async process is unable to write the status files for some reason and the only way to get the error is out of the async log.\n\nThis hint includes the exact async log path and name to make finding errors easier."
+    },
+    {
+        "commit": "126fc99c77998cc65094d92e955347100aa42531",
+        "date": "2022-04-28 14:10:53 -0400",
+        "subject": "Fix leaks in common/json, common/keyValue, and common/variantList.",
+        "body": "This doesn't solve the problem of the variant code making far too many copies, but it at least plugs the leaks.\n\njsonReadVarRecurse() could leak KeyValue and VariantList.\n\nkvDup() leaked object allocations into the calling context.\n\nkvDefault() gets a more efficient return structure.\n\nkvGetList() leaked a Variant into the calling context.\n\nvarLstNewStrLst() leaked object allocations into the calling context. Update varLstDup() to reflect changes made in varLstNewStrLst()."
+    },
+    {
+        "commit": "96166539cf7df010f9077cd624f24fd77e5a4feb",
+        "date": "2022-04-28 13:33:03 -0400",
+        "subject": "Fix leaked String in cfgParseSize()."
+    },
+    {
+        "commit": "4872a3f121e71f79a29dd63acad34b7c3537c775",
+        "date": "2022-04-28 12:33:39 -0400",
+        "subject": "Improvements to test harness memory debugging.",
+        "body": "Only set -DDEBUG_MEM for the modules currently being tested rather than globally.\n\nAlso run tests in a temp mem context. Running in the top context can confuse memory accounting when a new context is created in the top context."
+    },
+    {
+        "commit": "90f939b36f8963272cdfe8d0ed5a50606990ff5e",
+        "date": "2022-04-28 12:31:59 -0400",
+        "subject": "Fix leaks in common/io unit test.",
+        "body": "These leaks make it harder to detect leaks in the core code, so fix them."
+    },
+    {
+        "commit": "8047e97e31fb133551ad69c7fd170a8a96d188d6",
+        "date": "2022-04-28 12:17:33 -0400",
+        "subject": "Fix leaked String and Variant in harnessPqScriptRun()."
+    },
+    {
+        "commit": "ceb303f9e2f47d9818919dfd0127e558f2d83495",
+        "date": "2022-04-28 11:46:55 -0400",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "c463993b4cc96a92c61af298bc95d88129068902",
+        "date": "2022-04-28 11:41:16 -0400",
+        "subject": "Fix leaks in the storage/s3 module.",
+        "body": "storageS3Helper() leaked a few Strings which ended up in a long-lived context.\n\nstorageS3AuthAuto() and storageS3AuthWebId() were cleaned up by their callers but since they are not called often a temp mem context seems better.\n\nstorageS3Request() leaked an HttpRequest.\n\nstorageS3Info() leaked an HttpResponse.\n\nstorageS3PathRemoveInternal() leaked a variety of objects. Fix by freeing some of them and adding a temp mem context.\n\nstorageS3Remove() leaked an HttpResponse object.\n\nstorageWriteS3Part() leaked an HttpResponse object."
+    },
+    {
+        "commit": "4750bc94dd8279b166233463ff32f2f51fb67e18",
+        "date": "2022-04-28 11:20:31 -0400",
+        "subject": "Fix leaks in the storage/remote module.",
+        "body": "storageRemoteFilterGroup() leaked a number of objects. Use a temp mem context to prevent that.\n\nstorageRemoteProtocolInfoListCallback() leaked a PackWrite.\n\nstorageWriteRemoteFreeResource() leaked a PackWrite."
+    },
+    {
+        "commit": "c123a6af9f5aee4baea1d9ab202e03df6de319e3",
+        "date": "2022-04-28 11:19:01 -0400",
+        "subject": "Fix leaks in the storage/posix module.",
+        "body": "storagePosixPathCreate() leaked a String.\n\nstoragePosixPathRemoveCallback() leaked a String."
+    },
+    {
+        "commit": "d89bc6f2d241ae864cb9dcae2f5c6fc3a0e655ee",
+        "date": "2022-04-28 10:53:11 -0400",
+        "subject": "Fix leaks in the storage/gcs module.",
+        "body": "storageGcsAuthToken() memory was being cleaned up by the calling context, but seems better to keep this tidy and add a temp mem context.\n\nstorageGcsRequest() leaked an HttpRequest.\n\nstorageGcsInfo() leaked a number of objects. Use a temp mem context to prevent that.\n\nstorageGcsPathRemoveCallback() leaked an HttpResponse.\n\nstorageGcsRemove() leaked an HttpReponse.\n\nstorageWriteGcsVerify() leaked a number of objects. Use a temp mem context to prevent that.\n\nstorageWriteGcsBlock) leaked an HttpReponse."
+    },
+    {
+        "commit": "083c93eaa3d54d4594048b37542276fc6f6665fb",
+        "date": "2022-04-28 10:11:15 -0400",
+        "subject": "Reuse Strings in iniLoad().",
+        "body": "Reuse the section/key/value Strings by truncating them instead of creating a new one every time.\n\nAlso add an error for empty sections. This function is only used for loading info files (not config files), which should never contain an empty section."
+    },
+    {
+        "commit": "bc46d4e37b8c324d30543147eaeb8058184d3543",
+        "date": "2022-04-28 09:50:23 -0400",
+        "subject": "Add cvtZSubNTo*() functions.",
+        "body": "These functions allow conversion from substrings without needing to create a String or a temporary buffer.\n\nhttpDateToTime() no longer requires a temp mem context. Also improve handling of month search to avoid an allocation.\n\nhttpUriDecode() no longer requires a temp mem context.\n\njsonReadStr() no longer requires a temp mem context.\n\npgLsnFromWalSegment() no longer requires a temp mem context.\n\npgVersionFromStr() no longer requires a temp mem context. Also do a bit of refactoring.\n\nstorageGcsCvtTime() no longer leaks six Strings per call.\n\nstorageS3CvtTime() no longer leaks six Strings per call."
+    },
+    {
+        "commit": "6e18235be8b56eaedd940d7382e09e52ba22ffe9",
+        "date": "2022-04-28 06:52:07 -0400",
+        "subject": "Fix leak in varLstNewStrLst().",
+        "body": "The duplicated list elements were leaked into the calling context."
+    },
+    {
+        "commit": "aeb7568a0ffeba72f254e46d2aa5d7bcca7c9a19",
+        "date": "2022-04-28 06:48:02 -0400",
+        "subject": "Remove unused header."
+    },
+    {
+        "commit": "5285b9aa7bdda8c160adde2b7d64e217fd2be123",
+        "date": "2022-04-27 20:18:18 -0400",
+        "subject": "Fix incorrect test param."
+    },
+    {
+        "commit": "eb65a5674dfa84d6b516490ef8796d44934bb0ef",
+        "date": "2022-04-27 11:40:29 -0400",
+        "subject": "Use OBJ_NEW*() macros in SocketServer object.",
+        "body": "This was missed in ccc255d3 when the TLS server was introduced, probably because work on that commit preceded when the macros were introduced in 475b57c8. It would have been easy to miss in a merge."
+    },
+    {
+        "commit": "6f2654a5eb0e2cb63a4ff3af187f991817189dca",
+        "date": "2022-04-26 12:53:55 -0400",
+        "subject": "Fix leaks in the storage/azure module.",
+        "body": "storageAzureHelper() leaked a few Strings which ended up in a long-lived context.\n\nstorageAzureNew() failed to make a copy of the endpoint. This worked because storageAzureHelper() leaked the endpoint into the long-lived parent context.\n\nstorageAzureRequest() leaked an HttpRequest.\n\nstorageAzureInfo() leaked an HttpResponse.\n\nstorageAzurePathRemoveCallback() leaked an HttpResponse.\n\nstorageAzureRemove() leaked an HttpResponse."
+    },
+    {
+        "commit": "be120c746c403b878b6bc7df83b4ffbf6e513f72",
+        "date": "2022-04-26 12:27:51 -0400",
+        "subject": "Refactor and fix leak in storageRepoPathExpression().",
+        "body": "storageRepoPathExpression() could leak a StringList. Also refactor to remove unneeded assignments and create the String one time."
+    },
+    {
+        "commit": "cca6df872a7861de18f7e69e1df5183acd504681",
+        "date": "2022-04-26 12:09:44 -0400",
+        "subject": "Refactor functions in postgres/interface module and fix leak.",
+        "body": "pgLsnFromWalSegment() leaked two Strings.\n\nRefactor pgLsnRangeToWalSegmentList() to create the StringList in the calling context rather than moving it later."
+    },
+    {
+        "commit": "a56fa0eb45871dff8b6362d9298290a52c7e6cd9",
+        "date": "2022-04-26 11:59:21 -0400",
+        "subject": "Fix leaks in protocol module.",
+        "body": "These leaks were not a big deal individually and there are generally few protocol objects created, but the leaks ended up in mem contexts that persist for most of execution. It makes sense to keep long-lived contexts as tidy as possible."
+    },
+    {
+        "commit": "78e912a9320770122808384ae202b89fa6236e89",
+        "date": "2022-04-26 11:20:51 -0400",
+        "subject": "Fix leaks in info module.",
+        "body": "*LoadFileCallback() all leaked between retries.\n\ninfoPgArchiveId() leaked a String."
+    },
+    {
+        "commit": "36b0a9fa58f4f248fdabf170235f9f624d828d56",
+        "date": "2022-04-26 11:07:05 -0400",
+        "subject": "Fix leaks in db module.",
+        "body": "dbFreeResource() leaked ProtocolCommand.\n\ndbTimeMSec() leaked PackRead."
+    },
+    {
+        "commit": "78b90e5ad80f87e0c1167701ac40504dc888d0dd",
+        "date": "2022-04-26 11:03:06 -0400",
+        "subject": "Fix leak in configOptionRemote().",
+        "body": "A Pack and String were leaked."
+    },
+    {
+        "commit": "9a6df398393c116c73dbbf459073271d84c45bec",
+        "date": "2022-04-26 11:00:20 -0400",
+        "subject": "Fix spacing."
+    },
+    {
+        "commit": "8efb4e1e7f8d806f4688c54052f2325c21f470a9",
+        "date": "2022-04-26 10:58:12 -0400",
+        "subject": "Fix leak in cfgCommandJobRetry().",
+        "body": "A Variant was leaked for each retry record.\n\nAlso remove an extra linefeed."
+    },
+    {
+        "commit": "a8fed52ecb653229298682280b179fdf92438cdb",
+        "date": "2022-04-26 10:53:13 -0400",
+        "subject": "Fix leak in pckReadStrLst().",
+        "body": "A String would be leaked on each loop iteration."
+    },
+    {
+        "commit": "d7e45f12a54ea186e66824b9127478eaa1355d32",
+        "date": "2022-04-26 10:49:04 -0400",
+        "subject": "Refactor httpRequestNew().",
+        "body": "Move httpRequestProcess() outside of the object mem context. In case it ever returns a value we don't want that to end up in the object context."
+    },
+    {
+        "commit": "cd1cf337ff8011f01657ab1baca31927d5d2343d",
+        "date": "2022-04-26 10:45:30 -0400",
+        "subject": "Fix leak in httpHeaderPutRange().",
+        "body": "The range string was leaked."
+    },
+    {
+        "commit": "07e280199723eef35563ec71ff0c20687d642d9b",
+        "date": "2022-04-26 10:39:28 -0400",
+        "subject": "Fix leak in ioFilterGroupResultAllSet().",
+        "body": "The PackRead containing the filter results was leaked."
+    },
+    {
+        "commit": "3310decf8e4b09293e3f6b7de7e0212323ad0c81",
+        "date": "2022-04-26 10:36:27 -0400",
+        "subject": "Add missing FUNCTION_TEST*() macros."
+    },
+    {
+        "commit": "7eed9730aa8af91999e542394d05ef53c1cc7e36",
+        "date": "2022-04-26 10:34:10 -0400",
+        "subject": "Fix leak in cipherBlockNew().",
+        "body": "The string used to look up the cipher type was leaked."
+    },
+    {
+        "commit": "6eed4125e6297bc6e80c9c11f839ba65979293ee",
+        "date": "2022-04-26 10:29:48 -0400",
+        "subject": "Improved memory management in the common/exit module.",
+        "body": "Refactor so that error detail is only logged in one place. This reduces calls to exitErrorDetail() and LOG_INTERNAL_FMT().\n\nFix minor leaks in exitErrorDetail() and exitSafe()."
+    },
+    {
+        "commit": "fa6c68cb029e675d9f4b3e4fa48862b6644ecc78",
+        "date": "2022-04-26 10:18:24 -0400",
+        "subject": "Mem allocation cleanup in command/verify module.",
+        "body": "Move the temp mem context out of verifyJobCallback() into verifyBackup() and verifyArchive(). This makes it clearer that verifyJobCallback() allocates no memory and reduces mem usage when both verifyBackup() and verifyArchive() are called.\n\nUpdate verifyErrorMsg() to return zero-terminated strings to save on allocations. The output of this function is used when formatting strings so this is also simpler. Do a similar thing in verifyRender().\n\nAlso fix a minor leak in verifyInfoFile()."
+    },
+    {
+        "commit": "3f7c8bc9230acaf2dfb0a013303559b54a54c26f",
+        "date": "2022-04-26 10:15:47 -0400",
+        "subject": "Fix object allocations in incorrect mem context in execOpen().",
+        "body": "Object variables were begin allocated in the calling context rather than the object context.\n\nThis is not a live bug because Exec objects are currently created and opened in a long-lived context."
+    },
+    {
+        "commit": "4dbe76a5bb6e5aae779b2538ac9ce54782f46b8f",
+        "date": "2022-04-26 07:33:57 -0400",
+        "subject": "Fix comment formatting."
+    },
+    {
+        "commit": "41f9d69edcf671fbda21cb6d87dbca08e48e9976",
+        "date": "2022-04-25 15:38:49 -0400",
+        "subject": "Combine functions in the command/stanza module into one function.",
+        "body": "It is not clear why these were split out, but it probably had something to do with testing before storageList() could return NULL for an empty directory.\n\nAlso remove the tests that depended on a boolean return, which are no longer needed for coverage."
+    },
+    {
+        "commit": "55a828f999f6fc8a975ea5c2ea9710e2109a5c0a",
+        "date": "2022-04-25 15:03:37 -0400",
+        "subject": "Add temporary mem contexts and fix a leak in the command/restore module.",
+        "body": "restoreRecoveryConf() and restoreRecoveryWriteConf() do enough work to deserve their own memory contexts.\n\nrestoreFilePgPath() was leaking a String every time it was called, which could be a lot.\n\nAlso fix a spacing issue."
+    },
+    {
+        "commit": "4e7414d48fb3cca45ca66b3eb853a08b6daf2833",
+        "date": "2022-04-25 14:49:08 -0400",
+        "subject": "Add temporary mem contexts in the command/help module.",
+        "body": "These were not really leaks since memory was being freed by the calling function, but these functions do enough work to deserve their own memory contexts."
+    },
+    {
+        "commit": "fd295f002b720dc1acc5d9523bd442f372394d15",
+        "date": "2022-04-25 14:19:10 -0400",
+        "subject": "Add temporary mem context to removeExpiredBackup().",
+        "body": "This was not really a leak since memory was being freed by the calling function, but this function does enough work to deserve its own memory context.\n\nAlso fixed a doubled semicolon."
+    },
+    {
+        "commit": "9314be36b161da8128cc4149372f41b89087e844",
+        "date": "2022-04-25 14:14:29 -0400",
+        "subject": "Improve result declaration in backupRegExp().",
+        "body": "No need to set this to NULL when the initial value can be used instead."
+    },
+    {
+        "commit": "5b5dbe0e7e4d3b3f412ea869487c3018c7a8d67c",
+        "date": "2022-04-25 13:29:43 -0400",
+        "subject": "Fix memory leaks in archivePushDrop().",
+        "body": "A string was leaked for every file processed.\n\nSince the list can be quite large it also makes sense to reset the context occasionally."
+    },
+    {
+        "commit": "c3b08f71ce03e2b4103f12e1d7c5c05701f02ef3",
+        "date": "2022-04-25 13:26:09 -0400",
+        "subject": "Fix formatting in common/string module."
+    },
+    {
+        "commit": "40ef64f2be60fb947cf68aae2bb7d510ab36c8ec",
+        "date": "2022-04-25 12:59:46 -0400",
+        "subject": "Fix memory leaks in archivePushFile().",
+        "body": "The errorList is only used when throwing an error and the joined list is not needed after the error is thrown, so put both in the temp mem context."
+    },
+    {
+        "commit": "774db650868c86c791f2791d02bee129a7669be5",
+        "date": "2022-04-25 12:55:51 -0400",
+        "subject": "Remove useless context switches in archiveGetFile()/archivePushFile().",
+        "body": "These context switches do nothing since the list is already in the prior context."
+    },
+    {
+        "commit": "582c3dab4cff6883150c9c5de7f7b41d12982da9",
+        "date": "2022-04-25 12:32:33 -0400",
+        "subject": "Add strLstAddSub*() and strLstAddSubZ*() functions.",
+        "body": "These help with readability and remove a cause of leaks."
+    },
+    {
+        "commit": "ff45f463cf4d4521df5fd69b48bd553d862f0dc1",
+        "date": "2022-04-25 11:58:30 -0400",
+        "subject": "Use strLstAddZ() instead of strLstAdd() where possible.",
+        "body": "Using STRDEF() to convert the zero-terminated string to a String has no performance advantage but generates more code."
+    },
+    {
+        "commit": "7900660d3a12573db8a68bc7df46d7552dae54d1",
+        "date": "2022-04-25 11:47:43 -0400",
+        "subject": "Add strLstNewFmt().",
+        "body": "Simplifies adding a formatted string to a list and removes a common cause of leaks."
+    },
+    {
+        "commit": "3475514b61fec52a5bd9e7fa73d38d5be612a9ad",
+        "date": "2022-04-25 10:57:36 -0400",
+        "subject": "Fix memory leak in archiveAsyncErrorClear().",
+        "body": "A string was leaked on each call."
+    },
+    {
+        "commit": "23d645b5e7f1069296f1a51165412049e1dccbdc",
+        "date": "2022-04-25 10:52:13 -0400",
+        "subject": "Fix outdated comment."
+    },
+    {
+        "commit": "699f15dd2b227ad13ba313fa549c32938bd6cf2b",
+        "date": "2022-04-25 09:24:00 -0400",
+        "subject": "Remove THIS_MEM_CONTEXT() macro.",
+        "body": "objMemContext(this) performs the same task and is easier to read.\n\nMost instances of this macro were removed by 6e7be3c0."
+    },
+    {
+        "commit": "6e7be3c0525782cb58e0eb5046f1385e4eb8b1df",
+        "date": "2022-04-25 09:12:25 -0400",
+        "subject": "Add MEM_CONTEXT_OBJ_*() macros.",
+        "body": "These provide a standard way to switch to an object mem context.\n\nUpdate the two different patterns that were used before to the new macros."
+    },
+    {
+        "commit": "45c3f4d53c7e5198d4d49109398326fecd282bec",
+        "date": "2022-04-25 09:06:26 -0400",
+        "subject": "Improve JSON handling.",
+        "body": "Previously read/writing JSON required parsing/render via a variant, which add many more memory allocations and loops.\r\n\r\nInstead allow JSON to be read/written serially to improve performance and simplify the code. This also allows us to get rid of many String and Variant constant which are no longer required.\r\n\r\nThe goal is to be able to read/write very large (e.g. gigabyte manifest) JSON structures, which would not be practical with the current code.\r\n\r\nNote that external JSON (GCS, S3, etc) is still handled using variants. Converting these will require more consideration about key ordering since it cannot be guaranteed as in our own formats."
+    },
+    {
+        "commit": "58f24568f5bf578e8ad0f5e4866bf2ede8b45d46",
+        "date": "2022-04-25 08:25:48 -0400",
+        "subject": "Add ASSERT_PARAM() macro.",
+        "body": "Allows adding a parameter to a function that is used only for assertions."
+    },
+    {
+        "commit": "1e2b545ba47d66760cf4c6df65c6325bb6404bb2",
+        "date": "2022-04-24 19:19:46 -0400",
+        "subject": "Require type for FUNCTION_TEST_RETURN*() macros.",
+        "body": "This allows code to run after the return type has been generated in the case where it is an expression.\n\nNo new functionality here yet, but this will be used by a future commit that audits memory usage."
+    },
+    {
+        "commit": "91bbe810592c8b57079230d0bf15720d74c705fa",
+        "date": "2022-04-22 09:14:12 -0400",
+        "subject": "Add SIZE_OF_STRUCT_MEMBER() macro.",
+        "body": "Gets the size of a struct member, which requires a bit of additional syntax."
+    },
+    {
+        "commit": "a2eee156b5a85237d9b9ba7896b237ec4f216da0",
+        "date": "2022-04-21 18:23:17 -0400",
+        "subject": "Fix instances where STRDEF() was used instead of STR().",
+        "body": "In practice this didn't cause problems because the string buffer was still valid and strSize() was not being called."
+    },
+    {
+        "commit": "627921c72ab53a88519902c17450cedfa9dbda7a",
+        "date": "2022-04-21 08:35:31 -0400",
+        "subject": "Add STR_SIZE() macro.",
+        "body": "This allows efficiently creating strings where the length is already known and simplifies the STR() and STRDEF() macros."
+    },
+    {
+        "commit": "1ce613a24d4de1c219d2b7d844cf7e88649887fc",
+        "date": "2022-04-21 08:34:03 -0400",
+        "subject": "Use STRDEF() instead of STR() in command/help module.",
+        "body": "STRDEF() is more efficient since this is a constant string."
+    },
+    {
+        "commit": "4daddebaca6b4b1861778bc2b09d265302c05ed1",
+        "date": "2022-04-21 08:07:22 -0400",
+        "subject": "Add ASSERT_DECLARE() macro.",
+        "body": "Declare variables that will be used by later assertions with the goal of making them easier to read and maintain.\n\nThis is particularly useful for variables that are used more than once and require a lot of syntax to extract."
+    },
+    {
+        "commit": "e18b70bf555de24ba38d7c51f9d0ffbe8a02a355",
+        "date": "2022-04-21 07:45:59 -0400",
+        "subject": "Allow *RETURN*() macros to accept struct initializers.",
+        "body": "Struct initializers look like multiple parameters in a macro so use __VA_ARGS__ to reconstruct them."
+    },
+    {
+        "commit": "ea4d73f375558c237fce696f20c19d1efef00bc1",
+        "date": "2022-04-20 19:56:26 -0400",
+        "subject": "Fix ordering of backup-lsn-stop field in command/restore unit test.",
+        "body": "All fields should be alphabetical. Currently the read code is tolerant of this, but that will not always be the case.\n\nFields are always written alphabetically so this is just a test issue introduced by d8d41321."
+    },
+    {
+        "commit": "cb7a5f1ef3bbfe0a26e3cd718d9635280f2e9b83",
+        "date": "2022-04-20 19:49:23 -0400",
+        "subject": "Add JSON error when value does not parse in Ini object.",
+        "body": "If the JSON value fails to parse it is helpful to have the error message, at least for debugging."
+    },
+    {
+        "commit": "da6b4abc58674902196fe549586c16094dc37e38",
+        "date": "2022-04-20 19:41:28 -0400",
+        "subject": "Handle missing archive start/stop in info/info backup unit test.",
+        "body": "This is not a very realistic case since archive start/stop are always written, but it appears in many other unit tests so it should also be tested here."
+    },
+    {
+        "commit": "d897bf1ec2c74e46c56c31c6ba2ca910394ce0e5",
+        "date": "2022-04-20 19:36:33 -0400",
+        "subject": "Add size to info/manifest unit test.",
+        "body": "This prevents the check from being order dependent."
+    },
+    {
+        "commit": "d6f466be2bd1b68d45f109f0332783b784838ab7",
+        "date": "2022-04-20 19:31:35 -0400",
+        "subject": "Remove unnecessary mem contexts in the Manifest object.",
+        "body": "The correct context is set by the various *Add() functions so these are not needed and cause leaks, though the leaks will only be noticeable in cases where there are a lot of page checksum errors."
+    },
+    {
+        "commit": "da9f2618528e9bd4b5538ff81cc359172a36af7b",
+        "date": "2022-04-20 14:09:49 -0400",
+        "subject": "Add FUNCTION_TEST_NO_RETURN() macro.",
+        "body": "This is required for the (currently) single place where a function with test FUNCTION_TEST*() macros does not return.\n\nThis allows return to be added to the FUNCTION_TEST_RETURN_VOID() macro, which means return no longer needs to be added when returning from a function early."
+    },
+    {
+        "commit": "c304fafd456f67d11b0e9e7a8f399732716cf216",
+        "date": "2022-04-20 08:36:53 -0400",
+        "subject": "Refactor PgClient to return results in Pack format.",
+        "body": "Packs support stronger typing than JSON and are more efficient. For the small result sets that we deal with efficiency is probably not very important, but this removes another place where we are using JSON instead of Pack.\r\n\r\nPush checking for result struct (e.g. single row) down into PgClient since it has easy access to this information rather than needing to parse the result set to find out.\r\n\r\nRefactor all code downstream that depends on PgClient results."
+    },
+    {
+        "commit": "e699402f99f70819bd922eb6150fbe1b837eca0d",
+        "date": "2022-04-19 18:07:11 -0400",
+        "subject": "Remove extra linefeed."
+    },
+    {
+        "commit": "b7fccaf9949f15ea1a00abd434e765c9c4d3e2f1",
+        "date": "2022-04-18 14:08:53 -0400",
+        "subject": "Refactor remote storage protocol to use Packs instead of JSON.",
+        "body": "Packs are more efficient and strongly typed so they make more sense for the protocol."
+    },
+    {
+        "commit": "cfd6c7ceb490d8c2766fd91a4719bdf9f6e4f110",
+        "date": "2022-04-18 12:14:22 -0400",
+        "subject": "Use specific integer types in postgres/client and db unit tests.",
+        "body": "This will work better once we are able to transmit the results with stronger typing.\n\nAlso remove int2 which was not being used."
+    },
+    {
+        "commit": "9751ddc4f80928de4b42bc56c54731afa4ff16aa",
+        "date": "2022-04-18 11:53:31 -0400",
+        "subject": "Update postgres/client unit test to conform to current patterns.",
+        "body": "This includes adding test titles and using constants for query and error values that repeat."
+    },
+    {
+        "commit": "bc5f6fac34fefd0595eee87f250dc9abef06d191",
+        "date": "2022-04-18 10:47:44 -0400",
+        "subject": "Update postgres/client unit test for changes in libpq.",
+        "body": "There have been some behavioral changes in libpq which require changes to the test.\n\nAlso update the instructions since it is now a bit easier to run against a real cluster."
+    },
+    {
+        "commit": "214ee9eb0e8398b1871a53441f4b926eb194d765",
+        "date": "2022-04-17 09:41:22 -0400",
+        "subject": "Fix URL for apt.p.o archives.",
+        "body": "A new archive repo was created in March of 2020: https://www.df7cb.de/blog/2020/apt-archive.postgresql.org.html"
+    },
+    {
+        "commit": "d103dd6238dffb5ddc3d5366c674278a67426f25",
+        "date": "2022-04-14 20:34:42 -0400",
+        "subject": "Return stats as a JSON string rather than a KeyValue object.",
+        "body": "There is no need to process the stats so a KeyValue is overkill.\n\nAlso remove the performance tests that check the stat totals since this is covered in the unit tests."
+    },
+    {
+        "commit": "e1ce731f8ae5d1aea009bc369fd157cddb44e059",
+        "date": "2022-04-14 19:37:03 -0400",
+        "subject": "Add test for protocol greeting when a field is missing.",
+        "body": "A missing field and a NULL field are not exactly the same so it seems best to test both.\n\nBecause of the way KeyValue objects work the error is the same, but that will not always be true."
+    },
+    {
+        "commit": "8a29d56f3cbf37166f3722ac7ffe18841e9e57f3",
+        "date": "2022-04-14 19:18:00 -0400",
+        "subject": "Update comment in pack module to cover a more common use case.",
+        "body": "The KeyValue object is actively being removed so this is no longer the best example.\n\nInstead use an example that should outlive the KeyValue object."
+    },
+    {
+        "commit": "aeecd07ad87fafb34087f0df9d7c7413f749194c",
+        "date": "2022-04-14 18:29:54 -0400",
+        "subject": "Fix reported error line number when ini key length is zero.",
+        "body": "The line number was one less than it should have been, which could cause some confusion.\n\nSince this only affected ini files with JSON values, which are always written programmatically, there is almost zero chance this has ever been a problem in the field."
+    },
+    {
+        "commit": "47f8e11889ab8c05e1e548c07e6a338b69745c86",
+        "date": "2022-04-14 08:13:39 -0400",
+        "subject": "Update FreeBSD and MacOS images for Cirrus CI.",
+        "body": "This fixes fe1ac210. Apparently FreeBSD 12.2 went EOL and the image was immediately broken.\n\nAlso add FreeBSD 13.0 and update MacOS to Monterey."
+    },
+    {
+        "commit": "bcbac8a067e84a48e0849c5336f21044fec89df5",
+        "date": "2022-04-11 17:54:18 -0400",
+        "subject": "Add static keywords.",
+        "body": "This is more efficient than pushing these variables onto the stack."
+    },
+    {
+        "commit": "fa40bcdc5cf9e6fc6f46236df258d3fa536ccdc7",
+        "date": "2022-04-11 14:08:16 -0400",
+        "subject": "Throw error when unable to read lock process.",
+        "body": "Previously the process id was skipped if it did not exist. Instead, throw an error and handle the errors in downstream code.\r\n\r\nThis was probably ignored at some point to provide backward-compatibility, but that is no longer required, if it ever was."
+    },
+    {
+        "commit": "fe1ac210bba9439d9a4baa4adbadd1413c61e2f5",
+        "date": "2022-04-11 13:17:54 -0400",
+        "subject": "Disable FreeBSD builds on Cirrus CI.",
+        "body": "This build has started breaking with the following error:\n\ncd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup\n2022-04-11 17:11:53.034 P00   INFO: test begin on amd64 - log level info\n2022-04-11 17:11:53.107 P00   INFO: configure build\nld-elf.so.1: /usr/local/lib/perl5/5.32/mach/CORE/libperl.so.5.32: Undefined symbol \"strerror_l@FBSD_1.6\"\n\nDisable the build to unstick the pipeline until this can be fixed."
+    },
+    {
+        "commit": "15021a0e976c1a8eadebf642dfff293df0fed54a",
+        "date": "2022-04-09 18:29:57 -0400",
+        "subject": "Fix whitespace."
+    },
+    {
+        "commit": "79b204166394295e40e7ceddc359368c5770db26",
+        "date": "2022-04-08 15:55:41 -0400",
+        "subject": "Add lockRead*() functions for reading locks from another process.",
+        "body": "Sometimes we need to read a lock from another process. This was done two different ways and in the case of cmdStop() was definitely hacky.\r\n\r\nCentralize the logic to make it easier to read the locks for another process. This will also make it easier to add new lock data."
+    },
+    {
+        "commit": "aad7171940afdb221a03825bee6eb2f1827289f1",
+        "date": "2022-04-08 15:00:20 -0400",
+        "subject": "Suppress existing WAL warning when archive-mode-check is disabled.",
+        "body": "When archive-mode-check is disabled and archive-push is running from multiple hosts, it is very likely that the file will already exist with the same checksum, so disable the warning.\r\n\r\nHowever, if the checksums do not match, an error will still be thrown."
+    },
+    {
+        "commit": "4f543a4d67e0c18c8eccdd864a32003d45df7426",
+        "date": "2022-04-08 11:07:26 -0400",
+        "subject": "Handle NULL path in TEST_STORAGE_LIST when remove is specified.",
+        "body": "Using the path variable directly resulted in a path with (null) in it, which caused the remove to fail.\n\nThe pathFull variable already exists for this purpose so use it."
+    },
+    {
+        "commit": "571dceefec5c64da2b2d79dd7e471fe0262b916a",
+        "date": "2022-04-07 19:00:15 -0400",
+        "subject": "Add LENGTH_OF() macro.",
+        "body": "Determining the length of arrays that could be calculated at compile time was a bit piecemeal, with special macros used sometimes and with the math done directly other times.\n\nThis macro makes the task easier, uses less space, and automatically adjusts when the type changes."
+    },
+    {
+        "commit": "8be11d32e43bc889c4889b28f88fe20a0c4cfd60",
+        "date": "2022-04-07 11:44:45 -0400",
+        "subject": "Replace strCatFmt() with strCat()/strCatZ() where appropriate.",
+        "body": "Most of these looked like copy/paste from a prior required strCatFmt() call.\n\nThere is no issue here since strCatFmt() works the same in these cases, but using strCat()/strCatZ() is more efficient."
+    },
+    {
+        "commit": "cff147a7d257e270df8fee184fdc3684347be330",
+        "date": "2022-04-06 14:45:51 -0400",
+        "subject": "Add default for boolean options with unresolved dependencies.",
+        "body": "If a boolean option had an unresolved dependency then the value would be NULL, which meant the dependency would need to be checked in the code to avoid an error. For example, cfgOptionBool(cfgOptOnline) needed to be checked before it was safe to call cfgOptionBool(cfgOptArchiveCheck).\r\n\r\nAllow a default for boolean options when they are unresolved to simplify the code. This makes using the options easier and less prone to error. Not all boolean options get a dependency default in this commit, but more may be added in the future."
+    },
+    {
+        "commit": "acc9f3b72a481f64f5362d862959f300eb2aa63b",
+        "date": "2022-04-06 10:04:08 -0400",
+        "subject": "Move cfgParseOptionalFilterDepend() and add comment block."
+    },
+    {
+        "commit": "5dba0d6e9b9129c3cb7f3a4bc46da57544f36e73",
+        "date": "2022-04-05 18:42:19 -0400",
+        "subject": "Set option-archive-copy flag in backup.manifest to false when offline.",
+        "body": "In offline mode the pg_wal directory is copied, but that is not the same as archive-copy, which copies the exact set of WAL required from the archive.\n\nThis flag is purely for informational purposes so there is no live bug here, but the prior behavior was certainly misleading."
+    },
+    {
+        "commit": "54b4187527287bf3dd8ae158329f0feb44eebed8",
+        "date": "2022-04-05 13:14:42 -0400",
+        "subject": "Show Docker output when building containers if --log-level=detail.",
+        "body": "This helps with debugging and monitoring container builds."
+    },
+    {
+        "commit": "d8d4132118edd7f93a5b221478c85c2d213c39dd",
+        "date": "2022-04-05 11:59:12 -0400",
+        "subject": "Auto-select backup for restore command --type=lsn.",
+        "body": "For PITR with --type=lsn, attempt to auto-select the appropriate backup set based on the --target LSN provided. Pick the most recent backup where backup-lsn-stop is less than or equal to the provided LSN."
+    },
+    {
+        "commit": "08d9e269c6f03e7797584e90c53eb0743b787f60",
+        "date": "2022-04-05 09:14:56 -0400",
+        "subject": "Refactor target type checking for clarity in restore module.",
+        "body": "This avoids using targetTime != 0 as an indicator that a time target was selected."
+    },
+    {
+        "commit": "f5fdab2989140630a62a4ef0d4c7fc35d789f967",
+        "date": "2022-03-31 17:09:50 +0200",
+        "subject": "Fix typo in db-timeout help."
+    },
+    {
+        "commit": "c222ce1a5f6f813188b7e87a3838d6dce656e0ff",
+        "date": "2022-03-25 08:52:41 -0600",
+        "subject": "Fix tls-server-auth example and add clarifications."
+    },
+    {
+        "commit": "d4954fcbf49790475d26c90e951ac76660cef1e9",
+        "date": "2022-03-25 07:52:16 -0600",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "f60ec5055a633308422797902e9487085c862850",
+        "date": "2022-03-24 18:43:43 -0600",
+        "subject": "Cleanup output to stderr in unit tests.",
+        "body": "The unit tests were ignoring stderr but nothing being output there was important. Now a test will fail if there is anything on stderr.\n\nThis makes it easier to work with -fsanitize, which outputs to stderr."
+    },
+    {
+        "commit": "50ee4b19fec0b6bc888e4ff6603166365ce88233",
+        "date": "2022-03-24 17:55:38 -0600",
+        "subject": "Align checksum page error list in manifest file packs.",
+        "body": "This was left unaligned on purpose to save space but the sanitizer did not like it. Since this field is seldom used go ahead and align it to make the sanitizer happy.\n\nAlso add some macros to make working with alignment easier.\n\nFound with -fsanitize=undefined."
+    },
+    {
+        "commit": "3dd796045160c4d4dbf70ec2800ad483867629f1",
+        "date": "2022-03-24 15:59:41 -0600",
+        "subject": "Fix incorrect reference to stanza-update in the user guide.",
+        "body": "This should be stanza-upgrade. Also fix in the git history cache since the comment was copied from the user guide."
+    },
+    {
+        "commit": "14016a86e7d37030ae934a004cad70888b539b33",
+        "date": "2022-03-24 13:13:35 -0600",
+        "subject": "Check that sha1 checksum is not empty in manifestFileUpdate().",
+        "body": "The manifest test module was setting a blank value here and causing a stack overflow because memcpy() is used instead of strcpy().\n\nThis was really just a test issue but add an assert just in case the same were to happen in production code.\n\nAlso update a bogus checksum in the integration tests to the correct length to avoid running afoul of the assert.\n\nFound with -fsanitize=address."
+    },
+    {
+        "commit": "4e5ac11517022f445f4ec078cc30bd2ce3aa6d15",
+        "date": "2022-03-24 12:56:26 -0600",
+        "subject": "Fix incorrect struct type in list initialization.",
+        "body": "This looks like a copy-paste error.\n\nThe code is only run during development so this is not a live issue.\n\nFound with -fsanitize=address."
+    },
+    {
+        "commit": "75b26319aea4493d8b9624a61795f8128d50c3b5",
+        "date": "2022-03-24 12:26:09 -0600",
+        "subject": "Use strNewZ() in cases where STRDEF() assignment goes out of scope.",
+        "body": "If a variable assigned with STRDEF() is referenced out of scope of the STRDEF() assignment then the value is undefined.\n\nLuckily most of the instances are in tests but there is one in the core code. It is not clear if this is a live bug or not but it certainly needs to be fixed.\n\nFound with -fsanitize=address."
+    },
+    {
+        "commit": "edf6c70baa97ad9c9045c01df4f587880a78cdc6",
+        "date": "2022-03-24 11:00:51 -0600",
+        "subject": "Prevent signed integer overflow in cfgParseSize().",
+        "body": "If the value and multiplier were large enough then the return value could overflow unpredictably.\n\nCheck the value to make sure it will not overflow with the current multiplier.\n\nIt would be better to present an \"out of range\" error to the user rather than \"is not valid\" but it doesn't seem worth the effort since the error is extremely unlikely.\n\nFound with -fsanitize=undefined."
+    },
+    {
+        "commit": "ccbe2a1f70b3ec0a328c7f5d0f5053ef3de1b543",
+        "date": "2022-03-24 09:32:18 -0600",
+        "subject": "Do not pass NULL to memcpy() in Buffer/String objects.",
+        "body": "glibc and others seem tolerant of this but the behavior is undefined.\n\nFound with -fsanitize=undefined."
+    },
+    {
+        "commit": "98792b1b0cd084ff90343e65b64526dfede396e7",
+        "date": "2022-03-24 09:22:05 -0600",
+        "subject": "Do not pass NULL to bsearch()/qsort() in List object.",
+        "body": "glibc and others seem tolerant of this but the behavior is undefined.\n\nFound with -fsanitize=undefined."
+    },
+    {
+        "commit": "333ef84606cb1597e09a324c81759a2a222e3bf4",
+        "date": "2022-03-23 21:47:56 -0600",
+        "subject": "Use bufUsed() instead of struct member in Buffer object.",
+        "body": "bufUsed() is an inline function so it is just as efficient and should also be easier to read and maintain."
+    },
+    {
+        "commit": "424008d293661dfb1a167cfec2697def48057447",
+        "date": "2022-03-23 10:41:36 -0600",
+        "subject": "Allow files that become zero-length after the backup manifest is built.",
+        "body": "It is possible that a file will be be truncated to zero-length after the backup manifest has been built. We could build logic into backupFile() to handle this case but it is hard to test well because of the race condition so tests would need to written directly against backupFile() and backupJobResult(). It hardly seems worth all that effort for a condition that occurs rarely, if ever.\n\nInstead just remove the manifest check and add tests to restore to make sure it handles bundled zero-length files correctly. Logging will show that the file was bundled so if it happens a lot (which seems very unlikely) then we can think about an alternate implementation."
+    },
+    {
+        "commit": "fe9fd2ff2d778b86c0df159aabe7644f18f6479f",
+        "date": "2022-03-22 09:02:33 -0600",
+        "subject": "Disable repo-hardlink option when repo-bundle option is enabled.",
+        "body": "Hardlinking will not work with bundles because files are not stored individually."
+    },
+    {
+        "commit": "7afaac0a3d0e43e5598d1abf548559dbe6329363",
+        "date": "2022-03-22 08:35:34 -0600",
+        "subject": "Allow repo-hardlink option to be changed after full backup.",
+        "body": "This rule was added because there were not sufficient tests to demonstrate that the repo-hardlink option could be changed in a backup set.\r\n\r\nRemove the restriction and add/update tests to show that it works.\r\n\r\nThis is necessary now because bundling requires that hardlinking be disabled. Rather than add code complexity, it seems better just to address this limitation."
+    },
+    {
+        "commit": "5ae84d5e474e95dcc00c174aa5111815a5a70ba5",
+        "date": "2022-03-22 07:50:26 -0600",
+        "subject": "Improve path validation for repo-* commands.",
+        "body": "Check for invalid path in repo-* commands. Perform path validation and throw an error when appropriate. Path may not contain '//'. Strip trailing '/' from path. Absolute path must fall under repo path."
+    },
+    {
+        "commit": "21cef09dfd03c313531dc66ba9556164ae2835ab",
+        "date": "2022-03-16 11:02:29 -0600",
+        "subject": "Add AWS IMDSv2 support.",
+        "body": "IMDSv2 provides additional security to prevent instance metadata from being read by an attacker.\r\n\r\nAll AWS instances should provide IMDSv2 but still fail back to IMDSv1 if the IMDSv2 token request fails. This is in case there are any services outside AWS that are emulating IMDSv1 but have not implemented IMDSv2."
+    },
+    {
+        "commit": "2c96327e654ab634ee4077a39d6d20a7eae1065f",
+        "date": "2022-03-15 17:55:48 -0600",
+        "subject": "Remove extraneous double spaces in code and comments."
+    },
+    {
+        "commit": "3f66f42ef9605a83c356e4c6eb3ef47bcb12c30d",
+        "date": "2022-03-14 17:49:52 -0600",
+        "subject": "Rename bundle-* options to repo-bundle-*.",
+        "body": "It seems best for these to be repo options so they can be configured per repo, rather than globally.\r\n\r\nAll clarify usage for repo-bundle-size and repo-bundle-limit."
+    },
+    {
+        "commit": "7c9208ba856a71833dc7d8f1cf8cb2b4bb4b7414",
+        "date": "2022-03-11 10:10:02 -0600",
+        "subject": "Improve error message for invalid repo-azure-key.",
+        "body": "Check that repo-azure-key is valid base64 when repo-azure-key-type = shared."
+    },
+    {
+        "commit": "0054677147121967889ead7feab0959fb19e39a6",
+        "date": "2022-03-09 15:34:15 -0600",
+        "subject": "Add bundle logging to backup command.",
+        "body": "This was added to the restore command so add it to the backup command as well."
+    },
+    {
+        "commit": "dca6da86bfe84a0cda004df1140d125db1630c90",
+        "date": "2022-03-09 15:03:28 -0600",
+        "subject": "Optimize restore command for file bundling.",
+        "body": "Since files are stored sequentially in a bundle, it is often possible to restore multiple files with a single read. Previously, each restored file required a separate read. Reducing the number of reads is particularly beneficial for object stores, but performance should benefit on any file system.\r\n\r\nCurrently if there is a gap then a new read is required. In the future we might set a limit for how large a gap we'll skip without starting a new read."
+    },
+    {
+        "commit": "f7ab002aa74dd2ca277123f7500018ae68a04c74",
+        "date": "2022-03-08 12:18:23 -0600",
+        "subject": "Improve stop command to honor stanza option.",
+        "body": "Improve the stop command, when force and stanza options are specified, to terminate only processes holding lock files for the given stanza. Prior to these changes, termination of all processes holding lock files regardless of stanza occurred."
+    },
+    {
+        "commit": "514137040e60e8fff0e7f42f43b493113abae5ff",
+        "date": "2022-03-08 08:23:31 -0600",
+        "subject": "Add limit parameter to ioCopyP().",
+        "body": "Allows the number of bytes copied to be limited."
+    },
+    {
+        "commit": "166039c0da1875581a08d41ab8a44adf95fa6db1",
+        "date": "2022-03-08 08:09:58 -0600",
+        "subject": "Fix example for repo-gcs-key-type option in configuration reference.",
+        "body": "This looks like a copy-paste error from another option."
+    },
+    {
+        "commit": "91b718bd4f89157c7401e3904bb171387b2e8a3e",
+        "date": "2022-03-06 14:58:43 -0600",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "330e19900ee3415d920680cf6e6856bf5e8e9a69",
+        "date": "2022-03-06 13:01:24 -0600",
+        "subject": "Increase precision of percent complete logging for backup and restore.",
+        "body": "For very large backups only getting an update per percent may not be often enough.\r\n\r\nAdd hundredths to the percent complete logging to provide more timely information."
+    },
+    {
+        "commit": "be731f825432c738571f4c055f1b9d42d3fa18cf",
+        "date": "2022-03-06 12:03:57 -0600",
+        "subject": "Fix incorrect comment.",
+        "body": "This appears to have been blindly copied from the archive-get command."
+    },
+    {
+        "commit": "8f23b46b4be9a0ce55e0c2d13be0edfd5bdc5349",
+        "date": "2022-03-06 11:57:20 -0600",
+        "subject": "Replace percentage and size with a constant in restore test logs.",
+        "body": "Checking percentage and size in every test can cause quite a bit of churn when changes are made.\n\nFollow the example of the backup tests and replace percentage and size after the few tests to reduce churn."
+    },
+    {
+        "commit": "4d2fef1c37d357965f0ffb9af0d7489f3be1371b",
+        "date": "2022-03-06 11:48:22 -0600",
+        "subject": "Remove redundant restoreFile() test and improve coverage.",
+        "body": "These tests were written before the restore command was fully migrated to C so many of them have become redundant.\n\nIn the cases were they still provide coverage, add tests to synthetic restores to replace them. In general, these higher level tests provide better coverage than poking at the restoreFile() function directly."
+    },
+    {
+        "commit": "009d33aa8ebbcd00a85392e1424e8f078952e2f5",
+        "date": "2022-03-06 11:17:01 -0600",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "c242b966e0352505ee8389fcebcfbde48b2a55d4",
+        "date": "2022-03-06 11:14:01 -0600",
+        "subject": "Begin v2.39 development."
+    },
+    {
         "commit": "5249b89a2e94fdbb45461faaf2e1b0304b986ac7",
         "date": "2022-03-06 10:30:59 -0600",
         "subject": "v2.38: Minor Bug Fixes and Improvements"
