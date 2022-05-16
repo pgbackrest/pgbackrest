@@ -1,5 +1,10 @@
 [
     {
+        "commit": "901e829f6dd05fdc15d899bc7f1108883002b1d5",
+        "date": "2022-05-16 08:46:24 -0400",
+        "subject": "v2.39: Verify and File Bundling"
+    },
+    {
         "commit": "19dd015d589ed3efd31a2a238249a150fb3748c1",
         "date": "2022-05-13 09:41:53 -0400",
         "subject": "Fix issues in improved path validation for repo-* commands.",
