@@ -64,6 +64,33 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
     // Is the input done?
     this->done = input == NULL;
 
+/*
+Blocks are compressed and stored separately so they can be accessed randomly during restore.
+A map follows the stored blocks so future backups can work directly from the map.
+
+!!! DATA NEEDED
+
+For the stored blocks:
+    - block no (varint-128)
+    - sha1 (20 bytes)
+    - block data size (varint-128)
+    - block data (compressed if requested)
+
+For map:
+    - zero-based number that references a list of backup labels (varint-128)
+    - bundle id (if exists and if different than current) (varint-128)
+    - offset to block data (might be simpler if we could store the offset to the file somewhere as a base)
+        - maybe just store the file offset the first time a reference/bundle-id is found?
+    - sha1 (20 bytes)
+
+If a file that could shrink/grow is > block size but shrinks before getting copied, probably best to store it normally.
+
+For manifest:
+    - Global flag to indicate block incr
+    - Size of map to separate it from the block data (but map size will be included in repo-size)
+        - This will indicate that a file was stored with block level incr.
+*/
+
     // If still accumulating data in the buffer
     if (!this->done && bufUsed(this->block) < this->blockSize)
     {
@@ -90,38 +117,48 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
     }
 
     // If the block is full
-    if (bufUsed(this->block) == this->blockSize)
+    if (this->done || bufUsed(this->block) == this->blockSize)
     {
         if (bufUsed(this->blockOut) == 0)
         {
-            unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
-            size_t bufferPos = 0;
-
-            // Write the block number
-            cvtUInt64ToVarInt128(this->blockNo, buffer, &bufferPos, sizeof(buffer));
-            bufCatC(this->blockOut, buffer, 0, bufferPos);
-
-            // Write the hash !!!
-            unsigned char hash[HASH_TYPE_SHA1_SIZE] = {0xFF};
-            bufCatC(this->blockOut, hash, 0, HASH_TYPE_SHA1_SIZE);
-
-            // Write compressed size and data
-            MEM_CONTEXT_TEMP_BEGIN()
+            // If the file is smaller than a single block there is no need to store as as block or create a map
+            if (this->done && this->blockNo == 0 && bufUsed(this->block) < this->blockSize)
             {
-                Buffer *const compressed = bufNew(0);
-                IoWrite *const write = ioBufferWriteNew(compressed);
-
-                ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(compressTypeGz, 1));
-                ioWriteOpen(write);
-                ioWrite(write, this->block);
-                ioWriteClose(write);
-
-                bufferPos = 0;
-                cvtUInt64ToVarInt128(bufUsed(compressed), buffer, &bufferPos, sizeof(buffer));
-                bufCatC(this->blockOut, buffer, 0, bufferPos);
-                bufCat(this->blockOut, compressed);
+                // !!! Compress directly to this->blockOut. This will end up looking like it was compressed normally without the
+                // block incr filter.
             }
-            MEM_CONTEXT_TEMP_END();
+            // Else
+            else
+            {
+                unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+                size_t bufferPos = 0;
+
+                // Write the block number
+                cvtUInt64ToVarInt128(this->blockNo, buffer, &bufferPos, sizeof(buffer));
+                bufCatC(this->blockOut, buffer, 0, bufferPos);
+
+                // Write the hash !!!
+                unsigned char hash[HASH_TYPE_SHA1_SIZE] = {0xFF};
+                bufCatC(this->blockOut, hash, 0, HASH_TYPE_SHA1_SIZE);
+
+                // Write compressed size and data
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    Buffer *const compressed = bufNew(0);
+                    IoWrite *const write = ioBufferWriteNew(compressed);
+
+                    ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(compressTypeGz, 1));
+                    ioWriteOpen(write);
+                    ioWrite(write, this->block);
+                    ioWriteClose(write);
+
+                    bufferPos = 0;
+                    cvtUInt64ToVarInt128(bufUsed(compressed), buffer, &bufferPos, sizeof(buffer));
+                    bufCatC(this->blockOut, buffer, 0, bufferPos);
+                    bufCat(this->blockOut, compressed);
+                }
+                MEM_CONTEXT_TEMP_END();
+            }
         }
     }
 
