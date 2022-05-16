@@ -36,7 +36,7 @@ main(int argListSize, const char *argList[])
 
     // Render config
     const Storage *const storageRepo = storagePosixNewP(pathRepo, .write = true);
-    bldCfgRender(storageRepo, bldCfgParse(storageRepo));
+    bldCfgRender(storageRepo, bldCfgParse(storageRepo), true);
 
     return 0;
 }
