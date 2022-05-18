@@ -649,14 +649,11 @@ testRun(void)
                 TEST_RESULT_STR_Z(ioServerName(tlsServer), "localhost", "tls server name");
 
                 // Invalid client cert
-                if (TEST_64BIT())                                   // Older 32-bit gives inconsistent results
-                {
-                    socketSession = ioServerAccept(socketServer, NULL);
+                socketSession = ioServerAccept(socketServer, NULL);
 
-                    TEST_ERROR(
-                        ioServerAccept(tlsServer, socketSession), ServiceError,
-                        "TLS error [1:337100934] certificate verify failed");
-                }
+                TEST_ERROR(
+                    ioServerAccept(tlsServer, socketSession), ServiceError,
+                    "TLS error [1:337100934] certificate verify failed");
 
                 // Valid client cert
                 socketSession = ioServerAccept(socketServer, NULL);
@@ -689,25 +686,22 @@ testRun(void)
             {
                 IoSession *clientSession = NULL;
 
-                if (TEST_64BIT())                                   // Older 32-bit gives inconsistent results
-                {
-                    TEST_TITLE("client cert is invalid (signed by another CA)");
+                TEST_TITLE("client cert is invalid (signed by another CA)");
 
-                    TEST_ASSIGN(
-                        clientSession,
-                        ioClientOpen(
-                            tlsClientNewP(
-                                sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000,
-                                true, .certFile = STRDEF(TEST_PATH "/client-bad-ca.crt"),
-                                .keyFile = STRDEF(HRN_SERVER_CLIENT_KEY))),
-                        "client open");
+                TEST_ASSIGN(
+                    clientSession,
+                    ioClientOpen(
+                        tlsClientNewP(
+                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000,
+                            true, .certFile = STRDEF(TEST_PATH "/client-bad-ca.crt"),
+                            .keyFile = STRDEF(HRN_SERVER_CLIENT_KEY))),
+                    "client open");
 
-                    TEST_ERROR(
-                        ioRead(ioSessionIoReadP(clientSession), bufNew(1)), ServiceError,
-                        "TLS error [1:336151576] tlsv1 alert unknown ca");
+                TEST_ERROR(
+                    ioRead(ioSessionIoReadP(clientSession), bufNew(1)), ServiceError,
+                    "TLS error [1:336151576] tlsv1 alert unknown ca");
 
-                    TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
-                }
+                TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("client cert is valid");

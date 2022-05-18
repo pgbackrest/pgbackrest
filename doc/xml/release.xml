@@ -14,7 +14,10 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.39dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.40dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2022-05-16" version="2.39" title="Verify and File Bundling">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -188,7 +191,12 @@
                     </release-item>
 
                     <release-item>
-                        <github-pull-request id="1697"/>
+                        <commit subject="Improve path validation for repo-* commands.">
+                            <github-pull-request id="1697"/>
+                        </commit>
+                        <commit subject="Fix issues in improved path validation for repo-* commands.">
+                            <github-pull-request id="1751"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="reid.thompson"/>
@@ -364,6 +372,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
                         </release-item-contributor-list>
 
                         <p>Fix example for <br-option>repo-gcs-key-type</br-option> option in configuration reference.</p>
@@ -372,6 +381,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
                         </release-item-contributor-list>
 
                         <p>Fix <br-option>tls-server-auth</br-option> example and add clarifications.</p>

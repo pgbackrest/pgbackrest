@@ -32,21 +32,34 @@ repoPathIsValid(const String *path)
         // Validate absolute paths
         if (strBeginsWith(path, FSLASH_STR))
         {
-            // Check that the file path begins with the repo path
-            if (!strBeginsWith(path, cfgOptionStr(cfgOptRepoPath)))
+            // If the path is exactly equal to the repo path then the relative path is empty
+            if (strEq(path, cfgOptionStr(cfgOptRepoPath)))
             {
-                THROW_FMT(
-                    ParamInvalidError, "absolute path '%s' is not in base path '%s'", strZ(path),
-                    strZ(cfgOptionDisplay(cfgOptRepoPath)));
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = strNew();
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
+            // Else check that the file path begins with the repo path
+            else
+            {
+                if (!strEq(cfgOptionStr(cfgOptRepoPath), FSLASH_STR) &&
+                    !strBeginsWith(path, strNewFmt("%s/", strZ(cfgOptionStr(cfgOptRepoPath)))))
+                {
+                    THROW_FMT(
+                        ParamInvalidError, "absolute path '%s' is not in base path '%s'", strZ(path),
+                        strZ(cfgOptionDisplay(cfgOptRepoPath)));
+                }
 
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                // Get the relative part of the file
-                result = strSub(
-                    path, strEq(cfgOptionStr(cfgOptRepoPath), FSLASH_STR) ? 1 : strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    // Get the relative part of the path/file
+                    result = strSub(
+                        path, strEq(cfgOptionStr(cfgOptRepoPath), FSLASH_STR) ? 1 : strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
+                }
+                MEM_CONTEXT_PRIOR_END();
             }
-            MEM_CONTEXT_PRIOR_END();
         }
         else
         {

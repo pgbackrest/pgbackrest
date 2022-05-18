@@ -18,6 +18,28 @@ testRun(void)
     if (testBegin("bldCfgParse() and bldCfgRender()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("render with label");
+
+        TEST_RESULT_STR_Z(
+            bldCfgRenderLabel(STRDEF("line"), true, STRDEF("label")),
+            "line                                                                                                                  "
+                "      // label",
+            "render");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("render without label due to long line");
+
+        TEST_RESULT_STR_Z(
+            bldCfgRenderLabel(
+                STRDEF(
+                    "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+                        "12345678901234567890"),
+                true, STRDEF("label")),
+            "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678"
+                "901234567890",
+            "render");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command parse errors");
 
         HRN_STORAGE_PUT_Z(
@@ -414,7 +436,7 @@ testRun(void)
             "    deprecate:\n"
             "      pg?-host: {}\n");
 
-        TEST_RESULT_VOID(bldCfgRender(storageTest, bldCfgParse(storageTest)), "parse and render");
+        TEST_RESULT_VOID(bldCfgRender(storageTest, bldCfgParse(storageTest), false), "parse and render");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bldCfgRenderVar128Size()");
@@ -650,7 +672,6 @@ testRun(void)
             "\n"
             "static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =\n"
             "{\n"
-            COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_COMMAND\n"
             "    (\n"
             "        PARSE_RULE_COMMAND_NAME(\"archive-get\"),\n"
@@ -666,7 +687,6 @@ testRun(void)
             "            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_COMMAND\n"
             "    (\n"
@@ -684,7 +704,6 @@ testRun(void)
             "            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleRemote)\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_COMMAND\n"
             "    (\n"
@@ -698,7 +717,6 @@ testRun(void)
             "            PARSE_RULE_COMMAND_ROLE(cfgCmdRoleMain)\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_COMMAND\n"
             "    (\n"
@@ -719,12 +737,10 @@ testRun(void)
             COMMENT_BLOCK_END "\n"
             "static const ParseRuleOptionGroup parseRuleOptionGroup[CFG_OPTION_GROUP_TOTAL] =\n"
             "{\n"
-            COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION_GROUP\n"
             "    (\n"
             "        PARSE_RULE_OPTION_GROUP_NAME(\"pg\"),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION_GROUP\n"
             "    (\n"
@@ -739,7 +755,6 @@ testRun(void)
             "\n"
             "static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =\n"
             "{\n"
-            COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
             "        PARSE_RULE_OPTION_NAME(\"backup-standby\"),\n"
@@ -772,7 +787,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -819,7 +833,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -883,7 +896,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -955,7 +967,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -986,7 +997,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1025,7 +1035,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1082,7 +1091,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1109,7 +1117,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1162,7 +1169,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1242,7 +1248,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1280,7 +1285,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1331,7 +1335,6 @@ testRun(void)
             "            ),\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1368,7 +1371,6 @@ testRun(void)
             "            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1401,7 +1403,6 @@ testRun(void)
             "            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)\n"
             "        ),\n"
             "    ),\n"
-            "\n"
             COMMENT_SEPARATOR "\n"
             "    PARSE_RULE_OPTION\n"
             "    (\n"
@@ -1500,50 +1501,43 @@ testRun(void)
             "\n"
             "static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPRECATE_TOTAL] =\n"
             "{\n"
-            "    // backup-standby deprecation\n"
             "    {\n"
             "        .name = \"backup-standby-old\",\n"
             "        .id = cfgOptBackupStandby,\n"
             "        .unindexed = true,\n"
             "    },\n"
-            "\n"
-            "    // compress-type deprecation\n"
+            COMMENT_SEPARATOR "\n"
             "    {\n"
             "        .name = \"compress\",\n"
             "        .id = cfgOptCompressType,\n"
             "        .unindexed = true,\n"
             "    },\n"
-            "\n"
-            "    // pg-path deprecation\n"
+            COMMENT_SEPARATOR "\n"
             "    {\n"
             "        .name = \"db-path\",\n"
             "        .id = cfgOptPgPath,\n"
             "        .indexed = true,\n"
             "        .unindexed = true,\n"
             "    },\n"
-            "\n"
-            "    // online deprecation\n"
+            COMMENT_SEPARATOR "\n"
             "    {\n"
             "        .name = \"online-old\",\n"
             "        .id = cfgOptOnline,\n"
             "        .unindexed = true,\n"
             "    },\n"
-            "\n"
-            "    // pg-host deprecation\n"
+            COMMENT_SEPARATOR "\n"
             "    {\n"
             "        .name = \"pg-host\",\n"
             "        .id = cfgOptPgHost,\n"
             "        .indexed = true,\n"
             "    },\n"
-            "\n"
-            "    // pg-path deprecation\n"
+            COMMENT_SEPARATOR "\n"
             "    {\n"
             "        .name = \"pg-path\",\n"
             "        .id = cfgOptPgPath,\n"
             "        .unindexed = true,\n"
             "    },\n"
-            "\n"
-            "    // pg-path deprecation\n"
+            COMMENT_SEPARATOR "\n"
             "    {\n"
             "        .name = \"pg-path-indexed\",\n"
             "        .id = cfgOptPgPath,\n"

@@ -982,7 +982,9 @@ testRun(void)
         TEST_RESULT_BOOL(varBool(manifest->pub.data.backupOptionDelta), true, "check delta");
         TEST_RESULT_UINT(manifest->pub.data.backupOptionCompressType, compressTypeGz, "check compress");
 
-        TEST_RESULT_LOG("P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
+        TEST_RESULT_LOG(
+            "P00   WARN: file 'PG_VERSION' has timestamp (1482182860) in the future (relative to copy start 1482182859), enabling"
+                " delta checksum");
     }
 
     // *****************************************************************************************************************************
@@ -1197,7 +1199,9 @@ testRun(void)
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
-        TEST_RESULT_LOG("P00   WARN: file 'FILE1' has timestamp earlier than prior backup, enabling delta checksum");
+        TEST_RESULT_LOG(
+            "P00   WARN: file 'FILE1' has timestamp earlier than prior backup (prior 1482182860, current 1482182859), enabling"
+                " delta checksum");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -1249,7 +1253,9 @@ testRun(void)
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")),
             "incremental manifest");
 
-        TEST_RESULT_LOG("P00   WARN: file 'FILE2' has same timestamp as prior but different size, enabling delta checksum");
+        TEST_RESULT_LOG(
+            "P00   WARN: file 'FILE2' has same timestamp (1482182860) as prior but different size (prior 4, current 6), enabling"
+                " delta checksum");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
