@@ -15,6 +15,20 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.40dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1749"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve memory usage of mem contexts.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
         </release>
 
         <release date="2022-05-16" version="2.39" title="Verify and File Bundling">
