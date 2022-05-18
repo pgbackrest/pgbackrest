@@ -333,7 +333,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
     StorageWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteGcs)
+    OBJ_NEW_BEGIN(StorageWriteGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageWriteGcs *driver = OBJ_NEW_ALLOC();
 

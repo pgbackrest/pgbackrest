@@ -121,7 +121,7 @@ infoNew(const String *cipherPass)
 
     Info *this = NULL;
 
-    OBJ_NEW_BEGIN(Info)
+    OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoNewInternal();
 
@@ -256,7 +256,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
 
     Info *this = NULL;
 
-    OBJ_NEW_BEGIN(Info)
+    OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoNewInternal();
 

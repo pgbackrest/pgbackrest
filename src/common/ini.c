@@ -29,7 +29,7 @@ iniNew(void)
 
     Ini *this = NULL;
 
-    OBJ_NEW_BEGIN(Ini)
+    OBJ_NEW_BEGIN(Ini, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = OBJ_NEW_ALLOC();
 

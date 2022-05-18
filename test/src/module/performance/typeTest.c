@@ -263,7 +263,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");
 
-        MemContext *testContext = memContextNewP("test");
+        MemContext *testContext = memContextNewP("test", .childQty = MEM_CONTEXT_QTY_MAX);
         memContextKeep();
         Manifest *manifest = NULL;
         TimeMSec timeBegin = timeMSec();
@@ -276,7 +276,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
+        // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
         TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
 
@@ -295,7 +295,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("load manifest");
 
-        testContext = memContextNewP("test");
+        testContext = memContextNewP("test", .childQty = MEM_CONTEXT_QTY_MAX);
         memContextKeep();
         timeBegin = timeMSec();
 
@@ -306,7 +306,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         TEST_LOG_FMT("completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
+        // TEST_LOG_FMT("memory used %zu", memContextSize(testContext));
 
         TEST_RESULT_UINT(manifestFileTotal(manifest), driver.fileTotal, "   check file total");
 

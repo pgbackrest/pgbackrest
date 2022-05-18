@@ -185,7 +185,7 @@ cryptoHashNew(const String *type)
     // Allocate memory to hold process state
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(CryptoHash)
+    OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         CryptoHash *driver = OBJ_NEW_ALLOC();
         *driver = (CryptoHash){0};

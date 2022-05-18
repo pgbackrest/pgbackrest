@@ -1112,7 +1112,7 @@ manifestNewBuild(
 
     Manifest *this = NULL;
 
-    OBJ_NEW_BEGIN(Manifest)
+    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
@@ -2050,14 +2050,14 @@ manifestNewLoad(IoRead *read)
 
     Manifest *this = NULL;
 
-    OBJ_NEW_BEGIN(Manifest)
+    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
 
         // Load the manifest
         ManifestLoadData loadData =
         {
-            .memContext = memContextNewP("load"),
+            .memContext = memContextNewP("load", .childQty = MEM_CONTEXT_QTY_MAX),
             .manifest = this,
         };
 

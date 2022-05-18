@@ -37,51 +37,43 @@ struct Variant
 typedef struct VariantBool
 {
     VariantBoolPub pub;                                             // Publicly accessible variables
-    MemContext *memContext;
 } VariantBool;
 
 typedef struct VariantInt
 {
     VariantIntPub pub;                                              // Publicly accessible variables
-    MemContext *memContext;
 } VariantInt;
 
 typedef struct VariantInt64
 {
     VariantInt64Pub pub;                                            // Publicly accessible variables
-    MemContext *memContext;
 } VariantInt64;
 
 typedef struct VariantKeyValue
 {
     VARIANT_COMMON
     KeyValue *data;                                                 // KeyValue data
-    MemContext *memContext;
 } VariantKeyValue;
 
 typedef struct VariantString
 {
     VariantStringPub pub;                                           // Publicly accessible variables
-    MemContext *memContext;
 } VariantString;
 
 typedef struct VariantUInt
 {
     VariantUIntPub pub;                                             // Publicly accessible variables
-    MemContext *memContext;
 } VariantUInt;
 
 typedef struct VariantUInt64
 {
     VariantUInt64Pub pub;                                           // Publicly accessible variables
-    MemContext *memContext;
 } VariantUInt64;
 
 typedef struct VariantVariantList
 {
     VARIANT_COMMON
     VariantList *data;                                              // VariantList data
-    MemContext *memContext;
 } VariantVariantList;
 
 /***********************************************************************************************************************************
@@ -127,16 +119,7 @@ varDup(const Variant *this)
 
             case varTypeKeyValue:
             {
-                VariantKeyValue *keyValue = memNew(sizeof(VariantKeyValue));
-
-                *keyValue = (VariantKeyValue)
-                {
-                    .memContext = memContextCurrent(),
-                    .type = varTypeKeyValue,
-                    .data = kvDup(varKv(this)),
-                };
-
-                result = (Variant *)keyValue;
+                result = varNewKv(kvDup(varKv(this)));
                 break;
             }
 
@@ -224,18 +207,22 @@ varNewBool(bool data)
         FUNCTION_TEST_PARAM(BOOL, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantBool *this = memNew(sizeof(VariantBool));
+    VariantBool *this = NULL;
 
-    *this = (VariantBool)
+    OBJ_NEW_BEGIN(VariantBool)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (VariantBool)
         {
-            .type = varTypeBool,
-            .data = data,
-        },
-        .memContext = memContextCurrent(),
-    };
+            .pub =
+            {
+                .type = varTypeBool,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
@@ -329,18 +316,22 @@ varNewInt(int data)
         FUNCTION_TEST_PARAM(INT, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantInt *this = memNew(sizeof(VariantInt));
+    VariantInt *this = NULL;
 
-    *this = (VariantInt)
+    OBJ_NEW_BEGIN(VariantInt)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (VariantInt)
         {
-            .type = varTypeInt,
-            .data = data,
-        },
-        .memContext = memContextCurrent(),
-    };
+            .pub =
+            {
+                .type = varTypeInt,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
@@ -441,18 +432,22 @@ varNewInt64(int64_t data)
         FUNCTION_TEST_PARAM(INT64, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantInt64 *this = memNew(sizeof(VariantInt64));
+    VariantInt64 *this = NULL;
 
-    *this = (VariantInt64)
+    OBJ_NEW_BEGIN(VariantInt64)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (VariantInt64)
         {
-            .type = varTypeInt64,
-            .data = data,
-        },
-        .memContext = memContextCurrent(),
-    };
+            .pub =
+            {
+                .type = varTypeInt64,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
@@ -537,18 +532,22 @@ varNewUInt(unsigned int data)
         FUNCTION_TEST_PARAM(UINT, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantUInt *this = memNew(sizeof(VariantUInt));
+    VariantUInt *this = NULL;
 
-    *this = (VariantUInt)
+    OBJ_NEW_BEGIN(VariantUInt)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (VariantUInt)
         {
-            .type = varTypeUInt,
-            .data = data,
-        },
-        .memContext = memContextCurrent(),
-    };
+            .pub =
+            {
+                .type = varTypeUInt,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
@@ -658,18 +657,22 @@ varNewUInt64(uint64_t data)
         FUNCTION_TEST_PARAM(UINT64, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantUInt64 *this = memNew(sizeof(VariantUInt64));
+    VariantUInt64 *this = NULL;
 
-    *this = (VariantUInt64)
+    OBJ_NEW_BEGIN(VariantUInt64)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (VariantUInt64)
         {
-            .type = varTypeUInt64,
-            .data = data,
-        },
-        .memContext = memContextCurrent(),
-    };
+            .pub =
+            {
+                .type = varTypeUInt64,
+                .data = data,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
@@ -766,17 +769,21 @@ varNewKv(KeyValue *data)
         FUNCTION_TEST_PARAM(KEY_VALUE, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantKeyValue *this = memNew(sizeof(VariantKeyValue));
+    VariantKeyValue *this = NULL;
 
-    *this = (VariantKeyValue)
+    OBJ_NEW_BEGIN(VariantKeyValue, .childQty = 1)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeKeyValue,
-    };
+        this = OBJ_NEW_ALLOC();
 
-    if (data != NULL)
-        this->data = kvMove(data, memContextCurrent());
+        *this = (VariantKeyValue)
+        {
+            .type = varTypeKeyValue,
+        };
+
+        if (data != NULL)
+            this->data = kvMove(data, memContextCurrent());
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
@@ -808,35 +815,64 @@ varNewStr(const String *data)
         FUNCTION_TEST_PARAM(STRING, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant
-    VariantString *this = memNew(sizeof(VariantString) + (data != NULL ? sizeof(StringPub) + strSize(data) + 1 : 0));
+    VariantString *this = NULL;
 
-    *this = (VariantString)
+    // If the variant is larger than the extra allowed with a mem context then allocate the buffer separately
+    size_t allocExtra = sizeof(VariantString) + (data != NULL ? sizeof(StringPub) + strSize(data) + 1 : 0);
+
+    if (allocExtra > MEM_CONTEXT_ALLOC_EXTRA_MAX)
     {
-        .pub =
-        {
-            .type = varTypeString,
-        },
-        .memContext = memContextCurrent(),
-    };
+        ASSERT(data != NULL);
 
-    if (data != NULL)
+        OBJ_NEW_BEGIN(VariantString, .childQty = 1)
+        {
+            this = OBJ_NEW_ALLOC();
+
+            *this = (VariantString)
+            {
+                .pub =
+                {
+                    .type = varTypeString,
+                    .data = strDup(data),
+                },
+            };
+        }
+        OBJ_NEW_END();
+
+        FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
+    }
+
+    OBJ_NEW_EXTRA_BEGIN(VariantString, (uint16_t)(allocExtra))
     {
-        // Point the String after the VariantString struct
-        StringPub *const pubData = (StringPub *)(this + 1);
-        this->pub.data = (String *)pubData;
+        this = OBJ_NEW_ALLOC();
 
-        // Assign the string size and buffer (after StringPub struct)
-        *pubData = (StringPub)
+        *this = (VariantString)
         {
-            .size = (unsigned int)strSize(data),
-            .buffer = (char *)(pubData + 1),
+            .pub =
+            {
+                .type = varTypeString,
+            },
         };
 
-        // Assign the string
-        strncpy(pubData->buffer, strZ(data), strSize(data));
-        pubData->buffer[strSize(data)] = '\0';
+        if (data != NULL)
+        {
+            // Point the String after the VariantString struct
+            StringPub *const pubData = (StringPub *)(this + 1);
+            this->pub.data = (String *)pubData;
+
+            // Assign the string size and buffer (after StringPub struct)
+            *pubData = (StringPub)
+            {
+                .size = (unsigned int)strSize(data),
+                .buffer = (char *)(pubData + 1),
+            };
+
+            // Assign the string
+            strncpy(pubData->buffer, strZ(data), strSize(data));
+            pubData->buffer[strSize(data)] = '\0';
+        }
     }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
@@ -942,17 +978,21 @@ varNewVarLst(const VariantList *data)
         FUNCTION_TEST_PARAM(VARIANT_LIST, data);
     FUNCTION_TEST_END();
 
-    // Allocate memory for the variant and set the type and data
-    VariantVariantList *this = memNew(sizeof(VariantVariantList));
+    VariantVariantList *this = NULL;
 
-    *this = (VariantVariantList)
+    OBJ_NEW_BEGIN(VariantVariantList, .childQty = 1)
     {
-        .memContext = memContextCurrent(),
-        .type = varTypeVariantList,
-    };
+        this = OBJ_NEW_ALLOC();
 
-    if (data != NULL)
-        this->data = varLstDup(data);
+        *this = (VariantVariantList)
+        {
+            .type = varTypeVariantList,
+        };
+
+        if (data != NULL)
+            this->data = varLstDup(data);
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
@@ -1013,63 +1053,4 @@ varToLog(const Variant *this)
     }
 
     return result;
-}
-
-/**********************************************************************************************************************************/
-void
-varFree(Variant *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(VARIANT, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        MemContext *memContext = NULL;
-
-        switch (varType(this))
-        {
-            case varTypeBool:
-                memContext = ((VariantBool *)this)->memContext;
-                break;
-
-            case varTypeInt:
-                memContext = ((VariantInt *)this)->memContext;
-                break;
-
-            case varTypeInt64:
-                memContext = ((VariantInt64 *)this)->memContext;
-                break;
-
-            case varTypeKeyValue:
-                memContext = ((VariantKeyValue *)this)->memContext;
-                kvFree(((VariantKeyValue *)this)->data);
-                break;
-
-            case varTypeString:
-                memContext = ((VariantString *)this)->memContext;
-                break;
-
-            case varTypeUInt:
-                memContext = ((VariantUInt *)this)->memContext;
-                break;
-
-            case varTypeUInt64:
-                memContext = ((VariantUInt64 *)this)->memContext;
-                break;
-
-            case varTypeVariantList:
-                memContext = ((VariantVariantList *)this)->memContext;
-                varLstFree(((VariantVariantList *)this)->data);
-                break;
-        }
-
-        MEM_CONTEXT_BEGIN(memContext)
-        {
-            memFree(this);
-        }
-        MEM_CONTEXT_END();
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }

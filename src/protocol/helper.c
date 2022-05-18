@@ -63,7 +63,7 @@ protocolHelperInit(void)
         // Create a mem context to store protocol objects
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN("ProtocolHelper")
+            MEM_CONTEXT_NEW_BEGIN("ProtocolHelper", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
             {
                 protocolHelper.memContext = MEM_CONTEXT_NEW();
             }
