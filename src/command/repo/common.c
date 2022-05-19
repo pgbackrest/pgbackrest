@@ -6,6 +6,7 @@ Common Functions and Definitions for Repo Commands
 #include "command/repo/common.h"
 #include "common/debug.h"
 #include "config/config.h"
+#include "storage/helper.h"
 
 /**********************************************************************************************************************************/
 String *
@@ -32,8 +33,11 @@ repoPathIsValid(const String *path)
         // Validate absolute paths
         if (strBeginsWith(path, FSLASH_STR))
         {
+            // Get the repo path using repo storage in case it is remotely configured
+            const String *const repoPath = storagePathP(storageRepo(), NULL);
+
             // If the path is exactly equal to the repo path then the relative path is empty
-            if (strEq(path, cfgOptionStr(cfgOptRepoPath)))
+            if (strEq(path, repoPath))
             {
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
@@ -44,8 +48,7 @@ repoPathIsValid(const String *path)
             // Else check that the file path begins with the repo path
             else
             {
-                if (!strEq(cfgOptionStr(cfgOptRepoPath), FSLASH_STR) &&
-                    !strBeginsWith(path, strNewFmt("%s/", strZ(cfgOptionStr(cfgOptRepoPath)))))
+                if (!strEq(repoPath, FSLASH_STR) && !strBeginsWith(path, strNewFmt("%s/", strZ(repoPath))))
                 {
                     THROW_FMT(
                         ParamInvalidError, "absolute path '%s' is not in base path '%s'", strZ(path),
@@ -55,8 +58,7 @@ repoPathIsValid(const String *path)
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
                     // Get the relative part of the path/file
-                    result = strSub(
-                        path, strEq(cfgOptionStr(cfgOptRepoPath), FSLASH_STR) ? 1 : strSize(cfgOptionStr(cfgOptRepoPath)) + 1);
+                    result = strSub(path, strEq(repoPath, FSLASH_STR) ? 1 : strSize(repoPath) + 1);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }
