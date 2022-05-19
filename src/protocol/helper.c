@@ -63,7 +63,7 @@ protocolHelperInit(void)
         // Create a mem context to store protocol objects
         MEM_CONTEXT_BEGIN(memContextTop())
         {
-            MEM_CONTEXT_NEW_BEGIN("ProtocolHelper")
+            MEM_CONTEXT_NEW_BEGIN("ProtocolHelper", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
             {
                 protocolHelper.memContext = MEM_CONTEXT_NEW();
             }
@@ -369,7 +369,7 @@ protocolServerAuthorize(const String *authListStr, const String *const stanza)
         // Else check the stanza list for a match with the specified stanza. Each entry will need to be trimmed before comparing.
         else if (stanza != NULL)
         {
-            StringList *authList = strLstNewSplitZ(authListStr, COMMA_Z);
+            StringList *authList = strLstNewSplitZ(authListStr, ",");
 
             for (unsigned int authListIdx = 0; authListIdx < strLstSize(authList); authListIdx++)
             {

@@ -52,10 +52,10 @@ void hrnServerInit(void)
 
     // Set correct permissions on private keys
     THROW_ON_SYS_ERROR(
-        chmod(strZ(strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo())), 0600) == -1, FileModeError,
+        chmod(zNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo()), 0600) == -1, FileModeError,
         "unable to set mode on server key");
     THROW_ON_SYS_ERROR(
-        chmod(strZ(strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "client.key", hrnPathRepo())), 0600) == -1, FileModeError,
+        chmod(zNewFmt("%s/" HRN_SERVER_CERT_PREFIX "client.key", hrnPathRepo()), 0600) == -1, FileModeError,
         "unable to set mode on client key");
 
     // Add hostname when running in a container

@@ -797,7 +797,8 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
-                // created there
+                // created there in PostgreSQL < 15. PostgreSQL >= 15 no longer uses this directory, but it may be used by
+                // extensions such as pg_stat_statements so it should still be excluded.
                 if (strEqZ(info->name, PG_PATH_PGSTATTMP))
                     FUNCTION_TEST_RETURN_VOID();
 
@@ -1111,7 +1112,7 @@ manifestNewBuild(
 
     Manifest *this = NULL;
 
-    OBJ_NEW_BEGIN(Manifest)
+    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(NULL);
@@ -1343,7 +1344,8 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType
                 if (file.timestamp > copyStart)
                 {
                     LOG_WARN_FMT(
-                        "file '%s' has timestamp in the future, enabling delta checksum", strZ(manifestPathPg(file.name)));
+                        "file '%s' has timestamp (%" PRId64 ") in the future (relative to copy start %" PRId64 "), enabling delta"
+                            " checksum", strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, (int64_t)copyStart);
 
                     this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
                     break;
@@ -1423,8 +1425,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     if (file.timestamp < filePrior.timestamp)
                     {
                         LOG_WARN_FMT(
-                            "file '%s' has timestamp earlier than prior backup, enabling delta checksum",
-                            strZ(manifestPathPg(file.name)));
+                            "file '%s' has timestamp earlier than prior backup (prior %" PRId64 ", current %" PRId64 "), enabling"
+                                " delta checksum",
+                            strZ(manifestPathPg(file.name)), (int64_t)filePrior.timestamp, (int64_t)file.timestamp);
 
                         this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
                         break;
@@ -1434,8 +1437,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     if (file.size != filePrior.size && file.timestamp == filePrior.timestamp)
                     {
                         LOG_WARN_FMT(
-                            "file '%s' has same timestamp as prior but different size, enabling delta checksum",
-                            strZ(manifestPathPg(file.name)));
+                            "file '%s' has same timestamp (%" PRId64 ") as prior but different size (prior %" PRIu64 ", current"
+                                " %" PRIu64 "), enabling delta checksum",
+                            strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, filePrior.size, file.size);
 
                         this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
                         break;
@@ -2059,14 +2063,14 @@ manifestNewLoad(IoRead *read)
 
     Manifest *this = NULL;
 
-    OBJ_NEW_BEGIN(Manifest)
+    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
 
         // Load the manifest
         ManifestLoadData loadData =
         {
-            .memContext = memContextNewP("load"),
+            .memContext = memContextNewP("load", .childQty = MEM_CONTEXT_QTY_MAX),
             .manifest = this,
         };
 

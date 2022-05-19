@@ -10,6 +10,7 @@ PostgreSQL Interface
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "postgres/interface.h"
+#include "postgres/interface/static.vendor.h"
 #include "postgres/interface/version.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
@@ -78,6 +79,16 @@ typedef struct PgInterface
 
 static const PgInterface pgInterface[] =
 {
+    {
+        .version = PG_VERSION_15,
+
+        .controlIs = pgInterfaceControlIs150,
+        .control = pgInterfaceControl150,
+        .controlVersion = pgInterfaceControlVersion150,
+
+        .walIs = pgInterfaceWalIs150,
+        .wal = pgInterfaceWal150,
+    },
     {
         .version = PG_VERSION_14,
 
@@ -237,6 +248,39 @@ pgInterfaceVersion(unsigned int pgVersion)
         THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
 
     FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
+}
+
+/**********************************************************************************************************************************/
+bool
+pgDbIsTemplate(const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, strEqZ(name, "template0") || strEqZ(name, "template1"));
+}
+
+/**********************************************************************************************************************************/
+bool
+pgDbIsSystem(const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, strEqZ(name, "postgres") || pgDbIsTemplate(name));
+}
+
+/**********************************************************************************************************************************/
+bool
+pgDbIsSystemId(const unsigned int id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, id);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, id < FirstNormalObjectId);
 }
 
 /***********************************************************************************************************************************

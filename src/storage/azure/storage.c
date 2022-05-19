@@ -719,7 +719,7 @@ storageAzureNew(
 
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageAzure)
+    OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageAzure *driver = OBJ_NEW_ALLOC();
 

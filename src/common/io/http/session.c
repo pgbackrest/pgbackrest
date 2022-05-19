@@ -31,7 +31,7 @@ httpSessionNew(HttpClient *httpClient, IoSession *ioSession)
 
     HttpSession *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpSession)
+    OBJ_NEW_BEGIN(HttpSession, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = OBJ_NEW_ALLOC();
 

@@ -90,15 +90,9 @@ use constant VM_U18                                                 => 'u18';
     push @EXPORT, qw(VM_U18);
 use constant VM_U20                                                 => 'u20';
     push @EXPORT, qw(VM_U20);
-use constant VM_D9                                                  => 'd9';
-    push @EXPORT, qw(VM_D9);
-
-# Defines the vm that will be used for expect testing
-use constant VM_EXPECT                                              => VM_RH7;
-    push @EXPORT, qw(VM_EXPECT);
 
 # VM aliases for run matrices (numbered oldest to newest)
-use constant VM2                                                    => VM_D9;
+use constant VM2                                                    => VM_U18;
     push @EXPORT, qw(VM2);
 use constant VM3                                                    => VM_RH7;
     push @EXPORT, qw(VM3);
@@ -156,6 +150,10 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
+            PG_VERSION_13,
         ],
     },
 
@@ -186,36 +184,13 @@ my $oyVm =
         ],
     },
 
-    # Debian 9
-    &VM_D9 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_OS_REPO => 'stretch',
-        &VM_IMAGE => 'i386/debian:9',
-        &VM_ARCH => VM_ARCH_I386,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VM_DB =>
-        [
-            PG_VERSION_90,
-            PG_VERSION_91,
-            PG_VERSION_92,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_90,
-        ],
-    },
-
     # Ubuntu 18.04
     &VM_U18 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_OS_REPO => 'bionic',
-        &VM_IMAGE => 'ubuntu:18.04',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_COVERAGE_C => true,
+        &VM_IMAGE => 'i386/ubuntu:18.04',
+        &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VMDEF_WITH_BACKTRACE => true,
@@ -230,21 +205,14 @@ my $oyVm =
             PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-            PG_VERSION_13,
         ],
 
         &VM_DB_TEST =>
         [
+            PG_VERSION_90,
+            PG_VERSION_91,
+            PG_VERSION_92,
             PG_VERSION_93,
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-            PG_VERSION_13,
         ],
     },
 
@@ -275,20 +243,15 @@ my $oyVm =
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_91,
-            PG_VERSION_92,
-            PG_VERSION_93,
             PG_VERSION_94,
             PG_VERSION_95,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-            PG_VERSION_13,
             PG_VERSION_14,
+            PG_VERSION_15,
         ],
     },
 };

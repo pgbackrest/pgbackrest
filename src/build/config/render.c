@@ -297,6 +297,30 @@ bldCfgRenderLf(String *const config, const bool lf)
         strCatZ(config, "\n");
 }
 
+static String *
+bldCfgRenderLabel(const String *const config, const bool label, const String *const labelText)
+{
+    const StringList *const lines = strLstNewSplitZ(config, "\n");
+    String *const result = strNew();
+
+    const String *const labelComment = strNewFmt("// %s", strZ(labelText));
+
+    for (unsigned int lineIdx = 0; lineIdx < strLstSize(lines); lineIdx++)
+    {
+        const String *const line = strLstGet(lines, lineIdx);
+
+        if (lineIdx != 0)
+            strCatChr(result, '\n');
+
+        if (!label || strSize(line) + 1 + strSize(labelComment) > 132)
+            strCat(result, line);
+        else
+            strCatFmt(result, "%s%*s", strZ(line), (int)(132 - strSize(line)), strZ(labelComment));
+    }
+
+    return result;
+}
+
 // Helper to get var-128 encoding size
 static size_t
 bldCfgRenderVar128Size(uint64_t value)
@@ -542,7 +566,7 @@ bldCfgRenderValueAdd(
 }
 
 static void
-bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
+bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, const bool label)
 {
     String *const config = strNew();
 
@@ -575,35 +599,37 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
     for (unsigned int cmdIdx = 0; cmdIdx < lstSize(bldCfg.cmdList); cmdIdx++)
     {
         const BldCfgCommand *const cmd = lstGet(bldCfg.cmdList, cmdIdx);
+        String *const configCmd = strNew();
 
-        bldCfgRenderLf(config, cmdIdx != 0);
+        if (cmdIdx != 0)
+            strCatZ(config, COMMENT_SEPARATOR "\n");
 
         strCatFmt(
-            config,
-            COMMENT_SEPARATOR "\n"
+            configCmd,
             "    PARSE_RULE_COMMAND\n"
             "    (\n"
             "        PARSE_RULE_COMMAND_NAME(\"%s\"),\n",
             strZ(cmd->name));
 
         if (cmd->lockRequired)
-            strCatZ(config, "        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),\n");
+            strCatZ(configCmd, "        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),\n");
 
         if (cmd->lockRemoteRequired)
-            strCatZ(config, "        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),\n");
+            strCatZ(configCmd, "        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),\n");
 
-        strCatFmt(config, "        PARSE_RULE_COMMAND_LOCK_TYPE(%s),\n", strZ(bldEnum("lockType", cmd->lockType)));
+        strCatFmt(configCmd, "        PARSE_RULE_COMMAND_LOCK_TYPE(%s),\n", strZ(bldEnum("lockType", cmd->lockType)));
 
         if (cmd->logFile)
-            strCatZ(config, "        PARSE_RULE_COMMAND_LOG_FILE(true),\n");
+            strCatZ(configCmd, "        PARSE_RULE_COMMAND_LOG_FILE(true),\n");
 
-        strCatFmt(config, "        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(%s),\n", strZ(bldEnum("logLevel", cmd->logLevelDefault)));
+        strCatFmt(
+            configCmd, "        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(%s),\n", strZ(bldEnum("logLevel", cmd->logLevelDefault)));
 
         if (cmd->parameterAllowed)
-            strCatZ(config, "        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),\n");
+            strCatZ(configCmd, "        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),\n");
 
         strCatZ(
-            config,
+            configCmd,
             "\n"
             "        PARSE_RULE_COMMAND_ROLE_VALID_LIST\n"
             "        (\n");
@@ -611,15 +637,18 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         for (unsigned int cmdRoleIdx = 0; cmdRoleIdx < strLstSize(cmd->roleList); cmdRoleIdx++)
         {
             strCatFmt(
-                config,
+                configCmd,
                 "            PARSE_RULE_COMMAND_ROLE(%s)\n",
                 strZ(bldEnum("cfgCmdRole", strLstGet(cmd->roleList, cmdRoleIdx))));
         }
 
         strCatZ(
-            config,
+            configCmd,
             "        ),\n"
-            "    ),\n");
+            "    ),");
+
+        strCat(config, bldCfgRenderLabel(configCmd, label, strNewFmt("cmd/%s", strZ(cmd->name))));
+        strCatChr(config, '\n');
     }
 
     strCatZ(
@@ -640,17 +669,21 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
     for (unsigned int optGrpIdx = 0; optGrpIdx < lstSize(bldCfg.optGrpList); optGrpIdx++)
     {
         const BldCfgOptionGroup *const optGrp = lstGet(bldCfg.optGrpList, optGrpIdx);
+        String *const configOptGrp = strNew();
 
-        bldCfgRenderLf(config, optGrpIdx != 0);
+        if (optGrpIdx != 0)
+            strCatZ(config, COMMENT_SEPARATOR "\n");
 
         strCatFmt(
-            config,
-            COMMENT_SEPARATOR "\n"
+            configOptGrp,
             "    PARSE_RULE_OPTION_GROUP\n"
             "    (\n"
             "        PARSE_RULE_OPTION_GROUP_NAME(\"%s\"),\n"
-            "    ),\n",
+            "    ),",
             strZ(optGrp->name));
+
+        strCat(config, bldCfgRenderLabel(configOptGrp, label, strNewFmt("opt-grp/%s", strZ(optGrp->name))));
+        strCatChr(config, '\n');
     }
 
     strCatZ(
@@ -690,12 +723,13 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         const BldCfgOption *const opt = lstGet(bldCfg.optList, optIdx);
         StringList *const ruleDataList = strLstNew();
         bool ruleInt = false;
+        String *const configOpt = strNew();
 
-        bldCfgRenderLf(config, optIdx != 0);
+        if (optIdx != 0)
+            strCatZ(config, COMMENT_SEPARATOR "\n");
 
         strCatFmt(
-            config,
-            COMMENT_SEPARATOR "\n"
+            configOpt,
             "    PARSE_RULE_OPTION\n"
             "    (\n"
             "        PARSE_RULE_OPTION_NAME(\"%s\"),\n"
@@ -703,27 +737,27 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             strZ(opt->name), strZ(bldEnum("cfgOptType", opt->type)));
 
         if (opt->negate)
-            strCatZ(config, "        PARSE_RULE_OPTION_NEGATE(true),\n");
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_NEGATE(true),\n");
 
         if (opt->reset)
-            strCatZ(config, "        PARSE_RULE_OPTION_RESET(true),\n");
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_RESET(true),\n");
 
         strCatFmt(
-            config,
+            configOpt,
             "        PARSE_RULE_OPTION_REQUIRED(%s),\n"
             "        PARSE_RULE_OPTION_SECTION(%s),\n",
             cvtBoolToConstZ(opt->required), strZ(bldEnum("cfgSection", opt->section)));
 
         if (opt->secure)
-            strCatZ(config, "        PARSE_RULE_OPTION_SECURE(true),\n");
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_SECURE(true),\n");
 
         if (strEq(opt->type, OPT_TYPE_HASH_STR) || strEq(opt->type, OPT_TYPE_LIST_STR))
-            strCatZ(config, "        PARSE_RULE_OPTION_MULTI(true),\n");
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_MULTI(true),\n");
 
         if (opt->group != NULL)
         {
             strCatFmt(
-                config,
+                configOpt,
                 "        PARSE_RULE_OPTION_GROUP_MEMBER(true),\n"
                 "        PARSE_RULE_OPTION_GROUP_ID(%s),\n",
                 strZ(bldEnum("cfgOptGrp", opt->group)));
@@ -738,7 +772,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
                 if (strEq(deprecate->name, opt->name) && deprecate->unindexed)
                 {
-                    strCatZ(config, "        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),\n");
+                    strCatZ(configOpt, "        PARSE_RULE_OPTION_DEPRECATE_MATCH(true),\n");
                     break;
                 }
             }
@@ -766,7 +800,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             if (!strEmpty(configRole))
             {
                 strCatFmt(
-                    config,
+                    configOpt,
                     "\n"
                     "        PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_LIST\n"
                     "        (\n"
@@ -874,7 +908,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         if (optionalCmdRuleSize != 0 || optionalDefaultRuleSize != 0)
         {
             strCatZ(
-                config,
+                configOpt,
                 "\n"
                 "        PARSE_RULE_OPTIONAL\n"
                 "        (\n");
@@ -909,10 +943,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                     const VariantList *const cmdList = kvGetList(combine, group);
 
                     if (ruleIdx != 0)
-                        strCatChr(config, '\n');
+                        strCatChr(configOpt, '\n');
 
                     strCatZ(
-                        config,
+                        configOpt,
                         "            PARSE_RULE_OPTIONAL_GROUP\n"
                         "            (\n"
                         "                PARSE_RULE_FILTER_CMD\n"
@@ -921,13 +955,13 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                     for (unsigned int cmdIdx = 0; cmdIdx < varLstSize(cmdList); cmdIdx++)
                     {
                         strCatFmt(
-                            config,
+                            configOpt,
                             "                    PARSE_RULE_VAL_CMD(%s),\n",
                             strZ(bldEnum("cfgCmd", varStr(varLstGet(cmdList, cmdIdx)))));
                     }
 
                     strCatFmt(
-                        config,
+                        configOpt,
                         "                ),\n"
                         "%s"
                         "            ),\n",
@@ -938,10 +972,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
             if (optionalDefaultRuleSize != 0)
             {
                 if (optionalCmdRuleSize != 0)
-                    strCatChr(config, '\n');
+                    strCatChr(configOpt, '\n');
 
                 strCatZ(
-                    config,
+                    configOpt,
                     "            PARSE_RULE_OPTIONAL_GROUP\n"
                     "            (\n");
 
@@ -950,21 +984,25 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
                     const Variant *const key = varLstGet(kvKeyList(optionalDefaultRule), ruleIdx);
 
                     if (ruleIdx != 0)
-                        strCatChr(config, '\n');
+                        strCatChr(configOpt, '\n');
 
                     strCatFmt(
-                        config,
+                        configOpt,
                         "%s,\n",
                         strZ(varStr(kvGet(optionalDefaultRule, key))));
                 }
 
-                strCatZ(config, "            ),\n");
+                strCatZ(configOpt, "            ),\n");
             }
 
-            strCatZ(config, "        ),\n");
+            strCatZ(configOpt, "        ),\n");
         }
 
-        strCatZ(config, "    ),\n");
+        strCatZ(configOpt, "    ),");
+
+        // Add option to config
+        strCat(config, bldCfgRenderLabel(configOpt, label, strNewFmt("opt/%s", strZ(opt->name))));
+        strCatChr(config, '\n');
 
         // Build rule values
         if (strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
@@ -1055,24 +1093,28 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
     for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(deprecateCombineList); deprecateIdx++)
     {
         const BldCfgRenderOptionDeprecate *const deprecate = lstGet(deprecateCombineList, deprecateIdx);
+        String *const configOptDep = strNew();
 
-        bldCfgRenderLf(config, deprecateIdx != 0);
+        if (deprecateIdx != 0)
+            strCatZ(config, COMMENT_SEPARATOR "\n");
 
         strCatFmt(
-            config,
-            "    // %s deprecation\n"
+            configOptDep,
             "    {\n"
             "        .name = \"%s\",\n"
             "        .id = %s,\n",
-            strZ(deprecate->option->name), strZ(deprecate->name), strZ(bldEnum("cfgOpt", deprecate->option->name)));
+            strZ(deprecate->name), strZ(bldEnum("cfgOpt", deprecate->option->name)));
 
         if (deprecate->indexed)
-            strCatZ(config, "        .indexed = true,\n");
+            strCatZ(configOptDep, "        .indexed = true,\n");
 
         if (deprecate->unindexed)
-            strCatZ(config, "        .unindexed = true,\n");
+            strCatZ(configOptDep, "        .unindexed = true,\n");
 
-        strCatZ(config, "    },\n");
+        strCatZ(configOptDep, "    },");
+
+        strCat(config, bldCfgRenderLabel(configOptDep, label, strNewFmt("opt-deprecate/%s", strZ(deprecate->option->name))));
+        strCatChr(config, '\n');
     }
 
     strCatZ(config, "};\n");
@@ -1085,17 +1127,23 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         COMMENT_BLOCK_BEGIN "\n"
         "Order for option parse resolution\n"
         COMMENT_BLOCK_END "\n"
-        "static const ConfigOption optionResolveOrder[] =\n"
+        "static const uint8_t optionResolveOrder[] =\n"
         "{\n");
 
     // Render resolve order
+    String *const configResolve = strNew();
+
     for (unsigned int optResolveIdx = 0; optResolveIdx < lstSize(bldCfg.optResolveList); optResolveIdx++)
     {
+        bldCfgRenderLf(configResolve, optResolveIdx != 0);
+
         strCatFmt(
-            config, "    %s,\n", strZ(bldEnum("cfgOpt", (*(BldCfgOption **)lstGet(bldCfg.optResolveList, optResolveIdx))->name)));
+            configResolve, "    %s,",
+            strZ(bldEnum("cfgOpt", (*(BldCfgOption **)lstGet(bldCfg.optResolveList, optResolveIdx))->name)));
     }
 
-    strCatZ(config, "};\n");
+    strCat(config, bldCfgRenderLabel(configResolve, label, STRDEF("opt-resolve-order")));
+    strCatZ(config, "\n};\n");
 
     // Rule Strings
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1123,10 +1171,16 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         "static const StringPub parseRuleValueStr[] =\n"
         "{\n");
 
-    for (unsigned int ruleStrIdx = 0; ruleStrIdx < strLstSize(ruleStrList); ruleStrIdx++)
-        strCatFmt(configVal, "    PARSE_RULE_STRPUB(%s),\n", strZ(strLstGet(ruleStrList, ruleStrIdx)));
+    String *const configValStr = strNew();
 
-    strCatZ(configVal, "};\n");
+    for (unsigned int ruleStrIdx = 0; ruleStrIdx < strLstSize(ruleStrList); ruleStrIdx++)
+    {
+        bldCfgRenderLf(configValStr, ruleStrIdx != 0);
+        strCatFmt(configValStr, "    PARSE_RULE_STRPUB(%s),", strZ(strLstGet(ruleStrList, ruleStrIdx)));
+    }
+
+    strCat(configVal, bldCfgRenderLabel(configValStr, label, STRDEF("val/str")));
+    strCatZ(configVal, "\n};\n");
 
     strCatZ(
         configVal,
@@ -1134,14 +1188,19 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         "typedef enum\n"
         "{\n");
 
+    String *const configValStrEnum = strNew();
+
     for (unsigned int ruleStrIdx = 0; ruleStrIdx < strLstSize(ruleStrList); ruleStrIdx++)
     {
+        bldCfgRenderLf(configValStrEnum, ruleStrIdx != 0);
+
         strCatFmt(
-            configVal, "    %s,\n",
-            strZ(strNewFmt("parseRuleValStr%s", strZ(bldCfgRenderEnumStr(strLstGet(ruleStrList, ruleStrIdx))))));
+            configValStrEnum, "    %s,",
+            zNewFmt("parseRuleValStr%s", strZ(bldCfgRenderEnumStr(strLstGet(ruleStrList, ruleStrIdx)))));
     }
 
-    strCatZ(configVal, "} ParseRuleValueStr;\n");
+    strCat(configVal, bldCfgRenderLabel(configValStrEnum, label, STRDEF("val/str/enum")));
+    strCatZ(configVal, "\n} ParseRuleValueStr;\n");
 
     // Rule StringIds
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1167,10 +1226,16 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         "static const StringId parseRuleValueStrId[] =\n"
         "{\n");
 
-    for (unsigned int ruleStrIdIdx = 0; ruleStrIdIdx < strLstSize(ruleStrIdList); ruleStrIdIdx++)
-        strCatFmt(configVal, "    %s,\n", strZ(bldStrId(strZ(strLstGet(ruleStrIdList, ruleStrIdIdx)))));
+    String *const configValStrId = strNew();
 
-    strCatZ(configVal, "};\n");
+    for (unsigned int ruleStrIdIdx = 0; ruleStrIdIdx < strLstSize(ruleStrIdList); ruleStrIdIdx++)
+    {
+        bldCfgRenderLf(configValStrId, ruleStrIdIdx != 0);
+        strCatFmt(configValStrId, "    %s,", strZ(bldStrId(strZ(strLstGet(ruleStrIdList, ruleStrIdIdx)))));
+    }
+
+    strCat(configVal, bldCfgRenderLabel(configValStrId, label, STRDEF("val/strid")));
+    strCatZ(configVal, "\n};\n");
 
     strCatZ(
         configVal,
@@ -1178,10 +1243,16 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         "typedef enum\n"
         "{\n");
 
-    for (unsigned int ruleStrIdIdx = 0; ruleStrIdIdx < strLstSize(ruleStrIdList); ruleStrIdIdx++)
-        strCatFmt(configVal, "    %s,\n", strZ(bldEnum("parseRuleValStrId", strLstGet(ruleStrIdList, ruleStrIdIdx))));
+    String *const configValStrIdEnum = strNew();
 
-    strCatZ(configVal, "} ParseRuleValueStrId;\n");
+    for (unsigned int ruleStrIdIdx = 0; ruleStrIdIdx < strLstSize(ruleStrIdList); ruleStrIdIdx++)
+    {
+        bldCfgRenderLf(configValStrIdEnum, ruleStrIdIdx != 0);
+        strCatFmt(configValStrIdEnum, "    %s,", strZ(bldEnum("parseRuleValStrId", strLstGet(ruleStrIdList, ruleStrIdIdx))));
+    }
+
+    strCat(configVal, bldCfgRenderLabel(configValStrIdEnum, label, STRDEF("val/strid/enum")));
+    strCatZ(configVal, "\n} ParseRuleValueStrId;\n");
 
     // Rule Ints
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1207,10 +1278,16 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         "static const int64_t parseRuleValueInt[] =\n"
         "{\n");
 
-    for (unsigned int ruleIntIdx = 0; ruleIntIdx < strLstSize(ruleIntList); ruleIntIdx++)
-        strCatFmt(configVal, "    %s,\n", strZ(strTrim(strLstGet(ruleIntList, ruleIntIdx))));
+    String *const configValInt = strNew();
 
-    strCatZ(configVal, "};\n");
+    for (unsigned int ruleIntIdx = 0; ruleIntIdx < strLstSize(ruleIntList); ruleIntIdx++)
+    {
+        bldCfgRenderLf(configValInt, ruleIntIdx != 0);
+        strCatFmt(configValInt, "    %s,", strZ(strTrim(strLstGet(ruleIntList, ruleIntIdx))));
+    }
+
+    strCat(configVal, bldCfgRenderLabel(configValInt, label, STRDEF("val/int")));
+    strCatZ(configVal, "\n};\n");
 
     strCatZ(
         configVal,
@@ -1218,10 +1295,16 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
         "typedef enum\n"
         "{\n");
 
-    for (unsigned int ruleIntIdx = 0; ruleIntIdx < strLstSize(ruleIntList); ruleIntIdx++)
-        strCatFmt(configVal, "    %s,\n", strZ(bldEnum("parseRuleValInt", strLstGet(ruleIntList, ruleIntIdx))));
+    String *const configValIntEnum = strNew();
 
-    strCatZ(configVal, "} ParseRuleValueInt;\n");
+    for (unsigned int ruleIntIdx = 0; ruleIntIdx < strLstSize(ruleIntList); ruleIntIdx++)
+    {
+        bldCfgRenderLf(configValIntEnum, ruleIntIdx != 0);
+        strCatFmt(configValIntEnum, "    %s,", strZ(bldEnum("parseRuleValInt", strLstGet(ruleIntList, ruleIntIdx))));
+    }
+
+    strCat(configVal, bldCfgRenderLabel(configValIntEnum, label, STRDEF("val/int/enum")));
+    strCatZ(configVal, "\n} ParseRuleValueInt;\n");
 
     // Write to storage
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1232,8 +1315,8 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg)
 
 /**********************************************************************************************************************************/
 void
-bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg)
+bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg, const bool label)
 {
     bldCfgRenderConfigAutoH(storageRepo, bldCfg);
-    bldCfgRenderParseAutoC(storageRepo, bldCfg);
+    bldCfgRenderParseAutoC(storageRepo, bldCfg, label);
 }

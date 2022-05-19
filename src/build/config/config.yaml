@@ -157,7 +157,6 @@ command:
     command-role:
       local: {}
       remote: {}
-    internal: true
 
   version:
     log-file: false
@@ -312,6 +311,11 @@ option:
     command:
       info: {}
       repo-ls: {}
+      verify:
+        default: none
+        allow-list:
+          - none
+          - text
     allow-list:
       - text
       - json
@@ -459,6 +463,14 @@ option:
           - default
           - standby
         default: default
+    command-role:
+      main: {}
+
+  verbose:
+    type: boolean
+    default: false
+    command:
+     verify: {}
     command-role:
       main: {}
 
@@ -1782,7 +1794,6 @@ option:
     depend: repo-azure-account
 
   repo-bundle:
-    internal: true
     section: global
     group: repo
     type: boolean
@@ -1793,7 +1804,6 @@ option:
       main: {}
 
   repo-bundle-size:
-    internal: true
     section: global
     group: repo
     type: size

@@ -954,7 +954,7 @@ storageGcsNew(
 
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageGcs)
+    OBJ_NEW_BEGIN(StorageGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageGcs *driver = OBJ_NEW_ALLOC();
 

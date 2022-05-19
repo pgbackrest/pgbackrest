@@ -28,8 +28,11 @@ jobs:
       # tackle the slowest tests first.
       matrix:
         include:
-          # All unit (without coverage) and integration tests for 32-bit
-          - param: test --vm=d9 --param=no-performance
+          # All unit tests (without coverage) for 32-bit
+          - param: test --vm=u18 --param=no-performance --param=c-only
+
+          # All integration tests for 32-bit
+          - param: test --vm=u18 --param=module=mock --param=module=real
 
           # Debian/Ubuntu documentation
           - param: doc --vm=u18
@@ -54,6 +57,45 @@ jobs:
 
       - name: Run Test
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
+
+  # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
+  # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
+  # test on one big-endian architecture to be sure that checksums are correct.
+  arch:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        include:
+          - arch: ppc64le
+            distro: ubuntu20.04
+          - arch: s390x
+            distro: ubuntu20.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          path: pgbackrest
+
+      - name: Run Test
+        uses: uraimo/run-on-arch-action@v2.1.0
+        id: runcmd
+        with:
+          arch: ${{matrix.arch}}
+          distro: ${{matrix.distro}}
+
+          # Cache builds
+          githubToken: ${{github.token}}
+
+          install: |
+            apt-get update
+            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+
+          run: |
+            git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --no-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --no-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
   codeql:
     runs-on: ubuntu-latest

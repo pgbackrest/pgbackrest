@@ -128,8 +128,9 @@ Option constants
 #define CFGOPT_TLS_SERVER_KEY_FILE                                  "tls-server-key-file"
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
+#define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            155
+#define CFG_OPTION_TOTAL                                            156
 
 /***********************************************************************************************************************************
 Option value constants
@@ -197,6 +198,8 @@ Option value constants
 
 #define CFGOPTVAL_OUTPUT_JSON                                       STRID5("json", 0x73e6a0)
 #define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
+#define CFGOPTVAL_OUTPUT_NONE                                       STRID5("none", 0x2b9ee0)
+#define CFGOPTVAL_OUTPUT_NONE_Z                                     "none"
 #define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
 #define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
 
@@ -511,6 +514,7 @@ typedef enum
     cfgOptTlsServerKeyFile,
     cfgOptTlsServerPort,
     cfgOptType,
+    cfgOptVerbose,
 } ConfigOption;
 
 #endif

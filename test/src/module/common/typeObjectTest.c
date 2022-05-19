@@ -49,7 +49,7 @@ testObjectNew(void)
 {
     TestObject *this = NULL;
 
-    OBJ_NEW_BEGIN(STRINGIFY(TestObject))
+    OBJ_NEW_BEGIN(TestObject)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -69,7 +69,7 @@ testObjectContextNew(void)
 {
     TestObjectContext *this = NULL;
 
-    OBJ_NEW_BEGIN(STRINGIFY(TestObjectContext))
+    OBJ_NEW_BEGIN(TestObjectContext)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -107,7 +107,6 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_PTR(objMemContext(testObject), memContextFromAllocExtra(testObject), "mem context");
-        TEST_RESULT_BOOL(objMemContextFreeing(testObject), false, "not freeing");
         TEST_RESULT_VOID(testObjectFree(testObject), "free object");
         TEST_RESULT_VOID(testObjectFree(NULL), "free null object");
 

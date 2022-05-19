@@ -69,7 +69,7 @@ sub run
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(),
+            true,
             {bHostBackup => $bRemote, bTls => $bTls, strCompressType => $strCompressType, bArchiveAsync => true,
                 strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 

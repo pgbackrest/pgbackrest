@@ -14,30 +14,23 @@ String Handler
 #include "common/memContext.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
-#include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful
 ***********************************************************************************************************************************/
-STRING_EXTERN(BRACKETL_STR,                                         BRACKETL_Z);
-STRING_EXTERN(BRACKETR_STR,                                         BRACKETR_Z);
-STRING_EXTERN(COLON_STR,                                            COLON_Z);
-STRING_EXTERN(CR_STR,                                               CR_Z);
-STRING_EXTERN(CRLF_STR,                                             CRLF_Z);
-STRING_EXTERN(DASH_STR,                                             DASH_Z);
-STRING_EXTERN(DOT_STR,                                              DOT_Z);
-STRING_EXTERN(DOTDOT_STR,                                           DOTDOT_Z);
-STRING_EXTERN(EMPTY_STR,                                            EMPTY_Z);
-STRING_EXTERN(EQ_STR,                                               EQ_Z);
+STRING_EXTERN(CR_STR,                                               "\r");
+STRING_EXTERN(CRLF_STR,                                             "\r\n");
+STRING_EXTERN(DOT_STR,                                              ".");
+STRING_EXTERN(DOTDOT_STR,                                           "..");
+STRING_EXTERN(EMPTY_STR,                                            "");
 STRING_EXTERN(FALSE_STR,                                            FALSE_Z);
-STRING_EXTERN(FSLASH_STR,                                           FSLASH_Z);
-STRING_EXTERN(LF_STR,                                               LF_Z);
-STRING_EXTERN(N_STR,                                                N_Z);
+STRING_EXTERN(FSLASH_STR,                                           "/");
+STRING_EXTERN(LF_STR,                                               "\n");
+STRING_EXTERN(N_STR,                                                "n");
 STRING_EXTERN(NULL_STR,                                             NULL_Z);
-STRING_EXTERN(QUOTED_STR,                                           QUOTED_Z);
 STRING_EXTERN(TRUE_STR,                                             TRUE_Z);
-STRING_EXTERN(Y_STR,                                                Y_Z);
-STRING_EXTERN(ZERO_STR,                                             ZERO_Z);
+STRING_EXTERN(Y_STR,                                                "y");
+STRING_EXTERN(ZERO_STR,                                             "0");
 
 /***********************************************************************************************************************************
 Buffer macros
@@ -73,7 +66,6 @@ Object type
 struct String
 {
     StringPub pub;                                                  // Publicly accessible variables
-    MemContext *memContext;                                         // Required for dynamically allocated strings
 };
 
 /**********************************************************************************************************************************/
@@ -82,18 +74,22 @@ strNew(void)
 {
     FUNCTION_TEST_VOID();
 
-    // Create object
-    String *this = memNew(sizeof(String));
+    String *this = NULL;
 
-    *this = (String)
+    OBJ_NEW_BEGIN(String, .allocQty = 1)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (String)
         {
-            // Set empty so nothing is allocated until needed
-            .buffer = STR_EMPTY_BUFFER,
-        },
-        .memContext = memContextCurrent(),
-    };
+            .pub =
+            {
+                // Set empty so nothing is allocated until needed
+                .buffer = STR_EMPTY_BUFFER,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(STRING, this);
 }
@@ -110,17 +106,45 @@ strNewFixed(const size_t size)
 
     CHECK_SIZE(size);
 
-    String *this = memNew(sizeof(String) + size + 1);
+    String *this = NULL;
 
-    *this = (String)
+    // If the string is larger than the extra allowed with a mem context then allocate the buffer separately
+    size_t allocExtra = sizeof(String) + size + 1;
+
+    if (allocExtra > MEM_CONTEXT_ALLOC_EXTRA_MAX)
     {
-        .pub =
+        OBJ_NEW_BEGIN(String, .allocQty = 1)
         {
-            .size = (unsigned int)size,
-            .buffer = STR_FIXED_BUFFER,
-        },
-        .memContext = memContextCurrent(),
-    };
+            this = OBJ_NEW_ALLOC();
+
+            *this = (String)
+            {
+                .pub =
+                {
+                    .size = (unsigned int)size,
+                    .buffer = memNew(size + 1),
+                },
+            };
+        }
+        OBJ_NEW_END();
+
+        FUNCTION_TEST_RETURN(STRING, this);
+    }
+
+    OBJ_NEW_EXTRA_BEGIN(String, (uint16_t)(allocExtra))
+    {
+        this = OBJ_NEW_ALLOC();
+
+        *this = (String)
+        {
+            .pub =
+            {
+                .size = (unsigned int)size,
+                .buffer = STR_FIXED_BUFFER,
+            },
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(STRING, this);
 }
@@ -337,14 +361,14 @@ strResize(String *this, size_t requested)
         if (this->pub.extra < STRING_EXTRA_MIN)
             this->pub.extra = STRING_EXTRA_MIN;
 
-        MEM_CONTEXT_BEGIN(this->memContext)
+        MEM_CONTEXT_OBJ_BEGIN(this)
         {
             if (STR_IS_EMPTY_BUFFER())
                 this->pub.buffer = memNew(strSize(this) + this->pub.extra + 1);
             else
                 this->pub.buffer = memResize(this->pub.buffer, strSize(this) + this->pub.extra + 1);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_OBJ_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -1071,29 +1095,4 @@ strSizeFormat(const uint64_t size)
     }
 
     FUNCTION_TEST_RETURN(STRING, result);
-}
-
-/***********************************************************************************************************************************
-Free the string
-***********************************************************************************************************************************/
-void
-strFree(String *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-    {
-        MEM_CONTEXT_BEGIN(this->memContext)
-        {
-            if (!STR_IS_EMPTY_BUFFER() && !STR_IS_FIXED_BUFFER())
-                memFree(this->pub.buffer);
-
-            memFree(this);
-        }
-        MEM_CONTEXT_END();
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
 }

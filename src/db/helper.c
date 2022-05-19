@@ -126,7 +126,12 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 
         // Error if no primary was found
         if (result.primary == NULL && primaryRequired)
-            THROW(DbConnectError, "unable to find primary cluster - cannot proceed");
+        {
+            THROW(
+                DbConnectError,
+                "unable to find primary cluster - cannot proceed\n"
+                "HINT: are all available clusters in recovery?");
+        }
 
         // Error if no standby was found
         if (result.standby == NULL && standbyRequired)

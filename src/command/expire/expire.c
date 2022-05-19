@@ -620,7 +620,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                         "%s: %s archive retention on backup %s, start = %s%s",
                                         cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(archiveId), strZ(backupData->backupLabel),
                                         strZ(archiveRange.start),
-                                        archiveRange.stop != NULL ? strZ(strNewFmt(", stop = %s", strZ(archiveRange.stop))) : "");
+                                        archiveRange.stop != NULL ? zNewFmt(", stop = %s", strZ(archiveRange.stop)) : "");
 
                                     // Add the archive range to the list
                                     lstAdd(archiveRangeList, &archiveRange);

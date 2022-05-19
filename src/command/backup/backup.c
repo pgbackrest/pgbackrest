@@ -20,6 +20,7 @@ Backup Command
 #include "common/compress/helper.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
+#include "common/lock.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/time.h"
@@ -87,10 +88,14 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
 
             if (!strLstEmpty(historyList))
             {
-                const String *historyLabelLatest = strLstGet(historyList, 0);
+                const String *const historyLabelLatest = strLstGet(historyList, 0);
 
                 if (backupLabelLatest == NULL || strCmp(historyLabelLatest, backupLabelLatest) > 0)
-                    backupLabelLatest = historyLabelLatest;
+                {
+                    // Strip off the compression and manifest extensions in case this ends up in an error message
+                    backupLabelLatest = compressExtStrip(historyLabelLatest, compressTypeFromName(historyLabelLatest));
+                    backupLabelLatest = strSubN(backupLabelLatest, 0, strSize(backupLabelLatest) - sizeof(BACKUP_MANIFEST_EXT) + 1);
+                }
             }
         }
 
@@ -107,7 +112,7 @@ backupLabelCreate(BackupType type, const String *backupLabelPrior, time_t timest
             if (strCmp(result, backupLabelLatest) <= 0)
             {
                 THROW_FMT(
-                    FormatError,
+                    ClockError,
                     "new backup label '%s' is not later than latest backup label '%s'\n"
                     "HINT: has the timezone changed?\n"
                     "HINT: is there clock skew?",
@@ -1132,7 +1137,8 @@ Log the results of a job and throw errors
 static void
 backupJobResult(
     Manifest *const manifest, const String *const host, const Storage *const storagePg, StringList *const fileRemove,
-    ProtocolParallelJob *const job, const bool bundle, const uint64_t sizeTotal, uint64_t *const sizeProgress)
+    ProtocolParallelJob *const job, const bool bundle, const uint64_t sizeTotal, uint64_t *const sizeProgress,
+    unsigned int *const currentPercentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -1143,6 +1149,7 @@ backupJobResult(
         FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM_P(UINT64, sizeProgress);
+        FUNCTION_LOG_PARAM_P(UINT, currentPercentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -1159,6 +1166,7 @@ backupJobResult(
             const uint64_t bundleId = varType(protocolParallelJobKey(job)) == varTypeUInt64 ?
                 varUInt64(protocolParallelJobKey(job)) : 0;
             PackRead *const jobResult = protocolParallelJobResult(job);
+            unsigned int percentComplete = 0;
 
             while (!pckReadNullP(jobResult))
             {
@@ -1175,7 +1183,7 @@ backupJobResult(
 
                 // Create log file name
                 const String *const fileName = storagePathP(storagePg, manifestPathPg(file.name));
-                const String *fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
+                const String *const fileLog = host == NULL ? fileName : strNewFmt("%s:%s", strZ(host), strZ(fileName));
 
                 // Format log progress
                 String *const logProgress = strNew();
@@ -1183,9 +1191,11 @@ backupJobResult(
                 if (bundleId != 0)
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
 
+                // Store percentComplete as an integer
+                percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)*sizeProgress / (double)sizeTotal) * 10000);
+
                 strCatFmt(
-                    logProgress, "%s, %.2lf%%", strZ(strSizeFormat(copySize)),
-                    sizeTotal == 0 ? 100.00 : (double)*sizeProgress * 100.0 / (double)sizeTotal);
+                    logProgress, "%s, %u.%02u%%", strZ(strSizeFormat(copySize)), percentComplete / 100, percentComplete % 100);
 
                 // Format log checksum
                 const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
@@ -1307,6 +1317,13 @@ backupJobResult(
                         checksumPageError, checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL,
                         bundleId, bundleOffset);
                 }
+            }
+
+            // Update currentPercentComplete and lock file when the change is significant enough
+            if (percentComplete - *currentPercentComplete > 10)
+            {
+                *currentPercentComplete = percentComplete;
+                lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(*currentPercentComplete));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1738,7 +1755,9 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 }
 
 static void
-backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart, const String *cipherPassBackup)
+backupProcess(
+    const BackupData *const backupData, Manifest *const manifest, const String *const lsnStart,
+    const String *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -1857,6 +1876,9 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
         // Process jobs
         uint64_t sizeProgress = 0;
 
+        // Store current percentage complete - updated as jobs progress
+        unsigned int currentPercentComplete = 0;
+
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             do
@@ -1871,7 +1893,7 @@ backupProcess(BackupData *backupData, Manifest *manifest, const String *lsnStart
                         manifest,
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                        fileRemove, job, jobData.bundle, sizeTotal, &sizeProgress);
+                        fileRemove, job, jobData.bundle, sizeTotal, &sizeProgress, &currentPercentComplete);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection

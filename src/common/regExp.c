@@ -74,7 +74,7 @@ regExpNew(const String *expression)
 
     RegExp *this = NULL;
 
-    OBJ_NEW_BEGIN(RegExp)
+    OBJ_NEW_BEGIN(RegExp, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
         *this = (RegExp){{0}};                                      // Extra braces are required for older gcc versions
@@ -179,18 +179,13 @@ regExpMatchOne(const String *expression, const String *string)
     ASSERT(expression != NULL);
     ASSERT(string != NULL);
 
-    bool result = false;
-    RegExp *regExp = regExpNew(expression);
+    bool result;
 
-    TRY_BEGIN()
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = regExpMatch(regExp, string);
+        result = regExpMatch(regExpNew(expression), string);
     }
-    FINALLY()
-    {
-        regExpFree(regExp);
-    }
-    TRY_END();
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(BOOL, result);
 }

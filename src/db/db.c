@@ -76,7 +76,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const stora
 
     Db *this = NULL;
 
-    OBJ_NEW_BEGIN(Db)
+    OBJ_NEW_BEGIN(Db, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -332,8 +332,8 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
         strNew(),
         "select lsn::text as lsn,\n"
         "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name\n"
-        "  from pg_catalog.pg_start_backup('" PROJECT_NAME " backup started at ' || current_timestamp",
-        strZ(pgWalName(pgVersion)));
+        "  from pg_catalog.pg_%s('" PROJECT_NAME " backup started at ' || current_timestamp",
+        strZ(pgWalName(pgVersion)), pgVersion >= PG_VERSION_15 ? "backup_start" : "start_backup");
 
     // Start backup after immediate checkpoint
     if (startFast)
@@ -345,7 +345,7 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
         strCatZ(result, ", " FALSE_Z);
 
     // Use non-exclusive backup mode when available
-    if (pgVersion >= PG_VERSION_96)
+    if (pgVersion >= PG_VERSION_96 && pgVersion <= PG_VERSION_14)
         strCatZ(result, ", " FALSE_Z);
 
     // Complete query
@@ -491,7 +491,7 @@ dbBackupStopQuery(unsigned int pgVersion)
         "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name",
         strZ(pgWalName(pgVersion)));
 
-    // For PostgreSQL >= 9.6 the backup label and tablespace map are returned from pg_stop_backup
+    // For PostgreSQL >= 9.6 the backup label and tablespace map are returned
     if (pgVersion >= PG_VERSION_96)
     {
         strCatZ(
@@ -502,18 +502,24 @@ dbBackupStopQuery(unsigned int pgVersion)
     }
 
     // Build stop backup function
-    strCatZ(
+    strCatFmt(
         result,
         "\n"
-        "  from pg_catalog.pg_stop_backup(");
+        "  from pg_catalog.pg_%s(",
+        pgVersion >= PG_VERSION_15 ? "backup_stop" : "stop_backup");
 
     // Use non-exclusive backup mode when available
-    if (pgVersion >= PG_VERSION_96)
+    if (pgVersion >= PG_VERSION_96 && pgVersion <= PG_VERSION_14)
         strCatZ(result, FALSE_Z);
 
-    // Disable archive checking in pg_stop_backup() since we do this elsewhere
+    // Disable archive checking since we do this elsewhere
     if (pgVersion >= PG_VERSION_10)
-        strCatZ(result, ", " FALSE_Z);
+    {
+        if (pgVersion <= PG_VERSION_14)
+            strCatZ(result, ", ");
+
+        strCatZ(result, FALSE_Z);
+    }
 
     // Complete query
     strCatZ(result, ")");
@@ -581,7 +587,9 @@ dbList(Db *this)
         PACK,
         dbQuery(
             this, pgClientQueryResultAny,
-            STRDEF("select oid::oid, datname::text, datlastsysoid::oid from pg_catalog.pg_database")));
+            STRDEF(
+                "select oid::oid, datname::text, (select oid::oid from pg_catalog.pg_database where datname = 'template0')"
+                    " as datlastsysoid from pg_catalog.pg_database")));
 }
 
 /**********************************************************************************************************************************/

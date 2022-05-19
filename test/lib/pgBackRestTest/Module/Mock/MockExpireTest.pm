@@ -57,21 +57,16 @@ sub run
         my $strStorage = $rhRun->{storage};
         my $bEncrypt = $rhRun->{encrypt};
 
-        if ($strStorage ne POSIX && ($self->vm() eq VM3))
-        {
-            confess &log("cannot configure non-posix storage for expect log tests");
-        }
-
         ############################################################################################################################
         if ($self->begin("simple, enc ${bEncrypt}, storage ${strStorage}"))
         {
             # Create hosts, file object, and config
             my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-                true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
+                true, {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
-                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self->expect(), $self);
+                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self);
 
             $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 
@@ -159,11 +154,11 @@ sub run
         {
             # Create hosts, file object, and config
             my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-                true, $self->expect(), {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
+                true, {strStorage => $strStorage, bRepoEncrypt => $bEncrypt});
 
             # Create the test object
             my $oExpireTest = new pgBackRestTest::Env::ExpireEnvTest(
-                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self->expect(), $self);
+                $oHostBackup, $self->backrestExe(), storageRepo(), $oHostDbPrimary->dbPath(), $self);
 
             $oExpireTest->stanzaCreate($self->stanza(), PG_VERSION_92);
 

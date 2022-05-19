@@ -138,7 +138,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
     Manifest *result = NULL;
 
-    OBJ_NEW_BEGIN(Manifest)
+    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         result = manifestNewInternal();
         result->pub.info = infoNew(NULL);
@@ -202,7 +202,7 @@ testRun(void)
         TEST_TITLE("compressed encrypted repo file - fail");
 
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1))),
+            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)),
             "acefile", .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpass",
             .comment = "create a compressed encrypted repo file");
 
@@ -1294,7 +1294,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.pgVersion = PG_VERSION_90;
@@ -1316,11 +1316,11 @@ testRun(void)
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             // Give non-systemId to postgres db
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("postgres"), .id = 16385, .lastSystemId = 12168});
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template0"), .id = 12168, .lastSystemId = 12168});
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("user-made-system-db"), .id = 16380, .lastSystemId = 12168});
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF(UTF8_DB_NAME), .id = 16384, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("postgres"), .id = 16385, .lastSystemId = 99999});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template0"), .id = 12168, .lastSystemId = 99999});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 99999});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("user-made-system-db"), .id = 16380, .lastSystemId = 99999});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF(UTF8_DB_NAME), .id = 16384, .lastSystemId = 99999});
             manifestFileAdd(
                 manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/" PG_FILE_PGVERSION)});
             manifestFileAdd(
@@ -1420,7 +1420,7 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 99999});
             manifestFileAdd(
                 manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION)});
         }
@@ -1466,7 +1466,7 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test3"), .id = 65536, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test3"), .id = 65536, .lastSystemId = 99999});
             manifestFileAdd(
                 manifest, &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/16387/PG_9.4_201409291/65536/" PG_FILE_PGVERSION)});
@@ -2026,7 +2026,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2108,26 +2108,26 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
-            strZ(strNewFmt(
-            "P00   WARN: repo1: [FileMissingError] unable to load info file"
-            " '%s/repo/backup/test1/backup.info' or '%s/repo/backup/test1/backup.info.copy':\n"
-            "            FileMissingError: unable to open missing file '%s/repo/backup/test1/backup.info' for read\n"
-            "            FileMissingError: unable to open missing file '%s/repo/backup/test1/backup.info.copy' for read\n"
-            "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "            HINT: has a stanza-create been performed?\n"
-            "P00   INFO: repo2: restore backup set 20161219-212741F\n"
-            "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
-            "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
-            "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100.00%%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44"
-                "\n"
-            "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
-            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = 4B, file total = 1",
-            TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH)));
+            zNewFmt(
+                "P00   WARN: repo1: [FileMissingError] unable to load info file"
+                " '%s/repo/backup/test1/backup.info' or '%s/repo/backup/test1/backup.info.copy':\n"
+                "            FileMissingError: unable to open missing file '%s/repo/backup/test1/backup.info' for read\n"
+                "            FileMissingError: unable to open missing file '%s/repo/backup/test1/backup.info.copy' for read\n"
+                "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
+                "            HINT: has a stanza-create been performed?\n"
+                "P00   INFO: repo2: restore backup set 20161219-212741F\n"
+                "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
+                "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
+                "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
+                "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100.00%%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44"
+                    "\n"
+                "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
+                "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
+                "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
+                "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
+                "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
+                "P00   INFO: restore size = 4B, file total = 1",
+                TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH));
 
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF, .errorOnMissing = true);
@@ -2185,8 +2185,7 @@ testRun(void)
 
         // Change destination of tablespace link
         THROW_ON_SYS_ERROR(
-            symlink("/bogus", strZ(strNewFmt("%s/pg_tblspc/1", strZ(pgPath)))) == -1, FileOpenError,
-            "unable to create symlink");
+            symlink("/bogus", zNewFmt("%s/pg_tblspc/1", strZ(pgPath))) == -1, FileOpenError, "unable to create symlink");
 
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
@@ -2432,7 +2431,7 @@ testRun(void)
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2601,7 +2600,7 @@ testRun(void)
             HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL_INCR "/bundle/2", "aXb");
 
             // system db name
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("template1"), .id = 1, .lastSystemId = 99999});
 
             // base/16384 directory
             manifestPathAdd(
@@ -2632,7 +2631,7 @@ testRun(void)
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/16384/16385", fileBuffer);
 
             // base/32768 directory
-            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 12168});
+            manifestDbAdd(manifest, &(ManifestDb){.name = STRDEF("test2"), .id = 32768, .lastSystemId = 99999});
             manifestPathAdd(
                 manifest,
                 &(ManifestPath){
@@ -2711,8 +2710,7 @@ testRun(void)
             manifestLinkAdd(
                 manifest, &(ManifestLink){.name = name, .destination = destination, .group = groupName(), .user = userName()});
             THROW_ON_SYS_ERROR(
-                symlink("../wal", strZ(strNewFmt("%s/pg_wal", strZ(pgPath)))) == -1, FileOpenError,
-                "unable to create symlink");
+                symlink("../wal", zNewFmt("%s/pg_wal", strZ(pgPath))) == -1, FileOpenError, "unable to create symlink");
 
             // pg_xact path
             manifestPathAdd(
@@ -2765,9 +2763,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), "yyy", "yyy", .modeFile = 0600);
 
         // Add a few bogus links to be deleted
-        THROW_ON_SYS_ERROR(
-            symlink("../wal", strZ(strNewFmt("%s/pg_wal2", strZ(pgPath)))) == -1, FileOpenError,
-            "unable to create symlink");
+        THROW_ON_SYS_ERROR(symlink("../wal", zNewFmt("%s/pg_wal2", strZ(pgPath))) == -1, FileOpenError, "unable to create symlink");
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 

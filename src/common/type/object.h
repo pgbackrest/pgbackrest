@@ -29,8 +29,11 @@ OBJ_NEW_BEGIN(MyObj)
 }
 OBJ_NEW_END();
 ***********************************************************************************************************************************/
-#define OBJ_NEW_BEGIN(type)                                                                                                        \
-    MEM_CONTEXT_NEW_BEGIN(STRINGIFY(type), .allocExtra = sizeof(type))
+#define OBJ_NEW_EXTRA_BEGIN(type, extra, ...)                                                                                      \
+    MEM_CONTEXT_NEW_BEGIN(type, .allocExtra = extra, __VA_ARGS__)
+
+#define OBJ_NEW_BEGIN(type, ...)                                                                                                   \
+    OBJ_NEW_EXTRA_BEGIN(type, sizeof(type), __VA_ARGS__)
 
 #define OBJ_NEW_ALLOC()                                                                                                            \
     memContextAllocExtra(memContextCurrent())
@@ -95,13 +98,6 @@ __attribute__((always_inline)) static inline MemContext *
 objMemContext(void *const this)
 {
     return memContextFromAllocExtra(this);
-}
-
-// Is the object mem context currently being freed?
-__attribute__((always_inline)) static inline bool
-objMemContextFreeing(const void *const this)
-{
-    return memContextFreeing(memContextConstFromAllocExtra(this));
 }
 
 // Move an object to a new context if this != NULL

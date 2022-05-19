@@ -40,8 +40,7 @@ tlsSessionToLog(const THIS_VOID)
     THIS(const TlsSession);
 
     return strNewFmt(
-        "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}",
-        objMemContextFreeing(this) ? NULL_Z : strZ(ioSessionToLog(this->ioSession)), this->timeout,
+        "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}", strZ(ioSessionToLog(this->ioSession)), this->timeout,
         cvtBoolToConstZ(this->shutdownOnClose));
 }
 
@@ -372,7 +371,7 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 
     IoSession *this = NULL;
 
-    OBJ_NEW_BEGIN(TlsSession)
+    OBJ_NEW_BEGIN(TlsSession, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         TlsSession *driver = OBJ_NEW_ALLOC();
 

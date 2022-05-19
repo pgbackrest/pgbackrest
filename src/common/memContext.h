@@ -118,7 +118,7 @@ Note that memory context names are expected to live for the lifetime of the cont
 #define MEM_CONTEXT_NEW_BEGIN(memContextName, ...)                                                                                 \
     do                                                                                                                             \
     {                                                                                                                              \
-        MemContext *MEM_CONTEXT_NEW() = memContextNewP(memContextName, __VA_ARGS__);                                               \
+        MemContext *MEM_CONTEXT_NEW() = memContextNewP(STRINGIFY(memContextName), __VA_ARGS__);                                    \
         memContextSwitch(MEM_CONTEXT_NEW());
 
 #define MEM_CONTEXT_NEW_ALLOC()                                                                                                    \
@@ -150,7 +150,8 @@ MEM_CONTEXT_TEMP_END();
 #define MEM_CONTEXT_TEMP_BEGIN()                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
-        MemContext *MEM_CONTEXT_TEMP() = memContextNewP("temporary");                                                              \
+        MemContext *MEM_CONTEXT_TEMP() = memContextNewP(                                                                           \
+            "temporary", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX);                                        \
         memContextSwitch(MEM_CONTEXT_TEMP());
 
 #define MEM_CONTEXT_TEMP_RESET_BEGIN()                                                                                             \
@@ -166,7 +167,7 @@ MEM_CONTEXT_TEMP_END();
         {                                                                                                                          \
             memContextSwitchBack();                                                                                                \
             memContextDiscard();                                                                                                   \
-            MEM_CONTEXT_TEMP() = memContextNewP("temporary");                                                                      \
+            MEM_CONTEXT_TEMP() = memContextNewP("temporary", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX);    \
             memContextSwitch(MEM_CONTEXT_TEMP());                                                                                  \
             MEM_CONTEXT_TEMP_loopTotal = 0;                                                                                        \
         }                                                                                                                          \
@@ -204,13 +205,31 @@ Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerpl
 typedef struct MemContextNewParam
 {
     VAR_PARAM_HEADER;
+    uint8_t childQty;                                               // How many child contexts can this context have?
+    uint8_t allocQty;                                               // How many allocations can this context have?
+    uint8_t callbackQty;                                            // How many callbacks can this context have?
     uint16_t allocExtra;                                            // Extra memory to allocate with the context
 } MemContextNewParam;
 
-#define memContextNewP(name, ...)                                                                                                  \
-    memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+// Maximum amount of extra memory that can be allocated with the context using allocExtra
+#define MEM_CONTEXT_ALLOC_EXTRA_MAX                                 UINT16_MAX
 
-MemContext *memContextNew(const char *name, MemContextNewParam param);
+// Specify maximum quantity of child contexts or allocations using childQty or allocQty
+#define MEM_CONTEXT_QTY_MAX                                         UINT8_MAX
+
+#ifdef DEBUG
+    #define memContextNewP(name, ...)                                                                                              \
+        memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#else
+    #define memContextNewP(name, ...)                                                                                              \
+        memContextNew((MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#endif
+
+MemContext *memContextNew(
+#ifdef DEBUG
+    const char *name,
+#endif
+    MemContextNewParam param);
 
 // Switch to a context making it the current mem context
 void memContextSwitch(MemContext *this);
@@ -258,18 +277,12 @@ const MemContext *memContextConstFromAllocExtra(const void *allocExtra);
 // Current memory context
 MemContext *memContextCurrent(void);
 
-// Is the mem context currently being freed?
-bool memContextFreeing(const MemContext *this);
-
 // Prior context, i.e. the context that was current before the last memContextSwitch()
 MemContext *memContextPrior(void);
 
 // "top" context.  This context is created at initialization and is always present, i.e. it is never freed.  The top context is a
 // good place to put long-lived mem contexts since they won't be automatically freed until the program exits.
 MemContext *memContextTop(void);
-
-// Mem context name
-const char *memContextName(const MemContext *this);
 
 // Get total size of mem context and all children
 size_t memContextSize(const MemContext *this);

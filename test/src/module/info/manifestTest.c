@@ -949,7 +949,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.backupOptionOnline = true;
@@ -982,7 +982,9 @@ testRun(void)
         TEST_RESULT_BOOL(varBool(manifest->pub.data.backupOptionDelta), true, "check delta");
         TEST_RESULT_UINT(manifest->pub.data.backupOptionCompressType, compressTypeGz, "check compress");
 
-        TEST_RESULT_LOG("P00   WARN: file 'PG_VERSION' has timestamp in the future, enabling delta checksum");
+        TEST_RESULT_LOG(
+            "P00   WARN: file 'PG_VERSION' has timestamp (1482182860) in the future (relative to copy start 1482182859), enabling"
+                " delta checksum");
     }
 
     // *****************************************************************************************************************************
@@ -1033,7 +1035,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -1070,7 +1072,7 @@ testRun(void)
 
         Manifest *manifestPrior = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifestPrior = manifestNewInternal();
             manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");
@@ -1197,7 +1199,9 @@ testRun(void)
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
-        TEST_RESULT_LOG("P00   WARN: file 'FILE1' has timestamp earlier than prior backup, enabling delta checksum");
+        TEST_RESULT_LOG(
+            "P00   WARN: file 'FILE1' has timestamp earlier than prior backup (prior 1482182860, current 1482182859), enabling"
+                " delta checksum");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -1249,7 +1253,9 @@ testRun(void)
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")),
             "incremental manifest");
 
-        TEST_RESULT_LOG("P00   WARN: file 'FILE2' has same timestamp as prior but different size, enabling delta checksum");
+        TEST_RESULT_LOG(
+            "P00   WARN: file 'FILE2' has same timestamp (1482182860) as prior but different size (prior 4, current 6), enabling"
+                " delta checksum");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
@@ -1476,14 +1482,14 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
-            " mail\t={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                              \
-            "#={\"db-id\":16453,\"db-last-system-id\":12168}\n"                                                                    \
-            "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"                                                                    \
-            "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"                                                                    \
-            "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
-            "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
-            "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
-            SHRUG_EMOJI "={\"db-id\":18000,\"db-last-system-id\":12168}\n"
+            " mail\t={\"db-id\":16456,\"db-last-system-id\":99999}\n"                                                              \
+            "#={\"db-id\":16453,\"db-last-system-id\":99999}\n"                                                                    \
+            "=={\"db-id\":16455,\"db-last-system-id\":99999}\n"                                                                    \
+            "[={\"db-id\":16454,\"db-last-system-id\":99999}\n"                                                                    \
+            "postgres={\"db-id\":12173,\"db-last-system-id\":99999}\n"                                                             \
+            "template0={\"db-id\":12168,\"db-last-system-id\":99999}\n"                                                            \
+            "template1={\"db-id\":1,\"db-last-system-id\":99999}\n"                                                                \
+            SHRUG_EMOJI "={\"db-id\":18000,\"db-last-system-id\":99999}\n"
 
         #define TEST_MANIFEST_METADATA                                                                                             \
             "\n"                                                                                                                   \
@@ -1581,11 +1587,11 @@ testRun(void)
                 TEST_MANIFEST_TARGET
                 "\n"
                 "[db]\n"
-                " mail\t={\"db-id\":16456,\"db-last-system-id\":12168}\n"
-                "#={\"db-id\":16453,\"db-last-system-id\":12168}\n"
-                "=={\"db-id\":16455,\"db-last-system-id\":12168}\n"
-                "[={\"db-id\":16454,\"db-last-system-id\":12168}\n"
-                "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"
+                " mail\t={\"db-id\":16456,\"db-last-system-id\":99999}\n"
+                "#={\"db-id\":16453,\"db-last-system-id\":99999}\n"
+                "=={\"db-id\":16455,\"db-last-system-id\":99999}\n"
+                "[={\"db-id\":16454,\"db-last-system-id\":99999}\n"
+                "postgres={\"db-id\":12173,\"db-last-system-id\":99999}\n"
                 TEST_MANIFEST_FILE
                 TEST_MANIFEST_FILE_DEFAULT
                 TEST_MANIFEST_LINK
@@ -1641,19 +1647,19 @@ testRun(void)
         pckWriteArrayBeginP(dbList);
         pckWriteU32P(dbList, 12168);
         pckWriteStrP(dbList, STRDEF("template0"));
-        pckWriteU32P(dbList, 12168);
+        pckWriteU32P(dbList, 99999);
         pckWriteArrayEndP(dbList);
 
         pckWriteArrayBeginP(dbList);
         pckWriteU32P(dbList, 1);
         pckWriteStrP(dbList, STRDEF("template1"));
-        pckWriteU32P(dbList, 12168);
+        pckWriteU32P(dbList, 99999);
         pckWriteArrayEndP(dbList);
 
         pckWriteArrayBeginP(dbList);
         pckWriteU32P(dbList, 18000);
         pckWriteStrP(dbList, STRDEF(SHRUG_EMOJI));
-        pckWriteU32P(dbList, 12168);
+        pckWriteU32P(dbList, 99999);
         pckWriteArrayEndP(dbList);
 
         pckWriteEndP(dbList);

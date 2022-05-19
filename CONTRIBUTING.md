@@ -339,7 +339,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u20-base-20210930A image (7ffb73ceb9a2e3aad2cba7eb5c8e28fc3982db18) ...
+    P00   INFO: Using cached pgbackrest/test:u20-base-20220504A image (45b0905785dfd06c867b4067563171970c7581c5) ...
     P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
@@ -706,6 +706,8 @@ When submitting a Pull Request:
 - Provide a short submission title.
 
 - Write a detailed comment to describe the purpose of your submission and any issue(s), if any, it is resolving; a link to the GitHub issue is also helpful.
+
+- Select the `integration` branch as the base for your PR, do not select `main` nor any other branch.
 
 After submitting a Pull Request:
 

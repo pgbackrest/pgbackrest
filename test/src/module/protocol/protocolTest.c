@@ -281,7 +281,7 @@ testRun(void)
 
         IoWrite *write = ioFdWriteNewOpen(STRDEF("invalid"), 0, 0);
 
-        OBJ_NEW_BEGIN(ProtocolClient)
+        OBJ_NEW_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
             *protocolHelperClient.client = (ProtocolClient){
@@ -290,7 +290,7 @@ testRun(void)
         }
         OBJ_NEW_END();
 
-        OBJ_NEW_BEGIN(Exec)
+        OBJ_NEW_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
             *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};
@@ -986,9 +986,9 @@ testRun(void)
                         protocolClientNew(
                             strNewFmt("local client %u", clientIdx), STRDEF("test"), HRN_FORK_PARENT_READ(clientIdx),
                             HRN_FORK_PARENT_WRITE(clientIdx)),
-                        strZ(strNewFmt("local client %u new", clientIdx)));
+                        zNewFmt("local client %u new", clientIdx));
                     TEST_RESULT_VOID(
-                        protocolParallelClientAdd(parallel, client[clientIdx]), strZ(strNewFmt("local client %u add", clientIdx)));
+                        protocolParallelClientAdd(parallel, client[clientIdx]), zNewFmt("local client %u add", clientIdx));
                 }
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -1104,7 +1104,7 @@ testRun(void)
                 TEST_TITLE("free clients");
 
                 for (unsigned int clientIdx = 0; clientIdx < HRN_FORK_PROCESS_TOTAL(); clientIdx++)
-                    TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), strZ(strNewFmt("free client %u", clientIdx)));
+                    TEST_RESULT_VOID(protocolClientFree(client[clientIdx]), zNewFmt("free client %u", clientIdx));
             }
             HRN_FORK_PARENT_END();
         }

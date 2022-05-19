@@ -48,8 +48,7 @@ tlsClientToLog(const THIS_VOID)
 
     return strNewFmt(
         "{ioClient: %s, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 ", verifyPeer: %s}",
-        objMemContextFreeing(this) ? NULL_Z : strZ(ioClientToLog(this->ioClient)), this->timeoutConnect, this->timeoutSession,
-        cvtBoolToConstZ(this->verifyPeer));
+        strZ(ioClientToLog(this->ioClient)), this->timeoutConnect, this->timeoutSession, cvtBoolToConstZ(this->verifyPeer));
 }
 
 #define FUNCTION_LOG_TLS_CLIENT_TYPE                                                                                               \
@@ -366,7 +365,7 @@ tlsClientNew(
 
     IoClient *this = NULL;
 
-    OBJ_NEW_BEGIN(TlsClient)
+    OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         TlsClient *driver = OBJ_NEW_ALLOC();
 

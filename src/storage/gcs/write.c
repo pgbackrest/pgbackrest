@@ -195,7 +195,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
             strNewFmt(
                 HTTP_HEADER_CONTENT_RANGE_BYTES " %" PRIu64 "-%" PRIu64 "/%s", this->uploadTotal,
                 this->uploadTotal + bufUsed(this->chunkBuffer) - 1,
-                done ? strZ(strNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer))) : "*"));
+                done ? zNewFmt("%" PRIu64, this->uploadTotal + bufUsed(this->chunkBuffer)) : "*"));
 
         httpQueryAdd(query, GCS_QUERY_UPLOAD_ID_STR, this->uploadId);
 
@@ -333,7 +333,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
     StorageWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteGcs)
+    OBJ_NEW_BEGIN(StorageWriteGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageWriteGcs *driver = OBJ_NEW_ALLOC();
 

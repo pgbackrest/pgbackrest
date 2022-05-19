@@ -358,7 +358,7 @@ testRun(void)
             "text - multi-repo, single stanza, one wal segment");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("coverage for stanzaStatus branches");
+        TEST_TITLE("coverage for stanzaStatus branches && percent complete null");
 
         // Db1 and Db3 (from above) have same system-id and db-version so consider them the same for WAL reporting
         HRN_STORAGE_PUT_EMPTY(
@@ -424,6 +424,7 @@ testRun(void)
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza1"), STRDEF("777-afafafaf"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
+                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -617,7 +618,7 @@ testRun(void)
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("mixed multi-repo");
+        TEST_TITLE("mixed multi-repo, percent complete non-null");
 
         HRN_INFO_PUT(
             storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE,
@@ -743,10 +744,10 @@ testRun(void)
         #define TEST_MANIFEST_DB                                                                                                   \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
-            "mail={\"db-id\":16456,\"db-last-system-id\":12168}\n"                                                                 \
-            "postgres={\"db-id\":12173,\"db-last-system-id\":12168}\n"                                                             \
-            "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
-            "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
+            "mail={\"db-id\":16456,\"db-last-system-id\":99999}\n"                                                                 \
+            "postgres={\"db-id\":12173,\"db-last-system-id\":99999}\n"                                                             \
+            "template0={\"db-id\":12168,\"db-last-system-id\":99999}\n"                                                            \
+            "template1={\"db-id\":1,\"db-last-system-id\":99999}\n"                                                                \
 
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
@@ -1018,6 +1019,7 @@ testRun(void)
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
+                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(4545)), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1457,6 +1459,7 @@ testRun(void)
                 TEST_RESULT_INT_NE(
                     lockAcquire(cfgOptionStr(cfgOptLockPath), STRDEF("stanza2"), STRDEF("999-ffffffff"), lockTypeBackup, 0, true),
                     -1, "create backup/expire lock");
+                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(5555)), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1529,7 +1532,7 @@ testRun(void)
                     "            backup reference list: 20201116-155000F\n"
                     "\n"
                     "stanza: stanza2\n"
-                    "    status: mixed (backup/expire running)\n"
+                    "    status: mixed (backup/expire running - 55.55% complete)\n"
                     "        repo1: error (no valid backups)\n"
                     "        repo2: error (missing stanza path)\n"
                     "    cipher: mixed\n"
@@ -1775,8 +1778,8 @@ testRun(void)
         #define TEST_MANIFEST_NO_DB                                                                                                \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
-            "template0={\"db-id\":12168,\"db-last-system-id\":12168}\n"                                                            \
-            "template1={\"db-id\":1,\"db-last-system-id\":12168}\n"                                                                \
+            "template0={\"db-id\":12168,\"db-last-system-id\":99999}\n"                                                            \
+            "template1={\"db-id\":1,\"db-last-system-id\":99999}\n"                                                                \
 
         #define TEST_MANIFEST_FILE_NO_CHECKSUM_ERROR                                                                               \
         "\n"                                                                                                                       \

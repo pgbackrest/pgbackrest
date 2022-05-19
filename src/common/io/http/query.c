@@ -27,7 +27,7 @@ httpQueryNew(HttpQueryNewParam param)
 
     HttpQuery *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpQuery)
+    OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         // Allocate state and set context
         this = OBJ_NEW_ALLOC();
@@ -55,7 +55,7 @@ httpQueryNewStr(const String *query)
 
     HttpQuery *this = NULL;
 
-    OBJ_NEW_BEGIN(HttpQuery)
+    OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -67,16 +67,16 @@ httpQueryNewStr(const String *query)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Remove initial ? when present
-            if (strBeginsWithZ(query, QUESTION_Z))
+            if (strBeginsWithZ(query, "?"))
                 query = strSub(query, 1);
 
             // Split query into individual key value pairs
-            StringList *keyValueList = strLstNewSplitZ(query, AMPERSAND_Z);
+            StringList *keyValueList = strLstNewSplitZ(query, "&");
 
             for (unsigned int keyValueIdx = 0; keyValueIdx < strLstSize(keyValueList); keyValueIdx++)
             {
                 // Add each key/value pair
-                StringList *keyValue = strLstNewSplitZ(strLstGet(keyValueList, keyValueIdx), EQ_Z);
+                StringList *keyValue = strLstNewSplitZ(strLstGet(keyValueList, keyValueIdx), "=");
 
                 if (strLstSize(keyValue) != 2)
                 {
@@ -108,7 +108,7 @@ httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
 
     if (query != NULL)
     {
-        OBJ_NEW_BEGIN(HttpQuery)
+        OBJ_NEW_BEGIN(HttpQuery, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             // Allocate state and set context
             this = OBJ_NEW_ALLOC();

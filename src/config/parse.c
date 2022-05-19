@@ -436,18 +436,17 @@ cfgParseCommandRoleStr(const ConfigCommandRole commandRole)
 
 /**********************************************************************************************************************************/
 String *
-cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole commandRoleId, const String *const separator)
+cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole commandRoleId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
         FUNCTION_TEST_PARAM(ENUM, commandRoleId);
-        FUNCTION_TEST_PARAM(STRING, separator);
     FUNCTION_TEST_END();
 
-    String *result = strCatZ(strNew(), cfgParseCommandName(commandId));
+    String *const result = strCatZ(strNew(), cfgParseCommandName(commandId));
 
     if (commandRoleId != cfgCmdRoleMain)
-        strCatFmt(result, "%s%s", strZ(separator), strZ(cfgParseCommandRoleStr(commandRoleId)));
+        strCatFmt(result, ":%s", strZ(cfgParseCommandRoleStr(commandRoleId)));
 
     FUNCTION_TEST_RETURN(STRING, result);
 }
@@ -1381,7 +1380,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
         // Create the config struct
         Config *config;
 
-        OBJ_NEW_BEGIN(Config)
+        OBJ_NEW_BEGIN(Config, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
         {
             config = OBJ_NEW_ALLOC();
 
@@ -1569,7 +1568,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     // If not successful then a command role may be appended
                     if (config->command == cfgCmdNone)
                     {
-                        const StringList *commandPart = strLstNewSplit(STR(arg), COLON_STR);
+                        const StringList *commandPart = strLstNewSplitZ(STR(arg), ":");
 
                         if (strLstSize(commandPart) == 2)
                         {
@@ -2110,13 +2109,9 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 }
                             }
 
-                            THROW(
-                                OptionInvalidError,
-                                strZ(
-                                    strNewFmt(
-                                        "option '%s' not valid without option '%s'%s",
-                                        cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(dependOptionName),
-                                        strZ(errorValue))));
+                            THROW_FMT(
+                                OptionInvalidError, "option '%s' not valid without option '%s'%s",
+                                cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(dependOptionName), strZ(errorValue));
                         }
 
                         pckReadFree(filter);

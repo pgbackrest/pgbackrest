@@ -173,6 +173,9 @@ main(int argListSize, const char *argList[])
                         cfgLoadLogFile();
                         cmdBegin();
 
+                        // Null out any backup percent complete value in the backup lock file
+                        lockWriteDataP(lockTypeBackup);
+
                         // Run expire
                         cmdExpire();
                     }

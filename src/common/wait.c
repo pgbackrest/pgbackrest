@@ -32,7 +32,7 @@ waitNew(TimeMSec waitTime)
     // Allocate wait object
     Wait *this = NULL;
 
-    OBJ_NEW_BEGIN(Wait)
+    OBJ_NEW_BEGIN(Wait, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         // Create object
         this = OBJ_NEW_ALLOC();
