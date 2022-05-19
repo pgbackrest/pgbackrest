@@ -806,6 +806,19 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("BlockMap"))
+    {
+        TEST_TITLE("build map");
+
+        BlockMap *blockMap = NULL;
+        TEST_ASSIGN(blockMap, blockMapNew(), "new");
+
+        BlockMapItem blockMapItem1 = {.reference = 333};
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem1)->reference, 333, "add");
+        TEST_RESULT_UINT(blockMapGet(blockMap, 0)->reference, 333, "get");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("backupFile()"))
     {
         const String *pgFile = STRDEF("testfile");
