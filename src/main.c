@@ -134,6 +134,12 @@ main(int argListSize, const char *argList[])
         {
             switch (cfgCommand())
             {
+                // Annotate command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdAnnotate:
+                    cmdAnnotate();
+                    break;
+
                 // Archive get command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdArchiveGet:
@@ -182,12 +188,6 @@ main(int argListSize, const char *argList[])
 
                     break;
                 }
-
-                // Annotate command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdAnnotate:
-                    cmdAnnotate();
-                    break;
 
                 // Check command
                 // -----------------------------------------------------------------------------------------------------------------
