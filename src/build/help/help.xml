@@ -1038,18 +1038,6 @@
                 </text>
 
                 <config-key-list>
-                    <config-key id="archive-check" name="Check Archive">
-                        <summary>Check that WAL segments are in the archive before backup completes.</summary>
-
-                        <text>
-                            <p>Checks that all WAL segments required to make the backup consistent are present in the WAL archive. It's a good idea to leave this as the default unless you are using another method for archiving.</p>
-
-                            <p>This option must be enabled if <br-option>archive-copy</br-option> is enabled.</p>
-                        </text>
-
-                        <example>n</example>
-                    </config-key>
-
                     <config-key id="annotation" name="Backup annotation(s)">
                         <summary>Annotate the backup with user-defined key and value pairs.</summary>
 
@@ -1060,6 +1048,18 @@
                         </text>
 
                         <example>source="Sunday backup for website database"</example>
+                    </config-key>
+
+                    <config-key id="archive-check" name="Check Archive">
+                        <summary>Check that WAL segments are in the archive before backup completes.</summary>
+
+                        <text>
+                            <p>Checks that all WAL segments required to make the backup consistent are present in the WAL archive. It's a good idea to leave this as the default unless you are using another method for archiving.</p>
+
+                            <p>This option must be enabled if <br-option>archive-copy</br-option> is enabled.</p>
+                        </text>
+
+                        <example>n</example>
                     </config-key>
 
                     <config-key id="archive-copy" name="Copy Archive">
