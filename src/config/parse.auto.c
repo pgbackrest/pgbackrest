@@ -331,7 +331,9 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND                                                                                               // cmd/annotate
     (                                                                                                                // cmd/annotate
         PARSE_RULE_COMMAND_NAME("annotate"),                                                                         // cmd/annotate
-        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeNone),                                                                  // cmd/annotate
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),                                                                      // cmd/annotate
+        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),                                                               // cmd/annotate
+        PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeBackup),                                                                // cmd/annotate
         PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),                                                          // cmd/annotate
                                                                                                                      // cmd/annotate
         PARSE_RULE_COMMAND_ROLE_VALID_LIST                                                                           // cmd/annotate
@@ -689,11 +691,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                          // opt/annotation
             PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                              // opt/annotation
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/annotation
-        ),                                                                                                         // opt/annotation
-                                                                                                                   // opt/annotation
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/annotation
-        (                                                                                                          // opt/annotation
-            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                              // opt/annotation
         ),                                                                                                         // opt/annotation
                                                                                                                    // opt/annotation
         PARSE_RULE_OPTIONAL                                                                                        // opt/annotation

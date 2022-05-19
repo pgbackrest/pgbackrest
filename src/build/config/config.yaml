@@ -34,7 +34,9 @@ command:
   annotate:
     command-role:
       remote: {}
-    internal: true
+    lock-remote-required: true
+    lock-required: true
+    lock-type: backup
     log-file: false
 
   archive-get:
@@ -1102,9 +1104,6 @@ option:
     required: false
     command:
       annotate:
-        command-role:
-          main: {}
-          remote: {}
         required: true
       backup: {}
     command-role:
