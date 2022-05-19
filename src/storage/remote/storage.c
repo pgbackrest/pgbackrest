@@ -451,7 +451,7 @@ storageRemoteNew(
 
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageRemote)
+    OBJ_NEW_BEGIN(StorageRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageRemote *driver = OBJ_NEW_ALLOC();
 

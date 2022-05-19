@@ -421,7 +421,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     // Allocate memory to hold process state
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(CipherBlock)
+    OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         CipherBlock *driver = OBJ_NEW_ALLOC();
 

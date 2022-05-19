@@ -211,7 +211,7 @@ storageWriteRemoteNew(
 
     StorageWriteRemote *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteRemote)
+    OBJ_NEW_BEGIN(StorageWriteRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 

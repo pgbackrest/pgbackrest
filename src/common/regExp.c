@@ -74,7 +74,7 @@ regExpNew(const String *expression)
 
     RegExp *this = NULL;
 
-    OBJ_NEW_BEGIN(RegExp)
+    OBJ_NEW_BEGIN(RegExp, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
         *this = (RegExp){{0}};                                      // Extra braces are required for older gcc versions

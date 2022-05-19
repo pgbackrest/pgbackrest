@@ -49,7 +49,7 @@ testObjectNew(void)
 {
     TestObject *this = NULL;
 
-    OBJ_NEW_BEGIN(STRINGIFY(TestObject))
+    OBJ_NEW_BEGIN(TestObject)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -69,7 +69,7 @@ testObjectContextNew(void)
 {
     TestObjectContext *this = NULL;
 
-    OBJ_NEW_BEGIN(STRINGIFY(TestObjectContext))
+    OBJ_NEW_BEGIN(TestObjectContext)
     {
         this = OBJ_NEW_ALLOC();
 

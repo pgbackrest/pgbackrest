@@ -30,7 +30,7 @@ protocolCommandNew(const StringId command)
 
     ProtocolCommand *this = NULL;
 
-    OBJ_NEW_BEGIN(ProtocolCommand)
+    OBJ_NEW_BEGIN(ProtocolCommand, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = OBJ_NEW_ALLOC();
 

@@ -35,7 +35,7 @@ lstNew(size_t itemSize, ListParam param)
 
     List *this = NULL;
 
-    OBJ_NEW_BEGIN(List)
+    OBJ_NEW_BEGIN(List, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         // Create object
         this = OBJ_NEW_ALLOC();
