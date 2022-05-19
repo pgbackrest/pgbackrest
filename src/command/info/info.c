@@ -964,24 +964,22 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         // Annotations metadata
         if (kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR) != NULL)
         {
-            const KeyValue *annotationKv = varKv(kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR));
-            const StringList *annotationKeyList = strLstNewVarLst(kvKeyList(annotationKv));
-            String *annotationStr = strNew();
+            const KeyValue *const annotationKv = varKv(kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR));
+            const StringList *const annotationKeyList = strLstNewVarLst(kvKeyList(annotationKv));
+            String *const annotationStr = strNew();
 
             for (unsigned int keyIdx = 0; keyIdx < strLstSize(annotationKeyList); keyIdx++)
             {
-                String *key = strLstGet(annotationKeyList, keyIdx);
-                const String *value = varStr(kvGet(annotationKv, VARSTR(key)));
+                const String *const key = strLstGet(annotationKeyList, keyIdx);
+                const String *const value = varStr(kvGet(annotationKv, VARSTR(key)));
+
                 if (value != NULL)
-                    strCatZ(annotationStr, strZ(strNewFmt("                %s: %s\n", strZ(key), strZ(value))));
+                    strCatFmt(annotationStr, "                %s: %s\n", strZ(key), strZ(value));
             }
 
             // Only output annotation section if at least one not NULL value has been found
             if (!strEmpty(annotationStr))
-            {
-                strCatZ(resultStr, "            annotation(s)\n");
-                strCat(resultStr, annotationStr);
-            }
+                strCatFmt(resultStr, "            annotation(s)\n%s", strZ(annotationStr));
         }
     }
 

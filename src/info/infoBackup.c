@@ -486,15 +486,16 @@ infoBackupDataAnnotationSet(const InfoBackup *this, const String *const backupLa
         InfoBackupData *infoBackupData = lstFind(this->pub.backup, &backupLabel);
 
         KeyValue *tmpAnnotationKv = kvNew();
+
         if (infoBackupData->backupAnnotation != NULL)
             tmpAnnotationKv = varKv(infoBackupData->backupAnnotation);
 
-        const VariantList *annotationKeyList = kvKeyList(annotationKv);
+        const VariantList *const annotationKeyList = kvKeyList(annotationKv);
 
         for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
         {
-            const Variant *key = varLstGet(annotationKeyList, keyIdx);
-            const Variant *value = kvGet(annotationKv, key);
+            const Variant *const key = varLstGet(annotationKeyList, keyIdx);
+            const Variant *const value = kvGet(annotationKv, key);
 
             // Skip empty values
             if (!strEmpty(varStr(value)))
@@ -503,9 +504,7 @@ infoBackupDataAnnotationSet(const InfoBackup *this, const String *const backupLa
             }
             // Remove existing key if value is empty
             else if (kvKeyExists(tmpAnnotationKv, key))
-            {
                 kvRemove(tmpAnnotationKv, key);
-            }
         }
 
         infoBackupData->backupAnnotation = varNewKv(tmpAnnotationKv);

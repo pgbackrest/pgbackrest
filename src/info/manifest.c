@@ -2994,7 +2994,7 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 Getters/Setters
 ***********************************************************************************************************************************/
 void
-manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
+manifestAnnotationSet(Manifest *const this, const KeyValue *const annotationKv)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3002,22 +3002,21 @@ manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(annotationKv != NULL);
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
-        KeyValue *tmpAnnotationKv = kvNew();
-        const VariantList *annotationKeyList = kvKeyList(annotationKv);
+        KeyValue *const tmpAnnotationKv = kvNew();
+        const VariantList *const annotationKeyList = kvKeyList(annotationKv);
 
         for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
         {
-            const Variant *key = varLstGet(annotationKeyList, keyIdx);
-            const Variant *value = kvGet(annotationKv, key);
+            const Variant *const key = varLstGet(annotationKeyList, keyIdx);
+            const Variant *const value = kvGet(annotationKv, key);
 
             // Skip empty values
             if (!strEmpty(varStr(value)))
-            {
                 kvPut(tmpAnnotationKv, key, value);
-            }
         }
 
         // Save annotations

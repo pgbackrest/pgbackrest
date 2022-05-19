@@ -52,6 +52,7 @@ testRun(void)
         "    pgbackrest [options] [command]\n"
         "\n"
         "Commands:\n"
+        "    annotate        Add or modify backup annotation.\n"
         "    archive-get     Get a WAL segment from the archive.\n"
         "    archive-push    Push a WAL segment to the archive.\n"
         "    backup          Backup a database cluster.\n"
