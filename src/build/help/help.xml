@@ -1784,6 +1784,26 @@
         </operation-general>
 
         <command-list title="Commands">
+            <command id="annotate" name="Annotate">
+                <summary>Add or modify backup annotation(s).</summary>
+
+                <text>
+                    <p>Annotations can be generated with the <cmd>backup</cmd> command and added, modified or removed afterwards using the <cmd>annotate</cmd> command.</p>
+                </text>
+
+                <option-list>
+                    <option id="set" name="Set">
+                        <summary>Backup set to annotate.</summary>
+
+                        <text>
+                            <p>The backup set to annotate.</p>
+                        </text>
+
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
+            </command>
+
             <command id="backup" name="Backup">
                 <summary>Backup a database cluster.</summary>
 
@@ -2391,28 +2411,6 @@
                         </text>
 
                         <example>n</example>
-                    </option>
-                </option-list>
-            </command>
-
-            <!-- =============================================================================================================== -->
-            <command id="annotate" name="Annotate">
-                <summary>Add or modify backup annotation(s).</summary>
-
-                <text>
-                    <p>Annotations can be generated with the <cmd>backup</cmd> command and added, modified or removed afterwards using the <cmd>annotate</cmd> command.</p>
-                </text>
-
-                <option-list>
-                    <!-- ======================================================================================================= -->
-                    <option id="set" name="Set">
-                        <summary>Backup set to annotate.</summary>
-
-                        <text>
-                            <p>The backup set to annotate.</p>
-                        </text>
-
-                        <example>20150131-153358F_20150131-153401I</example>
                     </option>
                 </option-list>
             </command>
