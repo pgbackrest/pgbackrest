@@ -1039,12 +1039,12 @@
 
                 <config-key-list>
                     <config-key id="annotation" name="Backup annotation(s)">
-                        <summary>Annotate the backup with user-defined key and value pairs.</summary>
+                        <summary>Annotate backup with user-defined key/value pairs.</summary>
 
                         <text>
                             <p>Users can attach informative key/value pairs to the backup. This option can be used multiple times to attach multiple annotations.</p>
 
-                            <p>Those annotations will then be showed by the <cmd>info</cmd> command when a specific backup <br-option>set</br-option> is specified.</p>
+                            <p>Annotations are output by the <cmd>info</cmd> command when a backup is specified with <br-option>--set</br-option>.</p>
                         </text>
 
                         <example>source="Sunday backup for website database"</example>
@@ -1785,10 +1785,10 @@
 
         <command-list title="Commands">
             <command id="annotate" name="Annotate">
-                <summary>Add or modify backup annotation(s).</summary>
+                <summary>Add or modify backup annotation.</summary>
 
                 <text>
-                    <p>Annotations can be generated with the <cmd>backup</cmd> command and added, modified or removed afterwards using the <cmd>annotate</cmd> command.</p>
+                    <p>Annotations included with the <cmd>backup</cmd> command can be added, modified, or removed afterwards using the <cmd>annotate</cmd> command.</p>
                 </text>
 
                 <option-list>
