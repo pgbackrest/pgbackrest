@@ -99,8 +99,12 @@ sub new
 
             if (!defined($$oParam{bStandby}) || !$$oParam{bStandby})
             {
-                &log(WARN, "Testing against ${strDbVersionActual} ${strDevVersion} version");
+                &log(WARN, 'Testing against ' . trim($strOutLog) . " ${strDevVersion}");
             }
+        }
+        elsif (!defined($$oParam{bStandby}) || !$$oParam{bStandby})
+        {
+            &log(INFO, 'Testing against ' . trim($strOutLog));
         }
 
         # Don't run unit tests for unsupported versions
