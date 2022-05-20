@@ -41,6 +41,9 @@ blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
     return (BlockMapItem *)lstAdd((List *const)this, item);
 }
 
+// Save map to a buffer
+uint64_t blockMapSave(const BlockMap *this, Buffer *output);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/

@@ -813,9 +813,32 @@ testRun(void)
         BlockMap *blockMap = NULL;
         TEST_ASSIGN(blockMap, blockMapNew(), "new");
 
-        BlockMapItem blockMapItem1 = {.reference = 333};
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem1)->reference, 333, "add");
-        TEST_RESULT_UINT(blockMapGet(blockMap, 0)->reference, 333, "get");
+        BlockMapItem blockMapItem1 = {
+            .reference = 128, .checksum = {128, 15, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}};
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem1)->reference, 128, "add");
+        TEST_RESULT_UINT(blockMapGet(blockMap, 0)->reference, 128, "get");
+
+        BlockMapItem blockMapItem2 = {
+            .reference = blockMapItem1.reference, .bundleId = blockMapItem1.bundleId, .offset = blockMapItem1.offset + 128,
+            .checksum = {129, 15, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}};
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem2)->reference, blockMapItem2.reference, "add");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("save map");
+
+        Buffer *buffer = bufNew(0);
+        TEST_RESULT_UINT(blockMapSave(blockMap, buffer), 48, "save");
+        TEST_RESULT_STR_Z(
+            bufHex(buffer),
+            "8001"                                      // reference 128
+            "00"                                        // bundle id 0
+            "00"                                        // offset 0
+            "800f0e0d0c0b0a0908070708090a0b0c0d0e0f10"  // checksum
+
+            "8001"                                      // reference 128
+            "8001"                                      // rolling offset 128
+            "810f0e0d0c0b0a0908070708090a0b0c0d0e0f10", // checksum
+            "compare");
     }
 
     // *****************************************************************************************************************************
