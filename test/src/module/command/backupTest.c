@@ -814,13 +814,13 @@ testRun(void)
         TEST_ASSIGN(blockMap, blockMapNew(), "new");
 
         BlockMapItem blockMapItem1 = {
-            .reference = 128, .checksum = {128, 15, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}};
+            .reference = 128, .checksum = {255, 128, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem1)->reference, 128, "add");
         TEST_RESULT_UINT(blockMapGet(blockMap, 0)->reference, 128, "get");
 
         BlockMapItem blockMapItem2 = {
-            .reference = blockMapItem1.reference, .bundleId = blockMapItem1.bundleId, .offset = blockMapItem1.offset + 128,
-            .checksum = {129, 15, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}};
+            .reference = blockMapItem1.reference, .bundleId = blockMapItem1.bundleId, .offset = blockMapItem1.offset + 129,
+            .checksum = {255, 129, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem2)->reference, blockMapItem2.reference, "add");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -833,11 +833,11 @@ testRun(void)
             "8001"                                      // reference 128
             "00"                                        // bundle id 0
             "00"                                        // offset 0
-            "800f0e0d0c0b0a0908070708090a0b0c0d0e0f10"  // checksum
+            "ff800e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
 
             "8001"                                      // reference 128
-            "8001"                                      // rolling offset 128
-            "810f0e0d0c0b0a0908070708090a0b0c0d0e0f10", // checksum
+            "8101"                                      // rolling offset 129
+            "ff810e0d0c0b0a0908070708090a0b0c0d0effff", // checksum
             "compare");
     }
 
