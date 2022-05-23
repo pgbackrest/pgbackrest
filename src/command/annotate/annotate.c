@@ -44,8 +44,9 @@ cmdAnnotate(void)
         if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
             THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(backupLabel));
 
-        // Track the number of backup sets to update in the backup info file
+        // Track the number of backup sets to update in the backup info file and any errors that may occur
         unsigned int backupTotalProcessed = 0;
+        unsigned int errorTotal = 0;
 
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
@@ -75,12 +76,17 @@ cmdAnnotate(void)
                         cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
                 }
             }
-            CATCH(FileMissingError)
+            CATCH_ANY()
             {
-                THROW_FMT(FileMissingError, "%s", errorMessage());
+                LOG_ERROR_FMT(errorTypeCode(errorType()), "%s: %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorMessage());
+                errorTotal++;
             }
             TRY_END();
         }
+
+        // Error if any errors encountered on one or more repos
+        if (errorTotal > 0)
+            THROW_FMT(CommandError, CFGCMD_ANNOTATE " command encountered %u error(s), check the log file for details", errorTotal);
 
         if (backupTotalProcessed == 0)
             THROW(BackupSetInvalidError, "no backup set to annotate found");

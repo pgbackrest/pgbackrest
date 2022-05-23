@@ -33,13 +33,16 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdAnnotate, argListAnnotation);
 
         TEST_ERROR(
-            cmdAnnotate(), FileMissingError,
-            "unable to load info file '" TEST_PATH "/repo/backup/stanza1/backup.info' or"
+            cmdAnnotate(), CommandError, CFGCMD_ANNOTATE " command encountered 1 error(s), check the log file for details");
+
+        TEST_RESULT_LOG(
+            "P00  ERROR: [055]: repo1: unable to load info file '" TEST_PATH "/repo/backup/stanza1/backup.info' or"
             " '" TEST_PATH "/repo/backup/stanza1/backup.info.copy':\n"
-            "FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza1/backup.info' for read\n"
-            "FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza1/backup.info.copy' for read\n"
-            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-            "HINT: has a stanza-create been performed?");
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza1/backup.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH
+            "/repo/backup/stanza1/backup.info.copy' for read\n"
+            "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "            HINT: has a stanza-create been performed?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("annotate backup success");
