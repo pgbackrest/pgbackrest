@@ -201,9 +201,6 @@ manifestData(const Manifest *const this)
     return &(THIS_PUB(Manifest)->data);
 }
 
-// Set annotations
-void manifestAnnotationSet(Manifest *this, const KeyValue *annotationKv);
-
 // Set backup label
 void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 
@@ -221,7 +218,8 @@ void manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
     bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby,
+    const KeyValue *annotationKv);
 
 /***********************************************************************************************************************************
 Functions

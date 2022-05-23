@@ -1600,11 +1600,6 @@ testRun(void)
                 TEST_MANIFEST_PATH_DEFAULT))),
             "load manifest");
 
-        KeyValue *annotationKV = kvNew();
-        kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
-        kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
-        kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
-        TEST_RESULT_VOID(manifestAnnotationSet(manifest, annotationKV), "annotation set");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1638,7 +1633,7 @@ testRun(void)
         TEST_TITLE("manifest complete");
 
         TEST_RESULT_VOID(
-            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
+            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, NULL),
             "manifest complete without db");
 
         // Create db list
@@ -1664,11 +1659,16 @@ testRun(void)
 
         pckWriteEndP(dbList);
 
+        KeyValue *annotationKV = kvNew();
+        kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
+        kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
+        kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
+
         TEST_RESULT_VOID(
             manifestBuildComplete(
                 manifest, 1565282140, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142,
                 STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, pckWriteResult(dbList),
-                true, true, 16384, 3, 6, true, 32, false),
+                true, true, 16384, 3, 6, true, 32, false, annotationKV),
             "manifest complete with db");
 
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data")), NULL, "check pg_data path");

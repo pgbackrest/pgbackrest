@@ -2253,10 +2253,6 @@ cmdBackup(void)
                     (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
         }
 
-        // Set annotations in the manifest
-        if (cfgOptionTest(cfgOptAnnotation))
-            manifestAnnotationSet(manifest, cfgOptionKv(cfgOptAnnotation));
-
         // Save the manifest before processing starts
         backupManifestSaveCopy(manifest, cipherPassBackup);
 
@@ -2282,7 +2278,8 @@ cmdBackup(void)
             backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
             cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
-            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
+            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby),
+            cfgOptionTest(cfgOptAnnotation) ? cfgOptionKv(cfgOptAnnotation) : NULL);
 
         // The primary db object won't be used anymore so free it
         dbFree(backupData->dbPrimary);
