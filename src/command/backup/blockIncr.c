@@ -20,14 +20,20 @@ typedef struct BlockIncr
 {
     MemContext *memContext;                                         // Mem context of filter
 
-    unsigned int blockNo;                                           // Block number
+    unsigned int reference;                                         // Current backup reference
+    uint64_t bundleId;                                              // Bundle id
+
     size_t inputOffset;                                             // Input offset
+
+    unsigned int blockNo;                                           // Block number
+    size_t blockOffset;                                             // Block offset
     size_t blockSize;                                               // Block size
     Buffer *block;                                                  // Block buffer
 
     Buffer *blockOut;                                               // Block output buffer
     size_t blockOutOffset;                                          // Block output offset (already copied to output buffer)
 
+    const BlockMap *blockMapIn;                                     // Input block map
     BlockMap *blockMapOut;                                          // Output block map
     uint64_t blockMapOutSize;                                       // Output block map size (if any)
 
@@ -102,6 +108,7 @@ For manifest:
         // If all input can be copied
         if (bufUsed(input) - this->inputOffset <= bufRemains(this->block))
         {
+            // fprintf(stdout, "!!!WRITE ALL %zu", bufUsed(input) - this->inputOffset);
             bufCatSub(this->block, input, this->inputOffset, bufUsed(input) - this->inputOffset);
             this->inputOffset = 0;
 
@@ -138,6 +145,13 @@ For manifest:
                     ioWriteOpen(write);
 
                     // Write block number and hash
+                    BlockMapItem blockMapItem =
+                    {
+                        .reference = this->reference,
+                        .bundleId = this->bundleId,
+                        .offset = this->blockOffset,
+                    };
+
                     if (map)
                     {
                         // Write block number
@@ -147,9 +161,11 @@ For manifest:
                         cvtUInt64ToVarInt128(this->blockNo, buffer, &bufferPos, sizeof(buffer));
                         ioWrite(write, BUF(buffer, bufferPos));
 
-                        // Write hash !!!
-                        unsigned char hash[HASH_TYPE_SHA1_SIZE] = {0xFF};
-                        ioWrite(write, BUF(hash, HASH_TYPE_SHA1_SIZE));
+                        // Write checksum
+                        const Buffer *const checksum = cryptoHashOne(HASH_TYPE_SHA1_STR, this->block);
+
+                        ioWrite(write, checksum);
+                        memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
                     }
 
                     // Write compressed size (if there is a map) and data
@@ -169,7 +185,11 @@ For manifest:
                         cvtUInt64ToVarInt128(bufUsed(compressed), buffer, &bufferPos, sizeof(buffer));
                         ioWrite(write, BUF(buffer, bufferPos));
 
+                        blockMapItem.size = bufUsed(compressed);
+                        blockMapAdd(this->blockMapOut, &blockMapItem);
+
                         this->blockNo++;
+                        this->blockOffset += bufUsed(compressed);
                     }
 
                     ioWrite(write, compressed);
@@ -204,9 +224,10 @@ For manifest:
             {
                 bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
                 bufUsedZero(this->blockOut);
+                bufUsedZero(this->block);
 
                 this->blockOutOffset = 0;
-                this->inputSame = false;
+                this->inputSame = this->inputOffset != 0;
             }
             else
             {
@@ -238,7 +259,16 @@ blockIncrResult(THIS_VOID)
 
     Pack *result = NULL;
 
-    // !!!
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU64P(packWrite, this->blockMapOutSize);
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(PACK, result);
 }
@@ -279,15 +309,18 @@ blockIncrInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 IoFilter *
-blockIncrNew(const size_t blockSize)
+blockIncrNew(const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
+        FUNCTION_LOG_PARAM(UINT, reference);
+        FUNCTION_LOG_PARAM(UINT64, bundleId);
+        FUNCTION_LOG_PARAM(UINT64, bundleOffset);
     FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(BlockIncr)
+    OBJ_NEW_BEGIN(BlockIncr, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         BlockIncr *driver = OBJ_NEW_ALLOC();
 
@@ -295,6 +328,9 @@ blockIncrNew(const size_t blockSize)
         {
             .memContext = memContextCurrent(),
             .blockSize = blockSize,
+            .reference = reference,
+            .bundleId = bundleId,
+            .blockOffset = bundleOffset,
             .block = bufNew(blockSize),
             .blockOut = bufNew(0),
             .blockMapOut = blockMapNew(),
@@ -308,6 +344,9 @@ blockIncrNew(const size_t blockSize)
             PackWrite *const packWrite = pckWriteNewP();
 
             pckWriteU64P(packWrite, blockSize);
+            pckWriteU32P(packWrite, reference);
+            pckWriteU64P(packWrite, bundleId);
+            pckWriteU64P(packWrite, bundleOffset);
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -332,8 +371,11 @@ blockIncrNewPack(const Pack *const paramList)
     {
         PackRead *const paramListPack = pckReadNew(paramList);
         const size_t blockSize = (size_t)pckReadU64P(paramListPack);
+        const unsigned int reference = pckReadU32P(paramListPack);
+        const uint64_t bundleId = (size_t)pckReadU64P(paramListPack);
+        const uint64_t bundleOffset = (size_t)pckReadU64P(paramListPack);
 
-        result = ioFilterMove(blockIncrNew(blockSize), memContextPrior());
+        result = ioFilterMove(blockIncrNew(blockSize, reference, bundleId, bundleOffset), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

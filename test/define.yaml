@@ -805,18 +805,16 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 12
+        total: 13
 
         coverage:
           - command/backup/backup
+          - command/backup/blockIncr
           - command/backup/blockMap
           - command/backup/common
           - command/backup/file
           - command/backup/pageChecksum
           - command/backup/protocol
-
-        depend:
-          - command/backup/blockIncr
 
         include:
           - info/info

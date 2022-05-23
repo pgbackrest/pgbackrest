@@ -847,7 +847,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save map");
 
-        Buffer *buffer = bufNew(0);
+        Buffer *buffer = bufNew(256);
         IoWrite *write = ioBufferWriteNewOpen(buffer);
         TEST_RESULT_VOID(blockMapWrite(blockMap, write), "save");
         ioWriteClose(write);
@@ -894,6 +894,93 @@ testRun(void)
         TEST_TITLE("load map");
 
         // !!! TEST_ASSIGN(blockMap, blockMapNewLoad(buffer), "load");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("BlockIncr"))
+    {
+        TEST_TITLE("full backup with zero block");
+
+        ioBufferSizeSet(2);
+
+        const Buffer *source = BUFSTRZ("");
+        Buffer *destination = bufNew(256);
+        IoWrite *write = ioBufferWriteNew(destination);
+
+        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 0, 0, 0)), "block incr");
+        TEST_RESULT_VOID(ioWriteOpen(write), "open");
+        TEST_RESULT_VOID(ioWrite(write, source), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_RESULT_UINT(pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), 0, "compare");
+        TEST_RESULT_STR_Z(bufHex(destination), "", "compare");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup with partial block");
+
+        source = BUFSTRZ("12");
+        destination = bufNew(256);
+        write = ioBufferWriteNew(destination);
+
+        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 0, 0, 0)), "block incr");
+        TEST_RESULT_VOID(ioWriteOpen(write), "open");
+        TEST_RESULT_VOID(ioWrite(write, source), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_RESULT_UINT(pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), 0, "compare");
+        TEST_RESULT_STR_Z(bufHex(destination), "3132", "compare");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup");
+
+        source = BUFSTRZ("ABCXYZ123");
+        destination = bufNew(256);
+        write = ioBufferWriteNew(destination);
+
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 2, 4, 5)))),
+            "block incr");
+        TEST_RESULT_VOID(ioWriteOpen(write), "open");
+        TEST_RESULT_VOID(ioWrite(write, source), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        uint64_t mapSize;
+        TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
+        TEST_RESULT_UINT(mapSize, 67, "map size");
+
+        TEST_RESULT_STR_Z(
+            bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
+            "00"                                        // block no
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"  // checksum
+            "03"                                        // size
+            "414243"                                    // content
+
+            "01"                                        // block no
+            "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
+            "03"                                        // size
+            "58595a"                                    // content
+
+            "02"                                        // block no
+            "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
+            "03"                                        // size
+            "313233",                                   // content
+            "block list");
+
+        TEST_RESULT_STR_Z(
+            bufHex(BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize)),
+            "02"                                        // reference
+            "04"                                        // bundle id
+            "05"                                        // offset
+            "03"                                        // size
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"  // checksum
+
+            "03"                                        // size
+            "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
+
+            "03"                                        // size
+            "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
+            "00",                                       // reference end
+            "block map");
     }
 
     // *****************************************************************************************************************************

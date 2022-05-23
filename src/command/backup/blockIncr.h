@@ -16,7 +16,7 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *blockIncrNew(size_t blockSize);
+IoFilter *blockIncrNew(size_t blockSize, unsigned int reference, uint64_t bundleId, uint64_t bundleOffset);
 IoFilter *blockIncrNewPack(const Pack *paramList);
 
 #endif

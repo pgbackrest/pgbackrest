@@ -230,7 +230,7 @@ backupFile(
                 if (blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize))
                 {
                     ioFilterGroupAdd(
-                        ioReadFilterGroup(storageReadIo(read)), blockIncrNew(blockIncrSize));
+                        ioReadFilterGroup(storageReadIo(read)), blockIncrNew(blockIncrSize, /* !!! FIX */0, /* !!! FIX */0, bundleOffset));
                 }
                 // Else add compression
                 else if (repoFileCompressType != compressTypeNone)
