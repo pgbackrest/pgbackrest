@@ -1,0 +1,12 @@
+Log created: 2022-05-22T13:16:23.043900000Z
+Process ID:  260569 (0x3f9d9)
+Parent PID:  1 (0x1)
+Executable:  /usr/lib/virtualbox/VBoxHeadless
+Arg[0]: /usr/lib/virtualbox/VBoxHeadless
+Arg[1]: --comment
+Arg[2]: pgbackrest-test
+Arg[3]: --startvm
+Arg[4]: 9477bef5-7241-452b-b484-97dac597b2aa
+Arg[5]: --vrde
+Arg[6]: config
+AddRef: illegal refcnt=3221225469 state=2

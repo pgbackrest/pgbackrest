@@ -2197,6 +2197,9 @@ cmdBackup(void)
     // Test for stop file
     lockStopTest();
 
+    // Initialize the percent complete to zero
+    lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(0));
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the repo option was not provided and more than one repo is configured, then log the default repo chosen
