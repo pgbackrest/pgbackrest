@@ -4,6 +4,7 @@ Block Incremental Filter
 #include "build.auto.h"
 
 #include "command/backup/blockIncr.h"
+#include "command/backup/blockMap.h"
 #include "common/compress/helper.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -23,8 +24,12 @@ typedef struct BlockIncr
     size_t inputOffset;                                             // Input offset
     size_t blockSize;                                               // Block size
     Buffer *block;                                                  // Block buffer
+
     Buffer *blockOut;                                               // Block output buffer
-    Buffer *compressed;                                             // Intermediate compressed data
+    size_t blockOutOffset;                                          // Block output offset (already copied to output buffer)
+
+    BlockMap *blockMapOut;                                          // Output block map
+    uint64_t blockMapOutSize;                                       // Output block map size (if any)
 
     bool inputSame;                                                 // Input the same data
     bool done;                                                      // Is the filter done?
@@ -116,48 +121,100 @@ For manifest:
         }
     }
 
-    // If the block is full
+    // If done or block is full
     if (this->done || bufUsed(this->block) == this->blockSize)
     {
         if (bufUsed(this->blockOut) == 0)
         {
-            // If the file is smaller than a single block there is no need to store as as block or create a map
-            if (this->done && this->blockNo == 0 && bufUsed(this->block) < this->blockSize)
+            // If the file is smaller than a single block there is no need to store as a block or create a map
+            const bool map = this->blockNo > 0 || bufUsed(this->block) == this->blockSize;
+
+            if (bufUsed(this->block) > 0)
             {
-                // !!! Compress directly to this->blockOut. This will end up looking like it was compressed normally without the
-                // block incr filter.
-            }
-            // Else
-            else
-            {
-                unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
-                size_t bufferPos = 0;
-
-                // Write the block number
-                cvtUInt64ToVarInt128(this->blockNo, buffer, &bufferPos, sizeof(buffer));
-                bufCatC(this->blockOut, buffer, 0, bufferPos);
-
-                // Write the hash !!!
-                unsigned char hash[HASH_TYPE_SHA1_SIZE] = {0xFF};
-                bufCatC(this->blockOut, hash, 0, HASH_TYPE_SHA1_SIZE);
-
-                // Write compressed size and data
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    Buffer *const compressed = bufNew(0);
-                    IoWrite *const write = ioBufferWriteNew(compressed);
-
-                    ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(compressTypeGz, 1));
+                    IoWrite *const write = ioBufferWriteNew(this->blockOut);
+                    // !!! ENCRYPT FILTER WOULD GO HERE
                     ioWriteOpen(write);
-                    ioWrite(write, this->block);
-                    ioWriteClose(write);
 
-                    bufferPos = 0;
-                    cvtUInt64ToVarInt128(bufUsed(compressed), buffer, &bufferPos, sizeof(buffer));
-                    bufCatC(this->blockOut, buffer, 0, bufferPos);
-                    bufCat(this->blockOut, compressed);
+                    // Write block number and hash
+                    if (map)
+                    {
+                        // Write block number
+                        unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+                        size_t bufferPos = 0;
+
+                        cvtUInt64ToVarInt128(this->blockNo, buffer, &bufferPos, sizeof(buffer));
+                        ioWrite(write, BUF(buffer, bufferPos));
+
+                        // Write hash !!!
+                        unsigned char hash[HASH_TYPE_SHA1_SIZE] = {0xFF};
+                        ioWrite(write, BUF(hash, HASH_TYPE_SHA1_SIZE));
+                    }
+
+                    // Write compressed size (if there is a map) and data
+                    Buffer *const compressed = bufNew(0);
+                    IoWrite *const compressedWrite = ioBufferWriteNew(compressed);
+
+                    // ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
+                    ioWriteOpen(compressedWrite);
+                    ioWrite(compressedWrite, this->block);
+                    ioWriteClose(compressedWrite);
+
+                    if (map)
+                    {
+                        unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+                        size_t bufferPos = 0;
+
+                        cvtUInt64ToVarInt128(bufUsed(compressed), buffer, &bufferPos, sizeof(buffer));
+                        ioWrite(write, BUF(buffer, bufferPos));
+
+                        this->blockNo++;
+                    }
+
+                    ioWrite(write, compressed);
+                    ioWriteClose(write);
                 }
                 MEM_CONTEXT_TEMP_END();
+            }
+
+            if (this->done && map)
+            {
+                // Size of block output before starting to write the map
+                const size_t blockOutBegin = bufUsed(this->blockOut);
+
+                IoWrite *const write = ioBufferWriteNew(this->blockOut);
+                // !!! ENCRYPT FILTER WOULD GO HERE
+                ioWriteOpen(write);
+
+                blockMapWrite(this->blockMapOut, write);
+
+                // Close the write and get total bytes written for the map
+                ioWriteClose(write);
+                this->blockMapOutSize = bufUsed(this->blockOut) - blockOutBegin;
+            }
+        }
+
+        // Copy to output buffer
+        const size_t blockOutSize = bufUsed(this->blockOut) - this->blockOutOffset;
+
+        if (blockOutSize > 0)
+        {
+            if (bufRemains(output) >= blockOutSize)
+            {
+                bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
+                bufUsedZero(this->blockOut);
+
+                this->blockOutOffset = 0;
+                this->inputSame = false;
+            }
+            else
+            {
+                const size_t blockOutSize = bufRemains(output);
+                bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
+
+                this->blockOutOffset += blockOutSize;
+                this->inputSame = true;
             }
         }
     }
@@ -240,6 +297,7 @@ blockIncrNew(const size_t blockSize)
             .blockSize = blockSize,
             .block = bufNew(blockSize),
             .blockOut = bufNew(0),
+            .blockMapOut = blockMapNew(),
         };
 
         // Create param list

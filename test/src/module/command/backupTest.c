@@ -814,31 +814,86 @@ testRun(void)
         TEST_ASSIGN(blockMap, blockMapNew(), "new");
 
         BlockMapItem blockMapItem1 = {
-            .reference = 128, .checksum = {255, 128, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+            .reference = 128, .size = 3,
+            .checksum = {255, 128, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem1)->reference, 128, "add");
         TEST_RESULT_UINT(blockMapGet(blockMap, 0)->reference, 128, "get");
 
         BlockMapItem blockMapItem2 = {
-            .reference = blockMapItem1.reference, .bundleId = blockMapItem1.bundleId, .offset = blockMapItem1.offset + 129,
-            .checksum = {255, 129, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+            .reference = 0, .bundleId = 56, .offset = 200000000, .size = 127,
+            .checksum = {255, 0, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem2)->reference, blockMapItem2.reference, "add");
+
+        BlockMapItem blockMapItem5 = {
+            .reference = 1024, .bundleId = 1024, .offset = 1024, .size = 1024,
+            .checksum = {255, 102, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem5)->reference, blockMapItem5.reference, "add");
+
+        BlockMapItem blockMapItem3 = {
+            .reference = blockMapItem1.reference, .bundleId = blockMapItem1.bundleId, .offset = blockMapItem1.offset + 129,
+            .size = 9, .checksum = {255, 129, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem3)->reference, blockMapItem3.reference, "add");
+
+        BlockMapItem blockMapItem4 = {
+            .reference = blockMapItem2.reference, .bundleId = blockMapItem2.bundleId, .offset = blockMapItem2.offset + 129,
+            .size = 10, .checksum = {255, 1, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem4)->reference, blockMapItem4.reference, "add");
+
+        BlockMapItem blockMapItem6 = {
+            .reference = blockMapItem4.reference, .bundleId = blockMapItem4.bundleId, .offset = blockMapItem4.offset + 10,
+            .size = 11, .checksum = {255, 2, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem6)->reference, blockMapItem6.reference, "add");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save map");
 
         Buffer *buffer = bufNew(0);
-        TEST_RESULT_UINT(blockMapSave(blockMap, buffer), 48, "save");
+        IoWrite *write = ioBufferWriteNewOpen(buffer);
+        TEST_RESULT_VOID(blockMapWrite(blockMap, write), "save");
+        ioWriteClose(write);
+
         TEST_RESULT_STR_Z(
             bufHex(buffer),
             "8001"                                      // reference 128
             "00"                                        // bundle id 0
             "00"                                        // offset 0
+            "03"                                        // size 3
             "ff800e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "00"                                        // reference end
+
+            "00"                                        // reference 0
+            "38"                                        // bundle id 56
+            "8084af5f"                                  // offset 200000000
+            "7f"                                        // size 127
+            "ff000e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "00"                                        // reference end
+
+            "8008"                                      // reference 1024
+            "8008"                                      // bundle id 1024
+            "8008"                                      // offset 1024
+            "8008"                                      // size 1024
+            "ff660e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "00"                                        // reference end
 
             "8001"                                      // reference 128
             "8101"                                      // rolling offset 129
-            "ff810e0d0c0b0a0908070708090a0b0c0d0effff", // checksum
+            "09"                                        // size 9
+            "ff810e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "00"                                        // reference end
+
+            "00"                                        // reference 0
+            "8101"                                      // rolling offset 129
+            "0a"                                        // size 10
+            "ff010e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "0b"                                        // size 11
+            "ff020e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "00",                                       // reference end
             "compare");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("load map");
+
+        // !!! TEST_ASSIGN(blockMap, blockMapNewLoad(buffer), "load");
     }
 
     // *****************************************************************************************************************************

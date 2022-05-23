@@ -19,6 +19,7 @@ typedef struct BlockMapItem
     unsigned char checksum[HASH_TYPE_SHA1_SIZE];
     uint64_t bundleId;
     uint64_t offset;
+    uint64_t size;
 } BlockMapItem;
 
 /***********************************************************************************************************************************
@@ -38,11 +39,14 @@ Functions
 __attribute__((always_inline)) static inline const BlockMapItem *
 blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
 {
+    ASSERT_INLINE(item != NULL);
+    ASSERT_INLINE(item->size != 0);
+
     return (BlockMapItem *)lstAdd((List *const)this, item);
 }
 
-// Save map to a buffer
-uint64_t blockMapSave(const BlockMap *this, Buffer *output);
+// Write map to IO
+void blockMapWrite(const BlockMap *this, IoWrite *output);
 
 /***********************************************************************************************************************************
 Getters/Setters
