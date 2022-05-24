@@ -77,8 +77,9 @@ List *restoreFile(
                         {
                             const char *const fileName = strZ(storagePathP(storagePg(), file->name));
 
-                            // Truncate file if it is too large. It might be that the file was only appended to and the original
-                            // pages are unchanged.
+                            // If the file was extended since the backup, then truncate it to the size it was during the backup as
+                            // it might have only been appended to with the earlier portion being unchanged (we will verify this
+                            // using the checksum below)
                             if (info.size > file->size)
                             {
                                 // Open the file for write
@@ -127,9 +128,9 @@ List *restoreFile(
                                 {
                                     THROW_ON_SYS_ERROR_FMT(
                                         utime(
-                                            strZ(storagePathP(storagePg(), file->name)),
+                                            fileName,
                                             &((struct utimbuf){.actime = file->timeModified, .modtime = file->timeModified})) == -1,
-                                        FileInfoError, "unable to set time for '%s'", strZ(storagePathP(storagePg(), file->name)));
+                                        FileInfoError, "unable to set time for '%s'", fileName);
                                 }
 
                                 fileResult->result = restoreResultPreserve;
