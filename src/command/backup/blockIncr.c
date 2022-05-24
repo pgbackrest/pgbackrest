@@ -8,6 +8,7 @@ Block Incremental Filter
 #include "common/compress/helper.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/log.h"
 #include "common/type/pack.h"
@@ -141,6 +142,7 @@ For manifest:
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
                     IoWrite *const write = ioBufferWriteNew(this->blockOut);
+                    ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
                     // !!! ENCRYPT FILTER WOULD GO HERE
                     ioWriteOpen(write);
 
@@ -155,11 +157,7 @@ For manifest:
                     if (map)
                     {
                         // Write block number
-                        unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
-                        size_t bufferPos = 0;
-
-                        cvtUInt64ToVarInt128(this->blockNo, buffer, &bufferPos, sizeof(buffer));
-                        ioWrite(write, BUF(buffer, bufferPos));
+                        ioWriteVarIntU64(write, this->blockNo);
 
                         // Write checksum
                         const Buffer *const checksum = cryptoHashOne(HASH_TYPE_SHA1_STR, this->block);
@@ -168,7 +166,7 @@ For manifest:
                         memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
                     }
 
-                    // Write compressed size (if there is a map) and data
+                    // Write data
                     Buffer *const compressed = bufNew(0);
                     IoWrite *const compressedWrite = ioBufferWriteNew(compressed);
 
@@ -178,22 +176,20 @@ For manifest:
                     ioWriteClose(compressedWrite);
 
                     if (map)
-                    {
-                        unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
-                        size_t bufferPos = 0;
+                        ioWriteVarIntU64(write, bufUsed(compressed));
 
-                        cvtUInt64ToVarInt128(bufUsed(compressed), buffer, &bufferPos, sizeof(buffer));
-                        ioWrite(write, BUF(buffer, bufferPos));
-
-                        blockMapItem.size = bufUsed(compressed);
-                        blockMapAdd(this->blockMapOut, &blockMapItem);
-
-                        this->blockNo++;
-                        this->blockOffset += bufUsed(compressed);
-                    }
-
+                    // !!!
                     ioWrite(write, compressed);
                     ioWriteClose(write);
+
+                    if (map)
+                    {
+                        blockMapItem.size = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE));
+                        blockMapAdd(this->blockMapOut, &blockMapItem);
+
+                        this->blockOffset += blockMapItem.size;
+                        this->blockNo++;
+                    }
                 }
                 MEM_CONTEXT_TEMP_END();
             }
@@ -309,13 +305,16 @@ blockIncrInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 IoFilter *
-blockIncrNew(const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset)
+blockIncrNew(
+    const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset,
+    const Buffer *const blockMapIn)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(UINT, reference);
         FUNCTION_LOG_PARAM(UINT64, bundleId);
         FUNCTION_LOG_PARAM(UINT64, bundleOffset);
+        FUNCTION_LOG_PARAM(BUFFER, blockMapIn);
     FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
@@ -333,6 +332,7 @@ blockIncrNew(const size_t blockSize, const unsigned int reference, const uint64_
             .blockOffset = bundleOffset,
             .block = bufNew(blockSize),
             .blockOut = bufNew(0),
+            .blockMapIn = blockMapIn != NULL ? blockMapNewRead(ioBufferReadNewOpen(blockMapIn)) : NULL, // !!! FIX THIS LEAK
             .blockMapOut = blockMapNew(),
         };
 
@@ -347,6 +347,7 @@ blockIncrNew(const size_t blockSize, const unsigned int reference, const uint64_
             pckWriteU32P(packWrite, reference);
             pckWriteU64P(packWrite, bundleId);
             pckWriteU64P(packWrite, bundleOffset);
+            pckWriteBinP(packWrite, blockMapIn);
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -374,8 +375,9 @@ blockIncrNewPack(const Pack *const paramList)
         const unsigned int reference = pckReadU32P(paramListPack);
         const uint64_t bundleId = (size_t)pckReadU64P(paramListPack);
         const uint64_t bundleOffset = (size_t)pckReadU64P(paramListPack);
+        const Buffer *blockMapIn = pckReadBinP(paramListPack);
 
-        result = ioFilterMove(blockIncrNew(blockSize, reference, bundleId, bundleOffset), memContextPrior());
+        result = ioFilterMove(blockIncrNew(blockSize, reference, bundleId, bundleOffset, blockMapIn), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

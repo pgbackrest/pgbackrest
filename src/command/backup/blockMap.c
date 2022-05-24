@@ -163,7 +163,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
             referenceLast = blockMapItem->reference;
         }
 
-        // Add size
+        // Add size !!! SHOULD THE SIZE BE DELTA AS WELL TO SAVE SOME MORE SPACE?
         ioWriteVarIntU64(output, blockMapItem->size);
         blockMapRef->offset += blockMapItem->size;
 
