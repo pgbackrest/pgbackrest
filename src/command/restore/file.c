@@ -89,8 +89,8 @@ List *restoreFile(
                                 {
                                     // Truncate to original size
                                     THROW_ON_SYS_ERROR_FMT(
-                                        ftruncate(fd, (off_t)file->size) == -1, FileWriteError,
-                                        "unable to truncate file '%s' after write", fileName);
+                                        ftruncate(fd, (off_t)file->size) == -1, FileWriteError, "unable to truncate file '%s'",
+                                        fileName);
 
                                     // Sync
                                     THROW_ON_SYS_ERROR_FMT(fsync(fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, fileName);
