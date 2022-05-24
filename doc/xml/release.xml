@@ -16,6 +16,19 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.40dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1758"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Truncate files during delta <cmd>restore</cmd> when they are larger than expected.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
                     <release-item>
                         <github-pull-request id="1749"/>
