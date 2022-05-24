@@ -113,6 +113,7 @@ List *restoreFile(
                             {
                                 read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
                                 ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                                // !!! Hash map filter
                                 ioReadDrain(read);
                             }
 
@@ -134,6 +135,10 @@ List *restoreFile(
                                 }
 
                                 fileResult->result = restoreResultPreserve;
+                            }
+                            else
+                            {
+                                // !!! Store the hash map
                             }
                         }
                     }
