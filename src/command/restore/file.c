@@ -116,14 +116,13 @@ List *restoreFile(
                                 ioReadDrain(read);
                             }
 
-                            // If the checksum is also equal (or file is zero size) then no need to copy the file
+                            // If the checksum is the same (or file is zero size) then no need to copy the file
                             if (file->size == 0 ||
                                 strEq(
                                     file->checksum,
                                     pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
                             {
-                                // Even if hash/size are the same set the time back to backup time. This helps with unit testing,
-                                // but also presents a pristine version of the database after restore.
+                                // If the hash/size are now the same but the time is not, then set the time back to the backup time
                                 if (info.timeModified != file->timeModified)
                                 {
                                     THROW_ON_SYS_ERROR_FMT(
