@@ -72,13 +72,43 @@ List *restoreFile(
                     // Else use size and checksum
                     else
                     {
-                        // Only continue delta if the file size is as expected
-                        if (info.size == file->size)
+                        // Only continue delta if the file size is as expected or larger
+                        if (info.size >= file->size)
                         {
+                            const char *const fileName = strZ(storagePathP(storagePg(), file->name));
+
+                            // Truncate file if it is too large. It might be that the file was only appended to and the original
+                            // pages are unchanged.
+                            if (info.size > file->size)
+                            {
+                                // Open the file for write
+                                int fd = open(fileName, O_WRONLY, 0);
+                                THROW_ON_SYS_ERROR_FMT(fd == -1, FileReadError, STORAGE_ERROR_WRITE_OPEN, fileName);
+
+                                TRY_BEGIN()
+                                {
+                                    // Truncate to original size
+                                    THROW_ON_SYS_ERROR_FMT(
+                                        ftruncate(fd, (off_t)file->size) == -1, FileWriteError,
+                                        "unable to truncate file '%s' after write", fileName);
+
+                                    // Sync
+                                    THROW_ON_SYS_ERROR_FMT(fsync(fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, fileName);
+                                }
+                                FINALLY()
+                                {
+                                    THROW_ON_SYS_ERROR_FMT(close(fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, fileName);
+                                }
+                                TRY_END();
+
+                                // Modify the timestamp so it will be updated if the file matches
+                                info.timeModified = file->timeModified + 1;
+                            }
+
                             // Generate checksum for the file if size is not zero
                             IoRead *read = NULL;
 
-                            if (info.size != 0)
+                            if (file->size != 0)
                             {
                                 read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
                                 ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
