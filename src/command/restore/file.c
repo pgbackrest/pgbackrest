@@ -122,7 +122,8 @@ List *restoreFile(
                                     file->checksum,
                                     pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
                             {
-                                // If the hash/size are now the same but the time is not, then set the time back to the backup time
+                                // If the hash/size are now the same but the time is not, then set the time back to the backup time.
+                                // This helps with unit testing, but also presents a pristine version of the database after restore.
                                 if (info.timeModified != file->timeModified)
                                 {
                                     THROW_ON_SYS_ERROR_FMT(
