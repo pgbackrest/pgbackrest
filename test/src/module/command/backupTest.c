@@ -4,6 +4,7 @@ Test Backup Command
 #include "command/stanza/create.h"
 #include "command/stanza/upgrade.h"
 #include "common/crypto/hash.h"
+#include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "postgres/interface/static.vendor.h"
 #include "storage/helper.h"
@@ -845,7 +846,7 @@ testRun(void)
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem6)->reference, blockMapItem6.reference, "add");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("save map");
+        TEST_TITLE("write map");
 
         Buffer *buffer = bufNew(256);
         IoWrite *write = ioBufferWriteNewOpen(buffer);
@@ -854,46 +855,53 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(buffer),
-            "8001"                                      // reference 128
+            "8101"                                      // reference 128
             "00"                                        // bundle id 0
             "00"                                        // offset 0
             "03"                                        // size 3
             "ff800e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // reference end
 
-            "00"                                        // reference 0
+            "01"                                        // reference 0
             "38"                                        // bundle id 56
             "8084af5f"                                  // offset 200000000
             "7f"                                        // size 127
             "ff000e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // reference end
 
-            "8008"                                      // reference 1024
+            "8108"                                      // reference 1024
             "8008"                                      // bundle id 1024
             "8008"                                      // offset 1024
             "8008"                                      // size 1024
             "ff660e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // reference end
 
-            "8001"                                      // reference 128
-            "8101"                                      // rolling offset 129
+            "8101"                                      // reference 128
+            "7e"                                        // rolling offset 126
             "09"                                        // size 9
             "ff810e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // reference end
 
-            "00"                                        // reference 0
-            "8101"                                      // rolling offset 129
+            "01"                                        // reference 0
+            "02"                                        // rolling offset 2
             "0a"                                        // size 10
             "ff010e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "0b"                                        // size 11
             "ff020e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00",                                       // reference end
+            "00"                                        // reference end
+
+            "00",                                       // map end
             "compare");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("load map");
+        TEST_TITLE("read map");
 
-        // !!! TEST_ASSIGN(blockMap, blockMapNewLoad(buffer), "load");
+        Buffer *bufferCompare = bufNew(256);
+        write = ioBufferWriteNewOpen(bufferCompare);
+        TEST_RESULT_VOID(blockMapWrite(blockMapNewRead(ioBufferReadNewOpen(buffer)), write), "read and save");
+        ioWriteClose(write);
+
+        TEST_RESULT_STR(bufHex(bufferCompare), bufHex(buffer), "compare");
     }
 
     // *****************************************************************************************************************************
@@ -946,7 +954,7 @@ testRun(void)
 
         uint64_t mapSize;
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 67, "map size");
+        TEST_RESULT_UINT(mapSize, 68, "map size");
 
         TEST_RESULT_STR_Z(
             bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -968,7 +976,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize)),
-            "02"                                        // reference
+            "03"                                        // reference
             "04"                                        // bundle id
             "05"                                        // offset
             "03"                                        // size
@@ -979,7 +987,9 @@ testRun(void)
 
             "03"                                        // size
             "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
-            "00",                                       // reference end
+            "00"                                        // reference end
+
+            "00",                                       // map end
             "block map");
     }
 

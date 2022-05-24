@@ -33,6 +33,73 @@ lstComparatorBlockMapRef(const void *const blockMapRef1, const void *const block
     FUNCTION_TEST_RETURN(INT, 0);
 }
 
+BlockMap *
+blockMapNewRead(IoRead *const map)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, map);
+    FUNCTION_TEST_END();
+
+    BlockMap *const this = blockMapNew();
+    List *const refList = lstNewP(sizeof(BlockMapRef), .comparator = lstComparatorBlockMapRef);
+    Buffer *const checksum = bufNew(HASH_TYPE_SHA1_SIZE);
+    BlockMapRef *blockMapRef = NULL;
+
+    do
+    {
+        if (blockMapRef == NULL)
+        {
+            unsigned int reference = (unsigned int)ioReadVarIntU64(map);
+
+            if (reference == 0)
+                break;
+
+            reference--;
+
+            blockMapRef = lstFind(refList, &(BlockMapRef){.reference = reference});
+
+            if (blockMapRef == NULL)
+            {
+                BlockMapRef blockMapRefAdd = {.reference = reference, .bundleId = ioReadVarIntU64(map)};
+                blockMapRefAdd.offset = ioReadVarIntU64(map);
+
+                // Add reference to list
+                blockMapRef = lstAdd(refList, &blockMapRefAdd);
+            }
+            else
+                blockMapRef->offset += ioReadVarIntU64(map);
+        }
+
+        BlockMapItem blockMapItem =
+        {
+            .reference = blockMapRef->reference,
+            .bundleId = blockMapRef->bundleId,
+            .offset = blockMapRef->offset,
+            .size = ioReadVarIntU64(map),
+        };
+
+        if (blockMapItem.size == 0)
+        {
+            blockMapRef = NULL;
+        }
+        else
+        {
+            blockMapRef->offset += blockMapItem.size;
+
+            bufUsedZero(checksum);
+            ioRead(map, checksum);
+            memcpy(blockMapItem.checksum, bufPtr(checksum), bufUsed(checksum));
+
+            // Add to list
+            lstAdd((List *)this, &blockMapItem);
+        }
+    }
+    while (1);
+
+    FUNCTION_TEST_RETURN(BLOCK_MAP, this);
+}
+
+/**********************************************************************************************************************************/
 void
 blockMapWrite(const BlockMap *const this, IoWrite *const output)
 {
@@ -46,10 +113,9 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
     ASSERT(output != NULL);
 
     List *const refList = lstNewP(sizeof(BlockMapRef), .comparator = lstComparatorBlockMapRef);
+    BlockMapRef *blockMapRef = NULL;
 
     // !!!
-    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
-    size_t bufferPos = 0;
     unsigned int referenceLast = UINT_MAX;
 
     for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(this); blockMapIdx++)
@@ -59,37 +125,24 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
         if (referenceLast != blockMapItem->reference)
         {
             if (referenceLast != UINT_MAX)
-            {
-                bufferPos = 0;
-                cvtUInt64ToVarInt128(0, buffer, &bufferPos, sizeof(buffer));
-                ioWrite(output, BUF(buffer, bufferPos));
-            }
+                ioWriteVarIntU64(output, 0);
 
             // Add reference
-            bufferPos = 0;
-            cvtUInt64ToVarInt128(blockMapItem->reference, buffer, &bufferPos, sizeof(buffer));
-            ioWrite(output, BUF(buffer, bufferPos));
+            ioWriteVarIntU64(output, blockMapItem->reference + 1);
 
             // !!! WRITE REFERENCE, BUNDLE ID, CHECKSUM
 
             // Check if the reference is already in the list
-            BlockMapRef *const blockMapRef = lstFind(
-                refList, &(BlockMapRef){.reference = blockMapItem->reference, .bundleId = blockMapItem->bundleId});
+            blockMapRef = lstFind(refList, &(BlockMapRef){.reference = blockMapItem->reference});
 
             if (blockMapRef == NULL)
             {
-                // Add bundle id
-                bufferPos = 0;
-                cvtUInt64ToVarInt128(blockMapItem->bundleId, buffer, &bufferPos, sizeof(buffer));
-                ioWrite(output, BUF(buffer, bufferPos));
-
-                // Add offset
-                bufferPos = 0;
-                cvtUInt64ToVarInt128(blockMapItem->offset, buffer, &bufferPos, sizeof(buffer));
-                ioWrite(output, BUF(buffer, bufferPos));
+                // Add bundle id and offset
+                ioWriteVarIntU64(output, blockMapItem->bundleId);
+                ioWriteVarIntU64(output, blockMapItem->offset);
 
                 // Add reference to list
-                lstAdd(
+                blockMapRef = lstAdd(
                     refList,
                     &(BlockMapRef){
                         .reference = blockMapItem->reference, .bundleId = blockMapItem->bundleId, .offset = blockMapItem->offset});
@@ -101,9 +154,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
                 ASSERT(blockMapItem->offset > blockMapRef->offset);
 
                 // Add rolling offset delta
-                bufferPos = 0;
-                cvtUInt64ToVarInt128(blockMapItem->offset - blockMapRef->offset, buffer, &bufferPos, sizeof(buffer));
-                ioWrite(output, BUF(buffer, bufferPos));
+                ioWriteVarIntU64(output, blockMapItem->offset - blockMapRef->offset);
 
                 // Update the offset
                 blockMapRef->offset = blockMapItem->offset;
@@ -112,18 +163,19 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
             referenceLast = blockMapItem->reference;
         }
 
-        // Add rolling offset delta
-        bufferPos = 0;
-        cvtUInt64ToVarInt128(blockMapItem->size, buffer, &bufferPos, sizeof(buffer));
-        ioWrite(output, BUF(buffer, bufferPos));
+        // Add size
+        ioWriteVarIntU64(output, blockMapItem->size);
+        blockMapRef->offset += blockMapItem->size;
 
         // Add checksum
         ioWrite(output, BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE));
     }
 
-    bufferPos = 0;
-    cvtUInt64ToVarInt128(0, buffer, &bufferPos, sizeof(buffer));
-    ioWrite(output, BUF(buffer, bufferPos));
+    // Write reference end
+    ioWriteVarIntU64(output, 0);
+
+    // Write map end
+    ioWriteVarIntU64(output, 0);
 
     FUNCTION_TEST_RETURN_VOID();
 }
