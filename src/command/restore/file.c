@@ -101,8 +101,8 @@ List *restoreFile(
                                 }
                                 TRY_END();
 
-                                // Modify the timestamp so it will be updated if the file matches
-                                info.timeModified = file->timeModified + 1;
+                                // Update info
+                                info = storageInfoP(storagePg(), file->name, .followLink = true);
                             }
 
                             // Generate checksum for the file if size is not zero
