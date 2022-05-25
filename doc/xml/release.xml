@@ -29,6 +29,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1760"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Disable incremental manifest save when <br-option>resume=n</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1759"/>
 
                         <release-item-contributor-list>

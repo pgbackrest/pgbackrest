@@ -3153,6 +3153,7 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16K");
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+            hrnCfgArgRawBool(argList, cfgOptResume, false);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Set to a smaller values than the defaults allow
