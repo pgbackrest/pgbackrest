@@ -1876,8 +1876,9 @@ backupProcess(
         // Process jobs
         uint64_t sizeProgress = 0;
 
-        // Store current percentage complete - updated as jobs progress
+        // Initialize the percent complete to zero
         unsigned int currentPercentComplete = 0;
+        lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
