@@ -15,10 +15,6 @@ ERROR_DEFINE( 29, FormatError, false, RuntimeError);
 ERROR_DEFINE( 30, CommandRequiredError, false, RuntimeError);
 ERROR_DEFINE( 31, OptionInvalidError, false, RuntimeError);
 ERROR_DEFINE( 32, OptionInvalidValueError, false, RuntimeError);
-ERROR_DEFINE( 33, OptionInvalidRangeError, false, RuntimeError);
-ERROR_DEFINE( 34, OptionInvalidPairError, false, RuntimeError);
-ERROR_DEFINE( 35, OptionDuplicateKeyError, false, RuntimeError);
-ERROR_DEFINE( 36, OptionNegateError, false, RuntimeError);
 ERROR_DEFINE( 37, OptionRequiredError, false, RuntimeError);
 ERROR_DEFINE( 38, PgRunningError, false, RuntimeError);
 ERROR_DEFINE( 39, ProtocolError, false, RuntimeError);
@@ -41,13 +37,11 @@ ERROR_DEFINE( 55, FileMissingError, false, RuntimeError);
 ERROR_DEFINE( 56, DbConnectError, false, RuntimeError);
 ERROR_DEFINE( 57, DbQueryError, false, RuntimeError);
 ERROR_DEFINE( 58, DbMismatchError, false, RuntimeError);
-ERROR_DEFINE( 59, DbTimeoutError, false, RuntimeError);
 ERROR_DEFINE( 60, FileRemoveError, false, RuntimeError);
 ERROR_DEFINE( 61, PathRemoveError, false, RuntimeError);
 ERROR_DEFINE( 62, StopError, false, RuntimeError);
 ERROR_DEFINE( 63, TermError, false, RuntimeError);
 ERROR_DEFINE( 64, FileWriteError, false, RuntimeError);
-ERROR_DEFINE( 66, ProtocolTimeoutError, false, RuntimeError);
 ERROR_DEFINE( 67, FeatureNotSupportedError, false, RuntimeError);
 ERROR_DEFINE( 68, ArchiveCommandInvalidError, false, RuntimeError);
 ERROR_DEFINE( 69, LinkExpectedError, false, RuntimeError);
@@ -57,22 +51,15 @@ ERROR_DEFINE( 73, PathMissingError, false, RuntimeError);
 ERROR_DEFINE( 74, FileMoveError, false, RuntimeError);
 ERROR_DEFINE( 75, BackupSetInvalidError, false, RuntimeError);
 ERROR_DEFINE( 76, TablespaceMapError, false, RuntimeError);
-ERROR_DEFINE( 77, PathTypeError, false, RuntimeError);
 ERROR_DEFINE( 78, LinkMapError, false, RuntimeError);
 ERROR_DEFINE( 79, FileCloseError, false, RuntimeError);
 ERROR_DEFINE( 80, DbMissingError, false, RuntimeError);
 ERROR_DEFINE( 81, DbInvalidError, false, RuntimeError);
 ERROR_DEFINE( 82, ArchiveTimeoutError, false, RuntimeError);
 ERROR_DEFINE( 83, FileModeError, false, RuntimeError);
-ERROR_DEFINE( 84, OptionMultipleValueError, false, RuntimeError);
-ERROR_DEFINE( 85, ProtocolOutputRequiredError, false, RuntimeError);
-ERROR_DEFINE( 86, LinkOpenError, false, RuntimeError);
 ERROR_DEFINE( 87, ArchiveDisabledError, false, RuntimeError);
 ERROR_DEFINE( 88, FileOwnerError, false, RuntimeError);
 ERROR_DEFINE( 89, UserMissingError, false, RuntimeError);
-ERROR_DEFINE( 90, OptionCommandError, false, RuntimeError);
-ERROR_DEFINE( 91, GroupMissingError, false, RuntimeError);
-ERROR_DEFINE( 92, PathExistsError, false, RuntimeError);
 ERROR_DEFINE( 93, FileExistsError, false, RuntimeError);
 ERROR_DEFINE( 94, MemoryError, true, RuntimeError);
 ERROR_DEFINE( 95, CryptoError, false, RuntimeError);
@@ -88,7 +75,6 @@ ERROR_DEFINE(104, CommandError, false, RuntimeError);
 ERROR_DEFINE(105, AccessError, false, RuntimeError);
 ERROR_DEFINE(106, ClockError, false, RuntimeError);
 ERROR_DEFINE(122, RuntimeError, false, RuntimeError);
-ERROR_DEFINE(123, InvalidError, false, RuntimeError);
 ERROR_DEFINE(124, UnhandledError, false, RuntimeError);
 ERROR_DEFINE(125, UnknownError, false, RuntimeError);
 
@@ -105,10 +91,6 @@ static const ErrorType *errorTypeList[] =
     &CommandRequiredError,
     &OptionInvalidError,
     &OptionInvalidValueError,
-    &OptionInvalidRangeError,
-    &OptionInvalidPairError,
-    &OptionDuplicateKeyError,
-    &OptionNegateError,
     &OptionRequiredError,
     &PgRunningError,
     &ProtocolError,
@@ -131,13 +113,11 @@ static const ErrorType *errorTypeList[] =
     &DbConnectError,
     &DbQueryError,
     &DbMismatchError,
-    &DbTimeoutError,
     &FileRemoveError,
     &PathRemoveError,
     &StopError,
     &TermError,
     &FileWriteError,
-    &ProtocolTimeoutError,
     &FeatureNotSupportedError,
     &ArchiveCommandInvalidError,
     &LinkExpectedError,
@@ -147,22 +127,15 @@ static const ErrorType *errorTypeList[] =
     &FileMoveError,
     &BackupSetInvalidError,
     &TablespaceMapError,
-    &PathTypeError,
     &LinkMapError,
     &FileCloseError,
     &DbMissingError,
     &DbInvalidError,
     &ArchiveTimeoutError,
     &FileModeError,
-    &OptionMultipleValueError,
-    &ProtocolOutputRequiredError,
-    &LinkOpenError,
     &ArchiveDisabledError,
     &FileOwnerError,
     &UserMissingError,
-    &OptionCommandError,
-    &GroupMissingError,
-    &PathExistsError,
     &FileExistsError,
     &MemoryError,
     &CryptoError,
@@ -178,7 +151,6 @@ static const ErrorType *errorTypeList[] =
     &AccessError,
     &ClockError,
     &RuntimeError,
-    &InvalidError,
     &UnhandledError,
     &UnknownError,
     NULL,
