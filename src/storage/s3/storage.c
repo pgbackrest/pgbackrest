@@ -202,7 +202,7 @@ storageS3Auth(
         // Generate string to sign
         const String *stringToSign = strNewFmt(
             AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
-            strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(canonicalRequest)))));
+            strZ(bufHex(cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
 
         // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
@@ -210,14 +210,14 @@ storageS3Auth(
         if (!strEq(date, this->signingKeyDate))
         {
             const Buffer *dateKey = cryptoHmacOne(
-                HASH_TYPE_SHA256_STR, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
-            const Buffer *regionKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, dateKey, BUFSTR(this->region));
-            const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, S3_BUF);
+                hashTypeSha256, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
+            const Buffer *regionKey = cryptoHmacOne(hashTypeSha256, dateKey, BUFSTR(this->region));
+            const Buffer *serviceKey = cryptoHmacOne(hashTypeSha256, regionKey, S3_BUF);
 
             // Switch to the object context so signing key and date are not lost
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
-                this->signingKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, serviceKey, AWS4_REQUEST_BUF);
+                this->signingKey = cryptoHmacOne(hashTypeSha256, serviceKey, AWS4_REQUEST_BUF);
                 this->signingKeyDate = strDup(date);
             }
             MEM_CONTEXT_OBJ_END();
@@ -227,7 +227,7 @@ storageS3Auth(
         const String *authorization = strNewFmt(
             AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
             strZ(this->accessKey), strZ(date), strZ(this->region), strZ(signedHeaders),
-            strZ(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
+            strZ(bufHex(cryptoHmacOne(hashTypeSha256, this->signingKey, BUFSTR(stringToSign)))));
 
         httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, authorization);
     }
@@ -474,8 +474,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         if (param.content != NULL)
         {
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
-                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
         // Set KMS headers when requested
@@ -531,7 +530,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         storageS3Auth(
             this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
             param.content == NULL || bufEmpty(param.content) ?
-                HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
+                HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(hashTypeSha256, param.content)));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()

@@ -112,7 +112,7 @@ List *restoreFile(
                             if (file->size != 0)
                             {
                                 read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
-                                ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                                ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                                 ioReadDrain(read);
                             }
 
@@ -232,7 +232,7 @@ List *restoreFile(
                     ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
 
                 // Add sha1 filter
-                ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+                ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
                 // Add size filter
                 ioFilterGroupAdd(filterGroup, ioSizeNew());

@@ -940,7 +940,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
 
             // Add SHA1 filter
-            ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+            ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
             // Add compression
             if (compressType != compressTypeNone)

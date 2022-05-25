@@ -76,8 +76,7 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
     if (param.content != NULL)
     {
         strCatFmt(
-            request, "content-md5:%s\r\n",
-            strZ(strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, BUFSTRZ(param.content)))));
+            request, "content-md5:%s\r\n", strZ(strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
     }
 
     // Add date

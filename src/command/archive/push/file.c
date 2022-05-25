@@ -157,7 +157,7 @@ archivePushFile(
 
             // Generate a sha1 checksum for the wal segment
             IoRead *read = storageReadIo(storageNewReadP(storageLocal(), walSource));
-            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
             ioReadDrain(read);
 
             const String *walSegmentChecksum = pckReadStrP(
