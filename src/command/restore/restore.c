@@ -886,7 +886,7 @@ restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *i
         LOG_DETAIL_FMT("update mode for '%s' to %04o", strZ(pgPath), manifestMode);
 
         THROW_ON_SYS_ERROR_FMT(
-            chmod(strZ(pgPath), manifestMode) == -1, FileOwnerError, "unable to set mode for '%s'", strZ(pgPath));
+            chmod(strZ(pgPath), manifestMode) == -1, FileModeError, "unable to set mode for '%s'", strZ(pgPath));
     }
 
     FUNCTION_TEST_RETURN_VOID();
