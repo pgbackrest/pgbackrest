@@ -592,7 +592,7 @@ storagePosixNewInternal(
     // Create the object
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StoragePosix)
+    OBJ_NEW_BEGIN(StoragePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StoragePosix *driver = OBJ_NEW_ALLOC();
 

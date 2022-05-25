@@ -365,7 +365,7 @@ tlsClientNew(
 
     IoClient *this = NULL;
 
-    OBJ_NEW_BEGIN(TlsClient)
+    OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         TlsClient *driver = OBJ_NEW_ALLOC();
 

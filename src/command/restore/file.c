@@ -72,34 +72,65 @@ List *restoreFile(
                     // Else use size and checksum
                     else
                     {
-                        // Only continue delta if the file size is as expected
-                        if (info.size == file->size)
+                        // Only continue delta if the file size is as expected or larger
+                        if (info.size >= file->size)
                         {
+                            const char *const fileName = strZ(storagePathP(storagePg(), file->name));
+
+                            // If the file was extended since the backup, then truncate it to the size it was during the backup as
+                            // it might have only been appended to with the earlier portion being unchanged (we will verify this
+                            // using the checksum below)
+                            if (info.size > file->size)
+                            {
+                                // Open the file for write
+                                int fd = open(fileName, O_WRONLY, 0);
+                                THROW_ON_SYS_ERROR_FMT(fd == -1, FileReadError, STORAGE_ERROR_WRITE_OPEN, fileName);
+
+                                TRY_BEGIN()
+                                {
+                                    // Truncate to original size
+                                    THROW_ON_SYS_ERROR_FMT(
+                                        ftruncate(fd, (off_t)file->size) == -1, FileWriteError, "unable to truncate file '%s'",
+                                        fileName);
+
+                                    // Sync
+                                    THROW_ON_SYS_ERROR_FMT(fsync(fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, fileName);
+                                }
+                                FINALLY()
+                                {
+                                    THROW_ON_SYS_ERROR_FMT(close(fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, fileName);
+                                }
+                                TRY_END();
+
+                                // Update info
+                                info = storageInfoP(storagePg(), file->name, .followLink = true);
+                            }
+
                             // Generate checksum for the file if size is not zero
                             IoRead *read = NULL;
 
-                            if (info.size != 0)
+                            if (file->size != 0)
                             {
                                 read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
                                 ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
                                 ioReadDrain(read);
                             }
 
-                            // If the checksum is also equal (or file is zero size) then no need to copy the file
+                            // If the checksum is the same (or file is zero size) then no need to copy the file
                             if (file->size == 0 ||
                                 strEq(
                                     file->checksum,
                                     pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
                             {
-                                // Even if hash/size are the same set the time back to backup time. This helps with unit testing,
-                                // but also presents a pristine version of the database after restore.
+                                // If the hash/size are now the same but the time is not, then set the time back to the backup time.
+                                // This helps with unit testing, but also presents a pristine version of the database after restore.
                                 if (info.timeModified != file->timeModified)
                                 {
                                     THROW_ON_SYS_ERROR_FMT(
                                         utime(
-                                            strZ(storagePathP(storagePg(), file->name)),
+                                            fileName,
                                             &((struct utimbuf){.actime = file->timeModified, .modtime = file->timeModified})) == -1,
-                                        FileInfoError, "unable to set time for '%s'", strZ(storagePathP(storagePg(), file->name)));
+                                        FileInfoError, "unable to set time for '%s'", fileName);
                                 }
 
                                 fileResult->result = restoreResultPreserve;

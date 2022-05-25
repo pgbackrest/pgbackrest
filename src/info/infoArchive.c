@@ -69,7 +69,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 
     InfoArchive *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoArchive)
+    OBJ_NEW_BEGIN(InfoArchive, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoArchiveNewInternal();
 
@@ -94,7 +94,7 @@ infoArchiveNewLoad(IoRead *read)
 
     InfoArchive *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoArchive)
+    OBJ_NEW_BEGIN(InfoArchive, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoArchiveNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);

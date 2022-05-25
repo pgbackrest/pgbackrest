@@ -281,7 +281,7 @@ testRun(void)
 
         IoWrite *write = ioFdWriteNewOpen(STRDEF("invalid"), 0, 0);
 
-        OBJ_NEW_BEGIN(ProtocolClient)
+        OBJ_NEW_BEGIN(ProtocolClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.client = OBJ_NEW_ALLOC();
             *protocolHelperClient.client = (ProtocolClient){
@@ -290,7 +290,7 @@ testRun(void)
         }
         OBJ_NEW_END();
 
-        OBJ_NEW_BEGIN(Exec)
+        OBJ_NEW_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
             *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};

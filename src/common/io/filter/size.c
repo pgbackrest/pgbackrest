@@ -93,7 +93,7 @@ ioSizeNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(IoSize)
+    OBJ_NEW_BEGIN(IoSize, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         IoSize *driver = OBJ_NEW_ALLOC();
         *driver = (IoSize){0};
