@@ -53,7 +53,7 @@ verifyFile(
             ioFilterGroupAdd(filterGroup, decompressFilter(compressType));
 
         // Add sha1 filter
-        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
         // Add size filter
         ioFilterGroupAdd(filterGroup, ioSizeNew());

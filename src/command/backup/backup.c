@@ -940,7 +940,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
 
             // Add SHA1 filter
-            ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+            ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
             // Add compression
             if (compressType != compressTypeNone)
@@ -1881,8 +1881,9 @@ backupProcess(
         // Process jobs
         uint64_t sizeProgress = 0;
 
-        // Store current percentage complete - updated as jobs progress
+        // Initialize the percent complete to zero
         unsigned int currentPercentComplete = 0;
+        lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
