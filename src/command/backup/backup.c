@@ -1873,6 +1873,9 @@ backupProcess(
         if (manifestSaveSize < cfgOptionUInt64(cfgOptManifestSaveThreshold))
             manifestSaveSize = cfgOptionUInt64(cfgOptManifestSaveThreshold);
 
+        // We will skip manifest save in below parallel job loop when the backup is not resumable
+        const bool resumable = cfgOptionBool(cfgOptResume);
+
         // Process jobs
         uint64_t sizeProgress = 0;
 
@@ -1903,7 +1906,7 @@ backupProcess(
                 backupDbPing(backupData, false);
 
                 // Save the manifest periodically to preserve checksums for resume
-                if (sizeProgress - manifestSaveLast >= manifestSaveSize)
+                if (resumable && sizeProgress - manifestSaveLast >= manifestSaveSize)
                 {
                     backupManifestSaveCopy(manifest, cipherPassBackup);
                     manifestSaveLast = sizeProgress;
