@@ -138,7 +138,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
 
     Manifest *result = NULL;
 
-    OBJ_NEW_BEGIN(Manifest)
+    OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         result = manifestNewInternal();
         result->pub.info = infoNew(NULL);
@@ -1294,7 +1294,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.pgVersion = PG_VERSION_90;
@@ -2026,7 +2026,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2431,7 +2431,7 @@ testRun(void)
         #define TEST_PGDATA                                         MANIFEST_TARGET_PGDATA "/"
         #define TEST_REPO_PATH                                      STORAGE_REPO_BACKUP "/" TEST_LABEL "/" TEST_PGDATA
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
@@ -2920,6 +2920,14 @@ testRun(void)
 
         // Change timestamp so it will be updated
         HRN_STORAGE_TIME(storagePgWrite(), "global/999", 777);
+
+        // Enlarge a file so it gets truncated. Keep timestamp the same to prove that it gets updated after the truncate.
+        HRN_STORAGE_PUT_Z(
+            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n\n", .modeFile = 0600,
+            .timeModified = 1482182860);
+
+        // Enlarge a zero-length file so it gets truncated
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "global/888", "X", .modeFile = 0600);
 
         // Change size so delta will skip based on size
         HRN_STORAGE_PUT_Z(storagePgWrite(), "base/1/2", BOGUS_STR);

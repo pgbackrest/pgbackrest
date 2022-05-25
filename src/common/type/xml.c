@@ -332,7 +332,7 @@ xmlDocumentNew(const String *rootName)
     // Create object
     XmlDocument *this = NULL;
 
-    OBJ_NEW_BEGIN(XmlDocument)
+    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -368,7 +368,7 @@ xmlDocumentNewBuf(const Buffer *buffer)
     // Create object
     XmlDocument *this = NULL;
 
-    OBJ_NEW_BEGIN(XmlDocument)
+    OBJ_NEW_BEGIN(XmlDocument, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
         *this = (XmlDocument){{0}};                                 // Extra braces are required for older gcc versions

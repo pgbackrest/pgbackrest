@@ -127,7 +127,7 @@ execNew(const String *command, const StringList *param, const String *name, Time
 
     Exec *this = NULL;
 
-    OBJ_NEW_BEGIN(Exec)
+    OBJ_NEW_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 

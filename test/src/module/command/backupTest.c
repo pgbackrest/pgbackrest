@@ -1757,7 +1757,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.backupType = backupTypeFull;
@@ -1778,7 +1778,7 @@ testRun(void)
 
         Manifest *manifestResume = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifestResume = manifestNewInternal();
             manifestResume->pub.info = infoNew(NULL);
@@ -1912,7 +1912,7 @@ testRun(void)
         // Create manifest with file
         Manifest *manifest = NULL;
 
-        OBJ_NEW_BEGIN(Manifest)
+        OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
             manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
@@ -2566,7 +2566,8 @@ testRun(void)
                 "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   INFO: check archive for prior segment 0000000105D9758F000000FF\n"
-                "P00   WARN: file 'time-mismatch2' has timestamp in the future, enabling delta checksum\n"
+                "P00   WARN: file 'time-mismatch2' has timestamp (1570200100) in the future (relative to copy start 1570200000),"
+                    " enabling delta checksum\n"
                 "P00   WARN: resumable backup 20191003-105320F_20191004-144000D of same type exists"
                     " -- remove invalid files and resume\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/PG_VERSION.gz'"
