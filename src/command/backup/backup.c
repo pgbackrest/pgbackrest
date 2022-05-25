@@ -1873,7 +1873,7 @@ backupProcess(
         if (manifestSaveSize < cfgOptionUInt64(cfgOptManifestSaveThreshold))
             manifestSaveSize = cfgOptionUInt64(cfgOptManifestSaveThreshold);
 
-        // We will skip manifest save in below parallel job loop when the backup is not resumable
+        // We will skip incremental manifest save in below parallel job loop when the backup is not resumable
         const bool resumable = cfgOptionBool(cfgOptResume);
 
         // Process jobs
