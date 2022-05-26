@@ -5,10 +5,11 @@
      Libgcrypt
      WinCNG
      mbedTLS
-     Search on the internet indicates that linux, the bsd's, macos, win32, vms, OS400, arm support libssh2.
+     Search on the internet and libssh2 home and repo indicates that linux, the bsd's, macos, win32, vms, OS400, arm support libssh2.
      I joined and posted to the mailing list about supported platforms/architectures.
 - Create skeleton for sftp driver (new driver files, adding sftp as a
   option in the build system, the option system, etc)
+   - see storage.intern.h to determine required and optional functions for the driver
 - Flesh out the storage driver functions using libssh2
 - Parse fsync support from SSH_FXP_VERSION hello
 - Throw error if sftp requested but fsync not available - provide mechanism to override this
