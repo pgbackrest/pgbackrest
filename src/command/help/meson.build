@@ -5,5 +5,5 @@ help_auto_c_inc = custom_target(
         '../../build/config/config.yaml',
         '../../build/help/help.xml',
     ],
-    command : [build_help, '@SOURCE_ROOT@'],
+    command : [build_help, '@CURRENT_SOURCE_DIR@/../../..'],
 )

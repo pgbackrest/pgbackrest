@@ -1,5 +1,3 @@
-project('pgbackrest', 'c')
-
 cc = meson.get_compiler('c')
 
 lib_bz2 = cc.find_library('bz2')

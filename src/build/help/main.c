@@ -25,7 +25,7 @@ main(int argListSize, const char *argList[])
 
     // Get repo path (cwd if it was not passed)
     const String *pathRepo = argListSize >= 2 ?
-        strPath(strPathAbsolute(STR(argList[1]), STR(currentWorkDir))) : strPath(STR(currentWorkDir));
+        strPathAbsolute(STR(argList[1]), STR(currentWorkDir)) : strPath(STR(currentWorkDir));
 
     // Render config
     const Storage *const storageRepo = storagePosixNewP(pathRepo);
