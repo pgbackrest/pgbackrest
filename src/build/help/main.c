@@ -27,7 +27,7 @@ main(int argListSize, const char *argList[])
     const String *pathRepo = argListSize >= 2 ?
         strPath(strPathAbsolute(STR(argList[1]), STR(currentWorkDir))) : strPath(STR(currentWorkDir));
 
-    // THROW_FMT(AssertError, "!!!%s", strZ(pathRepo));
+    // THROW_FMT(AssertError, "!!!%s", currentWorkDir);
 
     // Render config
     const Storage *const storageRepo = storagePosixNewP(pathRepo);

@@ -2024,7 +2024,7 @@
             </command>
 
             <command id="restore" name="Restore">
-                <summary>Restore a database yyycluster.</summary>
+                <summary>Restore a database cluster.</summary>
 
                 <text>
                     <p>The restore command automatically defaults to selecting the latest backup from the first repository where backups exist (see <link page="user-guide" section="/quickstart/perform-restore">Quick Start - Restore a Backup</link>). The order in which the repositories are checked is dictated by the <file>pgbackrest.conf</file> (e.g. repo1 will be checked before repo2). To select from a specific repository, the <br-option>{[dash]}-repo</br-option> option can be passed (e.g. <br-option>{[dash]}-repo=1</br-option>). The <br-option>{[dash]}-set</br-option> option can be passed if a backup other than the latest is desired.</p>

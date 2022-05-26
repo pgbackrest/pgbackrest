@@ -71,13 +71,7 @@ src_build_help = [
 
 build_help = executable('build-help', src_common, src_build_help, dependencies : [lib_bz2, lib_xml, lib_yaml])
 
-help_auto_c = custom_target(
-    'help.auto.c',
-    output : 'help.auto.c',
-    command : [build_help, '@SOURCE_ROOT@'],
-    build_by_default : true,
-    build_always_stale : true,
-)
+subdir('command/help')
 
 src_pgbackrest = [
 	'command/archive/common.c',
@@ -229,6 +223,7 @@ executable(
     'pgbackrest',
     src_common,
     src_pgbackrest,
+    help_auto_h,
     dependencies : [
         lib_bz2,
         lib_openssl,
