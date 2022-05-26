@@ -223,7 +223,7 @@ executable(
     'pgbackrest',
     src_common,
     src_pgbackrest,
-    help_auto_h,
+    help_auto_c_inc,
     dependencies : [
         lib_bz2,
         lib_openssl,

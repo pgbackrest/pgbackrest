@@ -51,7 +51,7 @@ Main
 /***********************************************************************************************************************************
 Include automatically generated help data
 ***********************************************************************************************************************************/
-#include "command/help/help.auto.h"
+#include "command/help/help.auto.c.inc"
 
 int
 main(int argListSize, const char *argList[])
