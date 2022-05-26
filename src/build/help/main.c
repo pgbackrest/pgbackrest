@@ -24,7 +24,10 @@ main(int argListSize, const char *argList[])
     THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
 
     // Get repo path (cwd if it was not passed)
-    const String *pathRepo = argListSize >= 2 ? strPath(STR(argList[1])) : strPath(STR(currentWorkDir));
+    const String *pathRepo = argListSize >= 2 ?
+        strPath(strPathAbsolute(STR(argList[1]), STR(currentWorkDir))) : strPath(STR(currentWorkDir));
+
+    // THROW_FMT(AssertError, "!!!%s", strZ(pathRepo));
 
     // Render config
     const Storage *const storageRepo = storagePosixNewP(pathRepo);
