@@ -3,7 +3,9 @@
 ####################################################################################################################################
 project(
     'pgbackrest',
-    'c',
+    ['c'],
+    version: '2.40dev',
+    license: 'MIT',
     default_options: [
         # Core options
         'buildtype=release',
@@ -115,4 +117,57 @@ if get_option('fatal-errors') and meson.get_compiler('c').has_argument('-Wfatal-
         add_project_arguments('-Wfatal-errors', language: 'c')
 endif
 
+####################################################################################################################################
+# Build configuration
+####################################################################################################################################
+configuration = configuration_data()
+
+# Find required bz2 library
+lib_bz2 = meson.get_compiler('c').find_library('bz2')
+
+# Find optional lz4 library
+lib_lz4 = dependency('liblz4', required: false)
+
+if lib_lz4.found()
+    configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
+endif
+
+# Find required openssl library
+lib_openssl = dependency('openssl')
+
+# Find required pq library
+lib_pq = dependency('libpq')
+
+# Find required xml library
+lib_xml = dependency('libxml-2.0')
+
+# Find required yaml library (only used for build)
+lib_yaml = meson.get_compiler('c').find_library('yaml')
+
+# Find required gz library
+lib_z = dependency('zlib')
+
+# Find optional zstd library
+lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
+
+if lib_zstd.found()
+    configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
+endif
+
+# Check if the C compiler supports _Static_assert()
+if meson.get_compiler('c').compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
+  configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
+endif
+
+# Enable debug code
+if get_option('debug')
+    configuration.set('DEBUG', true, description: 'Enable debug code')
+endif
+
+# Set configuration path
+configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), description: 'Configuration path')
+
+####################################################################################################################################
+# Include src
+####################################################################################################################################
 subdir('src')

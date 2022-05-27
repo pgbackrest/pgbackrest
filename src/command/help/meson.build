@@ -1,3 +1,6 @@
+####################################################################################################################################
+# Generate help
+####################################################################################################################################
 help_auto_c_inc = custom_target(
     'help.auto.c.inc',
     output : 'help.auto.c.inc',
@@ -5,5 +8,8 @@ help_auto_c_inc = custom_target(
         '../../build/config/config.yaml',
         '../../build/help/help.xml',
     ],
-    command : [build_help, '@CURRENT_SOURCE_DIR@/../../..'],
+    command : [
+        build_help,
+        '@CURRENT_SOURCE_DIR@/../../..'
+    ],
 )
