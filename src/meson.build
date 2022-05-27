@@ -1,19 +1,59 @@
-cc = meson.get_compiler('c')
+####################################################################################################################################
+# Build configuration
+####################################################################################################################################
+configuration = configuration_data()
 
-lib_bz2 = cc.find_library('bz2')
+# Find required bz2 library
+lib_bz2 = meson.get_compiler('c').find_library('bz2')
+
+# Find optional lz4 library
+lib_lz4 = dependency('liblz4', required: false)
+
+if lib_lz4.found()
+    configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
+endif
+
+# Find required openssl library
 lib_openssl = dependency('openssl')
+
+# Find required pq library
 lib_pq = dependency('libpq')
+
+# Find required xml library
 lib_xml = dependency('libxml-2.0')
-lib_yaml = cc.find_library('yaml')
+
+# Find required yaml library (only used for build)
+lib_yaml = meson.get_compiler('c').find_library('yaml')
+
+# Find required gz library
 lib_z = dependency('zlib')
 
-conf_data = configuration_data()
+# Find optional zstd library
+lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
 
-conf_data.set_quoted('CFGOPTDEF_CONFIG_PATH', '/etc/pgbackrest')
-conf_data.set('NDEBUG', true)
+if lib_zstd.found()
+    configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
+endif
 
-configure_file(output: 'build.auto.h', configuration: conf_data)
+# Check if the C compiler supports _Static_assert()
+if meson.get_compiler('c').compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
+  configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
+endif
 
+# Enable debug code
+if get_option('debug')
+    configuration.set('DEBUG', true, description: 'Enable debug code')
+endif
+
+# Set configuration path
+configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), description: 'Configuration path')
+
+# Write configuration
+configure_file(output: 'build.auto.h', configuration: configuration)
+
+####################################################################################################################################
+# Common source used by all targets
+####################################################################################################################################
 src_common = [
 	'common/debug.c',
 	'common/encode.c',
@@ -55,6 +95,55 @@ src_common = [
 	'storage/write.c',
 ]
 
+####################################################################################################################################
+# Build config target
+####################################################################################################################################
+src_build_config = [
+	'build/common/render.c',
+	'build/common/yaml.c',
+	'build/config/main.c',
+	'build/config/parse.c',
+	'build/config/render.c',
+]
+
+build_config = executable(
+    'build-config',
+    src_common,
+    src_build_config,
+    dependencies : [
+        lib_yaml
+    ],
+    build_by_default: false,
+)
+
+alias_target('build-config', build_config)
+
+####################################################################################################################################
+# Build error target
+####################################################################################################################################
+src_build_error = [
+	'build/common/render.c',
+	'build/common/yaml.c',
+	'build/error/main.c',
+	'build/error/parse.c',
+	'build/error/render.c',
+]
+
+build_error = executable(
+    'build-error',
+    src_common,
+    src_build_error,
+    dependencies : [
+        lib_yaml
+    ],
+    build_by_default: false,
+)
+
+alias_target('build-error', build_error)
+
+####################################################################################################################################
+# Build help target
+####################################################################################################################################
 src_build_help = [
 	'build/common/render.c',
 	'build/common/yaml.c',
@@ -67,10 +156,25 @@ src_build_help = [
 	'common/type/xml.c',
 ]
 
-build_help = executable('build-help', src_common, src_build_help, dependencies : [lib_bz2, lib_xml, lib_yaml])
+build_help = executable(
+    'build-help',
+    src_common,
+    src_build_help,
+    dependencies: [
+        lib_bz2,
+        lib_xml,
+        lib_yaml
+    ],
+)
 
+# build help.auto.c.inc
 subdir('command/help')
 
+alias_target('build-help', help_auto_c_inc)
+
+####################################################################################################################################
+# pgBackRest target
+####################################################################################################################################
 src_pgbackrest = [
 	'command/archive/common.c',
 	'command/archive/get/file.c',
@@ -217,7 +321,7 @@ src_pgbackrest = [
     'main.c',
 ]
 
-executable(
+pgbackrest = executable(
     'pgbackrest',
     src_common,
     src_pgbackrest,
@@ -225,8 +329,12 @@ executable(
     dependencies : [
         lib_bz2,
         lib_openssl,
+        lib_lz4,
         lib_pq,
         lib_xml,
-        lib_z
+        lib_z,
+        lib_zstd,
     ]
 )
+
+alias_target('pgbackrest', pgbackrest)

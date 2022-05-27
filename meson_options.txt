@@ -1,1 +1,2 @@
-option('fatal-errors', type: 'boolean', value: false)
+option('configdir', type: 'string', value: '/etc/pgbackrest', description: 'Configuration directory')
+option('fatal-errors', type: 'boolean', value: false, description: 'Stop compilation on first error')

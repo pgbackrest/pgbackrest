@@ -6,9 +6,11 @@ project(
     'c',
     default_options: [
         # Core options
-        'debug=false',
         'buildtype=release',
         'warning_level=2',
+
+        # Base options
+        'b_ndebug=if-release',
 
         # Compiler options
         'c_std=c99',

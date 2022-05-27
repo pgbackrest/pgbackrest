@@ -493,29 +493,29 @@ eval
 
         # Create the build path
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strBuildPath = "${strTestPath}/build";
-
-        # Determine if we need to start from scratch due to changes that make may not detect
-        if (!-e "${strBuildPath}/Makefile" ||
-            stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
-            stat("${strBackRestBase}/src/configure")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
-            stat("${strBackRestBase}/src/build.auto.h.in")->mtime > stat("${strBuildPath}/Makefile")->mtime)
-        {
-            &log(INFO, "configure build");
-
-            $oStorageTest->pathCreate("${strBuildPath}/repo", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
-            executeTest("find ${strBuildPath} -mindepth 1 -print0 | xargs -0 rm -rf");
-            executeTest("cd ${strBuildPath} && ${strBackRestBase}/src/configure -q --enable-test");
-        }
 
         # Auto-generate code files unless --no-gen specified
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bNoGen)
         {
+            # Determine if we need to start from scratch due to changes that make may not detect
+            my $strBuildPath = "${strTestPath}/build";
+
+            if (!-e $strBuildPath)
+            {
+                &log(INFO, "setup build");
+
+                executeTest("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath} ${strBackRestBase}");
+            }
+
+            # Generate code
             &log(INFO, "autogenerate code");
 
             # Build code
-            executeTest("make -C ${strBuildPath} build-config build-error build-help");
+            executeTest(
+                "ninja -C ${strBuildPath} build-config build-error build-help" .
+                " && ${strBuildPath}/src/build-config ${strBackRestBase}/src" .
+                " && ${strBuildPath}/src/build-error ${strBackRestBase}/src");
 
             if ($bGenOnly)
             {
@@ -525,9 +525,11 @@ eval
 
         # Make a copy of the repo to track which files have been changed
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strRepoCachePath = "${strTestPath}/repo";
+        &log(INFO, "sync repo");
 
         # Create the repo path -- this should hopefully prevent obvious rsync errors below
+        my $strRepoCachePath = "${strTestPath}/repo";
+
         $oStorageTest->pathCreate($strRepoCachePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
         # Copy the repo
