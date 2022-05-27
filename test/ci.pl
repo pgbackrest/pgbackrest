@@ -187,7 +187,7 @@ eval
     elsif ($ARGV[0] eq 'test')
     {
         # Build list of packages that need to be installed
-        my $strPackage = "make gcc ccache meson git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
+        my $strPackage = "make gcc ccache ninja pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))
@@ -213,6 +213,12 @@ eval
         processBegin('install test packages');
         processExec(
             "sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${strPackage}",
+            {bSuppressStdErr => true});
+        processEnd();
+
+        processBegin('install meson');
+        processExec(
+            "sudo pip3 install meson==0.54.3 && sudo ln -s /usr/local/bin/meson /usr/bin/meson",
             {bSuppressStdErr => true});
         processEnd();
 
