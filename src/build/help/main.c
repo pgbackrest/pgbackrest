@@ -36,6 +36,8 @@ main(int argListSize, const char *argList[])
             pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
     }
 
+    THROW_FMT(AssertError, "!!!ARG=%s CWD=%s REPO=%s", argList[1], currentWorkDir, strZ(pathRepo));
+
     // Render config
     const Storage *const storageRepo = storagePosixNewP(pathRepo);
     const Storage *const storageBuild = storagePosixNewP(STR(currentWorkDir), .write = true);
