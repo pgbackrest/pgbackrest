@@ -25,6 +25,7 @@ main(int argListSize, const char *argList[])
 
     // Get repo path (cwd if it was not passed)
     const String *pathRepo = strPath(STR(currentWorkDir));
+    String *const pathOut = strCatZ(strNew(), currentWorkDir);
 
     if (argListSize >= 2)
     {
@@ -33,14 +34,15 @@ main(int argListSize, const char *argList[])
         if (strBeginsWith(pathArg, FSLASH_STR))
             pathRepo = strPath(pathArg);
         else
+        {
             pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
+            strCatZ(pathOut, "/src");
+        }
     }
-
-    THROW_FMT(AssertError, "!!!ARG=%s CWD=%s REPO=%s", argList[1], currentWorkDir, strZ(pathRepo));
 
     // Render config
     const Storage *const storageRepo = storagePosixNewP(pathRepo);
-    const Storage *const storageBuild = storagePosixNewP(STR(currentWorkDir), .write = true);
+    const Storage *const storageBuild = storagePosixNewP(pathOut, .write = true);
     const BldCfg bldCfg = bldCfgParse(storageRepo);
     bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg));
 
