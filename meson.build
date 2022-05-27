@@ -6,9 +6,9 @@ project(
     'c',
     default_options: [
         # Core options
-        'autofeatures=disabled',
         'debug=false',
-        'buildtype=plain',
+        'buildtype=release',
+        'warning_level=2',
 
         # Compiler options
         'c_std=c99',
@@ -25,12 +25,9 @@ elif build_machine.system() == 'darwin'
 endif
 
 ####################################################################################################################################
-# Enable as many warnings as possible to catch potential errors
+# Enable as many additional warnings as possible to catch potential errors
 ####################################################################################################################################
 warning_enable = [
-    # Warn about basic issues
-    'all',
-
     # Warn for implicit conversions that may alter a value
     'conversion',
 
@@ -39,9 +36,6 @@ warning_enable = [
 
     # Warn when an if-else has identical branches
     'duplicated-branches',
-
-    # Warn about more advance issues
-    'extra',
 
     # Warn if the format string is not a string literal and cannot be checked
     'format-nonliteral',
@@ -94,30 +88,29 @@ foreach warning : warning_disable
 endforeach
 
 ####################################################################################################################################
-# Test options
+# Enable additional optimizations if the level is high enough
 ####################################################################################################################################
-if get_option('test') == true
-    ################################################################################################################################
-    # Make warnings errors and stop after the first error. Subsequent errors are often caused by the first error.
-    ################################################################################################################################
-    error_enable = [
-        # Make all warnings into errors
-        'error',
+if get_option('optimization') in ['2', '3']
+    optimization_enable = [
+        # Unroll loops whose number of iterations can be determined at compile time or upon entry to the loop
+        'unroll-loops',
 
-        # Causes the compiler to abort compilation on the first error
-        'fatal-errors',
+        # Perform loop vectorization on trees
+        'tree-vectorize',
     ]
 
-    foreach error : error_enable
-        if meson.get_compiler('c').has_argument('-W' + error)
-            add_project_arguments('-W' + error, language: 'c')
+    foreach optimization : optimization_enable
+        if meson.get_compiler('c').has_argument('-f' + optimization)
+            add_project_arguments('-f' + optimization, language: 'c')
         endif
     endforeach
+endif
 
 ####################################################################################################################################
-# Release options
+# Stop after the first error when error on warn enabled. Subsequent errors are often caused by the first error.
 ####################################################################################################################################
-elif
+if get_option('fatal-errors') and meson.get_compiler('c').has_argument('-Wfatal-errors')
+        add_project_arguments('-Wfatal-errors', language: 'c')
 endif
 
 subdir('src')
