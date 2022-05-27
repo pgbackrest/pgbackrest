@@ -7,6 +7,20 @@
      mbedTLS
      Search on the internet and libssh2 home and repo indicates that linux, the bsd's, macos, win32, vms, OS400, arm support libssh2.
      I joined and posted to the mailing list about supported platforms/architectures.
+       ...snip...
+       > Is the presumption that as long as the platform/architecture provides
+       > one of
+       >  OpenSSL
+       >  Libgcrypt
+       >  WinCNG
+       >  mbedTLS
+       > that libssh2 will be viable?
+
+       Pretty much, yes. Linux, macOS, UNIX, BSD, Solaris, and Windows at least.
+
+       --
+
+         / daniel.haxx.se
 - Create skeleton for sftp driver (new driver files, adding sftp as a
   option in the build system, the option system, etc)
    - see storage.intern.h to determine required and optional functions for the driver
