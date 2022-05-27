@@ -94,7 +94,7 @@ endforeach
 ####################################################################################################################################
 # Enable additional optimizations if the level is high enough
 ####################################################################################################################################
-if get_option('optimization') in ['2', '3']
+if get_option('optimization') == '2' or get_option('optimization') == '3'
     optimization_enable = [
         # Unroll loops whose number of iterations can be determined at compile time or upon entry to the loop
         'unroll-loops',
