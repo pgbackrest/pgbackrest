@@ -51,7 +51,7 @@ use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE
 ####################################################################################################################################
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
-use constant CONTAINER_DEBUG                                        => false;
+use constant CONTAINER_DEBUG                                        => true;
 
 ####################################################################################################################################
 # Store cache container checksums
@@ -383,7 +383,7 @@ sub containerBuild
             $strScript .=
                 "    yum -y update && \\\n" .
                 "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
-                "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
+                "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl ccache ninja-build\\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP";
         }
@@ -392,7 +392,7 @@ sub containerBuild
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make valgrind git \\\n" .
+                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make ccache ninja-build valgrind git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
@@ -453,6 +453,39 @@ sub containerBuild
             "    rm -rf /root/${strValgrind}";
 
         #---------------------------------------------------------------------------------------------------------------------------
+        my $strMesonVersion = '0.61.4';
+
+        $strScript .= sectionHeader() .
+            "# Install Meson ${strMesonVersion}\n";
+
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+        {
+            $strScript .=
+                "    yum install -y python3-pip && \\\n";
+        }
+        else
+        {
+            $strScript .=
+                "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
+                "    apt-get install -y --no-install-recommends python3-pip && \\\n";
+        }
+
+        $strScript .=
+            "    pip3 install meson==${strMesonVersion} && \\\n" .
+            "    ln -s /usr/local/bin/meson /usr/bin/meson && \\\n";
+
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+        {
+            $strScript .=
+                "    yum autoremove -y python-pip";
+        }
+        else
+        {
+            $strScript .=
+                "    apt-get remove --auto-remove python-pip";
+        }
+
+        #---------------------------------------------------------------------------------------------------------------------------
         if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
         {
             my $strLCovVersion = $oVm->{$strOS}{&VMDEF_LCOV_VERSION};
@@ -484,11 +517,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F33)
+                elsif ($strOS eq VM_F35)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-33-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-35-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 

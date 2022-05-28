@@ -6,7 +6,7 @@ project(
     ['c'],
     version: '2.40dev',
     license: 'MIT',
-    meson_version: '=0.54.3',
+#    meson_version: '>=0.61.4',
     default_options: [
         # Core options
         'buildtype=release',
@@ -137,7 +137,7 @@ endif
 lib_openssl = dependency('openssl')
 
 # Find required pq library
-lib_pq = dependency('libpq')
+lib_pq = meson.get_compiler('c').find_library('libpq')
 
 # Find required xml library
 lib_xml = dependency('libxml-2.0')

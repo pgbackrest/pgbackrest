@@ -219,7 +219,7 @@ eval
 
         processBegin('install meson');
         processExec(
-            "sudo pip3 install meson==0.54.3 && sudo ln -s /usr/local/bin/meson /usr/bin/meson",
+            "sudo pip3 install meson==0.61.4 && sudo ln -s /usr/local/bin/meson /usr/bin/meson",
             {bSuppressStdErr => true});
         processEnd();
 

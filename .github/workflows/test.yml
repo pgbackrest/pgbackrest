@@ -41,7 +41,7 @@ jobs:
           - param: test --vm=u20 --param=module=mock --param=module=real
 
           # All unit tests (with coverage) on the newest gcc available
-          - param: test --vm=f33 --param=c-only --param=tz=America/New_York
+          - param: test --vm=f35 --param=c-only --param=tz=America/New_York
 
           # RHEL documentation
           - param: doc --vm=rh8
