@@ -377,12 +377,12 @@ sub containerBuild
             if ($strOS eq VM_RH7)
             {
                 $strScript .=
-                    "    yum -y install centos-release-scl-rh epel-release && \\\n";
+                    "    yum -y --setopt=skip_missing_names_on_install=False install centos-release-scl-rh epel-release && \\\n";
             }
 
             $strScript .=
                 "    yum -y update && \\\n" .
-                "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
+                "    yum -y --setopt=skip_missing_names_on_install=False install openssh-server openssh-clients wget sudo valgrind git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl ccache ninja-build\\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP";
@@ -461,7 +461,7 @@ sub containerBuild
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
             $strScript .=
-                "    yum install -y python3-pip && \\\n";
+                "    yum install --setopt=skip_missing_names_on_install=False -y python3-pip && \\\n";
         }
         else
         {
@@ -525,7 +525,7 @@ sub containerBuild
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
-                $strScript .= "    yum -y install postgresql-devel";
+                $strScript .= "    yum -y --setopt=skip_missing_names_on_install=Falseinstall postgresql-devel";
             }
             else
             {
@@ -546,7 +546,7 @@ sub containerBuild
 
                 if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
                 {
-                    $strScript .= "    yum -y install";
+                    $strScript .= "    yum -y --setopt=skip_missing_names_on_install=False install";
                 }
                 else
                 {
