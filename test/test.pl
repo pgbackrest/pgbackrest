@@ -788,7 +788,7 @@ eval
                         # Patch files in debian package builds
                         #
                         # Use these commands to create a new patch (may need to modify first line):
-                        # BRDIR=/backrest;BRVM=u20;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
+                        # BRDIR=/home/vagrant/pgbackrest;BRVM=u20;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
                         # DBDIR=${BRDIR?}/test/result/package/${BRVM}/debian
                         # diff -Naur ${DBDIR?}.old ${DBDIR}.new > ${BRPATCHFILE?}
                         my $strDebianPackagePatch = "${strBackRestBase}/test/patch/debian-package.patch";
@@ -900,7 +900,7 @@ eval
                         # Patch files in RHEL package builds
                         #
                         # Use these commands to create a new patch (may need to modify first line):
-                        # BRDIR=/backrest;BRVM=rh7;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
+                        # BRDIR=/home/vagrant/pgbackrest;BRVM=rh7;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
                         # PKDIR=${BRDIR?}/test/result/package/${BRVM}/SPECS
                         # diff -Naur ${PKDIR?}.old ${PKDIR}.new > ${BRPATCHFILE?}
                         my $strPackagePatch = "${strBackRestBase}/test/patch/rhel-package.patch";
