@@ -170,8 +170,8 @@ sub run
         &log($self->{bDryRun} && !$self->{bVmOut} || $self->{bShowOutputAsync} ? INFO : DETAIL, "${strTest}" .
              (!($self->{bDryRun} || !$self->{bVmOut}) || $self->{bShowOutputAsync} ? "\n" : ''));
 
-        my $strVmTestPath = '/home/' . TEST_USER . "/test/${strImage}";
         my $strHostTestPath = "$self->{strTestPath}/${strImage}";
+        my $strVmTestPath = $strHostTestPath;
 
         # Don't create the container if this is a dry run unless output from the VM is required. Output can be requested
         # to get more information about the specific tests that will be run.
