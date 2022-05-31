@@ -6,7 +6,7 @@ project(
     ['c'],
     version: '2.40dev',
     license: 'MIT',
-#    meson_version: '>=0.61.4',
+    meson_version: '>=0.53.2',
     default_options: [
         # Core options
         'buildtype=release',
