@@ -34,7 +34,7 @@ struct ErrorType
 #endif
 
 // Include error type definitions
-#include "common/error.auto.c"
+#include "common/error.auto.c.inc"
 
 /***********************************************************************************************************************************
 Maximum allowed number of nested try blocks

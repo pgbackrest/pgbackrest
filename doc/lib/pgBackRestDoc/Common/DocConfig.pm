@@ -320,6 +320,13 @@ sub process
             $oCommandOption->{&CONFIG_HELP_INTERNAL} =
                 cfgDefineCommand()->{$strCommand}{&CFGDEF_INTERNAL} ? true : $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
 
+            # If internal is defined for the option/command it overrides everthing else
+            if (defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL}))
+            {
+                $oCommandOption->{&CONFIG_HELP_INTERNAL} =
+                    $oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL};
+            }
+
             $$oCommandOption{&CONFIG_HELP_NAME} = $oOptionDoc->paramGet('name');
 
             # Generate a list of alternate names
@@ -445,6 +452,9 @@ sub manGet
 
                 if ($$hOption{&CONFIG_HELP_SOURCE} eq CONFIG_HELP_SOURCE_COMMAND)
                 {
+                    # Skip internal options
+                    next if $hOption->{&CONFIG_HELP_INTERNAL};
+
                     $iOptionMaxLen = length($strOption) > $iOptionMaxLen ? length($strOption) : $iOptionMaxLen;
 
                     $$hOptionList{$strCommand}{$strOption}{&CONFIG_HELP_SUMMARY} = $$hOption{&CONFIG_HELP_SUMMARY};
@@ -714,7 +724,7 @@ sub helpCommandDocGet
             foreach my $strOption (sort(keys(%{$$oCommandHash{&CONFIG_HELP_OPTION}})))
             {
                 # Skip internal options
-                next if $rhConfigDefine->{$strOption}{&CFGDEF_INTERNAL};
+                next if $$oCommandHash{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_INTERNAL};
 
                 # Skip secure options that can't be defined on the command line
                 next if ($rhConfigDefine->{$strOption}{&CFGDEF_SECURE});

@@ -64,6 +64,21 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-pull-request id="1749"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="francisco.miguel.biete"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip internal options in the configuration reference.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-doc-list>
         </release>
 
         <release date="2022-05-16" version="2.39" title="Verify and File Bundling">
@@ -11473,6 +11488,11 @@
         <contributor id="fatih.mencutekin">
             <contributor-name-display>Fatih Mencutekin</contributor-name-display>
             <contributor-id type="github">fatihmtekin</contributor-id>
+        </contributor>
+
+        <contributor id="francisco.miguel.biete">
+            <contributor-name-display>Francisco Miguel Biete</contributor-name-display>
+            <contributor-id type="github">fmbiete</contributor-id>
         </contributor>
 
         <contributor id="floris.van.nee">

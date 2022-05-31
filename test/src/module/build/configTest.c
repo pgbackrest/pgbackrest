@@ -561,11 +561,11 @@ testRun(void)
             "#endif\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check parse.auto.c");
+        TEST_TITLE("check parse.auto.c.inc");
 
         TEST_STORAGE_GET(
             storageTest,
-            "src/config/parse.auto.c",
+            "src/config/parse.auto.c.inc",
             COMMENT_BLOCK_BEGIN "\n"
             "Config Parse Rules\n"
             "\n"

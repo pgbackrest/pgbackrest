@@ -727,7 +727,7 @@ src/common/crypto/hash.h:
   class: core
   type: c/h
 
-src/common/crypto/md5.vendor.c:
+src/common/crypto/md5.vendor.c.inc:
   class: core/vendor
   type: c
 
@@ -747,7 +747,7 @@ src/common/encode.h:
   class: core
   type: c/h
 
-src/common/error.auto.c:
+src/common/error.auto.c.inc:
   class: core/auto
   type: c
 
@@ -1311,7 +1311,7 @@ src/config/load.h:
   class: core
   type: c/h
 
-src/config/parse.auto.c:
+src/config/parse.auto.c.inc:
   class: core/auto
   type: c
 
@@ -1423,7 +1423,7 @@ src/postgres/interface/page.c:
   class: core
   type: c
 
-src/postgres/interface/pageChecksum.vendor.c:
+src/postgres/interface/pageChecksum.vendor.c.inc:
   class: core/vendor
   type: c
 
