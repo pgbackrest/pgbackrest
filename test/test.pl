@@ -687,58 +687,67 @@ eval
                 foreach my $strBuildVM (@stryBuildVm)
                 {
                     my $strBuildPath = "${strBinPath}/${strBuildVM}";
-                    my $bRebuild = false;
-                    $rhBinBuild->{$strBuildVM} = false;
-
-                    # Build configure/compile options and see if they have changed from the previous build
-                    my $strCFlags =
-                        (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
-                        ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
-                    my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace ? '-lbacktrace' : '';
-                    my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
-                    my $strBuildFlags = "CFLAGS_EXTRA=${strCFlags}\nLDFLAGS_EXTRA=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
-                    my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
-
-                    my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
 
                     &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
 
-                    if ($strBuildVM ne VM_NONE)
+                    if ($strBuildVM eq VM_NONE)
                     {
+                        # Setup build if it does not exist
+                        if (!-e $strBuildPath)
+                        {
+                            executeTest("meson setup -Dwerror=true -Dfatal-errors=true ${strBuildPath} ${strBackRestBase}");
+                        }
+
+                        # Build code
+                        executeTest("ninja -C ${strBuildPath}");
+                    }
+                    else
+                    {
+                        my $bRebuild = false;
+                        $rhBinBuild->{$strBuildVM} = false;
+
+                        # Build configure/compile options and see if they have changed from the previous build
+                        my $strCFlags =
+                            (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
+                            ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
+                        my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace ? '-lbacktrace' : '';
+                        my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
+                        my $strBuildFlags = "CFLAGS_EXTRA=${strCFlags}\nLDFLAGS_EXTRA=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
+                        my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
+
+                        my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
+
                         executeTest(
                             "docker run -itd -h test-build --name=test-build" .
                                 " -v ${strBackRestBase}:${strBackRestBase} -v ${strTestPath}:${strTestPath} " .
                                 containerRepo() . ":${strBuildVM}-test",
                             {bSuppressStdErr => true});
-                    }
 
-                    if ($bBuildOptionsDiffer ||
-                        !-e "${strBuildPath}/Makefile" ||
-                        stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
-                        stat("${strBackRestBase}/src/configure")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
-                        stat("${strBackRestBase}/src/build.auto.h.in")->mtime > stat("${strBuildPath}/Makefile")->mtime)
-                    {
-                        &log(INFO, '        bin dependencies have changed, rebuilding');
+                        if ($bBuildOptionsDiffer ||
+                            !-e "${strBuildPath}/Makefile" ||
+                            stat("${strBackRestBase}/src/Makefile.in")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
+                            stat("${strBackRestBase}/src/configure")->mtime > stat("${strBuildPath}/Makefile")->mtime ||
+                            stat("${strBackRestBase}/src/build.auto.h.in")->mtime > stat("${strBuildPath}/Makefile")->mtime)
+                        {
+                            &log(INFO, '        bin dependencies have changed, rebuilding');
 
-                        # Remove old path if it exists and save the build flags
-                        executeTest("rm -rf ${strBuildPath}");
-                        buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
+                            # Remove old path if it exists and save the build flags
+                            executeTest("rm -rf ${strBuildPath}");
+                            buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
+
+                            executeTest(
+                                'docker exec -i -u ' . TEST_USER . ' test-build ' .
+                                "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure -q${strConfigOptions}'",
+                                {bShowOutputAsync => $bLogDetail});
+                        }
 
                         executeTest(
-                            ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
-                            "bash -c 'cd ${strBuildPath} && ${strBackRestBase}/src/configure -q${strConfigOptions}'",
+                            'docker exec -i -u ' . TEST_USER . ' test-build ' .
+                            "${strMakeCmd} -s -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
+                                " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'" .
+                                ($strLdFlags ne '' ? " LDFLAGS_EXTRA='${strLdFlags}'" : ''),
                             {bShowOutputAsync => $bLogDetail});
-                    }
 
-                    executeTest(
-                        ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . ' test-build ' : '') .
-                        "${strMakeCmd} -s -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
-                            " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'" .
-                            ($strLdFlags ne '' ? " LDFLAGS_EXTRA='${strLdFlags}'" : ''),
-                        {bShowOutputAsync => $bLogDetail});
-
-                    if ($strBuildVM ne VM_NONE)
-                    {
                         executeTest("docker rm -f test-build");
                     }
                 }
@@ -1091,7 +1100,7 @@ eval
         $strBackRestBase,                                           # Base backrest directory
         $strTestPath,                                               # Path where the tests will run
         dirname($strTestPath) . "/bin/${strVm}/" . PROJECT_EXE,     # Path to the pgbackrest binary
-        dirname($strTestPath) . "/bin/" . VM_NONE . '/' . PROJECT_EXE,  # Path to the backrest Perl storage helper
+        dirname($strTestPath) . "/bin/" . VM_NONE . '/src/' . PROJECT_EXE,  # Path to the pgbackrest storage helper
         $strPgVersion ne 'minimal' ? $strPgSqlBin: undef,           # Pg bin path
         $strPgVersion ne 'minimal' ? $strPgVersion: undef,          # Pg version
         $stryModule[0], $stryModuleTest[0], \@iyModuleTestRun,      # Module info
