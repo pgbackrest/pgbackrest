@@ -1,6 +1,6 @@
 # Error Definitions
 #
-# Definitions for all C errors, auto-generated to src/common/error.auto.c/h.
+# Definitions for all C errors, auto-generated to src/common/error.auto.c.inc/h.inc.
 
 # Errors in the code that it should not be possible for the user to encounter -- i.e., a likely bug
 assert:

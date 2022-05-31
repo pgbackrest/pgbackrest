@@ -76,11 +76,11 @@ testRun(void)
             "#endif\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check error.auto.c");
+        TEST_TITLE("check error.auto.c.inc");
 
         TEST_STORAGE_GET(
             storageTest,
-            "src/common/error.auto.c",
+            "src/common/error.auto.c.inc",
             COMMENT_BLOCK_BEGIN "\n"
             "Error Type Definition\n"
             "\n"

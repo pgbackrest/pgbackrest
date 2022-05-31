@@ -80,7 +80,7 @@ sub codeCountScan
             $strClass = 'doc/core';
         }
         elsif ($strFile =~ '^build/' || $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
-               $strFile =~ '^src/build/')
+               $strFile =~ '^src/build/' || $strFile =~ 'meson\.build$' || $strFile =~ 'meson_options\.txt$')
         {
             $strClass = 'build';
         }
@@ -94,13 +94,13 @@ sub codeCountScan
         }
 
         # Append auto if an auto-generated file
-        if ($strFile =~ '\.auto\..$' | $strFile =~ 'Auto\.pm$')
+        if ($strFile =~ '\.auto\..$' || $strFile =~ '\.auto\..\.inc$' || $strFile =~ 'Auto\.pm$')
         {
             $strClass .= '/auto';
         }
 
         # Append vendor if a vendorized file
-        if ($strFile =~ '\.vendor\..$')
+        if ($strFile =~ '\.vendor\..$' || $strFile =~ '\.vendor\..\.inc$')
         {
             $strClass .= '/vendor';
         }
@@ -119,7 +119,7 @@ sub codeCountScan
             $strType = 'c/h';
             $strForceLang = 'C/C++ Header';
         }
-        elsif ($strFile =~ '\.c$')
+        elsif ($strFile =~ '\.c$' || $strFile =~ '\.c.inc$')
         {
             $strType = 'c';
             $strForceLang = 'C';
@@ -137,6 +137,11 @@ sub codeCountScan
         elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure' || $strFile =~ '^src\/build\/')
         {
             $strType = 'make';
+            $strForceLang = 'make';
+        }
+        elsif ($strFile =~ 'meson\.build$' || $strFile =~ 'meson_options\.txt$')
+        {
+            $strType = 'meson';
             $strForceLang = 'make';
         }
         elsif ($strFile =~ '\.xml$')
