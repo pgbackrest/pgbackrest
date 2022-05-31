@@ -137,7 +137,7 @@ endif
 lib_openssl = dependency('openssl')
 
 # Find required pq library
-lib_pq = meson.get_compiler('c').find_library('libpq')
+lib_pq = dependency('libpq')
 
 # Find required xml library
 lib_xml = dependency('libxml-2.0')
