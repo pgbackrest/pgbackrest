@@ -1930,7 +1930,6 @@ option:
     command:
       archive-get: {}
       archive-push: {}
-      backup: {}
       check: {}
       info: {}
       repo-create: {}
