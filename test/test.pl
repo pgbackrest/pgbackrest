@@ -773,7 +773,7 @@ eval
                         # Patch files in debian package builds
                         #
                         # Use these commands to create a new patch (may need to modify first line):
-                        # BRDIR=/backrest;BRVM=u20;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
+                        # BRDIR=/backrest;BRVM=u22;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
                         # DBDIR=${BRDIR?}/test/result/package/${BRVM}/debian
                         # diff -Naur ${DBDIR?}.old ${DBDIR}.new > ${BRPATCHFILE?}
                         my $strDebianPackagePatch = "${strBackRestBase}/test/patch/debian-package.patch";

@@ -382,7 +382,7 @@ testRun(void)
         // Placeholder test for manifest
         TEST_ERROR(
             checkManifest(), UnknownError,
-            "remote-0 process on 'localhost' terminated unexpectedly [127]: bash: pgbackrest-bogus: command not found");
+            "remote-0 process on 'localhost' terminated unexpectedly [127]: bash: line 1: pgbackrest-bogus: command not found");
     }
 
     // *****************************************************************************************************************************

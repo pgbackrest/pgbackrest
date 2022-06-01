@@ -398,7 +398,7 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .caFile = STRDEF("bogus.crt"), .caPath = STRDEF("/bogus"))),
-            CryptoError, "unable to set user-defined CA certificate location: [33558530] No such file or directory");
+            CryptoError, "unable to set user-defined CA certificate location: [2147483650] no details available");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing client cert");
@@ -408,7 +408,7 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF("/bogus"), .keyFile = STRDEF("/bogus"))),
-            CryptoError, "unable to load cert file '/bogus': [33558530] No such file or directory");
+            CryptoError, "unable to load cert file '/bogus': [2147483650] no details available");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing client key");
@@ -418,7 +418,7 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF("/bogus"))),
-            CryptoError, "unable to load key file '/bogus': [33558530] No such file or directory");
+            CryptoError, "unable to load key file '/bogus': [2147483650] no details available");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("client cert and key do not match");
@@ -429,7 +429,7 @@ testRun(void)
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(HRN_SERVER_KEY))),
             CryptoError,
-            "unable to load key file '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': [185073780] key values"
+            "unable to load key file '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': [92274804] key values"
                 " mismatch");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -443,7 +443,7 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(TEST_PATH "/client-pwd.key")),
-                CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': [101077092] bad decrypt");
+                CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': [478150756] bad decrypt");
         }
         CATCH(TestError)
         {
@@ -653,7 +653,7 @@ testRun(void)
 
                 TEST_ERROR(
                     ioServerAccept(tlsServer, socketSession), ServiceError,
-                    "TLS error [1:337100934] certificate verify failed");
+                    "TLS error [1:167772294] certificate verify failed");
 
                 // Valid client cert
                 socketSession = ioServerAccept(socketServer, NULL);
@@ -699,7 +699,7 @@ testRun(void)
 
                 TEST_ERROR(
                     ioRead(ioSessionIoReadP(clientSession), bufNew(1)), ServiceError,
-                    "TLS error [1:336151576] tlsv1 alert unknown ca");
+                    "TLS error [1:167773208] tlsv1 alert unknown ca");
 
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
 
@@ -784,7 +784,7 @@ testRun(void)
                 TEST_RESULT_INT(tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_WRITE, 0, 0, false), 0, "write ready");
                 TEST_ERROR(
                     tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 336031996, 0, false), ServiceError,
-                    "TLS error [4:336031996] unknown protocol");
+                    "TLS error [4:336031996] no details available");
                 TEST_ERROR(
                     tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 0, 0, false), ServiceError,
                     "TLS error [4:0] no details available");
@@ -867,7 +867,9 @@ testRun(void)
                 socketLocal.block = false;
 
                 output = bufNew(13);
-                TEST_ERROR(ioRead(ioSessionIoReadP(session), output), KernelError, "TLS syscall error");
+                TEST_ERROR(
+                    ioRead(ioSessionIoReadP(session), output), ServiceError,
+                    "TLS error [1:167772454] unexpected eof while reading");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("aborted connection ignored and read complete (non-blocking socket)");
