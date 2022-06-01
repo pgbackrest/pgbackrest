@@ -368,24 +368,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("checkManifest()"))
-    {
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 5, "localhost");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 5, "pgbackrest-bogus");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 5, "/path/to/pg5");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHostUser, 5, TEST_USER);
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        // Placeholder test for manifest
-        TEST_ERROR(
-            checkManifest(), UnknownError,
-            "remote-0 process on 'localhost' terminated unexpectedly [127]: bash: line 1: pgbackrest-bogus: command not found");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("checkDbConfig(), checkArchiveCommand()"))
     {
         //--------------------------------------------------------------------------------------------------------------------------

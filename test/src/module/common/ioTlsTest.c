@@ -398,7 +398,12 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .caFile = STRDEF("bogus.crt"), .caPath = STRDEF("/bogus"))),
-            CryptoError, "unable to set user-defined CA certificate location: [2147483650] no details available");
+            CryptoError, "unable to set user-defined CA certificate location: "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[2147483650] no details available");
+#else
+            "[33558530] No such file or directory");
+#endif
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing client cert");
@@ -408,7 +413,12 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF("/bogus"), .keyFile = STRDEF("/bogus"))),
-            CryptoError, "unable to load cert file '/bogus': [2147483650] no details available");
+            CryptoError, "unable to load cert file '/bogus': "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[2147483650] no details available");
+#else
+            "[33558530] No such file or directory");
+#endif
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing client key");
@@ -418,7 +428,12 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF("/bogus"))),
-            CryptoError, "unable to load key file '/bogus': [2147483650] no details available");
+            CryptoError, "unable to load key file '/bogus': "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[2147483650] no details available");
+#else
+            "[33558530] No such file or directory");
+#endif
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("client cert and key do not match");
@@ -428,9 +443,13 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(HRN_SERVER_KEY))),
-            CryptoError,
-            "unable to load key file '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': [92274804] key values"
-                " mismatch");
+            CryptoError, "unable to load key file '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[92274804]"
+#else
+            "[185073780]"
+#endif
+            " key values mismatch");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("client cert with passphrase");
@@ -443,7 +462,13 @@ testRun(void)
                 tlsClientNewP(
                     sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(TEST_PATH "/client-pwd.key")),
-                CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': [478150756] bad decrypt");
+                CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+                "[478150756]"
+#else
+                "[101077092]"
+#endif
+                " bad decrypt");
         }
         CATCH(TestError)
         {
@@ -653,7 +678,13 @@ testRun(void)
 
                 TEST_ERROR(
                     ioServerAccept(tlsServer, socketSession), ServiceError,
-                    "TLS error [1:167772294] certificate verify failed");
+                    "TLS error "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+                    "[1:167772294]"
+#else
+                    "[1:337100934]"
+#endif
+                    " certificate verify failed");
 
                 // Valid client cert
                 socketSession = ioServerAccept(socketServer, NULL);
@@ -699,7 +730,13 @@ testRun(void)
 
                 TEST_ERROR(
                     ioRead(ioSessionIoReadP(clientSession), bufNew(1)), ServiceError,
-                    "TLS error [1:167773208] tlsv1 alert unknown ca");
+                    "TLS error "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+                    "[1:167773208]"
+#else
+                    "[1:336151576]"
+#endif
+                    " tlsv1 alert unknown ca");
 
                 TEST_RESULT_VOID(ioSessionFree(clientSession), "free client session");
 
@@ -784,7 +821,12 @@ testRun(void)
                 TEST_RESULT_INT(tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_WRITE, 0, 0, false), 0, "write ready");
                 TEST_ERROR(
                     tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 336031996, 0, false), ServiceError,
-                    "TLS error [4:336031996] no details available");
+                    "TLS error [4:336031996] "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+                    "no details available");
+#else
+                    "unknown protocol");
+#endif
                 TEST_ERROR(
                     tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 0, 0, false), ServiceError,
                     "TLS error [4:0] no details available");
@@ -869,7 +911,12 @@ testRun(void)
                 output = bufNew(13);
                 TEST_ERROR(
                     ioRead(ioSessionIoReadP(session), output), ServiceError,
-                    "TLS error [1:167772454] unexpected eof while reading");
+                    "TLS error "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+                    "[1:167772454] unexpected eof while reading");
+#else
+                    "[5:0] no details available");
+#endif
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("aborted connection ignored and read complete (non-blocking socket)");
