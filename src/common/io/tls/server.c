@@ -8,7 +8,6 @@ TLS Server
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <openssl/decoder.h>
 #include <openssl/err.h>
 
 #include "common/crypto/common.h"
@@ -103,36 +102,32 @@ tlsServerDh(SSL_CTX *const context)
 
     SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
 
-	// BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
-    // cryptoError(bio == NULL, "unable create buffer for DH parameters");
-
-    EVP_PKEY *dh = NULL;
-    const unsigned char *data = (const unsigned char *)DH_2048;
-    size_t dataSize = sizeof(DH_2048) - 1;
-
-    OSSL_DECODER_CTX *const decoder = OSSL_DECODER_CTX_new_for_pkey(
-        &dh, "PEM", NULL, "DH", OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS, NULL, NULL);
-    cryptoError(decoder == NULL, "unable to create dh decoder");
+	BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
+    cryptoError(bio == NULL, "unable create buffer for DH parameters");
 
     TRY_BEGIN()
     {
-        cryptoError(OSSL_DECODER_from_data(decoder, &data, &dataSize) != 1, "unable to decode dh");
-
-    	// DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+#pragma GCC diagnostic pop
 
         TRY_BEGIN()
         {
-            cryptoError(SSL_CTX_set0_tmp_dh_pkey(context, dh) != 1, "unable to set temp dh parameters");
+            cryptoError(SSL_CTX_set_tmp_dh(context, dh) != 1, "unable to set temp dh parameters");
         }
         FINALLY()
         {
-            EVP_PKEY_free(dh);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+            DH_free(dh);
+#pragma GCC diagnostic pop
         }
         TRY_END();
     }
     FINALLY()
     {
-        OSSL_DECODER_CTX_free(decoder);
+        BIO_free(bio);
     }
     TRY_END();
 
@@ -156,7 +151,10 @@ tlsServerEcdh(SSL_CTX *const context)
     const int nid = OBJ_sn2nid(ECHD_CURVE);
     cryptoError(nid == NID_undef, "unrecognized ECDH curve " ECHD_CURVE);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     EC_KEY *const ecdh = EC_KEY_new_by_curve_name(nid);
+#pragma GCC diagnostic pop
     cryptoError(ecdh == NULL, "could not create ecdh key");
 
     SSL_CTX_set_options(context, SSL_OP_SINGLE_ECDH_USE);
@@ -167,7 +165,10 @@ tlsServerEcdh(SSL_CTX *const context)
     }
     FINALLY()
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         EC_KEY_free(ecdh);
+#pragma GCC diagnostic pop
     }
     TRY_END();
 
@@ -293,7 +294,7 @@ tlsServerNew(
 
     IoServer *this = NULL;
 
-    OBJ_NEW_BEGIN(TlsServer)
+    OBJ_NEW_BEGIN(TlsServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         TlsServer *const driver = OBJ_NEW_ALLOC();
 

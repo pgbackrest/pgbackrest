@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PREREQ([2.69])
-AC_INIT([pgBackRest], [2.39dev])
+AC_INIT([pgBackRest], [2.40dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
@@ -9,9 +9,12 @@ AC_CONFIG_AUX_DIR(build)
 # ----------------------------------------------------------------------------------------------------------------------------------
 : ${CFLAGS=""}
 
+# Check compiler supports C99 standard
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_PROG_CC_C99
+
 # Build C standard based on the host type.  C99 is required and other flags are added depending on the host.
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_PROG_CC
 AC_CANONICAL_HOST
 AC_SUBST(CFLAGS, "${CFLAGS} -std=c99")
 
@@ -129,7 +132,7 @@ AC_ARG_WITH(
 
 # Set warnings and optimizations based on build type (i.e. production or test)
 # ----------------------------------------------------------------------------------------------------------------------------------
-AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-deprecated-declarations")
+AC_SUBST(CFLAGS, "${CFLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-implicit-fallthrough")
 
 # -Wno-clobbered is not supported on all compilers
 AX_CHECK_COMPILE_FLAG([-Wno-clobbered], [AC_SUBST(CFLAGS, "${CFLAGS} -Wno-clobbered")], [], [-Werror])

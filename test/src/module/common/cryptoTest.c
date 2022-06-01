@@ -146,7 +146,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *decryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
-        IoFilter *blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, HASH_TYPE_SHA1_STR);
+        IoFilter *blockDecryptFilter = cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, STRDEF("sha1"));
         blockDecryptFilter = cipherBlockNewPack(ioFilterParamList(blockDecryptFilter));
         CipherBlock *blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
@@ -294,15 +294,15 @@ testRun(void)
     {
         IoFilter *hash = NULL;
 
-        TEST_ERROR(cryptoHashNew(STRDEF(BOGUS_STR)), AssertError, "unable to load hash 'BOGUS'");
+        TEST_ERROR(cryptoHashNew(STRID5("bogus", 0x13a9de20)), AssertError, "unable to load hash 'bogus'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(hash, cryptoHashNew(STRDEF(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha1), "create sha1 hash");
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         PackWrite *packWrite = pckWriteNewP();
-        pckWriteStrP(packWrite, HASH_TYPE_SHA1_STR);
+        pckWriteStrIdP(packWrite, hashTypeSha1);
         pckWriteEndP(packWrite);
 
         TEST_ASSIGN(hash, cryptoHashNewPack(pckWriteResult(packWrite)), "create sha1 hash");
@@ -312,7 +312,7 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(hash, cryptoHashNew(STRDEF(HASH_TYPE_SHA1)), "create sha1 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha1), "create sha1 hash");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "    add 1");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTR(STRDEF("2"))), "    add 2");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRDEF("3")), "    add 3");
@@ -326,14 +326,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("md5 hash - zero bytes");
 
-        TEST_ASSIGN(hash, cryptoHashNew(STRDEF(HASH_TYPE_MD5)), "create md5 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeMd5), "create md5 hash");
         TEST_RESULT_STR_Z(pckReadStrP(pckReadNew(ioFilterResult(hash))), HASH_TYPE_MD5_ZERO, "check empty hash");
 
         // Exercise most of the conditions in the local MD5 code
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("md5 hash - mixed bytes");
 
-        TEST_ASSIGN(hash, cryptoHashNew(STRDEF(HASH_TYPE_MD5)), "create md5 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeMd5), "create md5 hash");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "add 1");
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("123456789012345678901234567890123")), "add 32 bytes");
         TEST_RESULT_VOID(
@@ -354,28 +354,28 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("md5 hash - > 0x1fffffff bytes");
 
-        TEST_ASSIGN(hash, cryptoHashNew(STRDEF(HASH_TYPE_MD5)), "create md5 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeMd5), "create md5 hash");
         ((CryptoHash *)ioFilterDriver(hash))->md5Context->lo = 0x1fffffff;
 
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "add 1");
         TEST_RESULT_STR_Z(pckReadStrP(pckReadNew(ioFilterResult(hash))), "5c99876f9cafa7f485eac9c7a8a2764c", "check hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(hash, cryptoHashNew(STRDEF(HASH_TYPE_SHA256)), "create sha256 hash");
+        TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha256), "create sha256 hash");
         TEST_RESULT_STR_Z(pckReadStrP(pckReadNew(ioFilterResult(hash))), HASH_TYPE_SHA256_ZERO, "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(
-            bufHex(cryptoHashOne(STRDEF(HASH_TYPE_SHA1), BUFSTRDEF("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
+            bufHex(cryptoHashOne(hashTypeSha1, BUFSTRDEF("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
         TEST_RESULT_STR_Z(
-            bufHex(cryptoHashOne(STRDEF(HASH_TYPE_SHA1), BUFSTRDEF(""))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
+            bufHex(cryptoHashOne(hashTypeSha1, BUFSTRDEF(""))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(
             bufHex(
                 cryptoHmacOne(
-                    STRDEF(HASH_TYPE_SHA256),
+                    hashTypeSha256,
                     BUFSTRDEF("AWS4wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),
                     BUFSTRDEF("20170412"))),
             "8b05c497afe9e1f42c8ada4cb88392e118649db1e5c98f0f0fb0a158bdd2dd76",

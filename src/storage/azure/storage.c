@@ -167,7 +167,7 @@ storageAzureAuth(
             // Generate authorization header
             httpHeaderPut(
                 httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
-                strZ(strNewEncode(encodeBase64, cryptoHmacOne(HASH_TYPE_SHA256_STR, this->sharedKey, BUFSTR(stringToSign))))));
+                strZ(strNewEncode(encodeBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else
@@ -216,8 +216,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         if (param.content != NULL)
         {
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
-                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
         // Encode path
@@ -719,7 +718,7 @@ storageAzureNew(
 
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageAzure)
+    OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageAzure *driver = OBJ_NEW_ALLOC();
 

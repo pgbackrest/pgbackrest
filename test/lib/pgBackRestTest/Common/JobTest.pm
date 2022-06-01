@@ -62,7 +62,6 @@ sub new
         $self->{strLogLevelTest},
         $self->{strLogLevelTestFile},
         $self->{bLogTimestamp},
-        $self->{bLogForce},
         $self->{bShowOutputAsync},
         $self->{bNoCleanup},
         $self->{iRetry},
@@ -96,7 +95,6 @@ sub new
             {name => 'strLogLevelTest'},
             {name => 'strLogLevelTestFile'},
             {name => 'bLogTimestamp'},
-            {name => 'bLogForce'},
             {name => 'bShowOutputAsync'},
             {name => 'bNoCleanup'},
             {name => 'iRetry'},
@@ -172,8 +170,8 @@ sub run
         &log($self->{bDryRun} && !$self->{bVmOut} || $self->{bShowOutputAsync} ? INFO : DETAIL, "${strTest}" .
              (!($self->{bDryRun} || !$self->{bVmOut}) || $self->{bShowOutputAsync} ? "\n" : ''));
 
-        my $strVmTestPath = '/home/' . TEST_USER . "/test/${strImage}";
         my $strHostTestPath = "$self->{strTestPath}/${strImage}";
+        my $strVmTestPath = $strHostTestPath;
 
         # Don't create the container if this is a dry run unless output from the VM is required. Output can be requested
         # to get more information about the specific tests that will be run.
@@ -748,7 +746,6 @@ sub run
                     ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
                     ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
-                    ($self->{bLogForce} ? ' --log-force' : '') .
                     ($self->{bDryRun} ? ' --dry-run' : '') .
                     ($self->{bDryRun} ? ' --vm-out' : '') .
                     ($self->{bNoCleanup} ? " --no-cleanup" : '');

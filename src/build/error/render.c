@@ -82,7 +82,7 @@ bldErrRenderErrorAutoH(const Storage *const storageRepo, const BldErr bldErr)
 }
 
 /***********************************************************************************************************************************
-Render error.auto.c
+Render error.auto.c.inc
 ***********************************************************************************************************************************/
 static void
 bldErrRenderErrorAutoC(const Storage *const storageRepo, const BldErr bldErr)
@@ -130,7 +130,7 @@ bldErrRenderErrorAutoC(const Storage *const storageRepo, const BldErr bldErr)
         "    NULL,\n"
         "};\n");
 
-    bldPut(storageRepo, "src/common/error.auto.c", BUFSTR(error));
+    bldPut(storageRepo, "src/common/error.auto.c.inc", BUFSTR(error));
 }
 
 /**********************************************************************************************************************************/

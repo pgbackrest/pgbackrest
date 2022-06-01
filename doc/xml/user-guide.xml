@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="{[project]} User Guide" subtitle="{[user-guide-subtitle]} / {[postgres]} {[pg-version-min]}-{[pg-version-max]}" cmd-line-len="85">
+<doc title="{[project]} User Guide" subtitle="{[user-guide-subtitle]}" cmd-line-len="85">
     <description>The {[project]} User Guide demonstrates how to quickly and easily setup {[project]} for your {[postgres]} database. Step-by-step instructions lead the user through all the important features of the fastest, most reliable {[postgres]} backup and restore solution.</description>
 
     <!-- ======================================================================================================================= -->
@@ -11,16 +11,11 @@
 
         <!-- OS titles -->
         <variable key="os-debian-title">Debian &amp; Ubuntu</variable>
-        <variable key="os-rhel-title">RHEL 7-8</variable>
+        <variable key="os-rhel-title">RHEL</variable>
 
         <!-- Base PostgreSQL versions -->
         <variable key="os-debian-pg-version">12</variable>
-        <variable key="os-debian-pg-version-min">12</variable>
-        <variable key="os-debian-pg-version-max">13</variable>
-
         <variable key="os-rhel-pg-version">10</variable>
-        <variable key="os-rhel-pg-version-min">9.6</variable>
-        <variable key="os-rhel-pg-version-max">11</variable>
 
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
@@ -70,12 +65,7 @@
 
         <!-- PostreSQL versions to run documentation for and min/max versions represented -->
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
-        <variable key="pg-version-min" if="{[os-type-is-debian]}">{[os-debian-pg-version-min]}</variable>
-        <variable key="pg-version-max" if="{[os-type-is-debian]}">{[os-debian-pg-version-max]}</variable>
-
         <variable key="pg-version" if="{[os-type-is-rhel]}">{[os-rhel-pg-version]}</variable>
-        <variable key="pg-version-min" if="{[os-type-is-rhel]}">{[os-rhel-pg-version-min]}</variable>
-        <variable key="pg-version-max" if="{[os-type-is-rhel]}">{[os-rhel-pg-version-max]}</variable>
 
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
@@ -83,7 +73,7 @@
         <variable key="wal-level" if="{[pg-version]} &lt; 9.6">hot_standby</variable>
         <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
 
-        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">13</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">14</variable>
         <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">11</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
@@ -347,7 +337,8 @@
 
         {[copy-ca-cert]}
 
-        RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
+        RUN mkdir -p /lib/systemd/system/sysinit.target.wants &amp;&amp; \
+            (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
             systemd-tmpfiles-setup.service ] || rm -f $i; done); \
             rm -f /lib/systemd/system/multi-user.target.wants/*;\
             rm -f /etc/systemd/system/*.wants/*;\
@@ -786,7 +777,7 @@
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
-        <p>Although the examples are targeted at {[user-guide-os]} and <postgres/> {[pg-version-min]}-{[pg-version-max]}, it should be fairly easy to apply this guide to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters.  The <backrest/> commands will be the same on any Unix system though the location to install the executable may vary.</p>
+        <p>Although the examples in this guide are targeted at <proper>{[user-guide-os]}</proper> and <postgres/> {[pg-version]}, it should be fairly easy to apply the examples to any Unix distribution and <postgres/> version. The only OS-specific commands are those to create, start, stop, and drop <postgres/> clusters. The <backrest/> commands will be the same on any Unix system though the location of the executable may vary. While <backrest/> strives to operate consistently across versions of <postgres/>, there are subtle differences between versions of <postgres/> that may show up in this guide when illustrating certain examples, e.g. <postgres/> path/file names and settings.</p>
 
         <p>Configuration information and documentation for PostgreSQL can be found in the <postgres/> <link url='http://www.postgresql.org/docs/{[pg-version]}/static/index.html'>Manual</link>.</p>
 

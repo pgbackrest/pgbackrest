@@ -10,6 +10,6 @@ Render Configuration Data
 Functions
 ***********************************************************************************************************************************/
 // Render auto-generated config files
-void bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg);
+void bldCfgRender(const Storage *const storageRepo, const BldCfg bldCfg, bool label);
 
 #endif

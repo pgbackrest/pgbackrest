@@ -14,11 +14,97 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.39dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.40dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1758"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Truncate files during delta <cmd>restore</cmd> when they are larger than expected.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1760"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Disable incremental manifest save when <br-option>resume=n</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1759"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Set backup percent complete to zero before copy start.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1749"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Improve memory usage of mem contexts.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="francisco.miguel.biete"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip internal options in the configuration reference.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1764"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="andrey.sokolov"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow any path to be passed to the <br-setting>--test-path</br-setting> option.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-test-list>
+        </release>
+
+        <release date="2022-05-16" version="2.39" title="Verify and File Bundling">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
-                        <github-pull-request id="1732"/>
+                        <commit subject="Fix error thrown from FINALLY() causing an infinite loop.">
+                            <github-pull-request id="1732"/>
+                        </commit>
+                        <commit subject="Remove unnecessary TRY() block in common/regExp module."/>
+                        <commit subject="Use variable instead of function to track FINALLY() state.">
+                            <github-pull-request id="1744"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -182,7 +268,12 @@
                     </release-item>
 
                     <release-item>
-                        <github-pull-request id="1697"/>
+                        <commit subject="Improve path validation for repo-* commands.">
+                            <github-pull-request id="1697"/>
+                        </commit>
+                        <commit subject="Fix issues in improved path validation for repo-* commands.">
+                            <github-pull-request id="1751"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="reid.thompson"/>
@@ -358,6 +449,7 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
                         </release-item-contributor-list>
 
                         <p>Fix example for <br-option>repo-gcs-key-type</br-option> option in configuration reference.</p>
@@ -366,12 +458,76 @@
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
                         </release-item-contributor-list>
 
                         <p>Fix <br-option>tls-server-auth</br-option> example and add clarifications.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1742"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                        </release-item-contributor-list>
+
+                        <p>Simplify messaging around supported versions in the documentation.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1747"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add option type descriptions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1731"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Add FAQ about backup types and restore speed.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1722"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.christensen"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Document required base branch for pull requests.</p>
+                    </release-item>
+                </release-improvement-list>
             </release-doc-list>
+
+            <release-test-list>
+                <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1745"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove integration expect log testing.</p>
+                    </release-item>
+                </release-development-list>
+            </release-test-list>
         </release>
 
         <release date="2022-03-06" version="2.38" title="Minor Bug Fixes and Improvements">
@@ -10948,7 +11104,7 @@
                             <release-item-ideator id="stephen.frost"/>
                         </release-item-contributor-list>
 
-                        <p>The <cmd>archive-get</cmd> command now returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.)  This lets <postgres/> know that that the archive stream has terminated normally.  However, this does not take into account possible holes in the archive stream.</p>
+                        <p>The <cmd>archive-get</cmd> command now returns a 1 when the archive file is missing to differentiate from hard errors (ssh connection failure, file copy error, etc.) This lets <postgres/> know that the archive stream has terminated normally. However, this does not take into account possible holes in the archive stream.</p>
                     </release-item>
                 </release-bug-list>
             </release-core-list>
@@ -11102,6 +11258,11 @@
         <contributor id="andrew.schwartz">
             <contributor-name-display>Andrew Schwartz</contributor-name-display>
             <contributor-id type="github">trinchan</contributor-id>
+        </contributor>
+
+        <contributor id="andrey.sokolov">
+            <contributor-name-display>Andrey Sokolov</contributor-name-display>
+            <contributor-id type="github">andr-sokolov</contributor-id>
         </contributor>
 
         <contributor id="anton.kurochkin">
@@ -11345,6 +11506,11 @@
         <contributor id="fatih.mencutekin">
             <contributor-name-display>Fatih Mencutekin</contributor-name-display>
             <contributor-id type="github">fatihmtekin</contributor-id>
+        </contributor>
+
+        <contributor id="francisco.miguel.biete">
+            <contributor-name-display>Francisco Miguel Biete</contributor-name-display>
+            <contributor-id type="github">fmbiete</contributor-id>
         </contributor>
 
         <contributor id="floris.van.nee">

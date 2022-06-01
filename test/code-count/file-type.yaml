@@ -727,7 +727,7 @@ src/common/crypto/hash.h:
   class: core
   type: c/h
 
-src/common/crypto/md5.vendor.c:
+src/common/crypto/md5.vendor.c.inc:
   class: core/vendor
   type: c
 
@@ -747,7 +747,7 @@ src/common/encode.h:
   class: core
   type: c/h
 
-src/common/error.auto.c:
+src/common/error.auto.c.inc:
   class: core/auto
   type: c
 
@@ -1223,6 +1223,10 @@ src/common/type/stringList.h:
   class: core
   type: c/h
 
+src/common/type/stringZ.c:
+  class: core
+  type: c
+
 src/common/type/stringZ.h:
   class: core
   type: c/h
@@ -1307,7 +1311,7 @@ src/config/load.h:
   class: core
   type: c/h
 
-src/config/parse.auto.c:
+src/config/parse.auto.c.inc:
   class: core/auto
   type: c
 
@@ -1419,7 +1423,7 @@ src/postgres/interface/page.c:
   class: core
   type: c
 
-src/postgres/interface/pageChecksum.vendor.c:
+src/postgres/interface/pageChecksum.vendor.c.inc:
   class: core/vendor
   type: c
 
@@ -1472,6 +1476,10 @@ src/postgres/interface/v130.c:
   type: c
 
 src/postgres/interface/v140.c:
+  class: core
+  type: c
+
+src/postgres/interface/v150.c:
   class: core
   type: c
 
@@ -1859,10 +1867,6 @@ test/lib/pgBackRestTest/Common/ListTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/LogTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/RunTest.pm:
   class: test/harness
   type: perl
@@ -2084,6 +2088,10 @@ test/src/common/harnessPostgres/harness130.c:
   type: c
 
 test/src/common/harnessPostgres/harness140.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness150.c:
   class: test/harness
   type: c
 

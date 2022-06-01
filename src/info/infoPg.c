@@ -69,7 +69,7 @@ infoPgNew(InfoPgType type, const String *cipherPassSub)
 
     InfoPg *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoPg)
+    OBJ_NEW_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
         this->pub.info = infoNew(cipherPassSub);
@@ -164,7 +164,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
 
     InfoPg *this = NULL;
 
-    OBJ_NEW_BEGIN(InfoPg)
+    OBJ_NEW_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
 

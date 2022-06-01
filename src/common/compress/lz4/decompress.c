@@ -163,7 +163,7 @@ lz4DecompressNew(void)
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(Lz4Decompress)
+    OBJ_NEW_BEGIN(Lz4Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         Lz4Decompress *driver = OBJ_NEW_ALLOC();
         *driver = (Lz4Decompress){0};

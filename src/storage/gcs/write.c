@@ -63,7 +63,7 @@ storageWriteGcsOpen(THIS_VOID)
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->chunkBuffer = bufNew(this->chunkSize);
-        this->md5hash = cryptoHashNew(HASH_TYPE_MD5_STR);
+        this->md5hash = cryptoHashNew(hashTypeMd5);
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -333,7 +333,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
     StorageWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteGcs)
+    OBJ_NEW_BEGIN(StorageWriteGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageWriteGcs *driver = OBJ_NEW_ALLOC();
 

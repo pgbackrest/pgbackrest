@@ -121,7 +121,7 @@ infoNew(const String *cipherPass)
 
     Info *this = NULL;
 
-    OBJ_NEW_BEGIN(Info)
+    OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoNewInternal();
 
@@ -256,7 +256,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
 
     Info *this = NULL;
 
-    OBJ_NEW_BEGIN(Info)
+    OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoNewInternal();
 
@@ -269,7 +269,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
                 .callbackFunction = callbackFunction,
                 .callbackData = callbackData,
                 .info = this,
-                .checksumActual = cryptoHashNew(HASH_TYPE_SHA1_STR),
+                .checksumActual = cryptoHashNew(hashTypeSha1),
             };
 
             INFO_CHECKSUM_BEGIN(data.checksumActual);
@@ -404,7 +404,7 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
         ioWriteOpen(data.write);
 
         // Begin checksum calculation
-        data.checksum = cryptoHashNew(HASH_TYPE_SHA1_STR);
+        data.checksum = cryptoHashNew(hashTypeSha1);
         INFO_CHECKSUM_BEGIN(data.checksum);
 
         // Add version and format

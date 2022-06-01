@@ -132,6 +132,9 @@ Begin a block where errors can be thrown
 #define TRY_BEGIN()                                                                                                                \
     do                                                                                                                             \
     {                                                                                                                              \
+        volatile bool TRY_finally = false;                                                                                         \
+        (void)TRY_finally;                                          /* Will be unused if there is no finally block */              \
+                                                                                                                                   \
         errorInternalTryBegin(__FILE__, __func__, __LINE__);                                                                       \
                                                                                                                                    \
         if (setjmp(*errorInternalJump()) == 0)                                                                                     \
@@ -167,8 +170,9 @@ Code to run whether the try block was successful or not
 #define FINALLY()                                                                                                                  \
         }                                                                                                                          \
                                                                                                                                    \
-        if (errorInternalFinally())                                                                                                \
-        {
+        if (!TRY_finally)                                                                                                          \
+        {                                                                                                                          \
+            TRY_finally = true;
 
 /***********************************************************************************************************************************
 End the try block
@@ -311,9 +315,6 @@ bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
 
 // Propagate the error up so it can be caught
 void errorInternalPropagate(void) __attribute__((__noreturn__));
-
-// Process finally block
-bool errorInternalFinally(void);
 
 // End the try block
 void errorInternalTryEnd(void);

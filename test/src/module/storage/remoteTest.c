@@ -294,7 +294,7 @@ testRun(void)
 
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
-        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
         ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
@@ -321,7 +321,7 @@ testRun(void)
 
         filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
-        ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
         ioFilterGroupAdd(filterGroup, ioSinkNew());
 
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "", "no content");

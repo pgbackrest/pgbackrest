@@ -18,13 +18,6 @@ Cryptographic Hash
 #include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
-Hash types
-***********************************************************************************************************************************/
-STRING_EXTERN(HASH_TYPE_MD5_STR,                                    HASH_TYPE_MD5);
-STRING_EXTERN(HASH_TYPE_SHA1_STR,                                   HASH_TYPE_SHA1);
-STRING_EXTERN(HASH_TYPE_SHA256_STR,                                 HASH_TYPE_SHA256);
-
-/***********************************************************************************************************************************
 Hashes for zero-length files (i.e., seed value)
 ***********************************************************************************************************************************/
 STRING_EXTERN(HASH_TYPE_SHA1_ZERO_STR,                              HASH_TYPE_SHA1_ZERO);
@@ -33,7 +26,7 @@ STRING_EXTERN(HASH_TYPE_SHA256_ZERO_STR,                            HASH_TYPE_SH
 /***********************************************************************************************************************************
 Include local MD5 code
 ***********************************************************************************************************************************/
-#include "common/crypto/md5.vendor.c"
+#include "common/crypto/md5.vendor.c.inc"
 
 /***********************************************************************************************************************************
 Object type
@@ -171,13 +164,13 @@ cryptoHashResult(THIS_VOID)
 
 /**********************************************************************************************************************************/
 IoFilter *
-cryptoHashNew(const String *type)
+cryptoHashNew(const HashType type)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
 
     // Init crypto subsystem
     cryptoInit();
@@ -185,7 +178,7 @@ cryptoHashNew(const String *type)
     // Allocate memory to hold process state
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(CryptoHash)
+    OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         CryptoHash *driver = OBJ_NEW_ALLOC();
         *driver = (CryptoHash){0};
@@ -193,7 +186,7 @@ cryptoHashNew(const String *type)
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid
         // cases for using MD5 which do not involve, for example, password hashes. Since popular object stores, e.g. S3, require
         // MD5 for verifying payload integrity we are simply forced to provide MD5 functionality.
-        if (strEq(type, HASH_TYPE_MD5_STR))
+        if (type == hashTypeMd5)
         {
             driver->md5Context = memNew(sizeof(MD5_CTX));
 
@@ -203,8 +196,11 @@ cryptoHashNew(const String *type)
         else
         {
             // Lookup digest
-            if ((driver->hashType = EVP_get_digestbyname(strZ(type))) == NULL)
-                THROW_FMT(AssertError, "unable to load hash '%s'", strZ(type));
+            char typeZ[STRID_MAX + 1];
+            strIdToZ(type, typeZ);
+
+            if ((driver->hashType = EVP_get_digestbyname(typeZ)) == NULL)
+                THROW_FMT(AssertError, "unable to load hash '%s'", typeZ);
 
             // Create context
             cryptoError((driver->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
@@ -223,7 +219,7 @@ cryptoHashNew(const String *type)
         {
             PackWrite *const packWrite = pckWriteNewP();
 
-            pckWriteStrP(packWrite, type);
+            pckWriteStrIdP(packWrite, type);
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -249,7 +245,7 @@ cryptoHashNewPack(const Pack *const paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = ioFilterMove(cryptoHashNew(pckReadStrP(pckReadNew(paramList))), memContextPrior());
+        result = ioFilterMove(cryptoHashNew(pckReadStrIdP(pckReadNew(paramList))), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -258,14 +254,14 @@ cryptoHashNewPack(const Pack *const paramList)
 
 /**********************************************************************************************************************************/
 Buffer *
-cryptoHashOne(const String *type, const Buffer *message)
+cryptoHashOne(const HashType type, const Buffer *message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(BUFFER, message);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
     ASSERT(message != NULL);
 
     Buffer *result = NULL;
@@ -292,22 +288,26 @@ cryptoHashOne(const String *type, const Buffer *message)
 
 /**********************************************************************************************************************************/
 Buffer *
-cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message)
+cryptoHmacOne(const HashType type, const Buffer *const key, const Buffer *const message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, type);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(BUFFER, key);
         FUNCTION_LOG_PARAM(BUFFER, message);
     FUNCTION_LOG_END();
 
-    ASSERT(type != NULL);
+    ASSERT(type != 0);
     ASSERT(key != NULL);
     ASSERT(message != NULL);
 
     // Init crypto subsystem
     cryptoInit();
 
-    const EVP_MD *hashType = EVP_get_digestbyname(strZ(type));
+    // Lookup digest
+    char typeZ[STRID_MAX + 1];
+    strIdToZ(type, typeZ);
+
+    const EVP_MD *hashType = EVP_get_digestbyname(typeZ);
     ASSERT(hashType != NULL);
 
     // Allocate a buffer to hold the hmac

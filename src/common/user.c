@@ -14,7 +14,7 @@ System User/Group Management
 /***********************************************************************************************************************************
 User group info
 ***********************************************************************************************************************************/
-struct
+static struct
 {
     MemContext *memContext;                                         // Mem context to store data in this struct
 
@@ -34,7 +34,7 @@ userInitInternal(void)
 
     MEM_CONTEXT_BEGIN(memContextTop())
     {
-        MEM_CONTEXT_NEW_BEGIN("UserLocalData")
+        MEM_CONTEXT_NEW_BEGIN(UserLocalData, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             userLocalData.memContext = MEM_CONTEXT_NEW();
 

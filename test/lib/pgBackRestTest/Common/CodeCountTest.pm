@@ -62,7 +62,6 @@ sub codeCountScan
                  $strFile =~ '^test/certificate/' ||
                  $strFile =~ '^test/code-count/' ||
                  $strFile =~ '^test/data/' ||
-                 $strFile =~ '^test/expect/' ||
                  $strFile =~ '^test/patch/' ||
                  $strFile =~ '^test/result/' ||
                  $strFile =~ '^test/scratch' ||
@@ -95,13 +94,13 @@ sub codeCountScan
         }
 
         # Append auto if an auto-generated file
-        if ($strFile =~ '\.auto\..$' | $strFile =~ 'Auto\.pm$')
+        if ($strFile =~ '\.auto\..$' || $strFile =~ '\.auto\..\.inc$' || $strFile =~ 'Auto\.pm$')
         {
             $strClass .= '/auto';
         }
 
         # Append vendor if a vendorized file
-        if ($strFile =~ '\.vendor\..$')
+        if ($strFile =~ '\.vendor\..$' || $strFile =~ '\.vendor\..\.inc$')
         {
             $strClass .= '/vendor';
         }
@@ -120,7 +119,7 @@ sub codeCountScan
             $strType = 'c/h';
             $strForceLang = 'C/C++ Header';
         }
-        elsif ($strFile =~ '\.c$')
+        elsif ($strFile =~ '\.c$' || $strFile =~ '\.c.inc$')
         {
             $strType = 'c';
             $strForceLang = 'C';

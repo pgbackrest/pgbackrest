@@ -96,7 +96,7 @@ testRun(void)
         }
         FINALLY()
         {
-            assert(errorContext.tryList[1].state == errorStateEnd);
+            assert(errorContext.tryList[1].state == errorStateTry);
             finallyDone = true;
         }
         TRY_END();
@@ -165,7 +165,7 @@ testRun(void)
                         }
                         FINALLY()
                         {
-                            assert(errorContext.tryList[5].state == errorStateEnd);
+                            assert(errorContext.tryList[5].state == errorStateTry);
 
                             char bigMessage[sizeof(messageBuffer) + 128];
                             memset(bigMessage, 'A', sizeof(bigMessage));
@@ -210,7 +210,7 @@ testRun(void)
         {
             assert(testErrorHandlerTryDepth == 1);
             assert(errorTryDepth() == 1);
-            assert(errorContext.tryList[1].state == errorStateFinally);
+            assert(errorContext.tryList[1].state == errorStateEnd);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
 
             catchDone = true;

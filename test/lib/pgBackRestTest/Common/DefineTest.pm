@@ -48,8 +48,6 @@ use constant TESTDEF_COVERAGE                                       => 'coverage
     push @EXPORT, qw(TESTDEF_COVERAGE);
 use constant TESTDEF_CORE                                           => 'core';
     push @EXPORT, qw(TESTDEF_CORE);
-use constant TESTDEF_EXPECT                                         => 'expect';
-    push @EXPORT, qw(TESTDEF_EXPECT);
 use constant TESTDEF_C                                              => 'c';
     push @EXPORT, qw(TESTDEF_C);
 use constant TESTDEF_DEFINE                                         => 'define';
@@ -121,13 +119,11 @@ sub testDefLoad
     {
         my $hModuleType = $hTestDef->{$strModuleType};
 
-        my $bExpect = false;                                        # By default don't run expect tests
         my $bContainer = true;                                      # By default run tests in a single container
         my $bIndividual = false;                                    # By default runs are all executed in the same container
 
         if ($strModuleType eq TESTDEF_INTEGRATION)
         {
-            $bExpect = true;                                        # Integration tests run expect tests
             $bContainer = false;                                    # Integration tests can run in multiple containers
             $bIndividual = true;                                    # Integration tests can change containers on each run
         }
@@ -167,7 +163,6 @@ sub testDefLoad
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_C} =
                     $strModuleType ne TESTDEF_INTEGRATION && $strTest !~ /perl$/ ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION} = $strModuleType eq TESTDEF_INTEGRATION ? true : false;
-                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_EXPECT} = $bExpect;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_CONTAINER} = $bContainer;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INDIVIDUAL} = $bIndividual;
 

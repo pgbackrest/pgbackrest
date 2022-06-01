@@ -69,76 +69,76 @@ Types
 ***********************************************************************************************************************************/
 typedef struct BldCfgCommand
 {
-    const String *const name;                                       // Name
-    const bool internal;                                            // Is the command internal?
-    const bool logFile;                                             // Does the command write automatically to a log file?
-    const String *const logLevelDefault;                            // Default log level
-    const bool lockRequired;                                        // Is a lock required
-    const bool lockRemoteRequired;                                  // Is a remote lock required?
-    const String *const lockType;                                   // Lock type
-    const bool parameterAllowed;                                    // Are command line parameters allowed?
-    const StringList *const roleList;                               // Roles valid for the command
+    const String *name;                                             // Name
+    bool internal;                                                  // Is the command internal?
+    bool logFile;                                                   // Does the command write automatically to a log file?
+    const String *logLevelDefault;                                  // Default log level
+    bool lockRequired;                                              // Is a lock required
+    bool lockRemoteRequired;                                        // Is a remote lock required?
+    const String *lockType;                                         // Lock type
+    bool parameterAllowed;                                          // Are command line parameters allowed?
+    const StringList *roleList;                                     // Roles valid for the command
 } BldCfgCommand;
 
 typedef struct BldCfgOptionGroup
 {
-    const String *const name;                                       // Name
+    const String *name;                                             // Name
 } BldCfgOptionGroup;
 
 typedef struct BldCfgOption BldCfgOption;                           // Forward declaration
 
 typedef struct BldCfgOptionDepend
 {
-    const BldCfgOption *const option;                               // Option dependency is on
-    const String *const defaultValue;                               // Default value, if any, when dependency is not resolved
-    const StringList *const valueList;                              // Allowed value list
+    const BldCfgOption *option;                                     // Option dependency is on
+    const String *defaultValue;                                     // Default value, if any, when dependency is not resolved
+    const StringList *valueList;                                    // Allowed value list
 } BldCfgOptionDepend;
 
 typedef struct BldCfgOptionDeprecate
 {
-    const String *const name;                                       // Deprecated option name
+    const String *name;                                             // Deprecated option name
     bool indexed;                                                   // Can the deprecation be indexed?
     bool unindexed;                                                 // Can the deprecation be unindexed?
 } BldCfgOptionDeprecate;
 
 typedef struct BldCfgOptionCommand
 {
-    const String *const name;                                       // Name
-    const bool internal;                                            // Is the option internal?
-    const bool required;                                            // Is the option required?
-    const String *const defaultValue;                               // Default value, if any
-    const BldCfgOptionDepend *const depend;                         // Dependency, if any
-    const StringList *const allowList;                              // Allowed value list
-    const StringList *const roleList;                               // Roles valid for the command
+    const String *name;                                             // Name
+    bool internal;                                                  // Is the option internal?
+    bool required;                                                  // Is the option required?
+    const String *defaultValue;                                     // Default value, if any
+    const BldCfgOptionDepend *depend;                               // Dependency, if any
+    const StringList *allowList;                                    // Allowed value list
+    const StringList *roleList;                                     // Roles valid for the command
 } BldCfgOptionCommand;
 
 struct BldCfgOption
 {
-    const String *const name;                                       // Name
-    const String *const type;                                       // Option type, e.g. integer
-    const String *const section;                                    // Option section, i.e. stanza or global
-    const bool internal;                                            // Is the option internal?
-    const bool required;                                            // Is the option required?
-    const bool negate;                                              // Can the option be negated?
-    const bool reset;                                               // Can the option be reset?
-    const String *const defaultValue;                               // Default value, if any
-    const bool defaultLiteral;                                      // Should default be interpreted literally, i.e. not a string
-    const String *const group;                                      // Option group, if any
-    const bool secure;                                              // Does the option contain a secret?
-    const BldCfgOptionDepend *const depend;                         // Dependency, if any
-    const StringList *const allowList;                              // Allowed value list
-    const String *const allowRangeMin;                              // Allow range min, if any
-    const String *const allowRangeMax;                              // Allow range max, if any
-    const List *const cmdList;                                      // Command override list
-    const List *const deprecateList;                                // List of option deprecations
+    const String *name;                                             // Name
+    const String *type;                                             // Option type, e.g. integer
+    const String *section;                                          // Option section, i.e. stanza or global
+    bool internal;                                                  // Is the option internal?
+    bool required;                                                  // Is the option required?
+    bool negate;                                                    // Can the option be negated?
+    bool reset;                                                     // Can the option be reset?
+    const String *defaultValue;                                     // Default value, if any
+    bool defaultLiteral;                                            // Should default be interpreted literally, i.e. not a string
+    const String *group;                                            // Option group, if any
+    bool secure;                                                    // Does the option contain a secret?
+    const BldCfgOptionDepend *depend;                               // Dependency, if any
+    const StringList *allowList;                                    // Allowed value list
+    const String *allowRangeMin;                                    // Allow range min, if any
+    const String *allowRangeMax;                                    // Allow range max, if any
+    const List *cmdList;                                            // Command override list
+    const List *deprecateList;                                      // List of option deprecations
 };
 
 typedef struct BldCfg
 {
-    const List *const cmdList;                                      // Command list
-    const List *const optGrpList;                                   // Option group list
-    const List *const optList;                                      // Option list
-    const List *const optResolveList;                               // Option list in resolved dependency order
+    const List *cmdList;                                            // Command list
+    const List *optGrpList;                                         // Option group list
+    const List *optList;                                            // Option list
+    const List *optResolveList;                                     // Option list in resolved dependency order
 } BldCfg;
 
 /***********************************************************************************************************************************

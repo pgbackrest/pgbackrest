@@ -229,7 +229,7 @@ sub run
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(
-            true, $self->expect(),
+            true,
             {bHostBackup => $bRemote, bTls => $bTls, strStorage => $strStorage, bRepoEncrypt => $bEncrypt,
                 strCompressType => NONE});
 
@@ -439,8 +439,8 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if ($self->runCurrent() == 1)
         {
-            $oHostDbPrimary->executeSimple($self->backrestExe() . " version", {oLogTest => $self->expect()});
-            $oHostDbPrimary->executeSimple($self->backrestExe() . " help version", {oLogTest => $self->expect()});
+            $oHostDbPrimary->executeSimple($self->backrestExe() . " version");
+            $oHostDbPrimary->executeSimple($self->backrestExe() . " help version");
         }
 
         # Full backup
@@ -851,12 +851,6 @@ sub run
 
         $oManifest{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_PROCESS_MAX} = $strStorage eq S3 ? 2 : 1;
 
-        if (!$bRemote)
-        {
-            # Remove the size-changed test file to avoid expect log churn
-            $oHostDbPrimary->manifestFileRemove(\%oManifest, MANIFEST_TARGET_PGDATA, 'changesize.txt');
-        }
-
         # Drop tablespace 11
         #---------------------------------------------------------------------------------------------------------------------------
         $strType = CFGOPTVAL_BACKUP_TYPE_DIFF;
@@ -1100,9 +1094,7 @@ sub run
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bRemote && $strStorage eq POSIX)
         {
-            executeTest(
-                'ls -1Rtr ' . $oHostBackup->repoBackupPath(PATH_BACKUP_HISTORY),
-                {oLogTest => $self->expect(), bRemote => $bRemote});
+            executeTest('ls -1Rtr ' . $oHostBackup->repoBackupPath(PATH_BACKUP_HISTORY), {bRemote => $bRemote});
         }
 
         # Test backup from standby warning that standby not configured so option reset
