@@ -609,7 +609,9 @@ sub run
                 $strTestDepend .= " ${strTestFile}";
 
                 # Determine where the project exe is located
-                my $strProjectExePath = "$self->{strTestPath}/bin/$self->{oTest}->{&TEST_VM}/" . PROJECT_EXE;
+                my $strProjectExePath =
+                    "$self->{strTestPath}/bin/$self->{oTest}->{&TEST_VM}/" . ($self->{oTest}->{&TEST_VM} eq VM_NONE ? 'src/' : '') .
+                    PROJECT_EXE;
 
                 # Is this test running in a container?
                 my $strContainer = $self->{oTest}->{&TEST_VM} eq VM_NONE ? 'false' : 'true';
