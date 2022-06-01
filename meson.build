@@ -143,7 +143,7 @@ lib_pq = dependency('libpq')
 lib_xml = dependency('libxml-2.0')
 
 # Find required yaml library (only used for build)
-lib_yaml = meson.get_compiler('c').find_library('yaml')
+lib_yaml = dependency('yaml-0.1')
 
 # Find required gz library
 lib_z = dependency('zlib')
