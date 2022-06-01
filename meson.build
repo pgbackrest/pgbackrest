@@ -73,7 +73,8 @@ endforeach
 
 ####################################################################################################################################
 # Disable various unhelpful warnings by adding -Wno-warning switches. GCC won't complain about unrecognized -Wno-warning switches,
-# so we have to test for the positive form, and if that works, add the negative form.
+# so we have to test for the positive form, and if that works, add the negative form. !!! Meson will automatically convert
+# -Wno-warning switches as of 0.51 so use that if possible.
 ####################################################################################################################################
 warning_disable = [
     # Warn for variables that might be changed by longjmp or vfork. Disable because of constant false positives/negatives.
