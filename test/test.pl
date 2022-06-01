@@ -495,6 +495,10 @@ eval
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bNoGen)
         {
+            my $strBuildPath = "${strTestPath}/build";
+
+            &log(INFO, (!-e $strBuildPath ? 'clean ' : '') . 'autogenerate code');
+
             # Auto-generate version for root meson.build script
             my $strMesonBuildOld = ${$oStorageTest->get("${strBackRestBase}/meson.build")};
             my $strMesonBuildNew;
@@ -512,17 +516,10 @@ eval
             buildPutDiffers($oStorageBackRest, "${strBackRestBase}/meson.build", $strMesonBuildNew);
 
             # Setup build if it does not exist
-            my $strBuildPath = "${strTestPath}/build";
-
             if (!-e $strBuildPath)
             {
-                &log(INFO, "setup build");
-
                 executeTest("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath} ${strBackRestBase}");
             }
-
-            # Generate code
-            &log(INFO, "autogenerate code");
 
             # Build code
             executeTest(
@@ -538,11 +535,9 @@ eval
 
         # Make a copy of the repo to track which files have been changed
         #---------------------------------------------------------------------------------------------------------------------------
-        &log(INFO, "sync repo");
-
-        # Create the repo path -- this should hopefully prevent obvious rsync errors below
         my $strRepoCachePath = "${strTestPath}/repo";
 
+        # Create the repo path -- this should hopefully prevent obvious rsync errors below
         $oStorageTest->pathCreate($strRepoCachePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
         # Copy the repo
@@ -688,10 +683,10 @@ eval
                 {
                     my $strBuildPath = "${strBinPath}/${strBuildVM}";
 
-                    &log(INFO, "    build bin for ${strBuildVM} (${strBuildPath})");
-
                     if ($strBuildVM eq VM_NONE)
                     {
+                        &log(INFO, "    " . (!-e $strBuildPath ? 'clean ' : '') . "bin build for ${strBuildVM} (${strBuildPath})");
+
                         # Setup build if it does not exist
                         if (!-e $strBuildPath)
                         {
@@ -703,6 +698,8 @@ eval
                     }
                     else
                     {
+                        &log(INFO, "    bin build for ${strBuildVM} (${strBuildPath})");
+
                         my $bRebuild = false;
                         $rhBinBuild->{$strBuildVM} = false;
 
