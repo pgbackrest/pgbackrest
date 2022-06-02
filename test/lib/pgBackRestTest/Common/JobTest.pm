@@ -249,6 +249,12 @@ sub run
                 {
                     executeTest("find $self->{strGCovPath} -mindepth 1 -print0 | xargs -0 rm -rf");
                 }
+                # If the $strShimSrcPath directory exists, it must be deleted so that its contents left over from previous tests do
+                # not affect the current one.
+                elsif ($self->{oStorageTest}->pathExists($strShimSrcPath))
+                {
+                    executeTest("rm -rf $strShimSrcPath");
+                }
 
                 # Write build.processing to track processing of this test
                 $self->{oStorageTest}->put($strBuildProcessingFile);
