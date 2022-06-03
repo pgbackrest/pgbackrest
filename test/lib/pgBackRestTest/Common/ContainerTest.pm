@@ -447,7 +447,7 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($strOS ne VM_U22 && $strOS ne VM_F36)
+        if ($strOS ne VM_U22 && $strOS ne VM_F35)
         {
             my $strValgrind = 'valgrind-3.17.0';
 
@@ -492,11 +492,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F36)
+                elsif ($strOS eq VM_F35)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-36-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-35-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
