@@ -85,7 +85,7 @@
             <release-test-list>
                 <release-improvement-list>
                     <release-item>
-                        <github-pull-request id="1764"/>
+                        <github-pull-request id="1765"/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
