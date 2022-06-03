@@ -147,6 +147,14 @@ doc/xml/user-guide.xml:
   class: doc/source
   type: xml
 
+meson.build:
+  class: build
+  type: meson
+
+meson_options.txt:
+  class: build
+  type: meson
+
 src/Makefile.in:
   class: build
   type: make
@@ -422,6 +430,10 @@ src/command/help/help.c:
 src/command/help/help.h:
   class: core
   type: c/h
+
+src/command/help/meson.build:
+  class: build
+  type: meson
 
 src/command/info/info.c:
   class: core
@@ -1402,6 +1414,10 @@ src/info/manifest.h:
 src/main.c:
   class: core
   type: c
+
+src/meson.build:
+  class: build
+  type: meson
 
 src/postgres/client.c:
   class: core

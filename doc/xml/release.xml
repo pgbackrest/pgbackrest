@@ -16,6 +16,10 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.40dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <text>
+                    <p><b>NOTE TO PACKAGERS</b>: An experimental <proper>meson</proper> build has been added but packagers should continue to use the <proper>autoconf</proper>/<proper>make</proper> build for the foreseeable future.</p>
+                </text>
+
                 <release-improvement-list>
                     <release-item>
                         <github-pull-request id="1758"/>
@@ -80,6 +84,18 @@
 
             <release-test-list>
                 <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1765"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="eli.schwartz"/>
+                            <release-item-reviewer id="sam.bassaly"/>
+                        </release-item-contributor-list>
+
+                        <p>Add experimental <proper>Meson</proper> build.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1764"/>
 
@@ -11488,6 +11504,11 @@
             <contributor-id type="github">ejberdecia</contributor-id>
         </contributor>
 
+        <contributor id="eli.schwartz">
+            <contributor-name-display>Eli Schwartz</contributor-name-display>
+            <contributor-id type="github">eli-schwartz</contributor-id>
+        </contributor>
+
         <contributor id="eric.radman">
             <contributor-name-display>Eric Radman</contributor-name-display>
             <contributor-id type="github">eradman</contributor-id>
@@ -11938,6 +11959,11 @@
         <contributor id="ryan.lambert">
             <contributor-name-display>Ryan Lambert</contributor-name-display>
             <contributor-id type="github">rustprooflabs</contributor-id>
+        </contributor>
+
+        <contributor id="sam.bassaly">
+            <contributor-name-display>Sam Bassaly</contributor-name-display>
+            <contributor-id type="github">shkshk90</contributor-id>
         </contributor>
 
         <contributor id="sarah.conway">
