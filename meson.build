@@ -30,69 +30,55 @@ elif host_machine.system() == 'darwin'
 endif
 
 ####################################################################################################################################
-# Enable as many additional warnings as possible to catch potential errors
+# Enable/disable warnings
 ####################################################################################################################################
+# Enable as many additional warnings as possible to catch potential errors
 warning_enable = [
     # Warn for implicit conversions that may alter a value
-    'conversion',
+    '-Wconversion',
 
     # Warn about duplicated conditions in an if-else-if chain
-    'duplicated-cond',
+    '-Wduplicated-cond',
 
     # Warn when an if-else has identical branches
-    'duplicated-branches',
+    '-Wduplicated-branches',
 
     # Warn if the format string is not a string literal and cannot be checked
-    'format-nonliteral',
+    '-Wformat-nonliteral',
 
     # Enable -Wformat plus additional format checks
-    'format=2',
+    '-Wformat=2',
 
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
-    'format-signedness',
+    '-Wformat-signedness',
 
     # Warn about anything that depends on the “size of” a function type or of void
-    'pointer-arith',
+    '-Wpointer-arith',
 
     # Warn if a function is declared or defined without specifying the argument types
-    'strict-prototypes',
+    '-Wstrict-prototypes',
 
     # Warn if a variable-length array is used
-    'vla',
+    '-Wvla',
 
     # Give string constants the type const char[length] so that copying the address of one into a non-const char * pointer produces
     # a warning
-    'write-strings',
+    '-Wwrite-strings',
 ]
 
-foreach warning : warning_enable
-    if meson.get_compiler('c').has_argument('-W' + warning)
-        add_project_arguments('-W' + warning, language: 'c')
-    endif
-endforeach
-
-####################################################################################################################################
-# Disable various unhelpful warnings by adding -Wno-warning switches. GCC won't complain about unrecognized -Wno-warning switches,
-# so we have to test for the positive form, and if that works, add the negative form. Meson will automatically convert
-# -Wno-warning switches as of 0.51 but leave the check here in case we decide to use an earlier version since the code would just
-# silently stop working as expected.
-####################################################################################################################################
+# Disable various unhelpful warnings
 warning_disable = [
     # Warn for variables that might be changed by longjmp or vfork. Disable because of constant false positives/negatives.
-    'clobbered',
+    '-Wno-clobbered',
 
     # Warn if a structure’s initializer has some fields missing. Disable so we can initialize with {0}.
-    'missing-field-initializers',
+    '-Wno-missing-field-initializers',
 
     # Warn when a switch case falls through. Disable because this an useful aspect of switches and tests should catch problems.
-    'implicit-fallthrough',
+    '-Wno-implicit-fallthrough',
 ]
 
-foreach warning : warning_disable
-    if meson.get_compiler('c').has_argument('-W' + warning)
-        add_project_arguments('-Wno-' + warning, language: 'c')
-    endif
-endforeach
+add_project_arguments(meson.get_compiler('c').get_supported_arguments(warning_enable, warning_disable), language: 'c')
 
 ####################################################################################################################################
 # Enable additional optimizations if the level is high enough
@@ -100,24 +86,20 @@ endforeach
 if get_option('optimization') in ['2', '3']
     optimization_enable = [
         # Unroll loops whose number of iterations can be determined at compile time or upon entry to the loop
-        'unroll-loops',
+        '-funroll-loops',
 
         # Perform loop vectorization on trees
-        'tree-vectorize',
+        '-ftree-vectorize',
     ]
 
-    foreach optimization : optimization_enable
-        if meson.get_compiler('c').has_argument('-f' + optimization)
-            add_project_arguments('-f' + optimization, language: 'c')
-        endif
-    endforeach
+    add_project_arguments(meson.get_compiler('c').get_supported_arguments(optimization_enable), language: 'c')
 endif
 
 ####################################################################################################################################
 # Stop after the first error when error on warn enabled. Subsequent errors are often caused by the first error.
 ####################################################################################################################################
-if get_option('fatal-errors') and meson.get_compiler('c').has_argument('-Wfatal-errors')
-        add_project_arguments('-Wfatal-errors', language: 'c')
+if get_option('fatal-errors')
+    add_project_arguments(meson.get_compiler('c').get_supported_arguments('-Wfatal-errors'), language: 'c')
 endif
 
 ####################################################################################################################################
