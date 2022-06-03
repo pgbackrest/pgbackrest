@@ -20,6 +20,9 @@ project(
     ],
 )
 
+# Selected C compiler
+cc = meson.get_compiler('c')
+
 ####################################################################################################################################
 # OS-specific settings
 ####################################################################################################################################
@@ -78,7 +81,7 @@ warning_disable = [
     '-Wno-implicit-fallthrough',
 ]
 
-add_project_arguments(meson.get_compiler('c').get_supported_arguments(warning_enable, warning_disable), language: 'c')
+add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
 
 ####################################################################################################################################
 # Enable additional optimizations if the level is high enough
@@ -92,14 +95,14 @@ if get_option('optimization') in ['2', '3']
         '-ftree-vectorize',
     ]
 
-    add_project_arguments(meson.get_compiler('c').get_supported_arguments(optimization_enable), language: 'c')
+    add_project_arguments(cc.get_supported_arguments(optimization_enable), language: 'c')
 endif
 
 ####################################################################################################################################
 # Stop after the first error when error on warn enabled. Subsequent errors are often caused by the first error.
 ####################################################################################################################################
 if get_option('fatal-errors')
-    add_project_arguments(meson.get_compiler('c').get_supported_arguments('-Wfatal-errors'), language: 'c')
+    add_project_arguments(cc.get_supported_arguments('-Wfatal-errors'), language: 'c')
 endif
 
 ####################################################################################################################################
@@ -108,7 +111,7 @@ endif
 configuration = configuration_data()
 
 # Find required bz2 library
-lib_bz2 = meson.get_compiler('c').find_library('bz2')
+lib_bz2 = cc.find_library('bz2')
 
 # Find optional lz4 library
 lib_lz4 = dependency('liblz4', required: false)
@@ -140,7 +143,7 @@ if lib_zstd.found()
 endif
 
 # Check if the C compiler supports _Static_assert()
-if meson.get_compiler('c').compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
+if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
 endif
 
