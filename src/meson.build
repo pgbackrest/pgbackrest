@@ -257,7 +257,6 @@ src_pgbackrest = [
 	'postgres/interface/v095.c',
 	'postgres/interface/v096.c',
 	'postgres/interface/v100.c',
-	'postgres/interface/v110.c',
 	'postgres/interface/v120.c',
 	'postgres/interface/v130.c',
 	'postgres/interface/v140.c',
