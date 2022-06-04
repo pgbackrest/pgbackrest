@@ -52,7 +52,6 @@ PG_INTERFACE(090);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 9.1 Interface
@@ -101,7 +100,6 @@ PG_INTERFACE(091);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 9.2 Interface
@@ -150,7 +148,6 @@ PG_INTERFACE(092);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 9.3 Interface
@@ -199,7 +196,6 @@ PG_INTERFACE(093);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 9.4 Interface
@@ -248,7 +244,6 @@ PG_INTERFACE(094);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 9.5 Interface
@@ -297,7 +292,6 @@ PG_INTERFACE(095);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 9.6 Interface
@@ -346,7 +340,6 @@ PG_INTERFACE(096);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 10 Interface
@@ -395,7 +388,6 @@ PG_INTERFACE(100);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 11 Interface
@@ -444,7 +436,6 @@ PG_INTERFACE(110);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 12 Interface
@@ -495,7 +486,6 @@ PG_INTERFACE(120);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 13 Interface
@@ -546,7 +536,6 @@ PG_INTERFACE(130);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 14 Interface
@@ -597,7 +586,6 @@ PG_INTERFACE(140);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
 
 /***********************************************************************************************************************************
 PostgreSQL 15 Interface
@@ -648,4 +636,140 @@ PG_INTERFACE(150);
 #undef PG_INTERFACE_CONTROL_VERSION
 #undef PG_INTERFACE_WAL_IS
 #undef PG_INTERFACE_WAL
-#undef PG_INTERFACE
+
+/***********************************************************************************************************************************
+Interface !!!
+***********************************************************************************************************************************/
+static const PgInterface pgInterface[] =
+{
+    {
+        .version = PG_VERSION_15,
+
+        .controlIs = pgInterfaceControlIs150,
+        .control = pgInterfaceControl150,
+        .controlVersion = pgInterfaceControlVersion150,
+
+        .walIs = pgInterfaceWalIs150,
+        .wal = pgInterfaceWal150,
+    },
+    {
+        .version = PG_VERSION_14,
+
+        .controlIs = pgInterfaceControlIs140,
+        .control = pgInterfaceControl140,
+        .controlVersion = pgInterfaceControlVersion140,
+
+        .walIs = pgInterfaceWalIs140,
+        .wal = pgInterfaceWal140,
+    },
+    {
+        .version = PG_VERSION_13,
+
+        .controlIs = pgInterfaceControlIs130,
+        .control = pgInterfaceControl130,
+        .controlVersion = pgInterfaceControlVersion130,
+
+        .walIs = pgInterfaceWalIs130,
+        .wal = pgInterfaceWal130,
+    },
+    {
+        .version = PG_VERSION_12,
+
+        .controlIs = pgInterfaceControlIs120,
+        .control = pgInterfaceControl120,
+        .controlVersion = pgInterfaceControlVersion120,
+
+        .walIs = pgInterfaceWalIs120,
+        .wal = pgInterfaceWal120,
+    },
+    {
+        .version = PG_VERSION_11,
+
+        .controlIs = pgInterfaceControlIs110,
+        .control = pgInterfaceControl110,
+        .controlVersion = pgInterfaceControlVersion110,
+
+        .walIs = pgInterfaceWalIs110,
+        .wal = pgInterfaceWal110,
+    },
+    {
+        .version = PG_VERSION_10,
+
+        .controlIs = pgInterfaceControlIs100,
+        .control = pgInterfaceControl100,
+        .controlVersion = pgInterfaceControlVersion100,
+
+        .walIs = pgInterfaceWalIs100,
+        .wal = pgInterfaceWal100,
+    },
+    {
+        .version = PG_VERSION_96,
+
+        .controlIs = pgInterfaceControlIs096,
+        .control = pgInterfaceControl096,
+        .controlVersion = pgInterfaceControlVersion096,
+
+        .walIs = pgInterfaceWalIs096,
+        .wal = pgInterfaceWal096,
+    },
+    {
+        .version = PG_VERSION_95,
+
+        .controlIs = pgInterfaceControlIs095,
+        .control = pgInterfaceControl095,
+        .controlVersion = pgInterfaceControlVersion095,
+
+        .walIs = pgInterfaceWalIs095,
+        .wal = pgInterfaceWal095,
+    },
+    {
+        .version = PG_VERSION_94,
+
+        .controlIs = pgInterfaceControlIs094,
+        .control = pgInterfaceControl094,
+        .controlVersion = pgInterfaceControlVersion094,
+
+        .walIs = pgInterfaceWalIs094,
+        .wal = pgInterfaceWal094,
+    },
+    {
+        .version = PG_VERSION_93,
+
+        .controlIs = pgInterfaceControlIs093,
+        .control = pgInterfaceControl093,
+        .controlVersion = pgInterfaceControlVersion093,
+
+        .walIs = pgInterfaceWalIs093,
+        .wal = pgInterfaceWal093,
+    },
+    {
+        .version = PG_VERSION_92,
+
+        .controlIs = pgInterfaceControlIs092,
+        .control = pgInterfaceControl092,
+        .controlVersion = pgInterfaceControlVersion092,
+
+        .walIs = pgInterfaceWalIs092,
+        .wal = pgInterfaceWal092,
+    },
+    {
+        .version = PG_VERSION_91,
+
+        .controlIs = pgInterfaceControlIs091,
+        .control = pgInterfaceControl091,
+        .controlVersion = pgInterfaceControlVersion091,
+
+        .walIs = pgInterfaceWalIs091,
+        .wal = pgInterfaceWal091,
+    },
+    {
+        .version = PG_VERSION_90,
+
+        .controlIs = pgInterfaceControlIs090,
+        .control = pgInterfaceControl090,
+        .controlVersion = pgInterfaceControlVersion090,
+
+        .walIs = pgInterfaceWalIs090,
+        .wal = pgInterfaceWal090,
+    },
+};
