@@ -398,7 +398,6 @@ unit:
           - postgres/interface/v095
           - postgres/interface/v096
           - postgres/interface/v100
-          - postgres/interface/v110
           - postgres/interface/v120
           - postgres/interface/v130
           - postgres/interface/v140

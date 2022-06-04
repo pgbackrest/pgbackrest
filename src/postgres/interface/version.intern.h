@@ -8,9 +8,6 @@ These macros should be kept as simple as possible, with most of the logic contai
 
 Each version of PostgreSQL will need a vXXX.c file to contain the version-specific functions created by these macros.
 ***********************************************************************************************************************************/
-#ifndef POSTGRES_INTERFACE_VERSIONINTERN_H
-#define POSTGRES_INTERFACE_VERSIONINTERN_H
-
 #include "common/debug.h"
 #include "postgres/interface/version.h"
 #include "postgres/version.h"
@@ -171,5 +168,3 @@ Call all macros with a single macro to make the vXXX.c files as simple as possib
     PG_INTERFACE_CONTROL_VERSION(version)                                                                                          \
     PG_INTERFACE_WAL_IS(version)                                                                                                   \
     PG_INTERFACE_WAL(version)
-
-#endif
