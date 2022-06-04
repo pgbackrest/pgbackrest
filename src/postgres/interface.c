@@ -11,7 +11,6 @@ PostgreSQL Interface
 #include "common/regExp.h"
 #include "postgres/interface.h"
 #include "postgres/interface/static.vendor.h"
-#include "postgres/interface/version.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 
@@ -76,6 +75,8 @@ typedef struct PgInterface
     // Convert WAL header to a common data structure
     PgWal (*wal)(const unsigned char *);
 } PgInterface;
+
+#include "postgres/interface/version.c.inc"
 
 static const PgInterface pgInterface[] =
 {

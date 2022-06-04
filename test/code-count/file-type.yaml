@@ -1447,57 +1447,9 @@ src/postgres/interface/static.vendor.h:
   class: core/vendor
   type: c/h
 
-src/postgres/interface/v090.c:
+src/postgres/interface/version.c.inc:
   class: core
   type: c
-
-src/postgres/interface/v091.c:
-  class: core
-  type: c
-
-src/postgres/interface/v092.c:
-  class: core
-  type: c
-
-src/postgres/interface/v093.c:
-  class: core
-  type: c
-
-src/postgres/interface/v094.c:
-  class: core
-  type: c
-
-src/postgres/interface/v095.c:
-  class: core
-  type: c
-
-src/postgres/interface/v096.c:
-  class: core
-  type: c
-
-src/postgres/interface/v100.c:
-  class: core
-  type: c
-
-src/postgres/interface/v120.c:
-  class: core
-  type: c
-
-src/postgres/interface/v130.c:
-  class: core
-  type: c
-
-src/postgres/interface/v140.c:
-  class: core
-  type: c
-
-src/postgres/interface/v150.c:
-  class: core
-  type: c
-
-src/postgres/interface/version.h:
-  class: core
-  type: c/h
 
 src/postgres/interface/version.intern.h:
   class: core

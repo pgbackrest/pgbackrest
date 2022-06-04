@@ -9,7 +9,6 @@ These macros should be kept as simple as possible, with most of the logic contai
 Each version of PostgreSQL will need a vXXX.c file to contain the version-specific functions created by these macros.
 ***********************************************************************************************************************************/
 #include "common/debug.h"
-#include "postgres/interface/version.h"
 #include "postgres/version.h"
 
 #include "postgres/interface/version.vendor.h"
@@ -24,7 +23,7 @@ Determine if the supplied pg_control is for this version of PostgreSQL
 #ifdef CATALOG_VERSION_NO_MAX
 
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
-    bool                                                                                                                           \
+    static bool                                                                                                                    \
     pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
@@ -38,7 +37,7 @@ Determine if the supplied pg_control is for this version of PostgreSQL
 #else
 
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
-    bool                                                                                                                           \
+    static bool                                                                                                                    \
     pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
@@ -60,7 +59,7 @@ Read the version specific pg_control into a general data structure
 #elif PG_VERSION >= PG_VERSION_93
 
 #define PG_INTERFACE_CONTROL(version)                                                                                              \
-    PgControl                                                                                                                      \
+    static PgControl                                                                                                               \
     pgInterfaceControl##version(const unsigned char *controlFile)                                                                  \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
@@ -81,7 +80,7 @@ Read the version specific pg_control into a general data structure
 #elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_CONTROL(version)                                                                                              \
-    PgControl                                                                                                                      \
+    static PgControl                                                                                                               \
     pgInterfaceControl##version(const unsigned char *controlFile)                                                                  \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
@@ -110,7 +109,7 @@ Get the control version
 #elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
-    uint32_t                                                                                                                       \
+    static uint32_t                                                                                                                \
     pgInterfaceControlVersion##version(void)                                                                                       \
     {                                                                                                                              \
         return PG_CONTROL_VERSION;                                                                                                 \
@@ -126,7 +125,7 @@ Determine if the supplied WAL is for this version of PostgreSQL
 #elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_WAL_IS(version)                                                                                               \
-    bool                                                                                                                           \
+    static bool                                                                                                                    \
     pgInterfaceWalIs##version(const unsigned char *walFile)                                                                        \
     {                                                                                                                              \
         ASSERT(walFile != NULL);                                                                                                   \
@@ -144,7 +143,7 @@ Read the version specific WAL header into a general data structure
 #elif PG_VERSION >= PG_VERSION_90
 
 #define PG_INTERFACE_WAL(version)                                                                                                  \
-    PgWal                                                                                                                          \
+    static PgWal                                                                                                                   \
     pgInterfaceWal##version(const unsigned char *walFile)                                                                          \
     {                                                                                                                              \
         ASSERT(walFile != NULL);                                                                                                   \
