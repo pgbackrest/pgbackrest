@@ -198,7 +198,6 @@ BUILDDIR=.build
 ####################################################################################################################################
 # Compile and link pgbackrest
 ####################################################################################################################################
-SRCS_PGBACKREST := $(wildcard postgres/interface/v*.c $(VPATH)/postgres/interface/v*.c)
 OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_PGBACKREST) $(SRCS) main.c)
 
 pgbackrest: $(OBJS_PGBACKREST)
