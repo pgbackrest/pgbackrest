@@ -523,9 +523,10 @@ eval
 
             # Build code
             executeTest(
-                "ninja -C ${strBuildPath} build-config build-error build-help" .
+                "ninja -C ${strBuildPath} build-config build-error build-postgres" .
                 " && ${strBuildPath}/src/build-config ${strBackRestBase}/src" .
-                " && ${strBuildPath}/src/build-error ${strBackRestBase}/src");
+                " && ${strBuildPath}/src/build-error ${strBackRestBase}/src" .
+                " && ${strBuildPath}/src/build-postgres ${strBackRestBase}/src");
 
             if ($bGenOnly)
             {

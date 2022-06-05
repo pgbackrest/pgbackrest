@@ -6,9 +6,8 @@ Auto-Generate PostgreSQL Interface
 #include "common/log.h"
 #include "storage/posix/storage.h"
 
-#include "build/config/parse.h"
-#include "build/help/parse.h"
-#include "build/help/render.h"
+#include "build/postgres/parse.h"
+#include "build/postgres/render.h"
 
 int
 main(int argListSize, const char *argList[])
@@ -19,31 +18,25 @@ main(int argListSize, const char *argList[])
     // Initialize logging
     logInit(logLevelWarn, logLevelError, logLevelOff, false, 0, 1, false);
 
-    // Get current working directory
-    char currentWorkDir[1024];
-    THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
-
-    // Get repo path (cwd if it was not passed)
-    const String *pathRepo = strPath(STR(currentWorkDir));
-    String *const pathOut = strCatZ(strNew(), currentWorkDir);
+    // If the path was specified
+    const String *pathRepo;
 
     if (argListSize >= 2)
     {
-        const String *const pathArg = STR(argList[1]);
+        pathRepo = strPath(STR(argList[1]));
+    }
+    // Else use current working directory
+    else
+    {
+        char currentWorkDir[1024];
+        THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
 
-        if (strBeginsWith(pathArg, FSLASH_STR))
-            pathRepo = strPath(pathArg);
-        else
-        {
-            pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
-            strCatZ(pathOut, "/src");
-        }
+        pathRepo = strPath(STR(currentWorkDir));
     }
 
-    // Render config
-    const Storage *const storageRepo = storagePosixNewP(pathRepo);
-    const Storage *const storageBuild = storagePosixNewP(pathOut, .write = true);
-    bldPgRender(storageBuild, bldPgParse(storageRepo, bldPg));
+    // Render postgres
+    const Storage *const storageRepo = storagePosixNewP(pathRepo, .write = true);
+    bldPgRender(storageRepo, bldPgParse(storageRepo));
 
     return 0;
 }

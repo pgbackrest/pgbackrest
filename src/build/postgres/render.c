@@ -10,7 +10,7 @@ Render PostgreSQL Interface
 #include "storage/posix/storage.h"
 
 #include "build/common/render.h"
-#include "build/error/render.h"
+#include "build/postgres/render.h"
 
 /***********************************************************************************************************************************
 Render interface.auto.c.inc
@@ -51,12 +51,14 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
             "#define DB_IN_CRASH_RECOVERY                                        DB_IN_CRASH_RECOVERY_%s\n"
             "#define DB_IN_ARCHIVE_RECOVERY                                      DB_IN_ARCHIVE_RECOVERY_%s\n"
             "#define DB_IN_PRODUCTION                                            DB_IN_PRODUCTION_%s\n"
+            "#define FullTransactionId                                           FullTransactionId_%s\n"
             "#define XLogLongPageHeaderData                                      XLogLongPageHeaderData_%s\n"
             "#define XLogPageHeaderData                                          XLogPageHeaderData_%s\n"
             "#define XLogRecPtr                                                  XLogRecPtr_%s\n"
             "\n",
             strZ(pgVersion->version), versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot,
-            versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot);
+            versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot,
+            versionNoDot);
 
         if (!pgVersion->release)
         {
@@ -82,8 +84,9 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
             "#undef DB_IN_CRASH_RECOVERY\n"
             "#undef DB_IN_ARCHIVE_RECOVERY\n"
             "#undef DB_IN_PRODUCTION\n"
-            "#undef XLogPageHeaderData\n"
+            "#undef FullTransactionId\n"
             "#undef XLogLongPageHeaderData\n"
+            "#undef XLogPageHeaderData\n"
             "#undef XLogRecPtr\n"
             "\n"
             "#undef CATALOG_VERSION_NO\n"

@@ -111,6 +111,29 @@ build_error = executable(
 alias_target('build-error', build_error)
 
 ####################################################################################################################################
+# Build postgres target
+####################################################################################################################################
+src_build_postgres = [
+	'build/common/render.c',
+	'build/common/yaml.c',
+	'build/postgres/main.c',
+	'build/postgres/parse.c',
+	'build/postgres/render.c',
+]
+
+build_postgres = executable(
+    'build-postgres',
+    src_common,
+    src_build_postgres,
+    dependencies : [
+        lib_yaml
+    ],
+    build_by_default: false,
+)
+
+alias_target('build-postgres', build_postgres)
+
+####################################################################################################################################
 # Build help target
 ####################################################################################################################################
 src_build_help = [
