@@ -125,7 +125,7 @@ BldPg
 bldPgParse(const Storage *const storageRepo)
 {
 
-    // !!!
+    // !!! NEED TO PARSE TYPES
     StringList *const typeList = strLstNew();
     strLstAddZ(typeList, "CheckPoint");
     strLstAddZ(typeList, "ControlFileData");
