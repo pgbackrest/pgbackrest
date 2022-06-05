@@ -255,7 +255,7 @@ command/help/help.auto.c.inc: build-help
 	./build-help $(VPATH)
 
 ####################################################################################################################################
-# Compile and link postgres generator
+# Compile and link postgres interface generator
 ####################################################################################################################################
 SRCS_BUILD_POSTGRES = \
 	build/common/render.c \

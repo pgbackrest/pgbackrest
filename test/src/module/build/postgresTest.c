@@ -51,7 +51,7 @@ testRun(void)
 
         TEST_STORAGE_GET(
             storageTest,
-            "src/postgres/interface.auto.c.inc",
+            "postgres/interface.auto.c.inc",
             COMMENT_BLOCK_BEGIN "\n"
             "PostgreSQL Interface\n"
             "\n"

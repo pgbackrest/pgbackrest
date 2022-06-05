@@ -3,10 +3,6 @@ Render PostgreSQL Interface
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <ctype.h>
-
-#include "common/log.h"
-// #include "common/type/convert.h"
 #include "storage/posix/storage.h"
 
 #include "build/common/render.h"

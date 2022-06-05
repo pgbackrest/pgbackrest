@@ -271,6 +271,30 @@ src/build/install-sh:
   class: build
   type: make
 
+src/build/postgres/main.c:
+  class: build
+  type: c
+
+src/build/postgres/parse.c:
+  class: build
+  type: c
+
+src/build/postgres/parse.h:
+  class: build
+  type: c/h
+
+src/build/postgres/postgres.yaml:
+  class: build
+  type: yaml
+
+src/build/postgres/render.c:
+  class: build
+  type: c
+
+src/build/postgres/render.h:
+  class: build
+  type: c/h
+
 src/command/archive/common.c:
   class: core
   type: c
@@ -1447,10 +1471,6 @@ src/postgres/interface/static.vendor.h:
   class: core/vendor
   type: c/h
 
-src/postgres/interface/version.c.inc:
-  class: core
-  type: c
-
 src/postgres/interface/version.intern.h:
   class: core
   type: c/h
@@ -1458,6 +1478,10 @@ src/postgres/interface/version.intern.h:
 src/postgres/interface/version.vendor.h:
   class: core/vendor
   type: c/h
+
+src/postgres/meson.build:
+  class: build
+  type: meson
 
 src/postgres/version.h:
   class: core
@@ -2120,6 +2144,10 @@ test/src/module/build/errorTest.c:
   type: c
 
 test/src/module/build/helpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/postgresTest.c:
   class: test/module
   type: c
 
