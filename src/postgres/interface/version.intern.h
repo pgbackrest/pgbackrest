@@ -8,9 +8,6 @@ These macros should be kept as simple as possible, with most of the logic contai
 
 Each version of PostgreSQL will need a vXXX.c file to contain the version-specific functions created by these macros.
 ***********************************************************************************************************************************/
-#include "common/debug.h"
-#include "postgres/version.h"
-
 #include "postgres/interface/version.vendor.h"
 
 /***********************************************************************************************************************************
