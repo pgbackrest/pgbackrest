@@ -21,6 +21,28 @@ testRun(void)
         TEST_TITLE("parse errors");
 
         HRN_STORAGE_PUT_Z(
+            storageTest, "src/postgres/interface/version.vendor.h",
+            "#define CATALOG_VERSION_NO\t1\n"
+            "#define PG_CONTROL_VERSION  2\n");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "src/postgres/interface/version.intern.h",
+            "#define  PG_INTERFACE_CONTROL_IS(version)\n");
+
+        TEST_ERROR(
+            bldPgParse(storageTest), FormatError,
+            "unable to find define -- are there extra spaces on '#define  PG_INTERFACE_CONTROL_IS(version)'");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "src/postgres/interface/version.intern.h",
+            "#define PG_INTERFACE_CONTROL_IS(version)\n"
+            "#define PG_INTERFACE_CONTROL(version)\n");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "src/build/postgres/postgres.yaml",
+            "bogus: value\n");
+
+        HRN_STORAGE_PUT_Z(
             storageTest, "src/build/postgres/postgres.yaml",
             "bogus: value\n");
 
@@ -92,9 +114,6 @@ testRun(void)
             "\n"
             "PG_INTERFACE_CONTROL_IS(110);\n"
             "PG_INTERFACE_CONTROL(110);\n"
-            "PG_INTERFACE_CONTROL_VERSION(110);\n"
-            "PG_INTERFACE_WAL_IS(110);\n"
-            "PG_INTERFACE_WAL(110);\n"
             "\n"
             "#undef CheckPoint\n"
             "#undef ControlFileData\n"
@@ -123,13 +142,9 @@ testRun(void)
             "#undef CATALOG_VERSION_NO_MAX\n"
             "#undef PG_CONTROL_VERSION\n"
             "#undef PG_VERSION\n"
-            "#undef XLOG_PAGE_MAGIC\n"
             "\n"
             "#undef PG_INTERFACE_CONTROL_IS\n"
             "#undef PG_INTERFACE_CONTROL\n"
-            "#undef PG_INTERFACE_CONTROL_VERSION\n"
-            "#undef PG_INTERFACE_WAL_IS\n"
-            "#undef PG_INTERFACE_WAL\n"
             "\n"
             COMMENT_BLOCK_BEGIN "\n"
             "PostgreSQL 9.0 interface\n"
@@ -163,9 +178,6 @@ testRun(void)
             "\n"
             "PG_INTERFACE_CONTROL_IS(090);\n"
             "PG_INTERFACE_CONTROL(090);\n"
-            "PG_INTERFACE_CONTROL_VERSION(090);\n"
-            "PG_INTERFACE_WAL_IS(090);\n"
-            "PG_INTERFACE_WAL(090);\n"
             "\n"
             "#undef CheckPoint\n"
             "#undef ControlFileData\n"
@@ -194,13 +206,9 @@ testRun(void)
             "#undef CATALOG_VERSION_NO_MAX\n"
             "#undef PG_CONTROL_VERSION\n"
             "#undef PG_VERSION\n"
-            "#undef XLOG_PAGE_MAGIC\n"
             "\n"
             "#undef PG_INTERFACE_CONTROL_IS\n"
             "#undef PG_INTERFACE_CONTROL\n"
-            "#undef PG_INTERFACE_CONTROL_VERSION\n"
-            "#undef PG_INTERFACE_WAL_IS\n"
-            "#undef PG_INTERFACE_WAL\n"
             "\n"
             COMMENT_BLOCK_BEGIN "\n"
             "PostgreSQL interface struct\n"

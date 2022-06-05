@@ -19,48 +19,6 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
 {
     String *pg = bldHeader(PG_MODULE, PG_AUTO_COMMENT);
 
-    // Interface types and defines
-    // -----------------------------------------------------------------------------------------------------------------------------
-    StringList *const typeList = strLstNew();
-    strLstAddZ(typeList, "CheckPoint");
-    strLstAddZ(typeList, "ControlFileData");
-    strLstAddZ(typeList, "DBState");
-    strLstAddZ(typeList, "DB_STARTUP");
-    strLstAddZ(typeList, "DB_SHUTDOWNED");
-    strLstAddZ(typeList, "DB_SHUTDOWNED_IN_RECOVERY");
-    strLstAddZ(typeList, "DB_SHUTDOWNING");
-    strLstAddZ(typeList, "DB_IN_CRASH_RECOVERY");
-    strLstAddZ(typeList, "DB_IN_ARCHIVE_RECOVERY");
-    strLstAddZ(typeList, "DB_IN_PRODUCTION");
-    strLstAddZ(typeList, "FullTransactionId");
-    strLstAddZ(typeList, "int64");
-    strLstAddZ(typeList, "MultiXactId");
-    strLstAddZ(typeList, "MultiXactOffset");
-    strLstAddZ(typeList, "Oid");
-    strLstAddZ(typeList, "pg_crc32");
-    strLstAddZ(typeList, "pg_crc32c");
-    strLstAddZ(typeList, "pg_time_t");
-    strLstAddZ(typeList, "TimeLineID");
-    strLstAddZ(typeList, "XLogLongPageHeaderData");
-    strLstAddZ(typeList, "XLogPageHeaderData");
-    strLstAddZ(typeList, "XLogRecPtr");
-
-    StringList *const defineList = strLstNew();
-    strLstAddZ(defineList, "CATALOG_VERSION_NO");
-    strLstAddZ(defineList, "CATALOG_VERSION_NO_MAX");
-    strLstAddZ(defineList, "PG_CONTROL_VERSION");
-    strLstAddZ(defineList, "PG_VERSION");
-    strLstAddZ(defineList, "XLOG_PAGE_MAGIC");
-
-    // Interface functions
-    // -----------------------------------------------------------------------------------------------------------------------------
-    StringList *const functionList = strLstNew();
-    strLstAddZ(functionList, "PG_INTERFACE_CONTROL_IS");
-    strLstAddZ(functionList, "PG_INTERFACE_CONTROL");
-    strLstAddZ(functionList, "PG_INTERFACE_CONTROL_VERSION");
-    strLstAddZ(functionList, "PG_INTERFACE_WAL_IS");
-    strLstAddZ(functionList, "PG_INTERFACE_WAL");
-
     // PostgreSQL interfaces
     // -----------------------------------------------------------------------------------------------------------------------------
     for (unsigned int pgIdx = lstSize(bldPg.pgList) - 1; pgIdx < lstSize(bldPg.pgList); pgIdx--)
@@ -79,9 +37,9 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
             "\n",
             strZ(pgVersion->version), versionNoDot);
 
-        for (unsigned int typeIdx = 0; typeIdx < strLstSize(typeList); typeIdx++)
+        for (unsigned int typeIdx = 0; typeIdx < strLstSize(bldPg.typeList); typeIdx++)
         {
-            const String *const type = strLstGet(typeList, typeIdx);
+            const String *const type = strLstGet(bldPg.typeList, typeIdx);
 
             strCat(pg, bldDefineRender(type, strNewFmt("%s_%s", strZ(type), versionNoDot)));
             strCatChr(pg, '\n');
@@ -101,23 +59,23 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
             "#include \"postgres/interface/version.intern.h\"\n"
             "\n");
 
-        for (unsigned int functionIdx = 0; functionIdx < strLstSize(functionList); functionIdx++)
-            strCatFmt(pg, "%s(%s);\n", strZ(strLstGet(functionList, functionIdx)), versionNum);
+        for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
+            strCatFmt(pg, "%s(%s);\n", strZ(strLstGet(bldPg.functionList, functionIdx)), versionNum);
 
         strCatChr(pg, '\n');
 
-        for (unsigned int typeIdx = 0; typeIdx < strLstSize(typeList); typeIdx++)
-            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(typeList, typeIdx)));
+        for (unsigned int typeIdx = 0; typeIdx < strLstSize(bldPg.typeList); typeIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(bldPg.typeList, typeIdx)));
 
         strCatChr(pg, '\n');
 
-        for (unsigned int defineIdx = 0; defineIdx < strLstSize(defineList); defineIdx++)
-            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(defineList, defineIdx)));
+        for (unsigned int defineIdx = 0; defineIdx < strLstSize(bldPg.defineList); defineIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(bldPg.defineList, defineIdx)));
 
         strCatChr(pg, '\n');
 
-        for (unsigned int functionIdx = 0; functionIdx < strLstSize(functionList); functionIdx++)
-            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(functionList, functionIdx)));
+        for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(bldPg.functionList, functionIdx)));
     }
 
     // Interface struct

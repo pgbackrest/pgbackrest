@@ -18,6 +18,9 @@ typedef struct BldPgVersion
 typedef struct BldPg
 {
     const List *pgList;                                            // Supported PostgreSQL versions
+    const StringList *typeList;                                    // PostgreSQL interface types
+    const StringList *defineList;                                  // PostgreSQL interface defines
+    const StringList *functionList;                                // Functions defined by macros
 } BldPg;
 
 /***********************************************************************************************************************************
