@@ -1,19 +1,18 @@
 /***********************************************************************************************************************************
 PostgreSQL Version Interface
 
-Macros for building version-specific functions that interface with the types in version.vendor.h.  Due to the way PostgreSQL types
+Macros for building version-specific functions that interface with the types in version.vendor.h. Due to the way PostgreSQL types
 evolve over time, this seems to be the easiest way to extract information from them.
 
 These macros should be kept as simple as possible, with most of the logic contained in postgres/interface.c.
-
-Each version of PostgreSQL will need a vXXX.c file to contain the version-specific functions created by these macros.
 ***********************************************************************************************************************************/
+#include "postgres/interface/version.vendor.h"
 #include "postgres/version.h"
 
-#include "postgres/interface/version.vendor.h"
-
 /***********************************************************************************************************************************
-Determine if the supplied pg_control is for this version of PostgreSQL
+Determine if the supplied pg_control is for this version of PostgreSQL. When CATALOG_VERSION_NO_MAX is defined then the catalog will
+be accepted as a range that lasts until the end of the encoded year. This allows pgBackRest to work with PostgreSQL during the
+alpha/beta/rc period without needing to be updated, unless of course the actual interface changes.
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
@@ -158,7 +157,7 @@ Read the version specific WAL header into a general data structure
 #endif
 
 /***********************************************************************************************************************************
-Call all macros with a single macro to make the vXXX.c files as simple as possible
+Call all macros with a single macro to make the auto-generated code as simple as possible
 ***********************************************************************************************************************************/
 #define PG_INTERFACE(version)                                                                                                      \
     PG_INTERFACE_CONTROL_IS(version)                                                                                               \
