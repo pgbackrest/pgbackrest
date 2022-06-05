@@ -124,7 +124,7 @@ testRun(void)
             "#define DB_IN_CRASH_RECOVERY                                        DB_IN_CRASH_RECOVERY_11\n"
             "#define DB_IN_ARCHIVE_RECOVERY                                      DB_IN_ARCHIVE_RECOVERY_11\n"
             "#define DB_IN_PRODUCTION                                            DB_IN_PRODUCTION_11\n"
-            "#define FullTransactionId                                           FullTransactionId_90\n"
+            "#define FullTransactionId                                           FullTransactionId_11\n"
             "#define XLogLongPageHeaderData                                      XLogLongPageHeaderData_11\n"
             "#define XLogPageHeaderData                                          XLogPageHeaderData_11\n"
             "#define XLogRecPtr                                                  XLogRecPtr_11\n"
