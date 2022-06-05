@@ -21,6 +21,7 @@ If a comment has syntax only changes, then the new version of the comment can be
 If a comment has changed in a way that implies a difference in the way the type is used, then a new version of the comment and type
 should be created.  See the CheckPoint type difference between 9.5 and 9.6 as an example.
 ***********************************************************************************************************************************/
+#include "postgres/interface/static.vendor.h"
 
 /***********************************************************************************************************************************
 Types from src/include/c.h

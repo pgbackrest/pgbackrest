@@ -103,7 +103,7 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
             versionNum);
     }
 
-    bldPut(storageRepo, "src/postgres//interface.auto.c.inc", BUFSTR(pg));
+    bldPut(storageRepo, "postgres/interface.auto.c.inc", BUFSTR(pg));
 }
 
 /**********************************************************************************************************************************/

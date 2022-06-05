@@ -111,29 +111,6 @@ build_error = executable(
 alias_target('build-error', build_error)
 
 ####################################################################################################################################
-# Build postgres target
-####################################################################################################################################
-src_build_postgres = [
-	'build/common/render.c',
-	'build/common/yaml.c',
-	'build/postgres/main.c',
-	'build/postgres/parse.c',
-	'build/postgres/render.c',
-]
-
-build_postgres = executable(
-    'build-postgres',
-    src_common,
-    src_build_postgres,
-    dependencies : [
-        lib_yaml
-    ],
-    build_by_default: false,
-)
-
-alias_target('build-postgres', build_postgres)
-
-####################################################################################################################################
 # Build help target
 ####################################################################################################################################
 src_build_help = [
@@ -163,6 +140,31 @@ build_help = executable(
 subdir('command/help')
 
 alias_target('build-help', help_auto_c_inc)
+
+####################################################################################################################################
+# Build postgres target
+####################################################################################################################################
+src_build_postgres = [
+	'build/common/render.c',
+	'build/common/yaml.c',
+	'build/postgres/main.c',
+	'build/postgres/parse.c',
+	'build/postgres/render.c',
+]
+
+build_postgres = executable(
+    'build-postgres',
+    src_common,
+    src_build_postgres,
+    dependencies : [
+        lib_yaml
+    ],
+)
+
+# build interface.auto.c.inc
+subdir('postgres')
+
+alias_target('build-postgres', build_postgres)
 
 ####################################################################################################################################
 # pgBackRest target
@@ -305,6 +307,7 @@ pgbackrest = executable(
     src_common,
     src_pgbackrest,
     help_auto_c_inc,
+    interface_auto_c_inc,
     dependencies : [
         lib_bz2,
         lib_openssl,

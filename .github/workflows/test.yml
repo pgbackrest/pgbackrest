@@ -94,8 +94,8 @@ jobs:
 
           run: |
             git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --no-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --no-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
   codeql:
     runs-on: ubuntu-latest

@@ -18,25 +18,31 @@ main(int argListSize, const char *argList[])
     // Initialize logging
     logInit(logLevelWarn, logLevelError, logLevelOff, false, 0, 1, false);
 
-    // If the path was specified
-    const String *pathRepo;
+    // Get current working directory
+    char currentWorkDir[1024];
+    THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
+
+    // Get repo path (cwd if it was not passed)
+    const String *pathRepo = strPath(STR(currentWorkDir));
+    String *const pathOut = strCatZ(strNew(), currentWorkDir);
 
     if (argListSize >= 2)
     {
-        pathRepo = strPath(STR(argList[1]));
-    }
-    // Else use current working directory
-    else
-    {
-        char currentWorkDir[1024];
-        THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
+        const String *const pathArg = STR(argList[1]);
 
-        pathRepo = strPath(STR(currentWorkDir));
+        if (strBeginsWith(pathArg, FSLASH_STR))
+            pathRepo = strPath(pathArg);
+        else
+        {
+            pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
+            strCatZ(pathOut, "/src");
+        }
     }
 
     // Render postgres
-    const Storage *const storageRepo = storagePosixNewP(pathRepo, .write = true);
-    bldPgRender(storageRepo, bldPgParse(storageRepo));
+    const Storage *const storageRepo = storagePosixNewP(pathRepo);
+    const Storage *const storageBuild = storagePosixNewP(pathOut, .write = true);
+    bldPgRender(storageBuild, bldPgParse(storageRepo));
 
     return 0;
 }
