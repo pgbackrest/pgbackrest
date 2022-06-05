@@ -19,7 +19,47 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
 {
     String *pg = bldHeader(PG_MODULE, PG_AUTO_COMMENT);
 
-    (void)bldPg; // !!!
+    // Interface types and defines
+    // -----------------------------------------------------------------------------------------------------------------------------
+    StringList *const typeList = strLstNew();
+    strLstAddZ(typeList, "CheckPoint");
+    strLstAddZ(typeList, "ControlFileData");
+    strLstAddZ(typeList, "DBState");
+    strLstAddZ(typeList, "DB_STARTUP");
+    strLstAddZ(typeList, "DB_SHUTDOWNED");
+    strLstAddZ(typeList, "DB_SHUTDOWNED_IN_RECOVERY");
+    strLstAddZ(typeList, "DB_SHUTDOWNING");
+    strLstAddZ(typeList, "DB_IN_CRASH_RECOVERY");
+    strLstAddZ(typeList, "DB_IN_ARCHIVE_RECOVERY");
+    strLstAddZ(typeList, "DB_IN_PRODUCTION");
+    strLstAddZ(typeList, "FullTransactionId");
+    strLstAddZ(typeList, "int64");
+    strLstAddZ(typeList, "MultiXactId");
+    strLstAddZ(typeList, "MultiXactOffset");
+    strLstAddZ(typeList, "Oid");
+    strLstAddZ(typeList, "pg_crc32");
+    strLstAddZ(typeList, "pg_crc32c");
+    strLstAddZ(typeList, "pg_time_t");
+    strLstAddZ(typeList, "TimeLineID");
+    strLstAddZ(typeList, "XLogLongPageHeaderData");
+    strLstAddZ(typeList, "XLogPageHeaderData");
+    strLstAddZ(typeList, "XLogRecPtr");
+
+    StringList *const defineList = strLstNew();
+    strLstAddZ(defineList, "CATALOG_VERSION_NO");
+    strLstAddZ(defineList, "CATALOG_VERSION_NO_MAX");
+    strLstAddZ(defineList, "PG_CONTROL_VERSION");
+    strLstAddZ(defineList, "PG_VERSION");
+    strLstAddZ(defineList, "XLOG_PAGE_MAGIC");
+
+    // Interface functions
+    // -----------------------------------------------------------------------------------------------------------------------------
+    StringList *const functionList = strLstNew();
+    strLstAddZ(functionList, "PG_INTERFACE_CONTROL_IS");
+    strLstAddZ(functionList, "PG_INTERFACE_CONTROL");
+    strLstAddZ(functionList, "PG_INTERFACE_CONTROL_VERSION");
+    strLstAddZ(functionList, "PG_INTERFACE_WAL_IS");
+    strLstAddZ(functionList, "PG_INTERFACE_WAL");
 
     // PostgreSQL interfaces
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -36,67 +76,48 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
             "PostgreSQL %s interface\n"
             COMMENT_BLOCK_END "\n"
             "#define PG_VERSION                                                  PG_VERSION_%s\n"
-            "\n"
-            "#define CheckPoint                                                  CheckPoint_%s\n"
-            "#define ControlFileData                                             ControlFileData_%s\n"
-            "#define DBState                                                     DBState_%s\n"
-            "#define DB_STARTUP                                                  DB_STARTUP_%s\n"
-            "#define DB_SHUTDOWNED                                               DB_SHUTDOWNED_%s\n"
-            "#define DB_SHUTDOWNED_IN_RECOVERY                                   DB_SHUTDOWNED_IN_RECOVERY_%s\n"
-            "#define DB_SHUTDOWNING                                              DB_SHUTDOWNING_%s\n"
-            "#define DB_IN_CRASH_RECOVERY                                        DB_IN_CRASH_RECOVERY_%s\n"
-            "#define DB_IN_ARCHIVE_RECOVERY                                      DB_IN_ARCHIVE_RECOVERY_%s\n"
-            "#define DB_IN_PRODUCTION                                            DB_IN_PRODUCTION_%s\n"
-            "#define FullTransactionId                                           FullTransactionId_%s\n"
-            "#define XLogLongPageHeaderData                                      XLogLongPageHeaderData_%s\n"
-            "#define XLogPageHeaderData                                          XLogPageHeaderData_%s\n"
-            "#define XLogRecPtr                                                  XLogRecPtr_%s\n"
             "\n",
-            strZ(pgVersion->version), versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot,
-            versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot, versionNoDot,
-            versionNoDot);
+            strZ(pgVersion->version), versionNoDot);
+
+        for (unsigned int typeIdx = 0; typeIdx < strLstSize(typeList); typeIdx++)
+        {
+            const String *const type = strLstGet(typeList, typeIdx);
+
+            strCat(pg, bldDefineRender(type, strNewFmt("%s_%s", strZ(type), versionNoDot)));
+            strCatChr(pg, '\n');
+        }
 
         if (!pgVersion->release)
         {
             strCatZ(
                 pg,
-                "#define CATALOG_VERSION_NO_MAX\n"
-                "\n");
+                "\n"
+                "#define CATALOG_VERSION_NO_MAX\n");
         }
 
-        strCatFmt(
+        strCatZ(
             pg,
+            "\n"
             "#include \"postgres/interface/version.intern.h\"\n"
-            "\n"
-            "PG_INTERFACE(%s);\n"
-            "\n"
-            "#undef CheckPoint\n"
-            "#undef ControlFileData\n"
-            "#undef DBState\n"
-            "#undef DB_STARTUP\n"
-            "#undef DB_SHUTDOWNED\n"
-            "#undef DB_SHUTDOWNED_IN_RECOVERY\n"
-            "#undef DB_SHUTDOWNING\n"
-            "#undef DB_IN_CRASH_RECOVERY\n"
-            "#undef DB_IN_ARCHIVE_RECOVERY\n"
-            "#undef DB_IN_PRODUCTION\n"
-            "#undef FullTransactionId\n"
-            "#undef XLogLongPageHeaderData\n"
-            "#undef XLogPageHeaderData\n"
-            "#undef XLogRecPtr\n"
-            "\n"
-            "#undef CATALOG_VERSION_NO\n"
-            "#undef CATALOG_VERSION_NO_MAX\n"
-            "#undef PG_CONTROL_VERSION\n"
-            "#undef PG_VERSION\n"
-            "#undef XLOG_PAGE_MAGIC\n"
-            "\n"
-            "#undef PG_INTERFACE_CONTROL_IS\n"
-            "#undef PG_INTERFACE_CONTROL\n"
-            "#undef PG_INTERFACE_CONTROL_VERSION\n"
-            "#undef PG_INTERFACE_WAL_IS\n"
-            "#undef PG_INTERFACE_WAL\n",
-            versionNum);
+            "\n");
+
+        for (unsigned int functionIdx = 0; functionIdx < strLstSize(functionList); functionIdx++)
+            strCatFmt(pg, "%s(%s);\n", strZ(strLstGet(functionList, functionIdx)), versionNum);
+
+        strCatChr(pg, '\n');
+
+        for (unsigned int typeIdx = 0; typeIdx < strLstSize(typeList); typeIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(typeList, typeIdx)));
+
+        strCatChr(pg, '\n');
+
+        for (unsigned int defineIdx = 0; defineIdx < strLstSize(defineList); defineIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(defineList, defineIdx)));
+
+        strCatChr(pg, '\n');
+
+        for (unsigned int functionIdx = 0; functionIdx < strLstSize(functionList); functionIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(functionList, functionIdx)));
     }
 
     // Interface struct

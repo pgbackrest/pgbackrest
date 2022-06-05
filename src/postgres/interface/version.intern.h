@@ -155,13 +155,3 @@ Read the version specific WAL header into a general data structure
     }
 
 #endif
-
-/***********************************************************************************************************************************
-Call all macros with a single macro to make the auto-generated code as simple as possible
-***********************************************************************************************************************************/
-#define PG_INTERFACE(version)                                                                                                      \
-    PG_INTERFACE_CONTROL_IS(version)                                                                                               \
-    PG_INTERFACE_CONTROL(version)                                                                                                  \
-    PG_INTERFACE_CONTROL_VERSION(version)                                                                                          \
-    PG_INTERFACE_WAL_IS(version)                                                                                                   \
-    PG_INTERFACE_WAL(version)
