@@ -138,12 +138,10 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
             result = 0;
             break;
 
-        // The connection was closed
-        case SSL_ERROR_ZERO_RETURN:
-        // Any other error that we cannot handle
+        // Handle graceful termination by the server or unexpected EOF/error
         default:
         {
-            // Close on unexpected EOF/error when allowed
+            // Close connection on graceful termination by the server or unexpected EOF/error when allowed
             if (errorTls == SSL_ERROR_ZERO_RETURN || this->ignoreUnexpectedEof)
             {
                 if (!closeOk)
