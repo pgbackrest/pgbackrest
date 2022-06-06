@@ -38,10 +38,13 @@ jobs:
           - param: doc --vm=u18
 
           # All integration tests
-          - param: test --vm=u20 --param=build-package --param=module=mock --param=module=real
+          - param: test --vm=u22 --param=build-package --param=module=mock --param=module=real
 
-          # All unit tests (with coverage) on the newest gcc available
-          - param: test --vm=f33 --param=c-only --param=tz=America/New_York
+          # All unit tests with coverage and alternate timezone
+          - param: test --vm=u22 --param=c-only --param=tz=America/New_York
+
+          # All unit tests on the newest gcc available
+          - param: test --vm=f36 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
 
           # RHEL documentation
           - param: doc --vm=rh8

@@ -1,7 +1,7 @@
-# export PGB=pgbackrest;export PGB_IMAGE=$PGB/test:u20-main;PGB_REPO=~/Documents/Code/$PGB
+# export PGB=pgbackrest;export PGB_IMAGE=$PGB/test:u22-main;PGB_REPO=~/Documents/Code/$PGB
 # docker build --squash -f $PGB_REPO/test/Dockerfile -t $PGB_IMAGE .
 # docker run --privileged -itd --name $PGB-test -h $PGB-test -v $PGB_REPO:/home/vagrant/$PGB $PGB_IMAGE
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 # Install packages
 RUN apt-get update
@@ -18,14 +18,6 @@ RUN curl -fsSL https://get.docker.com | sh
 
 # Create vagrant user
 RUN adduser --ingroup=docker -uid=5000 --disabled-password --gecos \"\" vagrant
-
-# Build valgrind
-RUN export VALGRIND=valgrind-3.17.0 && \
-    wget -q -O - https://sourceware.org/pub/valgrind/${VALGRIND?}.tar.bz2 | tar jx -C /root && \
-    cd /root/${VALGRIND?} && \
-    ./configure --silent && \
-    make -s -j8 install && \
-    rm -rf /root/${VALGRIND?}
 
 # Configure sudo
 RUN echo '%docker ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
