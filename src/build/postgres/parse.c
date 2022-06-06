@@ -120,39 +120,63 @@ bldPgParseDefine(const String *const header)
     return result;
 }
 
+/***********************************************************************************************************************************
+Parse defines from header
+***********************************************************************************************************************************/
+static StringList *
+bldPgParseType(const String *const header)
+{
+    const StringList *const lineList = strLstNewSplitZ(header, "\n");
+    StringList *const result = strLstNew();
+    bool scan = false;
+    bool scanEnum = false;
+
+    for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
+    {
+        const String *const line = strTrim(strLstGet(lineList, lineIdx));
+        const StringList *const tokenList = strLstNewSplitZ(line, " ");
+        const String *const tokenFirst = strLstGet(tokenList, 0);
+
+        if (strEqZ(tokenFirst, "typedef"))
+        {
+            ASSERT(!scan);
+
+            const String *const tokenType = strLstGet(tokenList, 1);
+
+            if (strEqZ(tokenType, "struct") || strEqZ(tokenType, "enum"))
+            {
+                scan = true;
+                scanEnum = strEqZ(tokenType, "enum");
+            }
+            else
+                strLstAddIfMissing(result, strLstGet(strLstNewSplitZ(strLstGet(tokenList, strLstSize(tokenList) - 1), ";"), 0));
+        }
+        else if (strEqZ(tokenFirst, "}"))
+        {
+            strLstAddIfMissing(result, strLstGet(strLstNewSplitZ(strLstGet(tokenList, strLstSize(tokenList) - 1), ";"), 0));
+
+            scan = false;
+            scanEnum = false;
+        }
+        else if (scanEnum && !strEqZ(tokenFirst, "{"))
+            strLstAddIfMissing(result, strLstGet(strLstNewSplitZ(strLstGet(tokenList, 0), ","), 0));
+    }
+
+    return result;
+}
+
 /**********************************************************************************************************************************/
 BldPg
 bldPgParse(const Storage *const storageRepo)
 {
-
-    // !!! NEED TO PARSE TYPES
-    StringList *const typeList = strLstNew();
-    strLstAddZ(typeList, "CheckPoint");
-    strLstAddZ(typeList, "ControlFileData");
-    strLstAddZ(typeList, "DBState");
-    strLstAddZ(typeList, "DB_STARTUP");
-    strLstAddZ(typeList, "DB_SHUTDOWNED");
-    strLstAddZ(typeList, "DB_SHUTDOWNED_IN_RECOVERY");
-    strLstAddZ(typeList, "DB_SHUTDOWNING");
-    strLstAddZ(typeList, "DB_IN_CRASH_RECOVERY");
-    strLstAddZ(typeList, "DB_IN_ARCHIVE_RECOVERY");
-    strLstAddZ(typeList, "DB_IN_PRODUCTION");
-    strLstAddZ(typeList, "FullTransactionId");
-    strLstAddZ(typeList, "int64");
-    strLstAddZ(typeList, "MultiXactId");
-    strLstAddZ(typeList, "MultiXactOffset");
-    strLstAddZ(typeList, "Oid");
-    strLstAddZ(typeList, "pg_crc32");
-    strLstAddZ(typeList, "pg_crc32c");
-    strLstAddZ(typeList, "pg_time_t");
-    strLstAddZ(typeList, "TimeLineID");
-    strLstAddZ(typeList, "XLogLongPageHeaderData");
-    strLstAddZ(typeList, "XLogPageHeaderData");
-    strLstAddZ(typeList, "XLogRecPtr");
+    // Parse types from version.vendor.h
+    const String *const vendorHeader = strNewBuf(
+        storageGetP(storageNewReadP(storageRepo, STRDEF("src/postgres/interface/version.vendor.h"))));
+    StringList *const typeList = bldPgParseType(vendorHeader);
+    strLstSort(typeList, sortOrderAsc);
 
     // Parse defines from version.vendor.h
-    StringList *const defineList = bldPgParseDefine(
-        strNewBuf(storageGetP(storageNewReadP(storageRepo, STRDEF("src/postgres/interface/version.vendor.h")))));
+    StringList *const defineList = bldPgParseDefine(vendorHeader);
     strLstAddZ(defineList, "CATALOG_VERSION_NO_MAX");
     strLstAddZ(defineList, "PG_VERSION");
     strLstSort(defineList, sortOrderAsc);
