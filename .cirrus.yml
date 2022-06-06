@@ -69,10 +69,10 @@ macos_monterey_task:
     LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib -L/usr/local/opt/libyaml/lib
     CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2 -I/usr/local/opt/libyaml/include
     PERL5LIB: /usr/local/opt/perl5/lib/perl5
-    PKG_CONFIG_PATH: /usr/local/Cellar/libpq/14.3/lib/pkgconfig:~/homebrew/Cellar/openssl@1.1/1.1.1o/lib/pkgconfig
+    PKG_CONFIG_PATH: /usr/local/Cellar/libpq/14.3/lib/pkgconfig:/usr/local/Cellar/openssl@1.1/1.1.1o/lib/pkgconfig
 
   install_script:
-    - brew install -q pkg-config openssl@1.1 libpq libxml2 libyaml cpanm meson
+    - brew install -q pkg-config openssl@1.1 libpq@14.3 libxml2 libyaml cpanm meson
     - cpanm --local-lib=/usr/local/opt/perl5 install YAML::XS
 
   script:
