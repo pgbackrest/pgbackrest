@@ -26,6 +26,7 @@ bldPgVersionList(Yaml *const yaml)
     {
         YamlEvent pgDef = yamlEventNextCheck(yaml, yamlEventTypeScalar);
 
+        // Parse version list
         if (strEqZ(pgDef.value, "version"))
         {
             yamlEventNextCheck(yaml, yamlEventTypeSeqBegin);
@@ -44,6 +45,7 @@ bldPgVersionList(Yaml *const yaml)
                     YamlEvent verDef = yamlEventNextCheck(yaml, yamlEventTypeScalar);
                     YamlEvent verDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
 
+                    // Get release setting
                     if (strEqZ(verDef.value, "release"))
                     {
                         pgRaw.release = yamlBoolParse(verDefVal);
@@ -91,10 +93,12 @@ bldPgParseDefine(const String *const header)
     const StringList *const lineList = strLstNewSplitZ(header, "\n");
     StringList *const result = strLstNew();
 
+    // Scan all lines
     for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
     {
         const String *const line = strTrim(strLstGet(lineList, lineIdx));
 
+        // If define get name
         if (strBeginsWithZ(line, "#define"))
         {
             const String *const defineToken = strTrim(strLstGet(strLstNewSplitZ(line, " "), 1));
@@ -102,6 +106,7 @@ bldPgParseDefine(const String *const header)
             if (strEmpty(defineToken))
                 THROW_FMT(FormatError, "unable to find define -- are there extra spaces on '%s'", strZ(line));
 
+            // The define might be followed by a ( or tab
             const StringList *defineList = strLstNewSplitZ(defineToken, "(");
             const String *define;
 
@@ -121,43 +126,43 @@ bldPgParseDefine(const String *const header)
 }
 
 /***********************************************************************************************************************************
-Parse defines from header
+Parse types from header
 ***********************************************************************************************************************************/
 static StringList *
 bldPgParseType(const String *const header)
 {
     const StringList *const lineList = strLstNewSplitZ(header, "\n");
     StringList *const result = strLstNew();
-    bool scan = false;
     bool scanEnum = false;
 
+    // Scan all lines
     for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
     {
         const String *const line = strTrim(strLstGet(lineList, lineIdx));
         const StringList *const tokenList = strLstNewSplitZ(line, " ");
         const String *const tokenFirst = strLstGet(tokenList, 0);
 
+        // If typedef
         if (strEqZ(tokenFirst, "typedef"))
         {
-            ASSERT(!scan);
-
             const String *const tokenType = strLstGet(tokenList, 1);
 
+            // If struct/enum continue scanning to get the name/enums
             if (strEqZ(tokenType, "struct") || strEqZ(tokenType, "enum"))
             {
-                scan = true;
                 scanEnum = strEqZ(tokenType, "enum");
             }
+            // Else add the type name
             else
                 strLstAddIfMissing(result, strLstGet(strLstNewSplitZ(strLstGet(tokenList, strLstSize(tokenList) - 1), ";"), 0));
         }
+        // End scanning of struct/enum and get name
         else if (strEqZ(tokenFirst, "}"))
         {
             strLstAddIfMissing(result, strLstGet(strLstNewSplitZ(strLstGet(tokenList, strLstSize(tokenList) - 1), ";"), 0));
-
-            scan = false;
             scanEnum = false;
         }
+        // Add enums to type list
         else if (scanEnum && !strEqZ(tokenFirst, "{"))
             strLstAddIfMissing(result, strLstGet(strLstNewSplitZ(strLstGet(tokenList, 0), ","), 0));
     }

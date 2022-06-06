@@ -25,7 +25,6 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
     {
         const BldPgVersion *const pgVersion = lstGet(bldPg.pgList, pgIdx);
         const char *const versionNoDot = strZ(strLstJoin(strLstNewSplitZ(pgVersion->version, "."), ""));
-        const char *const versionNum = versionNoDot[0] == '9' ? zNewFmt("0%s", versionNoDot) : zNewFmt("%s0", versionNoDot);
 
         strCatFmt(
             pg,
@@ -60,7 +59,7 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
             "\n");
 
         for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
-            strCatFmt(pg, "%s(%s);\n", strZ(strLstGet(bldPg.functionList, functionIdx)), versionNum);
+            strCatFmt(pg, "%s(%s);\n", strZ(strLstGet(bldPg.functionList, functionIdx)), versionNoDot);
 
         strCatChr(pg, '\n');
 
@@ -93,21 +92,39 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
     {
         const BldPgVersion *const pgVersion = lstGet(bldPg.pgList, pgIdx);
         const char *const versionNoDot = strZ(strLstJoin(strLstNewSplitZ(pgVersion->version, "."), ""));
-        const char *const versionNum = versionNoDot[0] == '9' ? zNewFmt("0%s", versionNoDot) : zNewFmt("%s0", versionNoDot);
 
         strCatFmt(
             pg,
             "    {\n"
             "        .version = PG_VERSION_%s,\n"
-            "\n"
-            "        .controlIs = pgInterfaceControlIs%s,\n"
-            "        .control = pgInterfaceControl%s,\n"
-            "        .controlVersion = pgInterfaceControlVersion%s,\n"
-            "\n"
-            "        .walIs = pgInterfaceWalIs%s,\n"
-            "        .wal = pgInterfaceWal%s,\n"
-            "    },\n",
-            versionNoDot, versionNum, versionNum, versionNum, versionNum, versionNum);
+            "\n",
+            versionNoDot);
+
+        for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
+        {
+            // Convert define name to function name
+            const StringList *const nameList = strLstNewSplitZ(strLstGet(bldPg.functionList, functionIdx), "_");
+            String *const name = strNew();
+
+            for (unsigned int nameIdx = 0; nameIdx < strLstSize(nameList); nameIdx++)
+            {
+                String *const namePart = strLower(strLstGet(nameList, nameIdx));
+
+                if (nameIdx != 0)
+                    strFirstUpper(namePart);
+
+                strCat(name, namePart);
+            }
+
+            strCatFmt(
+                pg,
+                "        .%s = %s%s,\n",
+                strZ(strFirstLower(strSub(name, sizeof("pgInterface") - 1))), strZ(name), versionNoDot);
+        }
+
+        strCatZ(
+            pg,
+            "    },\n");
     }
 
     strCatFmt(
