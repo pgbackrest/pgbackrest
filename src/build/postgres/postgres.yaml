@@ -1,6 +1,9 @@
-# !!! auto-generated to src/postgres/interface.auto.c.h.
+# Supported PostgreSQL Versions
 #
-# !!! DESCRIPTION OF OPTIONS
+# Version interfaces are auto-generated to src/postgres/interface.auto.c.inc.
+#
+# - 'version' contains a list of all supported versions
+# - For a specific version, 'release' marks it as not released (i.e. this should always be false when used)
 version:
   - 9.0
   - 9.1
