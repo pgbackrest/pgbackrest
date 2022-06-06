@@ -118,7 +118,7 @@ sub coverageExtract
 
     executeTest(
         (defined($strContainerImage) ? 'docker exec -i -u ' . TEST_USER . " ${strContainerImage} " : '') .
-        "${strLCovExe} --capture --directory=${strWorkUnitPath} --o=${strLCovOut} 2>&1");
+        "${strLCovExe} --capture --directory=${strWorkUnitPath} --o=${strLCovOut}");
 
     # Generate coverage report for each module
     foreach my $strCoveredModule (@stryCoveredModule)
