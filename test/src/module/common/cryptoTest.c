@@ -40,7 +40,13 @@ testRun(void)
         EVP_MD_CTX *context = EVP_MD_CTX_create();
         TEST_ERROR(
             cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
-            "unable to initialize hash context: [101187723] no digest set");
+            "unable to initialize hash context: "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[50331787]"
+#else
+            "[101187723]"
+#endif
+            " no digest set");
         EVP_MD_CTX_destroy(context);
 
         TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");

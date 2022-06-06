@@ -126,29 +126,6 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
 
     switch (errorTls)
     {
-        // The connection was closed
-        case SSL_ERROR_ZERO_RETURN:
-        // A syscall failed (this usually indicates unexpected eof)
-        case SSL_ERROR_SYSCALL:
-        {
-            // Error on SSL_ERROR_SYSCALL if unexpected EOF is not allowed
-            if (errorTls == SSL_ERROR_SYSCALL && !this->ignoreUnexpectedEof)
-            {
-                THROW_SYS_ERROR_CODE(errorSys, KernelError, "TLS syscall error");
-            }
-            // Else close the connection if we are in a state where it is allowed, e.g. not connecting
-            else
-            {
-                if (!closeOk)
-                    THROW(ProtocolError, "unexpected TLS eof");
-
-                this->shutdownOnClose = false;
-                tlsSessionClose(this);
-            }
-
-            break;
-        }
-
         // Try again after waiting for read ready
         case SSL_ERROR_WANT_READ:
             ioReadReadyP(ioSessionIoReadP(this->ioSession), .error = true);
@@ -161,15 +138,30 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
             result = 0;
             break;
 
-        // Any other error that we cannot handle
+        // Handle graceful termination by the server or unexpected EOF/error
         default:
         {
-            // Get detailed error message when available
-            const char *errorTlsDetailMessage = ERR_reason_error_string(errorTlsDetail);
+            // Close connection on graceful termination by the server or unexpected EOF/error when allowed
+            if (errorTls == SSL_ERROR_ZERO_RETURN || this->ignoreUnexpectedEof)
+            {
+                if (!closeOk)
+                    THROW(ProtocolError, "unexpected TLS eof");
 
-            THROW_FMT(
-                ServiceError, "TLS error [%d:%lu] %s", errorTls, errorTlsDetail,
-                errorTlsDetailMessage == NULL ? "no details available" : errorTlsDetailMessage);
+                this->shutdownOnClose = false;
+                tlsSessionClose(this);
+            }
+            // Else error
+            else
+            {
+                // Get detailed error message when available
+                const char *errorTlsDetailMessage = ERR_reason_error_string(errorTlsDetail);
+
+                THROW_FMT(
+                    ServiceError, "TLS error [%d:%lu] %s", errorTls, errorTlsDetail,
+                    errorTlsDetailMessage == NULL ? "no details available" : errorTlsDetailMessage);
+            }
+
+            break;
         }
     }
 
