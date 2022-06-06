@@ -22,6 +22,7 @@
 
          / daniel.haxx.se
 
+         Ubuntu
          https://packages.ubuntu.com/search?mode=exactfilename&suite=bionic&section=all&arch=any&keywords=libssh2&searchon=names
          18.04 LTS 1.8.0
          20.04 LTS 1.8.0
@@ -31,10 +32,12 @@
                 21         1.9.0
                 22         1.10.0
 
+         Debian
          https://www.debian.org/distrib/packages
          debian stable 1.9.0-2
                 testing 1.10.0-
 
+         Red Hat
          https://access.redhat.com/downloads/content/479/ver=/rhel---9/9.0/x86_64/packages
          rhel7 1.8.0
          rhel9 for x86_64 not listed
@@ -49,6 +52,7 @@
            epel 8 1.9.0
            epel 9 1.10.0
 
+        FreeBSD
         https://pkgs.org/search/?q=ssh2
         freebsd 12 & 13 libssh2-1.10.0,3.pkg
 
