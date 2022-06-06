@@ -123,8 +123,8 @@ endif
 # Find required openssl library
 lib_openssl = dependency('openssl')
 
-# Find required pq library. !!!
-lib_pq = dependency('libpq', required: false)
+# Find required pq library
+lib_pq = dependency('libpq')
 
 # Find required xml library
 lib_xml = dependency('libxml-2.0')
