@@ -6,4 +6,5 @@ autom4te.cache
 /Makefile
 /build.auto.h
 /pgbackrest
+/postgres/interface.auto.c.inc
 /build-*

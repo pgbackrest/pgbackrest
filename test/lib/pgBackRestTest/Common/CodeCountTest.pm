@@ -80,7 +80,7 @@ sub codeCountScan
             $strClass = 'doc/core';
         }
         elsif ($strFile =~ '^build/' || $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
-               $strFile =~ '^src/build/')
+               $strFile =~ '^src/build/' || $strFile =~ 'meson\.build$' || $strFile =~ 'meson_options\.txt$')
         {
             $strClass = 'build';
         }
@@ -137,6 +137,11 @@ sub codeCountScan
         elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure' || $strFile =~ '^src\/build\/')
         {
             $strType = 'make';
+            $strForceLang = 'make';
+        }
+        elsif ($strFile =~ 'meson\.build$' || $strFile =~ 'meson_options\.txt$')
+        {
+            $strType = 'meson';
             $strForceLang = 'make';
         }
         elsif ($strFile =~ '\.xml$')

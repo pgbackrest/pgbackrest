@@ -90,12 +90,12 @@ jobs:
 
           install: |
             apt-get update
-            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
 
           run: |
             git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --no-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --no-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
   codeql:
     runs-on: ubuntu-latest
