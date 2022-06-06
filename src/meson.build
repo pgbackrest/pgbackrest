@@ -142,6 +142,31 @@ subdir('command/help')
 alias_target('build-help', help_auto_c_inc)
 
 ####################################################################################################################################
+# Build postgres target
+####################################################################################################################################
+src_build_postgres = [
+	'build/common/render.c',
+	'build/common/yaml.c',
+	'build/postgres/main.c',
+	'build/postgres/parse.c',
+	'build/postgres/render.c',
+]
+
+build_postgres = executable(
+    'build-postgres',
+    src_common,
+    src_build_postgres,
+    dependencies : [
+        lib_yaml
+    ],
+)
+
+# build interface.auto.c.inc
+subdir('postgres')
+
+alias_target('build-postgres', build_postgres)
+
+####################################################################################################################################
 # pgBackRest target
 ####################################################################################################################################
 src_pgbackrest = [
@@ -249,19 +274,6 @@ src_pgbackrest = [
 	'postgres/client.c',
 	'postgres/interface.c',
 	'postgres/interface/page.c',
-	'postgres/interface/v090.c',
-	'postgres/interface/v091.c',
-	'postgres/interface/v092.c',
-	'postgres/interface/v093.c',
-	'postgres/interface/v094.c',
-	'postgres/interface/v095.c',
-	'postgres/interface/v096.c',
-	'postgres/interface/v100.c',
-	'postgres/interface/v110.c',
-	'postgres/interface/v120.c',
-	'postgres/interface/v130.c',
-	'postgres/interface/v140.c',
-	'postgres/interface/v150.c',
 	'protocol/client.c',
 	'protocol/command.c',
 	'protocol/helper.c',
@@ -295,6 +307,7 @@ pgbackrest = executable(
     src_common,
     src_pgbackrest,
     help_auto_c_inc,
+    interface_auto_c_inc,
     dependencies : [
         lib_bz2,
         lib_openssl,
