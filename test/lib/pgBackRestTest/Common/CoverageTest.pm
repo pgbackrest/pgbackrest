@@ -118,7 +118,7 @@ sub coverageExtract
 
     executeTest(
         (defined($strContainerImage) ? 'docker exec -i -u ' . TEST_USER . " ${strContainerImage} " : '') .
-        "${strLCovExe} --capture --directory=${strWorkUnitPath} --o=${strLCovOut}");
+        "${strLCovExe} --capture --directory=${strWorkUnitPath} --o=${strLCovOut} 2>&1");
 
     # Generate coverage report for each module
     foreach my $strCoveredModule (@stryCoveredModule)
@@ -140,16 +140,18 @@ sub coverageExtract
                 'test/src/module/' . substr(${strModuleOutName}, 5) : "src/${strModuleOutName}");
         my $strLCovFile = "${strTestResultCoveragePath}/raw/${strModuleOutName}.lcov";
         my $strLCovTotal = "${strWorkTmpPath}/all.lcov";
+        my $bInc = $strModuleName =~ '\.vendor$' || $strModuleName =~ '\.auto$';
+        my $strModuleSourceFile = $strModulePath . '.c' . ($bInc ? '.inc' : '');
 
         executeTest(
             "${strLCovExe}" . ($bTest ? ' --rc lcov_branch_coverage=0' : '') . " --extract=${strLCovOut} */${strModuleName}.c" .
-                " --o=${strLCovOutTmp}");
+            ($bInc ? '.inc' : '') . " --o=${strLCovOutTmp}");
 
         # Combine with prior run if there was one
         if ($oStorage->exists($strLCovFile))
         {
             my $strCoverage = ${$oStorage->get($strLCovOutTmp)};
-            $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
+            $strCoverage =~ s/^SF\:.*$/SF:$strModuleSourceFile/mg;
             $oStorage->put($strLCovOutTmp, $strCoverage);
 
             executeTest("${strLCovExe} --add-tracefile=${strLCovOutTmp} --add-tracefile=${strLCovFile} --o=${strLCovOutTmp}");
@@ -185,7 +187,7 @@ sub coverageExtract
             if (!$bTest || $iTotalLines != $iCoveredLines || $iTotalBranches != $iCoveredBranches)
             {
                 # Fix source file name
-                $strCoverage =~ s/^SF\:.*$/SF:$strModulePath\.c/mg;
+                $strCoverage =~ s/^SF\:.*$/SF:$strModuleSourceFile/mg;
 
                 $oStorage->put($oStorage->openWrite($strLCovFile, {bPathCreate => true}), $strCoverage);
 

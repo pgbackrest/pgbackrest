@@ -180,7 +180,7 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
     IoRead *read = storageReadIo(result);
     cipherBlockFilterGroupAdd(
         ioReadFilterGroup(read), cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt, cipherPass);
-    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
     // If the file is compressed, add a decompression filter
     if (compressTypeFromName(pathFileName) != compressTypeNone)

@@ -278,7 +278,7 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 }
 
 /***********************************************************************************************************************************
-Render parse.auto.c
+Render parse.auto.c.inc
 ***********************************************************************************************************************************/
 #define PARSE_AUTO_COMMENT                                          "Config Parse Rules"
 
@@ -1309,7 +1309,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
     // Write to storage
     // -----------------------------------------------------------------------------------------------------------------------------
     bldPut(
-        storageRepo, "src/config/parse.auto.c",
+        storageRepo, "src/config/parse.auto.c.inc",
         BUFSTR(strNewFmt("%s%s%s", strZ(bldHeader(CONFIG_MODULE, PARSE_AUTO_COMMENT)), strZ(configVal), strZ(config))));
 }
 

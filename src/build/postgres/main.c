@@ -1,14 +1,13 @@
 /***********************************************************************************************************************************
-Auto-Generate Help
+Auto-Generate PostgreSQL Interface
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
 #include "common/log.h"
 #include "storage/posix/storage.h"
 
-#include "build/config/parse.h"
-#include "build/help/parse.h"
-#include "build/help/render.h"
+#include "build/postgres/parse.h"
+#include "build/postgres/render.h"
 
 int
 main(int argListSize, const char *argList[])
@@ -40,11 +39,10 @@ main(int argListSize, const char *argList[])
         }
     }
 
-    // Render config
+    // Render postgres
     const Storage *const storageRepo = storagePosixNewP(pathRepo);
     const Storage *const storageBuild = storagePosixNewP(pathOut, .write = true);
-    const BldCfg bldCfg = bldCfgParse(storageRepo);
-    bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg));
+    bldPgRender(storageBuild, bldPgParse(storageRepo));
 
     return 0;
 }

@@ -16,7 +16,22 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.40dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <text>
+                    <p><b>NOTE TO PACKAGERS</b>: An experimental <proper>meson</proper> build has been added but packagers should continue to use the <proper>autoconf</proper>/<proper>make</proper> build for the foreseeable future.</p>
+                </text>
+
                 <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1767"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p><proper>OpenSSL 3</proper> support.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1758"/>
 
@@ -27,9 +42,42 @@
 
                         <p>Truncate files during delta <cmd>restore</cmd> when they are larger than expected.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1760"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Disable incremental manifest save when <br-option>resume=n</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1759"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Set backup percent complete to zero before copy start.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1771"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Automatically create <postgres/> version interfaces.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1749"/>
 
@@ -42,6 +90,46 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-bug-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="francisco.miguel.biete"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip internal options in the configuration reference.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-doc-list>
+
+            <release-test-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1765"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="eli.schwartz"/>
+                            <release-item-reviewer id="sam.bassaly"/>
+                        </release-item-contributor-list>
+
+                        <p>Add experimental <proper>Meson</proper> build.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1764"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="andrey.sokolov"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow any path to be passed to the <br-setting>--test-path</br-setting> option.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-test-list>
         </release>
 
         <release date="2022-05-16" version="2.39" title="Verify and File Bundling">
@@ -11210,6 +11298,11 @@
             <contributor-id type="github">trinchan</contributor-id>
         </contributor>
 
+        <contributor id="andrey.sokolov">
+            <contributor-name-display>Andrey Sokolov</contributor-name-display>
+            <contributor-id type="github">andr-sokolov</contributor-id>
+        </contributor>
+
         <contributor id="anton.kurochkin">
             <contributor-name-display>Anton Kurochkin</contributor-name-display>
             <contributor-id type="github">woblerr</contributor-id>
@@ -11433,6 +11526,11 @@
             <contributor-id type="github">ejberdecia</contributor-id>
         </contributor>
 
+        <contributor id="eli.schwartz">
+            <contributor-name-display>Eli Schwartz</contributor-name-display>
+            <contributor-id type="github">eli-schwartz</contributor-id>
+        </contributor>
+
         <contributor id="eric.radman">
             <contributor-name-display>Eric Radman</contributor-name-display>
             <contributor-id type="github">eradman</contributor-id>
@@ -11451,6 +11549,11 @@
         <contributor id="fatih.mencutekin">
             <contributor-name-display>Fatih Mencutekin</contributor-name-display>
             <contributor-id type="github">fatihmtekin</contributor-id>
+        </contributor>
+
+        <contributor id="francisco.miguel.biete">
+            <contributor-name-display>Francisco Miguel Biete</contributor-name-display>
+            <contributor-id type="github">fmbiete</contributor-id>
         </contributor>
 
         <contributor id="floris.van.nee">
@@ -11878,6 +11981,11 @@
         <contributor id="ryan.lambert">
             <contributor-name-display>Ryan Lambert</contributor-name-display>
             <contributor-id type="github">rustprooflabs</contributor-id>
+        </contributor>
+
+        <contributor id="sam.bassaly">
+            <contributor-name-display>Sam Bassaly</contributor-name-display>
+            <contributor-id type="github">shkshk90</contributor-id>
         </contributor>
 
         <contributor id="sarah.conway">

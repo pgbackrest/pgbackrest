@@ -940,7 +940,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
 
             // Add SHA1 filter
-            ioFilterGroupAdd(filterGroup, cryptoHashNew(HASH_TYPE_SHA1_STR));
+            ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
             // Add compression
             if (compressType != compressTypeNone)
@@ -1339,35 +1339,40 @@ backupJobResult(
 }
 
 /***********************************************************************************************************************************
-Save a copy of the backup manifest during processing to preserve checksums for a possible resume
+Save a copy of the backup manifest during processing to preserve checksums for a possible resume. Only save the final copy when
+resume is disabled since an incremental copy will not be used in a future backup unless resume is enabled beforehand.
 ***********************************************************************************************************************************/
 static void
-backupManifestSaveCopy(Manifest *const manifest, const String *cipherPassBackup)
+backupManifestSaveCopy(Manifest *const manifest, const String *const cipherPassBackup, const bool final)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
+        FUNCTION_LOG_PARAM(BOOL, final);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    if (final || cfgOptionBool(cfgOptResume))
     {
-        // Open file for write
-        IoWrite *write = storageWriteIo(
-            storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Open file for write
+            IoWrite *write = storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(),
+                    strNewFmt(
+                        STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
 
-        // Add encryption filter if required
-        cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, cipherPassBackup);
+            // Add encryption filter if required
+            cipherBlockFilterGroupAdd(
+                ioWriteFilterGroup(write), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, cipherPassBackup);
 
-        // Save file
-        manifestSave(manifest, write);
+            // Save file
+            manifestSave(manifest, write);
+        }
+        MEM_CONTEXT_TEMP_END();
     }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -1876,8 +1881,9 @@ backupProcess(
         // Process jobs
         uint64_t sizeProgress = 0;
 
-        // Store current percentage complete - updated as jobs progress
+        // Initialize the percent complete to zero
         unsigned int currentPercentComplete = 0;
+        lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
@@ -1905,7 +1911,7 @@ backupProcess(
                 // Save the manifest periodically to preserve checksums for resume
                 if (sizeProgress - manifestSaveLast >= manifestSaveSize)
                 {
-                    backupManifestSaveCopy(manifest, cipherPassBackup);
+                    backupManifestSaveCopy(manifest, cipherPassBackup, false);
                     manifestSaveLast = sizeProgress;
                 }
 
@@ -2009,7 +2015,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                 strZ(pgLsnToWalSegment(backupData->timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
-            backupManifestSaveCopy(manifest, cipherPassBackup);
+            backupManifestSaveCopy(manifest, cipherPassBackup, false);
 
             // Use base path to set ownership and mode
             const ManifestPath *basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
@@ -2130,7 +2136,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // -------------------------------------------------------------------------------------------------------------------------
         manifestValidate(manifest, true);
 
-        backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)));
+        backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)), true);
 
         storageCopy(
             storageNewReadP(
@@ -2254,7 +2260,7 @@ cmdBackup(void)
         }
 
         // Save the manifest before processing starts
-        backupManifestSaveCopy(manifest, cipherPassBackup);
+        backupManifestSaveCopy(manifest, cipherPassBackup, false);
 
         // Process the backup manifest
         backupProcess(backupData, manifest, backupStartResult.lsn, cipherPassBackup);

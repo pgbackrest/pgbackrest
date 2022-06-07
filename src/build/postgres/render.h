@@ -1,20 +1,15 @@
 /***********************************************************************************************************************************
-PostgreSQL Page Interface
+Render PostgreSQL Interface
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#ifndef BUILD_POSTGRES_RENDER_H
+#define BUILD_POSTGRES_RENDER_H
 
-#include <string.h>
-
-#include "postgres/interface/static.vendor.h"
+#include "build/postgres/parse.h"
 
 /***********************************************************************************************************************************
-Include the page checksum code
+Functions
 ***********************************************************************************************************************************/
-#include "postgres/interface/pageChecksum.vendor.c.inc"
+// Render auto-generated PostgreSQL files
+void bldPgRender(const Storage *const storageRepo, const BldPg bldPg);
 
-/**********************************************************************************************************************************/
-uint16_t
-pgPageChecksum(unsigned char *page, uint32_t blockNo)
-{
-    return pg_checksum_page((char *)page, blockNo);
-}
+#endif

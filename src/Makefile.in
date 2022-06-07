@@ -198,7 +198,6 @@ BUILDDIR=.build
 ####################################################################################################################################
 # Compile and link pgbackrest
 ####################################################################################################################################
-SRCS_PGBACKREST := $(wildcard postgres/interface/v*.c $(VPATH)/postgres/interface/v*.c)
 OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_PGBACKREST) $(SRCS) main.c)
 
 pgbackrest: $(OBJS_PGBACKREST)
@@ -216,7 +215,7 @@ SRCS_BUILD_CONFIG = \
 
 OBJS_BUILD_CONFIG = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_CONFIG))
 
-build-config: $(OBJS_BUILD_CONFIG) build/config/config.yaml config/config.auto.h config/parse.auto.c
+build-config: $(OBJS_BUILD_CONFIG) build/config/config.yaml config/config.auto.h config/parse.auto.c.inc
 	$(CC) -o build-config $(OBJS_BUILD_CONFIG) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
 	./build-config $(VPATH)
 
@@ -252,8 +251,26 @@ OBJS_BUILD_HELP = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_HELP
 build-help: $(OBJS_BUILD_HELP) build/config/config.yaml build/help/help.xml
 	$(CC) -o build-help $(OBJS_BUILD_HELP) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
 
-command/help/help.auto.c: build-help
+command/help/help.auto.c.inc: build-help
 	./build-help $(VPATH)
+
+####################################################################################################################################
+# Compile and link postgres interface generator
+####################################################################################################################################
+SRCS_BUILD_POSTGRES = \
+	build/common/render.c \
+	build/common/yaml.c \
+	build/postgres/parse.c \
+	build/postgres/render.c \
+	build/postgres/main.c
+
+OBJS_BUILD_POSTGRES = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_POSTGRES))
+
+build-postgres: $(OBJS_BUILD_POSTGRES) build/postgres/postgres.yaml
+	$(CC) -o build-postgres $(OBJS_BUILD_POSTGRES) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
+
+postgres/interface.auto.c.inc: build-postgres
+	./build-postgres $(VPATH)
 
 ####################################################################################################################################
 # Installation.  DESTDIR can be used to modify the install location.
@@ -276,7 +293,7 @@ uninstall:
 # Clean build files and executable created by make
 clean:
 	rm -rf $(BUILDDIR)
-	rm -f pgbackrest build-config build-error build-help command/help/help.auto.c
+	rm -f pgbackrest build-config build-error build-help build-postgres command/help/help.auto.c.inc postgres/interface.auto.c.inc
 
 .PHONY = clean-all
 
@@ -288,7 +305,8 @@ clean-all: clean
 # Special per-object flags
 ####################################################################################################################################
 $(BUILDDIR)/postgres/interface/page.o: CFLAGS += @CFLAGS_PAGE_CHECKSUM@
-$(BUILDDIR)/main.o: command/help/help.auto.c
+$(BUILDDIR)/postgres/interface.o: postgres/interface.auto.c.inc
+$(BUILDDIR)/main.o: command/help/help.auto.c.inc
 
 ####################################################################################################################################
 # Compile and generate dependencies

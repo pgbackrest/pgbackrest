@@ -403,6 +403,11 @@ sub containerBuild
             {
                 $strScript .= " g++-multilib";
             }
+
+            if ($strOS eq VM_U22)
+            {
+                $strScript .= " valgrind";
+            }
         }
 
         # Add zst command-line tool and development libs when available
@@ -442,15 +447,18 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strValgrind = 'valgrind-3.17.0';
+        if ($strOS ne VM_U22 && $strOS ne VM_F36)
+        {
+            my $strValgrind = 'valgrind-3.17.0';
 
-        $strScript .= sectionHeader() .
-            "# Build valgrind\n" .
-            "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
-            "    cd /root/${strValgrind} && \\\n" .
-            "    ./configure --silent && \\\n" .
-            "    make -s -j8 install && \\\n" .
-            "    rm -rf /root/${strValgrind}";
+            $strScript .= sectionHeader() .
+                "# Build valgrind\n" .
+                "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
+                "    cd /root/${strValgrind} && \\\n" .
+                "    ./configure --silent && \\\n" .
+                "    make -s -j8 install && \\\n" .
+                "    rm -rf /root/${strValgrind}";
+        }
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
@@ -484,11 +492,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F33)
+                elsif ($strOS eq VM_F36)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-33-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-36-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -498,7 +506,7 @@ sub containerBuild
             {
                 $strScript .=
                     "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
-                        ($strOS eq VM_U20 ? ' 15' : '') . "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                        ($strOS eq VM_U20 || $strOS eq VM_U22 ? ' 15' : '') . "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
                     "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
