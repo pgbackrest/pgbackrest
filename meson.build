@@ -155,6 +155,10 @@ endif
 # Set configuration path
 configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), description: 'Configuration path')
 
+# Set FN_NO_RETURN macro
+configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'No return function attribute')
+
+
 ####################################################################################################################################
 # Include src
 ####################################################################################################################################
