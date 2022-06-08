@@ -88,6 +88,17 @@
 
                         <p>Improve memory usage of mem contexts.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1773"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="sam.bassaly"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>FN_NO_RETURN</code> macro.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

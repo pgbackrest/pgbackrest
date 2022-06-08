@@ -45,7 +45,7 @@ bool cryptoIsInit(void);
 
 // Throw crypto errors
 void cryptoError(bool error, const char *description);
-void cryptoErrorCode(unsigned long code, const char *description) __attribute__((__noreturn__));
+FN_NO_RETURN void cryptoErrorCode(unsigned long code, const char *description);
 
 // Generate random bytes
 void cryptoRandomBytes(unsigned char *buffer, size_t size);
