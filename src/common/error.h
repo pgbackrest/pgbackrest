@@ -329,8 +329,7 @@ FN_NO_RETURN void errorInternalThrowFmt(
 
 // Throw a system error
 FN_NO_RETURN void errorInternalThrowSys(
-    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
-   ;
+    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message);
 
 // Throw a formatted system error
 FN_NO_RETURN void errorInternalThrowSysFmt(
