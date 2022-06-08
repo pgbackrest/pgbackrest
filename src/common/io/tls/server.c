@@ -107,7 +107,10 @@ tlsServerDh(SSL_CTX *const context)
 
     TRY_BEGIN()
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+#pragma GCC diagnostic pop
 
         TRY_BEGIN()
         {
@@ -115,7 +118,10 @@ tlsServerDh(SSL_CTX *const context)
         }
         FINALLY()
         {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             DH_free(dh);
+#pragma GCC diagnostic pop
         }
         TRY_END();
     }
@@ -145,7 +151,10 @@ tlsServerEcdh(SSL_CTX *const context)
     const int nid = OBJ_sn2nid(ECHD_CURVE);
     cryptoError(nid == NID_undef, "unrecognized ECDH curve " ECHD_CURVE);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     EC_KEY *const ecdh = EC_KEY_new_by_curve_name(nid);
+#pragma GCC diagnostic pop
     cryptoError(ecdh == NULL, "could not create ecdh key");
 
     SSL_CTX_set_options(context, SSL_OP_SINGLE_ECDH_USE);
@@ -156,7 +165,10 @@ tlsServerEcdh(SSL_CTX *const context)
     }
     FINALLY()
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         EC_KEY_free(ecdh);
+#pragma GCC diagnostic pop
     }
     TRY_END();
 

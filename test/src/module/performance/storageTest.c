@@ -307,7 +307,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(cryptoHashNew(HASH_TYPE_MD5_STR));
+                BENCHMARK_FILTER_ADD(cryptoHashNew(hashTypeMd5));
                 BENCHMARK_END(md5Total);
             }
             MEM_CONTEXT_TEMP_END();
@@ -318,7 +318,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(cryptoHashNew(HASH_TYPE_SHA1_STR));
+                BENCHMARK_FILTER_ADD(cryptoHashNew(hashTypeSha1));
                 BENCHMARK_END(sha1Total);
             }
             MEM_CONTEXT_TEMP_END();
@@ -329,7 +329,7 @@ testRun(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 BENCHMARK_BEGIN();
-                BENCHMARK_FILTER_ADD(cryptoHashNew(HASH_TYPE_SHA256_STR));
+                BENCHMARK_FILTER_ADD(cryptoHashNew(hashTypeSha256));
                 BENCHMARK_END(sha256Total);
             }
             MEM_CONTEXT_TEMP_END();

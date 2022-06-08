@@ -35,10 +35,10 @@ freebsd_12_task:
     cpu: 4
     memory: 4G
 
-  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync
+  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
 
   script:
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
@@ -51,10 +51,10 @@ freebsd_13_task:
     cpu: 4
     memory: 4G
 
-  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync
+  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
 
   script:
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
@@ -69,13 +69,14 @@ macos_monterey_task:
     LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/libpq/lib -L/usr/local/opt/libxml2/lib -L/usr/local/opt/libyaml/lib
     CPPFLAGS: -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/libpq/include -I/usr/local/opt/libxml2/include/libxml2 -I/usr/local/opt/libyaml/include
     PERL5LIB: /usr/local/opt/perl5/lib/perl5
+    PKG_CONFIG_PATH: /usr/local/opt/libpq/lib/pkgconfig:/usr/local/opt/openssl@1.1/lib/pkgconfig
 
   install_script:
-    - brew install -q openssl@1.1 libpq libxml2 libyaml cpanm
+    - brew install -q pkg-config openssl@1.1 libpq libxml2 libyaml cpanm meson
     - cpanm --local-lib=/usr/local/opt/perl5 install YAML::XS
 
   script:
-    - cd .. && ${CIRRUS_WORKING_DIR}/test/test.pl --no-gen --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+    - cd .. && ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}

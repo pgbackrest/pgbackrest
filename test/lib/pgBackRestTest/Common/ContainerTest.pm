@@ -396,17 +396,17 @@ sub containerBuild
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
-                "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg";
-
-            if ($strOS eq VM_U20)
-            {
-                $strScript .= " lsb-release";
-            }
+                "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release";
 
             # This package is required to build valgrind on 32-bit
             if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
             {
                 $strScript .= " g++-multilib";
+            }
+
+            if ($strOS eq VM_U22)
+            {
+                $strScript .= " valgrind";
             }
         }
 
@@ -447,15 +447,18 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        my $strValgrind = 'valgrind-3.17.0';
+        if ($strOS ne VM_U22 && $strOS ne VM_F36)
+        {
+            my $strValgrind = 'valgrind-3.17.0';
 
-        $strScript .= sectionHeader() .
-            "# Build valgrind\n" .
-            "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
-            "    cd /root/${strValgrind} && \\\n" .
-            "    ./configure --silent && \\\n" .
-            "    make -s -j8 install && \\\n" .
-            "    rm -rf /root/${strValgrind}";
+            $strScript .= sectionHeader() .
+                "# Build valgrind\n" .
+                "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
+                "    cd /root/${strValgrind} && \\\n" .
+                "    ./configure --silent && \\\n" .
+                "    make -s -j8 install && \\\n" .
+                "    rm -rf /root/${strValgrind}";
+        }
 
         #---------------------------------------------------------------------------------------------------------------------------
         if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
@@ -489,11 +492,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F33)
+                elsif ($strOS eq VM_F36)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-33-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-36-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -502,15 +505,11 @@ sub containerBuild
             else
             {
                 $strScript .=
-                    "    echo 'deb http://apt.postgresql.org/pub/repos/apt/ " .
-                    $$oVm{$strOS}{&VM_OS_REPO} . '-pgdg main' . "' >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
-                    ($strOS eq VM_U20 ?
-                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg-testing main 15\"" .
-                            " >> /etc/apt/sources.list.d/pgdg.list && \\\n" : '') .
+                    "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
+                        ($strOS eq VM_U20 || $strOS eq VM_U22 ? ' 15' : '') . "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                     "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                     "    apt-get update && \\\n" .
-                    "    apt-get install -y --no-install-recommends" .
-                        ($strOS eq VM_U20 ? " -t \$(lsb_release -s -c)-pgdg-testing" : '') . " postgresql-common libpq-dev && \\\n" .
+                    "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
@@ -526,9 +525,7 @@ sub containerBuild
                 }
                 else
                 {
-                    $strScript .=
-                        "    apt-get install -y --no-install-recommends" .
-                        ($strOS eq VM_U20 ? " -t \$(lsb_release -s -c)-pgdg-testing" : '');
+                    $strScript .= "    apt-get install -y --no-install-recommends";
                 }
 
                 # Construct list of databases to install

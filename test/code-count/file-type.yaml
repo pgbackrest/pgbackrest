@@ -147,6 +147,14 @@ doc/xml/user-guide.xml:
   class: doc/source
   type: xml
 
+meson.build:
+  class: build
+  type: meson
+
+meson_options.txt:
+  class: build
+  type: meson
+
 src/Makefile.in:
   class: build
   type: make
@@ -262,6 +270,30 @@ src/build/help/render.h:
 src/build/install-sh:
   class: build
   type: make
+
+src/build/postgres/main.c:
+  class: build
+  type: c
+
+src/build/postgres/parse.c:
+  class: build
+  type: c
+
+src/build/postgres/parse.h:
+  class: build
+  type: c/h
+
+src/build/postgres/postgres.yaml:
+  class: build
+  type: yaml
+
+src/build/postgres/render.c:
+  class: build
+  type: c
+
+src/build/postgres/render.h:
+  class: build
+  type: c/h
 
 src/command/archive/common.c:
   class: core
@@ -422,6 +454,10 @@ src/command/help/help.c:
 src/command/help/help.h:
   class: core
   type: c/h
+
+src/command/help/meson.build:
+  class: build
+  type: meson
 
 src/command/info/info.c:
   class: core
@@ -727,7 +763,7 @@ src/common/crypto/hash.h:
   class: core
   type: c/h
 
-src/common/crypto/md5.vendor.c:
+src/common/crypto/md5.vendor.c.inc:
   class: core/vendor
   type: c
 
@@ -747,7 +783,7 @@ src/common/encode.h:
   class: core
   type: c/h
 
-src/common/error.auto.c:
+src/common/error.auto.c.inc:
   class: core/auto
   type: c
 
@@ -1311,7 +1347,7 @@ src/config/load.h:
   class: core
   type: c/h
 
-src/config/parse.auto.c:
+src/config/parse.auto.c.inc:
   class: core/auto
   type: c
 
@@ -1403,6 +1439,10 @@ src/main.c:
   class: core
   type: c
 
+src/meson.build:
+  class: build
+  type: meson
+
 src/postgres/client.c:
   class: core
   type: c
@@ -1423,68 +1463,12 @@ src/postgres/interface/page.c:
   class: core
   type: c
 
-src/postgres/interface/pageChecksum.vendor.c:
+src/postgres/interface/pageChecksum.vendor.c.inc:
   class: core/vendor
   type: c
 
 src/postgres/interface/static.vendor.h:
   class: core/vendor
-  type: c/h
-
-src/postgres/interface/v090.c:
-  class: core
-  type: c
-
-src/postgres/interface/v091.c:
-  class: core
-  type: c
-
-src/postgres/interface/v092.c:
-  class: core
-  type: c
-
-src/postgres/interface/v093.c:
-  class: core
-  type: c
-
-src/postgres/interface/v094.c:
-  class: core
-  type: c
-
-src/postgres/interface/v095.c:
-  class: core
-  type: c
-
-src/postgres/interface/v096.c:
-  class: core
-  type: c
-
-src/postgres/interface/v100.c:
-  class: core
-  type: c
-
-src/postgres/interface/v110.c:
-  class: core
-  type: c
-
-src/postgres/interface/v120.c:
-  class: core
-  type: c
-
-src/postgres/interface/v130.c:
-  class: core
-  type: c
-
-src/postgres/interface/v140.c:
-  class: core
-  type: c
-
-src/postgres/interface/v150.c:
-  class: core
-  type: c
-
-src/postgres/interface/version.h:
-  class: core
   type: c/h
 
 src/postgres/interface/version.intern.h:
@@ -1494,6 +1478,10 @@ src/postgres/interface/version.intern.h:
 src/postgres/interface/version.vendor.h:
   class: core/vendor
   type: c/h
+
+src/postgres/meson.build:
+  class: build
+  type: meson
 
 src/postgres/version.h:
   class: core
@@ -2156,6 +2144,10 @@ test/src/module/build/errorTest.c:
   type: c
 
 test/src/module/build/helpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/build/postgresTest.c:
   class: test/module
   type: c
 

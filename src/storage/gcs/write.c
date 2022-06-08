@@ -63,7 +63,7 @@ storageWriteGcsOpen(THIS_VOID)
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->chunkBuffer = bufNew(this->chunkSize);
-        this->md5hash = cryptoHashNew(HASH_TYPE_MD5_STR);
+        this->md5hash = cryptoHashNew(hashTypeMd5);
     }
     MEM_CONTEXT_OBJ_END();
 

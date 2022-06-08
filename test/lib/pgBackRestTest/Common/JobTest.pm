@@ -170,8 +170,8 @@ sub run
         &log($self->{bDryRun} && !$self->{bVmOut} || $self->{bShowOutputAsync} ? INFO : DETAIL, "${strTest}" .
              (!($self->{bDryRun} || !$self->{bVmOut}) || $self->{bShowOutputAsync} ? "\n" : ''));
 
-        my $strVmTestPath = '/home/' . TEST_USER . "/test/${strImage}";
         my $strHostTestPath = "$self->{strTestPath}/${strImage}";
+        my $strVmTestPath = $strHostTestPath;
 
         # Don't create the container if this is a dry run unless output from the VM is required. Output can be requested
         # to get more information about the specific tests that will be run.
@@ -609,7 +609,9 @@ sub run
                 $strTestDepend .= " ${strTestFile}";
 
                 # Determine where the project exe is located
-                my $strProjectExePath = "$self->{strTestPath}/bin/$self->{oTest}->{&TEST_VM}/" . PROJECT_EXE;
+                my $strProjectExePath =
+                    "$self->{strTestPath}/bin/$self->{oTest}->{&TEST_VM}/" . ($self->{oTest}->{&TEST_VM} eq VM_NONE ? 'src/' : '') .
+                    PROJECT_EXE;
 
                 # Is this test running in a container?
                 my $strContainer = $self->{oTest}->{&TEST_VM} eq VM_NONE ? 'false' : 'true';

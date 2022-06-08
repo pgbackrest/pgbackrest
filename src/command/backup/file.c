@@ -90,7 +90,7 @@ backupFile(
                         storageNewReadP(
                             storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing,
                             .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
-                    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                     ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
                     // If the pg file exists check the checksum/size
@@ -154,7 +154,7 @@ backupFile(
                             if (repoFileCompressType != compressTypeNone)
                                 ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(repoFileCompressType));
 
-                            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                             ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
                             ioReadDrain(read);
@@ -210,7 +210,7 @@ backupFile(
                 StorageRead *read = storageNewReadP(
                     storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
                     .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL);
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(HASH_TYPE_SHA1_STR));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
                 ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 
                 // Add page checksum filter

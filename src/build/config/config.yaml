@@ -1644,12 +1644,9 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
-      stanza-create:
-        internal: true
-      stanza-delete:
-        internal: true
-      stanza-upgrade:
-        internal: true
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
       verify: {}
     command-role:
       async: {}
@@ -1973,7 +1970,6 @@ option:
       annotate: {}
       archive-get: {}
       archive-push: {}
-      backup: {}
       check: {}
       info: {}
       repo-create: {}

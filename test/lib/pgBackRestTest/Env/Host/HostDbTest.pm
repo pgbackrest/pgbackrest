@@ -99,8 +99,12 @@ sub new
 
             if (!defined($$oParam{bStandby}) || !$$oParam{bStandby})
             {
-                &log(WARN, "Testing against ${strDbVersionActual} ${strDevVersion} version");
+                &log(WARN, 'Testing against ' . trim($strOutLog) . " ${strDevVersion}");
             }
+        }
+        elsif (!defined($$oParam{bStandby}) || !$$oParam{bStandby})
+        {
+            &log(INFO, 'Testing against ' . trim($strOutLog));
         }
 
         # Don't run unit tests for unsupported versions
@@ -466,6 +470,7 @@ sub clusterStop
 
     # Set defaults
     my $bIgnoreLogError = defined($$hParam{bIgnoreLogError}) ? $$hParam{bIgnoreLogError} : false;
+    my $bStop = defined($hParam->{bStop}) ? $$hParam{bStop} : true;
 
     # Disconnect user session
     $self->sqlDisconnect();
@@ -480,7 +485,7 @@ sub clusterStop
     }
 
     # If pg process is running then stop the cluster
-    if (-e $self->dbBasePath() . '/' . DB_FILE_POSTMTRPID)
+    if ($bStop && -e $self->dbBasePath() . '/' . DB_FILE_POSTMTRPID)
     {
         $self->executeSimple($self->pgBinPath() . '/pg_ctl stop -D ' . $self->dbBasePath() . ' -w -s -m fast');
     }

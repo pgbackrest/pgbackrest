@@ -5754,7 +5754,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                           // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/repo-host-cmd
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                             // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                              // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                               // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                         // opt/repo-host-cmd
@@ -5779,7 +5778,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                       // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                         // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                        // opt/repo-host-cmd
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                             // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                            // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                             // opt/repo-host-cmd
         ),                                                                                                      // opt/repo-host-cmd
@@ -5811,7 +5809,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                        // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-host-config
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                           // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                            // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                      // opt/repo-host-config
@@ -5836,7 +5833,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                    // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                      // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                     // opt/repo-host-config
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                          // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                         // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                          // opt/repo-host-config
         ),                                                                                                   // opt/repo-host-config
@@ -5873,7 +5869,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                           // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                         // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                        // opt/repo-host-config-include-path
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                             // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                              // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                               // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                         // opt/repo-host-config-include-path
@@ -5898,7 +5893,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                       // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                         // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                        // opt/repo-host-config-include-path
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                             // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                            // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                             // opt/repo-host-config-include-path
         ),                                                                                      // opt/repo-host-config-include-path
@@ -5935,7 +5929,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                   // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                 // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                // opt/repo-host-config-path
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                     // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                      // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                       // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                 // opt/repo-host-config-path
@@ -5960,7 +5953,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                               // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                 // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                // opt/repo-host-config-path
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                     // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                    // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                     // opt/repo-host-config-path
         ),                                                                                              // opt/repo-host-config-path
@@ -6056,7 +6048,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-host-port
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                              // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                        // opt/repo-host-port
@@ -6081,7 +6072,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                      // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-host-port
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                           // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-host-port
         ),                                                                                                     // opt/repo-host-port
@@ -6190,7 +6180,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-host-user
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                              // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                        // opt/repo-host-user
@@ -6215,7 +6204,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                      // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-host-user
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                           // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                            // opt/repo-host-user
         ),                                                                                                     // opt/repo-host-user

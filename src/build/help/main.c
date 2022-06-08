@@ -24,11 +24,25 @@ main(int argListSize, const char *argList[])
     THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
 
     // Get repo path (cwd if it was not passed)
-    const String *pathRepo = argListSize >= 2 ? strPath(STR(argList[1])) : strPath(STR(currentWorkDir));
+    const String *pathRepo = strPath(STR(currentWorkDir));
+    String *const pathOut = strCatZ(strNew(), currentWorkDir);
+
+    if (argListSize >= 2)
+    {
+        const String *const pathArg = STR(argList[1]);
+
+        if (strBeginsWith(pathArg, FSLASH_STR))
+            pathRepo = strPath(pathArg);
+        else
+        {
+            pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
+            strCatZ(pathOut, "/src");
+        }
+    }
 
     // Render config
     const Storage *const storageRepo = storagePosixNewP(pathRepo);
-    const Storage *const storageBuild = storagePosixNewP(STR(currentWorkDir), .write = true);
+    const Storage *const storageBuild = storagePosixNewP(pathOut, .write = true);
     const BldCfg bldCfg = bldCfgParse(storageRepo);
     bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg));
 

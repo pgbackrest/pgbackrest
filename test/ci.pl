@@ -187,7 +187,8 @@ eval
     elsif ($ARGV[0] eq 'test')
     {
         # Build list of packages that need to be installed
-        my $strPackage = "make gcc git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
+        my $strPackage =
+            "make gcc ccache meson python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))
