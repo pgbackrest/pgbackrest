@@ -128,7 +128,7 @@ Functions
 HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
 
 // Throw an error if the request failed
-void httpRequestError(const HttpRequest *this, HttpResponse *response) __attribute__((__noreturn__));
+FN_NO_RETURN void httpRequestError(const HttpRequest *this, HttpResponse *response);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline HttpRequest *
