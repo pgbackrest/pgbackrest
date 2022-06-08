@@ -128,6 +128,17 @@
 
                         <p>Allow any path to be passed to the <br-setting>--test-path</br-setting> option.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1775"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="andrey.sokolov"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix compile error when <code>DEBUG_EXEC_TIME</code> is defined without <code>DEBUG</code>.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-test-list>
         </release>
