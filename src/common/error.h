@@ -314,28 +314,28 @@ jmp_buf *errorInternalJump(void);
 bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
 
 // Propagate the error up so it can be caught
-void errorInternalPropagate(void) __attribute__((__noreturn__));
+FN_NO_RETURN void errorInternalPropagate(void);
 
 // End the try block
 void errorInternalTryEnd(void);
 
 // Throw an error
-void errorInternalThrow(
+FN_NO_RETURN void errorInternalThrow(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message,
-    const char *stackTrace) __attribute__((__noreturn__));
-void errorInternalThrowFmt(
+    const char *stackTrace);
+FN_NO_RETURN void errorInternalThrowFmt(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
-    __attribute__((format(printf, 5, 6))) __attribute__((__noreturn__));
+    __attribute__((format(printf, 5, 6)));
 
 // Throw a system error
-void errorInternalThrowSys(
+FN_NO_RETURN void errorInternalThrowSys(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
-    __attribute__((__noreturn__));
+   ;
 
 // Throw a formatted system error
-void errorInternalThrowSysFmt(
+FN_NO_RETURN void errorInternalThrowSysFmt(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
-    __attribute__((format(printf, 6, 7))) __attribute__((__noreturn__));
+    __attribute__((format(printf, 6, 7)));
 
 // Versions of the above for coverage testing which checks the error condition inside the function
 #ifdef DEBUG_COVERAGE
