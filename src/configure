@@ -4114,6 +4114,105 @@ fi
 fi
 
 
+# Check optional libSSH2 library
+# ----------------------------------------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libssh2_init in -lssh2" >&5
+$as_echo_n "checking for libssh2_init in -lssh2... " >&6; }
+if ${ac_cv_lib_ssh2_libssh2_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssh2  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char libssh2_init ();
+int
+main ()
+{
+return libssh2_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ssh2_libssh2_init=yes
+else
+  ac_cv_lib_ssh2_libssh2_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssh2_libssh2_init" >&5
+$as_echo "$ac_cv_lib_ssh2_libssh2_init" >&6; }
+if test "x$ac_cv_lib_ssh2_libssh2_init" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "libssh2.h" "ac_cv_header_libssh2_h" "$ac_includes_default"
+if test "x$ac_cv_header_libssh2_h" = xyes; then :
+  $as_echo "#define HAVE_LIBSSH2 1" >>confdefs.h
+ LIBS="${LIBS} -lssh2"
+
+else
+  as_fn_error $? "header file <libssh2.h> is required" "$LINENO" 5
+fi
+
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libssh2_sftp_init in -lssh2" >&5
+$as_echo_n "checking for libssh2_sftp_init in -lssh2... " >&6; }
+if ${ac_cv_lib_ssh2_libssh2_sftp_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lssh2  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char libssh2_sftp_init ();
+int
+main ()
+{
+return libssh2_sftp_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_ssh2_libssh2_sftp_init=yes
+else
+  ac_cv_lib_ssh2_libssh2_sftp_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssh2_libssh2_sftp_init" >&5
+$as_echo "$ac_cv_lib_ssh2_libssh2_sftp_init" >&6; }
+if test "x$ac_cv_lib_ssh2_libssh2_sftp_init" = xyes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "libssh2_sftp.h" "ac_cv_header_libssh2_sftp_h" "$ac_includes_default"
+if test "x$ac_cv_header_libssh2_sftp_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <libssh2_sftp.h> is required" "$LINENO" 5
+fi
+
+
+fi
+
+
 # Check optional zst library. Ignore any versions below 1.0.
 # ----------------------------------------------------------------------------------------------------------------------------------
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_isError in -lzstd" >&5
@@ -5672,4 +5771,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 cfa1a13c22c05a182831f35772524bf9d48feaf2
+# Generated from src/build/configure.ac sha1 f0ef20a13dc65a80fee4e90dbd54b4d26d70c59a
