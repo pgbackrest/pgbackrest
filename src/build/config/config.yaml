@@ -1629,6 +1629,7 @@ option:
       - gcs
       - posix
       - s3
+      - sftp
     command:
       archive-get:
         command-role:

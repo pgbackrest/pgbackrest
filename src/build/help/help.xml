@@ -994,6 +994,7 @@
                                 <list-item><id>gcs</id> - Google Cloud Storage</list-item>
                                 <list-item><id>posix</id> - Posix-compliant file systems</list-item>
                                 <list-item><id>s3</id> - AWS Simple Storage Service</list-item>
+                                <list-item><id>sftp</id> - Sftp Storage Service</list-item>
                             </list>
 
                             <p>When an <proper>NFS</proper> mount is used as a <id>posix</id> repository, the same rules apply to <backrest/> as described in the <postgres/> documentation: <link url="https://www.postgresql.org/docs/current/creating-cluster.html#CREATING-CLUSTER-FILESYSTEM">Creating a Database Cluster - File Systems</link>.</p>

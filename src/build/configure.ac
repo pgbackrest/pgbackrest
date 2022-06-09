@@ -109,6 +109,17 @@ AC_CHECK_LIB(
     [AC_CHECK_HEADER(lz4frame.h, [AC_DEFINE(HAVE_LIBLZ4) AC_SUBST(LIBS, "${LIBS} -llz4")],
         [AC_MSG_ERROR([header file <lz4frame.h> is required])])])
 
+# Check optional libSSH2 library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [ssh2], [libssh2_init],
+    [AC_CHECK_HEADER(libssh2.h, [AC_DEFINE(HAVE_LIBSSH2) AC_SUBST(LIBS, "${LIBS} -lssh2")],
+        [AC_MSG_ERROR([header file <libssh2.h> is required])])])
+AC_CHECK_LIB(
+    [ssh2], [libssh2_sftp_init],
+    [AC_CHECK_HEADER(libssh2_sftp.h, [],
+        [AC_MSG_ERROR([header file <libssh2_sftp.h> is required])])])
+
 # Check optional zst library. Ignore any versions below 1.0.
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_CHECK_LIB(
