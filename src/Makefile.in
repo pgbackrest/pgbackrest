@@ -123,7 +123,6 @@ SRCS = \
 	common/io/http/url.c \
 	common/io/server.c \
 	common/io/session.c \
-	common/io/sftp/client.c \
 	common/io/socket/client.c \
 	common/io/socket/common.c \
 	common/io/socket/server.c \
@@ -175,7 +174,8 @@ SRCS = \
 	storage/s3/helper.c \
 	storage/s3/read.c \
 	storage/s3/storage.c \
-	storage/s3/write.c
+	storage/s3/write.c \
+	storage/sftp/write.c
 
 ####################################################################################################################################
 # Compiler options

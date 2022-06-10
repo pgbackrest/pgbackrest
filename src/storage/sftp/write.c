@@ -3,6 +3,8 @@ Sftp Storage File write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+//#ifdef HAVE_LIBSSH2
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -17,18 +19,23 @@ Sftp Storage File write
 #include "storage/sftp/write.h"
 #include "storage/write.intern.h"
 
+//jrt !!! look at implementing an error checking/handling function - libssh2 session error => sftp session error
+//
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWriteSftp
 {
     StorageWriteInterface interface;                                // Interface
-    StorageSftp *storage;                                          // Storage that created this object
+    StorageSftp *storage;                                           // Storage that created this object
 
     const String *nameTmp;
     const String *path;
-    //jrt fd becomes handle
     int fd;                                                         // File descriptor
+    LIBSSH2_SESSION *session;
+    LIBSSH2_SFTP *sftpSession;
+    LIBSSH2_SFTP_HANDLE *sftpHandle;
+    LIBSSH2_SFTP_ATTRIBUTES *attr;
 } StorageWriteSftp;
 
 /***********************************************************************************************************************************
@@ -44,7 +51,7 @@ File open constants
 
 Since open is called more than once use constants to make sure these parameters are always the same
 ***********************************************************************************************************************************/
-#define FILE_OPEN_FLAGS                                             (O_CREAT | O_TRUNC | O_WRONLY)
+#define FILE_OPEN_FLAGS                                             (LIBSSH2_FXF_CREAT | LIBSSH2_FXF_TRUNC | LIBSSH2_FXF_WRITE)
 #define FILE_OPEN_PURPOSE                                           "write"
 
 /***********************************************************************************************************************************
@@ -62,7 +69,8 @@ storageWriteSftpFreeResource(THIS_VOID)
     ASSERT(this != NULL);
 
     //jrt fd becomes handle, libssh2*close()
-    THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
+    THROW_ON_SYS_ERROR_FMT(
+        libssh2_sftp_close(this->sftpHandle) != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -81,54 +89,63 @@ storageWriteSftpOpen(THIS_VOID)
 
     ASSERT(this != NULL);
     //jrt fd becomes handle
-    ASSERT(this->fd == -1);
+    //ASSERT(this->fd == -1);
 
     // Open the file
-    //jrt fd becomes handle, libssh2*open()
-    this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+    //this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+    //jrt !!! rework file open flags if they don't match LIBSSH2_FXF* flags,
+    //same with mode -> see  LIBSSH2_SFTP_S_* convenience defines in <lib‐ssh2_sftp.h>
+    this->sftpHandle = libssh2_sftp_open(this->sftpSession, strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
 
-    //jrt fd becomes handle, libssh2*() to create path libssh2_sftp_mkdir()???
+    //if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                 // {vm_covered}
     // Attempt to create the path if it is missing
-    if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                            // {vm_covered}
+    if (this->sftpHandle == NULL && this->interface.createPath)                                            // {vm_covered} need explanation  on this
     {
          // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
         //jrt fd becomes handle, libssh2*open()
-        this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+        this->sftpHandle = libssh2_sftp_open(this->sftpSession, strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
     }
 
     // Handle errors
-    //jrt fd becomes handle
     //jrt ??libssh2 errors and handlers
-    if (this->fd == -1)
+    if (this->sftpHandle == NULL)
     {
-        if (errno == ENOENT)                                                                                        // {vm_covered}
-            THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
-        else
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));               // {vm_covered}
+        // If session indicates sftp error, can query for sftp error
+        // !!! see also libssh2_session_last_error()
+        if(libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        {
+            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_PATH)                        // {vm_covered}
+                THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
+            else
+                THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));    // {vm_covered}
+        }
     }
 
     // Set free callback to ensure the file descriptor is freed
     memContextCallbackSet(objMemContext(this), storageWriteSftpFreeResource, this);
 
     // Update user/group owner
-    // jrt libssh2_sftp_setstat() ????
+    // jrt libssh2_sftp_setstat() libssh2_sftp_fsetstat()
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
-        uid_t updateUserId = userIdFromName(this->interface.user);
+        this->attr->flags = LIBSSH2_SFTP_ATTR_UIDGID;
 
-        if (updateUserId == userId())
-            updateUserId = (uid_t)-1;
+        this->attr->uid = userIdFromName(this->interface.user);
 
-        gid_t updateGroupId = groupIdFromName(this->interface.group);
+        if (this->attr->uid == userId())
+            this->attr->uid = (uid_t)-1;
 
-        if (updateGroupId == groupId())
-            updateGroupId = (gid_t)-1;
+        this->attr->gid = groupIdFromName(this->interface.group);
 
+        if (this->attr->gid == groupId())
+            this->attr->gid = (gid_t)-1;
+
+        // !!! see also libssh2_session_last_error()
         THROW_ON_SYS_ERROR_FMT(
-            chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
+            libssh2_sftp_fsetstat(this->sftpHandle, this->attr) != 0, FileOwnerError, "unable to set ownership for '%s'",
             strZ(this->nameTmp));
     }
 
@@ -156,7 +173,9 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
     // Write the data
     // jrt libssh2_sftp_write()
     // fd becomes handle
-    if (write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
+    //if (write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
+    // !!! verify this cast is valid
+    if (libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
@@ -179,34 +198,48 @@ storageWriteSftpClose(THIS_VOID)
     // Close if the file has not already been closed
     // jrt fd becomes handle
     // jrt libssh2*close()
-    if (this->fd != -1)
+    //if (this->fd != -1)
+    if (this->sftpHandle != NULL)
     {
         // Sync the file
         //jrt fd becomes handle, libssh2_sftp_fsync if available -- determine how to query hello for fsync capability
+        //!!! per below, if cannot query hellow for capability then we can act accordingly upon receipt of LIBSSH2_FX_OP_UNSUPPORTED
+        //bail out/issue/log warning etc
+        //jrt !!! LIBSSH2_ERROR_SFTP_PROTOCOL - An invalid SFTP protocol response was received on the socket, or an SFTP operation
+        //caused an errorcode to be returned by the server. In particular, this can be returned if the SSH server does not support
+        //the fsync operation: the SFTP subcode LIBSSH2_FX_OP_UNSUPPORTED will be returned in this case.
         if (this->interface.syncFile)
-            THROW_ON_SYS_ERROR_FMT(fsync(this->fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
+        {
+            THROW_ON_SYS_ERROR_FMT(
+                libssh2_sftp_fsync(this->sftpHandle) != 0, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
+        }
 
         // Close the file
         //jrt fd becomes handle, libssh2_*close()
         memContextCallbackClear(objMemContext(this));
-        THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
-        this->fd = -1;
 
         // Update modified time
         if (this->interface.timeModified != 0)
         {
+            //jrt verify this
+            this->attr->flags = LIBSSH2_SFTP_ATTR_ACMODTIME;
+            this->attr->atime = this->attr->mtime = this->interface.timeModified;
             THROW_ON_SYS_ERROR_FMT(
-                utime(
-                    strZ(this->nameTmp),
-                    &((struct utimbuf){.actime = this->interface.timeModified, .modtime = this->interface.timeModified})) == -1,
+                libssh2_sftp_fsetstat(
+                    this->sftpHandle, this->attr) != 0,
                 FileInfoError, "unable to set time for '%s'", strZ(this->nameTmp));
         }
+
+        THROW_ON_SYS_ERROR_FMT(
+            libssh2_sftp_close(this->sftpHandle) != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
+        this->sftpHandle = NULL;
+//        this->fd = -1;
 
         // Rename from temp file
         // jrt libssh2_sftp_rename
         if (this->interface.atomic)
         {
-            if (rename(strZ(this->nameTmp), strZ(this->interface.name)) == -1)
+            if (libssh2_sftp_rename(this->sftpSession, strZ(this->nameTmp), strZ(this->interface.name)) != 0)
                 THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
         }
 
@@ -309,3 +342,5 @@ storageWriteSftpNew(
 
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
 }
+
+//#endif // HAVE_LIBSSH2
