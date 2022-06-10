@@ -31,7 +31,6 @@ typedef struct StorageWriteSftp
 
     const String *nameTmp;
     const String *path;
-    int fd;                                                         // File descriptor
     LIBSSH2_SESSION *session;
     LIBSSH2_SFTP *sftpSession;
     LIBSSH2_SFTP_HANDLE *sftpHandle;
@@ -88,8 +87,6 @@ storageWriteSftpOpen(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    //jrt fd becomes handle
-    //ASSERT(this->fd == -1);
 
     // Open the file
     //this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
@@ -99,7 +96,7 @@ storageWriteSftpOpen(THIS_VOID)
 
     //if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                 // {vm_covered}
     // Attempt to create the path if it is missing
-    if (this->sftpHandle == NULL && this->interface.createPath)                                            // {vm_covered} need explanation  on this
+    if (this->sftpHandle == NULL && this->interface.createPath)                                            // {vm_covered} jrt need explanation  on this
     {
          // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
@@ -114,10 +111,12 @@ storageWriteSftpOpen(THIS_VOID)
     if (this->sftpHandle == NULL)
     {
         // If session indicates sftp error, can query for sftp error
-        // !!! see also libssh2_session_last_error()
-        if(libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        // !!! see also libssh2_session_last_error() - possible to return more detailed error
+        if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
-            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_PATH)                        // {vm_covered}
+            //jrt should should check be against LIBSSH2_FX_NO_SUCH_FILE and LIBSSH2_FX_NO_SUCH_PATH
+            //verify PATH or FILE or both
+            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)                        // {vm_covered}
                 THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
             else
                 THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));    // {vm_covered}
@@ -214,8 +213,6 @@ storageWriteSftpClose(THIS_VOID)
                 libssh2_sftp_fsync(this->sftpHandle) != 0, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
         }
 
-        // Close the file
-        //jrt fd becomes handle, libssh2_*close()
         memContextCallbackClear(objMemContext(this));
 
         // Update modified time
@@ -230,10 +227,11 @@ storageWriteSftpClose(THIS_VOID)
                 FileInfoError, "unable to set time for '%s'", strZ(this->nameTmp));
         }
 
+        // Close the file
+        //jrt fd becomes handle, libssh2_*close()
         THROW_ON_SYS_ERROR_FMT(
             libssh2_sftp_close(this->sftpHandle) != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
         this->sftpHandle = NULL;
-//        this->fd = -1;
 
         // Rename from temp file
         // jrt libssh2_sftp_rename
@@ -250,24 +248,6 @@ storageWriteSftpClose(THIS_VOID)
     }
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Get file descriptor
-***********************************************************************************************************************************/
-static int
-storageWriteSftpFd(const THIS_VOID)
-{
-    THIS(const StorageWriteSftp);
-
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_WRITE_SFTP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    // jrt fd becomes handle
-    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/
@@ -305,8 +285,6 @@ storageWriteSftpNew(
         {
             .storage = storage,
             .path = strPath(name),
-            // jrt fd becomes handle
-            .fd = -1,
 
             .interface = (StorageWriteInterface)
             {
@@ -325,8 +303,6 @@ storageWriteSftpNew(
                 .ioInterface = (IoWriteInterface)
                 {
                     .close = storageWriteSftpClose,
-                    // jrt fd becomes handle
-                    .fd = storageWriteSftpFd,
                     .open = storageWriteSftpOpen,
                     .write = storageWriteSftp,
                 },

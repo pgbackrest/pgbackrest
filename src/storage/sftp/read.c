@@ -3,6 +3,8 @@ Sftp Storage Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+//#ifdef HAVE_LIBSSH2
+
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -22,9 +24,10 @@ typedef struct StorageReadSftp
     StorageReadInterface interface;                                 // Interface
     StorageSftp *storage;                                           // Storage that created this object
 
-    //jrt fd to become handle
-    //jrt LIBSSH2_SFTP_HANDLE *handle;
-    int fd;                                                         // File descriptor
+    LIBSSH2_SESSION *session;
+    LIBSSH2_SFTP *sftpSession;
+    LIBSSH2_SFTP_HANDLE *sftpHandle;
+    LIBSSH2_SFTP_ATTRIBUTES *attr;
     uint64_t current;                                               // Current bytes read from file
     uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
     bool eof;
@@ -53,9 +56,9 @@ storageReadSftpFreeResource(THIS_VOID)
     ASSERT(this != NULL);
 
     //jrt fd to become handle
-    //jrt libssh2_sftp_close()
-    if (this->fd != -1)
-        THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+    //jrt libssh2_sftp_close() -- determine if *close NULLS sftpHandle
+    THROW_ON_SYS_ERROR_FMT(
+        libssh2_sftp_close(this->sftpHandle) != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -73,14 +76,26 @@ storageReadSftpOpen(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-//jrt fd may need to become LIBSSH2_SFTP_HANDLE handle
-    ASSERT(this->fd == -1);
 
     // Open the file
     // jrt libssh2_sftp_open* call
+    this->sftpHandle = libssh2_sftp_open(this->sftpSession, strZ(this->interface.name), LIBSSH2_FXF_READ, 0);
+
+    if (this->sftpHandle == NULL)
+    {
+        // If session indicates sftp error, can query for sftp error
+        // !!! see also libssh2_session_last_error() - possible to return more detailed error
+        if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        {
+            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_PATH)                        // {vm_covered}
+                THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
+            else
+                THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));    // {vm_covered}
+        }
+    }
 
     // jrt return success/failure - fd may need to become LIBSSH2_SFTP_HANDLE handle
-    FUNCTION_LOG_RETURN(BOOL, this->fd != NULL);
+    FUNCTION_LOG_RETURN(BOOL, this->sftpHandle != NULL);
 }
 
 /***********************************************************************************************************************************
@@ -98,7 +113,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
     FUNCTION_LOG_END();
 
     //jrt fd to become handle
-    ASSERT(this != NULL && this->fd != -1);
+    ASSERT(this != NULL && this->sftpHandle != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
     // Read if EOF has not been reached
@@ -114,7 +129,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
 
         // Read from file
         // jrt libssh2_sftp_read() replaces read, fd becomes handle,
-        actualBytes = read(this->fd, bufRemainsPtr(buffer), expectedBytes);
+        actualBytes = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer), expectedBytes);
 
         // Error occurred during read
         if (actualBytes == -1)
@@ -149,8 +164,7 @@ storageReadSftpClose(THIS_VOID)
 
     memContextCallbackClear(objMemContext(this));
     storageReadSftpFreeResource(this);
-    //jrt fd to become handle, becomes NULL???
-    this->fd = -1;
+    this->sftpHandle = NULL;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -170,24 +184,6 @@ storageReadSftpEof(THIS_VOID)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, this->eof);
-}
-
-/***********************************************************************************************************************************
-Get file descriptor
-***********************************************************************************************************************************/
-static int
-storageReadSftpFd(const THIS_VOID)
-{
-    THIS(const StorageReadSftp);
-
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ_SFTP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    //jrt fd to become handle
-    FUNCTION_TEST_RETURN(INT, this->fd);
 }
 
 /**********************************************************************************************************************************/
@@ -214,8 +210,6 @@ storageReadSftpNew(
         *driver = (StorageReadSftp)
         {
             .storage = storage,
-            //jrt fd to become handle
-            .fd = -1,
 
             // Rather than enable/disable limit checking just use a big number when there is no limit.  We can feel pretty confident
             // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
@@ -234,8 +228,6 @@ storageReadSftpNew(
                 {
                     .close = storageReadSftpClose,
                     .eof = storageReadSftpEof,
-                    //jrt fd to become handle
-                    .fd = storageReadSftpFd,
                     .open = storageReadSftpOpen,
                     .read = storageReadSftp,
                 },
@@ -248,3 +240,5 @@ storageReadSftpNew(
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }
+
+//#endif // HAVE_LIBSSH2

@@ -175,6 +175,7 @@ SRCS = \
 	storage/s3/read.c \
 	storage/s3/storage.c \
 	storage/s3/write.c \
+	storage/sftp/read.c \
 	storage/sftp/write.c
 
 ####################################################################################################################################
