@@ -99,6 +99,17 @@
 
                         <p>Add <code>FN_NO_RETURN</code> macro.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1781"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="alexey.gordeev"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix hard-coded WAL size assertion in <code>walSegmentNext()</code>.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
@@ -11298,6 +11309,11 @@
         <contributor id="alex.richman">
             <contributor-name-display>Alex Richman</contributor-name-display>
             <contributor-id type="github">alex-richman-onesignal</contributor-id>
+        </contributor>
+
+        <contributor id="alexey.gordeev">
+            <contributor-name-display>Alexey Gordeev</contributor-name-display>
+            <contributor-id type="github">InnerLife0</contributor-id>
         </contributor>
 
         <contributor id="anderson.a.mallmann">
