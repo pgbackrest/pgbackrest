@@ -53,6 +53,7 @@ STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefi
 STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
 STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
 STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
+STRING_STATIC(S3_XML_TAG_IS_TRUNCATED_STR,                          "IsTruncated");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
 STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
@@ -686,13 +687,12 @@ storageS3ListInternal(
 
                 XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
-                // If a continuation token exists then send an async request to get more data
-                const String *continuationToken = xmlNodeContent(
-                    xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
-
-                if (continuationToken != NULL)
+                // If list is truncated then send an async request to get more data
+                if (strEq(xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_IS_TRUNCATED_STR, true)), TRUE_STR))
                 {
-                    httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
+                    httpQueryPut(
+                        query, S3_QUERY_CONTINUATION_TOKEN_STR,
+                        xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, true)));
 
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
