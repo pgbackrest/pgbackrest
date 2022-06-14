@@ -691,7 +691,7 @@ storageS3ListInternal(
                 if (strEq(xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_IS_TRUNCATED_STR, true)), TRUE_STR))
                 {
                     const String *const nextContinuationToken = xmlNodeContent(
-                        xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
+                        xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, true));
                     CHECK(FormatError, !strEmpty(nextContinuationToken), "NextContinuationToken may not be empty");
 
                     httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, nextContinuationToken);
