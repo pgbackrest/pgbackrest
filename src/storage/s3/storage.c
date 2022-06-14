@@ -690,9 +690,11 @@ storageS3ListInternal(
                 // If list is truncated then send an async request to get more data
                 if (strEq(xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_IS_TRUNCATED_STR, true)), TRUE_STR))
                 {
-                    httpQueryPut(
-                        query, S3_QUERY_CONTINUATION_TOKEN_STR,
-                        xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, true)));
+                    const String *const nextContinuationToken = xmlNodeContent(
+                        xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
+                    CHECK(FormatError, !strEmpty(nextContinuationToken), "NextContinuationToken must not be empty");
+
+                    httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, nextContinuationToken);
 
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
