@@ -692,7 +692,7 @@ storageS3ListInternal(
                 {
                     const String *const nextContinuationToken = xmlNodeContent(
                         xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
-                    CHECK(FormatError, !strEmpty(nextContinuationToken), "NextContinuationToken must not be empty");
+                    CHECK(FormatError, !strEmpty(nextContinuationToken), "NextContinuationToken may not be empty");
 
                     httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, nextContinuationToken);
 
