@@ -34,6 +34,9 @@ bldDefineRender(const String *const define, const String *const value)
     return strNewFmt("#define %s%*s%s", strZ(define), (int)(60 - strSize(define)), "", strZ(value));
 }
 
+// Convert identifiers like test-id to testId and add an optional prefix
+String *bldEnum(const char *const prefix, const String *const value);
+
 // Format file header
 __attribute__((always_inline)) static inline String *
 bldHeader(const char *const module, const char *const description)

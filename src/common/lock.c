@@ -21,7 +21,7 @@ Lock Handler
 #include "common/type/json.h"
 #include "common/user.h"
 #include "common/wait.h"
-#include "storage/helper.h"
+#include "storage/posix/storage.h"
 #include "storage/storage.intern.h"
 #include "version.h"
 
@@ -310,7 +310,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                 // If the path does not exist then create it
                 if (errNo == ENOENT)
                 {
-                    storagePathCreateP(storageLocalWrite(), strPath(lockFile));
+                    storagePathCreateP(storagePosixNewP(FSLASH_STR, .write = true), strPath(lockFile));
                     retry = true;
                 }
             }
@@ -475,10 +475,14 @@ lockReleaseFile(const int lockFd, const String *const lockFile)
     // Can't release lock if there isn't one
     ASSERT(lockFd >= 0);
 
-    // Remove file first and then close it to release the lock.  If we close it first then another process might grab the lock
-    // right before the delete which means the file locked by the other process will get deleted.
-    storageRemoveP(storageLocalWrite(), lockFile);
-    close(lockFd);
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Remove file first and then close it to release the lock. If we close it first then another process might grab the lock
+        // right before the delete which means the file locked by the other process will get deleted.
+        storageRemoveP(storagePosixNewP(FSLASH_STR, .write = true), lockFile);
+        close(lockFd);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

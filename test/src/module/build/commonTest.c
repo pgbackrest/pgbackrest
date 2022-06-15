@@ -14,7 +14,13 @@ testRun(void)
     if (testBegin("render"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("bldStrid()");
+        TEST_TITLE("bldEnum()");
+
+        TEST_RESULT_STR_Z(bldEnum(NULL, STRDEF("test-id/group-name")), "testId/groupName", "enum");
+        TEST_RESULT_STR_Z(bldEnum("pre", STRDEF("option-name")), "preOptionName", "enum");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bldStrId()");
 
         TEST_RESULT_STR_Z(bldStrId("abc"), "STRID5(\"abc\", 0xc410)", "5-bit");
         TEST_RESULT_STR_Z(bldStrId("ABC"), "STRID6(\"ABC\", 0x289e61)", "6-bit");
