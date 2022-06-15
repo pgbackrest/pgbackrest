@@ -219,7 +219,7 @@ void manifestBuildComplete(
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
     bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
     unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby,
-    const KeyValue *annotationKv);
+    const KeyValue *annotation);
 
 /***********************************************************************************************************************************
 Functions

@@ -1485,7 +1485,7 @@ manifestBuildComplete(
     const time_t timestampStop, const String *const lsnStop, const String *const archiveStop, const unsigned int pgId,
     const uint64_t pgSystemId, const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy,
     const size_t optionBufferSize, const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork,
-    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby, const KeyValue *const newAnnotationKv)
+    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby, const KeyValue *const annotation)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1506,7 +1506,7 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionHardLink);
         FUNCTION_LOG_PARAM(UINT, optionProcessMax);
         FUNCTION_LOG_PARAM(BOOL, optionStandby);
-        FUNCTION_LOG_PARAM(KEY_VALUE, newAnnotationKv);
+        FUNCTION_LOG_PARAM(KEY_VALUE, annotation);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
@@ -1544,23 +1544,22 @@ manifestBuildComplete(
         }
 
         // Save annotations
-        if (newAnnotationKv != NULL)
+        if (annotation != NULL)
         {
             this->pub.data.annotation = varNewKv(kvNew());
 
-            KeyValue *const annotationKv = varKv(this->pub.data.annotation);
-            const VariantList *const newAnnotationKeyList = kvKeyList(newAnnotationKv);
+            KeyValue *const manifestAnnotationKv = varKv(this->pub.data.annotation);
+            const VariantList *const annotationKeyList = kvKeyList(annotation);
 
-            for (unsigned int keyIdx = 0; keyIdx < varLstSize(newAnnotationKeyList); keyIdx++)
+            for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
             {
-                const Variant *const newKey = varLstGet(newAnnotationKeyList, keyIdx);
-                const Variant *const newValue = kvGet(newAnnotationKv, newKey);
+                const Variant *const key = varLstGet(annotationKeyList, keyIdx);
+                const Variant *const value = kvGet(annotation, key);
 
                 // Skip empty values
-                if (!strEmpty(varStr(newValue)))
-                    kvPut(annotationKv, newKey, newValue);
+                if (!strEmpty(varStr(value)))
+                    kvPut(manifestAnnotationKv, key, value);
             }
-
         }
 
         // Save options
