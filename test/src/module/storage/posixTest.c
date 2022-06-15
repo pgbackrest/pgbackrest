@@ -820,16 +820,9 @@ testRun(void)
             STORAGE_ERROR_PATH_REMOVE_FILE ": [13] Permission denied", strZ(fileRemove));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path remove without recurse");
+        TEST_TITLE("path remove - path with subpath and file removed");
 
         HRN_SYSTEM_FMT("sudo chmod 777 %s", strZ(pathRemove2));
-
-        TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove1), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE ": [39] Directory not empty", strZ(pathRemove1));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path remove - path with subpath and file removed");
 
         TEST_RESULT_VOID(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
@@ -838,9 +831,16 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path remove - path with subpath removed");
+        TEST_TITLE("path remove without recurse");
 
         HRN_SYSTEM_FMT("mkdir -p %s", strZ(pathRemove2));
+
+        TEST_ERROR_FMT(
+            storagePathRemoveP(storageTest, pathRemove1), PathRemoveError,
+            STORAGE_ERROR_PATH_REMOVE ": [39] Directory not empty", strZ(pathRemove1));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path remove - path with subpath removed");
 
         TEST_RESULT_VOID(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");

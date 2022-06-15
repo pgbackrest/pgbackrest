@@ -433,6 +433,17 @@ storagePosixPathRemoveCallback(void *const callbackData, const StorageInfo *cons
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Helper to determine if an error code indicates that a path is not empty. This can vary by implementation.
+static bool
+storagePosixErrorIsEmpty(const int error)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, error);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, error == ENOTEMPTY || error == EEXIST);
+}
+
 static bool
 storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
@@ -466,7 +477,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
                     removed = true;
                 }
                 // Else if not empty but recursion requested then remove all sub paths/files
-                else if (errno == ENOTEMPTY && recurse)
+                else if (storagePosixErrorIsEmpty(errno) && recurse)                                                // {vm_covered}
                 {
                     StoragePosixPathRemoveData data =
                     {
@@ -477,7 +488,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
                     storageInterfaceInfoListP(this, path, storageInfoLevelExists, storagePosixPathRemoveCallback, &data);
                 }
                 // Else error
-                else
+                else                                                                                                // {vm_covered}
                     THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));                    // {vm_covered}
             }
             // Else path was removed
