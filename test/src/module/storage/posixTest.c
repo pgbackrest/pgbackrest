@@ -800,21 +800,20 @@ testRun(void)
             STORAGE_ERROR_PATH_REMOVE ": [13] Permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("path remove - subpath permission denied");
+        TEST_TITLE("path remove - subpath permission denied");
 
-        HRN_SYSTEM_FMT("sudo chmod 777 %s", strZ(pathRemove1));
+        String *fileRemove = strNewFmt("%s/remove.txt", strZ(pathRemove2));
 
-        // TEST_ERROR_FMT(
-        //     storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathOpenError,
-        //     STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathRemove2));
+        HRN_SYSTEM_FMT("sudo chmod 777 %s && sudo touch %s", strZ(pathRemove1), strZ(fileRemove));
+
+        TEST_ERROR_FMT(
+            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - file in subpath, permission denied");
 
-        String *fileRemove = strNewFmt("%s/remove.txt", strZ(pathRemove2));
-
-        HRN_SYSTEM_FMT(
-            "sudo chmod 755 %s && sudo touch %s && sudo chmod 777 %s", strZ(pathRemove2), strZ(fileRemove), strZ(fileRemove));
+        HRN_SYSTEM_FMT("sudo chmod 755 %s && sudo chmod 777 %s", strZ(pathRemove2), strZ(fileRemove));
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
