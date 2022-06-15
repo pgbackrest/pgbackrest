@@ -432,7 +432,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .backupType = manData->backupType,
                 .backupError = varNewBool(backupError),
 
-                .backupAnnotation = manData->annotation,
+                .backupAnnotation = varDup(manData->annotation),
                 .backupArchiveStart = strDup(manData->archiveStart),
                 .backupArchiveStop = strDup(manData->archiveStop),
                 .backupLsnStart = strDup(manData->lsnStart),
@@ -470,44 +470,45 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
 /**********************************************************************************************************************************/
 void
-infoBackupDataAnnotationSet(const InfoBackup *this, const String *const backupLabel, const KeyValue *annotationKv)
+infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const backupLabel, const KeyValue *const newAnnotationKv)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_BACKUP, this);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
-        FUNCTION_TEST_PARAM(KEY_VALUE, annotationKv);
+        FUNCTION_TEST_PARAM(KEY_VALUE, newAnnotationKv);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
     ASSERT(infoBackupLabelExists(this, backupLabel));
+    ASSERT(newAnnotationKv != NULL);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.backup))
     {
-        InfoBackupData *infoBackupData = lstFind(this->pub.backup, &backupLabel);
+        // Get data for specified backup
+        InfoBackupData *const infoBackupData = lstFind(this->pub.backup, &backupLabel);
 
-        KeyValue *tmpAnnotationKv = kvNew();
+        // Create annotation if it does not exist
+        if (infoBackupData->backupAnnotation == NULL)
+            infoBackupData->backupAnnotation = varNewKv(kvNew());
 
-        if (infoBackupData->backupAnnotation != NULL)
-            tmpAnnotationKv = varKv(infoBackupData->backupAnnotation);
+        // Update annotations
+        KeyValue *const annotationKv = varKv(infoBackupData->backupAnnotation);
+        const VariantList *const newAnnotationKeyList = kvKeyList(newAnnotationKv);
 
-        const VariantList *const annotationKeyList = kvKeyList(annotationKv);
-
-        for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
+        for (unsigned int keyIdx = 0; keyIdx < varLstSize(newAnnotationKeyList); keyIdx++)
         {
-            const Variant *const key = varLstGet(annotationKeyList, keyIdx);
-            const Variant *const value = kvGet(annotationKv, key);
+            const Variant *const newKey = varLstGet(newAnnotationKeyList, keyIdx);
+            const Variant *const newValue = kvGet(newAnnotationKv, newKey);
 
-            // Skip empty values
-            if (!strEmpty(varStr(value)))
+            // If value is empty remove the key
+            if (strEmpty(varStr(newValue)))
             {
-                kvPut(tmpAnnotationKv, key, value);
+                kvRemove(annotationKv, newKey);
             }
-            // Remove existing key if value is empty
-            else if (kvKeyExists(tmpAnnotationKv, key))
-                kvRemove(tmpAnnotationKv, key);
+            // Else put new key/value (this will overwrite an existing value)
+            else
+                kvPut(annotationKv, newKey, newValue);
         }
-
-        infoBackupData->backupAnnotation = varNewKv(tmpAnnotationKv);
     }
     MEM_CONTEXT_END();
 
