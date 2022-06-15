@@ -358,10 +358,9 @@ kvRemove(KeyValue *this, const Variant *key)
         lstRemoveIdx(this->list, listIdx);
 
         // Remove from the key list (index must be the same as the key/value list)
-        Variant *const listKey = varLstGet(this->pub.keyList, listIdx);
-        ASSERT(varEq(key, listKey));
+        ASSERT(varEq(key, varLstGet(this->pub.keyList, listIdx)));
 
-        varFree(listKey);
+        varFree(varLstGet(this->pub.keyList, listIdx));
         lstRemoveIdx((List *)this->pub.keyList, listIdx);
     }
 
