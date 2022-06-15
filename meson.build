@@ -79,6 +79,9 @@ warning_disable = [
 
     # Warn when a switch case falls through. Disable because this an useful aspect of switches and tests should catch problems.
     '-Wno-implicit-fallthrough',
+
+    # [msvc]:[C4114]: Warn if the same type qualifier used more than once
+    '/wd4114',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
@@ -110,6 +113,7 @@ endif
 ####################################################################################################################################
 configuration = configuration_data()
 
+if cc.get_id() != 'msvc'
 # Find required bz2 library
 lib_bz2 = cc.find_library('bz2')
 
@@ -141,6 +145,7 @@ lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
 if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
 endif
+endif
 
 # Check if the C compiler supports _Static_assert()
 if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
@@ -156,7 +161,19 @@ endif
 configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), description: 'Configuration path')
 
 # Set FN_NO_RETURN macro
-configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
+if cc.has_function_attribute('__noreturn__')
+    configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
+else
+    configuration.set('FN_NO_RETURN', '__declspec(noreturn)', description: 'Indicate that a function does not return')
+endif
+
+
+if cc.get_id() == 'msvc'
+    # Include MSVC compatibility header
+    configuration.set('INCLUDE_MSVC_COMPAT', '#include "common/msvcCompat.h"', description: 'MSVC compatibility header')
+else
+    configuration.set('INCLUDE_MSVC_COMPAT', '', description: '')
+endif
 
 ####################################################################################################################################
 # Include src
