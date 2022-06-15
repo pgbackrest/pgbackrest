@@ -796,17 +796,17 @@ testRun(void)
             storagePathRemoveP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE ": [13] Permission denied",
             strZ(pathRemove2));
         TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathRemove2));
+            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathRemoveError,
+            STORAGE_ERROR_PATH_REMOVE ": [13] Permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path remove - subpath permission denied");
+        // TEST_TITLE("path remove - subpath permission denied");
 
         HRN_SYSTEM_FMT("sudo chmod 777 %s", strZ(pathRemove1));
 
-        TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathRemove2));
+        // TEST_ERROR_FMT(
+        //     storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathOpenError,
+        //     STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - file in subpath, permission denied");
@@ -821,9 +821,16 @@ testRun(void)
             STORAGE_ERROR_PATH_REMOVE_FILE ": [13] Permission denied", strZ(fileRemove));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path remove - path with subpath and file removed");
+        TEST_TITLE("path remove without recurse");
 
         HRN_SYSTEM_FMT("sudo chmod 777 %s", strZ(pathRemove2));
+
+        TEST_ERROR_FMT(
+            storagePathRemoveP(storageTest, pathRemove1), PathRemoveError,
+            STORAGE_ERROR_PATH_REMOVE ": [39] Directory not empty", strZ(pathRemove1));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path remove - path with subpath and file removed");
 
         TEST_RESULT_VOID(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");

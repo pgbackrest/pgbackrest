@@ -452,28 +452,39 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Recurse if requested
-        if (recurse)
+        bool removed = false;
+
+        do
         {
-            StoragePosixPathRemoveData data =
+            // If path could not be removed
+            if (rmdir(strZ(path)) == -1)
             {
-                .driver = this,
-                .path = path,
-            };
+                // Path does not exist
+                if (errno == ENOENT)
+                {
+                    result = false;
+                    removed = true;
+                }
+                // Else if not empty but recursion requested then remove all sub paths/files
+                else if (errno == ENOTEMPTY && recurse)
+                {
+                    StoragePosixPathRemoveData data =
+                    {
+                        .driver = this,
+                        .path = path,
+                    };
 
-            // Remove all sub paths/files
-            storageInterfaceInfoListP(this, path, storageInfoLevelExists, storagePosixPathRemoveCallback, &data);
+                    storageInterfaceInfoListP(this, path, storageInfoLevelExists, storagePosixPathRemoveCallback, &data);
+                }
+                // Else error
+                else
+                    THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));                    // {vm_covered}
+            }
+            // Else path was removed
+            else
+                removed = true;
         }
-
-        // Delete the path
-        if (rmdir(strZ(path)) == -1)
-        {
-            if (errno != ENOENT)                                                                                    // {vm_covered}
-                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));                        // {vm_covered}
-
-            // Path does not exist
-            result = false;
-        }
+        while (!removed);
     }
     MEM_CONTEXT_TEMP_END();
 
