@@ -350,18 +350,19 @@ kvRemove(KeyValue *this, const Variant *key)
     // If the key was found, remove it
     if (listIdx != KEY_NOT_FOUND)
     {
-
         // Free the key/value being removed and remove from the list
-        KeyValuePair *pair = (KeyValuePair *)lstGet(this->list, listIdx);
+        KeyValuePair *const pair = (KeyValuePair *)lstGet(this->list, listIdx);
+
+        varFree(pair->key);
         varFree(pair->value);
         lstRemoveIdx(this->list, listIdx);
 
-        // Remove from the key list
-        for (unsigned int idx = 0; idx < varLstSize(this->pub.keyList); idx++)
-        {
-            if (varEq(key, varLstGet(this->pub.keyList, idx)))
-                lstRemoveIdx((List *)this->pub.keyList, idx);
-        }
+        // Remove from the key list (index must be the same as the key/value list)
+        Variant *const listKey = varLstGet(this->pub.keyList, listIdx);
+        ASSERT(varEq(key, listKey));
+
+        varFree(listKey);
+        lstRemoveIdx((List *)this->pub.keyList, listIdx);
     }
 
     FUNCTION_TEST_RETURN(KEY_VALUE, this);
