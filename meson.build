@@ -161,7 +161,7 @@ endif
 configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), description: 'Configuration path')
 
 # Set FN_NO_RETURN macro
-if cc.has_function_attribute('__noreturn__')
+if cc.has_function_attribute('noreturn')
     configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
 else
     configuration.set('FN_NO_RETURN', '__declspec(noreturn)', description: 'Indicate that a function does not return')
