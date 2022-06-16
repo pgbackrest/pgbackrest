@@ -167,7 +167,6 @@ else
     configuration.set('FN_NO_RETURN', '__declspec(noreturn)', description: 'Indicate that a function does not return')
 endif
 
-
 if cc.get_id() == 'msvc'
     # Include MSVC compatibility header
     configuration.set('INCLUDE_MSVC_COMPAT', '#include "common/msvcCompat.h"', description: 'MSVC compatibility header')
