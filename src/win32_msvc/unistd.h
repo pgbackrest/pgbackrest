@@ -13,7 +13,7 @@ MSVC compatibility header for <unistd.h>
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
-#define write _write
+#define write(fd, buffer, count) _write(fd, buffer, (unsigned int)count)
 #define open  _open
 #define close _close
 #define lseek _lseek
