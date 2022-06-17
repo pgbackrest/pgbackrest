@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Sftp Storage Internal
 ***********************************************************************************************************************************/
+//#ifdef  HAVE_LIBSSH2
+
 #ifndef STORAGE_SFTP_STORAGE_INTERN_H
 #define STORAGE_SFTP_STORAGE_INTERN_H
 
@@ -11,8 +13,9 @@ Sftp Storage Internal
 Constructors
 ***********************************************************************************************************************************/
 Storage *storageSftpNewInternal(
-    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
+    const StringId type, const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
+    const String *user, const String *password, const String *keyPub, const String *keyPriv, mode_t modeFile, mode_t modePath,
+    bool write, StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
 
 /***********************************************************************************************************************************
 Functions
@@ -30,3 +33,5 @@ Macros for function logging
     objToLog(value, "StorageSftp *", buffer, bufferSize)
 
 #endif
+
+//#endif // HAVE_LIBSSH2

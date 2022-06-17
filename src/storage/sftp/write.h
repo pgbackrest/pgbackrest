@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Sftp Storage File write
 ***********************************************************************************************************************************/
+//#ifdef HAVE_LIBSSH2
+
 #ifndef STORAGE_SFTP_WRITE_H
 #define STORAGE_SFTP_WRITE_H
 
@@ -15,3 +17,5 @@ StorageWrite *storageWriteSftpNew(
     time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic);
 
 #endif
+
+//#endif // HAVE_LIBSSH2

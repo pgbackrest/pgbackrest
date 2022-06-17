@@ -66,6 +66,7 @@ storageWriteSftpFreeResource(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->sftpHandle != NULL);
 
     //jrt fd becomes handle, libssh2*close()
     THROW_ON_SYS_ERROR_FMT(
@@ -87,12 +88,15 @@ storageWriteSftpOpen(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->sftpSession != NULL);
 
     // Open the file
     //this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
     //jrt !!! rework file open flags if they don't match LIBSSH2_FXF* flags,
     //same with mode -> see  LIBSSH2_SFTP_S_* convenience defines in <lib‐ssh2_sftp.h>
-    this->sftpHandle = libssh2_sftp_open(this->sftpSession, strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+    this->sftpHandle = libssh2_sftp_open_ex(
+        this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), FILE_OPEN_FLAGS,
+        (int)this->interface.modeFile, LIBSSH2_SFTP_OPENFILE);
 
     //if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                 // {vm_covered}
     // Attempt to create the path if it is missing
@@ -103,7 +107,9 @@ storageWriteSftpOpen(THIS_VOID)
 
         // Open file again
         //jrt fd becomes handle, libssh2*open()
-        this->sftpHandle = libssh2_sftp_open(this->sftpSession, strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
+        this->sftpHandle = libssh2_sftp_open_ex(
+        this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), FILE_OPEN_FLAGS,
+        (int)this->interface.modeFile, LIBSSH2_SFTP_OPENFILE);
     }
 
     // Handle errors
@@ -167,7 +173,7 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
     //jrt fd becomes handle
-    ASSERT(this->fd != -1);
+    ASSERT(this->sftpHandle != NULL);
 
     // Write the data
     // jrt libssh2_sftp_write()
@@ -193,6 +199,7 @@ storageWriteSftpClose(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->sftpHandle != NULL);
 
     // Close if the file has not already been closed
     // jrt fd becomes handle
@@ -220,7 +227,8 @@ storageWriteSftpClose(THIS_VOID)
         {
             //jrt verify this
             this->attr->flags = LIBSSH2_SFTP_ATTR_ACMODTIME;
-            this->attr->atime = this->attr->mtime = this->interface.timeModified;
+            this->attr->atime = (unsigned int)this->interface.timeModified;
+            this->attr->mtime = (unsigned int)this->interface.timeModified;
             THROW_ON_SYS_ERROR_FMT(
                 libssh2_sftp_fsetstat(
                     this->sftpHandle, this->attr) != 0,
@@ -237,7 +245,11 @@ storageWriteSftpClose(THIS_VOID)
         // jrt libssh2_sftp_rename
         if (this->interface.atomic)
         {
-            if (libssh2_sftp_rename(this->sftpSession, strZ(this->nameTmp), strZ(this->interface.name)) != 0)
+            //if (libssh2_sftp_rename(this->sftpSession, strZ(this->nameTmp), strZ(this->interface.name)) != 0)
+            if (libssh2_sftp_rename_ex(
+                this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), strZ(this->interface.name),
+                (unsigned int)strSize(this->interface.name),
+                LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE) != 0)
                 THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
         }
 

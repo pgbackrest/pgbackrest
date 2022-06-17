@@ -79,7 +79,9 @@ storageReadSftpOpen(THIS_VOID)
 
     // Open the file
     // jrt libssh2_sftp_open* call
-    this->sftpHandle = libssh2_sftp_open(this->sftpSession, strZ(this->interface.name), LIBSSH2_FXF_READ, 0);
+    this->sftpHandle = libssh2_sftp_open_ex(
+        this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name), LIBSSH2_FXF_READ, 0,
+        LIBSSH2_SFTP_OPENFILE);
 
     if (this->sftpHandle == NULL)
     {

@@ -1747,6 +1747,34 @@ src/storage/s3/write.h:
   class: core
   type: c/h
 
+src/storage/sftp/read.c:
+  class: core
+  type: c
+
+src/storage/sftp/read.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/storage.c:
+  class: core
+  type: c
+
+src/storage/sftp/storage.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/storage.intern.h:
+  class: core
+  type: c/h
+
+src/storage/sftp/write.c:
+  class: core
+  type: c
+
+src/storage/sftp/write.h:
+  class: core
+  type: c/h
+
 src/storage/storage.c:
   class: core
   type: c
@@ -2436,6 +2464,10 @@ test/src/module/storage/remoteTest.c:
   type: c
 
 test/src/module/storage/s3Test.c:
+  class: test/module
+  type: c
+
+test/src/module/storage/sftpTest.c:
   class: test/module
   type: c
 

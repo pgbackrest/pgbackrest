@@ -555,6 +555,20 @@ unit:
           - storage/storage
           - storage/write
 
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: sftp
+        total: 1
+
+        coverage:
+          - storage/sftp/read
+          - storage/sftp/storage
+          - storage/sftp/write
+
+        include:
+          - storage/read
+          - storage/storage
+          - storage/write
+
   # ********************************************************************************************************************************
   - name: postgres
 
