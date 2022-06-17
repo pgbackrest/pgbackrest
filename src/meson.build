@@ -322,13 +322,31 @@ pgbackrest = executable(
 
 alias_target('pgbackrest', pgbackrest)
 
+####################################################################################################################################
+# Win32 MSVC build
+####################################################################################################################################
 else
-    configure_file(input: 'build.auto.h.meson.in', output: 'build.auto.h', configuration: configuration)
+    configure_file(input: 'win32_msvc/build.auto.h.in', output: 'build.auto.h', configuration: configuration)
+
+    ################################################################################################################################
+    # MSVC specific include dirs and sources
+    ################################################################################################################################
+    include_dir_win32 = include_directories('win32_msvc')
+
+    src_win32 = [
+        'win32_msvc/gettimeofday.c',
+        'win32_msvc/localtime.c'
+    ]
+
     src_common = [
         'common/error.c',
         'common/stackTrace.c',
         'common/debug.c',
-        # 'common/encode.c',
+        'common/type/convert.c',
+        'common/memContext.c',
+        'common/encode.c',
+        'common/time.c',
+        'common/type/object.c',
         # 'common/error.c',
         # 'common/io/filter/buffer.c',
         # 'common/io/filter/filter.c',
@@ -340,14 +358,10 @@ else
         # 'common/io/read.c',
         # 'common/io/write.c',
         # 'common/log.c',
-        # 'common/memContext.c',
         # 'common/regExp.c',
-        # 'common/time.c',
         # 'common/type/buffer.c',
-        # 'common/type/convert.c',
         # 'common/type/keyValue.c',
         # 'common/type/list.c',
-        # 'common/type/object.c',
         # 'common/type/pack.c',
         # 'common/type/string.c',
         # 'common/type/stringZ.c',
@@ -381,8 +395,10 @@ else
         'build-config',
         src_common,
         src_build_config,
+        src_win32,
         dependencies : [],
         build_by_default: true,
+        include_directories: include_dir_win32,
     )
 
     alias_target('build-config', build_config)

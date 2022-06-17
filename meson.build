@@ -169,7 +169,7 @@ endif
 
 if cc.get_id() == 'msvc'
     # Include MSVC compatibility header
-    configuration.set('INCLUDE_MSVC_COMPAT', '#include "common/msvcCompat.h"', description: 'MSVC compatibility header')
+    configuration.set('INCLUDE_MSVC_COMPAT', '#include "msvcCompat.h"', description: 'MSVC compatibility header')
 else
     configuration.set('INCLUDE_MSVC_COMPAT', '', description: '')
 endif
