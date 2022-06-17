@@ -378,6 +378,7 @@ else
         # 'common/regExp.c',
         # 'common/user.c',
         'common/wait.c',
+        'common/ini.c',
         # 'config/common.c',
         # 'storage/posix/read.c',
         # 'storage/posix/storage.c',
