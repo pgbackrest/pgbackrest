@@ -253,8 +253,15 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strReplaceChr()"))
+    if (testBegin("strReplace() and strReplaceChr()"))
     {
+        TEST_RESULT_STR_Z(strReplace(strNewZ(""), STRDEF("A"), STRDEF("B")), "", "replace none");
+        TEST_RESULT_STR_Z(strReplace(strCatZ(strNew(), "ABC"), STRDEF("ABC"), STRDEF("DEF")), "DEF", "replace all");
+        TEST_RESULT_STR_Z(strReplace(strCatZ(strNew(), "ABCXABC"), STRDEF("ABC"), STRDEF("DEF")), "DEFXDEF", "replace multiple");
+        TEST_RESULT_STR_Z(strReplace(strCatZ(strNew(), "XABCX"), STRDEF("ABC"), STRDEF("DEFGHI")), "XDEFGHIX", "replace larger");
+        TEST_RESULT_STR_Z(
+            strReplace(strCatZ(strNew(), "XABCXABCX"), STRDEF("ABC"), STRDEF("ABCD")), "XABCDXABCDX", "replace common substring");
+
         TEST_RESULT_STR_Z(strReplaceChr(strNewZ("ABCD"), 'B', 'R'), "ARCD", "replace chr");
     }
 
