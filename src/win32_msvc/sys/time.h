@@ -15,5 +15,3 @@ struct timezone {
 typedef long suseconds_t;
 
 int gettimeofday(struct timeval *tv, struct timezone *tz);
-
-struct tm *localtime_r(const time_t *restrict timer, struct tm *restrict result);

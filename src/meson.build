@@ -333,6 +333,10 @@ else
     ################################################################################################################################
     include_dir_win32 = include_directories('win32_msvc')
 
+    win32_deps = [
+        cc.find_library('ws2_32', required: true)
+    ]
+
     src_win32 = [
         'win32_msvc/gettimeofday.c',
         'win32_msvc/localtime.c'
@@ -396,7 +400,7 @@ else
         src_common,
         src_build_config,
         src_win32,
-        dependencies : [],
+        dependencies : win32_deps,
         build_by_default: true,
         include_directories: include_dir_win32,
     )

@@ -7,9 +7,9 @@ Inspired by:
 
 #include "sys/time.h"
 
-#include <Windows.h>
+#include <time.h>
 
-struct tm *localtime_r(const time_t *restrict timer, struct tm *restrict result)
+struct tm *localtime_r(const time_t *timer, struct tm *result)
 {
     if (!timer || !result) {
         return NULL;

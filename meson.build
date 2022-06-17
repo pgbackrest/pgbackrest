@@ -82,6 +82,9 @@ warning_disable = [
 
     # [msvc]:[C4114]: Warn if the same type qualifier used more than once
     '/wd4114',
+
+    # [msvc]:[C4116]: Warn for unnamed type definition in parentheses, triggers with ALIGN_OF macro
+    '/wd4116',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
