@@ -14,7 +14,6 @@ Convert C Types
 #include "common/debug.h"
 #include "common/macro.h"
 #include "common/type/convert.h"
-#include "win32_msvc/timeWin32.h"
 
 /***********************************************************************************************************************************
 Check results of strto*() function for:
