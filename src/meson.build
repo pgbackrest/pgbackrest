@@ -371,7 +371,7 @@ else
         'common/io/read.c',
         'common/io/write.c',
         'common/log.c',
-        # 'common/regExp.c',
+        'common/regExp.c',
         # 'common/user.c',
         # 'common/wait.c',
         # 'config/common.c',
