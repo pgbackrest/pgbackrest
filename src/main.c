@@ -14,6 +14,7 @@ Main
 #include "command/command.h"
 #include "command/control/start.h"
 #include "command/control/stop.h"
+#include "command/exit.h"
 #include "command/expire/expire.h"
 #include "command/help/help.h"
 #include "command/info/info.h"
@@ -33,7 +34,6 @@ Main
 #include "command/verify/verify.h"
 #include "common/debug.h"
 #include "common/error.h"
-#include "common/exit.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/stat.h"
@@ -305,6 +305,9 @@ main(int argListSize, const char *argList[])
         result = exitSafe(result, true, 0);
     }
     TRY_END();
+
+    // Free protocol objects
+    protocolFree();
 
     FUNCTION_LOG_RETURN(INT, error ? result : exitSafe(result, false, 0));
 }
