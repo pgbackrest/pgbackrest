@@ -6,7 +6,11 @@ Posix Storage File write
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <utime.h>
+#ifdef _WIN32
+    #include <sys/utime.h>
+#else
+    #include <utime.h>
+#endif
 
 #include "common/debug.h"
 #include "common/io/write.h"

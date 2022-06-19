@@ -380,12 +380,12 @@ else
         'common/wait.c',
         'common/ini.c',
         # 'config/common.c',
-        # 'storage/posix/read.c',
-        # 'storage/posix/storage.c',
-        # 'storage/posix/write.c',
-        # 'storage/read.c',
-        # 'storage/storage.c',
-        # 'storage/write.c',
+        'storage/posix/read.c',
+        'storage/posix/storage.c',
+        'storage/posix/write.c',
+        'storage/read.c',
+        'storage/storage.c',
+        'storage/write.c',
     ]
 
     ####################################################################################################################################
