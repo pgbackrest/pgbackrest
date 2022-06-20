@@ -20,6 +20,27 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // This test should always be first so the storage helper is uninitialized
+    // *****************************************************************************************************************************
+    if (testBegin("storageHelperDryRunInit()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("writable storage fails when dry-run is not initialized");
+
+        TEST_ERROR(storagePgIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageRepoIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("writable storage fails when dry-run is true");
+
+        storageHelperDryRunInit(true);
+
+        TEST_ERROR(storagePgIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageRepoIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
+        TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
+    }
+
     // *****************************************************************************************************************************
     if (testBegin("storageNew()"))
     {
@@ -53,6 +74,7 @@ testRun(void)
         TEST_RESULT_PTR(storageDriver(storageTest), storageTest->pub.driver, "check driver");
         TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "check path feature");
+
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
