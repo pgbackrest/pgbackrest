@@ -69,10 +69,20 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
             libssh2_sftp_stat_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file), LIBSSH2_SFTP_STAT, &attrs) :
             libssh2_sftp_stat_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file), LIBSSH2_SFTP_LSTAT, &attrs)) != 0)
     {
+        //!!! verify/validate the below notes
+        int errval = errno;
+        // !!! jrt libssh2 on missing file returns sftp error 2 LIBSSH2_FX_NO_SUCH_FILE but it or something else evidently sets
+        // !!! errno to 11 - Resource temporarily unavailable
+        // !!! do we override errno and set it 2, or do we update tests to match
+        LOG_DEBUG_FMT("jrt errno %d", errval);
+        LOG_DEBUG_FMT("jrt error on ssh2 stat");
         // If session indicates sftp error, can query for sftp error
         // !!! see also libssh2_session_last_error() - possible to return more detailed error
         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
+        LOG_DEBUG_FMT("jrt sftp error %lu", libssh2_sftp_last_error(this->sftpSession));
+//            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)                              // {vm_covered}
+//                errno = 2;
             if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)                              // {vm_covered}
                 THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                                 // {vm_covered}
         }
@@ -80,6 +90,7 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
     // On success the file exists
     else
     {
+        LOG_DEBUG_FMT("jrt success on ssh2 stat");
         result.exists = true;
 
         // Add type info (no need set file type since it is the default)
