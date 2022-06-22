@@ -376,7 +376,7 @@ else
         'common/type/json.c',
         'common/stat.c',
         # 'common/regExp.c',
-        # 'common/user.c',
+        'common/user.c',
         'common/wait.c',
         'common/ini.c',
         # 'config/common.c',

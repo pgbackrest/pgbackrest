@@ -8,6 +8,7 @@ MSVC compatibility header for <unistd.h>
 
 // For io functions
 #include <io.h>
+#include <fcntl.h>
 
 // Values from https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/fileno?view=msvc-170
 #define STDOUT_FILENO 1

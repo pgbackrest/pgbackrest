@@ -12,6 +12,17 @@ Posix Storage
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+    #include <Windows.h>
+
+    #include <accctrl.h>
+    #include <aclapi.h>
+
+    #include <shobjidl_core.h>
+
+    #undef interface
+#endif
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/regExp.h"
@@ -53,6 +64,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 
     StorageInfo result = {.level = level};
 
+#ifndef _WIN32
     // Stat the file to check if it exists
     struct stat statFile;
 
@@ -108,6 +120,216 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
             }
         }
     }
+#else 
+    DWORD fileAttributes = GetFileAttributesA(strZ(file));
+
+    if (fileAttributes == INVALID_FILE_ATTRIBUTES)
+    {
+        if (GetLastError() != ERROR_FILE_NOT_FOUND)                                                                 // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                                     // {vm_covered}
+    }
+    // On success the file exists
+    else
+    {
+        result.exists = true;
+
+        // Add type info (no need set file type since it is the default)
+        if (result.level >= storageInfoLevelType)
+        {
+            if (fileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                result.type = storageTypePath;
+            else if (fileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+                result.type = storageTypeLink;
+            // TBD
+            else if (fileAttributes & FILE_ATTRIBUTE_TEMPORARY || fileAttributes & FILE_ATTRIBUTE_SYSTEM ||
+                fileAttributes & FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS || fileAttributes & FILE_ATTRIBUTE_RECALL_ON_OPEN)
+                result.type = storageTypeSpecial;
+        }
+
+        // Add basic level info
+        if (result.level >= storageInfoLevelBasic)
+        {
+            // Open a read-file handle ONLY if it is existing
+            HANDLE fileHandle = CreateFileA(
+                strZ(file),
+                GENERIC_READ,
+                FILE_SHARE_READ,
+                NULL,
+                OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL,
+                NULL);
+
+            if (fileHandle == INVALID_HANDLE_VALUE)
+            {
+                if (GetLastError() != ERROR_FILE_NOT_FOUND)                                                             // {vm_covered}
+                    THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                             // {vm_covered}
+            }
+            else
+            {
+                FILETIME lastWriteTime;
+                BOOL ret = GetFileTime(fileHandle, NULL, NULL, &lastWriteTime);
+
+                if (!ret)
+                {
+                    CloseHandle(fileHandle);
+                    THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                             // {vm_covered}
+                }
+
+                result.timeModified = ( time_t )(lastWriteTime.dwHighDateTime) << 32 | ( time_t )lastWriteTime.dwLowDateTime;
+
+                if (result.type == storageTypeFile)
+                {
+                    LARGE_INTEGER fileSize;
+                    ret = GetFileSizeEx(fileHandle, &fileSize);
+
+                    if (!ret)
+                    {
+                        CloseHandle(fileHandle);
+                        THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                         // {vm_covered}
+                    }
+
+                    result.size = (uint64_t)fileSize.QuadPart;
+                }
+            }
+
+            CloseHandle(fileHandle);
+        }
+
+        // Add detail level info
+        if (result.level >= storageInfoLevelDetail)
+        {
+            HANDLE fileHandle = INVALID_HANDLE_VALUE;
+            DWORD retCode = 0;
+            PSID sidOwner = NULL;
+            BOOL retResult = FALSE;
+            PACL dacl = NULL;
+
+            DWORD accountNameSize = 0;
+            DWORD domainNameSize = 0;
+
+            PSECURITY_DESCRIPTOR securityDescriptor = NULL;
+            SID_NAME_USE sidNameUse = SidTypeUnknown;
+
+            // Open a read-file handle ONLY if it is existing
+            fileHandle = CreateFileA(
+                strZ(file),
+                GENERIC_READ,
+                FILE_SHARE_READ,
+                NULL,
+                OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL,
+                NULL);
+
+            if (fileHandle == INVALID_HANDLE_VALUE)
+            {
+                if (GetLastError() != ERROR_FILE_NOT_FOUND)                                                         // {vm_covered}
+                    THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                             // {vm_covered}
+
+                FUNCTION_LOG_RETURN(STORAGE_INFO, result); 
+            }
+
+            // Get the owner SID of the file.
+            retCode = GetSecurityInfo(
+                fileHandle,
+                SE_FILE_OBJECT,
+                OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION ,
+                &sidOwner,
+                NULL,
+                &dacl,
+                NULL,
+                &securityDescriptor);
+
+            if ( retCode == ERROR_SUCCESS )
+            {
+                // Set Username
+                // Get buffer sizes.
+                retResult = LookupAccountSidA(
+                    NULL,
+                    sidOwner,
+                    NULL,
+                    (LPDWORD)&accountNameSize,
+                    NULL,
+                    (LPDWORD)&domainNameSize,
+                    &sidNameUse);
+
+                if ( retResult )
+                {
+                    MEM_CONTEXT_TEMP_BEGIN()
+                    {
+                        Buffer* accountName = bufNew(accountNameSize);
+                        Buffer* domainName = bufNew(domainNameSize);
+
+                        retResult = LookupAccountSidA(
+                            NULL,
+                            sidOwner,
+                            bufPtr(accountName),
+                            (LPDWORD)&accountNameSize,
+                            bufPtr(domainName),
+                            (LPDWORD)&domainNameSize,
+                            &sidNameUse);
+                        if ( retResult )
+                        {
+                            MEM_CONTEXT_PRIOR_BEGIN()
+                            {
+                                result.user = strNewZN(bufPtr(accountName), accountNameSize);
+                            }
+                            MEM_CONTEXT_PRIOR_END();
+                        }
+                    }
+                    MEM_CONTEXT_TEMP_END();
+                }
+
+                // Set permissions
+                TRUSTEEA trustee = { 0 };
+                DWORD accessMask;
+
+                trustee.pMultipleTrustee = NULL;
+                trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+                trustee.TrusteeForm = TRUSTEE_IS_SID;
+                trustee.TrusteeType = TRUSTEE_IS_USER;
+                trustee.ptstrName = sidOwner;
+
+                retCode = GetEffectiveRightsFromAclA(dacl, &trustee, &accessMask);
+
+                if ( retCode == ERROR_SUCCESS )
+                {
+                    if (accessMask | GENERIC_READ )
+                        result.mode |= S_IRUSR;
+                    if (accessMask | GENERIC_WRITE )
+                        result.mode |= S_IWUSR;
+                    if (accessMask | GENERIC_EXECUTE )
+                        result.mode |= S_IXUSR;
+                }
+
+                LocalFree(securityDescriptor);
+            }
+
+            // Set default values
+            result.groupId = (gid_t)-1;
+            result.group = NULL;
+            result.userId = (uid_t)-1;
+
+            if (result.type == storageTypeLink)
+            {
+                char linkDestination[MAX_PATH];
+                DWORD linkDestinationSize = 0;
+
+                linkDestinationSize = GetFinalPathNameByHandleA(fileHandle, linkDestination, sizeof(linkDestination), FILE_NAME_NORMALIZED | VOLUME_NAME_NT);
+                if ( linkDestinationSize == 0 )
+                {
+                    CloseHandle(fileHandle);
+
+                    THROW_SYS_ERROR_FMT(
+                        FileReadError, "unable to get destination for link '%s'", strZ(file));
+                }
+
+                result.linkDestination = strNewZN(linkDestination, (size_t)linkDestinationSize);
+            }
+
+            CloseHandle(fileHandle);
+        }
+    }
+#endif
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
@@ -169,6 +391,7 @@ storagePosixInfoList(
 
     bool result = false;
 
+#ifndef _WIN32
     // Open the directory for read
     DIR *dir = opendir(strZ(path));
 
@@ -223,7 +446,57 @@ storagePosixInfoList(
         }
         TRY_END();
     }
+#else
 
+    // Open the directory for read
+    WIN32_FIND_DATAA fileData = { 0 };
+    HANDLE findHandle = FindFirstFileA(strZ(path), &fileData);
+
+    // If the directory could not be opened process errors and report missing directories
+    if (findHandle == INVALID_HANDLE_VALUE)
+    {
+        if (GetLastError() != ERROR_FILE_NOT_FOUND )
+            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));
+    }
+    else
+    {
+        // Directory was found
+        result = true;
+
+        TRY_BEGIN()
+        {
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
+            {
+                do
+                {
+                    const String *name = STR(fileData.cFileName);
+
+                    // If only making a list of files that exist then no need to go get detailed info which requires calling
+                    // stat() and is therefore relatively slow
+                    if (level == storageInfoLevelExists)
+                    {
+                        callback(callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
+                    }
+                    // Else more info is required which requires a call to stat()
+                    else
+                    {
+                        storagePosixInfoListEntry(this, path, name, level, callback, callbackData);
+                    }
+
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
+                while (FindNextFileA(findHandle, &fileData));
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+        FINALLY()
+        {
+            FindClose(findHandle);
+        }
+        TRY_END();
+    }
+#endif
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
