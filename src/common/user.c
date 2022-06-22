@@ -194,7 +194,7 @@ userInitInternal(void)
             char buffer[UNLEN + 1];
             DWORD bufferSize;
 
-            GetUserNameA(buffer, bufferSize);
+            GetUserNameA(buffer, &bufferSize);
 
             userLocalData.memContext = MEM_CONTEXT_NEW();
 

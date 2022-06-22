@@ -122,9 +122,12 @@ storageWritePosixOpen(THIS_VOID)
         if (updateGroupId == groupId())
             updateGroupId = (gid_t)-1;
 
+        // TBD
+#ifndef _WIN32
         THROW_ON_SYS_ERROR_FMT(
             chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
             strZ(this->nameTmp));
+#endif
     }
 
     FUNCTION_LOG_RETURN_VOID();

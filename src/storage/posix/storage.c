@@ -18,8 +18,6 @@ Posix Storage
     #include <accctrl.h>
     #include <aclapi.h>
 
-    #include <shobjidl_core.h>
-
     #undef interface
 #endif
 

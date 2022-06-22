@@ -8,13 +8,10 @@ MSVC compatibility header for <dirent.h>
 
 // From https://www.gnu.org/software/libc/manual/html_node/Permission-Bits.html
 #define S_IRUSR 0400
-#define S_IREAD 0400
 
 #define S_IWUSR 0200
-#define S_IWRITE 0200
 
 #define S_IXUSR 0100
-#define S_IEXEC 0100
 
 #define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
 

@@ -11,7 +11,9 @@ Storage Interface
 #include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#ifndef _WIN32
 #include "common/regExp.h"
+#endif
 #include "common/wait.h"
 #include "storage/storage.h"
 
@@ -378,7 +380,9 @@ typedef struct StorageInfoListData
     StorageInfoListCallback callbackFunction;                       // Original callback function
     void *callbackData;                                             // Original callback data
     const String *expression;                                       // Filter for names
+#ifndef _WIN32
     RegExp *regExp;                                                 // Compiled filter for names
+#endif
     bool recurse;                                                   // Should we recurse?
     SortOrder sortOrder;                                            // Sort order
     const String *path;                                             // Top-level path for info
@@ -393,30 +397,31 @@ storageInfoListCallback(void *data, const StorageInfo *info)
         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    StorageInfoListData *listData = data;
+#ifndef _WIN32 // Disable, due to regex usage
+    StorageInfoListData* listData = data;
 
     // Is this the . path?
     bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
 
     // Skip . paths when getting info for subpaths (since info was already reported in the parent path)
-    if (dotPath && listData->subPath != NULL)
+    if ( dotPath && listData->subPath != NULL )
         FUNCTION_TEST_RETURN_VOID();
 
     // Update the name in info with the subpath
     StorageInfo infoUpdate = *info;
 
-    if (listData->subPath != NULL)
+    if ( listData->subPath != NULL )
         infoUpdate.name = strNewFmt("%s/%s", strZ(listData->subPath), strZ(infoUpdate.name));
 
     // Is this file a match?
     bool match = listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name);
 
     // Callback before checking path contents when not descending
-    if (match && listData->sortOrder != sortOrderDesc)
+    if ( match && listData->sortOrder != sortOrderDesc )
         listData->callbackFunction(listData->callbackData, &infoUpdate);
 
     // Recurse into paths
-    if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
+    if ( infoUpdate.type == storageTypePath && listData->recurse && !dotPath )
     {
         StorageInfoListData data = *listData;
         data.subPath = infoUpdate.name;
@@ -427,8 +432,10 @@ storageInfoListCallback(void *data, const StorageInfo *info)
     }
 
     // Callback after checking path contents when descending
-    if (match && listData->sortOrder == sortOrderDesc)
+    if ( match && listData->sortOrder == sortOrderDesc )
         listData->callbackFunction(listData->callbackData, &infoUpdate);
+#endif // !_WIN32
+
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -456,17 +463,18 @@ storageInfoList(
 
     bool result = false;
 
+#ifndef _WIN32 // Disable, due to regex usage
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Info level
-        if (param.level == storageInfoLevelDefault)
+        if ( param.level == storageInfoLevelDefault )
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
         // Build the path
-        String *path = storagePathP(this, pathExp);
+        String* path = storagePathP(this, pathExp);
 
         // If there is an expression or recursion then the info will need to be filtered through a local callback
-        if (param.expression != NULL || param.recurse)
+        if ( param.expression != NULL || param.recurse )
         {
             StorageInfoListData data =
             {
@@ -479,7 +487,7 @@ storageInfoList(
                 .path = path,
             };
 
-            if (data.expression != NULL)
+            if ( data.expression != NULL )
                 data.regExp = regExpNew(param.expression);
 
             result = storageInfoListSort(
@@ -488,10 +496,12 @@ storageInfoList(
         else
             result = storageInfoListSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
 
-        if (!result && param.errorOnMissing)
+        if ( !result && param.errorOnMissing )
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
     }
     MEM_CONTEXT_TEMP_END();
+#endif // !_WIN32
+
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

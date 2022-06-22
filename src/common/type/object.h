@@ -10,6 +10,11 @@ These macros and functions implement common object functionality.
 #include "common/macro.h"
 #include "common/memContext.h"
 
+#ifdef _WIN32
+    // Defined in combaseapi
+    #undef THIS
+#endif
+
 /***********************************************************************************************************************************
 Create a new object
 
