@@ -24,6 +24,13 @@ project(
 cc = meson.get_compiler('c')
 
 ####################################################################################################################################
+# Error on release builds since we do not want anyone using meson for production yet
+####################################################################################################################################
+if get_option('buildtype') != 'debug'
+    error('meson is currently not supported for release builds')
+endif
+
+####################################################################################################################################
 # OS-specific settings
 ####################################################################################################################################
 if host_machine.system() == 'linux'
@@ -159,6 +166,6 @@ configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), descr
 configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
 
 ####################################################################################################################################
-# Include src
+# Include subdirs
 ####################################################################################################################################
 subdir('src')

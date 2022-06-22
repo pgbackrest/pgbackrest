@@ -688,7 +688,9 @@ eval
                         # Setup build if it does not exist
                         if (!-e $strBuildPath)
                         {
-                            executeTest("meson setup -Dwerror=true -Dfatal-errors=true ${strBuildPath} ${strBackRestBase}");
+                            executeTest(
+                                "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath}" .
+                                    " ${strBackRestBase}");
                         }
 
                         # Build code

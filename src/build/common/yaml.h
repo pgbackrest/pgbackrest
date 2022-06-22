@@ -60,7 +60,34 @@ YamlEvent yamlEventNext(Yaml *this);
 YamlEvent yamlEventNextCheck(Yaml *this, YamlEventType type);
 
 // Check the event type
-void yamlEventCheck(YamlEvent event, YamlEventType type);
+YamlEvent yamlEventCheck(YamlEvent event, YamlEventType type);
+
+// Peek at the next event
+YamlEvent yamlEventPeek(Yaml *this);
+
+// Get next scalar
+__attribute__((always_inline)) static inline YamlEvent
+yamlScalarNext(Yaml *const this)
+{
+    return yamlEventNextCheck(this, yamlEventTypeScalar);
+}
+
+// Check scalar
+void yamlScalarCheck(YamlEvent event, const String *value);
+
+__attribute__((always_inline)) static inline void
+yamlScalarCheckZ(const YamlEvent event, const char *const value)
+{
+    yamlScalarCheck(event, STR(value));
+}
+
+void yamlScalarNextCheck(Yaml *this, const String *value);
+
+__attribute__((always_inline)) static inline void
+yamlScalarNextCheckZ(Yaml *const this, const char *const value)
+{
+    yamlScalarNextCheck(this, STR(value));
+}
 
 // Convert an event to a boolean (or error)
 bool yamlBoolParse(YamlEvent event);
