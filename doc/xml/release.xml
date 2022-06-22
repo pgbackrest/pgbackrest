@@ -101,6 +101,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1790"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="sam.bassaly"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add cast to handle compilers (e.g. <proper>MSVC</proper>) that coerce to signed int.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1781"/>
 
                         <release-item-contributor-list>
