@@ -238,6 +238,25 @@ testRun(void)
 
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info - file");
+
+        const Buffer *buffer = BUFSTRDEF("TESTFILE");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, fileName), buffer), "put test file");
+
+        HRN_STORAGE_TIME(storageTest, strZ(fileName), 1555155555);
+
+        TEST_ASSIGN(info, storageInfoP(storageTest, fileName), "get file info");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeFile, "check type");
+        TEST_RESULT_UINT(info.size, 8, "check size");
+        TEST_RESULT_INT(info.mode, 0640, "check mode");
+        TEST_RESULT_INT(info.timeModified, 1555155555, "check mod time");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+
+        storageRemoveP(storageTest, fileName, .errorOnMissing = true);
+
 
 
     }

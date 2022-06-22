@@ -297,6 +297,10 @@ storageWriteSftpNew(
         {
             .storage = storage,
             .path = strPath(name),
+            .session = storage->session,
+            .sftpSession = storage->sftpSession,
+            .sftpHandle = storage->sftpHandle,
+            .attr = storage->attr,
 
             .interface = (StorageWriteInterface)
             {

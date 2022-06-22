@@ -75,7 +75,7 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
         // !!! errno to 11 - Resource temporarily unavailable
         // !!! do we override errno and set it 2, or do we update tests to match
         LOG_DEBUG_FMT("jrt errno %d", errval);
-        LOG_DEBUG_FMT("jrt error on ssh2 stat");
+        LOG_DEBUG_FMT("jrt error on ssh2 stat %d", libssh2_session_last_errno(this->session));
         // If session indicates sftp error, can query for sftp error
         // !!! see also libssh2_session_last_error() - possible to return more detailed error
         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
@@ -682,7 +682,9 @@ static const StorageInterface storageInterfaceSftp =
     .newWrite = storageSftpNewWrite,
     .pathCreate = storageSftpPathCreate,
     .pathRemove = storageSftpPathRemove,
-    .pathSync = storageSftpPathSync,
+    //!!! jrt null path sync?
+    //.pathSync = storageSftpPathSync,
+    .pathSync = NULL,
     .remove = storageSftpRemove,
 };
 
@@ -725,16 +727,26 @@ storageSftpNewInternal(
     {
         StorageSftp *driver = OBJ_NEW_ALLOC();
 
+        //jrt !!! error handling
+
+        if (libssh2_init(0) != 0)
+            THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2");                                 // {vm_covered}
+
         *driver = (StorageSftp)
         {
             .interface = storageInterfaceSftp,
             .session = libssh2_session_init(),
         };
 
+        if (driver->session == NULL)
+            THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2 session");                                 // {vm_covered}
+
         //!!! jrt add error handling
         libssh2_session_set_blocking(driver->session, 1);
         IoSession *ioSession = ioClientOpen(sckClientNew(host, port, timeoutConnect, timeoutSession));
-        libssh2_session_handshake(driver->session, ioSessionFd(ioSession));
+        if (libssh2_session_handshake(driver->session, ioSessionFd(ioSession)))
+            THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2 session");                                 // {vm_covered}
+
         //!!! jrt allow for stronger hash sha - newer versions have sha256 i think
         libssh2_hostkey_hash(driver->session, LIBSSH2_HOSTKEY_HASH_SHA1);
 
@@ -749,8 +761,18 @@ storageSftpNewInternal(
         }
 
         driver->sftpSession = libssh2_sftp_init(driver->session);
+        if (driver->sftpSession == NULL)
+        {
+            LOG_DEBUG_FMT("jrt error on sftp init session err %d", libssh2_session_last_errno(driver->session));
 
+            if (libssh2_session_last_errno(driver->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+            {
+                LOG_DEBUG_FMT("jrt sftp init error %lu", libssh2_sftp_last_error(driver->sftpSession));
+            }
+            THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2_sftp session");                                 // {vm_covered}
+        }
         // Disable path sync when not supported
+        // !!! jrt libssh2 may not support path sync -- test/verify and set appropriately
         if (!pathSync)
             driver->interface.pathSync = NULL;
 
