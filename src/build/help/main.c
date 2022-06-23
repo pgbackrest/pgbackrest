@@ -16,7 +16,7 @@ int
 main(int argListSize, const char *argList[])
 {
     // Check parameters
-    CHECK(ParamInvalidError, argListSize <= 2, "only one parameter allowed");
+    CHECK(ParamInvalidError, argListSize <= 3, "only two parameters allowed");
 
     // Initialize logging
     logInit(logLevelWarn, logLevelError, logLevelOff, false, 0, 1, false);
@@ -27,7 +27,7 @@ main(int argListSize, const char *argList[])
 
     // Get repo path (cwd if it was not passed)
     const String *pathRepo = strPath(STR(currentWorkDir));
-    String *const pathOut = strCatZ(strNew(), currentWorkDir);
+    String *pathBuild = strCatZ(strNew(), currentWorkDir);
 
     if (argListSize >= 2)
     {
@@ -38,13 +38,24 @@ main(int argListSize, const char *argList[])
         else
         {
             pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
-            strCatZ(pathOut, "/src");
+            strCatZ(pathBuild, "/src");
         }
     }
 
-    // Render config
+    // If the build path was specified
+    if (argListSize >= 3)
+    {
+        const String *const pathArg = STR(argList[2]);
+
+        if (strBeginsWith(pathArg, FSLASH_STR))
+            pathBuild = strPath(pathArg);
+        else
+            pathBuild = strPathAbsolute(pathArg, STR(currentWorkDir));
+    }
+
+    // Render help
     const Storage *const storageRepo = storagePosixNewP(pathRepo);
-    const Storage *const storageBuild = storagePosixNewP(pathOut, .write = true);
+    const Storage *const storageBuild = storagePosixNewP(pathBuild, .write = true);
     const BldCfg bldCfg = bldCfgParse(storageRepo);
     bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg));
 

@@ -23,7 +23,7 @@ configure_file(output: 'build.auto.h', configuration: configuration)
 ####################################################################################################################################
 # Common source used by all targets
 ####################################################################################################################################
-src_common = [
+src_common = files(
 	'common/debug.c',
 	'common/encode.c',
 	'common/error.c',
@@ -62,7 +62,7 @@ src_common = [
 	'storage/read.c',
 	'storage/storage.c',
 	'storage/write.c',
-]
+)
 
 ####################################################################################################################################
 # Build config target

@@ -1,0 +1,148 @@
+####################################################################################################################################
+# Configuration Definition
+####################################################################################################################################
+
+####################################################################################################################################
+# Commands
+####################################################################################################################################
+command:
+  help:
+    log-level-default: DEBUG
+    parameter-allowed: true
+
+  test: {}
+
+  noop:
+    internal: true
+
+  version:
+    log-level-default: DEBUG
+
+####################################################################################################################################
+# Option groups that are not used but must be present for modules to compile
+####################################################################################################################################
+optionGroup:
+  pg: {}
+  repo: {}
+
+####################################################################################################################################
+# Options
+####################################################################################################################################
+option:
+  # General options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  buffer-size:
+    type: size
+    internal: true
+    default: 64KiB
+    allow-list:
+      - 16KiB
+      - 32KiB
+      - 64KiB
+      - 128KiB
+      - 256KiB
+      - 512KiB
+      - 1MiB
+
+  module:
+    type: string
+    command:
+      test: {}
+
+  neutral-umask:
+    type: boolean
+    internal: true
+    default: true
+
+  repo-path:
+    type: string
+    default: pgbackrest
+    command:
+      test: {}
+
+  scale:
+    type: integer
+    internal: true
+    default: 1
+    allow-range: [1, 1000000000000]
+    command:
+      test: {}
+
+  test:
+    type: integer
+    internal: true
+    required: false
+    allow-range: [1, 999]
+    command:
+      test: {}
+
+  test-path:
+    type: string
+    default: test
+    command:
+      test: {}
+
+  tz:
+    type: string
+    internal: true
+    required: false
+    command:
+      test: {}
+
+  vm:
+    type: string
+    internal: true
+    default: none
+    command:
+      test: {}
+
+  vm-id:
+    type: integer
+    internal: true
+    default: 0
+    allow-range: [0, 1024]
+    command:
+      test: {}
+
+  # Logging options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  log-level:
+    type: string-id
+    default: info
+    allow-list:
+      - off
+      - error
+      - warn
+      - info
+      - detail
+      - debug
+      - trace
+
+  log-level-test:
+    inherit: log-level
+    default: off
+
+  log-timestamp:
+    type: boolean
+    default: true
+    negate: true
+    command: log-level
+
+  # Options that are not used but must be present for modules to compile. All must have a default or not be required.
+  #---------------------------------------------------------------------------------------------------------------------------------
+  compress-level-network: {type: string, required: false, command: {noop: {}}}
+  config: {
+    type: string, internal: true, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE, default-literal: true, negate: true}
+  config-path: {type: string, required: false, command: {noop: {}}}
+  config-include-path: {
+    type: string, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH, default-literal: true, command: {noop: {}}}
+  job-retry: {type: string, required: false, deprecate: {job-retry-old: {}}, command: {noop: {}}}
+  job-retry-interval: {type: string, required: false, command: {noop: {}}}
+  log-level-file: {type: string, required: false, command: {noop: {}}}
+  log-level-stderr: {type: string, required: false, command: {noop: {}}}
+  pg: {type: string, required: false, command: {noop: {}}}
+  pg-path: {type: string, required: false, command: {noop: {}}}
+  repo-type: {type: string, required: false, command: {noop: {}}}
+  repo: {type: string, required: false, command: {noop: {}}}
+  spool-path: {type: string, required: false, command: {noop: {}}}
+  stanza: {type: string, required: false, command: {noop: {}}}

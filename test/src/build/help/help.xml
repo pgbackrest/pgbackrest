@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd">
+<doc>
+    <config><config-section-list></config-section-list></config>
+
+    <operation>
+        <operation-general>
+            <option-list>
+                <option id="config"><summary></summary><text><p></p></text></option>
+                <option id="config-path"><summary></summary><text><p></p></text></option>
+                <option id="config-include-path"><summary></summary><text><p></p></text></option>
+                <option id="pg"><summary></summary><text><p></p></text></option>
+                <option id="pg-path"><summary></summary><text><p></p></text></option>
+                <option id="compress-level-network"><summary></summary><text><p></p></text></option>
+                <option id="job-retry"><summary></summary><text><p></p></text></option>
+                <option id="job-retry-interval"><summary></summary><text><p></p></text></option>
+                <option id="log-level-file"><summary></summary><text><p></p></text></option>
+                <option id="log-level-stderr"><summary></summary><text><p></p></text></option>
+                <option id="repo"><summary></summary><text><p></p></text></option>
+                <option id="repo-type"><summary></summary><text><p></p></text></option>
+                <option id="spool-path"><summary></summary><text><p></p></text></option>
+                <option id="stanza"><summary></summary><text><p></p></text></option>
+
+                <option id="buffer-size">
+                    <summary>Buffer size for I/O operations.</summary>
+
+                    <text>
+                        <p>Buffer size used for copy, compress, encrypt, and other operations. The number of buffers used depends on options and each operation may use additional memory, e.g. <id>gz</id> compression may use an additional 256KiB of memory.</p>
+
+                        <p>Allowed values are <id>16KiB</id>, <id>32KiB</id>, <id>64KiB</id>, <id>128KiB</id>, <id>256KiB</id>, <id>512KiB</id>, and <id>1MiB</id>.</p>
+                    </text>
+
+                    <example>1MiB</example>
+                </option>
+
+                <option id="log-level">
+                    <summary>Level for harness logging.</summary>
+
+                    <text>
+                        <p>Log level for the test harness (as opposed to the test being run).</p>
+
+                        <p>The following log levels are supported:</p>
+
+                        <list>
+                            <list-item><id>off</id> - No logging at all (not recommended)</list-item>
+                            <list-item><id>error</id> - Log only errors</list-item>
+                            <list-item><id>warn</id> - Log warnings and errors</list-item>
+                            <list-item><id>info</id> - Log info, warnings, and errors</list-item>
+                            <list-item><id>detail</id> - Log detail, info, warnings, and errors</list-item>
+                            <list-item><id>debug</id> - Log debug, detail, info, warnings, and errors</list-item>
+                            <list-item><id>trace</id> - Log trace (very verbose debugging), debug, info, warnings, and errors</list-item>
+                        </list>
+                    </text>
+
+                    <example>error</example>
+                </option>
+
+                <option id="log-level-test">
+                    <summary>Level for test logging.</summary>
+
+                    <text>
+                        <p>Log level for the test being run (as opposed to the test harness).</p>
+
+                        <p>Supported log levels are the same as <br-option>log-level</br-option></p>
+                    </text>
+
+                    <example>error</example>
+                </option>
+
+                <option id="log-timestamp">
+                    <summary>Enable timestamp in logging.</summary>
+
+                    <text>
+                        <p>Enables the timestamp in console and file logging. This option is disabled in special situations such as generating documentation.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
+                <option id="module">
+                    <summary>Module to test.</summary>
+
+                    <text>
+                        <p>Unit test module to be tested.</p>
+                    </text>
+
+                    <example>common/error</example>
+                </option>
+
+                <option id="neutral-umask">
+                    <summary>Use a neutral umask.</summary>
+
+                    <text>
+                        <p>Sets the umask to 0000 so modes are created in a sensible way. The default directory mode is 0750 and default file mode is 0640. The lock and log directories set the directory and file mode to 0770 and 0660 respectively.</p>
+
+                        <p>To use the executing user's umask instead specify <setting>neutral-umask=n</setting> in the config file or <setting>--no-neutral-umask</setting> on the command line.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
+                <option id="repo-path">
+                    <summary>Path to code repository.</summary>
+
+                    <text>
+                        <p>Path to the original code repository or a copy.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
+                <option id="scale">
+                    <summary>Scale performance test.</summary>
+
+                    <text>
+                        <p>Allows performance tests to be scaled from the default.</p>
+                    </text>
+
+                    <example>10</example>
+                </option>
+
+                <option id="test">
+                    <summary>Module test to run.</summary>
+
+                    <text>
+                        <p>Run an individual test in a module.</p>
+                    </text>
+
+                    <example>2</example>
+                </option>
+
+                <option id="test-path">
+                    <summary>Path where test will run.</summary>
+
+                    <text>
+                        <p>This path will be managed entirely by the test harness.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
+                <option id="tz">
+                    <summary>Timezone for testing.</summary>
+
+                    <text>
+                        <p>Used to ensure that different timezones do not change test results.</p>
+                    </text>
+
+                    <example>America/New_York</example>
+                </option>
+
+                <option id="vm">
+                    <summary>VM to run test on.</summary>
+
+                    <text>
+                        <p>Name of VM to run the test on.</p>
+                    </text>
+
+                    <example>rh7</example>
+                </option>
+
+                <option id="vm-id">
+                    <summary>VM id to run test on.</summary>
+
+                    <text>
+                        <p>Allows more than one test to run simultaneously.</p>
+                    </text>
+
+                    <example>3</example>
+                </option>
+            </option-list>
+        </operation-general>
+
+        <command-list>
+            <command id="help">
+                <summary>Get help.</summary>
+
+                <text>
+                    <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>pgbackrest help backup</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help backup type</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
+                </text>
+            </command>
+
+            <!-- Noop command holds options that must be defined but we don't need -->
+            <command id="noop"><summary></summary><text><p></p></text></command>
+
+            <command id="test">
+                <summary>Run a test.</summary>
+
+                <text>
+                    <p>By default tests expect to run with the code repository in a subpath named <path>pgbackrest</path>. Tests will be run in a subpath named <path>test</path>.</p>
+
+                    <p>A test can be run by using the module option, e.g. <br-option>--module=common/error</br-option>.</p>
+                </text>
+            </command>
+
+            <command id="version">
+                <summary>Get version.</summary>
+
+                <text>
+                    <p>Displays installed <backrest/> version.</p>
+                </text>
+            </command>
+        </command-list>
+    </operation>
+</doc>

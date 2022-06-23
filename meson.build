@@ -169,3 +169,4 @@ configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 
 # Include subdirs
 ####################################################################################################################################
 subdir('src')
+subdir('test/src')

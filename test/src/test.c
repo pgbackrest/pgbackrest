@@ -5,6 +5,11 @@ This wrapper runs the C unit tests.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+// Enable FUNCTION_TEST*() macros for enhanced debugging
+#ifndef DEBUG_TEST_TRACE
+    #define DEBUG_TEST_TRACE
+#endif
+
 // This must be before all includes except build.auto.h
 #ifdef HRN_FEATURE_MEMCONTEXT
     #define DEBUG_MEM

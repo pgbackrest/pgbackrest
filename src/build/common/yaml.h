@@ -102,6 +102,38 @@ yamlFree(Yaml *const this)
 }
 
 /***********************************************************************************************************************************
+Helper macros for iterating sequences and maps
+***********************************************************************************************************************************/
+#define YAML_ITER_BEGIN(yamlParam, eventBegin)                                                                                     \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        Yaml *const YAML_ITER_yaml = yaml;                                                                                         \
+        yamlEventNextCheck(YAML_ITER_yaml, eventBegin);                                                                            \
+                                                                                                                                   \
+        do                                                                                                                         \
+        {
+
+#define YAML_ITER_END(eventEnd)                                                                                                    \
+        }                                                                                                                          \
+        while (yamlEventPeek(YAML_ITER_yaml).type != eventEnd);                                                                    \
+                                                                                                                                   \
+        yamlEventNextCheck(YAML_ITER_yaml, eventEnd);                                                                              \
+    }                                                                                                                              \
+    while (0)
+
+#define YAML_SEQ_BEGIN(yaml)                                                                                                       \
+    YAML_ITER_BEGIN(yaml, yamlEventTypeSeqBegin)
+
+#define YAML_SEQ_END()                                                                                                             \
+    YAML_ITER_END(yamlEventTypeSeqEnd);
+
+#define YAML_MAP_BEGIN(yaml)                                                                                                       \
+    YAML_ITER_BEGIN(yaml, yamlEventTypeMapBegin)
+
+#define YAML_MAP_END()                                                                                                             \
+    YAML_ITER_END(yamlEventTypeMapEnd);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_YAML_TYPE                                                                                                     \
