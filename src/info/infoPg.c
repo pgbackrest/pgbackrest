@@ -294,8 +294,8 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
         if (saveData->infoPg->type == infoPgBackup)
         {
             infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_CATALOG_VERSION, jsonFromVar(VARUINT(pgData.catalogVersion)));
-            infoSaveValue(
-                infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_CONTROL_VERSION, jsonFromVar(VARUINT(pgControlVersion(pgData.version))));
+            infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_CONTROL_VERSION,
+                          jsonFromVar(VARUINT(pgControlVersion(getDBMSType(pgData.catalogVersion), pgData.version))));
         }
 
         infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_ID, jsonFromVar(VARUINT(pgData.id)));
@@ -318,7 +318,8 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
             if (saveData->infoPg->type == infoPgBackup)
             {
                 jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CATALOG_VERSION), pgData.catalogVersion);
-                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION), pgControlVersion(pgData.version));
+                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION),
+                              pgControlVersion(getDBMSType(pgData.catalogVersion), pgData.version));
             }
 
             if (saveData->infoPg->type == infoPgArchive)

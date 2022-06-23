@@ -89,29 +89,47 @@ typedef struct PgControlCommon
 } PgControlCommon;
 
 /***********************************************************************************************************************************
-Get the interface for a PostgreSQL version
+Get the interface for a DBMS version
 ***********************************************************************************************************************************/
 static const PgInterface *
-pgInterfaceVersion(unsigned int pgVersion)
+pgInterfaceVersion(DBMSType dt, unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, dt);
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
     const PgInterface *result = NULL;
-
-    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+    if (dt == dbmsGreenplum)
     {
-        if (pgInterface[interfaceIdx].version == pgVersion)
+        // Search among Greenplum interfaces
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(gpdbInterface); interfaceIdx++)
         {
-            result = &pgInterface[interfaceIdx];
-            break;
+            if (gpdbInterface[interfaceIdx].version == pgVersion)
+            {
+                result = &gpdbInterface[interfaceIdx];
+                break;
+            }
+        }
+    }
+    else
+    {   // dt == dbmsPostgreSQL
+        // Search among PostgreSQL interfaces
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+        {
+            if (pgInterface[interfaceIdx].version == pgVersion)
+            {
+                result = &pgInterface[interfaceIdx];
+                break;
+            }
         }
     }
 
     // If the version was not found then error
     if (result == NULL)
-        THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
+        THROW_FMT(AssertError, "invalid %s version %u",
+                 (dt == dbmsGreenplum) ? GPDB_NAME : PG_NAME,
+                 pgVersion);
 
     FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
 }
@@ -192,6 +210,18 @@ pgControlFromBuffer(const Buffer *controlFile)
         }
     }
 
+    if (interface == NULL)
+    {
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(gpdbInterface); interfaceIdx++)
+        {
+            if (gpdbInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
+            {
+                interface = &gpdbInterface[interfaceIdx];
+                break;
+            }
+        }
+    }
+
     // If the version was not found then error with the control and catalog version that were found
     if (interface == NULL)
     {
@@ -244,13 +274,14 @@ pgControlFromFile(const Storage *storage)
 
 /**********************************************************************************************************************************/
 uint32_t
-pgControlVersion(unsigned int pgVersion)
+pgControlVersion(DBMSType dt, unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, dt);
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(UINT32, pgInterfaceVersion(pgVersion)->controlVersion());
+    FUNCTION_TEST_RETURN(UINT32, pgInterfaceVersion(dt, pgVersion)->controlVersion());
 }
 
 /***********************************************************************************************************************************
@@ -290,6 +321,8 @@ pgWalFromBuffer(const Buffer *walBuffer)
             break;
         }
     }
+
+    // The interface of PostgreSQL 9.4 is used for GPDB6 here
 
     // If the version was not found then error with the magic that was found
     if (interface == NULL)

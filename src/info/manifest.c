@@ -2233,7 +2233,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             jsonFromVar(VARUINT(manifest->pub.data.pgCatalogVersion)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB, "db-control-version",
-            jsonFromVar(VARUINT(pgControlVersion(manifest->pub.data.pgVersion))));
+            jsonFromVar(VARUINT(pgControlVersion(getDBMSType(manifest->pub.data.pgCatalogVersion), manifest->pub.data.pgVersion))));
         infoSaveValue(infoSaveData, MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_ID, jsonFromVar(VARUINT(manifest->pub.data.pgId)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP_DB, MANIFEST_KEY_DB_SYSTEM_ID,

@@ -1,0 +1,9 @@
+# Supported GPDB Versions
+#
+# Version interfaces are auto-generated to src/postgres/interface.auto.c.inc.
+#
+# - 'version' contains a list of all supported versions
+# - For a specific version, 'pg_version' contains PostgreSQL version which the GPDB version is based on
+version:
+  - 6:
+      pg_version: 9.4

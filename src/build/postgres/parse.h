@@ -15,9 +15,16 @@ typedef struct BldPgVersion
     bool release;                                                   // Is this a released version?
 } BldPgVersion;
 
+typedef struct BldGpdbVersion
+{
+    const String *version;                                          // Version
+    const String *pg_version;                                       // PostgreSQL version
+} BldGpdbVersion;
+
 typedef struct BldPg
 {
     const List *pgList;                                            // Supported PostgreSQL versions
+    const List *gpdbList;                                          // Supported GPDB versions
     const StringList *typeList;                                    // PostgreSQL interface types
     const StringList *defineList;                                  // PostgreSQL interface defines
     const StringList *functionList;                                // Functions defined by macros
@@ -26,7 +33,7 @@ typedef struct BldPg
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Parse postgres.yaml
+// Parse postgres.yaml and gpdb.yaml
 BldPg bldPgParse(const Storage *const storageRepo);
 
 #endif

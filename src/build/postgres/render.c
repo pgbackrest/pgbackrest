@@ -77,7 +77,7 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
             strCatFmt(pg, "#undef %s\n", strZ(strLstGet(bldPg.functionList, functionIdx)));
     }
 
-    // Interface struct
+    // PostgreSQL interface struct
     // -----------------------------------------------------------------------------------------------------------------------------
     strCatFmt(
         pg,
@@ -131,6 +131,111 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
         pg,
         "};\n");
 
+    // Greenplum interfaces
+    // -----------------------------------------------------------------------------------------------------------------------------
+    for (unsigned int gpdbIdx = lstSize(bldPg.gpdbList) - 1; gpdbIdx < lstSize(bldPg.gpdbList); gpdbIdx--)
+    {
+        const BldGpdbVersion *const gpdbVersion = lstGet(bldPg.gpdbList, gpdbIdx);
+        const char *const versionNoDot = strZ(strLstJoin(strLstNewSplitZ(gpdbVersion->version, "."), ""));
+        const char *const pgVersionNoDot = strZ(strLstJoin(strLstNewSplitZ(gpdbVersion->pg_version, "."), ""));
+
+        strCatFmt(
+            pg,
+            "\n"
+            COMMENT_BLOCK_BEGIN "\n"
+            "Greenplum %s interface\n"
+            COMMENT_BLOCK_END "\n"
+            "#define PG_VERSION                                                  PG_VERSION_%s\n"
+            "#define GPDB_VERSION                                                GPDB_VERSION_%s\n"
+            "\n",
+            strZ(gpdbVersion->version), pgVersionNoDot, versionNoDot);
+
+        for (unsigned int typeIdx = 0; typeIdx < strLstSize(bldPg.typeList); typeIdx++)
+        {
+            const String *const type = strLstGet(bldPg.typeList, typeIdx);
+
+            strCat(pg, bldDefineRender(type, strNewFmt("%s_GPDB%s", strZ(type), versionNoDot)));
+            strCatChr(pg, '\n');
+        }
+
+        strCatZ(
+            pg,
+            "\n"
+            "#include \"postgres/interface/version.intern.h\"\n"
+            "\n");
+
+        for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
+            strCatFmt(pg, "%s(GPDB%s);\n", strZ(strLstGet(bldPg.functionList, functionIdx)), versionNoDot);
+
+        strCatChr(pg, '\n');
+
+        for (unsigned int typeIdx = 0; typeIdx < strLstSize(bldPg.typeList); typeIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(bldPg.typeList, typeIdx)));
+
+        strCatChr(pg, '\n');
+
+        for (unsigned int defineIdx = 0; defineIdx < strLstSize(bldPg.defineList); defineIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(bldPg.defineList, defineIdx)));
+
+        strCatChr(pg, '\n');
+
+        for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
+            strCatFmt(pg, "#undef %s\n", strZ(strLstGet(bldPg.functionList, functionIdx)));
+    }
+
+    // Greenplum interface struct
+    // -----------------------------------------------------------------------------------------------------------------------------
+    strCatFmt(
+        pg,
+        "\n"
+        COMMENT_BLOCK_BEGIN "\n"
+        "GPDB interface struct\n"
+        COMMENT_BLOCK_END "\n"
+        "static const PgInterface gpdbInterface[] =\n"
+        "{\n");
+
+    for (unsigned int gpdbIdx = lstSize(bldPg.gpdbList) - 1; gpdbIdx < lstSize(bldPg.gpdbList); gpdbIdx--)
+    {
+        const BldGpdbVersion *const pgVersion = lstGet(bldPg.gpdbList, gpdbIdx);
+        const char *const versionNoDot = strZ(strLstJoin(strLstNewSplitZ(pgVersion->version, "."), ""));
+
+        strCatFmt(
+            pg,
+            "    {\n"
+            "        .version = GPDB_VERSION_%s,\n"
+            "\n",
+            versionNoDot);
+
+        for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
+        {
+            // Convert define name to function name
+            const StringList *const nameList = strLstNewSplitZ(strLstGet(bldPg.functionList, functionIdx), "_");
+            String *const name = strNew();
+
+            for (unsigned int nameIdx = 0; nameIdx < strLstSize(nameList); nameIdx++)
+            {
+                String *const namePart = strLower(strLstGet(nameList, nameIdx));
+
+                if (nameIdx != 0)
+                    strFirstUpper(namePart);
+
+                strCat(name, namePart);
+            }
+
+            strCatFmt(
+                pg,
+                "        .%s = %sGPDB%s,\n",
+                strZ(strFirstLower(strSub(name, sizeof("pgInterface") - 1))), strZ(name), versionNoDot);
+        }
+
+        strCatZ(
+            pg,
+            "    },\n");
+    }
+
+    strCatFmt(
+        pg,
+        "};\n");
     bldPut(storageRepo, "postgres/interface.auto.c.inc", BUFSTR(pg));
 }
 
