@@ -107,10 +107,10 @@ typedef struct StorageInfoListParam
     const String *expression;
 } StorageInfoListParam;
 
-#define storageInfoListP(this, fileExp, callback, callbackData, ...)                                                               \
-    storageInfoList(this, fileExp, callback, callbackData, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInfoListO(this, fileExp, callback, callbackData, ...)                                                               \
+    storageInfoListOld(this, fileExp, callback, callbackData, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-bool storageInfoList(
+bool storageInfoListOld(
     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param);
 
 // Get a list of files from a directory
@@ -126,6 +126,16 @@ typedef struct StorageListParam
     storageList(this, pathExp, (StorageListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 StringList *storageList(const Storage *this, const String *pathExp, StorageListParam param);
+
+// Get a list of files from a directory (!!!NEW)
+typedef struct StorageList StorageList;
+
+#define storageInfoListP(this, fileExp, ...)                                                                                          \
+    storageListX(this, fileExp, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+StorageList *storageListX(const Storage *this, const String *pathExp, StorageInfoListParam param);
+bool storageListMore(StorageList *this);
+StorageInfo storageListNext(StorageList *this);
 
 // Move a file
 #define storageMoveP(this, source, destination)                                                                                    \
@@ -268,5 +278,10 @@ String *storageToLog(const Storage *this);
     Storage *
 #define FUNCTION_LOG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                     \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
+
+#define FUNCTION_LOG_STORAGE_LIST_TYPE                                                                                             \
+    StorageList *
+#define FUNCTION_LOG_STORAGE_LIST_FORMAT(value, buffer, bufferSize)                                                                \
+    objToLog(value, "StorageList", buffer, bufferSize)
 
 #endif

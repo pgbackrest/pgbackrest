@@ -144,7 +144,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("storageInfoList()"))
+    if (testBegin("storageInfoListP()"))
     {
         TEST_TITLE_FMT("list %d million files", TEST_SCALE);
 
@@ -163,7 +163,7 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                // Create a driver to test remote performance of storageInfoList() and inject it into storageRepo()
+                // Create a driver to test remote performance of storageInfoListP() and inject it into storageRepo()
                 StorageTestPerfInfoList driver =
                 {
                     .interface = storageInterfaceTestDummy,
@@ -203,7 +203,7 @@ testRun(void)
                 uint64_t fileCallbackTotal = 0;
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, &fileCallbackTotal),
+                    storageInfoListO(storageRemote, NULL, storageTestDummyInfoListCallback, &fileCallbackTotal),
                     "list remote files");
 
                 TEST_RESULT_UINT(fileCallbackTotal, fileTotal, "check callback total");

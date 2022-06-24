@@ -283,7 +283,7 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     // Generate a list of files/paths/etc
     List *list = lstNewP(sizeof(StorageInfo));
 
-    storageInfoListP(
+    storageInfoListO(
         storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse,
         .expression = param.expression != NULL ? STR(param.expression) : NULL);
 

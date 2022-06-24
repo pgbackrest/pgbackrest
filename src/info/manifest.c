@@ -820,7 +820,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             buildDataSub.pgPath = strNewFmt("%s/%s", strZ(buildData.pgPath), strZ(info->name));
             buildDataSub.dbPath = regExpMatch(buildData.dbPathExp, manifestName);
 
-            storageInfoListP(
+            storageInfoListO(
                 buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
 
             break;
@@ -1211,7 +1211,7 @@ manifestNewBuild(
             manifestTargetAdd(this, &target);
 
             // Gather info for the rest of the files/links/paths
-            storageInfoListP(
+            storageInfoListO(
                 storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
 
             // These may not be in order even if the incoming data was sorted

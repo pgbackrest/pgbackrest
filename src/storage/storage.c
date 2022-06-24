@@ -287,7 +287,7 @@ typedef struct StorageInfoListSortData
 } StorageInfoListSortData;
 
 static void
-storageInfoListSortCallback(void *data, const StorageInfo *info)
+storageInfoListOldSortCallback(void *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_LOG_PARAM_P(VOID, data);
@@ -313,7 +313,7 @@ storageInfoListSortCallback(void *data, const StorageInfo *info)
 }
 
 static bool
-storageInfoListSort(
+storageInfoListOldSort(
     const Storage *this, const String *path, StorageInfoLevel level, const String *expression, SortOrder sortOrder,
     StorageInfoListCallback callback, void *callbackData)
 {
@@ -350,7 +350,7 @@ storageInfoListSort(
             };
 
             result = storageInterfaceInfoListP(
-                storageDriver(this), path, level, storageInfoListSortCallback, &data, .expression = expression);
+                storageDriver(this), path, level, storageInfoListOldSortCallback, &data, .expression = expression);
             lstSort(data.infoList, sortOrder);
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -386,7 +386,7 @@ typedef struct StorageInfoListData
 } StorageInfoListData;
 
 static void
-storageInfoListCallback(void *data, const StorageInfo *info)
+storageInfoListOldCallback(void *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_LOG_PARAM_P(VOID, data);
@@ -421,9 +421,9 @@ storageInfoListCallback(void *data, const StorageInfo *info)
         StorageInfoListData data = *listData;
         data.subPath = infoUpdate.name;
 
-        storageInfoListSort(
+        storageInfoListOldSort(
             data.storage, strNewFmt("%s/%s", strZ(data.path), strZ(data.subPath)), infoUpdate.level, data.expression,
-            data.sortOrder, storageInfoListCallback, &data);
+            data.sortOrder, storageInfoListOldCallback, &data);
     }
 
     // Callback after checking path contents when descending
@@ -434,7 +434,7 @@ storageInfoListCallback(void *data, const StorageInfo *info)
 }
 
 bool
-storageInfoList(
+storageInfoListOld(
     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -482,11 +482,11 @@ storageInfoList(
             if (data.expression != NULL)
                 data.regExp = regExpNew(param.expression);
 
-            result = storageInfoListSort(
-                this, path, param.level, param.expression, param.sortOrder, storageInfoListCallback, &data);
+            result = storageInfoListOldSort(
+                this, path, param.level, param.expression, param.sortOrder, storageInfoListOldCallback, &data);
         }
         else
-            result = storageInfoListSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
+            result = storageInfoListOldSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
 
         if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
@@ -494,6 +494,95 @@ storageInfoList(
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+struct StorageList
+{
+    List *list;                                                     // Storage list
+    unsigned int listIdx;                                           // Current index
+};
+
+static void
+storageListXCallback(void *data, const StorageInfo *info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    if (!strEq(info->name, DOT_STR))
+    {
+        MEM_CONTEXT_OBJ_BEGIN(data)
+        {
+            StorageInfo *const infoCopy = lstAdd(data, info);
+
+            infoCopy->name = strDup(info->name);
+            infoCopy->user = strDup(info->user);
+            infoCopy->group = strDup(info->group);
+            infoCopy->linkDestination = strDup(info->linkDestination);
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+StorageList *
+storageListX(const Storage *this, const String *pathExp, StorageInfoListParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, pathExp);
+        FUNCTION_LOG_PARAM(ENUM, param.level);
+        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
+        FUNCTION_LOG_PARAM(STRING, param.expression);
+        FUNCTION_LOG_PARAM(BOOL, param.recurse);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // Create object
+    StorageList *storageList = NULL;
+
+    OBJ_NEW_BEGIN(StorageList, .childQty = 1)
+    {
+        // Create object
+        storageList = OBJ_NEW_ALLOC();
+
+        *storageList = (StorageList)
+        {
+            .list = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
+        };
+    }
+    OBJ_NEW_END();
+
+    storageInfoListOld(this, pathExp, storageListXCallback, storageList->list, param);
+
+    FUNCTION_LOG_RETURN(STORAGE_LIST, storageList);
+}
+
+bool
+storageListMore(StorageList *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STORAGE_LIST, this);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(BOOL, this->listIdx < lstSize(this->list));
+}
+
+StorageInfo storageListNext(StorageList *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STORAGE_LIST, this);
+    FUNCTION_TEST_END();
+
+    const StorageInfo *const result = lstGet(this->list, this->listIdx);
+    this->listIdx++;
+
+    FUNCTION_TEST_RETURN(STORAGE_INFO, *result);
 }
 
 /**********************************************************************************************************************************/
@@ -537,7 +626,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 
         // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler when
         // the caller doesn't care if the path is missing.
-        if (!storageInfoListP(
+        if (!storageInfoListO(
                 this, pathExp, storageListCallback, result, .level = storageInfoLevelExists, .errorOnMissing = param.errorOnMissing,
                 .expression = param.expression))
         {

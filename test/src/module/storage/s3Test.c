@@ -1069,11 +1069,11 @@ testRun(void)
                 };
 
                 TEST_ERROR(
-                    storageInfoListP(s3, STRDEF("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                    storageInfoListO(s3, STRDEF("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
                     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                    storageInfoListO(s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
                     "test_path {path}\n"
@@ -1100,7 +1100,7 @@ testRun(void)
                 callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(s3, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
+                    storageInfoListO(s3, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
@@ -1125,7 +1125,7 @@ testRun(void)
                 callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(
+                    storageInfoListO(
                         s3, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test.*$"),
                         .level = storageInfoLevelExists),
                     "list");
@@ -1175,7 +1175,7 @@ testRun(void)
                 callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(
+                    storageInfoListO(
                         s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -1216,7 +1216,7 @@ testRun(void)
                 callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListP(
+                    storageInfoListO(
                         s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test(1|3)"),
                         .level = storageInfoLevelExists),
                     "list");

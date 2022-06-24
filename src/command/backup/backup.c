@@ -547,7 +547,7 @@ void backupResumeCallback(void *data, const StorageInfo *info)
                 resumeDataSub.manifestParentName = manifestName;
                 resumeDataSub.backupPath = backupPath;
 
-                storageInfoListP(
+                storageInfoListO(
                     storageRepo(), resumeDataSub.backupPath, backupResumeCallback, &resumeDataSub, .sortOrder = sortOrderAsc);
             }
 
@@ -798,7 +798,7 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
                 .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel)),
             };
 
-            storageInfoListP(storageRepo(), resumeData.backupPath, backupResumeCallback, &resumeData, .sortOrder = sortOrderAsc);
+            storageInfoListO(storageRepo(), resumeData.backupPath, backupResumeCallback, &resumeData, .sortOrder = sortOrderAsc);
         }
     }
     MEM_CONTEXT_TEMP_END();

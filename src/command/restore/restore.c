@@ -892,7 +892,7 @@ restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *i
     FUNCTION_TEST_RETURN_VOID();
 }
 
-// storageInfoList() callback that cleans the paths
+// !!! storageInfoListO() callback that cleans the paths
 static void
 restoreCleanInfoListCallback(void *data, const StorageInfo *info)
 {
@@ -998,7 +998,7 @@ restoreCleanInfoListCallback(void *data, const StorageInfo *info)
                 cleanDataSub.targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info->name));
                 cleanDataSub.basePath = false;
 
-                storageInfoListP(
+                storageInfoListO(
                     storageLocalWrite(), cleanDataSub.targetPath, restoreCleanInfoListCallback, &cleanDataSub,
                     .errorOnMissing = true, .sortOrder = sortOrderAsc);
             }
@@ -1121,7 +1121,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                 {
                     if (cleanData->target->file == NULL)
                     {
-                        storageInfoListP(
+                        storageInfoListO(
                             storageLocal(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData,
                             .errorOnMissing = true);
                     }
@@ -1202,7 +1202,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                     restoreCleanMode(cleanData->targetPath, manifestPath->mode, &info);
 
                     // Clean the target
-                    storageInfoListP(
+                    storageInfoListO(
                         storageLocalWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true,
                         .sortOrder = sortOrderAsc);
                 }

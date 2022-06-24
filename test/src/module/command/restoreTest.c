@@ -111,7 +111,7 @@ testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest 
     };
 
     TEST_RESULT_VOID(
-        storageInfoListP(storage, pgPath, hrnStorageInfoListCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc),
+        storageInfoListO(storage, pgPath, hrnStorageInfoListCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc),
         "pg path info list for restore compare");
 
     // Compare
