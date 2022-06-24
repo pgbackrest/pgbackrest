@@ -24,7 +24,7 @@ configure_file(output: 'build.auto.h', configuration: configuration)
 ####################################################################################################################################
 # Common source used by all targets
 ####################################################################################################################################
-src_common = [
+src_common = files(
 	'common/debug.c',
 	'common/encode.c',
 	'common/error.c',
@@ -63,7 +63,7 @@ src_common = [
 	'storage/read.c',
 	'storage/storage.c',
 	'storage/write.c',
-]
+)
 
 ####################################################################################################################################
 # Build config target
@@ -185,6 +185,7 @@ src_pgbackrest = [
 	'command/backup/file.c',
 	'command/check/check.c',
 	'command/check/common.c',
+	'command/exit.c',
 	'command/expire/expire.c',
 	'command/help/help.c',
 	'command/info/info.c',
@@ -229,7 +230,6 @@ src_pgbackrest = [
 	'common/crypto/common.c',
 	'common/crypto/hash.c',
 	'common/exec.c',
-	'common/exit.c',
 	'common/fork.c',
 	'common/ini.c',
 	'common/io/client.c',

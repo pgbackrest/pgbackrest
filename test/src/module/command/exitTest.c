@@ -94,7 +94,7 @@ testRun(void)
         {
             exitSafe(0, true, signalTypeNone);
             TEST_RESULT_LOG(
-                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/exit::exitSafe: (result: 0, error: true, signalType: 0)\n"
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/command/exit::exitSafe: (result: 0, error: true, signalType: 0)\n"
                 "P00  ERROR: [122]: test debug error message\n"
                 "            --------------------------------------------------------------------\n"
                 "            If SUBMITTING AN ISSUE please provide the following information:\n"
@@ -109,7 +109,7 @@ testRun(void)
                 "P00   INFO: archive-push:async command end: aborted with exception [122]\n"
                 "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: (failOnNoLock: false)\n"
                 "P00  DEBUG:     " TEST_PGB_PATH "/src/common/lock::lockRelease: => false\n"
-                "P00  DEBUG:     " TEST_PGB_PATH "/src/common/exit::exitSafe: => 122");
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/command/exit::exitSafe: => 122");
         }
         TRY_END();
 

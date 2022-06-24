@@ -181,6 +181,9 @@ String *strPathAbsolute(const String *this, const String *base);
 String *strQuote(const String *this, const String *quote);
 String *strQuoteZ(const String *this, const char *quote);
 
+// Replace a substring with another string
+String *strReplace(String *this, const String *replace, const String *with);
+
 // Replace a character with another character
 String *strReplaceChr(String *this, char find, char replace);
 

@@ -439,6 +439,14 @@ src/command/control/stop.h:
   class: core
   type: c/h
 
+src/command/exit.c:
+  class: core
+  type: c
+
+src/command/exit.h:
+  class: core
+  type: c/h
+
 src/command/expire/expire.c:
   class: core
   type: c
@@ -804,14 +812,6 @@ src/common/exec.c:
   type: c
 
 src/common/exec.h:
-  class: core
-  type: c/h
-
-src/common/exit.c:
-  class: core
-  type: c
-
-src/common/exit.h:
   class: core
   type: c/h
 
@@ -2179,6 +2179,10 @@ test/src/module/command/controlTest.c:
   class: test/module
   type: c
 
+test/src/module/command/exitTest.c:
+  class: test/module
+  type: c
+
 test/src/module/command/expireTest.c:
   class: test/module
   type: c
@@ -2252,10 +2256,6 @@ test/src/module/common/errorTest.c:
   type: c
 
 test/src/module/common/execTest.c:
-  class: test/module
-  type: c
-
-test/src/module/common/exitTest.c:
   class: test/module
   type: c
 

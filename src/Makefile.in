@@ -64,6 +64,7 @@ SRCS = \
 	command/check/check.c \
 	command/check/common.c \
 	command/expire/expire.c \
+	command/exit.c \
 	command/help/help.c \
 	command/info/info.c \
 	command/command.c \
@@ -105,7 +106,6 @@ SRCS = \
 	common/crypto/common.c \
 	common/crypto/hash.c \
 	common/exec.c \
-	common/exit.c \
 	common/fork.c \
 	common/ini.c \
 	common/io/client.c \
