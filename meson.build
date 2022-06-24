@@ -27,7 +27,7 @@ cc = meson.get_compiler('c')
 # Error on release builds since we do not want anyone using meson for production yet
 ####################################################################################################################################
 if get_option('buildtype') != 'debug'
-    error('meson is currently not supported for release builds')
+#    error('meson is currently not supported for release builds')
 endif
 
 ####################################################################################################################################
@@ -155,6 +155,27 @@ lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
 if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
 endif
+else
+
+yaml_inc_dir = include_directories('D:/Dep/yaml/include')
+lib_yaml = cc.find_library('yaml', dirs: ['D:/Dep/yaml/lib'], )
+# Find required openssl library
+# lib_openssl = dependency('openssl')
+
+# Find required pq library
+# lib_pq = dependency('libpq')
+
+# Find required xml library
+# lib_xml = dependency('libxml-2.0')
+
+# Find required yaml library (only used for build)
+# lib_yaml = dependency('yaml-0.1')
+
+# Find required gz library
+# lib_z = dependency('zlib')
+
+# Find optional zstd library
+# lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
 endif
 
 # Check if the C compiler supports _Static_assert()
@@ -180,6 +201,12 @@ endif
 if cc.get_id() == 'msvc'
     # Include MSVC compatibility header
     configuration.set('INCLUDE_MSVC_COMPAT', '#include "msvcCompat.h"', description: 'MSVC compatibility header')
+    if lib_yaml.found()
+        # Enable static import for lib yaml
+        configuration.set('ENABLE_YAML', '#define ENABLE_YAML', description: 'Enable lib_yaml static import')
+    else
+        configuration.set('ENABLE_YAML', '')
+    endif
 else
     configuration.set('INCLUDE_MSVC_COMPAT', '', description: '')
 endif
@@ -188,4 +215,4 @@ endif
 # Include subdirs
 ####################################################################################################################################
 subdir('src')
-subdir('test/src')
+# subdir('test/src')

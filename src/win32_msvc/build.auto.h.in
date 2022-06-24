@@ -4,4 +4,6 @@ Build file for meson
 
 #define FN_NO_RETURN @FN_NO_RETURN@
 
+@ENABLE_YAML@
+
 @INCLUDE_MSVC_COMPAT@

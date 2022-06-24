@@ -392,10 +392,10 @@ else
     # Build config target
     ####################################################################################################################################
     src_build_config = [
-        # 'build/common/render.c',
-        # 'build/common/yaml.c',
+        'build/common/render.c',
+        'build/common/yaml.c',
         # 'build/config/main.c',
-        # 'build/config/parse.c',
+        'build/config/parse.c',
         # 'build/config/render.c',
     ]
 
@@ -404,9 +404,15 @@ else
         src_common,
         src_build_config,
         src_win32,
-        dependencies : win32_deps,
+        dependencies : [
+            win32_deps,
+            lib_yaml
+        ],
         build_by_default: true,
-        include_directories: include_dir_win32,
+        include_directories: [
+            yaml_inc_dir,
+            include_dir_win32,
+        ]
     )
 
     alias_target('build-config', build_config)

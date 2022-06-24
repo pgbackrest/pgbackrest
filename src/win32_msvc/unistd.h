@@ -25,6 +25,7 @@ MSVC compatibility header for <unistd.h>
 #define unlink _unlink
 #define rmdir _rmdir
 #define mkdir(path, mode) _mkdir(path)
+#define getcwd _getcwd
 
 #endif
 
