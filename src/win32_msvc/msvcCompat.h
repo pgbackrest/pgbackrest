@@ -58,4 +58,8 @@ Dependencies
     #define YAML_DECLARE_STATIC
 #endif
 
+#ifdef ENABLE_REGEX
+    #define USE_REGEX_STATIC
+#endif
+
 #endif

@@ -159,6 +159,10 @@ else
 
 yaml_inc_dir = include_directories('D:/Dep/yaml/include')
 lib_yaml = cc.find_library('yaml', dirs: ['D:/Dep/yaml/lib'], )
+
+regex_inc_dir = include_directories('D:/Dep/regex/include')
+lib_regex = cc.find_library('regex', dirs: ['D:/Dep/regex/lib'], )
+
 # Find required openssl library
 # lib_openssl = dependency('openssl')
 
@@ -201,11 +205,17 @@ endif
 if cc.get_id() == 'msvc'
     # Include MSVC compatibility header
     configuration.set('INCLUDE_MSVC_COMPAT', '#include "msvcCompat.h"', description: 'MSVC compatibility header')
+    # Enable static import for lib yaml
     if lib_yaml.found()
-        # Enable static import for lib yaml
         configuration.set('ENABLE_YAML', '#define ENABLE_YAML', description: 'Enable lib_yaml static import')
     else
         configuration.set('ENABLE_YAML', '')
+    endif
+    # Enable static import for lib regex
+    if lib_regex.found()
+        configuration.set('ENABLE_REGEX', '#define ENABLE_REGEX', description: 'Enable lib_regex static import')
+    else
+        configuration.set('ENABLE_REGEX', '')
     endif
 else
     configuration.set('INCLUDE_MSVC_COMPAT', '', description: '')

@@ -328,6 +328,8 @@ alias_target('pgbackrest', pgbackrest)
 else
     configure_file(input: 'win32_msvc/build.auto.h.in', output: 'build.auto.h', configuration: configuration)
 
+    subdir('win32_msvc/regex')
+
     ################################################################################################################################
     # MSVC specific include dirs and sources
     ################################################################################################################################
@@ -375,7 +377,7 @@ else
         'common/type/keyValue.c',
         'common/type/json.c',
         'common/stat.c',
-        # 'common/regExp.c',
+        'common/regExp.c',
         'common/user.c',
         'common/wait.c',
         'common/ini.c',
@@ -399,6 +401,8 @@ else
         # 'build/config/render.c',
     ]
 
+    lib_regex2 = declare_dependency(link_with : dep_regex)
+
     build_config = executable(
         'build-config',
         src_common,
@@ -406,7 +410,8 @@ else
         src_win32,
         dependencies : [
             win32_deps,
-            lib_yaml
+            lib_yaml,
+            lib_regex2,
         ],
         build_by_default: true,
         include_directories: [

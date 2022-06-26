@@ -6,4 +6,6 @@ Build file for meson
 
 @ENABLE_YAML@
 
+@ENABLE_REGEX@
+
 @INCLUDE_MSVC_COMPAT@
