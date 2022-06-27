@@ -511,7 +511,7 @@ storageListXCallback(void *data, const StorageInfo *info)
         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    if (!strEq(info->name, DOT_STR))
+    if (info->type != storageTypePath || !strEq(info->name, DOT_STR))
     {
         MEM_CONTEXT_OBJ_BEGIN(data)
         {

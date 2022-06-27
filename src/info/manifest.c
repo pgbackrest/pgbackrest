@@ -713,7 +713,7 @@ manifestBuildInfo(
     ASSERT(pgPath != NULL);
     ASSERT(info != NULL);
 
-    // Skip all . paths because they have already been recorded on the previous level of recursion
+    // Skip all . links because they have already been recorded on the previous level of recursion
     if (strEq(info->name, DOT_STR))
         FUNCTION_TEST_RETURN_VOID();
 
