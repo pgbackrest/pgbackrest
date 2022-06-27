@@ -701,14 +701,14 @@ typedef struct ManifestBuildData
 
 // Callback to process files/links/paths and add them to the manifest
 static void
-manifestBuildCallback(void *data, const StorageInfo *info)
+manifestBuildInfo(ManifestBuildData buildData, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
+        FUNCTION_TEST_PARAM(VOID, buildData);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, *info);
     FUNCTION_TEST_END();
 
-    ASSERT(data != NULL);
+    // ASSERT(buildData != NULL);
     ASSERT(info != NULL);
 
     // Skip all . paths because they have already been recorded on the previous level of recursion
@@ -721,7 +721,6 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         FUNCTION_TEST_RETURN_VOID();
 
     // Get build data
-    ManifestBuildData buildData = *(ManifestBuildData *)data;
     unsigned int pgVersion = buildData.manifest->pub.data.pgVersion;
 
     // Construct the name used to identify this file/link/path in the manifest
@@ -820,8 +819,22 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             buildDataSub.pgPath = strNewFmt("%s/%s", strZ(buildData.pgPath), strZ(info->name));
             buildDataSub.dbPath = regExpMatch(buildData.dbPathExp, manifestName);
 
-            storageInfoListO(
-                buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
+            {
+                StorageList *const storageList = storageInfoListP(
+                    buildDataSub.storagePg, buildDataSub.pgPath, .sortOrder = sortOrderAsc);
+
+                while (storageListMore(storageList))
+                {
+                    const StorageInfo info = storageListNext(storageList);
+
+                    manifestBuildInfo(buildDataSub, &info);
+
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
 
             break;
         }
@@ -1070,7 +1083,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 storageInfoP(buildData.storagePg, linkPgPath, .followLink = true);
 
             // Recurse into the link destination
-            manifestBuildCallback(&buildData, &linkedInfo);
+            manifestBuildInfo(buildData, &linkedInfo);
 
             break;
         }
@@ -1211,8 +1224,22 @@ manifestNewBuild(
             manifestTargetAdd(this, &target);
 
             // Gather info for the rest of the files/links/paths
-            storageInfoListO(
-                storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
+            {
+                StorageList *const storageList = storageInfoListP(
+                    storagePg, buildData.pgPath, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+
+                while (storageListMore(storageList))
+                {
+                    const StorageInfo info = storageListNext(storageList);
+
+                    manifestBuildInfo(buildData, &info);
+
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
 
             // These may not be in order even if the incoming data was sorted
             lstSort(this->pub.fileList, sortOrderAsc);
