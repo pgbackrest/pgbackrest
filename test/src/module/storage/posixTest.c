@@ -350,20 +350,20 @@ testRun(void)
         TEST_TITLE("path missing");
 
         TEST_ERROR_FMT(
-            storageInfoListO(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL, .errorOnMissing = true),
+            storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL, .errorOnMissing = true),
             PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
 
         TEST_RESULT_BOOL(
-            storageInfoListO(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
+            storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
 
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_ERROR_FMT(
-            storageInfoListO(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
+            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
             STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageInfoListO(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
+            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
             STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
 
@@ -390,7 +390,7 @@ testRun(void)
         callbackData.content = strNew();
 
         TEST_RESULT_VOID(
-            storageInfoListO(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
+            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
             "directory with one dot file sorted");
         TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
 
@@ -419,7 +419,7 @@ testRun(void)
         };
 
         TEST_RESULT_VOID(
-            storageInfoListO(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
             "directory with one dot file sorted");
         TEST_RESULT_STR_Z(
             callbackData.content,
@@ -430,31 +430,6 @@ testRun(void)
             "file {file, s=8, m=0660}\n"
             "link {link, d=../file}\n"
             "pipe {special}\n",
-            "check content");
-
-        // !!! NEW INTERFACE
-        String *content = strNew();
-        StorageList *storageList = NULL;
-
-        TEST_ASSIGN(
-            storageList, storageInfoListP(storageTest, STRDEF("pg"), .sortOrder = sortOrderAsc),
-            "directory with one dot file sorted");
-
-        while (storageListMore(storageList))
-        {
-            const StorageInfo info = storageListNext(storageList);
-
-            strCatFmt(content, "%s\n", strZ(info.name));
-        }
-
-        TEST_RESULT_STR_Z(
-            content,
-#ifdef TEST_CONTAINER_REQUIRED
-            ".include\n"
-#endif // TEST_CONTAINER_REQUIRED
-            "file\n"
-            "link\n"
-            "pipe\n",
             "check content");
 
 #ifdef TEST_CONTAINER_REQUIRED
@@ -470,7 +445,7 @@ testRun(void)
         callbackData.content = strNew();
 
         TEST_RESULT_VOID(
-            storageInfoListO(
+            storageInfoListP(
                 storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
             "recurse descending");
         TEST_RESULT_STR_Z(
@@ -494,7 +469,7 @@ testRun(void)
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
         TEST_RESULT_VOID(
-            storageInfoListO(
+            storageInfoListP(
                 storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
             "recurse descending");
         TEST_RESULT_STR_Z(
@@ -515,7 +490,7 @@ testRun(void)
         callbackData.content = strNew();
 
         TEST_RESULT_VOID(
-            storageInfoListO(
+            storageInfoListP(
                 storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc,
                 .expression = STRDEF("^path")),
             "filter");
@@ -530,7 +505,7 @@ testRun(void)
         callbackData.content = strNew();
 
         TEST_RESULT_VOID(
-            storageInfoListO(
+            storageInfoListP(
                 storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc, .recurse = true,
                 .expression = STRDEF("\\/file$")),
             "filter");

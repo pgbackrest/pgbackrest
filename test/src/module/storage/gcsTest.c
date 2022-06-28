@@ -719,11 +719,11 @@ testRun(void)
                 };
 
                 TEST_ERROR(
-                    storageInfoListO(storage, STRDEF("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
+                    storageInfoListP(storage, STRDEF("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
                     AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 TEST_RESULT_VOID(
-                    storageInfoListO(storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
+                    storageInfoListP(storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
                 TEST_RESULT_STR_Z(
                     callbackData.content,
                     "test_path {path}\n"
@@ -751,7 +751,7 @@ testRun(void)
                 callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListO(
+                    storageInfoListP(
                         storage, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -779,7 +779,7 @@ testRun(void)
                 callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListO(
+                    storageInfoListP(
                         storage, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test.*$"),
                         .level = storageInfoLevelExists),
                     "list");
@@ -832,7 +832,7 @@ testRun(void)
                 callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListO(
+                    storageInfoListP(
                         storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
                     "list");
                 TEST_RESULT_STR_Z(
@@ -874,7 +874,7 @@ testRun(void)
                 callbackData.content = strNew();
 
                 TEST_RESULT_VOID(
-                    storageInfoListO(
+                    storageInfoListP(
                         storage, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test(1|3)"),
                         .level = storageInfoLevelExists),
                     "list");

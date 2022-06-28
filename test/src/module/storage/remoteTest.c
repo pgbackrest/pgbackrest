@@ -203,7 +203,7 @@ testRun(void)
         };
 
         TEST_RESULT_BOOL(
-            storageInfoListO(storageRepo, STRDEF(BOGUS_STR), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+            storageInfoListP(storageRepo, STRDEF(BOGUS_STR), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
             false, "info list");
         TEST_RESULT_STR_Z(callbackData.content, "", "check content");
 
@@ -221,7 +221,7 @@ testRun(void)
         HRN_STORAGE_TIME(storagePgWrite, NULL, 1555160000);
 
         TEST_RESULT_BOOL(
-            storageInfoListO(storagePgWrite, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc), true,
+            storageInfoListP(storagePgWrite, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc), true,
             "info list");
         TEST_RESULT_STR_Z(
             callbackData.content,
@@ -446,7 +446,7 @@ testRun(void)
         HarnessStorageInfoListCallbackData callbackData = {.content = strNew(), .userOmit = true, .groupOmit = true};
 
         TEST_RESULT_BOOL(
-            storageInfoListO(
+            storageInfoListP(
                 storageRepo, STRDEF(TEST_PATH "/repo128/parent"), hrnStorageInfoListCallback, &callbackData,
                 .sortOrder = sortOrderAsc),
             true, "info list");
