@@ -197,15 +197,7 @@ testRun(void)
     {
         TEST_TITLE("path not found");
 
-        HarnessStorageInfoListCallbackData callbackData =
-        {
-            .content = strNew(),
-        };
-
-        TEST_RESULT_BOOL(
-            storageInfoListP(storageRepo, STRDEF(BOGUS_STR), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
-            false, "info list");
-        TEST_RESULT_STR_Z(callbackData.content, "", "check content");
+        TEST_RESULT_BOOL(storageListMore(storageInfoListP(storageRepo, STRDEF(BOGUS_STR))), false, "path missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("list path and file");
@@ -220,17 +212,14 @@ testRun(void)
         // Path timestamp must be set after file is created since file creation updates it
         HRN_STORAGE_TIME(storagePgWrite, NULL, 1555160000);
 
-        TEST_RESULT_BOOL(
-            storageInfoListP(storagePgWrite, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc), true,
-            "info list");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            ". {path, m=0750, u=" TEST_USER ", g=" TEST_GROUP "}\n"
+        TEST_STORAGE_LIST(
+            storagePgWrite, NULL,
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
 #ifdef TEST_CONTAINER_REQUIRED
-            "noname {file, s=6, m=0640, t=1555160002, u=99999, g=99999}\n"
+            "noname {s=6, t=1555160002, u=99999, g=99999, m=0640}\n"
 #endif // TEST_CONTAINER_REQUIRED
-            "test {file, s=6, m=0640, t=1555160001, u=" TEST_USER ", g=" TEST_GROUP "}\n",
-            "check content");
+            "test {s=6, t=1555160001, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n",
+            .level = storageInfoLevelDetail, .includeDot = true);
     }
 
     // *****************************************************************************************************************************
@@ -443,18 +432,11 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, STRDEF("parent/testpath"), .mode = 0777), "path create");
 
-        HarnessStorageInfoListCallbackData callbackData = {.content = strNew(), .userOmit = true, .groupOmit = true};
-
-        TEST_RESULT_BOOL(
-            storageInfoListP(
-                storageRepo, STRDEF(TEST_PATH "/repo128/parent"), hrnStorageInfoListCallback, &callbackData,
-                .sortOrder = sortOrderAsc),
-            true, "info list");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            ". {path, m=0777}\n"
-            "testpath {path, m=0777}\n",
-            "check content");
+        TEST_STORAGE_LIST(
+            storageRepo, TEST_PATH "/repo128/parent",
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0777}\n"
+            "testpath/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0777}\n",
+            .level = storageInfoLevelDetail, .includeDot = true);
     }
 
     // *****************************************************************************************************************************
