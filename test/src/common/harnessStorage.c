@@ -73,114 +73,6 @@ const StorageInterface storageInterfaceTestDummy =
 
 /**********************************************************************************************************************************/
 void
-hrnStorageInfoListCallback(void *callbackData, const StorageInfo *info)
-{
-    HarnessStorageInfoListCallbackData *data = callbackData;
-
-    if (data->rootPathOmit && info->type == storageTypePath && strEq(info->name, DOT_STR))
-        return;
-
-    strCatFmt(data->content, "%s {", info->name == NULL ? NULL_Z : strZ(info->name));
-
-    if (info->level > storageInfoLevelExists)
-    {
-        switch (info->type)
-        {
-            case storageTypeFile:
-            {
-                strCatZ(data->content, "file");
-
-                if (info->level >= storageInfoLevelBasic && !data->sizeOmit)
-                {
-                    uint64_t size = info->size;
-
-                    // If the file is compressed then decompress to get the real size.  Note that only gz is used in unit tests since
-                    // it is the only compression type guaranteed to be present.
-                    if (data->fileCompressed)
-                    {
-                        ASSERT(data->storage != NULL);
-
-                        StorageRead *read = storageNewReadP(
-                            data->storage,
-                            data->path != NULL ? strNewFmt("%s/%s", strZ(data->path), strZ(info->name)) : info->name);
-                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilter(compressTypeGz));
-                        size = bufUsed(storageGetP(read));
-                    }
-
-                    strCatFmt(data->content, ", s=%" PRIu64, size);
-                }
-
-                break;
-            }
-
-            case storageTypeLink:
-            {
-                strCatZ(data->content, "link");
-
-                if (info->linkDestination != NULL)
-                    strCatFmt(data->content, ", d=%s", strZ(info->linkDestination));
-
-                break;
-            }
-
-            case storageTypePath:
-                strCatZ(data->content, "path");
-                break;
-
-            case storageTypeSpecial:
-                strCatZ(data->content, "special");
-                break;
-        }
-
-        if (info->type != storageTypeSpecial)
-        {
-            if (info->type != storageTypeLink)
-            {
-                if (info->level >= storageInfoLevelDetail &&
-                    (!data->modeOmit || (info->type == storageTypePath && data->modePath != info->mode) ||
-                    (info->type == storageTypeFile && data->modeFile != info->mode)))
-                {
-                    strCatFmt(data->content, ", m=%04o", info->mode);
-                }
-            }
-
-            if (info->type == storageTypeFile && info->level >= storageInfoLevelBasic)
-            {
-                if (!data->timestampOmit)
-                    strCatFmt(data->content, ", t=%" PRIu64, (uint64_t)info->timeModified);
-            }
-
-            if (info->level >= storageInfoLevelDetail && (!data->userOmit || userId() != info->userId))
-            {
-                if (info->user != NULL)
-                {
-                    strCatFmt(data->content, ", u=%s", strZ(info->user));
-                }
-                else
-                {
-                    strCatFmt(data->content, ", u=%d", (int)info->userId);
-                }
-            }
-
-            if (info->level >= storageInfoLevelDetail && (!data->groupOmit || groupId() != info->groupId))
-            {
-                if (info->group != NULL)
-                {
-                    strCatFmt(data->content, ", g=%s", strZ(info->group));
-                }
-                else
-                {
-                    strCatFmt(data->content, ", g=%d", (int)info->groupId);
-                }
-            }
-        }
-    }
-
-    strCatZ(data->content, "}\n");
-}
-
-/**********************************************************************************************************************************/
-void
 testStorageGet(const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
 {
     hrnTestResultBegin(__func__, false);
@@ -251,30 +143,30 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
 static void
 hrnStorageListCallback(void *list, const StorageInfo *info)
 {
-    if (!strEq(info->name, DOT_STR))
+    MEM_CONTEXT_BEGIN(lstMemContext(list))
     {
-        MEM_CONTEXT_BEGIN(lstMemContext(list))
-        {
-            StorageInfo infoCopy = *info;
-            infoCopy.name = strDup(infoCopy.name);
-            infoCopy.user = strDup(infoCopy.user);
-            infoCopy.group = strDup(infoCopy.group);
-            infoCopy.linkDestination = strDup(infoCopy.linkDestination);
+        StorageInfo infoCopy = *info;
+        infoCopy.name = strDup(infoCopy.name);
+        infoCopy.user = strDup(infoCopy.user);
+        infoCopy.group = strDup(infoCopy.group);
+        infoCopy.linkDestination = strDup(infoCopy.linkDestination);
 
-            lstAdd(list, &infoCopy);
-        }
-        MEM_CONTEXT_END();
+        lstAdd(list, &infoCopy);
     }
+    MEM_CONTEXT_END();
 }
 
 void
 hrnStorageList(const Storage *const storage, const char *const path, const char *const expected, const HrnStorageListParam param)
 {
+    // Check if paths are supported
+    const bool featurePath = storageFeature(storage, storageFeaturePath);
+
     // Log list test
     hrnTestResultBegin(__func__, false);
 
     ASSERT(storage != NULL);
-    ASSERT(storagePathExistsP(storage, path == NULL ? NULL : STR(path)));
+    ASSERT(!featurePath || storagePathExistsP(storage, path == NULL ? NULL : STR(path)));
 
     const String *const pathFull = storagePathP(storage, path == NULL ? NULL : STR(path));
     printf("list%s contents of '%s'", param.remove ? "/remove": "", strZ(pathFull));
@@ -284,7 +176,9 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     List *list = lstNewP(sizeof(StorageInfo));
 
     storageInfoListP(
-        storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse,
+        storage, pathFull, hrnStorageListCallback, list, .recurse = !param.noRecurse,
+        .sortOrder = param.sortOrder == sortOrderNone ? sortOrderAsc : param.sortOrder,
+        .level = param.level == storageInfoLevelDefault && !param.levelForce ? storageInfoLevelType : param.level,
         .expression = param.expression != NULL ? STR(param.expression) : NULL);
 
     // Remove files if requested
@@ -294,6 +188,9 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
         {
             const StorageInfo *const info = lstGet(list, listIdx);
 
+            if (strEq(info->name, DOT_STR))
+                continue;
+
             // Only remove at the top level since path remove will recurse
             if (strChr(info->name, '/') == -1)
             {
@@ -301,7 +198,8 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
                 if (info->type == storageTypePath)
                 {
                     storagePathRemoveP(
-                        storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)), .errorOnMissing = true, .recurse = true);
+                        storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)), .errorOnMissing = featurePath,
+                        .recurse = true);
                 }
                 // Remove file, link, or special
                 else
@@ -310,31 +208,75 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
         }
     }
 
-    // Return list for comparison
+    // Generate list for comparison
     StringList *listStr = strLstNew();
 
     for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
     {
         const StorageInfo *const info = lstGet(list, listIdx);
+        String *const item = strCat(strNew(), info->name);
+
+        if (strEq(info->name, DOT_STR) && !param.includeDot)
+            continue;
 
         switch (info->type)
         {
             case storageTypeFile:
-                strLstAdd(listStr, info->name);
                 break;
 
             case storageTypeLink:
-                strLstAddFmt(listStr, "%s>", strZ(info->name));
+                strCatZ(item, ">");
                 break;
 
             case storageTypePath:
-                strLstAddFmt(listStr, "%s/", strZ(info->name));
+                strCatZ(item, "/");
                 break;
 
             case storageTypeSpecial:
-                strLstAddFmt(listStr, "%s*", strZ(info->name));
+                strCatZ(item, "*");
                 break;
         }
+
+        if (((info->type == storageTypeFile || info->type == storageTypeLink) && info->level >= storageInfoLevelBasic) ||
+            (info->type == storageTypePath && info->level >= storageInfoLevelDetail))
+        {
+            strCatZ(item, " {");
+
+            if (info->type == storageTypeFile)
+                strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info->size, (int64_t)info->timeModified);
+            else if (info->type == storageTypeLink)
+            {
+                const StorageInfo infoLink = storageInfoP(
+                    storage,
+                    strEq(info->name, DOT_STR) ? pathFull : strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)),
+                    .level = storageInfoLevelDetail);
+
+                strCatFmt(item, "d=%s", strZ(infoLink.linkDestination));
+            }
+
+            if (info->level >= storageInfoLevelDetail)
+            {
+                if (info->type != storageTypePath)
+                    strCatZ(item, ", ");
+
+                if (info->user != NULL)
+                    strCatFmt(item, "u=%s", strZ(info->user));
+                else
+                    strCatFmt(item, "u=%d", (int)info->userId);
+
+                if (info->group != NULL)
+                    strCatFmt(item, ", g=%s", strZ(info->group));
+                else
+                    strCatFmt(item, ", g=%d", (int)info->groupId);
+
+                if (info->type != storageTypeLink)
+                    strCatFmt(item, ", m=%04o", info->mode);
+            }
+
+            strCatZ(item, "}");
+        }
+
+        strLstAdd(listStr, item);
     }
 
     hrnTestResultStringList(listStr, expected, harnessTestResultOperationEq);
