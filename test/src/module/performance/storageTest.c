@@ -28,22 +28,6 @@ stress testing as needed.
 #include "storage/remote/protocol.h"
 
 /***********************************************************************************************************************************
-Dummy callback functions
-***********************************************************************************************************************************/
-static void
-storageTestDummyInfoListCallback(void *data, const StorageInfo *info)
-{
-    (void)info;
-
-    // Do some work in the mem context to blow up the total time if this is not efficient, i.e. if the current mem context is not
-    // being freed regularly
-    memResize(memNew(16), 32);
-
-    // Increment callback total
-    (*(uint64_t *)data)++;
-}
-
-/***********************************************************************************************************************************
 Driver to test storageInfoList
 ***********************************************************************************************************************************/
 typedef struct
@@ -200,13 +184,18 @@ testRun(void)
                 TimeMSec timeBegin = timeMSec();
 
                 // Storage info list
-                uint64_t fileCallbackTotal = 0;
+                uint64_t fileTotal = 0;
+                StorageList *storageList = NULL;
 
-                TEST_RESULT_VOID(
-                    storageInfoListO(storageRemote, NULL, storageTestDummyInfoListCallback, &fileCallbackTotal),
-                    "list remote files");
+                TEST_ASSIGN(storageList, storageInfoListP(storageRemote, NULL), "list remote files");
 
-                TEST_RESULT_UINT(fileCallbackTotal, fileTotal, "check callback total");
+                while (storageListMore(storageList))
+                {
+                    storageListNext(storageList);
+                    fileTotal++;
+                }
+
+                TEST_RESULT_UINT(fileTotal, fileTotal, "check callback total");
 
                 TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 

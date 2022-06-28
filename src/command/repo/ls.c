@@ -22,11 +22,11 @@ Render storage list
 static void
 storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const bool json)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_LIST, storageList);
-        FUNCTION_LOG_PARAM(IO_WRITE, write);
-        FUNCTION_LOG_PARAM(BOOL, json);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_LIST, storageList);
+        FUNCTION_TEST_PARAM(IO_WRITE, write);
+        FUNCTION_TEST_PARAM(BOOL, json);
+    FUNCTION_TEST_END();
 
     ASSERT(storageList != NULL);
     ASSERT(write != NULL);
@@ -74,7 +74,7 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
         ioWrite(write, LF_BUF);
     }
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 static void
