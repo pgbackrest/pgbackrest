@@ -24,6 +24,13 @@ testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
     String *const result)
 {
+    // Output root path if it is a link so we can verify the destination
+    const StorageInfo dotInfo = storageInfoP(storage, path);
+
+    if (dotInfo.type == storageTypeLink)
+        strCatFmt(result, ". {link, d=%s}\n", strZ(dotInfo.linkDestination));
+
+    // Output path contents
     StorageList *const storageList = storageInfoListP(storage, path, .recurse = true, .sortOrder = sortOrderAsc);
 
     while (storageListMore(storageList))

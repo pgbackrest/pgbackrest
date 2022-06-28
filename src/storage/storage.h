@@ -113,6 +113,16 @@ typedef struct StorageInfoListParam
 bool storageInfoListOld(
     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param);
 
+// Info for all files/paths in a path (!!!NEW)
+typedef struct StorageList StorageList;
+
+#define storageInfoListP(this, fileExp, ...)                                                                                          \
+    storageListX(this, fileExp, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+StorageList *storageListX(const Storage *this, const String *pathExp, StorageInfoListParam param);
+bool storageListMore(StorageList *this);
+StorageInfo storageListNext(StorageList *this);
+
 // Get a list of files from a directory
 typedef struct StorageListParam
 {
@@ -126,16 +136,6 @@ typedef struct StorageListParam
     storageList(this, pathExp, (StorageListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 StringList *storageList(const Storage *this, const String *pathExp, StorageListParam param);
-
-// Get a list of files from a directory (!!!NEW)
-typedef struct StorageList StorageList;
-
-#define storageInfoListP(this, fileExp, ...)                                                                                          \
-    storageListX(this, fileExp, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-StorageList *storageListX(const Storage *this, const String *pathExp, StorageInfoListParam param);
-bool storageListMore(StorageList *this);
-StorageInfo storageListNext(StorageList *this);
 
 // Move a file
 #define storageMoveP(this, source, destination)                                                                                    \
