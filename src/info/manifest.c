@@ -713,10 +713,6 @@ manifestBuildInfo(
     ASSERT(pgPath != NULL);
     ASSERT(info != NULL);
 
-    // Skip all . links because they have already been recorded on the previous level of recursion
-    if (strEq(info->name, DOT_STR))
-        FUNCTION_TEST_RETURN_VOID();
-
     // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
     // are recreated.
     if (strBeginsWithZ(info->name, PG_PREFIX_PGSQLTMP))

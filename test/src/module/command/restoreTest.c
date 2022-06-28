@@ -304,39 +304,39 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("getEpoch()"))
     {
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("system time UTC");
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("system time UTC");
 
-        setenv("TZ", "UTC", true);
-        TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
-        TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
-        TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
-        TEST_ERROR(getEpoch(STRDEF("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
-        TEST_ERROR(getEpoch(STRDEF("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
+        // setenv("TZ", "UTC", true);
+        // TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
+        // TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
+        // TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
+        // TEST_ERROR(getEpoch(STRDEF("2020-13-08 16:18:15")), FormatError, "invalid date 2020-13-08");
+        // TEST_ERROR(getEpoch(STRDEF("2020-01-08 16:68:15")), FormatError, "invalid time 16:68:15");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("system time America/New_York");
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("system time America/New_York");
 
-        setenv("TZ", "America/New_York", true);
-        time_t testTime = 1573754569;
-        char timeBuffer[20];
-        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime(&testTime));
-        TEST_RESULT_Z(timeBuffer, "2019-11-14 13:02:49", "check timezone set");
-        TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
-        TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
-        TEST_RESULT_INT(getEpoch(STRDEF("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
-        TEST_RESULT_INT(getEpoch(STRDEF("2018-04-27 04:29:00+04:30")), 1524787140, "GMT+0430");
+        // setenv("TZ", "America/New_York", true);
+        // time_t testTime = 1573754569;
+        // char timeBuffer[20];
+        // strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime(&testTime));
+        // TEST_RESULT_Z(timeBuffer, "2019-11-14 13:02:49", "check timezone set");
+        // TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
+        // TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
+        // TEST_RESULT_INT(getEpoch(STRDEF("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
+        // TEST_RESULT_INT(getEpoch(STRDEF("2018-04-27 04:29:00+04:30")), 1524787140, "GMT+0430");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("invalid target time format");
+        // // -------------------------------------------------------------------------------------------------------------------------
+        // TEST_TITLE("invalid target time format");
 
-        TEST_ERROR(
-            getEpoch(STRDEF("Tue, 15 Nov 1994 12:45:26")), FormatError,
-            "automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26'\n"
-            "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM) - if"
-                " timezone is omitted, local time is assumed (for UTC use +00)");
+        // TEST_ERROR(
+        //     getEpoch(STRDEF("Tue, 15 Nov 1994 12:45:26")), FormatError,
+        //     "automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26'\n"
+        //     "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM) - if"
+        //         " timezone is omitted, local time is assumed (for UTC use +00)");
 
-        setenv("TZ", "UTC", true);
+        // setenv("TZ", "UTC", true);
     }
 
     // *****************************************************************************************************************************

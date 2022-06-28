@@ -248,25 +248,6 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
 }
 
 /**********************************************************************************************************************************/
-static void
-hrnStorageListCallback(void *list, const StorageInfo *info)
-{
-    if (!strEq(info->name, DOT_STR))
-    {
-        MEM_CONTEXT_BEGIN(lstMemContext(list))
-        {
-            StorageInfo infoCopy = *info;
-            infoCopy.name = strDup(infoCopy.name);
-            infoCopy.user = strDup(infoCopy.user);
-            infoCopy.group = strDup(infoCopy.group);
-            infoCopy.linkDestination = strDup(infoCopy.linkDestination);
-
-            lstAdd(list, &infoCopy);
-        }
-        MEM_CONTEXT_END();
-    }
-}
-
 void
 hrnStorageList(const Storage *const storage, const char *const path, const char *const expected, const HrnStorageListParam param)
 {
@@ -283,9 +264,16 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     // Generate a list of files/paths/etc
     List *list = lstNewP(sizeof(StorageInfo));
 
-    storageInfoListO(
-        storage, pathFull, hrnStorageListCallback, list, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse,
+    StorageList *const storageList = storageInfoListP(
+        storage, pathFull, .sortOrder = sortOrderAsc, .recurse = !param.noRecurse,
         .expression = param.expression != NULL ? STR(param.expression) : NULL);
+
+    while (storageListMore(storageList))
+    {
+        const StorageInfo info = storageListNext(storageList);
+
+        lstAdd(list, &info);
+    }
 
     // Remove files if requested
     if (param.remove)
