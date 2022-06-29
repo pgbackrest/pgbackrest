@@ -612,11 +612,22 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
     ASSERT(this != NULL);
     ASSERT(!param.errorOnMissing || !param.nullOnMissing);
 
-    FUNCTION_LOG_RETURN(
-        STRING_LIST,
-        (StringList *)storageIterP(
+    StringList *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // We are going to cheat a bit here and transform the iterator list into a StringList. There may be a better way to do this
+        // but for now it saves code.
+        StorageIter *const storageIter = storageIterP(
             this, pathExp, .errorOnMissing = param.errorOnMissing, .nullOnMissing = param.nullOnMissing,
-            .expression = param.expression));
+            .expression = param.expression);
+
+        if (storageIter != NULL)
+            result = (StringList *)lstMove(storageIter->list, memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
