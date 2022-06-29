@@ -7,9 +7,10 @@ Storage Interface
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
-Object type
+Object types
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
+typedef struct StorageIter StorageIter;
 
 #include "common/type/buffer.h"
 #include "common/type/stringList.h"
@@ -96,8 +97,6 @@ StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoP
 
 // Iterator for all files/paths in a path which returns different info based on the value of the level parameter. Once the iterator
 // has been created use storageIterMore() to determine if there is more info and storageIterNext() to get the next info.
-typedef struct StorageIter StorageIter;
-
 typedef struct StorageIterParam
 {
     VAR_PARAM_HEADER;
