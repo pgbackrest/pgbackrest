@@ -23,12 +23,12 @@ static void
 storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const bool json)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_LIST, storageIter);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
         FUNCTION_TEST_PARAM(IO_WRITE, write);
         FUNCTION_TEST_PARAM(BOOL, json);
     FUNCTION_TEST_END();
 
-    ASSERT(storageIter != NULL);
+    ASSERT(info != NULL);
     ASSERT(write != NULL);
 
     // Render in json
