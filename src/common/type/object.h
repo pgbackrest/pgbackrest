@@ -13,6 +13,8 @@ These macros and functions implement common object functionality.
 #ifdef _WIN32
     // Defined in combaseapi
     #undef THIS
+    // Defined as struct
+    #undef interface
 #endif
 
 /***********************************************************************************************************************************

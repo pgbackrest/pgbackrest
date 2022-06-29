@@ -373,7 +373,7 @@ else
         'common/io/read.c',
         'common/io/write.c',
         'common/log.c',
-        # 'common/type/xml.c',
+        'common/type/xml.c',
         'common/type/keyValue.c',
         'common/type/json.c',
         'common/stat.c',
@@ -381,7 +381,7 @@ else
         'common/user.c',
         'common/wait.c',
         'common/ini.c',
-        # 'config/common.c',
+        'config/common.c',
         'storage/posix/read.c',
         'storage/posix/storage.c',
         'storage/posix/write.c',
@@ -396,12 +396,12 @@ else
     src_build_config = [
         'build/common/render.c',
         'build/common/yaml.c',
-        # 'build/config/main.c',
+        'build/config/main.c',
         'build/config/parse.c',
-        # 'build/config/render.c',
+        'build/config/render.c',
     ]
 
-    lib_regex2 = declare_dependency(link_with : dep_regex)
+    lib_regex = declare_dependency(link_with : dep_regex)
 
     build_config = executable(
         'build-config',
@@ -411,15 +411,54 @@ else
         dependencies : [
             win32_deps,
             lib_yaml,
-            lib_regex2,
+            lib_regex,
+            lib_xml,
         ],
         build_by_default: true,
         include_directories: [
-            yaml_inc_dir,
+            dep_inc_dir,
             include_dir_win32,
         ]
     )
 
     alias_target('build-config', build_config)
+
+    ####################################################################################################################################
+    # Build help target
+    ####################################################################################################################################
+    src_build_help = [
+        'build/common/render.c',
+        'build/common/yaml.c',
+        'build/config/parse.c',
+        'build/help/main.c',
+        'build/help/parse.c',
+        'build/help/render.c',
+        'common/compress/bz2/common.c',
+        'common/compress/bz2/compress.c',
+        'common/type/xml.c',
+    ]
+
+    build_help = executable(
+        'build-help',
+        src_common,
+        src_build_help,
+        src_win32,
+        dependencies: [
+            win32_deps,
+            lib_bz2,
+            lib_xml,
+            lib_yaml,
+            lib_regex,
+        ],
+        include_directories: [
+            include_dir_win32,
+            dep_inc_dir,
+        ]
+    )
+
+    # build help.auto.c.inc
+    subdir('command/help')
+
+    alias_target('build-help', help_auto_c_inc)
 
 endif

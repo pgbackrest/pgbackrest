@@ -27,6 +27,10 @@ MSVC compatibility header for <unistd.h>
 #define mkdir(path, mode) _mkdir(path)
 #define getcwd _getcwd
 
+#ifdef interface
+    #undef interface
+#endif
+
 #endif
 
 #endif

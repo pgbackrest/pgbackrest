@@ -14,7 +14,16 @@
         "*.ASSEMBLE*": "hlasm",
         "*.HLASM*": "hlasm",
         "*.HLA*": "hlasm",
+        "*.EXEC*": "rexx",
+        "*.REXX*": "rexx",
+        "*.REXXINC*": "rexx",
+        "*.copyasm": "hlasm",
+        "*.macasm": "hlasm",
+        "*.bms": "hlasm",
+        "*.rex": "rexx",
+        "*.rexx": "rexx",
         "get.h": "c",
-        "*.in": "cpp"
+        "*.in": "cpp",
+        "config.h": "c"
     }
 }

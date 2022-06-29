@@ -157,11 +157,20 @@ if lib_zstd.found()
 endif
 else
 
-yaml_inc_dir = include_directories('D:/Dep/yaml/include')
-lib_yaml = cc.find_library('yaml', dirs: ['D:/Dep/yaml/lib'], )
+dep_inc_dir = include_directories('D:/Dep/include')
+lib_yaml = cc.find_library('yaml', dirs: ['D:/Dep/lib'], )
 
-regex_inc_dir = include_directories('D:/Dep/regex/include')
-lib_regex = cc.find_library('regex', dirs: ['D:/Dep/regex/lib'], )
+# regex_inc_dir = include_directories('D:/Dep/regex/include')
+# lib_regex = cc.find_library('regex', dirs: ['D:/Dep/regex/lib'], )
+
+
+
+# Find required bz2 library
+lib_bz2 = cc.find_library('bz2', dirs: ['D:/Dep/lib'],)
+
+if not lib_yaml.found()
+    error('lib yaml not found')
+endif
 
 # Find required openssl library
 # lib_openssl = dependency('openssl')
@@ -170,7 +179,8 @@ lib_regex = cc.find_library('regex', dirs: ['D:/Dep/regex/lib'], )
 # lib_pq = dependency('libpq')
 
 # Find required xml library
-# lib_xml = dependency('libxml-2.0')
+# lib_xml = dependency('libxml2', method: 'cmake')
+lib_xml = cc.find_library('xml2s', dirs: ['D:/Dep/lib'],)
 
 # Find required yaml library (only used for build)
 # lib_yaml = dependency('yaml-0.1')
@@ -212,10 +222,16 @@ if cc.get_id() == 'msvc'
         configuration.set('ENABLE_YAML', '')
     endif
     # Enable static import for lib regex
-    if lib_regex.found()
+    if true # lib_regex.found()
         configuration.set('ENABLE_REGEX', '#define ENABLE_REGEX', description: 'Enable lib_regex static import')
     else
         configuration.set('ENABLE_REGEX', '')
+    endif
+    # Enable static import for lib xml
+    if lib_xml.found()
+        configuration.set('ENABLE_XML', '#define ENABLE_XML', description: 'Enable libxml2 static import')
+    else
+        configuration.set('ENABLE_XML', '')
     endif
 else
     configuration.set('INCLUDE_MSVC_COMPAT', '', description: '')
@@ -225,4 +241,4 @@ endif
 # Include subdirs
 ####################################################################################################################################
 subdir('src')
-# subdir('test/src')
+subdir('test/src')

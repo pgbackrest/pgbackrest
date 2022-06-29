@@ -1,7 +1,11 @@
 ####################################################################################################################################
 # Write configuration
 ####################################################################################################################################
+if cc.get_id() != 'msvc'
 configure_file(output: 'build.auto.h', configuration: configuration)
+else
+configure_file(input: '../../src/win32_msvc/build.auto.h.in', output: 'build.auto.h', configuration: configuration)
+endif
 
 ####################################################################################################################################
 # Build config target
@@ -46,6 +50,7 @@ src_test = [
     'main.c',
 ]
 
+if cc.get_id() != 'msvc'
 test_pgbackrest = executable(
     'test-pgbackrest',
     src_common,
@@ -59,5 +64,27 @@ test_pgbackrest = executable(
     ],
     build_by_default: false,
 )
+
+else
+
+test_pgbackrest = executable(
+    'test-pgbackrest',
+    # src_common,
+    src_test,
+    test_help_auto_c_inc,
+    test_parse_auto_c_inc,
+    include_directories: [
+        include_directories('.', '../../src'),
+        dep_inc_dir,
+        include_dir_win32,
+    ],
+    dependencies: [
+        lib_bz2,
+        lib_yaml,
+    ],
+    build_by_default: false,
+)
+
+endif
 
 alias_target('test-pgbackrest', test_pgbackrest)

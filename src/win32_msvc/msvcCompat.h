@@ -62,4 +62,8 @@ Dependencies
     #define USE_REGEX_STATIC
 #endif
 
+#ifdef ENABLE_XML
+    #define LIBXML_STATIC
+#endif
+
 #endif

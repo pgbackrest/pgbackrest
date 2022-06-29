@@ -8,4 +8,6 @@ Build file for meson
 
 @ENABLE_REGEX@
 
+@ENABLE_XML@
+
 @INCLUDE_MSVC_COMPAT@
