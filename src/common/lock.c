@@ -9,6 +9,10 @@ Lock Handler
 #include <sys/file.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+    #include <Windows.h>
+#endif
+
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -159,7 +163,14 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
         else
         {
             // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing the lock
+        #ifdef _WIN32
+            HANDLE fileHandle = _get_osfhandle(fd);
+            ASSERT(fileHandle != INVALID_HANDLE_VALUE);
+            
+            if (LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, MAXDWORD, MAXDWORD, NULL) == FALSE)
+        #else
             if (flock(fd, LOCK_EX | LOCK_NB) == 0)
+        #endif
             {
                 result.status = lockReadStatusUnlocked;
             }
@@ -317,7 +328,14 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
             else
             {
                 // Attempt to lock the file
-                if (flock(result, LOCK_EX | LOCK_NB) == -1)
+            #ifdef _WIN32
+                HANDLE fileHandle = _get_osfhandle(result);
+                ASSERT(fileHandle != INVALID_HANDLE_VALUE);
+            
+                if (LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, MAXDWORD, MAXDWORD, NULL) == FALSE)
+            #else
+                if (flock(result, LOCK_EX | LOCK_NB) == 0)
+            #endif
                 {
                     // Save the error for reporting outside the loop
                     errNo = errno;
