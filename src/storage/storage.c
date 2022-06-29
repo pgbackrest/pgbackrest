@@ -539,6 +539,8 @@ storageIterNew(const Storage *const this, const String *const pathExp, const Sto
         FUNCTION_LOG_PARAM(STRING, pathExp);
         FUNCTION_LOG_PARAM(ENUM, param.level);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        FUNCTION_LOG_PARAM(BOOL, param.recurse);
+        FUNCTION_LOG_PARAM(BOOL, param.nullOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
         FUNCTION_LOG_PARAM(BOOL, param.recurse);
@@ -546,24 +548,31 @@ storageIterNew(const Storage *const this, const String *const pathExp, const Sto
 
     ASSERT(this != NULL);
 
-    // Create object
-    StorageIter *storageIter = NULL;
+    StorageIter *result = NULL;
 
-    OBJ_NEW_BEGIN(StorageIter, .childQty = 1)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create object
-        storageIter = OBJ_NEW_ALLOC();
 
-        *storageIter = (StorageIter)
+        OBJ_NEW_BEGIN(StorageIter, .childQty = 1)
         {
-            .list = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
-        };
+            // Create object
+            result = OBJ_NEW_ALLOC();
+
+            *result = (StorageIter)
+            {
+                .list = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
+            };
+        }
+        OBJ_NEW_END();
+
+        if (!storageInfoListOld(this, pathExp, storageIterCallback, result->list, param) && param.nullOnMissing)
+            result = NULL;
+        else
+            objMove(result, memContextPrior());
     }
-    OBJ_NEW_END();
+    MEM_CONTEXT_TEMP_END();
 
-    storageInfoListOld(this, pathExp, storageIterCallback, storageIter->list, param);
-
-    FUNCTION_LOG_RETURN(STORAGE_LIST, storageIter);
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 bool
@@ -589,23 +598,6 @@ StorageInfo storageIterNext(StorageIter *const this)
 }
 
 /**********************************************************************************************************************************/
-static void
-storageListCallback(void *data, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    // Skip . path
-    if (strEq(info->name, DOT_STR))
-        FUNCTION_TEST_RETURN_VOID();
-
-    strLstAdd((StringList *)data, info->name);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 StringList *
 storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
@@ -619,30 +611,12 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 
     ASSERT(this != NULL);
     ASSERT(!param.errorOnMissing || !param.nullOnMissing);
-    ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
-    StringList *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = strLstNew();
-
-        // Build an empty list if the directory does not exist by default.  This makes the logic in calling functions simpler when
-        // the caller doesn't care if the path is missing.
-        if (!storageInfoListO(
-                this, pathExp, storageListCallback, result, .level = storageInfoLevelExists, .errorOnMissing = param.errorOnMissing,
-                .expression = param.expression))
-        {
-            if (param.nullOnMissing)
-                result = NULL;
-        }
-
-        // Move list up to the old context
-        result = strLstMove(result, memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(STRING_LIST, result);
+    FUNCTION_LOG_RETURN(
+        STRING_LIST,
+        (StringList *)storageIterP(
+            this, pathExp, .errorOnMissing = param.errorOnMissing, .nullOnMissing = param.nullOnMissing,
+            .expression = param.expression));
 }
 
 /**********************************************************************************************************************************/

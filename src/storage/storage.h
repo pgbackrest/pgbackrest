@@ -95,13 +95,14 @@ typedef struct StorageInfoParam
 
 StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
-// Iterator for all files/paths in a path which returns different info based on the value of the level parameter. Once the iterator
-// has been created use storageIterMore() to determine if there is more info and storageIterNext() to get the next info.
+// Iterator for all files/links/paths in a path which returns different info based on the value of the level parameter. Once the
+// iterator has been created use storageIterMore() to determine if there is more info and storageIterNext() to get the next info.
 typedef struct StorageIterParam
 {
     VAR_PARAM_HEADER;
     StorageInfoLevel level;
     bool errorOnMissing;
+    bool nullOnMissing;
     bool recurse;
     SortOrder sortOrder;
     const String *expression;
