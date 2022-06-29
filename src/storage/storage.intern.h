@@ -58,6 +58,11 @@ Path expression callback function type - used to modify paths based on expressio
 typedef String *StoragePathExpressionCallback(const String *expression, const String *path);
 
 /***********************************************************************************************************************************
+Storage info callback function type - used to return storage info
+***********************************************************************************************************************************/
+typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *info);
+
+/***********************************************************************************************************************************
 Required interface functions
 ***********************************************************************************************************************************/
 // Get information about a file/link/path

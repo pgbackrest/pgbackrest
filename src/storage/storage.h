@@ -94,10 +94,11 @@ typedef struct StorageInfoParam
 
 StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
-// Info for all files/paths in a path
-typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *info);
+// Iterator for all files/paths in a path which returns different info based on the value of the level parameter. Once the iterator
+// has been created use storageIterMore() to determine if there is more info and storageIterNext() to get the next info.
+typedef struct StorageIter StorageIter;
 
-typedef struct StorageInfoListParam
+typedef struct StorageIterParam
 {
     VAR_PARAM_HEADER;
     StorageInfoLevel level;
@@ -105,23 +106,14 @@ typedef struct StorageInfoListParam
     bool recurse;
     SortOrder sortOrder;
     const String *expression;
-} StorageInfoListParam;
+} StorageIterParam;
 
-#define storageInfoListO(this, fileExp, callback, callbackData, ...)                                                               \
-    storageInfoListOld(this, fileExp, callback, callbackData, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageIterP(this, fileExp, ...)                                                                                           \
+    storageIterNew(this, fileExp, (StorageIterParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-bool storageInfoListOld(
-    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param);
-
-// Info for all files/paths in a path (!!!NEW)
-typedef struct StorageList StorageList;
-
-#define storageInfoListP(this, fileExp, ...)                                                                                          \
-    storageListX(this, fileExp, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-StorageList *storageListX(const Storage *this, const String *pathExp, StorageInfoListParam param);
-bool storageListMore(StorageList *this);
-StorageInfo storageListNext(StorageList *this);
+StorageIter *storageIterNew(const Storage *this, const String *pathExp, StorageIterParam param);
+bool storageIterMore(StorageIter *this);
+StorageInfo storageIterNext(StorageIter *this);
 
 // Get a list of files from a directory
 typedef struct StorageListParam
@@ -280,8 +272,8 @@ String *storageToLog(const Storage *this);
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
 
 #define FUNCTION_LOG_STORAGE_LIST_TYPE                                                                                             \
-    StorageList *
+    StorageIter *
 #define FUNCTION_LOG_STORAGE_LIST_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "StorageList", buffer, bufferSize)
+    objToLog(value, "StorageIter", buffer, bufferSize)
 
 #endif

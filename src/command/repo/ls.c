@@ -23,12 +23,12 @@ static void
 storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const bool json)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_LIST, storageList);
+        FUNCTION_TEST_PARAM(STORAGE_LIST, storageIter);
         FUNCTION_TEST_PARAM(IO_WRITE, write);
         FUNCTION_TEST_PARAM(BOOL, json);
     FUNCTION_TEST_END();
 
-    ASSERT(storageList != NULL);
+    ASSERT(storageIter != NULL);
     ASSERT(write != NULL);
 
     // Render in json
@@ -144,12 +144,12 @@ storageListRender(IoWrite *write)
         }
 
         // List content of the path
-        StorageList *const storageList = storageInfoListP(
+        StorageIter *const storageIter = storageIterP(
             storageRepo(), path, .sortOrder = sortOrder, .expression = expression, .recurse = cfgOptionBool(cfgOptRecurse));
 
-        while (storageListMore(storageList))
+        while (storageIterMore(storageIter))
         {
-            const StorageInfo info = storageListNext(storageList);
+            const StorageInfo info = storageIterNext(storageIter);
 
             // Add separator character
             if (!first && json)

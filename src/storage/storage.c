@@ -433,9 +433,9 @@ storageInfoListOldCallback(void *data, const StorageInfo *info)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-bool
+static bool
 storageInfoListOld(
-    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param)
+    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageIterParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -496,15 +496,18 @@ storageInfoListOld(
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
+#define storageInfoListO(this, fileExp, callback, callbackData, ...)                                                               \
+    storageInfoListOld(this, fileExp, callback, callbackData, (StorageIterParam){VAR_PARAM_INIT, __VA_ARGS__})
+
 /**********************************************************************************************************************************/
-struct StorageList
+struct StorageIter
 {
     List *list;                                                     // Storage list
     unsigned int listIdx;                                           // Current index
 };
 
 static void
-storageListXCallback(void *data, const StorageInfo *info)
+storageIterCallback(void *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_LOG_PARAM_P(VOID, data);
@@ -528,8 +531,8 @@ storageListXCallback(void *data, const StorageInfo *info)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-StorageList *
-storageListX(const Storage *this, const String *pathExp, StorageInfoListParam param)
+StorageIter *
+storageIterNew(const Storage *const this, const String *const pathExp, const StorageIterParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -544,27 +547,27 @@ storageListX(const Storage *this, const String *pathExp, StorageInfoListParam pa
     ASSERT(this != NULL);
 
     // Create object
-    StorageList *storageList = NULL;
+    StorageIter *storageIter = NULL;
 
-    OBJ_NEW_BEGIN(StorageList, .childQty = 1)
+    OBJ_NEW_BEGIN(StorageIter, .childQty = 1)
     {
         // Create object
-        storageList = OBJ_NEW_ALLOC();
+        storageIter = OBJ_NEW_ALLOC();
 
-        *storageList = (StorageList)
+        *storageIter = (StorageIter)
         {
             .list = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
         };
     }
     OBJ_NEW_END();
 
-    storageInfoListOld(this, pathExp, storageListXCallback, storageList->list, param);
+    storageInfoListOld(this, pathExp, storageIterCallback, storageIter->list, param);
 
-    FUNCTION_LOG_RETURN(STORAGE_LIST, storageList);
+    FUNCTION_LOG_RETURN(STORAGE_LIST, storageIter);
 }
 
 bool
-storageListMore(StorageList *const this)
+storageIterMore(StorageIter *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_LOG_PARAM(STORAGE_LIST, this);
@@ -573,7 +576,7 @@ storageListMore(StorageList *const this)
     FUNCTION_TEST_RETURN(BOOL, this->listIdx < lstSize(this->list));
 }
 
-StorageInfo storageListNext(StorageList *const this)
+StorageInfo storageIterNext(StorageIter *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_LOG_PARAM(STORAGE_LIST, this);

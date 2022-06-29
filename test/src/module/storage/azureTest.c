@@ -718,7 +718,7 @@ testRun(void)
                         "</EnumerationResults>");
 
                 TEST_ERROR(
-                    storageInfoListP(storage, STRDEF("/"), .errorOnMissing = true), AssertError,
+                    storageIterP(storage, STRDEF("/"), .errorOnMissing = true), AssertError,
                     "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 TEST_STORAGE_LIST(

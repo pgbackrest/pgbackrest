@@ -193,11 +193,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageInfoListP()"))
+    if (testBegin("storageIterP()"))
     {
         TEST_TITLE("path not found");
 
-        TEST_RESULT_BOOL(storageListMore(storageInfoListP(storageRepo, STRDEF(BOGUS_STR))), false, "path missing");
+        TEST_RESULT_BOOL(storageIterMore(storageIterP(storageRepo, STRDEF(BOGUS_STR))), false, "path missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("list path and file");

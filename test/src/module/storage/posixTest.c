@@ -340,7 +340,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageInfoListP()"))
+    if (testBegin("storageIterP()"))
     {
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_CREATE_NOPERM();
@@ -350,19 +350,19 @@ testRun(void)
         TEST_TITLE("path missing");
 
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError,
+            storageIterP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError,
             STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
 
-        TEST_RESULT_BOOL(storageListMore(storageInfoListP(storageTest, STRDEF(BOGUS_STR))), false, "ignore missing dir");
+        TEST_RESULT_BOOL(storageIterMore(storageIterP(storageTest, STRDEF(BOGUS_STR))), false, "ignore missing dir");
 
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO ": [13] Permission denied",
+            storageIterP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO ": [13] Permission denied",
             strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO ": [13] Permission denied",
+            storageIterP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO ": [13] Permission denied",
             strZ(pathNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
 
