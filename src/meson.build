@@ -59,6 +59,7 @@ src_common = files(
 	'storage/posix/read.c',
 	'storage/posix/storage.c',
 	'storage/posix/write.c',
+	'storage/iterator.c',
 	'storage/read.c',
 	'storage/storage.c',
 	'storage/write.c',

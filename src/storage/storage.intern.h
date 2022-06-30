@@ -174,6 +174,30 @@ typedef bool StorageInterfaceInfoList(
         thisVoid, path, level, callback, callbackData, (StorageInterfaceInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
+// Get info for all files/links/paths in a path (does not recurse or return info about the path passed to the function)
+//
+// See storageInterfaceInfoP() for usage of the level parameter.
+typedef struct StorageInterfaceListParam
+{
+    VAR_PARAM_HEADER;
+
+    // Regular expression used to filter the results. The expression is always checked in the callback passed to
+    // storageInterfaceIterP() so checking the expression in the driver is entirely optional. The driver should only use the
+    // expression if it can improve performance or limit network transfer.
+    //
+    // Partial matching of the expression is fine as long as nothing that should match is excluded, e.g. it is OK to prefix match
+    // using the prefix returned from regExpPrefix(). This may cause extra results to be sent to the callback but won't exclude
+    // anything that matches the expression exactly.
+    const String *expression;
+} StorageInterfaceListParam;
+
+typedef List *StorageInterfaceList(void *thisVoid, const String *path, StorageInfoLevel level, StorageInterfaceListParam param);
+
+#define storageInterfaceListP(thisVoid, path, level, callback, callbackData, ...)                                                  \
+    STORAGE_COMMON_INTERFACE(thisVoid).list(                                                                                       \
+        thisVoid, path, level, (StorageInterfaceListParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+// ---------------------------------------------------------------------------------------------------------------------------------
 // Remove a path (and optionally recurse)
 typedef struct StorageInterfacePathRemoveParam
 {
@@ -269,6 +293,7 @@ typedef struct StorageInterface
     // Required functions
     StorageInterfaceInfo *info;
     StorageInterfaceInfoList *infoList;
+    StorageInterfaceList *list;
     StorageInterfaceNewRead *newRead;
     StorageInterfaceNewWrite *newWrite;
     StorageInterfacePathRemove *pathRemove;

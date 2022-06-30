@@ -483,6 +483,7 @@ unit:
           - storage/posix/storage
           - storage/posix/write
           - storage/helper
+          - storage/iterator
           - storage/read
           - storage/storage
           - storage/write
