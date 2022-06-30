@@ -6,6 +6,10 @@ Exit Routines
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+    #include <Windows.h>
+#endif
+
 #include "command/command.h"
 #include "command/exit.h"
 #include "common/debug.h"
@@ -30,6 +34,7 @@ exitSignalName(SignalType signalType)
 
     switch (signalType)
     {
+    #ifndef _WIN32
         case signalTypeHup:
             name = "HUP";
             break;
@@ -44,6 +49,31 @@ exitSignalName(SignalType signalType)
 
         case signalTypeNone:
             THROW(AssertError, "no name for signal none");
+    #else
+        case signalTypeCtrlC:
+            name = "Ctrl-C";
+            break;
+
+        case signalTypeCtrlBreak:
+            name = "Ctrl-Break";
+            break;
+
+        case signalTypeCtrlClose:
+            name = "Close";
+            break;
+
+        case signalTypeCtrlLogoff:
+            name = "Logoff";
+            break;
+
+        case signalTypeCtrlShutdown:
+            name = "Shutdown";
+            break;
+
+        case signalTypeNone:
+        default:
+            THROW(AssertError, "no name for signal none");
+    #endif
     }
 
     FUNCTION_TEST_RETURN_CONST(STRINGZ, name);
@@ -52,6 +82,7 @@ exitSignalName(SignalType signalType)
 /***********************************************************************************************************************************
 Catch signals
 ***********************************************************************************************************************************/
+#ifndef _WIN32
 static void
 exitOnSignal(int signalType)
 {
@@ -63,20 +94,35 @@ exitOnSignal(int signalType)
 
     FUNCTION_LOG_RETURN_VOID();
 }
+#else
+static BOOL
+exitOnSignal(_In_ DWORD signalType)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_PARAM(DWORD, signalType);
+    FUNCTION_LOG_END();
+
+    ExitProcess(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
+
+    FUNCTION_TEST_RETURN(BOOL, TRUE);
+}
+#endif
 
 /**********************************************************************************************************************************/
 void
 exitInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
-
+#ifndef _WIN32
     signal(SIGHUP, exitOnSignal);
     signal(SIGINT, exitOnSignal);
     signal(SIGTERM, exitOnSignal);
 
     // Ignore SIGPIPE and check for EPIPE errors on write() instead
     signal(SIGPIPE, SIG_IGN);
-
+#else
+    SetConsoleCtrlHandler(exitOnSignal, TRUE);
+#endif
     FUNCTION_LOG_RETURN_VOID();
 }
 
