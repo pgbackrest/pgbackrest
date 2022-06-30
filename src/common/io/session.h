@@ -17,11 +17,18 @@ typedef struct IoSession IoSession;
 /***********************************************************************************************************************************
 Session roles
 ***********************************************************************************************************************************/
+#ifndef _WIN32
 typedef enum
 {
     ioSessionRoleClient = STRID5("client", 0x28e2a5830),            // Client session
     ioSessionRoleServer = STRID5("server", 0x245b48b30),            // Server session
 } IoSessionRole;
+#else
+#define ioSessionRoleClient     STRID5("client", 0x28e2a5830ULL)            // Client session
+#define ioSessionRoleServer     STRID5("server", 0x245b48b30ULL)            // Server session
+
+typedef unsigned __int64 IoSessionRole;
+#endif
 
 #include "common/io/read.h"
 #include "common/io/session.intern.h"
