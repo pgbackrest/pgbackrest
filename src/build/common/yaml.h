@@ -19,6 +19,7 @@ typedef struct Yaml Yaml;
 /***********************************************************************************************************************************
 Yaml event type
 ***********************************************************************************************************************************/
+#ifndef _WIN32
 typedef enum
 {
     yamlEventTypeNone = STRID5("none", 0x2b9ee0),
@@ -33,6 +34,22 @@ typedef enum
     yamlEventTypeMapBegin = STRID5("map-begin", 0xe49ca2dc02d0),
     yamlEventTypeMapEnd = STRID5("map-end", 0x11c5dc02d0),
 } YamlEventType;
+#else
+    #define yamlEventTypeNone           STRID5("none", 0x2b9ee0ULL)
+    #define yamlEventTypeStreamBegin    STRID5("stream-begin", 0x724e516da12ca930ULL)
+    #define yamlEventTypeStreamEnd      STRID5("stream-end", 0x8e2eda12ca930ULL)
+    #define yamlEventTypeDocBegin       STRID5("doc-begin", 0xe49ca2d8de40ULL)
+    #define yamlEventTypeDocEnd         STRID5("doc-end", 0x11c5d8de40ULL)
+    #define yamlEventTypeAlias          STRID5("alias", 0x130a5810ULL)
+    #define yamlEventTypeScalar         STRID5("scalar", 0x241604730ULL)
+    #define yamlEventTypeSeqBegin       STRID5("seq-begin", 0xe49ca2dc4b30ULL)
+    #define yamlEventTypeSeqEnd         STRID5("seq-end", 0x11c5dc4b30ULL)
+    #define yamlEventTypeMapBegin       STRID5("map-begin", 0xe49ca2dc02d0ULL)
+    #define yamlEventTypeMapEnd         STRID5("map-end", 0x11c5dc02d0ULL)
+
+    typedef unsigned __int64 YamlEventType;
+#endif // !_WIN32
+
 
 /***********************************************************************************************************************************
 Yaml event
