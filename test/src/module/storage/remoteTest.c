@@ -436,7 +436,7 @@ testRun(void)
             storageRepo, TEST_PATH "/repo128/parent",
             "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0777}\n"
             "testpath/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0777}\n",
-            .level = storageInfoLevelDetail, .includeDot = true);
+            .level = storageInfoLevelDetail, .includeDot = true, .noRecurse = true);
     }
 
     // *****************************************************************************************************************************
