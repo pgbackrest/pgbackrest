@@ -869,34 +869,26 @@ strPathAbsolute(const String *this, const String *base)
     if (strstr(strZ(result), "/..") != NULL || strstr(strZ(result), "//") != NULL)
         THROW_FMT(AssertError, "result path '%s' is not absolute", strZ(result));
 #else
-    // Path is already absolute so just return it
-    if (PathIsRelativeA(strZ(this)))
+    // We always call GetFullPathNameA, as PathIsRelativeA returns false on paths like C:\x\y\..\..
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strDup(this);
-    }
-    // Else we'll need to construct the absolute path.  You would hope we could use realpath() here but it is so broken in the
-    // Posix spec that is seems best avoided.
-    else
-    {
-        MEM_CONTEXT_TEMP_BEGIN()
+        DWORD bufferSize = GetFullPathNameA(strZ(this), 0, NULL, NULL);
+        if (bufferSize == 0)
+            THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
+
+        Buffer *fullPathBuffer = bufNew((size_t)bufferSize);
+        DWORD writtenCount = GetFullPathNameA(strZ(this), bufferSize, bufPtr(fullPathBuffer), NULL);
+        if (writtenCount == 0 || writtenCount != (bufferSize - 1))
+            THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
+
+        MEM_CONTEXT_PRIOR_BEGIN()
         {
-            DWORD bufferSize = GetFullPathNameA(strZ(this), 0, NULL, NULL);
-            if (bufferSize == 0)
-                THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
-
-            Buffer *fullPathBuffer = bufNew((size_t)bufferSize);
-            DWORD bufferSize = GetFullPathNameA(strZ(this), bufferSize, bufPtr(fullPathBuffer), NULL);
-            if (bufferSize == 0)
-                THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
-
-            MEM_CONTEXT_PRIOR_BEGIN()
-            {
-                result = strNewBuf(fullPathBuffer);
-            }
-            MEM_CONTEXT_PRIOR_END();
+            result = strNewZ(bufPtr(fullPathBuffer));
         }
-        MEM_CONTEXT_TEMP_END();
+        MEM_CONTEXT_PRIOR_END();
     }
+    MEM_CONTEXT_TEMP_END();
+
 
     // There should not be any stray .. or // in the final result
     if (PathIsRelativeA(strZ(result)))

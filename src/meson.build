@@ -336,7 +336,8 @@ else
     include_dir_win32 = include_directories('win32_msvc')
 
     win32_deps = [
-        cc.find_library('ws2_32', required: true)
+        cc.find_library('ws2_32', required: true),
+        cc.find_library('Shlwapi', required: true),
     ]
 
     src_win32 = [
