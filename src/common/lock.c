@@ -164,7 +164,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
         {
             // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing the lock
         #ifdef _WIN32
-            HANDLE fileHandle = _get_osfhandle(fd);
+            HANDLE fileHandle = (HANDLE)_get_osfhandle(fd);
             ASSERT(fileHandle != INVALID_HANDLE_VALUE);
             
             if (LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, MAXDWORD, MAXDWORD, NULL) == FALSE)
@@ -258,7 +258,11 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         if (param.percentComplete != NULL)
             jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
 
+    #ifndef _WIN32
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
+    #else
+        jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), GetCurrentProcessId());
+    #endif
 
         jsonWriteObjectEnd(json);
 
@@ -270,9 +274,19 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
                 strZ(lockLocal.file[lockType].name));
 
             // In case the current write is ever shorter than the previous one
+        #ifndef _WIN32
             THROW_ON_SYS_ERROR_FMT(
                 ftruncate(lockLocal.file[lockType].fd, 0) == -1, FileWriteError, "unable to truncate '%s'",
                 strZ(lockLocal.file[lockType].name));
+        #else
+            HANDLE fileHandle = (HANDLE)_get_osfhandle(lockLocal.file[lockType].fd);
+            ASSERT(fileHandle != INVALID_HANDLE_VALUE);
+
+            THROW_ON_SYS_ERROR_FMT(
+                SetEndOfFile(fileHandle) == FALSE, FileWriteError, "unable to truncate '%s'",
+                strZ(lockLocal.file[lockType].name));
+        #endif // !_WIN32
+
         }
 
         // Write lock file data
@@ -329,7 +343,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
             {
                 // Attempt to lock the file
             #ifdef _WIN32
-                HANDLE fileHandle = _get_osfhandle(result);
+                HANDLE fileHandle = (HANDLE)_get_osfhandle(result);
                 ASSERT(fileHandle != INVALID_HANDLE_VALUE);
             
                 if (LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, MAXDWORD, MAXDWORD, NULL) == FALSE)
