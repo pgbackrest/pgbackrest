@@ -167,7 +167,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
             HANDLE fileHandle = (HANDLE)_get_osfhandle(fd);
             ASSERT(fileHandle != INVALID_HANDLE_VALUE);
             
-            if (LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, MAXDWORD, MAXDWORD, NULL) == FALSE)
+            if (LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, MAXDWORD, MAXDWORD, NULL))
         #else
             if (flock(fd, LOCK_EX | LOCK_NB) == 0)
         #endif
@@ -348,7 +348,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
             
                 if (LockFileEx(fileHandle, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, MAXDWORD, MAXDWORD, NULL) == FALSE)
             #else
-                if (flock(result, LOCK_EX | LOCK_NB) == 0)
+                if (flock(result, LOCK_EX | LOCK_NB) == -1)
             #endif
                 {
                     // Save the error for reporting outside the loop
