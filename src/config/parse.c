@@ -943,7 +943,7 @@ cfgParseOptionalRule(
             else
             {
                 // If the optional rule type is greater than requested then return. The optional rule may be requested later.
-                if (optionalRules->typeNext > optionalRuleType)
+                if (optionalRules->typeNext > (unsigned int)optionalRuleType)
                     FUNCTION_TEST_RETURN(BOOL, false);
 
                 // Consume the unused optional rule
