@@ -450,12 +450,14 @@ testRun(void)
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path - filter");
+        TEST_TITLE("empty path - filter");
+
+        storagePathCreateP(storageTest, STRDEF("pg/empty"), .mode = 0700);
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
-            "path/\n",
-            .noRecurse = true, .level = storageInfoLevelType, .expression = "^path");
+            "empty/\n",
+            .level = storageInfoLevelType, .expression = "^empty");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("filter in subpath during recursion");

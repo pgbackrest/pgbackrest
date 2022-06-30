@@ -287,12 +287,9 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 /**********************************************************************************************************************************/
 typedef struct StorageIterData
 {
-    const Storage *storage;                                         // Storage object
     List *list;                                                     // List to collect info in
-    const String *expression;                                       // Filter for names
     RegExp *regExp;                                                 // Compiled filter for names
     bool recurse;                                                   // Should we recurse?
-    const String *path;                                             // Top-level path for info
     const String *pathSub;                                          // Path below the top-level path (starts as NULL)
 } StorageIterData;
 
@@ -313,7 +310,8 @@ storageIterCallback(void *data, const StorageInfo *info)
     const String *const pathFile = iterData->pathSub == NULL ?
         strDup(info->name) : strNewFmt("%s/%s", strZ(iterData->pathSub), strZ(info->name));
 
-    if ((iterData->regExp == NULL || regExpMatch(iterData->regExp, pathFile)))
+    if ((info->type == storageTypePath && iterData->recurse) ||
+        (iterData->regExp == NULL || regExpMatch(iterData->regExp, pathFile)))
     {
         MEM_CONTEXT_OBJ_BEGIN(iterData->list)
         {
@@ -325,19 +323,6 @@ storageIterCallback(void *data, const StorageInfo *info)
             infoCopy->linkDestination = strDup(info->linkDestination);
         }
         MEM_CONTEXT_OBJ_END();
-    }
-
-    // Recurse into paths when requested
-    if (info->type == storageTypePath && iterData->recurse)
-    {
-        StorageIterData iterDataSub = *iterData;
-        iterDataSub.path = strNewFmt("%s/%s", strZ(iterData->path), strZ(info->name));
-        iterDataSub.pathSub = iterData->pathSub == NULL ?
-            info->name : strNewFmt("%s/%s", strZ(iterData->pathSub), strZ(info->name));
-
-        storageInterfaceInfoListP(
-            storageDriver(iterDataSub.storage), iterDataSub.path, info->level, storageIterCallback, &iterDataSub,
-            .expression = iterDataSub.expression);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -362,6 +347,7 @@ storageIterNew(const Storage *const this, const String *const pathExp, StorageIt
     ASSERT(this->pub.interface.infoList != NULL);
     ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
+    const String *const path = storagePathP(this, pathExp);
     StorageIter *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -379,25 +365,45 @@ storageIterNew(const Storage *const this, const String *const pathExp, StorageIt
         }
         OBJ_NEW_END();
 
-        StorageIterData iterData =
-        {
-            .storage = this,
-            .list = result->list,
-            .recurse = param.recurse,
-            .expression = param.expression,
-            .path = storagePathP(this, pathExp),
-        };
+        StorageIterData iterData = {.list = result->list, .recurse = param.recurse};
 
-        if (iterData.expression != NULL)
-            iterData.regExp = regExpNew(iterData.expression);
+        if (param.expression != NULL)
+            iterData.regExp = regExpNew(param.expression);
 
         // Info level
         if (param.level == storageInfoLevelDefault)
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
         if (storageInterfaceInfoListP(
-                storageDriver(this), iterData.path, param.level, storageIterCallback, &iterData, .expression = iterData.expression))
+                storageDriver(this), path, param.level, storageIterCallback, &iterData, .expression = param.expression))
         {
+            if (param.recurse)
+            {
+                unsigned int listIdx = 0;
+
+                while (listIdx < lstSize(result->list))
+                {
+                    const StorageInfo *const info = lstGet(result->list, listIdx);
+
+                    if (info->type == storageTypePath)
+                    {
+                        iterData.pathSub = info->name;
+
+                        storageInterfaceInfoListP(
+                            storageDriver(this), strNewFmt("%s/%s", strZ(path), strZ(iterData.pathSub)), param.level,
+                            storageIterCallback, &iterData, .expression = param.expression);
+
+                        if (iterData.regExp != NULL && !regExpMatch(iterData.regExp, info->name))
+                        {
+                            lstRemoveIdx(result->list, listIdx);
+                            continue;
+                        }
+                    }
+
+                    listIdx++;
+                }
+            }
+
             if (param.sortOrder != sortOrderNone)
                 lstSort(result->list, param.sortOrder);
 
@@ -406,7 +412,7 @@ storageIterNew(const Storage *const this, const String *const pathExp, StorageIt
         else
         {
             if (param.errorOnMissing)
-                THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(storagePathP(this, pathExp)));
+                THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
 
             if (param.nullOnMissing)
                 result = NULL;
