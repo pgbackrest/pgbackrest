@@ -424,6 +424,37 @@ else
     alias_target('build-config', build_config)
 
     ####################################################################################################################################
+    # Build error target
+    ####################################################################################################################################
+    src_build_error = [
+        'build/common/render.c',
+        'build/common/yaml.c',
+        'build/error/main.c',
+        'build/error/parse.c',
+        'build/error/render.c',
+    ]
+
+    build_error = executable(
+        'build-error',
+        src_common,
+        src_build_error,
+        src_win32,
+        dependencies : [
+            lib_yaml,
+            win32_deps,
+            lib_xml,
+            lib_regex,
+        ],
+        build_by_default: false,
+        include_directories: [
+            dep_inc_dir,
+            include_dir_win32,
+        ]
+    )
+
+    alias_target('build-error', build_error)
+
+    ####################################################################################################################################
     # Build help target
     ####################################################################################################################################
     src_build_help = [

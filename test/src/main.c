@@ -5,6 +5,10 @@ Main
 
 #include <stdio.h>
 
+#ifdef _WIN32
+    #include <Windows.h>
+#endif
+
 #include "command/command.h"
 #include "command/exit.h"
 #include "command/help/help.h"

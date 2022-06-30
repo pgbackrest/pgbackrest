@@ -8,6 +8,8 @@ Follow steps documented [here](https://github.com/yaml/libyaml/issues/165).
 
 ### `libregex`
 
+**TODO:** Move to [rxspencer](https://github.com/garyhouston/rxspencer)
+
 Download [sources](http://gnuwin32.sourceforge.net/downlinks/regex-src-zip.php) from the [gnuwin32](http://gnuwin32.sourceforge.net/packages/regex.htm) project.
 
 Follow the following steps:

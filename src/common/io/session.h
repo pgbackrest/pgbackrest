@@ -102,7 +102,7 @@ Functions
 __attribute__((always_inline)) static inline void
 ioSessionClose(IoSession *const this)
 {
-    return (void)THIS_PUB(IoSession)->interface->close(THIS_PUB(IoSession)->driver);
+    return THIS_PUB(IoSession)->interface->close(THIS_PUB(IoSession)->driver);
 }
 
 // Move to a new parent mem context

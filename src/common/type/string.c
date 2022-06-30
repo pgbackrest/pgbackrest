@@ -9,6 +9,10 @@ String Handler
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+    #include <shlwapi.h>
+#endif
+
 #include "common/debug.h"
 #include "common/macro.h"
 #include "common/memContext.h"
@@ -294,8 +298,14 @@ strBaseZ(const String *this)
 
     const char *end = this->pub.buffer + strSize(this);
 
+#ifndef _WIN32
     while (end > this->pub.buffer && *(end - 1) != '/')
         end--;
+#else
+    while (end > this->pub.buffer && *(end - 1) != '/' && *(end - 1) != '\\')
+        end--;
+#endif // !_WIN32
+
 
     FUNCTION_TEST_RETURN_CONST(STRINGZ, end);
 }
@@ -761,8 +771,14 @@ strPath(const String *this)
 
     const char *end = this->pub.buffer + strSize(this);
 
+#ifndef _WIN32
     while (end > this->pub.buffer && *(end - 1) != '/')
         end--;
+#else
+    while (end > this->pub.buffer && *(end - 1) != '/' && *(end - 1) != '\\')
+        end--;
+#endif // !_WIN32
+
 
     FUNCTION_TEST_RETURN(
         STRING,
@@ -784,6 +800,7 @@ strPathAbsolute(const String *this, const String *base)
 
     String *result = NULL;
 
+#ifndef _WIN32
     // Path is already absolute so just return it
     if (strBeginsWith(this, FSLASH_STR))
     {
@@ -851,6 +868,40 @@ strPathAbsolute(const String *this, const String *base)
     // There should not be any stray .. or // in the final result
     if (strstr(strZ(result), "/..") != NULL || strstr(strZ(result), "//") != NULL)
         THROW_FMT(AssertError, "result path '%s' is not absolute", strZ(result));
+#else
+    // Path is already absolute so just return it
+    if (PathIsRelativeA(strZ(this)))
+    {
+        result = strDup(this);
+    }
+    // Else we'll need to construct the absolute path.  You would hope we could use realpath() here but it is so broken in the
+    // Posix spec that is seems best avoided.
+    else
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            DWORD bufferSize = GetFullPathNameA(strZ(this), 0, NULL, NULL);
+            if (bufferSize == 0)
+                THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
+
+            Buffer *fullPathBuffer = bufNew((size_t)bufferSize);
+            DWORD bufferSize = GetFullPathNameA(strZ(this), bufferSize, bufPtr(fullPathBuffer), NULL);
+            if (bufferSize == 0)
+                THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result = strNewBuf(fullPathBuffer);
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    // There should not be any stray .. or // in the final result
+    if (PathIsRelativeA(strZ(result)))
+        THROW_FMT(AssertError, "result path '%s' is not absolute", strZ(result));
+#endif // !_WIN32
 
     FUNCTION_TEST_RETURN(STRING, result);
 }

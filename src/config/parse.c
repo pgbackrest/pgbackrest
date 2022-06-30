@@ -54,7 +54,9 @@ Prefix for environment variables
 #define PGBACKREST_ENV_SIZE                                         (sizeof(PGBACKREST_ENV) - 1)
 
 // In some environments this will not be externed
+#ifndef _WIN32
 extern char **environ;
+#endif
 
 /***********************************************************************************************************************************
 Define how a command is parsed
