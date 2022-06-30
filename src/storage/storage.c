@@ -16,7 +16,7 @@ Storage Interface
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
-Object type
+Object types
 ***********************************************************************************************************************************/
 struct Storage
 {
@@ -27,6 +27,12 @@ struct Storage
     mode_t modePath;
     bool write;
     StoragePathExpressionCallback *pathExpressionFunction;
+};
+
+struct StorageIter
+{
+    List *list;                                                     // Storage list
+    unsigned int listIdx;                                           // Current index
 };
 
 /**********************************************************************************************************************************/
@@ -279,232 +285,237 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageInfoListSortData
+// typedef struct StorageInfoListSortData
+// {
+//     MemContext *memContext;                                         // Mem context to use for allocating data in this struct
+//     StringList *ownerList;                                          // List of users and groups to reduce memory usage
+//     List *infoList;                                                 // List of info
+// } StorageInfoListSortData;
+
+// static void
+// storageInfoListOldSortCallback(void *data, const StorageInfo *info)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_LOG_PARAM_P(VOID, data);
+//         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+//     FUNCTION_TEST_END();
+
+//     StorageInfoListSortData *infoData = data;
+
+//     MEM_CONTEXT_BEGIN(infoData->memContext)
+//     {
+//         // Copy info and dup strings
+//         StorageInfo infoCopy = *info;
+//         infoCopy.name = strDup(info->name);
+//         infoCopy.linkDestination = strDup(info->linkDestination);
+//         infoCopy.user = strLstAddIfMissing(infoData->ownerList, info->user);
+//         infoCopy.group = strLstAddIfMissing(infoData->ownerList, info->group);
+
+//         lstAdd(infoData->infoList, &infoCopy);
+//     }
+//     MEM_CONTEXT_END();
+
+//     FUNCTION_TEST_RETURN_VOID();
+// }
+
+// static bool
+// storageInfoListOldSort(
+//     const Storage *this, const String *path, StorageInfoLevel level, const String *expression, SortOrder sortOrder,
+//     StorageInfoListCallback callback, void *callbackData)
+// {
+//     FUNCTION_LOG_BEGIN(logLevelTrace);
+//         FUNCTION_LOG_PARAM(STORAGE, this);
+//         FUNCTION_LOG_PARAM(STRING, path);
+//         FUNCTION_LOG_PARAM(ENUM, level);
+//         FUNCTION_LOG_PARAM(STRING, expression);
+//         FUNCTION_LOG_PARAM(ENUM, sortOrder);
+//         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+//         FUNCTION_LOG_PARAM_P(VOID, callbackData);
+//     FUNCTION_LOG_END();
+
+//     ASSERT(this != NULL);
+//     ASSERT(callback != NULL);
+
+//     bool result = false;
+
+//     MEM_CONTEXT_TEMP_BEGIN()
+//     {
+//         // If no sorting then use the callback directly
+//         if (sortOrder == sortOrderNone)
+//         {
+//             result = storageInterfaceInfoListP(storageDriver(this), path, level, callback, callbackData, .expression = expression);
+//         }
+//         // Else sort the info before sending it to the callback
+//         else
+//         {
+//             StorageInfoListSortData data =
+//             {
+//                 .memContext = MEM_CONTEXT_TEMP(),
+//                 .ownerList = strLstNew(),
+//                 .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
+//             };
+
+//             result = storageInterfaceInfoListP(
+//                 storageDriver(this), path, level, storageInfoListOldSortCallback, &data, .expression = expression);
+//             lstSort(data.infoList, sortOrder);
+
+//             MEM_CONTEXT_TEMP_RESET_BEGIN()
+//             {
+//                 for (unsigned int infoIdx = 0; infoIdx < lstSize(data.infoList); infoIdx++)
+//                 {
+//                     // Pass info to the caller
+//                     callback(callbackData, lstGet(data.infoList, infoIdx));
+
+//                     // Reset the memory context occasionally
+//                     MEM_CONTEXT_TEMP_RESET(1000);
+//                 }
+//             }
+//             MEM_CONTEXT_TEMP_END();
+//         }
+//     }
+//     MEM_CONTEXT_TEMP_END();
+
+//     FUNCTION_LOG_RETURN(BOOL, result);
+// }
+
+// typedef struct StorageInfoListData
+// {
+//     const Storage *storage;                                         // Storage object;
+//     StorageInfoListCallback callbackFunction;                       // Original callback function
+//     void *callbackData;                                             // Original callback data
+//     const String *expression;                                       // Filter for names
+//     RegExp *regExp;                                                 // Compiled filter for names
+//     bool recurse;                                                   // Should we recurse?
+//     SortOrder sortOrder;                                            // Sort order
+//     const String *path;                                             // Top-level path for info
+//     const String *subPath;                                          // Path below the top-level path (starts as NULL)
+// } StorageInfoListData;
+
+// static void
+// storageInfoListOldCallback(void *data, const StorageInfo *info)
+// {
+//     FUNCTION_TEST_BEGIN();
+//         FUNCTION_LOG_PARAM_P(VOID, data);
+//         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+//     FUNCTION_TEST_END();
+
+//     StorageInfoListData *listData = data;
+
+//     // Is this the . path?
+//     bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
+
+//     // Skip . paths when getting info for subpaths (since info was already reported in the parent path)
+//     if (dotPath && listData->subPath != NULL)
+//         FUNCTION_TEST_RETURN_VOID();
+
+//     // Update the name in info with the subpath
+//     StorageInfo infoUpdate = *info;
+
+//     if (listData->subPath != NULL)
+//         infoUpdate.name = strNewFmt("%s/%s", strZ(listData->subPath), strZ(infoUpdate.name));
+
+//     // Is this file a match?
+//     bool match = listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name);
+
+//     // Callback before checking path contents when not descending
+//     if (match && listData->sortOrder != sortOrderDesc)
+//         listData->callbackFunction(listData->callbackData, &infoUpdate);
+
+//     // Recurse into paths
+//     if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
+//     {
+//         StorageInfoListData data = *listData;
+//         data.subPath = infoUpdate.name;
+
+//         storageInfoListOldSort(
+//             data.storage, strNewFmt("%s/%s", strZ(data.path), strZ(data.subPath)), infoUpdate.level, data.expression,
+//             data.sortOrder, storageInfoListOldCallback, &data);
+//     }
+
+//     // Callback after checking path contents when descending
+//     if (match && listData->sortOrder == sortOrderDesc)
+//         listData->callbackFunction(listData->callbackData, &infoUpdate);
+
+//     FUNCTION_TEST_RETURN_VOID();
+// }
+
+// static bool
+// storageInfoListOld(
+//     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageIterParam param)
+// {
+//     FUNCTION_LOG_BEGIN(logLevelDebug);
+//         FUNCTION_LOG_PARAM(STORAGE, this);
+//         FUNCTION_LOG_PARAM(STRING, pathExp);
+//         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+//         FUNCTION_LOG_PARAM_P(VOID, callbackData);
+//         FUNCTION_LOG_PARAM(ENUM, param.level);
+//         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+//         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
+//         FUNCTION_LOG_PARAM(STRING, param.expression);
+//         FUNCTION_LOG_PARAM(BOOL, param.recurse);
+//     FUNCTION_LOG_END();
+
+//     ASSERT(this != NULL);
+//     ASSERT(callback != NULL);
+//     ASSERT(this->pub.interface.infoList != NULL);
+//     ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
+
+//     bool result = false;
+
+//     MEM_CONTEXT_TEMP_BEGIN()
+//     {
+//         // Info level
+//         if (param.level == storageInfoLevelDefault)
+//             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
+
+//         // Build the path
+//         String *path = storagePathP(this, pathExp);
+
+//         // If there is an expression or recursion then the info will need to be filtered through a local callback
+//         if (param.expression != NULL || param.recurse)
+//         {
+//             StorageInfoListData data =
+//             {
+//                 .storage = this,
+//                 .callbackFunction = callback,
+//                 .callbackData = callbackData,
+//                 .expression = param.expression,
+//                 .sortOrder = param.sortOrder,
+//                 .recurse = param.recurse,
+//                 .path = path,
+//             };
+
+//             if (data.expression != NULL)
+//                 data.regExp = regExpNew(param.expression);
+
+//             result = storageInfoListOldSort(
+//                 this, path, param.level, param.expression, param.sortOrder, storageInfoListOldCallback, &data);
+//         }
+//         else
+//             result = storageInfoListOldSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
+
+//         if (!result && param.errorOnMissing)
+//             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
+//     }
+//     MEM_CONTEXT_TEMP_END();
+
+//     FUNCTION_LOG_RETURN(BOOL, result);
+// }
+
+/*#define storageInfoListO(this, fileExp, callback, callbackData, ...)                                                               \
+     storageInfoListOld(this, fileExp, callback, callbackData, (StorageIterParam){VAR_PARAM_INIT, __VA_ARGS__})*/
+
+/**********************************************************************************************************************************/
+typedef struct StorageIterData
 {
-    MemContext *memContext;                                         // Mem context to use for allocating data in this struct
-    StringList *ownerList;                                          // List of users and groups to reduce memory usage
-    List *infoList;                                                 // List of info
-} StorageInfoListSortData;
-
-static void
-storageInfoListOldSortCallback(void *data, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    StorageInfoListSortData *infoData = data;
-
-    MEM_CONTEXT_BEGIN(infoData->memContext)
-    {
-        // Copy info and dup strings
-        StorageInfo infoCopy = *info;
-        infoCopy.name = strDup(info->name);
-        infoCopy.linkDestination = strDup(info->linkDestination);
-        infoCopy.user = strLstAddIfMissing(infoData->ownerList, info->user);
-        infoCopy.group = strLstAddIfMissing(infoData->ownerList, info->group);
-
-        lstAdd(infoData->infoList, &infoCopy);
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-static bool
-storageInfoListOldSort(
-    const Storage *this, const String *path, StorageInfoLevel level, const String *expression, SortOrder sortOrder,
-    StorageInfoListCallback callback, void *callbackData)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(STRING, expression);
-        FUNCTION_LOG_PARAM(ENUM, sortOrder);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(callback != NULL);
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // If no sorting then use the callback directly
-        if (sortOrder == sortOrderNone)
-        {
-            result = storageInterfaceInfoListP(storageDriver(this), path, level, callback, callbackData, .expression = expression);
-        }
-        // Else sort the info before sending it to the callback
-        else
-        {
-            StorageInfoListSortData data =
-            {
-                .memContext = MEM_CONTEXT_TEMP(),
-                .ownerList = strLstNew(),
-                .infoList = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
-            };
-
-            result = storageInterfaceInfoListP(
-                storageDriver(this), path, level, storageInfoListOldSortCallback, &data, .expression = expression);
-            lstSort(data.infoList, sortOrder);
-
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                for (unsigned int infoIdx = 0; infoIdx < lstSize(data.infoList); infoIdx++)
-                {
-                    // Pass info to the caller
-                    callback(callbackData, lstGet(data.infoList, infoIdx));
-
-                    // Reset the memory context occasionally
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-typedef struct StorageInfoListData
-{
-    const Storage *storage;                                         // Storage object;
-    StorageInfoListCallback callbackFunction;                       // Original callback function
-    void *callbackData;                                             // Original callback data
+    const Storage *storage;                                         // Storage object
+    List *list;                                                     // List to collect info in
     const String *expression;                                       // Filter for names
     RegExp *regExp;                                                 // Compiled filter for names
     bool recurse;                                                   // Should we recurse?
-    SortOrder sortOrder;                                            // Sort order
     const String *path;                                             // Top-level path for info
-    const String *subPath;                                          // Path below the top-level path (starts as NULL)
-} StorageInfoListData;
-
-static void
-storageInfoListOldCallback(void *data, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    StorageInfoListData *listData = data;
-
-    // Is this the . path?
-    bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
-
-    // Skip . paths when getting info for subpaths (since info was already reported in the parent path)
-    if (dotPath && listData->subPath != NULL)
-        FUNCTION_TEST_RETURN_VOID();
-
-    // Update the name in info with the subpath
-    StorageInfo infoUpdate = *info;
-
-    if (listData->subPath != NULL)
-        infoUpdate.name = strNewFmt("%s/%s", strZ(listData->subPath), strZ(infoUpdate.name));
-
-    // Is this file a match?
-    bool match = listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name);
-
-    // Callback before checking path contents when not descending
-    if (match && listData->sortOrder != sortOrderDesc)
-        listData->callbackFunction(listData->callbackData, &infoUpdate);
-
-    // Recurse into paths
-    if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
-    {
-        StorageInfoListData data = *listData;
-        data.subPath = infoUpdate.name;
-
-        storageInfoListOldSort(
-            data.storage, strNewFmt("%s/%s", strZ(data.path), strZ(data.subPath)), infoUpdate.level, data.expression,
-            data.sortOrder, storageInfoListOldCallback, &data);
-    }
-
-    // Callback after checking path contents when descending
-    if (match && listData->sortOrder == sortOrderDesc)
-        listData->callbackFunction(listData->callbackData, &infoUpdate);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-static bool
-storageInfoListOld(
-    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageIterParam param)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, this);
-        FUNCTION_LOG_PARAM(STRING, pathExp);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
-        FUNCTION_LOG_PARAM(ENUM, param.level);
-        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
-        FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
-        FUNCTION_LOG_PARAM(STRING, param.expression);
-        FUNCTION_LOG_PARAM(BOOL, param.recurse);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(callback != NULL);
-    ASSERT(this->pub.interface.infoList != NULL);
-    ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
-
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Info level
-        if (param.level == storageInfoLevelDefault)
-            param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
-
-        // Build the path
-        String *path = storagePathP(this, pathExp);
-
-        // If there is an expression or recursion then the info will need to be filtered through a local callback
-        if (param.expression != NULL || param.recurse)
-        {
-            StorageInfoListData data =
-            {
-                .storage = this,
-                .callbackFunction = callback,
-                .callbackData = callbackData,
-                .expression = param.expression,
-                .sortOrder = param.sortOrder,
-                .recurse = param.recurse,
-                .path = path,
-            };
-
-            if (data.expression != NULL)
-                data.regExp = regExpNew(param.expression);
-
-            result = storageInfoListOldSort(
-                this, path, param.level, param.expression, param.sortOrder, storageInfoListOldCallback, &data);
-        }
-        else
-            result = storageInfoListOldSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
-
-        if (!result && param.errorOnMissing)
-            THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-#define storageInfoListO(this, fileExp, callback, callbackData, ...)                                                               \
-    storageInfoListOld(this, fileExp, callback, callbackData, (StorageIterParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-/**********************************************************************************************************************************/
-struct StorageIter
-{
-    List *list;                                                     // Storage list
-    unsigned int listIdx;                                           // Current index
-};
+    const String *pathSub;                                          // Path below the top-level path (starts as NULL)
+} StorageIterData;
 
 static void
 storageIterCallback(void *data, const StorageInfo *info)
@@ -514,18 +525,33 @@ storageIterCallback(void *data, const StorageInfo *info)
         FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-    if (!strEq(info->name, DOT_STR))
-    {
-        MEM_CONTEXT_OBJ_BEGIN(data)
-        {
-            StorageInfo *const infoCopy = lstAdd(data, info);
+    const StorageIterData *const iterData = data;
 
-            infoCopy->name = strDup(info->name);
+    if (!strEq(info->name, DOT_STR) && (iterData->regExp == NULL || regExpMatch(iterData->regExp, info->name)))
+    {
+        MEM_CONTEXT_OBJ_BEGIN(iterData->list)
+        {
+            StorageInfo *const infoCopy = lstAdd(iterData->list, info);
+
+            infoCopy->name = iterData->pathSub == NULL ?
+                strDup(info->name) : strNewFmt("%s/%s", strZ(iterData->pathSub), strZ(info->name));
             infoCopy->user = strDup(info->user);
             infoCopy->group = strDup(info->group);
             infoCopy->linkDestination = strDup(info->linkDestination);
         }
         MEM_CONTEXT_OBJ_END();
+
+        if (info->type == storageTypePath)
+        {
+            StorageIterData iterDataSub = *iterData;
+            iterDataSub.path = strNewFmt("%s/%s", strZ(iterData->path), strZ(info->name));
+            iterDataSub.pathSub = iterData->pathSub == NULL ?
+                info->name : strNewFmt("%s/%s", strZ(iterData->pathSub), strZ(info->name));
+
+            storageInterfaceInfoListP(
+                storageDriver(iterDataSub.storage), iterDataSub.path, info->level, storageIterCallback, &iterDataSub,
+                .expression = iterDataSub.expression);
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -565,10 +591,36 @@ storageIterNew(const Storage *const this, const String *const pathExp, const Sto
         }
         OBJ_NEW_END();
 
-        if (!storageInfoListOld(this, pathExp, storageIterCallback, result->list, param) && param.nullOnMissing)
-            result = NULL;
-        else
+        StorageIterData iterData =
+        {
+            .storage = this,
+            .list = result->list,
+            .recurse = param.recurse,
+            .expression = param.expression,
+            .path = storagePathP(this, pathExp),
+        };
+
+        if (iterData.expression != NULL)
+            iterData.regExp = regExpNew(iterData.expression);
+
+        if (storageInterfaceInfoListP(
+                storageDriver(this), iterData.path, param.level, storageIterCallback, &iterData, .expression = iterData.expression))
+        {
+            if (param.sortOrder != sortOrderNone)
+                lstSort(result->list, param.sortOrder);
+
             objMove(result, memContextPrior());
+        }
+        else
+        {
+            if (param.errorOnMissing)
+                THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(storagePathP(this, pathExp)));
+
+            if (param.nullOnMissing)
+                result = NULL;
+            else
+                objMove(result, memContextPrior());
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

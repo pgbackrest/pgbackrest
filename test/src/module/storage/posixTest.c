@@ -353,7 +353,7 @@ testRun(void)
             storageIterP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError,
             STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
 
-        TEST_RESULT_BOOL(storageIterMore(storageIterP(storageTest, STRDEF(BOGUS_STR))), false, "ignore missing dir");
+        TEST_RESULT_PTR(storageIterP(storageTest, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "ignore missing dir");
 
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_ERROR_FMT(
