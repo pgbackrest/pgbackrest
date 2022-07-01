@@ -280,36 +280,8 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageRemoteProtocolInfoListCallbackData
-{
-    ProtocolServer *const server;
-    StorageRemoteInfoProtocolWriteData writeData;
-} StorageRemoteProtocolInfoListCallbackData;
-
-static void
-storageRemoteProtocolInfoListCallback(void *const dataVoid, const StorageInfo *const info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, dataVoid);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    ASSERT(dataVoid != NULL);
-    ASSERT(info != NULL);
-
-    StorageRemoteProtocolInfoListCallbackData *const data = dataVoid;
-
-    PackWrite *const write = protocolPackNew();
-    pckWriteStrP(write, info->name);
-    storageRemoteInfoProtocolPut(&data->writeData, write, info);
-    protocolServerDataPut(data->server, write);
-    pckWriteFree(write);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 void
-storageRemoteInfoListProtocol(PackRead *const param, ProtocolServer *const server)
+storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
@@ -324,15 +296,27 @@ storageRemoteInfoListProtocol(PackRead *const param, ProtocolServer *const serve
     {
         const String *const path = pckReadStrP(param);
         const StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
+        StorageRemoteInfoProtocolWriteData writeData = {.memContext = memContextCurrent()};
+        StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level);
 
-        StorageRemoteProtocolInfoListCallbackData data = {.server = server, .writeData = {.memContext = memContextCurrent()}};
+        // Put list
+        if (list != NULL)
+        {
+            for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+            {
+                const StorageInfo info = storageLstGet(list, listIdx);
 
-        const bool result = storageInterfaceInfoListP(
-            storageRemoteProtocolLocal.driver, path, level, storageRemoteProtocolInfoListCallback, &data);
+                PackWrite *const write = protocolPackNew();
+                pckWriteStrP(write, info.name);
+                storageRemoteInfoProtocolPut(&writeData, write, &info);
+                protocolServerDataPut(server, write);
+                pckWriteFree(write);
+            }
+        }
 
         // Indicate whether or not the path was found
         PackWrite *write = protocolPackNew();
-        pckWriteBoolP(write, result, .defaultWrite = true);
+        pckWriteBoolP(write, list != NULL, .defaultWrite = true);
         protocolServerDataPut(server, write);
 
         protocolServerDataEndPut(server);
