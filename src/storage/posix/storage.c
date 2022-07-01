@@ -491,47 +491,6 @@ storagePosixPathCreate(
 }
 
 /**********************************************************************************************************************************/
-typedef struct StoragePosixPathRemoveData
-{
-    StoragePosix *driver;                                           // Driver
-    const String *path;                                             // Path
-} StoragePosixPathRemoveData;
-
-static void
-storagePosixPathRemoveCallback(void *const callbackData, const StorageInfo *const info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM_P(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    ASSERT(callbackData != NULL);
-    ASSERT(info != NULL);
-
-    if (!strEqZ(info->name, "."))
-    {
-        StoragePosixPathRemoveData *const data = callbackData;
-        String *const file = strNewFmt("%s/%s", strZ(data->path), strZ(info->name));
-
-        // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
-        if (unlink(strZ(file)) == -1)                                                                               // {vm_covered}
-        {
-            // These errors indicate that the entry is actually a path so we'll try to delete it that way
-            if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
-            {
-                storageInterfacePathRemoveP(data->driver, file, true);
-            }
-            // Else error
-            else
-                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));                   // {vm_covered}
-        }
-
-        strFree(file);
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 static bool
 storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
@@ -554,14 +513,36 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         // Recurse if requested
         if (recurse)
         {
-            StoragePosixPathRemoveData data =
-            {
-                .driver = this,
-                .path = path,
-            };
+            const List *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
 
-            // Remove all sub paths/files
-            storageInterfaceInfoListP(this, path, storageInfoLevelExists, storagePosixPathRemoveCallback, &data);
+            if (list != NULL)
+            {
+                MEM_CONTEXT_TEMP_RESET_BEGIN()
+                {
+                    for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+                    {
+                        const StorageInfo *const info = lstGet(list, listIdx);
+                        const String *const file = strNewFmt("%s/%s", strZ(path), strZ(info->name));
+
+                        // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
+                        if (unlink(strZ(file)) == -1)                                                               // {vm_covered}
+                        {
+                            // These errors indicate that the entry is actually a path so we'll try to delete it that way
+                            if (errno == EPERM || errno == EISDIR)               // {uncovered_branch - no EPERM on tested systems}
+                            {
+                                storageInterfacePathRemoveP(this, file, true);
+                            }
+                            // Else error
+                            else
+                                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));   // {vm_covered}
+                        }
+
+                        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                        MEM_CONTEXT_TEMP_RESET(1000);
+                    }
+                }
+                MEM_CONTEXT_TEMP_END();
+            }
         }
 
         // Delete the path
@@ -569,6 +550,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         {
             if (errno != ENOENT)                                                                                    // {vm_covered}
                 THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));                        // {vm_covered}
+                // !!! ADD HINT HERE?
 
             // Path does not exist
             result = false;
