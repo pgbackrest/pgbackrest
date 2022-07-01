@@ -61,7 +61,7 @@ typedef String *StoragePathExpressionCallback(const String *expression, const St
 /***********************************************************************************************************************************
 Storage info callback function type - used to return storage info
 ***********************************************************************************************************************************/
-typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *info);
+typedef void (*StorageListCallback)(void *callbackData, const StorageInfo *info);
 
 /***********************************************************************************************************************************
 Required interface functions
@@ -147,32 +147,6 @@ typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *fil
 
 #define storageInterfaceNewWriteP(thisVoid, file, ...)                                                                             \
     STORAGE_COMMON_INTERFACE(thisVoid).newWrite(thisVoid, file, (StorageInterfaceNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-// ---------------------------------------------------------------------------------------------------------------------------------
-// Get info for a path and all paths/files in the path (does not recurse)
-//
-// See storageInterfaceInfoP() for usage of the level parameter.
-typedef struct StorageInterfaceInfoListParam
-{
-    VAR_PARAM_HEADER;
-
-    // Regular expression used to filter the results. The expression is always checked in the callback passed to
-    // storageInterfaceInfoListP() so checking the expression in the driver is entirely optional. The driver should only use the
-    // expression if it can improve performance or limit network transfer.
-    //
-    // Partial matching of the expression is fine as long as nothing that should match is excluded, e.g. it is OK to prefix match
-    // using the prefix returned from regExpPrefix(). This may cause extra results to be sent to the callback but won't exclude
-    // anything that matches the expression exactly.
-    const String *expression;
-} StorageInterfaceInfoListParam;
-
-typedef bool StorageInterfaceInfoList(
-    void *thisVoid, const String *path, StorageInfoLevel level, void (*callback)(void *callbackData, const StorageInfo *info),
-    void *callbackData, StorageInterfaceInfoListParam param);
-
-#define storageInterfaceInfoListP(thisVoid, path, level, callback, callbackData, ...)                                              \
-    STORAGE_COMMON_INTERFACE(thisVoid).infoList(                                                                                   \
-        thisVoid, path, level, callback, callbackData, (StorageInterfaceInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Get info for all files/links/paths in a path (does not recurse or return info about the path passed to the function)
@@ -294,7 +268,6 @@ typedef struct StorageInterface
 
     // Required functions
     StorageInterfaceInfo *info;
-    StorageInterfaceInfoList *infoList;
     StorageInterfaceList *list;
     StorageInterfaceNewRead *newRead;
     StorageInterfaceNewWrite *newWrite;

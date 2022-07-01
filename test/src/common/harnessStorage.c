@@ -29,12 +29,10 @@ storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, Stor
     (void)thisVoid; (void)file; (void)level; (void)param; return (StorageInfo){.exists = false};
 }
 
-static bool
-storageTestDummyInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storageTestDummyList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
-    (void)thisVoid; (void)path; (void)level; (void)callback; (void)callbackData; (void)param; return false;
+    (void)thisVoid; (void)path; (void)level; (void)param; return false;
 }
 
 static StorageRead *
@@ -64,7 +62,7 @@ storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemovePara
 const StorageInterface storageInterfaceTestDummy =
 {
     .info = storageTestDummyInfo,
-    .infoList = storageTestDummyInfoList,
+    .list = storageTestDummyList,
     .newRead = storageTestDummyNewRead,
     .newWrite = storageTestDummyNewWrite,
     .pathRemove = storageTestDummyPathRemove,

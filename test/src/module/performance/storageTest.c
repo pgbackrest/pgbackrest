@@ -28,37 +28,31 @@ stress testing as needed.
 #include "storage/remote/protocol.h"
 
 /***********************************************************************************************************************************
-Driver to test storageInfoList
+Driver to test storageNewItrP()
 ***********************************************************************************************************************************/
 typedef struct
 {
     STORAGE_COMMON_MEMBER;
     uint64_t fileTotal;
-} StorageTestPerfInfoList;
+} StorageTestPerfList;
 
-static bool
-storageTestPerfInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storageTestPerfList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
-    THIS(StorageTestPerfInfoList);
+    THIS(StorageTestPerfList);
     (void)path; (void)level; (void)param;
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        MEM_CONTEXT_TEMP_RESET_BEGIN()
-        {
-            for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
-            {
-                callback(callbackData, &(StorageInfo){.exists = true, .name = STRDEF("name")});
-                MEM_CONTEXT_TEMP_RESET(1000);
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-    MEM_CONTEXT_TEMP_END();
+    StorageList *result = NULL;
 
-    return this->fileTotal != 0;
+    if (this->fileTotal != 0)
+    {
+        result = storageLstNew(storageInfoLevelExists);
+
+        for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
+            storageLstAdd(result, &(StorageInfo){.exists = true, .name = STRDEF("name")});
+    }
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -148,13 +142,13 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
                 // Create a driver to test remote performance of storageNewItrP() and inject it into storageRepo()
-                StorageTestPerfInfoList driver =
+                StorageTestPerfList driver =
                 {
                     .interface = storageInterfaceTestDummy,
                     .fileTotal = fileTotal,
                 };
 
-                driver.interface.infoList = storageTestPerfInfoList;
+                driver.interface.list = storageTestPerfList;
 
                 Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
                 storageHelper.storageRepoWrite = memNew(sizeof(Storage *));
