@@ -18,61 +18,92 @@ struct StorageIterator
     void *driver;                                                   // Storage driver
     const String *path;                                             // Path to iterate
     StorageInfoLevel level;                                         // Info level
-    // bool errorOnMissing;                                            // Error when path is missing
-    // bool nullOnMissing;                                             // Return NULL on missing
     bool recurse;                                                   // Recurse into paths
     SortOrder sortOrder;                                            // Sort order
     const String *expression;                                       // Match expression
     RegExp *regExp;                                                 // Parsed match expression
 
-    List *list;                                                     // Info list
-    unsigned int listIdx;                                           // Current index in info list
+    List *list;                                                     // List of info lists
+    bool returnedNext;                                              // Next info was returned
+    StorageInfo infoNext;                                           // Info to be returned by next
+    String *nameNext;                                               // Name for next info
 };
 
-/**********************************************************************************************************************************/
-typedef struct StorageIterData
+typedef struct StorageIteratorInfo
 {
-    List *list;                                                     // List to collect info in
-    RegExp *regExp;                                                 // Compiled filter for names
-    bool recurse;                                                   // Should we recurse?
-    const String *pathSub;                                          // Path below the top-level path (starts as NULL)
-} StorageIterData;
+    String *pathSub;                                                // Subpath
+    List *list;                                                     // Info list
+    unsigned int listIdx;                                           // Current index in info list
+    bool pathContentSkip;                                           // Skip reading path content
+} StorageIteratorInfo;
 
-static void
-storageItrCallback(void *data, const StorageInfo *info)
+/***********************************************************************************************************************************
+Check a path and add it to the stack if it exists and has content
+***********************************************************************************************************************************/
+typedef struct StorageItrPathAddResult
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
+    bool found;                                                     // Was the path found?
+    bool content;                                                   // Did the path have content?
+} StorageItrPathAddResult;
 
-    // Skip .
-    if (strEq(info->name, DOT_STR))
-        FUNCTION_TEST_RETURN_VOID();
+static StorageItrPathAddResult
+storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_ITERATOR, this);
+        FUNCTION_LOG_PARAM(STRING, pathSub);
+    FUNCTION_LOG_END();
 
-    // Add info if there is no expression or the expression matches
-    const StorageIterData *const iterData = data;
-    const String *const pathFile = iterData->pathSub == NULL ?
-        strDup(info->name) : strNewFmt("%s/%s", strZ(iterData->pathSub), strZ(info->name));
+    ASSERT(this != NULL);
 
-    if ((info->type == storageTypePath && iterData->recurse) ||
-        (iterData->regExp == NULL || regExpMatch(iterData->regExp, pathFile)))
+    StorageItrPathAddResult result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        MEM_CONTEXT_OBJ_BEGIN(iterData->list)
-        {
-            StorageInfo *const infoCopy = lstAdd(iterData->list, info);
+        // Append subpath to path when required
+        const String *const path = pathSub == NULL ? this->path : strNewFmt("%s/%s", strZ(this->path), strZ(pathSub));
 
-            infoCopy->name = strDup(pathFile);
-            infoCopy->user = strDup(info->user);
-            infoCopy->group = strDup(info->group);
-            infoCopy->linkDestination = strDup(info->linkDestination);
+        MEM_CONTEXT_OBJ_BEGIN(this->list)
+        {
+            // Get path content
+            StorageIteratorInfo listInfo =
+            {
+                .list = storageInterfaceListP(this->driver, path, this->level, .expression = this->expression),
+            };
+
+            if (listInfo.list != NULL)
+            {
+                result.found = true;
+
+                // If the path has content
+                if (!lstEmpty(listInfo.list))
+                {
+                    result.content = true;
+
+                    // Put subpath in list context so they get freed together
+                    MEM_CONTEXT_OBJ_BEGIN(listInfo.list)
+                    {
+                        listInfo.pathSub = strDup(pathSub);
+                    }
+                    MEM_CONTEXT_OBJ_END();
+
+                    // Sort if needed
+                    if (this->sortOrder != sortOrderNone)
+                        lstSort(listInfo.list, this->sortOrder);
+
+                    // Add path to stack
+                    lstAdd(this->list, &listInfo);
+                }
+            }
         }
         MEM_CONTEXT_OBJ_END();
     }
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
+/**********************************************************************************************************************************/
 StorageIterator *
 storageItrNew(
     void *const driver, const String *const path, const StorageInfoLevel level, const bool errorOnMissing, const bool nullOnMissing,
@@ -89,6 +120,10 @@ storageItrNew(
         FUNCTION_LOG_PARAM(STRING, expression);
     FUNCTION_LOG_END();
 
+    ASSERT(driver != NULL);
+    ASSERT(path != NULL);
+    ASSERT(!recurse || level >= storageInfoLevelType);
+
     StorageIterator *this = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -103,64 +138,28 @@ storageItrNew(
                 .driver = driver,
                 .path = strDup(path),
                 .level = level,
-                // .errorOnMissing = errorOnMissing,
-                // .nullOnMissing = nullOnMissing,
                 .recurse = recurse,
                 .sortOrder = sortOrder,
                 .expression = strDup(expression),
-                .list = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
+                .list = lstNewP(sizeof(StorageIteratorInfo)),
+                .returnedNext = true,
             };
 
+            // Compile regular expression
             if (this->expression != NULL)
                 this->regExp = regExpNew(this->expression);
 
-            MEM_CONTEXT_TEMP_BEGIN()
+            // If root path was not found
+            if (!storageItrPathAdd(this, NULL).found)
             {
-                StorageIterData iterData = {.list = this->list, .recurse = this->recurse, .regExp = this->regExp};
+                // Throw an error when requested
+                if (errorOnMissing)
+                    THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(this->path));
 
-                if (storageInterfaceInfoListP(
-                        this->driver, path, this->level, storageItrCallback, &iterData, .expression = this->expression))
-                {
-                    if (this->recurse)
-                    {
-                        unsigned int listIdx = 0;
-
-                        while (listIdx < lstSize(this->list))
-                        {
-                            const StorageInfo *const info = lstGet(this->list, listIdx);
-
-                            if (info->type == storageTypePath)
-                            {
-                                iterData.pathSub = info->name;
-
-                                storageInterfaceInfoListP(
-                                    this->driver, strNewFmt("%s/%s", strZ(path), strZ(iterData.pathSub)), this->level,
-                                    storageItrCallback, &iterData, .expression = this->expression);
-
-                                if (iterData.regExp != NULL && !regExpMatch(iterData.regExp, info->name))
-                                {
-                                    lstRemoveIdx(this->list, listIdx);
-                                    continue;
-                                }
-                            }
-
-                            listIdx++;
-                        }
-                    }
-
-                    if (this->sortOrder != sortOrderNone)
-                        lstSort(this->list, this->sortOrder);
-                }
-                else
-                {
-                    if (errorOnMissing)
-                        THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
-
-                    if (nullOnMissing)
-                        this = NULL;
-                }
+                // Return NULL when requested
+                if (nullOnMissing)
+                    this = NULL;
             }
-            MEM_CONTEXT_TEMP_END();
         }
         OBJ_NEW_END();
 
@@ -176,23 +175,120 @@ bool
 storageItrMore(StorageIterator *const this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE_ITERATOR, this);
+        FUNCTION_TEST_PARAM(STORAGE_ITERATOR, this);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(BOOL, this->listIdx < lstSize(this->list));
+    ASSERT(this != NULL);
+
+    // If next has not been called then return true
+    if (!this->returnedNext)
+        FUNCTION_TEST_RETURN(BOOL, true);
+
+    while (lstSize(this->list) != 0)
+    {
+        StorageIteratorInfo *const listInfo = lstGetLast(this->list);
+
+        for (; listInfo->listIdx < lstSize(listInfo->list); listInfo->listIdx++)
+        {
+            this->infoNext = *(StorageInfo *)lstGet(listInfo->list, listInfo->listIdx);
+
+            if (listInfo->pathSub != NULL)
+            {
+                strFree(this->nameNext);
+
+                MEM_CONTEXT_OBJ_BEGIN(this)
+                {
+                    this->nameNext = strNewFmt("%s/%s", strZ(listInfo->pathSub), strZ(this->infoNext.name));
+                    this->infoNext.name = this->nameNext;
+                }
+                MEM_CONTEXT_OBJ_END();
+            }
+
+            // !!!
+            bool pathFound = false;
+
+            if (this->infoNext.type == storageTypePath && this->recurse && !listInfo->pathContentSkip)
+            {
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    const String *const path = strNewFmt("%s/%s", strZ(this->path), strZ(this->infoNext.name));
+
+                    MEM_CONTEXT_OBJ_BEGIN(this->list)
+                    {
+                        StorageIteratorInfo listInfo =
+                        {
+                            .list = storageInterfaceListP(this->driver, path, this->level, .expression = this->expression),
+                        };
+
+                        if (listInfo.list != NULL && !lstEmpty(listInfo.list))
+                        {
+                            MEM_CONTEXT_OBJ_BEGIN(listInfo.list)
+                            {
+                                listInfo.pathSub = strDup(this->infoNext.name);
+                            }
+                            MEM_CONTEXT_OBJ_END();
+
+                            if (this->sortOrder != sortOrderNone)
+                                lstSort(listInfo.list, this->sortOrder);
+
+                            lstAdd(this->list, &listInfo);
+                            pathFound = true;
+                        }
+                    }
+                    MEM_CONTEXT_OBJ_END();
+                }
+                MEM_CONTEXT_TEMP_END();
+            }
+
+            if (this->regExp != NULL && !regExpMatch(this->regExp, this->infoNext.name))
+            {
+                if (pathFound)
+                {
+                    listInfo->listIdx++;
+                    break;
+                }
+
+                continue;
+            }
+
+            if (pathFound && this->sortOrder == sortOrderDesc)
+            {
+                listInfo->pathContentSkip = true;
+                break;
+            }
+
+            // !!! Found
+            this->returnedNext = false;
+            listInfo->pathContentSkip = false;
+            listInfo->listIdx++;
+
+            FUNCTION_TEST_RETURN(BOOL, true);
+        }
+
+        // !!!
+        if (listInfo->listIdx >= lstSize(listInfo->list))
+        {
+            lstFree(listInfo->list);
+            lstRemoveLast(this->list);
+        }
+    }
+
+    FUNCTION_TEST_RETURN(BOOL, false);
 }
 
 /**********************************************************************************************************************************/
 StorageInfo storageItrNext(StorageIterator *const this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE_ITERATOR, this);
+        FUNCTION_TEST_PARAM(STORAGE_ITERATOR, this);
     FUNCTION_TEST_END();
 
-    const StorageInfo *const result = lstGet(this->list, this->listIdx);
-    this->listIdx++;
+    ASSERT(this != NULL);
+    ASSERT(!this->returnedNext);
 
-    FUNCTION_TEST_RETURN(STORAGE_INFO, *result);
+    this->returnedNext = true;
+
+    FUNCTION_TEST_RETURN(STORAGE_INFO, this->infoNext);
 }
 
 /**********************************************************************************************************************************/

@@ -193,7 +193,7 @@ typedef struct StorageInterfaceListParam
 
 typedef List *StorageInterfaceList(void *thisVoid, const String *path, StorageInfoLevel level, StorageInterfaceListParam param);
 
-#define storageInterfaceListP(thisVoid, path, level, callback, callbackData, ...)                                                  \
+#define storageInterfaceListP(thisVoid, path, level, ...)                                                                          \
     STORAGE_COMMON_INTERFACE(thisVoid).list(                                                                                       \
         thisVoid, path, level, (StorageInterfaceListParam){VAR_PARAM_INIT, __VA_ARGS__})
 

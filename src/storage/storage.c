@@ -295,7 +295,7 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->pub.interface.infoList != NULL);
+    ASSERT(this->pub.interface.list != NULL);
     ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
     StorageIterator *result = NULL;

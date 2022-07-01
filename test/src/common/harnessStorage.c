@@ -171,7 +171,11 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
 
     while (storageItrMore(storageItr))
     {
-        const StorageInfo info = storageItrNext(storageItr);
+        StorageInfo info = storageItrNext(storageItr);
+        info.name = strDup(info.name);
+        info.group = strDup(info.group);
+        info.user = strDup(info.user);
+        info.linkDestination = strDup(info.linkDestination);
 
         lstAdd(list, &info);
     }
