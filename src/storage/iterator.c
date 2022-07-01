@@ -8,6 +8,7 @@ Storage Iterator
 #include "common/regExp.h"
 #include "common/type/list.h"
 #include "storage/iterator.h"
+#include "storage/list.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -32,7 +33,7 @@ struct StorageIterator
 typedef struct StorageIteratorInfo
 {
     String *pathSub;                                                // Subpath
-    List *list;                                                     // Info list
+    StorageList *list;                                              // Storage info list
     unsigned int listIdx;                                           // Current index in info list
     bool pathContentSkip;                                           // Skip reading path content
 } StorageIteratorInfo;
@@ -61,7 +62,7 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get path content
-        List *const list = storageInterfaceListP(
+        StorageList *const list = storageInterfaceListP(
             this->driver, pathSub == NULL ? this->path : strNewFmt("%s/%s", strZ(this->path), strZ(pathSub)), this->level,
             .expression = this->expression);
 
@@ -70,13 +71,13 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
             result.found = true;
 
             // If the path has content
-            if (!lstEmpty(list))
+            if (!storageLstEmpty(list))
             {
                 result.content = true;
 
                 // Sort if needed
                 if (this->sortOrder != sortOrderNone)
-                    lstSort(list, this->sortOrder);
+                    storageLstSort(list, this->sortOrder);
 
                 // Add path to stack
                 MEM_CONTEXT_OBJ_BEGIN(this->stack)
@@ -84,7 +85,8 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
                     OBJ_NEW_BEGIN(StorageIteratorInfo, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = 1)
                     {
                         StorageIteratorInfo *const listInfo = OBJ_NEW_ALLOC();
-                        *listInfo = (StorageIteratorInfo){.pathSub = strDup(pathSub), .list = lstMove(list, memContextCurrent())};
+                        *listInfo = (StorageIteratorInfo){
+                            .pathSub = strDup(pathSub), .list = storageLstMove(list, memContextCurrent())};
 
                         lstAdd(this->stack, &listInfo);
                     }
@@ -184,9 +186,9 @@ storageItrMore(StorageIterator *const this)
     {
         StorageIteratorInfo *const listInfo = *(StorageIteratorInfo **)lstGetLast(this->stack);
 
-        for (; listInfo->listIdx < lstSize(listInfo->list); listInfo->listIdx++)
+        for (; listInfo->listIdx < storageLstSize(listInfo->list); listInfo->listIdx++)
         {
-            this->infoNext = *(StorageInfo *)lstGet(listInfo->list, listInfo->listIdx);
+            this->infoNext = storageLstGet(listInfo->list, listInfo->listIdx);
 
             if (listInfo->pathSub != NULL)
             {
@@ -232,7 +234,7 @@ storageItrMore(StorageIterator *const this)
         }
 
         // !!!
-        if (listInfo->listIdx >= lstSize(listInfo->list))
+        if (listInfo->listIdx >= storageLstSize(listInfo->list))
         {
             objFree(listInfo);
             lstRemoveLast(this->stack);

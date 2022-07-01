@@ -228,7 +228,7 @@ storagePosixInfoList(
 }
 
 /**********************************************************************************************************************************/
-static List *
+static StorageList *
 storagePosixList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
     THIS(StoragePosix);
@@ -243,7 +243,7 @@ storagePosixList(THIS_VOID, const String *path, StorageInfoLevel level, StorageI
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    List *result = NULL;
+    StorageList *result = NULL;
 
     // Open the directory for read
     DIR *const dir = opendir(strZ(path));
@@ -257,7 +257,7 @@ storagePosixList(THIS_VOID, const String *path, StorageInfoLevel level, StorageI
     // Directory was found
     else
     {
-        result = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr);
+        result = storageLstNew(level);
 
         TRY_BEGIN()
         {
@@ -275,18 +275,14 @@ storagePosixList(THIS_VOID, const String *path, StorageInfoLevel level, StorageI
                         // stat() and is therefore relatively slow
                         if (level == storageInfoLevelExists)
                         {
-                            MEM_CONTEXT_OBJ_BEGIN(result)
-                            {
-                                lstAdd(
-                                    result,
-                                    &(StorageInfo)
-                                    {
-                                        .name = strNewZ(dirEntry->d_name),
-                                        .level = storageInfoLevelExists,
-                                        .exists = true,
-                                    });
-                            }
-                            MEM_CONTEXT_OBJ_END();
+                            storageLstAdd(
+                                result,
+                                &(StorageInfo)
+                                {
+                                    .name = STR(dirEntry->d_name),
+                                    .level = storageInfoLevelExists,
+                                    .exists = true,
+                                });
                         }
                         // Else more info is required which requires a call to stat()
                         else
@@ -299,8 +295,8 @@ storagePosixList(THIS_VOID, const String *path, StorageInfoLevel level, StorageI
 
                                 if (info.exists)
                                 {
-                                    info.name = strNewZ(dirEntry->d_name);
-                                    lstAdd(result, &info);
+                                    info.name = STR(dirEntry->d_name);
+                                    storageLstAdd(result, &info);
                                 }
                             }
                             MEM_CONTEXT_OBJ_END();
@@ -323,7 +319,7 @@ storagePosixList(THIS_VOID, const String *path, StorageInfoLevel level, StorageI
         TRY_END();
     }
 
-    FUNCTION_LOG_RETURN(LIST, result);
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -513,16 +509,15 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         // Recurse if requested
         if (recurse)
         {
-            const List *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
+            const StorageList *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
 
             if (list != NULL)
             {
                 MEM_CONTEXT_TEMP_RESET_BEGIN()
                 {
-                    for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+                    for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
                     {
-                        const StorageInfo *const info = lstGet(list, listIdx);
-                        const String *const file = strNewFmt("%s/%s", strZ(path), strZ(info->name));
+                        const String *const file = strNewFmt("%s/%s", strZ(path), strZ(storageLstGet(list, listIdx).name));
 
                         // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
                         if (unlink(strZ(file)) == -1)                                                               // {vm_covered}

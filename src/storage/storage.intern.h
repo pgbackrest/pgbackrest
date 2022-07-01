@@ -15,6 +15,7 @@ in the description of each function.
 
 #include "common/type/param.h"
 #include "storage/info.h"
+#include "storage/list.h"
 #include "storage/read.h"
 #include "storage/write.h"
 
@@ -191,7 +192,8 @@ typedef struct StorageInterfaceListParam
     const String *expression;
 } StorageInterfaceListParam;
 
-typedef List *StorageInterfaceList(void *thisVoid, const String *path, StorageInfoLevel level, StorageInterfaceListParam param);
+typedef StorageList *StorageInterfaceList(
+    void *thisVoid, const String *path, StorageInfoLevel level, StorageInterfaceListParam param);
 
 #define storageInterfaceListP(thisVoid, path, level, ...)                                                                          \
     STORAGE_COMMON_INTERFACE(thisVoid).list(                                                                                       \
