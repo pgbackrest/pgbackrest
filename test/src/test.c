@@ -5,6 +5,11 @@ This wrapper runs the C unit tests.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+// Enable FUNCTION_TEST*() macros for enhanced debugging
+#ifndef DEBUG_TEST_TRACE
+    #define DEBUG_TEST_TRACE
+#endif
+
 // This must be before all includes except build.auto.h
 #ifdef HRN_FEATURE_MEMCONTEXT
     #define DEBUG_MEM
@@ -192,13 +197,13 @@ main(int argListSize, const char *argList[])
     // Set globals
     hrnInit(
         argList[0],                 // Test exe
-        "{[C_TEST_PROJECT_EXE]}",   // Project exe
-        {[C_TEST_CONTAINER]},       // Is this test running in a container?
+        TEST_PROJECT_EXE,           // Project exe
+        TEST_IN_CONTAINER,          // Is this test running in a container?
         {[C_TEST_IDX]},             // The 0-based index of this test
         {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
-        "{[C_TEST_PATH]}",          // Path where tests write data
-        "{[C_HRN_PATH]}",           // Path where the harness stores temp files (expect, diff, etc.)
-        "{[C_HRN_PATH_REPO]}");     // Path with a copy of the repository
+        TEST_PATH,                  // Path where tests write data
+        HRN_PATH,                   // Path where the harness stores temp files (expect, diff, etc.)
+        HRN_PATH_REPO);             // Path with a copy of the repository
 
     // Set default test log level
 #ifdef HRN_FEATURE_LOG
@@ -212,7 +217,7 @@ main(int argListSize, const char *argList[])
 #endif
 
     // Initialize tests
-    //      run, selected
+    //     run, selected
     {[C_TEST_LIST]}
 
 #ifdef HRN_FEATURE_ERROR

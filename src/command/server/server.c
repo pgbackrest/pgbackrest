@@ -5,10 +5,10 @@ Server Command
 
 #include <sys/wait.h>
 
+#include "command/exit.h"
 #include "command/remote/remote.h"
 #include "command/server/server.h"
 #include "common/debug.h"
-#include "common/exit.h"
 #include "common/fork.h"
 #include "common/io/socket/server.h"
 #include "common/io/tls/server.h"

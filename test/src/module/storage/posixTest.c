@@ -370,29 +370,21 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("helper function - storagePosixInfoListEntry()");
 
-        HarnessStorageInfoListCallbackData callbackData =
-        {
-            .content = strNew(),
-        };
-
         TEST_RESULT_VOID(
             storagePosixInfoListEntry(
-                (StoragePosix *)storageDriver(storageTest), STRDEF("pg"), STRDEF("missing"), storageInfoLevelBasic,
-                hrnStorageInfoListCallback, &callbackData),
+                (StoragePosix *)storageDriver(storageTest), STRDEF("pg"), STRDEF("missing"), storageInfoLevelBasic, (void *)1,
+                NULL),
             "missing path");
-        TEST_RESULT_STR_Z(callbackData.content, "", "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with only dot");
 
         storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
 
-        callbackData.content = strNew();
-
-        TEST_RESULT_VOID(
-            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
-            "directory with one dot file sorted");
-        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
+        TEST_STORAGE_LIST(
+            storageTest,
+            "pg", "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n",
+            .level = storageInfoLevelDetail, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with file, link, pipe");
@@ -402,35 +394,22 @@ testRun(void)
         HRN_SYSTEM("sudo chown 77777:77777 " TEST_PATH "/pg/.include");
 #endif // TEST_CONTAINER_REQUIRED
 
-        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("pg/file"), .modeFile = 0660, .timeModified = 1656433838), BUFSTRDEF("TESTDATA"));
 
         HRN_SYSTEM("ln -s ../file " TEST_PATH "/pg/link");
         HRN_SYSTEM("mkfifo -m 777 " TEST_PATH "/pg/pipe");
 
-        callbackData = (HarnessStorageInfoListCallbackData)
-        {
-            .content = strNew(),
-            .timestampOmit = true,
-            .modeOmit = true,
-            .modePath = 0766,
-            .modeFile = 0600,
-            .userOmit = true,
-            .groupOmit = true,
-        };
-
-        TEST_RESULT_VOID(
-            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
-            "directory with one dot file sorted");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            ". {path}\n"
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n"
 #ifdef TEST_CONTAINER_REQUIRED
-            ".include {path, m=0755, u=77777, g=77777}\n"
+            ".include/ {u=77777, g=77777, m=0755}\n"
 #endif // TEST_CONTAINER_REQUIRED
-            "file {file, s=8, m=0660}\n"
-            "link {link, d=../file}\n"
-            "pipe {special}\n",
-            "check content");
+            "file {s=8, t=1656433838, u=" TEST_USER ", g=" TEST_GROUP ", m=0660}\n"
+            "link> {d=../file, u=" TEST_USER ", g=" TEST_GROUP "}\n"
+            "pipe*\n",
+            .level = storageInfoLevelDetail, .includeDot = true);
 
 #ifdef TEST_CONTAINER_REQUIRED
         HRN_SYSTEM("sudo rmdir " TEST_PATH "/pg/.include");
@@ -440,76 +419,52 @@ testRun(void)
         TEST_TITLE("path - recurse");
 
         storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
-        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600, .timeModified = 1656434296),
+            BUFSTRDEF("TESTDATA"));
 
-        callbackData.content = strNew();
-
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
-            "recurse descending");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            "pipe {special}\n"
-            "path/file {file, s=8}\n"
-            "path {path, m=0700}\n"
-            "link {link, d=../file}\n"
-            "file {file, s=8, m=0660}\n"
-            ". {path}\n",
-            "check content");
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "pipe*\n"
+            "path/file {s=8, t=1656434296}\n"
+            "path/\n"
+            "link> {d=../file}\n"
+            "file {s=8, t=1656433838}\n"
+            "./\n",
+            .level = storageInfoLevelBasic, .includeDot = true, .sortOrder = sortOrderDesc);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path basic info - recurse");
 
-        storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
-        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
-
-        callbackData.content = strNew();
-
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
-            "recurse descending");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            "pipe {special}\n"
-            "path/file {file, s=8}\n"
-            "path {path}\n"
-            "link {link}\n"
-            "file {file, s=8}\n"
-            ". {path}\n",
-            "check content");
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "pipe*\n"
+            "path/file {s=8, t=1656434296}\n"
+            "path/\n"
+            "link> {d=../file}\n"
+            "file {s=8, t=1656433838}\n"
+            "./\n",
+            .levelForce = true, .includeDot = true, .sortOrder = sortOrderDesc);
 
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path - filter");
 
-        callbackData.content = strNew();
-
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc,
-                .expression = STRDEF("^path")),
-            "filter");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            "path {path, m=0700}\n",
-            "check content");
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "path/\n",
+            .noRecurse = true, .level = storageInfoLevelType, .expression = "^path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("filter in subpath during recursion");
 
-        callbackData.content = strNew();
-
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc, .recurse = true,
-                .expression = STRDEF("\\/file$")),
-            "filter");
-        TEST_RESULT_STR_Z(callbackData.content, "path/file {file, s=8}\n", "check content");
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "path/file {s=8, t=1656434296}\n",
+            .level = storageInfoLevelBasic, .expression = "\\/file$");
     }
 
     // *****************************************************************************************************************************

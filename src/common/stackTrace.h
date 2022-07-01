@@ -53,10 +53,10 @@ Internal Functions
 LogLevel stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel);
 
 // Pop a function from the trace stack
-#ifdef NDEBUG
-    void stackTracePop(void);
-#else
+#ifdef DEBUG
     void stackTracePop(const char *fileName, const char *functionName, bool test);
+#else
+    void stackTracePop(void);
 #endif
 
 // Generate the stack trace

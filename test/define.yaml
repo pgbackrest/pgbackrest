@@ -283,8 +283,37 @@ unit:
           - common/type/pack
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: compress
+        total: 5
+
+        coverage:
+          - common/compress/bz2/common
+          - common/compress/bz2/compress
+          - common/compress/bz2/decompress
+          - common/compress/gz/common
+          - common/compress/gz/compress
+          - common/compress/gz/decompress
+          - common/compress/lz4/common
+          - common/compress/lz4/compress
+          - common/compress/lz4/decompress
+          - common/compress/zst/common
+          - common/compress/zst/compress
+          - common/compress/zst/decompress
+          - common/compress/helper
+
+        depend:
+          - storage/posix/read
+          - storage/posix/storage
+          - storage/posix/write
+          - storage/read
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
         total: 3
+        feature: STORAGE
+        harness: storage
 
         coverage:
           - common/crypto/cipherBlock
@@ -315,14 +344,6 @@ unit:
           - common/io/fdRead
           - common/io/read
 
-        depend:
-          - storage/posix/read
-          - storage/posix/storage
-          - storage/posix/write
-          - storage/read
-          - storage/storage
-          - storage/write
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
         total: 6
@@ -352,31 +373,12 @@ unit:
           - common/ini
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: compress
-        total: 5
-
-        coverage:
-          - common/compress/bz2/common
-          - common/compress/bz2/compress
-          - common/compress/bz2/decompress
-          - common/compress/gz/common
-          - common/compress/gz/compress
-          - common/compress/gz/decompress
-          - common/compress/lz4/common
-          - common/compress/lz4/compress
-          - common/compress/lz4/decompress
-          - common/compress/zst/common
-          - common/compress/zst/compress
-          - common/compress/zst/decompress
-          - common/compress/helper
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: exit
+      - name: lock
         total: 3
         harness: config
 
         coverage:
-          - common/exit
+          - common/lock
 
         depend:
           - command/backup/pageChecksum
@@ -399,15 +401,6 @@ unit:
           - storage/remote/protocol
           - storage/remote/storage
           - storage/remote/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: lock
-        total: 3
-        feature: STORAGE
-        harness: storage
-
-        coverage:
-          - common/lock
 
   # ********************************************************************************************************************************
   - name: protocol
@@ -845,6 +838,13 @@ unit:
 
         coverage:
           - command/local/local
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: exit
+        total: 3
+
+        coverage:
+          - command/exit
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: server

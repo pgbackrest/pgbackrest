@@ -7,9 +7,9 @@ Exit Routines
 #include <string.h>
 
 #include "command/command.h"
+#include "command/exit.h"
 #include "common/debug.h"
 #include "common/error.h"
-#include "common/exit.h"
 #include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -137,9 +137,6 @@ exitSafe(int result, bool error, SignalType signalType)
 
         result = errorCode();
     }
-
-    // Free protocol objects
-    protocolFree();
 
     // Log command end if a command is set
     if (cfgCommand() != cfgCmdNone)

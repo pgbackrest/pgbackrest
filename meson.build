@@ -24,6 +24,13 @@ project(
 cc = meson.get_compiler('c')
 
 ####################################################################################################################################
+# Error on release builds since we do not want anyone using meson for production yet
+####################################################################################################################################
+if get_option('buildtype') != 'debug'
+    error('meson is currently not supported for release builds')
+endif
+
+####################################################################################################################################
 # OS-specific settings
 ####################################################################################################################################
 if host_machine.system() == 'linux'
@@ -106,6 +113,25 @@ if get_option('fatal-errors')
 endif
 
 ####################################################################################################################################
+# Generate -fmacro-prefix-map so the relative path to the source directory is not included in the __FILE__ macro. This provides
+# reproducible builds and minimizes the file path in debug messages, just like an in-tree make build. For test source, prefix with
+# test/ in case there are any module name collisions.
+####################################################################################################################################
+file_prefix = run_command(
+    [
+        'python3',
+        '-c',
+        'import sys, os; print(os.path.relpath(sys.argv[1], sys.argv[2]))',
+        meson.current_source_dir(),
+        meson.current_build_dir(),
+    ],
+    check: true,
+).stdout().strip()
+
+add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/src/=' . format(file_prefix)), language: 'c')
+add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/src/=test/' . format(file_prefix)), language: 'c')
+
+####################################################################################################################################
 # Build configuration
 ####################################################################################################################################
 configuration = configuration_data()
@@ -159,6 +185,7 @@ configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), descr
 configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
 
 ####################################################################################################################################
-# Include src
+# Include subdirs
 ####################################################################################################################################
 subdir('src')
+subdir('test/src')
