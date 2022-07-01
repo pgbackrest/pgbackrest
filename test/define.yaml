@@ -482,6 +482,7 @@ unit:
           - storage/cifs/helper
           - storage/cifs/storage
           - storage/posix/read
+          - storage/posix/storage
           - storage/posix/write
           - storage/helper
           # - storage/iterator
@@ -489,12 +490,6 @@ unit:
           - storage/read
           - storage/storage
           - storage/write
-
-        include:
-          - storage/posix/storage
-
-        depend:
-          - storage/posix/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote

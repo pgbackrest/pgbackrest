@@ -367,12 +367,12 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("helper function - storagePosixInfoListEntry()");
+        TEST_TITLE("helper function - storagePosixListEntry()");
 
         TEST_RESULT_VOID(
-            storagePosixInfoListEntry(
-                (StoragePosix *)storageDriver(storageTest), STRDEF("pg"), STRDEF("missing"), storageInfoLevelBasic, (void *)1,
-                NULL),
+            storagePosixListEntry(
+                (StoragePosix *)storageDriver(storageTest), storageLstNew(storageInfoLevelBasic), STRDEF("pg"), "missing",
+                storageInfoLevelBasic),
             "missing path");
 
         // -------------------------------------------------------------------------------------------------------------------------
