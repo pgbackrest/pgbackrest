@@ -199,7 +199,11 @@ endif
 
 # Enable debug code
 if get_option('debug')
-    configuration.set('DEBUG', true, description: 'Enable debug code')
+    if cc.get_id() == 'msvc'
+        configuration.set('DEBUG', '#define DEBUG 1', description: 'Enable debug code')
+    else
+        configuration.set('DEBUG', true, description: 'Enable debug code')
+    endif
 endif
 
 # Set configuration path

@@ -55,5 +55,5 @@ cmake --install libxml2-build
 ## Meson commands
 
 ```
-meson configure --cmake-prefix-path <PATH> --backend vs .\vsbuild~
+meson configure --cmake-prefix-path <PATH> --backend vs  -Dconfigdir=<CONFIG DIR> .\vsbuild~
 ```

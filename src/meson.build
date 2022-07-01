@@ -340,12 +340,12 @@ else
         cc.find_library('Shlwapi', required: true),
     ]
 
-    src_win32 = [
+    src_win32 = files(
         'win32_msvc/gettimeofday.c',
         'win32_msvc/localtime.c'
-    ]
+    )
 
-    src_common = [
+    src_common = files(
         'common/error.c',
         'common/stackTrace.c',
         'common/debug.c',
@@ -389,7 +389,7 @@ else
         'storage/read.c',
         'storage/storage.c',
         'storage/write.c',
-    ]
+    )
 
     ####################################################################################################################################
     # Build config target
@@ -446,7 +446,7 @@ else
             lib_xml,
             lib_regex,
         ],
-        build_by_default: false,
+        build_by_default: true,
         include_directories: [
             dep_inc_dir,
             include_dir_win32,

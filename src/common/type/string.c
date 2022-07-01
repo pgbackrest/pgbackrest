@@ -775,7 +775,7 @@ strPath(const String *this)
     while (end > this->pub.buffer && *(end - 1) != '/')
         end--;
 #else
-    while (end > this->pub.buffer && *(end - 1) != '/' && *(end - 1) != '\\')
+    while (end > this->pub.buffer && *(end - 1) != '/' && *(end - 1) != '\\') 
         end--;
 #endif // !_WIN32
 

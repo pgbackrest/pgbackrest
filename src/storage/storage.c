@@ -6,14 +6,16 @@ Storage Interface
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _WIN32
+    #include <Shlwapi.h>
+#endif
+
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#ifndef _WIN32
 #include "common/regExp.h"
-#endif
 #include "common/wait.h"
 #include "storage/storage.h"
 
@@ -49,7 +51,11 @@ storageNew(
     FUNCTION_LOG_END();
 
     ASSERT(type != 0);
+#ifndef _WIN32
     ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
+#else
+    ASSERT(strSize(path) >= 1 && PathIsRelativeA(strZ(path)) == FALSE);
+#endif
     ASSERT(driver != NULL);
     ASSERT(interface.info != NULL);
     ASSERT(interface.infoList != NULL);
@@ -380,9 +386,7 @@ typedef struct StorageInfoListData
     StorageInfoListCallback callbackFunction;                       // Original callback function
     void *callbackData;                                             // Original callback data
     const String *expression;                                       // Filter for names
-#ifndef _WIN32
     RegExp *regExp;                                                 // Compiled filter for names
-#endif
     bool recurse;                                                   // Should we recurse?
     SortOrder sortOrder;                                            // Sort order
     const String *path;                                             // Top-level path for info
@@ -393,35 +397,34 @@ static void
 storageInfoListCallback(void *data, const StorageInfo *info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(STORAGE_INFO, info);
+    FUNCTION_LOG_PARAM_P(VOID, data);
+    FUNCTION_LOG_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
-#ifndef _WIN32 // Disable, due to regex usage
-    StorageInfoListData* listData = data;
+    StorageInfoListData *listData = data;
 
     // Is this the . path?
     bool dotPath = info->type == storageTypePath && strEq(info->name, DOT_STR);
 
     // Skip . paths when getting info for subpaths (since info was already reported in the parent path)
-    if ( dotPath && listData->subPath != NULL )
+    if (dotPath && listData->subPath != NULL)
         FUNCTION_TEST_RETURN_VOID();
 
     // Update the name in info with the subpath
     StorageInfo infoUpdate = *info;
 
-    if ( listData->subPath != NULL )
+    if (listData->subPath != NULL)
         infoUpdate.name = strNewFmt("%s/%s", strZ(listData->subPath), strZ(infoUpdate.name));
 
     // Is this file a match?
     bool match = listData->expression == NULL || regExpMatch(listData->regExp, infoUpdate.name);
 
     // Callback before checking path contents when not descending
-    if ( match && listData->sortOrder != sortOrderDesc )
+    if (match && listData->sortOrder != sortOrderDesc)
         listData->callbackFunction(listData->callbackData, &infoUpdate);
 
     // Recurse into paths
-    if ( infoUpdate.type == storageTypePath && listData->recurse && !dotPath )
+    if (infoUpdate.type == storageTypePath && listData->recurse && !dotPath)
     {
         StorageInfoListData data = *listData;
         data.subPath = infoUpdate.name;
@@ -432,10 +435,8 @@ storageInfoListCallback(void *data, const StorageInfo *info)
     }
 
     // Callback after checking path contents when descending
-    if ( match && listData->sortOrder == sortOrderDesc )
+    if (match && listData->sortOrder == sortOrderDesc)
         listData->callbackFunction(listData->callbackData, &infoUpdate);
-#endif // !_WIN32
-
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -445,15 +446,15 @@ storageInfoList(
     const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, this);
-        FUNCTION_LOG_PARAM(STRING, pathExp);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
-        FUNCTION_LOG_PARAM(ENUM, param.level);
-        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
-        FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
-        FUNCTION_LOG_PARAM(STRING, param.expression);
-        FUNCTION_LOG_PARAM(BOOL, param.recurse);
+    FUNCTION_LOG_PARAM(STORAGE, this);
+    FUNCTION_LOG_PARAM(STRING, pathExp);
+    FUNCTION_LOG_PARAM(FUNCTIONP, callback);
+    FUNCTION_LOG_PARAM_P(VOID, callbackData);
+    FUNCTION_LOG_PARAM(ENUM, param.level);
+    FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+    FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
+    FUNCTION_LOG_PARAM(STRING, param.expression);
+    FUNCTION_LOG_PARAM(BOOL, param.recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -463,18 +464,17 @@ storageInfoList(
 
     bool result = false;
 
-#ifndef _WIN32 // Disable, due to regex usage
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Info level
-        if ( param.level == storageInfoLevelDefault )
+        if (param.level == storageInfoLevelDefault)
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
         // Build the path
-        String* path = storagePathP(this, pathExp);
+        String *path = storagePathP(this, pathExp);
 
         // If there is an expression or recursion then the info will need to be filtered through a local callback
-        if ( param.expression != NULL || param.recurse )
+        if (param.expression != NULL || param.recurse)
         {
             StorageInfoListData data =
             {
@@ -487,7 +487,7 @@ storageInfoList(
                 .path = path,
             };
 
-            if ( data.expression != NULL )
+            if (data.expression != NULL)
                 data.regExp = regExpNew(param.expression);
 
             result = storageInfoListSort(
@@ -496,12 +496,10 @@ storageInfoList(
         else
             result = storageInfoListSort(this, path, param.level, NULL, param.sortOrder, callback, callbackData);
 
-        if ( !result && param.errorOnMissing )
+        if (!result && param.errorOnMissing)
             THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
     }
     MEM_CONTEXT_TEMP_END();
-#endif // !_WIN32
-
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -695,6 +693,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
     else
     {
         // If the path expression is absolute then use it as is
+#ifndef _WIN32
         if ((strZ(pathExp))[0] == '/')
         {
             // Make sure the base storage path is contained within the path expression
@@ -709,6 +708,23 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 
             result = strDup(pathExp);
         }
+#else
+        if (PathIsRelativeA(strZ(pathExp)) == FALSE)
+        {
+            // Make sure the base storage path is contained within the path expression
+            if (!PathIsRootA(this->path))
+            {
+                // TODO: Convert to either PathIsPrefix, or PathIsSameRoot
+                if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
+                    !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/' || *(strZ(pathExp) + strSize(this->path)) == '\\')))
+                {
+                    THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strZ(pathExp), strZ(this->path));
+                }
+            }
+
+            result = strDup(pathExp);
+        }
+#endif
         // Else path expression is relative so combine it with the base storage path
         else
         {
@@ -737,9 +753,13 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                 if (strSize(expression) < strSize(pathExp))
                 {
                     // Error if path separator is not found
+#ifndef _WIN32
                     if (end[1] != '/')
                         THROW_FMT(AssertError, "'/' should separate expression and path '%s'", strZ(pathExp));
-
+#else
+                    if (end[1] != '/' && end[1] != '\\')
+                        THROW_FMT(AssertError, "'/' or '\\' should separate expression and path '%s'", strZ(pathExp));
+#endif
                     // Only create path if there is something after the path separator
                     if (end[2] == 0)
                         THROW_FMT(AssertError, "path '%s' should not end in '/'", strZ(pathExp));

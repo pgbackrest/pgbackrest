@@ -69,10 +69,11 @@ else
 
 test_pgbackrest = executable(
     'test-pgbackrest',
-    # src_common,
+    src_common,
     src_test,
     test_help_auto_c_inc,
     test_parse_auto_c_inc,
+    src_win32,
     include_directories: [
         include_directories('.', '../../src'),
         dep_inc_dir,
@@ -81,8 +82,11 @@ test_pgbackrest = executable(
     dependencies: [
         lib_bz2,
         lib_yaml,
+        lib_xml,
+        lib_regex,
+        win32_deps,
     ],
-    build_by_default: false,
+    build_by_default: true,
 )
 
 endif
