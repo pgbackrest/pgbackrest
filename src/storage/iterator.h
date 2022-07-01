@@ -5,9 +5,12 @@ Storage Iterator
 #define STORAGE_ITERATOR_H
 
 /***********************************************************************************************************************************
-StorageIterator object
+Object type
 ***********************************************************************************************************************************/
 typedef struct StorageIterator StorageIterator;
+
+#include "common/type/string.h"
+#include "storage/info.h"
 
 /***********************************************************************************************************************************
 Constructors
@@ -19,12 +22,18 @@ StorageIterator *storageItrNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Is there more info to be retrieved from the iterator?
+bool storageItrMore(StorageIterator *this);
+
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline StorageIterator *
 storageItrMove(StorageIterator *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
+
+// Get next info. An error will be thrown if there is no more data so use storageItrMore() to check.
+StorageInfo storageItrNext(StorageIterator *this);
 
 /***********************************************************************************************************************************
 Destructor

@@ -228,98 +228,98 @@ storagePosixInfoList(
 }
 
 /**********************************************************************************************************************************/
-static List *
-storagePosixList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
-{
-    THIS(StoragePosix);
+// static List *
+// storagePosixList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
+// {
+//     THIS(StoragePosix);
 
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(ENUM, level);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
+//     FUNCTION_LOG_BEGIN(logLevelTrace);
+//         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+//         FUNCTION_LOG_PARAM(STRING, path);
+//         FUNCTION_LOG_PARAM(ENUM, level);
+//         (void)param;                                                // No parameters are used
+//     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
+//     ASSERT(this != NULL);
+//     ASSERT(path != NULL);
 
-    List *result = NULL;
+//     List *result = NULL;
 
-    // Open the directory for read
-    DIR *const dir = opendir(strZ(path));
+//     // Open the directory for read
+//     DIR *const dir = opendir(strZ(path));
 
-    // If the directory could not be opened process errors and report missing directories
-    if (dir == NULL)
-    {
-        if (errno != ENOENT)                                                                                        // {vm_covered}
-            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));                                // {vm_covered}
-    }
-    // Directory was found
-    else
-    {
-        result = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr);
+//     // If the directory could not be opened process errors and report missing directories
+//     if (dir == NULL)
+//     {
+//         if (errno != ENOENT)                                                                                        // {vm_covered}
+//             THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));                                // {vm_covered}
+//     }
+//     // Directory was found
+//     else
+//     {
+//         result = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr);
 
-        TRY_BEGIN()
-        {
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                // Read the directory entries
-                const struct dirent *dirEntry = readdir(dir);
+//         TRY_BEGIN()
+//         {
+//             MEM_CONTEXT_TEMP_RESET_BEGIN()
+//             {
+//                 // Read the directory entries
+//                 const struct dirent *dirEntry = readdir(dir);
 
-                while (dirEntry != NULL)
-                {
-                    // Always skip . and ..
-                    if (strEqZ(DOT_STR, dirEntry->d_name) || strEqZ(DOTDOT_STR, dirEntry->d_name))
-                        continue;
+//                 while (dirEntry != NULL)
+//                 {
+//                     // Always skip . and ..
+//                     if (strEqZ(DOT_STR, dirEntry->d_name) || strEqZ(DOTDOT_STR, dirEntry->d_name))
+//                         continue;
 
-                    // If only making a list of files that exist then no need to go get detailed info which requires calling stat()
-                    // and is therefore relatively slow
-                    if (level == storageInfoLevelExists)
-                    {
-                        MEM_CONTEXT_OBJ_BEGIN(result)
-                        {
-                            lstAdd(
-                                result,
-                                &(StorageInfo){.name = strNewZ(dirEntry->d_name), .level = storageInfoLevelExists, .exists = true});
-                        }
-                        MEM_CONTEXT_OBJ_END();
-                    }
-                    // Else more info is required which requires a call to stat()
-                    else
-                    {
-                        const String *const pathFile = strNewFmt("%s/%s", strZ(path), dirEntry->d_name);
+//                     // If only making a list of files that exist then no need to go get detailed info which requires calling stat()
+//                     // and is therefore relatively slow
+//                     if (level == storageInfoLevelExists)
+//                     {
+//                         MEM_CONTEXT_OBJ_BEGIN(result)
+//                         {
+//                             lstAdd(
+//                                 result,
+//                                 &(StorageInfo){.name = strNewZ(dirEntry->d_name), .level = storageInfoLevelExists, .exists = true});
+//                         }
+//                         MEM_CONTEXT_OBJ_END();
+//                     }
+//                     // Else more info is required which requires a call to stat()
+//                     else
+//                     {
+//                         const String *const pathFile = strNewFmt("%s/%s", strZ(path), dirEntry->d_name);
 
-                        MEM_CONTEXT_OBJ_BEGIN(result)
-                        {
-                            StorageInfo info = storageInterfaceInfoP(this, pathFile, level);
+//                         MEM_CONTEXT_OBJ_BEGIN(result)
+//                         {
+//                             StorageInfo info = storageInterfaceInfoP(this, pathFile, level);
 
-                            if (info.exists)
-                            {
-                                info.name = strNewZ(dirEntry->d_name);
-                                lstAdd(result, &info);
-                            }
-                        }
-                        MEM_CONTEXT_OBJ_END();
-                    }
+//                             if (info.exists)
+//                             {
+//                                 info.name = strNewZ(dirEntry->d_name);
+//                                 lstAdd(result, &info);
+//                             }
+//                         }
+//                         MEM_CONTEXT_OBJ_END();
+//                     }
 
-                    // Get next entry
-                    dirEntry = readdir(dir);
+//                     // Get next entry
+//                     dirEntry = readdir(dir);
 
-                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        FINALLY()
-        {
-            closedir(dir);
-        }
-        TRY_END();
-    }
+//                     // Reset the memory context occasionally so we don't use too much memory or slow down processing
+//                     MEM_CONTEXT_TEMP_RESET(1000);
+//                 }
+//             }
+//             MEM_CONTEXT_TEMP_END();
+//         }
+//         FINALLY()
+//         {
+//             closedir(dir);
+//         }
+//         TRY_END();
+//     }
 
-    FUNCTION_LOG_RETURN(LIST, result);
-}
+//     FUNCTION_LOG_RETURN(LIST, result);
+// }
 
 /**********************************************************************************************************************************/
 static bool
@@ -651,7 +651,7 @@ static const StorageInterface storageInterfacePosix =
 
     .info = storagePosixInfo,
     .infoList = storagePosixInfoList,
-    .list = storagePosixList,
+    // .list = storagePosixList,
     .move = storagePosixMove,
     .newRead = storagePosixNewRead,
     .newWrite = storagePosixNewWrite,

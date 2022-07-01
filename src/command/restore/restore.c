@@ -894,21 +894,21 @@ restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *i
 
 // Recurse paths
 static void
-restoreCleanBuildRecurse(StorageIter *const storageIter, const RestoreCleanCallbackData *const cleanData)
+restoreCleanBuildRecurse(StorageIterator *const storageItr, const RestoreCleanCallbackData *const cleanData)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_LIST, storageIter);
+        FUNCTION_TEST_PARAM(STORAGE_ITERATOR, storageItr);
         FUNCTION_TEST_PARAM_P(VOID, cleanData);
     FUNCTION_TEST_END();
 
-    ASSERT(storageIter != NULL);
+    ASSERT(storageItr != NULL);
     ASSERT(cleanData != NULL);
 
     MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        while (storageIterMore(storageIter))
+        while (storageItrMore(storageItr))
         {
-            const StorageInfo info = storageIterNext(storageIter);
+            const StorageInfo info = storageItrNext(storageItr);
 
             // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
             if (cleanData->basePath && info.type == storageTypeFile && strLstExists(cleanData->fileIgnore, info.name))
@@ -999,7 +999,7 @@ restoreCleanBuildRecurse(StorageIter *const storageIter, const RestoreCleanCallb
                         cleanDataSub.basePath = false;
 
                         restoreCleanBuildRecurse(
-                            storageIterP(
+                            storageNewItrP(
                                 storageLocalWrite(), cleanDataSub.targetPath, .errorOnMissing = true, .sortOrder = sortOrderAsc),
                             &cleanDataSub);
                     }
@@ -1129,7 +1129,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                     if (cleanData->target->file == NULL)
                     {
                         restoreCleanBuildRecurse(
-                            storageIterP(storageLocal(), cleanData->targetPath, .errorOnMissing = true), cleanData);
+                            storageNewItrP(storageLocal(), cleanData->targetPath, .errorOnMissing = true), cleanData);
                     }
                     else
                     {
@@ -1209,7 +1209,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
                     // Clean the target
                     restoreCleanBuildRecurse(
-                        storageIterP(storageLocalWrite(), cleanData->targetPath, .errorOnMissing = true, .sortOrder = sortOrderAsc),
+                        storageNewItrP(
+                            storageLocalWrite(), cleanData->targetPath, .errorOnMissing = true, .sortOrder = sortOrderAsc),
                         cleanData);
                 }
             }

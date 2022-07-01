@@ -193,11 +193,11 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageIterP()"))
+    if (testBegin("storageNewItrP()"))
     {
         TEST_TITLE("path not found");
 
-        TEST_RESULT_PTR(storageIterP(storageRepo, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "path missing");
+        TEST_RESULT_PTR(storageNewItrP(storageRepo, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "path missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("list path and file");

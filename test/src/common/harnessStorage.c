@@ -165,13 +165,13 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     // Generate a list of files/paths/etc
     List *const list = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr);
 
-    StorageIter *const storageIter = storageIterP(
+    StorageIterator *const storageItr = storageNewItrP(
         storage, pathFull, .recurse = !param.noRecurse, .sortOrder = sortOrder, .level = level,
         .expression = param.expression != NULL ? STR(param.expression) : NULL);
 
-    while (storageIterMore(storageIter))
+    while (storageItrMore(storageItr))
     {
-        const StorageInfo info = storageIterNext(storageIter);
+        const StorageInfo info = storageItrNext(storageItr);
 
         lstAdd(list, &info);
     }

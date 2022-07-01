@@ -492,11 +492,11 @@ Check for a backup that can be resumed and merge into the manifest if found
 // Helper to clean invalid paths/files/links out of the resumable backup path
 static void
 backupResumeClean(
-    StorageIter *const storageIter, Manifest *const manifest, const Manifest *const manifestResume, const CompressType compressType,
-    const bool delta, const String *const backupParentPath, const String *const manifestParentName)
+    StorageIterator *const storageItr, Manifest *const manifest, const Manifest *const manifestResume,
+    const CompressType compressType, const bool delta, const String *const backupParentPath, const String *const manifestParentName)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_LIST, storageIter);
+        FUNCTION_LOG_PARAM(STORAGE_ITERATOR, storageItr);           // Storage info
         FUNCTION_LOG_PARAM(MANIFEST, manifest);                     // New manifest
         FUNCTION_LOG_PARAM(MANIFEST, manifestResume);               // Resumed manifest
         FUNCTION_LOG_PARAM(ENUM, compressType);                     // Backup compression type
@@ -505,16 +505,16 @@ backupResumeClean(
         FUNCTION_LOG_PARAM(STRING, manifestParentName);             // Parent manifest name used to construct manifest name
     FUNCTION_LOG_END();
 
-    ASSERT(storageIter != NULL);
+    ASSERT(storageItr != NULL);
     ASSERT(manifest != NULL);
     ASSERT(manifestResume != NULL);
     ASSERT(backupParentPath != NULL);
 
     MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        while (storageIterMore(storageIter))
+        while (storageItrMore(storageItr))
         {
-            const StorageInfo info = storageIterNext(storageIter);
+            const StorageInfo info = storageItrNext(storageItr);
 
             // Skip backup.manifest.copy -- it must be preserved to allow resume again if this process throws an error before
             // writing the manifest for the first time
@@ -544,7 +544,7 @@ backupResumeClean(
                     // Else recurse into the path
                     {
                         backupResumeClean(
-                            storageIterP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
+                            storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
                             compressType, delta, backupPath, manifestName);
                     }
 
@@ -796,7 +796,7 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
             const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));
 
             backupResumeClean(
-                storageIterP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
+                storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
                 compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionBool(cfgOptDelta), backupPath, NULL);
         }
     }

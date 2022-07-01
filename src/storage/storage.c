@@ -29,12 +29,6 @@ struct Storage
     StoragePathExpressionCallback *pathExpressionFunction;
 };
 
-struct StorageIter
-{
-    List *list;                                                     // Storage list
-    unsigned int listIdx;                                           // Current index
-};
-
 /**********************************************************************************************************************************/
 Storage *
 storageNew(
@@ -286,128 +280,41 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 
 /**********************************************************************************************************************************/
 StorageIterator *
-storageItrNew(const Storage *const this, const String *const pathExp, StorageIterParam param)
+storageNewItr(const Storage *const this, const String *const pathExp, StorageNewItrParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, pathExp);
         FUNCTION_LOG_PARAM(ENUM, param.level);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
-        FUNCTION_LOG_PARAM(BOOL, param.nullOnMissing);
         FUNCTION_LOG_PARAM(BOOL, param.recurse);
+        FUNCTION_LOG_PARAM(BOOL, param.nullOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
+        FUNCTION_LOG_PARAM(BOOL, param.recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->pub.interface.list != NULL);
+    ASSERT(this->pub.interface.infoList != NULL);
     ASSERT(!param.errorOnMissing || storageFeature(this, storageFeaturePath));
 
-    StorageIter *result = NULL;
-
-    // Full path
-    const String *const path = storagePathP(this, pathExp);
-
-    // Info level
-    if (param.level == storageInfoLevelDefault)
-        param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
+    StorageIterator *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        OBJ_NEW_BEGIN(StorageIter, .childQty = 1)
-        {
-            // Create object
-            result = OBJ_NEW_ALLOC();
+        // Info level
+        if (param.level == storageInfoLevelDefault)
+            param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
-            *result = (StorageIter)
-            {
-                .list = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr),
-            };
-        }
-        OBJ_NEW_END();
-
-        if (this->pub.interface.infoList != NULL)
-        {
-        }
-        else
-        {
-            StorageIterData iterData = {.list = result->list, .recurse = param.recurse};
-
-            if (param.expression != NULL)
-                iterData.regExp = regExpNew(param.expression);
-
-            if (storageInterfaceInfoListP(
-                    storageDriver(this), path, param.level, storageIterCallback, &iterData, .expression = param.expression))
-            {
-                if (param.recurse)
-                {
-                    unsigned int listIdx = 0;
-
-                    while (listIdx < lstSize(result->list))
-                    {
-                        const StorageInfo *const info = lstGet(result->list, listIdx);
-
-                        if (info->type == storageTypePath)
-                        {
-                            iterData.pathSub = info->name;
-
-                            storageInterfaceInfoListP(
-                                storageDriver(this), strNewFmt("%s/%s", strZ(path), strZ(iterData.pathSub)), param.level,
-                                storageIterCallback, &iterData, .expression = param.expression);
-
-                            if (iterData.regExp != NULL && !regExpMatch(iterData.regExp, info->name))
-                            {
-                                lstRemoveIdx(result->list, listIdx);
-                                continue;
-                            }
-                        }
-
-                        listIdx++;
-                    }
-                }
-
-                if (param.sortOrder != sortOrderNone)
-                    lstSort(result->list, param.sortOrder);
-
-                objMove(result, memContextPrior());
-            }
-            else
-            {
-                if (param.errorOnMissing)
-                    THROW_FMT(PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
-
-                if (param.nullOnMissing)
-                    result = NULL;
-                else
-                    objMove(result, memContextPrior());
-            }
-        }
+        result = storageItrMove(
+            storageItrNew(
+                storageDriver(this), storagePathP(this, pathExp), param.level, param.errorOnMissing, param.nullOnMissing,
+                param.recurse, param.sortOrder, param.expression),
+            memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
-}
-
-bool
-storageIterMore(StorageIter *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE_LIST, this);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(BOOL, this->listIdx < lstSize(this->list));
-}
-
-StorageInfo storageIterNext(StorageIter *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE_LIST, this);
-    FUNCTION_TEST_END();
-
-    const StorageInfo *const result = lstGet(this->list, this->listIdx);
-    this->listIdx++;
-
-    FUNCTION_TEST_RETURN(STORAGE_INFO, *result);
+    FUNCTION_LOG_RETURN(STORAGE_ITERATOR, result);
 }
 
 /**********************************************************************************************************************************/
@@ -429,14 +336,19 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // We are going to cheat a bit here and transform the iterator list into a StringList. There may be a better way to do this
-        // but for now it saves code.
-        StorageIter *const storageIter = storageIterP(
+        StorageIterator *const storageItr = storageNewItrP(
             this, pathExp, .errorOnMissing = param.errorOnMissing, .nullOnMissing = param.nullOnMissing,
             .expression = param.expression);
 
-        if (storageIter != NULL)
-            result = (StringList *)lstMove(storageIter->list, memContextPrior());
+        if (storageItr != NULL)
+        {
+            result = strLstNew();
+
+            while (storageItrMore(storageItr))
+                strLstAdd(result, storageItrNext(storageItr).name);
+
+            strLstMove(result, memContextPrior());
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

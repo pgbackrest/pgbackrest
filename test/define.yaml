@@ -305,6 +305,7 @@ unit:
           - storage/posix/read
           - storage/posix/storage
           - storage/posix/write
+          - storage/iterator
           - storage/read
           - storage/storage
           - storage/write

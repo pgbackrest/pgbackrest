@@ -31,11 +31,11 @@ testBackupValidateList(
         strCatFmt(result, ". {link, d=%s}\n", strZ(dotInfo.linkDestination));
 
     // Output path contents
-    StorageIter *const storageIter = storageIterP(storage, path, .recurse = true, .sortOrder = sortOrderAsc);
+    StorageIterator *const storageItr = storageNewItrP(storage, path, .recurse = true, .sortOrder = sortOrderAsc);
 
-    while (storageIterMore(storageIter))
+    while (storageItrMore(storageItr))
     {
-        const StorageInfo info = storageIterNext(storageIter);
+        const StorageInfo info = storageItrNext(storageItr);
 
         // Don't include backup.manifest or copy. We'll test that they are present elsewhere
         if (info.type == storageTypeFile &&

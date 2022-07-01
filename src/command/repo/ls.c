@@ -144,12 +144,12 @@ storageListRender(IoWrite *write)
         }
 
         // List content of the path
-        StorageIter *const storageIter = storageIterP(
+        StorageIterator *const storageItr = storageNewItrP(
             storageRepo(), path, .sortOrder = sortOrder, .expression = expression, .recurse = cfgOptionBool(cfgOptRecurse));
 
-        while (storageIterMore(storageIter))
+        while (storageItrMore(storageItr))
         {
-            const StorageInfo info = storageIterNext(storageIter);
+            const StorageInfo info = storageItrNext(storageItr);
 
             // Add separator character
             if (!first && json)

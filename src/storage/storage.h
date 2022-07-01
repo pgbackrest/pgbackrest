@@ -7,10 +7,9 @@ Storage Interface
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
-Object types
+Object type
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
-typedef struct StorageIter StorageIter;
 
 #include "common/type/buffer.h"
 #include "common/type/stringList.h"
@@ -18,6 +17,7 @@ typedef struct StorageIter StorageIter;
 #include "common/time.h"
 #include "common/type/param.h"
 #include "storage/info.h"
+#include "storage/iterator.h"
 #include "storage/read.h"
 #include "storage/storage.intern.h"
 #include "storage/write.h"
@@ -95,9 +95,8 @@ typedef struct StorageInfoParam
 
 StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
-// Iterator for all files/links/paths in a path which returns different info based on the value of the level parameter. Once the
-// iterator has been created use storageIterMore() to determine if there is more info and storageIterNext() to get the next info.
-typedef struct StorageIterParam
+// Iterator for all files/links/paths in a path which returns different info based on the value of the level parameter
+typedef struct StorageNewItrParam
 {
     VAR_PARAM_HEADER;
     StorageInfoLevel level;
@@ -106,14 +105,12 @@ typedef struct StorageIterParam
     bool recurse;
     SortOrder sortOrder;
     const String *expression;
-} StorageIterParam;
+} StorageNewItrParam;
 
-#define storageIterP(this, fileExp, ...)                                                                                           \
-    storageIterNew(this, fileExp, (StorageIterParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageNewItrP(this, fileExp, ...)                                                                                           \
+    storageNewItr(this, fileExp, (StorageNewItrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-StorageIter *storageIterNew(const Storage *this, const String *pathExp, StorageIterParam param);
-bool storageIterMore(StorageIter *this);
-StorageInfo storageIterNext(StorageIter *this);
+StorageIterator *storageNewItr(const Storage *this, const String *pathExp, StorageNewItrParam param);
 
 // Get a list of files from a directory
 typedef struct StorageListParam
@@ -270,10 +267,5 @@ String *storageToLog(const Storage *this);
     Storage *
 #define FUNCTION_LOG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                     \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
-
-#define FUNCTION_LOG_STORAGE_LIST_TYPE                                                                                             \
-    StorageIter *
-#define FUNCTION_LOG_STORAGE_LIST_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "StorageIter", buffer, bufferSize)
 
 #endif

@@ -817,11 +817,11 @@ manifestBuildInfo(
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
-                StorageIter *const storageIter = storageIterP(buildData->storagePg, pgPathSub, .sortOrder = sortOrderAsc);
+                StorageIterator *const storageItr = storageNewItrP(buildData->storagePg, pgPathSub, .sortOrder = sortOrderAsc);
 
-                while (storageIterMore(storageIter))
+                while (storageItrMore(storageItr))
                 {
-                    const StorageInfo info = storageIterNext(storageIter);
+                    const StorageInfo info = storageItrNext(storageItr);
 
                     manifestBuildInfo(buildData, manifestName, pgPathSub, dbPathSub, &info);
 
@@ -1222,12 +1222,12 @@ manifestNewBuild(
             // Gather info for the rest of the files/links/paths
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
-                StorageIter *const storageIter = storageIterP(
+                StorageIterator *const storageItr = storageNewItrP(
                     storagePg, pgPath, .errorOnMissing = true, .sortOrder = sortOrderAsc);
 
-                while (storageIterMore(storageIter))
+                while (storageItrMore(storageItr))
                 {
-                    const StorageInfo info = storageIterNext(storageIter);
+                    const StorageInfo info = storageItrNext(storageItr);
 
                     manifestBuildInfo(&buildData, MANIFEST_TARGET_PGDATA_STR, pgPath, false, &info);
 
