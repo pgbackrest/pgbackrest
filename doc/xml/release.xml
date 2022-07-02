@@ -64,6 +64,21 @@
 
                         <p>Set backup percent complete to zero before copy start.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1748"/>
+                        <github-pull-request id="1783"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="monchr"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="soulou"/>
+                        </release-item-contributor-list>
+
+                        <p>Use <proper>S3</proper> <id>IsTruncated</id> flag to determine list continuation.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -11762,6 +11777,11 @@
             <contributor-name-display>John Kelly</contributor-name-display>
         </contributor>
 
+        <contributor id="john.morris">
+            <contributor-name-display>John Morris</contributor-name-display>
+            <contributor-id type="github">precision-software</contributor-id>
+        </contributor>
+
         <contributor id="julian.zhang">
             <contributor-name-display>Julian Zhang</contributor-name-display>
             <contributor-id type="github">julianzhang98</contributor-id>
@@ -11947,6 +11967,11 @@
             <contributor-id type="github">melrifa1</contributor-id>
         </contributor>
 
+        <contributor id="monchr">
+            <contributor-name-display>MonChr</contributor-name-display>
+            <contributor-id type="github">MonChr</contributor-id>
+        </contributor>
+
         <contributor id="navid.golpayegani">
             <contributor-name-display>Navid Golpayegani</contributor-name-display>
             <contributor-id type="github">golpa</contributor-id>
@@ -12070,6 +12095,11 @@
         <contributor id="slava.moudry">
             <contributor-name-display>Slava Moudry</contributor-name-display>
             <contributor-id type="github">slava-pagerduty</contributor-id>
+        </contributor>
+
+        <contributor id="soulou">
+            <contributor-name-display>Soulou</contributor-name-display>
+            <contributor-id type="github">Soulou</contributor-id>
         </contributor>
 
         <contributor id="stefan.fercot">
