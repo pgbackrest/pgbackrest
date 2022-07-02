@@ -48,10 +48,11 @@ storageLstNew(const StorageInfoLevel level)
 
 /**********************************************************************************************************************************/
 void
-storageLstAdd(StorageList *const this, const StorageInfo *const info)
+storageLstInsert(StorageList *const this, const unsigned int idx, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_LIST, this);
+        FUNCTION_TEST_PARAM(UINT, idx);
         FUNCTION_TEST_PARAM_P(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
@@ -66,7 +67,7 @@ storageLstAdd(StorageList *const this, const StorageInfo *const info)
         infoCopy.group = strDup(infoCopy.group);
         infoCopy.linkDestination = strDup(infoCopy.linkDestination);
 
-        lstAdd(this->pub.list, &infoCopy);
+        lstInsert(this->pub.list, idx, &infoCopy);
     }
     MEM_CONTEXT_OBJ_END();
 

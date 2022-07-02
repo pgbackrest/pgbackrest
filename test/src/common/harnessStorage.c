@@ -161,7 +161,7 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     hrnTestResultComment(param.comment);
 
     // Generate a list of files/paths/etc
-    List *const list = lstNewP(sizeof(StorageInfo), .comparator = lstComparatorStr);
+    StorageList *const list = storageLstNew(level);
 
     StorageIterator *const storageItr = storageNewItrP(
         storage, pathFull, .recurse = !param.noRecurse, .sortOrder = sortOrder, .level = level,
@@ -170,37 +170,32 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     while (storageItrMore(storageItr))
     {
         StorageInfo info = storageItrNext(storageItr);
-        info.name = strDup(info.name);
-        info.group = strDup(info.group);
-        info.user = strDup(info.user);
-        info.linkDestination = strDup(info.linkDestination);
-
-        lstAdd(list, &info);
+        storageLstAdd(list, &info);
     }
 
     // Remove files if requested
     if (param.remove)
     {
-        for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+        for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
         {
-            const StorageInfo *const info = lstGet(list, listIdx);
+            const StorageInfo info = storageLstGet(list, listIdx);
 
-            if (strEq(info->name, DOT_STR))
+            if (strEq(info.name, DOT_STR))
                 continue;
 
             // Only remove at the top level since path remove will recurse
-            if (strChr(info->name, '/') == -1)
+            if (strChr(info.name, '/') == -1)
             {
                 // Remove a path recursively
-                if (info->type == storageTypePath)
+                if (info.type == storageTypePath)
                 {
                     storagePathRemoveP(
-                        storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)), .errorOnMissing = featurePath,
+                        storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info.name)), .errorOnMissing = featurePath,
                         .recurse = true);
                 }
                 // Remove file, link, or special
                 else
-                    storageRemoveP(storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)), .errorOnMissing = true);
+                    storageRemoveP(storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info.name)), .errorOnMissing = true);
             }
         }
     }
@@ -217,20 +212,20 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
         info.name = DOT_STR;
 
         if (sortOrder == sortOrderAsc)
-            lstInsert(list, 0, &info);
+            storageLstInsert(list, 0, &info);
         else
-            lstAdd(list, &info);
+            storageLstAdd(list, &info);
     }
 
-    for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+    for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
     {
-        const StorageInfo *const info = lstGet(list, listIdx);
-        String *const item = strCat(strNew(), info->name);
+        const StorageInfo info = storageLstGet(list, listIdx);
+        String *const item = strCat(strNew(), info.name);
 
-        if (strEq(info->name, DOT_STR) && !param.includeDot)
+        if (strEq(info.name, DOT_STR) && !param.includeDot)
             continue;
 
-        switch (info->type)
+        switch (info.type)
         {
             case storageTypeFile:
                 break;
@@ -248,18 +243,18 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
                 break;
         }
 
-        if (((info->type == storageTypeFile || info->type == storageTypeLink) && level >= storageInfoLevelBasic) ||
-            (info->type == storageTypePath && level >= storageInfoLevelDetail))
+        if (((info.type == storageTypeFile || info.type == storageTypeLink) && level >= storageInfoLevelBasic) ||
+            (info.type == storageTypePath && level >= storageInfoLevelDetail))
         {
             strCatZ(item, " {");
 
-            if (info->type == storageTypeFile)
-                strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info->size, (int64_t)info->timeModified);
-            else if (info->type == storageTypeLink)
+            if (info.type == storageTypeFile)
+                strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info.size, (int64_t)info.timeModified);
+            else if (info.type == storageTypeLink)
             {
                 const StorageInfo infoLink = storageInfoP(
                     storage,
-                    strEq(info->name, DOT_STR) ? pathFull : strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)),
+                    strEq(info.name, DOT_STR) ? pathFull : strNewFmt("%s/%s", strZ(pathFull), strZ(info.name)),
                     .level = storageInfoLevelDetail);
 
                 strCatFmt(item, "d=%s", strZ(infoLink.linkDestination));
@@ -267,21 +262,21 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
 
             if (level >= storageInfoLevelDetail)
             {
-                if (info->type != storageTypePath)
+                if (info.type != storageTypePath)
                     strCatZ(item, ", ");
 
-                if (info->user != NULL)
-                    strCatFmt(item, "u=%s", strZ(info->user));
+                if (info.user != NULL)
+                    strCatFmt(item, "u=%s", strZ(info.user));
                 else
-                    strCatFmt(item, "u=%d", (int)info->userId);
+                    strCatFmt(item, "u=%d", (int)info.userId);
 
-                if (info->group != NULL)
-                    strCatFmt(item, ", g=%s", strZ(info->group));
+                if (info.group != NULL)
+                    strCatFmt(item, ", g=%s", strZ(info.group));
                 else
-                    strCatFmt(item, ", g=%d", (int)info->groupId);
+                    strCatFmt(item, ", g=%d", (int)info.groupId);
 
-                if (info->type != storageTypeLink)
-                    strCatFmt(item, ", m=%04o", info->mode);
+                if (info.type != storageTypeLink)
+                    strCatFmt(item, ", m=%04o", info.mode);
             }
 
             strCatZ(item, "}");

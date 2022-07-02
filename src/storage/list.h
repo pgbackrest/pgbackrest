@@ -57,8 +57,15 @@ storageLstSort(StorageList *const this, const SortOrder sortOrder)
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Insert info
+void storageLstInsert(StorageList *this, unsigned int idx, const StorageInfo *info);
+
 // Add info
-void storageLstAdd(StorageList *this, const StorageInfo *info);
+__attribute__((always_inline)) static inline void
+storageLstAdd(StorageList *const this, const StorageInfo *const info)
+{
+    storageLstInsert(this, storageLstSize(this), info);
+}
 
 // Get info
 StorageInfo storageLstGet(const StorageList *this, unsigned int idx);
