@@ -53,9 +53,11 @@ STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefi
 STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
 STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
 STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
+STRING_STATIC(S3_XML_TAG_IS_TRUNCATED_STR,                          "IsTruncated");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
-STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
+#define S3_XML_TAG_NEXT_CONTINUATION_TOKEN                          "NextContinuationToken"
+    STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,           S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
@@ -686,13 +688,14 @@ storageS3ListInternal(
 
                 XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
-                // If a continuation token exists then send an async request to get more data
-                const String *continuationToken = xmlNodeContent(
-                    xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
-
-                if (continuationToken != NULL)
+                // If list is truncated then send an async request to get more data
+                if (strEq(xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_IS_TRUNCATED_STR, true)), TRUE_STR))
                 {
-                    httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
+                    const String *const nextContinuationToken = xmlNodeContent(
+                        xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, true));
+                    CHECK(FormatError, !strEmpty(nextContinuationToken), S3_XML_TAG_NEXT_CONTINUATION_TOKEN " may not be empty");
+
+                    httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, nextContinuationToken);
 
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()

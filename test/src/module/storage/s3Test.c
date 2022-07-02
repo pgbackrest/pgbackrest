@@ -1053,6 +1053,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2009-10-12T17:50:30.000Z</LastModified>"
@@ -1082,6 +1083,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>test1.txt</Key>"
                         "    </Contents>"
@@ -1105,6 +1107,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>test1.txt</Key>"
                         "    </Contents>"
@@ -1124,6 +1127,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>true</IsTruncated>"
                         "    <NextContinuationToken>1ueGcxLPRx1Tr/XYExHnhbYLgveDs2J/wm36Hy4vbOwM=</NextContinuationToken>"
                         "    <Contents>"
                         "        <Key>path/to/test1.txt</Key>"
@@ -1145,6 +1149,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/to/test3.txt</Key>"
                         "    </Contents>"
@@ -1171,6 +1176,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/to/test1.txt</Key>"
                         "    </Contents>"
@@ -1231,6 +1237,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>test1.txt</Key>"
                         "    </Contents>"
@@ -1261,6 +1268,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "</ListBucketResult>");
 
                 TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/path"), .recurse = true), "remove");
@@ -1274,6 +1282,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>true</IsTruncated>"
                         "    <NextContinuationToken>continue</NextContinuationToken>"
                         "   <CommonPrefixes>"
                         "       <Prefix>path/to/test3/</Prefix>"
@@ -1289,6 +1298,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/to/test3.txt</Key>"
                         "    </Contents>"
@@ -1327,6 +1337,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/sample.txt</Key>"
                         "    </Contents>"
