@@ -59,29 +59,14 @@ typedef struct StorageListInfo
 } StorageListInfo;
 
 // Determine size of struct to store in the list. We only need to store the members that are used by the current level.
-static size_t
-storageLstInfoSize(const StorageInfoLevel level)
+static const uint8_t storageLstInfoSize[storageInfoLevelDetail + 1] =
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, level);
-    FUNCTION_TEST_END();
-
-    switch (level)
-    {
-        case storageInfoLevelExists:
-            FUNCTION_TEST_RETURN(SIZE, offsetof(StorageListInfo, type));
-
-        case storageInfoLevelType:
-            FUNCTION_TEST_RETURN(SIZE, offsetof(StorageListInfo, basic));
-
-        case storageInfoLevelBasic:
-            FUNCTION_TEST_RETURN(SIZE, offsetof(StorageListInfo, detail));
-
-        default:
-            ASSERT(level == storageInfoLevelDetail);
-            FUNCTION_TEST_RETURN(SIZE, sizeof(StorageListInfo));
-    }
-}
+    0,                                                              // storageInfoLevelDefault (should not be used)
+    offsetof(StorageListInfo, type),                                // storageInfoLevelExists
+    offsetof(StorageListInfo, basic),                               // storageInfoLevelType
+    offsetof(StorageListInfo, detail),                              // storageInfoLevelBasic
+    sizeof(StorageListInfo),                                        // storageInfoLevelDetail
+};
 
 /**********************************************************************************************************************************/
 StorageList *
@@ -90,6 +75,8 @@ storageLstNew(const StorageInfoLevel level)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(ENUM, level);
     FUNCTION_LOG_END();
+
+    ASSERT(level != storageInfoLevelDefault);
 
     StorageList *this = NULL;
 
@@ -102,7 +89,7 @@ storageLstNew(const StorageInfoLevel level)
         {
             .pub =
             {
-                .list = lstNewP(storageLstInfoSize(level), .comparator =  lstComparatorStr),
+                .list = lstNewP(storageLstInfoSize[level], .comparator =  lstComparatorStr),
                 .level = level,
             },
             .ownerList = strLstNew(),
