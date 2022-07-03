@@ -107,7 +107,7 @@ typedef struct StorageNewItrParam
     const String *expression;
 } StorageNewItrParam;
 
-#define storageNewItrP(this, fileExp, ...)                                                                                           \
+#define storageNewItrP(this, fileExp, ...)                                                                                         \
     storageNewItr(this, fileExp, (StorageNewItrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 StorageIterator *storageNewItr(const Storage *this, const String *pathExp, StorageNewItrParam param);

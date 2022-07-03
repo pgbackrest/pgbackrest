@@ -43,8 +43,8 @@ Check a path and add it to the stack if it exists and has content
 ***********************************************************************************************************************************/
 typedef struct StorageItrPathAddResult
 {
-    bool found;                                                     // Was the path found?
-    bool content;                                                   // Did the path have content?
+    bool exists;                                                    // Does the path exist?
+    bool content;                                                   // Does the path have content?
 } StorageItrPathAddResult;
 
 static StorageItrPathAddResult
@@ -66,20 +66,21 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
             this->driver, pathSub == NULL ? this->path : strNewFmt("%s/%s", strZ(this->path), strZ(pathSub)), this->level,
             .expression = this->expression);
 
+        // If path exists
         if (list != NULL)
         {
-            result.found = true;
+            result.exists = true;
 
             // If the path has content
             if (!storageLstEmpty(list))
             {
                 result.content = true;
 
-                // Sort if needed
+                // Sort if requested
                 if (this->sortOrder != sortOrderNone)
                     storageLstSort(list, this->sortOrder);
 
-                // Add path to stack
+                // Add path to top of stack
                 MEM_CONTEXT_OBJ_BEGIN(this->stack)
                 {
                     OBJ_NEW_BEGIN(StorageIteratorInfo, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = 1)
@@ -140,6 +141,7 @@ storageItrNew(
                 .sortOrder = sortOrder,
                 .expression = strDup(expression),
                 .stack = lstNewP(sizeof(StorageIteratorInfo *)),
+                .nameNext = strNew(),
                 .returnedNext = true,
             };
 
@@ -147,8 +149,8 @@ storageItrNew(
             if (this->expression != NULL)
                 this->regExp = regExpNew(this->expression);
 
-            // If root path was not found
-            if (!storageItrPathAdd(this, NULL).found)
+            // If root path does not exist
+            if (!storageItrPathAdd(this, NULL).exists)
             {
                 // Throw an error when requested
                 if (errorOnMissing)
@@ -182,58 +184,66 @@ storageItrMore(StorageIterator *const this)
     if (!this->returnedNext)
         FUNCTION_TEST_RETURN(BOOL, true);
 
+    // Search stack for info
     while (lstSize(this->stack) != 0)
     {
+        // Always pull from the top of the stack
         StorageIteratorInfo *const listInfo = *(StorageIteratorInfo **)lstGetLast(this->stack);
 
+        // Search list for info
         for (; listInfo->listIdx < storageLstSize(listInfo->list); listInfo->listIdx++)
         {
+            // Next info
             this->infoNext = storageLstGet(listInfo->list, listInfo->listIdx);
 
+            // Update info name when in subpath
             if (listInfo->pathSub != NULL)
             {
-                strFree(this->nameNext);
+                strTrunc(this->nameNext, 0);
+                strCatFmt(this->nameNext, "%s/%s", strZ(listInfo->pathSub), strZ(this->infoNext.name));
 
-                MEM_CONTEXT_OBJ_BEGIN(this)
-                {
-                    this->nameNext = strNewFmt("%s/%s", strZ(listInfo->pathSub), strZ(this->infoNext.name));
-                    this->infoNext.name = this->nameNext;
-                }
-                MEM_CONTEXT_OBJ_END();
+                this->infoNext.name = this->nameNext;
             }
 
-            // !!!
+            // Does the path have content?
             const bool pathContent =
                 this->infoNext.type == storageTypePath && this->recurse && !listInfo->pathContentSkip &&
                 storageItrPathAdd(this, this->infoNext.name).content;
 
+            // Clear path content skip flag if it was set on a previous iteration
             listInfo->pathContentSkip = false;
 
+            // Skip info if it does match the provided expression
             if (this->regExp != NULL && !regExpMatch(this->regExp, this->infoNext.name))
             {
+                // Path content may match the expression even if the path does not. Break so the content on the top of the stack
+                // will be checked and increment the index so that path will be skipped.
                 if (pathContent)
                 {
                     listInfo->listIdx++;
                     break;
                 }
 
+                // Skip info and continue
                 continue;
             }
 
+            // When sort order is descending the path will need to be output after the content. Break so that content gets checked
+            // but set a flag so on the next iteration the path with be checked but the content skipped.
             if (pathContent && this->sortOrder == sortOrderDesc)
             {
                 listInfo->pathContentSkip = true;
                 break;
             }
 
-            // !!! Found
+            // Return next info
             this->returnedNext = false;
             listInfo->listIdx++;
 
             FUNCTION_TEST_RETURN(BOOL, true);
         }
 
-        // !!!
+        // If no more info then free the list. This check is required because we may break out of the above loop early.
         if (listInfo->listIdx >= storageLstSize(listInfo->list))
         {
             objFree(listInfo);

@@ -15,7 +15,73 @@ Object type
 struct StorageList
 {
     StorageListPub pub;                                             // Publicly accessible variables
+    StringList *ownerList;                                          // List of users/groups
 };
+
+/***********************************************************************************************************************************
+A more space efficient version of StorageInfo. Each level is contained in a struct to ensure alignment when only using part of the
+struct to store info. This also keeps the size calculations accurate if members are added to a level.
+***********************************************************************************************************************************/
+typedef struct StorageListInfo
+{
+    // Set when info type >= storageInfoLevelExists
+    struct
+    {
+        const String *name;                                         // Name of path/file/link
+    } exists;
+
+    // Mode is only provided at detail level but is included here to save space on 64-bit architectures
+    struct
+    {
+        // Set when info type >= storageInfoLevelType (undefined at lower levels)
+        StorageType type;                                           // Type file/path/link)
+
+        // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
+        mode_t mode;                                                // Mode of path/file/link
+    } type;
+
+    // Set when info type >= storageInfoLevelBasic (undefined at lower levels)
+    struct
+    {
+        uint64_t size;                                              // Size (path/link is 0)
+        time_t timeModified;                                        // Time file was last modified
+    } basic;
+
+    // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
+    struct
+    {
+        const String *user;                                         // Name of user that owns the file
+        const String *group;                                        // Name of group that owns the file
+        uid_t userId;                                               // User that owns the file
+        uid_t groupId;                                              // Group that owns the file
+        const String *linkDestination;                              // Destination if this is a link
+    } detail;
+} StorageListInfo;
+
+// Determine size of struct to store in the list. We only need to store the members that are used by the current level.
+static size_t
+storageLstInfoSize(const StorageInfoLevel level)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, level);
+    FUNCTION_TEST_END();
+
+    switch (level)
+    {
+        case storageInfoLevelExists:
+            FUNCTION_TEST_RETURN(SIZE, offsetof(StorageListInfo, type));
+
+        case storageInfoLevelType:
+            FUNCTION_TEST_RETURN(SIZE, offsetof(StorageListInfo, basic));
+
+        case storageInfoLevelBasic:
+            FUNCTION_TEST_RETURN(SIZE, offsetof(StorageListInfo, detail));
+
+        default:
+            ASSERT(level == storageInfoLevelDetail);
+            FUNCTION_TEST_RETURN(SIZE, sizeof(StorageListInfo));
+    }
+}
 
 /**********************************************************************************************************************************/
 StorageList *
@@ -36,9 +102,10 @@ storageLstNew(const StorageInfoLevel level)
         {
             .pub =
             {
-                .list = lstNewP(sizeof(StorageInfo), .comparator =  lstComparatorStr),
+                .list = lstNewP(storageLstInfoSize(level), .comparator =  lstComparatorStr),
                 .level = level,
             },
+            .ownerList = strLstNew(),
         };
     }
     OBJ_NEW_END();
@@ -61,13 +128,28 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
 
     MEM_CONTEXT_OBJ_BEGIN(this->pub.list)
     {
-        StorageInfo infoCopy = *info;
-        infoCopy.name = strDup(infoCopy.name);
-        infoCopy.user = strDup(infoCopy.user);
-        infoCopy.group = strDup(infoCopy.group);
-        infoCopy.linkDestination = strDup(infoCopy.linkDestination);
+        StorageListInfo listInfo = {.exists = {.name = strDup(info->name)}};
 
-        lstInsert(this->pub.list, idx, &infoCopy);
+        if (storageLstLevel(this) >= storageInfoLevelType)
+            listInfo.type.type = info->type;
+
+        if (storageLstLevel(this) >= storageInfoLevelBasic)
+        {
+            listInfo.basic.size = info->size;
+            listInfo.basic.timeModified = info->timeModified;
+        }
+
+        if (storageLstLevel(this) >= storageInfoLevelDetail)
+        {
+            listInfo.type.mode = info->mode;
+            listInfo.detail.user = strLstAddIfMissing(this->ownerList, info->user);
+            listInfo.detail.group = strLstAddIfMissing(this->ownerList, info->group);
+            listInfo.detail.userId = info->userId;
+            listInfo.detail.groupId = info->groupId;
+            listInfo.detail.linkDestination = strDup(info->linkDestination);
+        }
+
+        lstInsert(this->pub.list, idx, &listInfo);
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -85,7 +167,29 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STORAGE_INFO, *(StorageInfo *)lstGet(this->pub.list, idx));
+    const StorageListInfo *const listInfo = lstGet(this->pub.list, idx);
+    StorageInfo result = {.name = listInfo->exists.name};
+
+    if (storageLstLevel(this) >= storageInfoLevelType)
+        result.type = listInfo->type.type;
+
+    if (storageLstLevel(this) >= storageInfoLevelBasic)
+    {
+        result.size = listInfo->basic.size;
+        result.timeModified = listInfo->basic.timeModified;
+    }
+
+    if (storageLstLevel(this) >= storageInfoLevelDetail)
+    {
+        result.mode = listInfo->type.mode;
+        result.user = listInfo->detail.user;
+        result.group = listInfo->detail.group;
+        result.userId = listInfo->detail.userId;
+        result.groupId = listInfo->detail.groupId;
+        result.linkDestination = listInfo->detail.linkDestination;
+    }
+
+    FUNCTION_TEST_RETURN(STORAGE_INFO, result);
 }
 
 /**********************************************************************************************************************************/

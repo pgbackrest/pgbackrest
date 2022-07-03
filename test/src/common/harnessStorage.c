@@ -161,7 +161,7 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     hrnTestResultComment(param.comment);
 
     // Generate a list of files/paths/etc
-    StorageList *const list = storageLstNew(level);
+    StorageList *const list = storageLstNew(level == storageInfoLevelDefault ? storageInfoLevelDetail : level);
 
     StorageIterator *const storageItr = storageNewItrP(
         storage, pathFull, .recurse = !param.noRecurse, .sortOrder = sortOrder, .level = level,
