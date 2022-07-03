@@ -117,23 +117,25 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
     {
         StorageListInfo listInfo = {.exists = {.name = strDup(info->name)}};
 
-        if (storageLstLevel(this) >= storageInfoLevelType)
-            listInfo.type.type = info->type;
-
-        if (storageLstLevel(this) >= storageInfoLevelBasic)
+        switch (storageLstLevel(this))
         {
-            listInfo.basic.size = info->size;
-            listInfo.basic.timeModified = info->timeModified;
-        }
+            case storageInfoLevelDetail:
+                listInfo.type.mode = info->mode;
+                listInfo.detail.user = strLstAddIfMissing(this->ownerList, info->user);
+                listInfo.detail.group = strLstAddIfMissing(this->ownerList, info->group);
+                listInfo.detail.userId = info->userId;
+                listInfo.detail.groupId = info->groupId;
+                listInfo.detail.linkDestination = strDup(info->linkDestination);
 
-        if (storageLstLevel(this) >= storageInfoLevelDetail)
-        {
-            listInfo.type.mode = info->mode;
-            listInfo.detail.user = strLstAddIfMissing(this->ownerList, info->user);
-            listInfo.detail.group = strLstAddIfMissing(this->ownerList, info->group);
-            listInfo.detail.userId = info->userId;
-            listInfo.detail.groupId = info->groupId;
-            listInfo.detail.linkDestination = strDup(info->linkDestination);
+            case storageInfoLevelBasic:
+                listInfo.basic.size = info->size;
+                listInfo.basic.timeModified = info->timeModified;
+
+            case storageInfoLevelType:
+                listInfo.type.type = info->type;
+
+            default:
+                break;
         }
 
         lstInsert(this->pub.list, idx, &listInfo);
@@ -155,25 +157,27 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
     ASSERT(this != NULL);
 
     const StorageListInfo *const listInfo = lstGet(this->pub.list, idx);
-    StorageInfo result = {.name = listInfo->exists.name};
+    StorageInfo result = {.name = listInfo->exists.name, .exists = true, .level = storageLstLevel(this)};
 
-    if (storageLstLevel(this) >= storageInfoLevelType)
-        result.type = listInfo->type.type;
-
-    if (storageLstLevel(this) >= storageInfoLevelBasic)
+    switch (result.level)
     {
-        result.size = listInfo->basic.size;
-        result.timeModified = listInfo->basic.timeModified;
-    }
+        case storageInfoLevelDetail:
+            result.mode = listInfo->type.mode;
+            result.user = listInfo->detail.user;
+            result.group = listInfo->detail.group;
+            result.userId = listInfo->detail.userId;
+            result.groupId = listInfo->detail.groupId;
+            result.linkDestination = listInfo->detail.linkDestination;
 
-    if (storageLstLevel(this) >= storageInfoLevelDetail)
-    {
-        result.mode = listInfo->type.mode;
-        result.user = listInfo->detail.user;
-        result.group = listInfo->detail.group;
-        result.userId = listInfo->detail.userId;
-        result.groupId = listInfo->detail.groupId;
-        result.linkDestination = listInfo->detail.linkDestination;
+        case storageInfoLevelBasic:
+            result.size = listInfo->basic.size;
+            result.timeModified = listInfo->basic.timeModified;
+
+        case storageInfoLevelType:
+            result.type = listInfo->type.type;
+
+        default:
+            break;
     }
 
     FUNCTION_TEST_RETURN(STORAGE_INFO, result);
