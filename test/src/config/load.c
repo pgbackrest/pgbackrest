@@ -88,7 +88,12 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         // Parse config from command line
         TRY_BEGIN()
         {
+#ifndef _MSC_VER
             configParse(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew), true);
+#else
+            String *rootPath = strNewZ("C:\\");
+            configParse(storagePosixNewP(rootPath), strLstSize(argListNew), strLstPtr(argListNew), true);
+#endif
         }
         CATCH(CommandRequiredError)
         {

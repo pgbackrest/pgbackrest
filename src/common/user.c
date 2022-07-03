@@ -203,7 +203,7 @@ userInitInternal(void)
             userLocalData.userRoot = userLocalData.userId == 0;
 
             userLocalData.groupId = (gid_t)-1;
-            userLocalData.groupName = NULL;
+            userLocalData.groupName = strNewZ("Users");
         }
         MEM_CONTEXT_NEW_END();
     }

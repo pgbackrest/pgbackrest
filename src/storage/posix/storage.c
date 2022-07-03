@@ -833,7 +833,12 @@ static const StorageInterface storageInterfacePosix =
     .newWrite = storagePosixNewWrite,
     .pathCreate = storagePosixPathCreate,
     .pathRemove = storagePosixPathRemove,
+#ifndef _MSC_VER
     .pathSync = storagePosixPathSync,
+#else
+    // Disable path sync, as it is not available on Windows
+    .pathSync = NULL,
+#endif
     .remove = storagePosixRemove,
 };
 

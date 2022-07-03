@@ -712,7 +712,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
         if (PathIsRelativeA(strZ(pathExp)) == FALSE)
         {
             // Make sure the base storage path is contained within the path expression
-            if (!PathIsRootA(this->path))
+            if (!PathIsRootA(strZ(this->path)))
             {
                 // TODO: Convert to either PathIsPrefix, or PathIsSameRoot
                 if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
