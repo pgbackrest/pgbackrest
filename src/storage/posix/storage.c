@@ -447,9 +447,16 @@ storagePosixInfoList(
 #else
 
     // Open the directory for read
+    HANDLE findHandle = INVALID_HANDLE_VALUE;
     WIN32_FIND_DATAA fileData = { 0 };
-    HANDLE findHandle = FindFirstFileA(strZ(path), &fileData);
 
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *searchPath = strNewFmt("%s/*", strZ(path)) ;
+        findHandle = FindFirstFileA(strZ(searchPath), &fileData);
+    }
+    MEM_CONTEXT_TEMP_END();
+    
     // If the directory could not be opened process errors and report missing directories
     if (findHandle == INVALID_HANDLE_VALUE)
     {
@@ -469,18 +476,21 @@ storagePosixInfoList(
                 {
                     const String *name = STR(fileData.cFileName);
 
-                    // If only making a list of files that exist then no need to go get detailed info which requires calling
-                    // stat() and is therefore relatively slow
-                    if (level == storageInfoLevelExists)
+                    // Always skip . and ..
+                    if (!strEq(name, DOT_STR) && !strEq(name, DOTDOT_STR))
                     {
-                        callback(callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
+                        // If only making a list of files that exist then no need to go get detailed info which requires calling
+                        // stat() and is therefore relatively slow
+                        if (level == storageInfoLevelExists)
+                        {
+                            callback(callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
+                        }
+                        // Else more info is required which requires a call to stat()
+                        else
+                        {
+                            storagePosixInfoListEntry(this, path, name, level, callback, callbackData);
+                        }
                     }
-                    // Else more info is required which requires a call to stat()
-                    else
-                    {
-                        storagePosixInfoListEntry(this, path, name, level, callback, callbackData);
-                    }
-
                     // Reset the memory context occasionally so we don't use too much memory or slow down processing
                     MEM_CONTEXT_TEMP_RESET(1000);
                 }
