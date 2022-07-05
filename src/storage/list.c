@@ -72,9 +72,9 @@ static const uint8_t storageLstInfoSize[storageInfoLevelDetail + 1] =
 StorageList *
 storageLstNew(const StorageInfoLevel level)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(ENUM, level);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, level);
+    FUNCTION_TEST_END();
 
     ASSERT(level != storageInfoLevelDefault);
 
@@ -97,7 +97,7 @@ storageLstNew(const StorageInfoLevel level)
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_LIST, this);
+    FUNCTION_TEST_RETURN(STORAGE_LIST, this);
 }
 
 /**********************************************************************************************************************************/
@@ -135,7 +135,6 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
                 listInfo.type.type = info->type;
 
             default:
-                break;
         }
 
         lstInsert(this->pub.list, idx, &listInfo);
@@ -177,7 +176,6 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
             result.type = listInfo->type.type;
 
         default:
-            break;
     }
 
     FUNCTION_TEST_RETURN(STORAGE_INFO, result);

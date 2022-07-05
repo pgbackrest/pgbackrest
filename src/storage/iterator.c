@@ -229,7 +229,7 @@ storageItrMore(StorageIterator *const this)
             }
 
             // When sort order is descending the path will need to be output after the content. Break so that content gets checked
-            // but set a flag so on the next iteration the path with be checked but the content skipped.
+            // but set a flag so on the next iteration the path will be output but the content skipped.
             if (pathContent && this->sortOrder == sortOrderDesc)
             {
                 listInfo->pathContentSkip = true;
