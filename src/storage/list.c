@@ -135,6 +135,7 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
                 listInfo.type.type = info->type;
 
             default:
+                break;
         }
 
         lstInsert(this->pub.list, idx, &listInfo);
@@ -176,6 +177,7 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
             result.type = listInfo->type.type;
 
         default:
+            break;
     }
 
     FUNCTION_TEST_RETURN(STORAGE_INFO, result);
