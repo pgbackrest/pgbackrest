@@ -200,7 +200,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageInfoListP(storageRepo, STRDEF(BOGUS_STR), (void *)1, NULL), false, "path missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("list path and file");
+        TEST_TITLE("list path and file (no user/group");
 
         storagePutP(storageNewWriteP(storagePgWrite, STRDEF("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
 
@@ -220,6 +220,24 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
             "test {s=6, t=1555160001, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n",
             .level = storageInfoLevelDetail, .includeDot = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list path and file");
+
+#ifdef TEST_CONTAINER_REQUIRED
+        HRN_SYSTEM_FMT("sudo chown " TEST_USER ":" TEST_GROUP " %s", strZ(storagePathP(storagePgWrite, STRDEF("noname"))));
+#endif // TEST_CONTAINER_REQUIRED
+
+        // Path timestamp must be set after file is updated
+        HRN_STORAGE_TIME(storagePgWrite, NULL, 1555160000);
+
+        TEST_STORAGE_LIST(
+            storagePgWrite, NULL,
+#ifdef TEST_CONTAINER_REQUIRED
+            "noname {s=6, t=1555160002, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
+#endif // TEST_CONTAINER_REQUIRED
+            "test {s=6, t=1555160001, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n",
+            .level = storageInfoLevelDetail);
     }
 
     // *****************************************************************************************************************************

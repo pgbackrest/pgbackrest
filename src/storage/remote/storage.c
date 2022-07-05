@@ -90,7 +90,7 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
     data->userIdLast = info->userId;
     data->groupIdLast = info->groupId;
 
-    if (!strEq(info->user, data->user) && info->user != NULL)                                                       // {vm_covered}
+    if (info->user != NULL && !strEq(info->user, data->user))                                                       // {vm_covered}
     {
         strFree(data->user);
 
@@ -101,7 +101,7 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
         MEM_CONTEXT_END();
     }
 
-    if (!strEq(info->group, data->group) && info->group != NULL)                                                    // {vm_covered}
+    if (info->group != NULL && !strEq(info->group, data->group))                                                    // {vm_covered}
     {
         strFree(data->group);
 
