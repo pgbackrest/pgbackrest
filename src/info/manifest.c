@@ -814,11 +814,10 @@ manifestBuildInfo(
             // Recurse into the path
             const String *const pgPathSub = strNewFmt("%s/%s", strZ(pgPath), strZ(info->name));
             const bool dbPathSub = regExpMatch(buildData->dbPathExp, manifestName);
+            StorageIterator *const storageItr = storageNewItrP(buildData->storagePg, pgPathSub, .sortOrder = sortOrderAsc);
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
-                StorageIterator *const storageItr = storageNewItrP(buildData->storagePg, pgPathSub, .sortOrder = sortOrderAsc);
-
                 while (storageItrMore(storageItr))
                 {
                     const StorageInfo info = storageItrNext(storageItr);
