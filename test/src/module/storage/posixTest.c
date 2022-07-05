@@ -381,8 +381,8 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
 
         TEST_STORAGE_LIST(
-            storageTest,
-            "pg", "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n",
+            storageTest, "pg",
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n",
             .level = storageInfoLevelDetail, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -415,7 +415,16 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path - recurse");
+        TEST_TITLE("storageItrMore() twice in a row");
+
+        StorageIterator *storageItr = NULL;
+
+        TEST_ASSIGN(storageItr, storageNewItrP(storageTest, STRDEF("pg")), "new iterator");
+        TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more");
+        TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more again");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path - recurse desc");
 
         storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
         storagePutP(
@@ -431,6 +440,20 @@ testRun(void)
             "file {s=8, t=1656433838}\n"
             "./\n",
             .level = storageInfoLevelBasic, .includeDot = true, .sortOrder = sortOrderDesc);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path - recurse asc");
+
+
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "./\n"
+            "file {s=8, t=1656433838}\n"
+            "link> {d=../file}\n"
+            "path/\n"
+            "path/file {s=8, t=1656434296}\n"
+            "pipe*\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path basic info - recurse");

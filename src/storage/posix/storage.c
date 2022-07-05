@@ -448,7 +448,6 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         {
             if (errno != ENOENT)                                                                                    // {vm_covered}
                 THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));                        // {vm_covered}
-                // !!! ADD HINT HERE?
 
             // Path does not exist
             result = false;

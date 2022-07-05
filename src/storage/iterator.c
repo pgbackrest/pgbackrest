@@ -30,6 +30,7 @@ struct StorageIterator
     String *nameNext;                                               // Name for next info
 };
 
+// Path info list
 typedef struct StorageIteratorInfo
 {
     String *pathSub;                                                // Subpath

@@ -485,8 +485,8 @@ unit:
           - storage/posix/storage
           - storage/posix/write
           - storage/helper
-          # - storage/iterator
-          # - storage/list
+          - storage/iterator
+          - storage/list
           - storage/read
           - storage/storage
           - storage/write
@@ -497,19 +497,15 @@ unit:
 
         coverage:
           - storage/remote/read
+          - storage/remote/protocol
+          - storage/remote/storage
           - storage/remote/write
           - storage/helper
           - storage/storage
 
         include:
-          - storage/remote/protocol
-          - storage/remote/storage
           - storage/read
           - storage/write
-
-        depend:
-          - storage/remote/protocol
-          - storage/remote/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: azure
