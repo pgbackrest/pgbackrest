@@ -70,7 +70,7 @@
                         <github-pull-request id="1783"/>
 
                         <release-item-contributor-list>
-                            <release-item-ideator id="monchr"/>
+                            <release-item-ideator id="christian.montagne"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="john.morris"/>
                             <!-- Actually tester, but we don't have a tag for that yet -->
@@ -11967,8 +11967,8 @@
             <contributor-id type="github">melrifa1</contributor-id>
         </contributor>
 
-        <contributor id="monchr">
-            <contributor-name-display>MonChr</contributor-name-display>
+        <contributor id="christian.montagne">
+            <contributor-name-display>Christian Montagne</contributor-name-display>
             <contributor-id type="github">MonChr</contributor-id>
         </contributor>
 
