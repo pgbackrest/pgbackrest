@@ -217,7 +217,7 @@ storageRemoteInfoProtocolPut(
         data->userIdLast = info->userId;
         data->groupIdLast = info->groupId;
 
-        if (!strEq(info->user, data->user))                                                                         // {vm_covered}
+        if (info->user != NULL && !strEq(info->user, data->user))                                                   // {vm_covered}
         {
             strFree(data->user);
 
@@ -228,7 +228,7 @@ storageRemoteInfoProtocolPut(
             MEM_CONTEXT_END();
         }
 
-        if (!strEq(info->group, data->group))                                                                       // {vm_covered}
+        if (info->group != NULL && !strEq(info->group, data->group))                                                // {vm_covered}
         {
             strFree(data->group);
 
