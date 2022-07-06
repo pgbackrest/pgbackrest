@@ -1219,10 +1219,11 @@ manifestNewBuild(
             manifestTargetAdd(this, &target);
 
             // Gather info for the rest of the files/links/paths
+            StorageIterator *const storageItr = storageNewItrP(
+                storagePg, pgPath, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
-                StorageIterator *const storageItr = storageNewItrP(
-                    storagePg, pgPath, .errorOnMissing = true, .sortOrder = sortOrderAsc);
 
                 while (storageItrMore(storageItr))
                 {
