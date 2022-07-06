@@ -1303,7 +1303,7 @@ verifyCreateFileErrorsStr(
 
         // Clean up trailing comma when necessary
         if (strEndsWithZ(result, ", "))
-            strTrunc(result, (int)strSize(result) - 2);
+            strTruncIdx(result, (int)strSize(result) - 2);
     }
     MEM_CONTEXT_TEMP_END();
 

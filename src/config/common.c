@@ -97,7 +97,7 @@ cfgParseSize(const String *const value)
             multiplier = cfgParseSizeQualifier(strArray[chrPos]);
 
             // Remove any letters
-            strTrunc(valueLower, chrPos);
+            strTruncIdx(valueLower, chrPos);
         }
 
         // Convert string to bytes

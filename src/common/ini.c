@@ -342,7 +342,7 @@ iniLoad(
                     // The line is a section. Since the value must be valid JSON this means that the value must never be an array.
                     if (linePtr[0] == '[' && linePtr[strSize(line) - 1] == ']')
                     {
-                        strCatZN(strTrunc(section, 0), linePtr + 1, strSize(line) - 2);
+                        strCatZN(strTrunc(section), linePtr + 1, strSize(line) - 2);
 
                         if (strEmpty(section))
                             THROW_FMT(FormatError, "invalid empty section at line %u: %s", lineIdx + 1, linePtr);
@@ -370,8 +370,8 @@ iniLoad(
                             retry = false;
 
                             // Get key/value
-                            strCatZN(strTrunc(key, 0), linePtr, (size_t)(lineEqual - linePtr));
-                            strCatZ(strTrunc(value, 0), lineEqual + 1);
+                            strCatZN(strTrunc(key), linePtr, (size_t)(lineEqual - linePtr));
+                            strCatZ(strTrunc(value), lineEqual + 1);
 
                             // Check that the value is valid JSON
                             TRY_BEGIN()

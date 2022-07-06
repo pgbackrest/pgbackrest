@@ -1060,7 +1060,7 @@ strChr(const String *this, char chr)
 
 /**********************************************************************************************************************************/
 String *
-strTrunc(String *this, int idx)
+strTruncIdx(String *this, int idx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
