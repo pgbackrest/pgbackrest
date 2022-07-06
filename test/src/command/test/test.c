@@ -46,8 +46,9 @@ cmdTest(
         // Meson setup
         const String *const pathUnit = strNewFmt("%s/unit-%u", strZ(testBldPathTest(testBld)), testBldVmId(testBld));
         const String *const pathUnitBuild = strNewFmt("%s/build", strZ(pathUnit));
-
-        if (!storageExistsP(testBldStorageTest(testBld), strNewFmt("%s/build.ninja", strZ(pathUnitBuild))))
+#pragma message("WARN: This is a temporary fix")
+        //if (!storageExistsP(testBldStorageTest(testBld), strNewFmt("%s/build.ninja", strZ(pathUnitBuild))))
+        if (!storageExistsP(testBldStorageTest(testBld), strNewFmt("%s/build.ninja", strZ(pathUnit))))
         {
             const char *const mesonSetup = zNewFmt(
                 "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug %s %s", strZ(pathUnitBuild), strZ(pathUnit));

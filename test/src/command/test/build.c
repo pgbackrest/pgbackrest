@@ -151,6 +151,7 @@ testBldUnit(TestBuild *const this)
         strReplace(mesonBuild, STRDEF("subdir('"), STRDEF("# subdir('"));
 
         // Write build.auto.in
+#ifndef _WIN32
         strCatZ(
             mesonBuild,
             "\n"
@@ -160,6 +161,63 @@ testBldUnit(TestBuild *const this)
             "configure_file(output: 'build.auto.h', configuration: configuration)\n"
             "\n"
             "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
+#else
+//#error FIX configure_file
+        strCatZ(
+            mesonBuild,
+            "\n"
+            MESON_COMMENT_BLOCK "\n"
+            "# Write configuration\n"
+            MESON_COMMENT_BLOCK "\n");
+
+        strCatFmt(
+            mesonBuild,
+            "configure_file(input: '%s/src/win32_msvc/build.auto.h.in', output: 'build.auto.h', configuration: configuration)\n",
+            strZ(testBldPathRepo(this)));
+
+        strCatZ(
+            mesonBuild,
+            "\n"
+            MESON_COMMENT_BLOCK "\n"
+            "# MSVC specific include dirs and sources\n"
+            MESON_COMMENT_BLOCK "\n");
+
+        //strCatFmt(
+        //    mesonBuild,
+        //    "\n"
+        //    "subdir('%s/src/win32_msvc/regex')\n",
+        //    strZ(testBldPathRepo(this)));
+
+        strCatFmt(
+            mesonBuild,
+            "\n"
+            "include_dir_win32 = include_directories('%s/src/win32_msvc')\n",
+            strZ(testBldPathRepo(this)));
+
+        strCatZ(
+            mesonBuild,
+            "\n"
+            "win32_deps = [\n"
+            "    cc.find_library('ws2_32', required: true),\n"
+            "    cc.find_library('Shlwapi', required: true),\n"
+            "]\n");
+
+        strCatFmt(
+            mesonBuild,
+            "\n"
+            "src_win32 = files(\n"
+            "    '%s/src/win32_msvc/gettimeofday.c',\n"
+            "    '%s/src/win32_msvc/localtime.c',\n"
+            ")\n",
+            strZ(testBldPathRepo(this)),
+            strZ(testBldPathRepo(this)));
+        
+
+        strCatZ(
+            mesonBuild,
+            "\n"
+            "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
+#endif
 
         // Configure features
         if (testBldModule(this)->feature != NULL)
@@ -195,7 +253,7 @@ testBldUnit(TestBuild *const this)
                 mesonBuild, "    '%s/src/%s.c',\n", strZ(testBldPathRepo(this)),
                 strZ(strLstGet(testBldModule(this)->dependList, dependIdx)));
         }
-
+#ifndef _WIN32
         strCatFmt(
             mesonBuild,
             "    '%s/test/src/common/harnessTest.c',\n"
@@ -208,7 +266,31 @@ testBldUnit(TestBuild *const this)
             "        ),\n"
             ")\n",
             strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)));
+#else
+//#error FIXME HERE
+        strCatFmt(
+            mesonBuild,
+            "    '%s/test/src/common/harnessTest.c',\n"
+            "    '%s/src/win32_msvc/gettimeofday.c',\n"
+            "    '%s/src/win32_msvc/localtime.c',\n"
+            "    'test.c',\n"
+            "    include_directories:\n"
+            "        include_directories(\n"
+            "            '.',\n"
+            "            '%s/test/src',\n"
+            "            '%s/src',\n"
+            "            '%s/src/win32_msvc',\n"
+            "        ),\n"
+            "   dependencies: [\n"
+            "       cc.find_library('ws2_32', required: true),\n"
+            "       cc.find_library('Shlwapi', required: true),\n"
+            "   ],\n"
+            ")\n",
+            strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)),
+            strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)));
+#endif
 
+        strReplaceChr(mesonBuild, '\\', '/');
         testBldWrite(storageUnit, storageUnitList, "meson.build", BUFSTR(mesonBuild));
 
         // Build test.c

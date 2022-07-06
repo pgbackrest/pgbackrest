@@ -196,6 +196,9 @@ storageWritePosixClose(THIS_VOID)
         // Rename from temp file
         if (this->interface.atomic)
         {
+#ifdef _MSC_VER
+            remove(strZ(this->interface.name));
+#endif
             if (rename(strZ(this->nameTmp), strZ(this->interface.name)) == -1)
                 THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
         }
