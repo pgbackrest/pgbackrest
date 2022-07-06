@@ -6,7 +6,7 @@ project(
     ['c'],
     version: '2.40dev',
     license: 'MIT',
-    meson_version: '>=0.53.2',
+    meson_version: '>=0.45',
     default_options: [
         # Core options
         'buildtype=release',
@@ -26,7 +26,7 @@ cc = meson.get_compiler('c')
 ####################################################################################################################################
 # Error on release builds since we do not want anyone using meson for production yet
 ####################################################################################################################################
-if get_option('buildtype') != 'debug'
+if get_option('buildtype') != 'debug' and get_option('buildtype') != 'debugoptimized'
     error('meson is currently not supported for release builds')
 endif
 
@@ -91,9 +91,10 @@ warning_disable = [
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
 
 ####################################################################################################################################
-# Enable additional optimizations if the level is high enough
+# Enable additional optimizations for release builds. We would prefer to use `get_option('optimization') in ['2', '3']` when our
+# minimum version is high enough to allow it.
 ####################################################################################################################################
-if get_option('optimization') in ['2', '3']
+if get_option('buildtype') == 'release'
     optimization_enable = [
         # Unroll loops whose number of iterations can be determined at compile time or upon entry to the loop
         '-funroll-loops',
@@ -125,7 +126,7 @@ file_prefix = run_command(
         meson.current_source_dir(),
         meson.current_build_dir(),
     ],
-    check: true,
+    # check: true, # This should be set when the minimum supported meson version is >= 0.47
 ).stdout().strip()
 
 add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/src/=' . format(file_prefix)), language: 'c')
@@ -173,8 +174,8 @@ if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");})
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
 endif
 
-# Enable debug code
-if get_option('debug')
+# Enable debug code. We would prefer to use `get_option('debug')` when our minimum version is high enough to allow it.
+if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
     configuration.set('DEBUG', true, description: 'Enable debug code')
 endif
 

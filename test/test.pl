@@ -536,7 +536,7 @@ eval
 
         # Build code
         executeTest(
-            "ninja -C ${strBuildPath}" . ($bMinGen ? '' : ' build-config build-error') . ' build-postgres' .
+            "ninja -C ${strBuildPath}" . ($bMinGen ? '' : ' src/build-config src/build-error') . ' src/build-postgres' .
             ($bMinGen ? '' : " && ${strBuildPath}/src/build-config ${strBackRestBase}/src") .
             ($bMinGen ? '' : " && ${strBuildPath}/src/build-error ${strBackRestBase}/src") .
             " && cd $strRepoCachePath/src && ${strBuildPath}/src/build-postgres");

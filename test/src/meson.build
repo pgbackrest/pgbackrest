@@ -9,15 +9,11 @@ configure_file(output: 'build.auto.h', configuration: configuration)
 # build parse.auto.c.inc
 subdir('config')
 
-alias_target('test-build-config', test_parse_auto_c_inc)
-
 ####################################################################################################################################
 # Build help target
 ####################################################################################################################################
 # build help.auto.c.inc
 subdir('command/help')
-
-alias_target('test-build-help', test_help_auto_c_inc)
 
 ####################################################################################################################################
 # test target
@@ -46,7 +42,7 @@ src_test = [
     'main.c',
 ]
 
-test_pgbackrest = executable(
+executable(
     'test-pgbackrest',
     src_common,
     src_test,
@@ -59,5 +55,3 @@ test_pgbackrest = executable(
     ],
     build_by_default: false,
 )
-
-alias_target('test-pgbackrest', test_pgbackrest)
