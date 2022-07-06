@@ -200,8 +200,7 @@ storageItrMore(StorageIterator *const this)
             // Update info name when in subpath
             if (listInfo->pathSub != NULL)
             {
-                strTrunc(this->nameNext, 0);
-                strCatFmt(this->nameNext, "%s/%s", strZ(listInfo->pathSub), strZ(this->infoNext.name));
+                strCatFmt(strTrunc(this->nameNext), "%s/%s", strZ(listInfo->pathSub), strZ(this->infoNext.name));
 
                 this->infoNext.name = this->nameNext;
             }

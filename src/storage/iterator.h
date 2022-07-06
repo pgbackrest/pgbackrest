@@ -32,8 +32,8 @@ storageItrMove(StorageIterator *const this, MemContext *const parentNew)
     return objMove(this, parentNew);
 }
 
-// Get next info. An error will be thrown if there is no more data so use storageItrMore() to check. Note that StorageInfo.name will
-// be undefined after the next call to storageItrMore().
+// Get next info. An error will be thrown if there is no more data so use storageItrMore() to check. Note that StorageInfo pointer
+// members (e.g. name) will be undefined after the next call to storageItrMore().
 StorageInfo storageItrNext(StorageIterator *this);
 
 /***********************************************************************************************************************************
