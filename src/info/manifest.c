@@ -1224,7 +1224,6 @@ manifestNewBuild(
 
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
-
                 while (storageItrMore(storageItr))
                 {
                     const StorageInfo info = storageItrNext(storageItr);
