@@ -542,6 +542,7 @@ backupResumeClean(
                         storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
                     }
                     // Else recurse into the path
+                    else
                     {
                         backupResumeClean(
                             storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
