@@ -41,6 +41,7 @@ src_common = files(
 	'common/regExp.c',
 	'common/stackTrace.c',
 	'common/time.c',
+	'common/type/blob.c',
 	'common/type/buffer.c',
 	'common/type/convert.c',
 	'common/type/keyValue.c',

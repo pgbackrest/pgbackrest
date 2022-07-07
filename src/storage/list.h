@@ -67,8 +67,8 @@ storageLstAdd(StorageList *const this, const StorageInfo *const info)
     storageLstInsert(this, storageLstSize(this), info);
 }
 
-// Get info
-StorageInfo storageLstGet(const StorageList *this, unsigned int idx);
+// Get info. Note that StorageInfo pointer members (e.g. name) will be undefined after the next call to storageLstGet().
+StorageInfo storageLstGet(StorageList *this, unsigned int idx);
 
 // Move to a new parent mem context
 __attribute__((always_inline)) static inline StorageList *

@@ -412,7 +412,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         // Recurse if requested
         if (recurse)
         {
-            const StorageList *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
+            StorageList *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
 
             if (list != NULL)
             {
