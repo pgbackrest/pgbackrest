@@ -33,6 +33,19 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1754"/>
+                        <github-pull-request id="1805"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Create snapshot when listing contents of a path.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1758"/>
 
                         <release-item-contributor-list>
