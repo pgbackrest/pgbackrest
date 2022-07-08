@@ -10991,7 +10991,7 @@
                             <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
-                        <p>Allow comments/disabling in <file>pg_backrest.conf</file> using the <id>#</id> character.  Only <id>#</id> characters in the forst character of the line are honored.</p>
+                        <p>Allow comments/disabling in <file>pg_backrest.conf</file> using the <id>#</id> character. Only <id>#</id> characters in the first character of the line are honored.</p>
                     </release-item>
 
                     <release-item>
