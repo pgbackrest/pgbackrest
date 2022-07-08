@@ -150,6 +150,18 @@
                         <p>Skip internal options in the configuration reference.</p>
                     </release-item>
                 </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="julien.cigar"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add link to <postgres/> configuration in repository host section.</p>
+                    </release-item>
+                </release-improvement-list>
             </release-doc-list>
 
             <release-test-list>
@@ -10979,7 +10991,7 @@
                             <release-item-ideator id="michael.renner"/>
                         </release-item-contributor-list>
 
-                        <p>Allow comments/disabling in <file>pg_backrest.conf</file> using the <id>#</id> character.  Only <id>#</id> characters in the forst character of the line are honored.</p>
+                        <p>Allow comments/disabling in <file>pg_backrest.conf</file> using the <id>#</id> character. Only <id>#</id> characters in the first character of the line are honored.</p>
                     </release-item>
 
                     <release-item>
@@ -11785,6 +11797,11 @@
         <contributor id="julian.zhang">
             <contributor-name-display>Julian Zhang</contributor-name-display>
             <contributor-id type="github">julianzhang98</contributor-id>
+        </contributor>
+
+        <contributor id="julien.cigar">
+            <contributor-name-display>Julien Cigar</contributor-name-display>
+            <contributor-id type="github">silenius</contributor-id>
         </contributor>
 
         <contributor id="jungle-boogie">

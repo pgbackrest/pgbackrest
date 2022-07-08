@@ -2530,6 +2530,8 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
+            <p><postgres/> configuration may be found in the <link section="/quickstart/configure-archiving">Configure Archiving</link> section.</p>
+
             <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>repository</host> host instead of the <host>database</host> host.</p>
 
             <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
