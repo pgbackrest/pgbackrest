@@ -608,7 +608,7 @@ General function for listing files to be used by other list routines
 static void
 storageS3ListInternal(
     StorageS3 *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
-    StorageInfoListCallback callback, void *callbackData)
+    StorageListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -813,10 +813,24 @@ storageS3Info(THIS_VOID, const String *const file, const StorageInfoLevel level,
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageS3InfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static void
+storageS3ListCallback(void *const callbackData, const StorageInfo *const info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
+
+    storageLstAdd(callbackData, info);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static StorageList *
+storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
     THIS(StorageS3);
 
@@ -824,18 +838,17 @@ storageS3InfoList(
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
         FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(callback != NULL);
 
-    storageS3ListInternal(this, path, level, param.expression, false, callback, callbackData);
+    StorageList *const result = storageLstNew(level);
 
-    FUNCTION_LOG_RETURN(BOOL, true);
+    storageS3ListInternal(this, path, level, param.expression, false, storageS3ListCallback, result);
+
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1066,7 +1079,7 @@ storageS3Remove(THIS_VOID, const String *const file, const StorageInterfaceRemov
 static const StorageInterface storageInterfaceS3 =
 {
     .info = storageS3Info,
-    .infoList = storageS3InfoList,
+    .list = storageS3List,
     .newRead = storageS3NewRead,
     .newWrite = storageS3NewWrite,
     .pathRemove = storageS3PathRemove,

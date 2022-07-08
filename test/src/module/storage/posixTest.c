@@ -340,7 +340,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageInfoList()"))
+    if (testBegin("storageNewItrP()"))
     {
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_CREATE_NOPERM();
@@ -350,30 +350,29 @@ testRun(void)
         TEST_TITLE("path missing");
 
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL, .errorOnMissing = true),
-            PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
+            storageNewItrP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError,
+            STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
 
-        TEST_RESULT_BOOL(
-            storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
+        TEST_RESULT_PTR(storageNewItrP(storageTest, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "ignore missing dir");
 
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+            storageNewItrP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO ": [13] Permission denied",
+            strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+            storageNewItrP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO ": [13] Permission denied",
+            strZ(pathNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("helper function - storagePosixInfoListEntry()");
+        TEST_TITLE("helper function - storagePosixListEntry()");
 
         TEST_RESULT_VOID(
-            storagePosixInfoListEntry(
-                (StoragePosix *)storageDriver(storageTest), STRDEF("pg"), STRDEF("missing"), storageInfoLevelBasic, (void *)1,
-                NULL),
+            storagePosixListEntry(
+                (StoragePosix *)storageDriver(storageTest), storageLstNew(storageInfoLevelBasic), STRDEF("pg"), "missing",
+                storageInfoLevelBasic),
             "missing path");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -382,8 +381,8 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
 
         TEST_STORAGE_LIST(
-            storageTest,
-            "pg", "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n",
+            storageTest, "pg",
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n",
             .level = storageInfoLevelDetail, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -416,7 +415,16 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path - recurse");
+        TEST_TITLE("storageItrMore() twice in a row");
+
+        StorageIterator *storageItr = NULL;
+
+        TEST_ASSIGN(storageItr, storageNewItrP(storageTest, STRDEF("pg")), "new iterator");
+        TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more");
+        TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more again");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path - recurse desc");
 
         storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
         storagePutP(
@@ -432,6 +440,20 @@ testRun(void)
             "file {s=8, t=1656433838}\n"
             "./\n",
             .level = storageInfoLevelBasic, .includeDot = true, .sortOrder = sortOrderDesc);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path - recurse asc");
+
+
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "./\n"
+            "file {s=8, t=1656433838}\n"
+            "link> {d=../file}\n"
+            "path/\n"
+            "path/file {s=8, t=1656434296}\n"
+            "pipe*\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path basic info - recurse");
@@ -451,12 +473,14 @@ testRun(void)
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path - filter");
+        TEST_TITLE("empty path - filter");
+
+        storagePathCreateP(storageTest, STRDEF("pg/empty"), .mode = 0700);
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
-            "path/\n",
-            .noRecurse = true, .level = storageInfoLevelType, .expression = "^path");
+            "empty/\n",
+            .level = storageInfoLevelType, .expression = "^empty");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("filter in subpath during recursion");

@@ -489,147 +489,152 @@ backupBuildIncr(const InfoBackup *infoBackup, Manifest *manifest, Manifest *mani
 /***********************************************************************************************************************************
 Check for a backup that can be resumed and merge into the manifest if found
 ***********************************************************************************************************************************/
-typedef struct BackupResumeData
+// Helper to clean invalid paths/files/links out of the resumable backup path
+static void
+backupResumeClean(
+    StorageIterator *const storageItr, Manifest *const manifest, const Manifest *const manifestResume,
+    const CompressType compressType, const bool delta, const String *const backupParentPath, const String *const manifestParentName)
 {
-    Manifest *manifest;                                             // New manifest
-    const Manifest *manifestResume;                                 // Resumed manifest
-    const CompressType compressType;                                // Backup compression type
-    const bool delta;                                               // Is this a delta backup?
-    const String *backupPath;                                       // Path to the current level of the backup being cleaned
-    const String *manifestParentName;                               // Parent manifest name used to construct manifest name
-} BackupResumeData;
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_ITERATOR, storageItr);           // Storage info
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);                     // New manifest
+        FUNCTION_LOG_PARAM(MANIFEST, manifestResume);               // Resumed manifest
+        FUNCTION_LOG_PARAM(ENUM, compressType);                     // Backup compression type
+        FUNCTION_LOG_PARAM(BOOL, delta);                            // Is this a delta backup?
+        FUNCTION_LOG_PARAM(STRING, backupParentPath);               // Path to the current level of the backup being cleaned
+        FUNCTION_LOG_PARAM(STRING, manifestParentName);             // Parent manifest name used to construct manifest name
+    FUNCTION_LOG_END();
 
-// Callback to clean invalid paths/files/links out of the resumable backup path
-void backupResumeCallback(void *data, const StorageInfo *info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
-    FUNCTION_TEST_END();
+    ASSERT(storageItr != NULL);
+    ASSERT(manifest != NULL);
+    ASSERT(manifestResume != NULL);
+    ASSERT(backupParentPath != NULL);
 
-    ASSERT(data != NULL);
-    ASSERT(info != NULL);
-
-    BackupResumeData *resumeData = data;
-
-    // Skip all . paths because they have already been handled on the previous level of recursion
-    if (strEq(info->name, DOT_STR))
-        FUNCTION_TEST_RETURN_VOID();
-
-    // Skip backup.manifest.copy -- it must be preserved to allow resume again if this process throws an error before writing the
-    // manifest for the first time
-    if (resumeData->manifestParentName == NULL && strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
-        FUNCTION_TEST_RETURN_VOID();
-
-    // Build the name used to lookup files in the manifest
-    const String *manifestName = resumeData->manifestParentName != NULL ?
-        strNewFmt("%s/%s", strZ(resumeData->manifestParentName), strZ(info->name)) : info->name;
-
-    // Build the backup path used to remove files/links/paths that are invalid
-    const String *backupPath = strNewFmt("%s/%s", strZ(resumeData->backupPath), strZ(info->name));
-
-    // Process file types
-    switch (info->type)
+    MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        // Check paths
-        // -------------------------------------------------------------------------------------------------------------------------
-        case storageTypePath:
+        while (storageItrMore(storageItr))
         {
-            // If the path was not found in the new manifest then remove it
-            if (manifestPathFindDefault(resumeData->manifest, manifestName, NULL) == NULL)
+            const StorageInfo info = storageItrNext(storageItr);
+
+            // Skip backup.manifest.copy -- it must be preserved to allow resume again if this process throws an error before
+            // writing the manifest for the first time
+            if (manifestParentName == NULL && strEqZ(info.name, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
+                continue;
+
+            // Build the name used to lookup files in the manifest
+            const String *manifestName = manifestParentName != NULL ?
+                strNewFmt("%s/%s", strZ(manifestParentName), strZ(info.name)) : info.name;
+
+            // Build the backup path used to remove files/links/paths that are invalid
+            const String *const backupPath = strNewFmt("%s/%s", strZ(backupParentPath), strZ(info.name));
+
+            // Process file types
+            switch (info.type)
             {
-                LOG_DETAIL_FMT("remove path '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
-                storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
-            }
-            // Else recurse into the path
-            {
-                BackupResumeData resumeDataSub = *resumeData;
-                resumeDataSub.manifestParentName = manifestName;
-                resumeDataSub.backupPath = backupPath;
-
-                storageInfoListP(
-                    storageRepo(), resumeDataSub.backupPath, backupResumeCallback, &resumeDataSub, .sortOrder = sortOrderAsc);
-            }
-
-            break;
-        }
-
-        // Check files
-        // -------------------------------------------------------------------------------------------------------------------------
-        case storageTypeFile:
-        {
-            // If the file is compressed then strip off the extension before doing the lookup
-            CompressType fileCompressType = compressTypeFromName(manifestName);
-
-            if (fileCompressType != compressTypeNone)
-                manifestName = compressExtStrip(manifestName, fileCompressType);
-
-            // Check if the file can be resumed or must be removed
-            const char *removeReason = NULL;
-
-            if (fileCompressType != resumeData->compressType)
-                removeReason = "mismatched compression type";
-            else if (!manifestFileExists(resumeData->manifest, manifestName))
-                removeReason = "missing in manifest";
-            else
-            {
-                const ManifestFile file = manifestFileFind(resumeData->manifest, manifestName);
-
-                if (file.reference != NULL)
-                    removeReason = "reference in manifest";
-                else if (!manifestFileExists(resumeData->manifestResume, manifestName))
-                    removeReason = "missing in resumed manifest";
-                else
+                // Check paths
+                // -----------------------------------------------------------------------------------------------------------------
+                case storageTypePath:
                 {
-                    const ManifestFile fileResume = manifestFileFind(resumeData->manifestResume, manifestName);
-
-                    if (fileResume.reference != NULL)
-                        removeReason = "reference in resumed manifest";
-                    else if (fileResume.checksumSha1[0] == '\0')
-                        removeReason = "no checksum in resumed manifest";
-                    else if (file.size != fileResume.size)
-                        removeReason = "mismatched size";
-                    else if (!resumeData->delta && file.timestamp != fileResume.timestamp)
-                        removeReason = "mismatched timestamp";
-                    else if (file.size == 0)
-                        // ??? don't resume zero size files because Perl wouldn't -- this can be removed after the migration)
-                        removeReason = "zero size";
+                    // If the path was not found in the new manifest then remove it
+                    if (manifestPathFindDefault(manifest, manifestName, NULL) == NULL)
+                    {
+                        LOG_DETAIL_FMT("remove path '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
+                        storagePathRemoveP(storageRepoWrite(), backupPath, .recurse = true);
+                    }
+                    // Else recurse into the path
                     else
                     {
-                        manifestFileUpdate(
-                            resumeData->manifest, manifestName, file.size, fileResume.sizeRepo, fileResume.checksumSha1, NULL,
-                            fileResume.checksumPage, fileResume.checksumPageError, fileResume.checksumPageErrorList, 0, 0);
+                        backupResumeClean(
+                            storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
+                            compressType, delta, backupPath, manifestName);
                     }
+
+                    break;
                 }
-            }
 
-            // Remove the file if it could not be resumed
-            if (removeReason != NULL)
-            {
-                LOG_DETAIL_FMT(
-                    "remove file '%s' from resumed backup (%s)", strZ(storagePathP(storageRepo(), backupPath)), removeReason);
-                storageRemoveP(storageRepoWrite(), backupPath);
-            }
+                // Check files
+                // -----------------------------------------------------------------------------------------------------------------
+                case storageTypeFile:
+                {
+                    // If the file is compressed then strip off the extension before doing the lookup
+                    const CompressType fileCompressType = compressTypeFromName(manifestName);
 
-            break;
+                    if (fileCompressType != compressTypeNone)
+                        manifestName = compressExtStrip(manifestName, fileCompressType);
+
+                    // Check if the file can be resumed or must be removed
+                    const char *removeReason = NULL;
+
+                    if (fileCompressType != compressType)
+                        removeReason = "mismatched compression type";
+                    else if (!manifestFileExists(manifest, manifestName))
+                        removeReason = "missing in manifest";
+                    else
+                    {
+                        const ManifestFile file = manifestFileFind(manifest, manifestName);
+
+                        if (file.reference != NULL)
+                            removeReason = "reference in manifest";
+                        else if (!manifestFileExists(manifestResume, manifestName))
+                            removeReason = "missing in resumed manifest";
+                        else
+                        {
+                            const ManifestFile fileResume = manifestFileFind(manifestResume, manifestName);
+
+                            if (fileResume.reference != NULL)
+                                removeReason = "reference in resumed manifest";
+                            else if (fileResume.checksumSha1[0] == '\0')
+                                removeReason = "no checksum in resumed manifest";
+                            else if (file.size != fileResume.size)
+                                removeReason = "mismatched size";
+                            else if (!delta && file.timestamp != fileResume.timestamp)
+                                removeReason = "mismatched timestamp";
+                            else if (file.size == 0)
+                                // ??? don't resume zero size files because Perl wouldn't -- can be removed after the migration)
+                                removeReason = "zero size";
+                            else
+                            {
+                                manifestFileUpdate(
+                                    manifest, manifestName, file.size, fileResume.sizeRepo, fileResume.checksumSha1, NULL,
+                                    fileResume.checksumPage, fileResume.checksumPageError, fileResume.checksumPageErrorList, 0, 0);
+                            }
+                        }
+                    }
+
+                    // Remove the file if it could not be resumed
+                    if (removeReason != NULL)
+                    {
+                        LOG_DETAIL_FMT(
+                            "remove file '%s' from resumed backup (%s)", strZ(storagePathP(storageRepo(), backupPath)),
+                            removeReason);
+                        storageRemoveP(storageRepoWrite(), backupPath);
+                    }
+
+                    break;
+                }
+
+                // Remove links. We could check that the link has not changed and preserve it but it doesn't seem worth the extra
+                // testing. The link will be recreated during the backup if needed.
+                // -----------------------------------------------------------------------------------------------------------------
+                case storageTypeLink:
+                    storageRemoveP(storageRepoWrite(), backupPath);
+                    break;
+
+                // Remove special files
+                // -----------------------------------------------------------------------------------------------------------------
+                case storageTypeSpecial:
+                    LOG_WARN_FMT("remove special file '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
+                    storageRemoveP(storageRepoWrite(), backupPath);
+                    break;
+            }
         }
 
-        // Remove links.  We could check that the link has not changed and preserve it but it doesn't seem worth the extra testing.
-        // The link will be recreated during the backup if needed.
-        // -------------------------------------------------------------------------------------------------------------------------
-        case storageTypeLink:
-            storageRemoveP(storageRepoWrite(), backupPath);
-            break;
-
-        // Remove special files
-        // -------------------------------------------------------------------------------------------------------------------------
-        case storageTypeSpecial:
-            LOG_WARN_FMT("remove special file '%s' from resumed backup", strZ(storagePathP(storageRepo(), backupPath)));
-            storageRemoveP(storageRepoWrite(), backupPath);
-            break;
+        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+        MEM_CONTEXT_TEMP_RESET(1000);
     }
+    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 // Helper to find a resumable backup
@@ -789,16 +794,11 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
                 manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestResume));
 
             // Clean resumed backup
-            BackupResumeData resumeData =
-            {
-                .manifest = manifest,
-                .manifestResume = manifestResume,
-                .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
-                .delta = cfgOptionBool(cfgOptDelta),
-                .backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel)),
-            };
+            const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));
 
-            storageInfoListP(storageRepo(), resumeData.backupPath, backupResumeCallback, &resumeData, .sortOrder = sortOrderAsc);
+            backupResumeClean(
+                storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
+                compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionBool(cfgOptDelta), backupPath, NULL);
         }
     }
     MEM_CONTEXT_TEMP_END();

@@ -892,131 +892,138 @@ restoreCleanMode(const String *pgPath, mode_t manifestMode, const StorageInfo *i
     FUNCTION_TEST_RETURN_VOID();
 }
 
-// storageInfoList() callback that cleans the paths
+// Recurse paths
 static void
-restoreCleanInfoListCallback(void *data, const StorageInfo *info)
+restoreCleanBuildRecurse(StorageIterator *const storageItr, const RestoreCleanCallbackData *const cleanData)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+        FUNCTION_TEST_PARAM(STORAGE_ITERATOR, storageItr);
+        FUNCTION_TEST_PARAM_P(VOID, cleanData);
     FUNCTION_TEST_END();
 
-    ASSERT(data != NULL);
-    ASSERT(info != NULL);
+    ASSERT(storageItr != NULL);
+    ASSERT(cleanData != NULL);
 
-    RestoreCleanCallbackData *cleanData = (RestoreCleanCallbackData *)data;
-
-    // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
-    if (cleanData->basePath && info->type == storageTypeFile && strLstExists(cleanData->fileIgnore, info->name))
-        FUNCTION_TEST_RETURN_VOID();
-
-    // Skip all . paths because they have already been cleaned on the previous level of recursion
-    if (strEq(info->name, DOT_STR))
-        FUNCTION_TEST_RETURN_VOID();
-
-    // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
-    if (!cleanData->delta)
+    MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        THROW_FMT(
-            PathNotEmptyError,
-            "unable to restore to path '%s' because it contains files\n"
-            "HINT: try using --delta if this is what you intended.",
-            strZ(cleanData->targetPath));
-    }
-
-    // Construct the name used to find this file/link/path in the manifest
-    const String *manifestName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info->name));
-
-    // Construct the path of this file/link/path in the PostgreSQL data directory
-    const String *pgPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info->name));
-
-    switch (info->type)
-    {
-        case storageTypeFile:
+        while (storageItrMore(storageItr))
         {
-            if (manifestFileExists(cleanData->manifest, manifestName) &&
-                manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
-            {
-                const ManifestFile manifestFile = manifestFileFind(cleanData->manifest, manifestName);
+            const StorageInfo info = storageItrNext(storageItr);
 
-                restoreCleanOwnership(
-                    pgPath, manifestFile.user, cleanData->rootReplaceUser, manifestFile.group, cleanData->rootReplaceGroup,
-                    info->userId, info->groupId, false);
-                restoreCleanMode(pgPath, manifestFile.mode, info);
-            }
-            else
+            // Don't include backup.manifest or recovery.conf (when preserved) in the comparison or empty directory check
+            if (cleanData->basePath && info.type == storageTypeFile && strLstExists(cleanData->fileIgnore, info.name))
+                continue;
+
+            // If this is not a delta then error because the directory is expected to be empty.  Ignore the . path.
+            if (!cleanData->delta)
             {
-                LOG_DETAIL_FMT("remove invalid file '%s'", strZ(pgPath));
-                storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                THROW_FMT(
+                    PathNotEmptyError,
+                    "unable to restore to path '%s' because it contains files\n"
+                    "HINT: try using --delta if this is what you intended.",
+                    strZ(cleanData->targetPath));
             }
 
-            break;
-        }
+            // Construct the name used to find this file/link/path in the manifest
+            const String *manifestName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info.name));
 
-        case storageTypeLink:
-        {
-            const ManifestLink *manifestLink = manifestLinkFindDefault(cleanData->manifest, manifestName, NULL);
+            // Construct the path of this file/link/path in the PostgreSQL data directory
+            const String *pgPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info.name));
 
-            if (manifestLink != NULL)
+            switch (info.type)
             {
-                if (!strEq(manifestLink->destination, info->linkDestination))
+                case storageTypeFile:
                 {
-                    LOG_DETAIL_FMT("remove link '%s' because destination changed", strZ(pgPath));
+                    if (manifestFileExists(cleanData->manifest, manifestName) &&
+                        manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
+                    {
+                        const ManifestFile manifestFile = manifestFileFind(cleanData->manifest, manifestName);
+
+                        restoreCleanOwnership(
+                            pgPath, manifestFile.user, cleanData->rootReplaceUser, manifestFile.group, cleanData->rootReplaceGroup,
+                            info.userId, info.groupId, false);
+                        restoreCleanMode(pgPath, manifestFile.mode, &info);
+                    }
+                    else
+                    {
+                        LOG_DETAIL_FMT("remove invalid file '%s'", strZ(pgPath));
+                        storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                    }
+
+                    break;
+                }
+
+                case storageTypeLink:
+                {
+                    const ManifestLink *manifestLink = manifestLinkFindDefault(cleanData->manifest, manifestName, NULL);
+
+                    if (manifestLink != NULL)
+                    {
+                        if (!strEq(manifestLink->destination, info.linkDestination))
+                        {
+                            LOG_DETAIL_FMT("remove link '%s' because destination changed", strZ(pgPath));
+                            storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                        }
+                        else
+                        {
+                            restoreCleanOwnership(
+                                pgPath, manifestLink->user, cleanData->rootReplaceUser, manifestLink->group,
+                                cleanData->rootReplaceGroup, info.userId, info.groupId, false);
+                        }
+                    }
+                    else
+                    {
+                        LOG_DETAIL_FMT("remove invalid link '%s'", strZ(pgPath));
+                        storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                    }
+
+                    break;
+                }
+
+                case storageTypePath:
+                {
+                    const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
+
+                    if (manifestPath != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
+                    {
+                        // Check ownership/permissions
+                        restoreCleanOwnership(
+                            pgPath, manifestPath->user, cleanData->rootReplaceUser, manifestPath->group,
+                            cleanData->rootReplaceGroup, info.userId, info.groupId, false);
+                        restoreCleanMode(pgPath, manifestPath->mode, &info);
+
+                        // Recurse into the path
+                        RestoreCleanCallbackData cleanDataSub = *cleanData;
+                        cleanDataSub.targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info.name));
+                        cleanDataSub.targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info.name));
+                        cleanDataSub.basePath = false;
+
+                        restoreCleanBuildRecurse(
+                            storageNewItrP(
+                                storageLocalWrite(), cleanDataSub.targetPath, .errorOnMissing = true, .sortOrder = sortOrderAsc),
+                            &cleanDataSub);
+                    }
+                    else
+                    {
+                        LOG_DETAIL_FMT("remove invalid path '%s'", strZ(pgPath));
+                        storagePathRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true, .recurse = true);
+                    }
+
+                    break;
+                }
+
+                // Special file types cannot exist in the manifest so just delete them
+                case storageTypeSpecial:
+                    LOG_DETAIL_FMT("remove special file '%s'", strZ(pgPath));
                     storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
-                }
-                else
-                {
-                    restoreCleanOwnership(
-                        pgPath, manifestLink->user, cleanData->rootReplaceUser, manifestLink->group, cleanData->rootReplaceGroup,
-                        info->userId, info->groupId, false);
-                }
-            }
-            else
-            {
-                LOG_DETAIL_FMT("remove invalid link '%s'", strZ(pgPath));
-                storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
+                    break;
             }
 
-            break;
+            // Reset the memory context occasionally so we don't use too much memory or slow down processing
+            MEM_CONTEXT_TEMP_RESET(1000);
         }
-
-        case storageTypePath:
-        {
-            const ManifestPath *manifestPath = manifestPathFindDefault(cleanData->manifest, manifestName, NULL);
-
-            if (manifestPath != NULL && manifestLinkFindDefault(cleanData->manifest, manifestName, NULL) == NULL)
-            {
-                // Check ownership/permissions
-                restoreCleanOwnership(
-                    pgPath, manifestPath->user, cleanData->rootReplaceUser, manifestPath->group, cleanData->rootReplaceGroup,
-                    info->userId, info->groupId, false);
-                restoreCleanMode(pgPath, manifestPath->mode, info);
-
-                // Recurse into the path
-                RestoreCleanCallbackData cleanDataSub = *cleanData;
-                cleanDataSub.targetName = strNewFmt("%s/%s", strZ(cleanData->targetName), strZ(info->name));
-                cleanDataSub.targetPath = strNewFmt("%s/%s", strZ(cleanData->targetPath), strZ(info->name));
-                cleanDataSub.basePath = false;
-
-                storageInfoListP(
-                    storageLocalWrite(), cleanDataSub.targetPath, restoreCleanInfoListCallback, &cleanDataSub,
-                    .errorOnMissing = true, .sortOrder = sortOrderAsc);
-            }
-            else
-            {
-                LOG_DETAIL_FMT("remove invalid path '%s'", strZ(pgPath));
-                storagePathRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true, .recurse = true);
-            }
-
-            break;
-        }
-
-        // Special file types cannot exist in the manifest so just delete them
-        case storageTypeSpecial:
-            LOG_DETAIL_FMT("remove special file '%s'", strZ(pgPath));
-            storageRemoveP(storageLocalWrite(), pgPath, .errorOnMissing = true);
-            break;
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1121,9 +1128,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                 {
                     if (cleanData->target->file == NULL)
                     {
-                        storageInfoListP(
-                            storageLocal(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData,
-                            .errorOnMissing = true);
+                        restoreCleanBuildRecurse(
+                            storageNewItrP(storageLocal(), cleanData->targetPath, .errorOnMissing = true), cleanData);
                     }
                     else
                     {
@@ -1202,9 +1208,10 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                     restoreCleanMode(cleanData->targetPath, manifestPath->mode, &info);
 
                     // Clean the target
-                    storageInfoListP(
-                        storageLocalWrite(), cleanData->targetPath, restoreCleanInfoListCallback, cleanData, .errorOnMissing = true,
-                        .sortOrder = sortOrderAsc);
+                    restoreCleanBuildRecurse(
+                        storageNewItrP(
+                            storageLocalWrite(), cleanData->targetPath, .errorOnMissing = true, .sortOrder = sortOrderAsc),
+                        cleanData);
                 }
             }
             // If the target does not exist we'll attempt to create it

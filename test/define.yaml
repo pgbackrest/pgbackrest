@@ -135,6 +135,13 @@ unit:
           - common/type/object
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-blob
+        total: 1
+
+        coverage:
+          - common/type/blob
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
         total: 27
         feature: string
@@ -305,6 +312,8 @@ unit:
           - storage/posix/read
           - storage/posix/storage
           - storage/posix/write
+          - storage/iterator
+          - storage/list
           - storage/read
           - storage/storage
           - storage/write
@@ -483,6 +492,8 @@ unit:
           - storage/posix/storage
           - storage/posix/write
           - storage/helper
+          - storage/iterator
+          - storage/list
           - storage/read
           - storage/storage
           - storage/write

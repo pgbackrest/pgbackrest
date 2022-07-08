@@ -28,53 +28,31 @@ stress testing as needed.
 #include "storage/remote/protocol.h"
 
 /***********************************************************************************************************************************
-Dummy callback functions
-***********************************************************************************************************************************/
-static void
-storageTestDummyInfoListCallback(void *data, const StorageInfo *info)
-{
-    (void)info;
-
-    // Do some work in the mem context to blow up the total time if this is not efficient, i.e. if the current mem context is not
-    // being freed regularly
-    memResize(memNew(16), 32);
-
-    // Increment callback total
-    (*(uint64_t *)data)++;
-}
-
-/***********************************************************************************************************************************
-Driver to test storageInfoList
+Driver to test storageNewItrP()
 ***********************************************************************************************************************************/
 typedef struct
 {
     STORAGE_COMMON_MEMBER;
     uint64_t fileTotal;
-} StorageTestPerfInfoList;
+} StorageTestPerfList;
 
-static bool
-storageTestPerfInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storageTestPerfList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
-    THIS(StorageTestPerfInfoList);
+    THIS(StorageTestPerfList);
     (void)path; (void)level; (void)param;
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        MEM_CONTEXT_TEMP_RESET_BEGIN()
-        {
-            for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
-            {
-                callback(callbackData, &(StorageInfo){.exists = true, .name = STRDEF("name")});
-                MEM_CONTEXT_TEMP_RESET(1000);
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-    MEM_CONTEXT_TEMP_END();
+    StorageList *result = NULL;
 
-    return this->fileTotal != 0;
+    if (this->fileTotal != 0)
+    {
+        result = storageLstNew(storageInfoLevelExists);
+
+        for (uint64_t fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
+            storageLstAdd(result, &(StorageInfo){.exists = true, .name = STRDEF("name")});
+    }
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -144,7 +122,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("storageInfoList()"))
+    if (testBegin("storageNewItrP()"))
     {
         TEST_TITLE_FMT("list %d million files", TEST_SCALE);
 
@@ -163,14 +141,14 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRemoteType, protocolStorageTypeRepo);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleRemote);
 
-                // Create a driver to test remote performance of storageInfoList() and inject it into storageRepo()
-                StorageTestPerfInfoList driver =
+                // Create a driver to test remote performance of storageNewItrP() and inject it into storageRepo()
+                StorageTestPerfList driver =
                 {
                     .interface = storageInterfaceTestDummy,
                     .fileTotal = fileTotal,
                 };
 
-                driver.interface.infoList = storageTestPerfInfoList;
+                driver.interface.list = storageTestPerfList;
 
                 Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, NULL, &driver, driver.interface);
                 storageHelper.storageRepoWrite = memNew(sizeof(Storage *));
@@ -200,13 +178,18 @@ testRun(void)
                 TimeMSec timeBegin = timeMSec();
 
                 // Storage info list
-                uint64_t fileCallbackTotal = 0;
+                uint64_t fileTotal = 0;
+                StorageIterator *storageItr = NULL;
 
-                TEST_RESULT_VOID(
-                    storageInfoListP(storageRemote, NULL, storageTestDummyInfoListCallback, &fileCallbackTotal),
-                    "list remote files");
+                TEST_ASSIGN(storageItr, storageNewItrP(storageRemote, NULL), "list remote files");
 
-                TEST_RESULT_UINT(fileCallbackTotal, fileTotal, "check callback total");
+                while (storageItrMore(storageItr))
+                {
+                    storageItrNext(storageItr);
+                    fileTotal++;
+                }
+
+                TEST_RESULT_UINT(fileTotal, fileTotal, "check callback total");
 
                 TEST_LOG_FMT("list transferred in %ums", (unsigned int)(timeMSec() - timeBegin));
 

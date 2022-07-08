@@ -1065,8 +1065,8 @@ testRun(void)
                         "</ListBucketResult>");
 
                 TEST_ERROR(
-                    storageInfoListP(s3, STRDEF("/"), (void *)1, NULL, .errorOnMissing = true),
-                    AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
+                    storageNewItrP(s3, STRDEF("/"), .errorOnMissing = true), AssertError,
+                    "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 TEST_STORAGE_LIST(
                     s3, "/path/to",

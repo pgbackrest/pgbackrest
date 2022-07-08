@@ -29,12 +29,10 @@ storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, Stor
     (void)thisVoid; (void)file; (void)level; (void)param; return (StorageInfo){.exists = false};
 }
 
-static bool
-storageTestDummyInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storageTestDummyList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
-    (void)thisVoid; (void)path; (void)level; (void)callback; (void)callbackData; (void)param; return false;
+    (void)thisVoid; (void)path; (void)level; (void)param; return false;
 }
 
 static StorageRead *
@@ -64,7 +62,7 @@ storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemovePara
 const StorageInterface storageInterfaceTestDummy =
 {
     .info = storageTestDummyInfo,
-    .infoList = storageTestDummyInfoList,
+    .list = storageTestDummyList,
     .newRead = storageTestDummyNewRead,
     .newWrite = storageTestDummyNewWrite,
     .pathRemove = storageTestDummyPathRemove,
@@ -140,27 +138,17 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
 }
 
 /**********************************************************************************************************************************/
-static void
-hrnStorageListCallback(void *list, const StorageInfo *info)
-{
-    MEM_CONTEXT_BEGIN(lstMemContext(list))
-    {
-        StorageInfo infoCopy = *info;
-        infoCopy.name = strDup(infoCopy.name);
-        infoCopy.user = strDup(infoCopy.user);
-        infoCopy.group = strDup(infoCopy.group);
-        infoCopy.linkDestination = strDup(infoCopy.linkDestination);
-
-        lstAdd(list, &infoCopy);
-    }
-    MEM_CONTEXT_END();
-}
-
 void
 hrnStorageList(const Storage *const storage, const char *const path, const char *const expected, const HrnStorageListParam param)
 {
     // Check if paths are supported
     const bool featurePath = storageFeature(storage, storageFeaturePath);
+
+    // Determine sort order
+    const SortOrder sortOrder = param.sortOrder == sortOrderNone ? sortOrderAsc : param.sortOrder;
+
+    // Determine level
+    StorageInfoLevel level = param.level == storageInfoLevelDefault && !param.levelForce ? storageInfoLevelType : param.level;
 
     // Log list test
     hrnTestResultBegin(__func__, false);
@@ -173,37 +161,41 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     hrnTestResultComment(param.comment);
 
     // Generate a list of files/paths/etc
-    List *list = lstNewP(sizeof(StorageInfo));
+    StorageList *const list = storageLstNew(level == storageInfoLevelDefault ? storageInfoLevelDetail : level);
 
-    storageInfoListP(
-        storage, pathFull, hrnStorageListCallback, list, .recurse = !param.noRecurse,
-        .sortOrder = param.sortOrder == sortOrderNone ? sortOrderAsc : param.sortOrder,
-        .level = param.level == storageInfoLevelDefault && !param.levelForce ? storageInfoLevelType : param.level,
+    StorageIterator *const storageItr = storageNewItrP(
+        storage, pathFull, .recurse = !param.noRecurse, .sortOrder = sortOrder, .level = level,
         .expression = param.expression != NULL ? STR(param.expression) : NULL);
+
+    while (storageItrMore(storageItr))
+    {
+        StorageInfo info = storageItrNext(storageItr);
+        storageLstAdd(list, &info);
+    }
 
     // Remove files if requested
     if (param.remove)
     {
-        for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
+        for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
         {
-            const StorageInfo *const info = lstGet(list, listIdx);
+            const StorageInfo info = storageLstGet(list, listIdx);
 
-            if (strEq(info->name, DOT_STR))
+            if (strEq(info.name, DOT_STR))
                 continue;
 
             // Only remove at the top level since path remove will recurse
-            if (strChr(info->name, '/') == -1)
+            if (strChr(info.name, '/') == -1)
             {
                 // Remove a path recursively
-                if (info->type == storageTypePath)
+                if (info.type == storageTypePath)
                 {
                     storagePathRemoveP(
-                        storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)), .errorOnMissing = featurePath,
+                        storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info.name)), .errorOnMissing = featurePath,
                         .recurse = true);
                 }
                 // Remove file, link, or special
                 else
-                    storageRemoveP(storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)), .errorOnMissing = true);
+                    storageRemoveP(storage, strNewFmt("%s/%s", strZ(pathFull), strZ(info.name)), .errorOnMissing = true);
             }
         }
     }
@@ -211,15 +203,29 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     // Generate list for comparison
     StringList *listStr = strLstNew();
 
-    for (unsigned int listIdx = 0; listIdx < lstSize(list); listIdx++)
-    {
-        const StorageInfo *const info = lstGet(list, listIdx);
-        String *const item = strCat(strNew(), info->name);
+    if (level == storageInfoLevelDefault)
+        level = storageFeature(storage, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
-        if (strEq(info->name, DOT_STR) && !param.includeDot)
+    if (param.includeDot)
+    {
+        StorageInfo info = storageInfoP(storage, pathFull);
+        info.name = DOT_STR;
+
+        if (sortOrder == sortOrderAsc)
+            storageLstInsert(list, 0, &info);
+        else
+            storageLstAdd(list, &info);
+    }
+
+    for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+    {
+        const StorageInfo info = storageLstGet(list, listIdx);
+        String *const item = strCat(strNew(), info.name);
+
+        if (strEq(info.name, DOT_STR) && !param.includeDot)
             continue;
 
-        switch (info->type)
+        switch (info.type)
         {
             case storageTypeFile:
                 break;
@@ -237,40 +243,40 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
                 break;
         }
 
-        if (((info->type == storageTypeFile || info->type == storageTypeLink) && info->level >= storageInfoLevelBasic) ||
-            (info->type == storageTypePath && info->level >= storageInfoLevelDetail))
+        if (((info.type == storageTypeFile || info.type == storageTypeLink) && level >= storageInfoLevelBasic) ||
+            (info.type == storageTypePath && level >= storageInfoLevelDetail))
         {
             strCatZ(item, " {");
 
-            if (info->type == storageTypeFile)
-                strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info->size, (int64_t)info->timeModified);
-            else if (info->type == storageTypeLink)
+            if (info.type == storageTypeFile)
+                strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info.size, (int64_t)info.timeModified);
+            else if (info.type == storageTypeLink)
             {
                 const StorageInfo infoLink = storageInfoP(
                     storage,
-                    strEq(info->name, DOT_STR) ? pathFull : strNewFmt("%s/%s", strZ(pathFull), strZ(info->name)),
+                    strEq(info.name, DOT_STR) ? pathFull : strNewFmt("%s/%s", strZ(pathFull), strZ(info.name)),
                     .level = storageInfoLevelDetail);
 
                 strCatFmt(item, "d=%s", strZ(infoLink.linkDestination));
             }
 
-            if (info->level >= storageInfoLevelDetail)
+            if (level >= storageInfoLevelDetail)
             {
-                if (info->type != storageTypePath)
+                if (info.type != storageTypePath)
                     strCatZ(item, ", ");
 
-                if (info->user != NULL)
-                    strCatFmt(item, "u=%s", strZ(info->user));
+                if (info.user != NULL)
+                    strCatFmt(item, "u=%s", strZ(info.user));
                 else
-                    strCatFmt(item, "u=%d", (int)info->userId);
+                    strCatFmt(item, "u=%d", (int)info.userId);
 
-                if (info->group != NULL)
-                    strCatFmt(item, ", g=%s", strZ(info->group));
+                if (info.group != NULL)
+                    strCatFmt(item, ", g=%s", strZ(info.group));
                 else
-                    strCatFmt(item, ", g=%d", (int)info->groupId);
+                    strCatFmt(item, ", g=%d", (int)info.groupId);
 
-                if (info->type != storageTypeLink)
-                    strCatFmt(item, ", m=%04o", info->mode);
+                if (info.type != storageTypeLink)
+                    strCatFmt(item, ", m=%04o", info.mode);
             }
 
             strCatZ(item, "}");

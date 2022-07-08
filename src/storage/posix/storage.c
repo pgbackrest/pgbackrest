@@ -113,44 +113,40 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 }
 
 /**********************************************************************************************************************************/
-// Helper function to get info for a file if it exists.  This logic can't live directly in storagePosixInfoList() because there is
-// a race condition where a file might exist while listing the directory but it is gone before stat() can be called.  In order to
-// get complete test coverage this function must be split out.
+// Helper function to get info for a file if it exists. This logic can't live directly in storagePosixList() because there is a race
+// condition where a file might exist while listing the directory but it is gone before stat() can be called. In order to get
+// complete test coverage this function must be split out.
 static void
-storagePosixInfoListEntry(
-    StoragePosix *this, const String *path, const String *name, StorageInfoLevel level, StorageInfoListCallback callback,
-    void *callbackData)
+storagePosixListEntry(
+    StoragePosix *const this, StorageList *const list, const String *const path, const char *const name,
+    const StorageInfoLevel level)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_POSIX, this);
+        FUNCTION_TEST_PARAM(STORAGE_LIST, list);
         FUNCTION_TEST_PARAM(STRING, path);
-        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(STRINGZ, name);
         FUNCTION_TEST_PARAM(ENUM, level);
-        FUNCTION_TEST_PARAM(FUNCTIONP, callback);
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(list != NULL);
     ASSERT(path != NULL);
     ASSERT(name != NULL);
-    ASSERT(callback != NULL);
 
-    StorageInfo storageInfo = storageInterfaceInfoP(
-        this, strEq(name, DOT_STR) ? strDup(path) : strNewFmt("%s/%s", strZ(path), strZ(name)), level);
+    StorageInfo info = storageInterfaceInfoP(this, strNewFmt("%s/%s", strZ(path), name), level);
 
-    if (storageInfo.exists)
+    if (info.exists)
     {
-        storageInfo.name = name;
-        callback(callbackData, &storageInfo);
+        info.name = STR(name);
+        storageLstAdd(list, &info);
     }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
-static bool
-storagePosixInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
     THIS(StoragePosix);
 
@@ -158,19 +154,16 @@ storagePosixInfoList(
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(callback != NULL);
 
-    bool result = false;
+    StorageList *result = NULL;
 
     // Open the directory for read
-    DIR *dir = opendir(strZ(path));
+    DIR *const dir = opendir(strZ(path));
 
     // If the directory could not be opened process errors and report missing directories
     if (dir == NULL)
@@ -178,34 +171,39 @@ storagePosixInfoList(
         if (errno != ENOENT)                                                                                        // {vm_covered}
             THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));                                // {vm_covered}
     }
+    // Directory was found
     else
     {
-        // Directory was found
-        result = true;
+        result = storageLstNew(level);
 
         TRY_BEGIN()
         {
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
                 // Read the directory entries
-                struct dirent *dirEntry = readdir(dir);
+                const struct dirent *dirEntry = readdir(dir);
 
                 while (dirEntry != NULL)
                 {
-                    const String *name = STR(dirEntry->d_name);
-
-                    // Always skip ..
-                    if (!strEq(name, DOTDOT_STR))
+                    // Always skip . and ..
+                    if (!strEqZ(DOT_STR, dirEntry->d_name) && !strEqZ(DOTDOT_STR, dirEntry->d_name))
                     {
                         // If only making a list of files that exist then no need to go get detailed info which requires calling
                         // stat() and is therefore relatively slow
                         if (level == storageInfoLevelExists)
                         {
-                            callback(callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
+                            storageLstAdd(
+                                result,
+                                &(StorageInfo)
+                                {
+                                    .name = STR(dirEntry->d_name),
+                                    .level = storageInfoLevelExists,
+                                    .exists = true,
+                                });
                         }
                         // Else more info is required which requires a call to stat()
                         else
-                            storagePosixInfoListEntry(this, path, name, level, callback, callbackData);
+                            storagePosixListEntry(this, result, path, dirEntry->d_name, level);
                     }
 
                     // Get next entry
@@ -224,7 +222,7 @@ storagePosixInfoList(
         TRY_END();
     }
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -392,47 +390,6 @@ storagePosixPathCreate(
 }
 
 /**********************************************************************************************************************************/
-typedef struct StoragePosixPathRemoveData
-{
-    StoragePosix *driver;                                           // Driver
-    const String *path;                                             // Path
-} StoragePosixPathRemoveData;
-
-static void
-storagePosixPathRemoveCallback(void *const callbackData, const StorageInfo *const info)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, callbackData);
-        FUNCTION_TEST_PARAM_P(STORAGE_INFO, info);
-    FUNCTION_TEST_END();
-
-    ASSERT(callbackData != NULL);
-    ASSERT(info != NULL);
-
-    if (!strEqZ(info->name, "."))
-    {
-        StoragePosixPathRemoveData *const data = callbackData;
-        String *const file = strNewFmt("%s/%s", strZ(data->path), strZ(info->name));
-
-        // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
-        if (unlink(strZ(file)) == -1)                                                                               // {vm_covered}
-        {
-            // These errors indicate that the entry is actually a path so we'll try to delete it that way
-            if (errno == EPERM || errno == EISDIR)              // {uncovered_branch - no EPERM on tested systems}
-            {
-                storageInterfacePathRemoveP(data->driver, file, true);
-            }
-            // Else error
-            else
-                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));                   // {vm_covered}
-        }
-
-        strFree(file);
-    }
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 static bool
 storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
@@ -455,14 +412,35 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
         // Recurse if requested
         if (recurse)
         {
-            StoragePosixPathRemoveData data =
-            {
-                .driver = this,
-                .path = path,
-            };
+            StorageList *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
 
-            // Remove all sub paths/files
-            storageInterfaceInfoListP(this, path, storageInfoLevelExists, storagePosixPathRemoveCallback, &data);
+            if (list != NULL)
+            {
+                MEM_CONTEXT_TEMP_RESET_BEGIN()
+                {
+                    for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+                    {
+                        const String *const file = strNewFmt("%s/%s", strZ(path), strZ(storageLstGet(list, listIdx).name));
+
+                        // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
+                        if (unlink(strZ(file)) == -1)                                                               // {vm_covered}
+                        {
+                            // These errors indicate that the entry is actually a path so we'll try to delete it that way
+                            if (errno == EPERM || errno == EISDIR)               // {uncovered_branch - no EPERM on tested systems}
+                            {
+                                storageInterfacePathRemoveP(this, file, true);
+                            }
+                            // Else error
+                            else
+                                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));   // {vm_covered}
+                        }
+
+                        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                        MEM_CONTEXT_TEMP_RESET(1000);
+                    }
+                }
+                MEM_CONTEXT_TEMP_END();
+            }
         }
 
         // Delete the path
@@ -556,7 +534,7 @@ static const StorageInterface storageInterfacePosix =
     .feature = 1 << storageFeaturePath,
 
     .info = storagePosixInfo,
-    .infoList = storagePosixInfoList,
+    .list = storagePosixList,
     .move = storagePosixMove,
     .newRead = storagePosixNewRead,
     .newWrite = storagePosixNewWrite,

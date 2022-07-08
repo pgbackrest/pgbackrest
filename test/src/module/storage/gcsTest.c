@@ -714,8 +714,8 @@ testRun(void)
                         "}");
 
                 TEST_ERROR(
-                    storageInfoListP(storage, STRDEF("/"), (void *)1, NULL, .errorOnMissing = true),
-                    AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
+                    storageNewItrP(storage, STRDEF("/"), .errorOnMissing = true), AssertError,
+                    "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 TEST_STORAGE_LIST(
                     storage, "/path/to",

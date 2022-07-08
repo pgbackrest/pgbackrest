@@ -19,184 +19,188 @@ Test Backup Command
 /***********************************************************************************************************************************
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
 ***********************************************************************************************************************************/
-typedef struct TestBackupValidateCallbackData
+static String *
+testBackupValidateList(
+    const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
+    String *const result)
 {
-    const Storage *storage;                                         // Storage object when needed (e.g. fileCompressed = true)
-    const String *path;                                             // Subpath when storage is specified
-    Manifest *manifest;                                             // Manifest to check for files/links/paths
-    const ManifestData *manifestData;                               // Manifest data
-    String *content;                                                // String where content should be added
-} TestBackupValidateCallbackData;
+    // Output root path if it is a link so we can verify the destination
+    const StorageInfo dotInfo = storageInfoP(storage, path);
 
-static void
-testBackupValidateCallback(void *callbackData, const StorageInfo *info)
-{
-    TestBackupValidateCallbackData *data = callbackData;
+    if (dotInfo.type == storageTypeLink)
+        strCatFmt(result, ". {link, d=%s}\n", strZ(dotInfo.linkDestination));
 
-    // Don't include . when it is a path (we'll still include it when it is a link so we can see the destination)
-    if (info->type == storageTypePath && strEq(info->name, DOT_STR))
-        return;
+    // Output path contents
+    StorageIterator *const storageItr = storageNewItrP(storage, path, .recurse = true, .sortOrder = sortOrderAsc);
 
-    // Don't include backup.manifest or copy.  We'll test that they are present elsewhere
-    if (info->type == storageTypeFile &&
-        (strEqZ(info->name, BACKUP_MANIFEST_FILE) || strEqZ(info->name, BACKUP_MANIFEST_FILE INFO_COPY_EXT)))
-        return;
-
-    switch (info->type)
+    while (storageItrMore(storageItr))
     {
-        case storageTypeFile:
+        const StorageInfo info = storageItrNext(storageItr);
+
+        // Don't include backup.manifest or copy. We'll test that they are present elsewhere
+        if (info.type == storageTypeFile &&
+            (strEqZ(info.name, BACKUP_MANIFEST_FILE) || strEqZ(info.name, BACKUP_MANIFEST_FILE INFO_COPY_EXT)))
         {
-            // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
-            // mode and current user/group.
-            // ---------------------------------------------------------------------------------------------------------------------
-            if (info->mode != 0640)
-                THROW_FMT(AssertError, "'%s' mode is not 0640", strZ(info->name));
+            continue;
+        }
 
-            if (!strEq(info->user, TEST_USER_STR))
-                THROW_FMT(AssertError, "'%s' user should be '" TEST_USER "'", strZ(info->name));
-
-            if (!strEq(info->group, TEST_GROUP_STR))
-                THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(info->name));
-
-            // Build file list (needed because bundles can contain multiple files)
-            // ---------------------------------------------------------------------------------------------------------------------
-            List *const fileList = lstNewP(sizeof(ManifestFilePack **));
-            bool bundle = strBeginsWithZ(info->name, "bundle/");
-
-            if (bundle)
+        switch (info.type)
+        {
+            case storageTypeFile:
             {
-                const uint64_t bundleId = cvtZToUInt64(strZ(info->name) + sizeof("bundle"));
+                // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
+                // mode and current user/group.
+                // -----------------------------------------------------------------------------------------------------------------
+                if (info.mode != 0640)
+                    THROW_FMT(AssertError, "'%s' mode is not 0640", strZ(info.name));
 
-                for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(data->manifest); fileIdx++)
-                {
-                    ManifestFilePack **const filePack = lstGet(data->manifest->pub.fileList, fileIdx);
+                if (!strEq(info.user, TEST_USER_STR))
+                    THROW_FMT(AssertError, "'%s' user should be '" TEST_USER "'", strZ(info.name));
 
-                    if (manifestFileUnpack(data->manifest, *filePack).bundleId == bundleId)
-                        lstAdd(fileList, &filePack);
-                }
-            }
-            else
-            {
-                const String *manifestName = info->name;
+                if (!strEq(info.group, TEST_GROUP_STR))
+                    THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(info.name));
 
-                if (data->manifestData->backupOptionCompressType != compressTypeNone)
-                {
-                    manifestName = strSubN(
-                        info->name, 0, strSize(info->name) - strSize(compressExtStr(data->manifestData->backupOptionCompressType)));
-                }
-
-                ManifestFilePack **const filePack = manifestFilePackFindInternal(data->manifest, manifestName);
-                lstAdd(fileList, &filePack);
-            }
-
-            // Check files
-            // ---------------------------------------------------------------------------------------------------------------------
-            for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
-            {
-                ManifestFilePack **const filePack = *(ManifestFilePack ***)lstGet(fileList, fileIdx);
-                ManifestFile file = manifestFileUnpack(data->manifest, *filePack);
+                // Build file list (needed because bundles can contain multiple files)
+                // -----------------------------------------------------------------------------------------------------------------
+                List *const fileList = lstNewP(sizeof(ManifestFilePack **));
+                bool bundle = strBeginsWithZ(info.name, "bundle/");
 
                 if (bundle)
-                    strCatFmt(data->content, "%s/%s {file", strZ(info->name), strZ(file.name));
+                {
+                    const uint64_t bundleId = cvtZToUInt64(strZ(info.name) + sizeof("bundle"));
+
+                    for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+                    {
+                        ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
+
+                        if (manifestFileUnpack(manifest, *filePack).bundleId == bundleId)
+                            lstAdd(fileList, &filePack);
+                    }
+                }
                 else
-                    strCatFmt(data->content, "%s {file", strZ(info->name));
-
-                // Calculate checksum/size and decompress if needed
-                // -----------------------------------------------------------------------------------------------------------------
-                StorageRead *read = storageNewReadP(
-                    data->storage, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)), .offset = file.bundleOffset,
-                    .limit = VARUINT64(file.sizeRepo));
-
-                if (data->manifestData->backupOptionCompressType != compressTypeNone)
                 {
-                    ioFilterGroupAdd(
-                        ioReadFilterGroup(storageReadIo(read)), decompressFilter(data->manifestData->backupOptionCompressType));
+                    const String *manifestName = info.name;
+
+                    if (manifestData->backupOptionCompressType != compressTypeNone)
+                    {
+                        manifestName = strSubN(
+                            info.name, 0, strSize(info.name) - strSize(compressExtStr(manifestData->backupOptionCompressType)));
+                    }
+
+                    ManifestFilePack **const filePack = manifestFilePackFindInternal(manifest, manifestName);
+                    lstAdd(fileList, &filePack);
                 }
 
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
-
-                uint64_t size = bufUsed(storageGetP(read));
-                const String *checksum = pckReadStrP(
-                    ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
-
-                strCatFmt(data->content, ", s=%" PRIu64, size);
-
-                if (!strEqZ(checksum, file.checksumSha1))
-                    THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
-
-                // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even the
-                // same compression algorithm can give slightly different results based on the version so repo-size is not
-                // deterministic for compression.
+                // Check files
                 // -----------------------------------------------------------------------------------------------------------------
-                if (size != file.size)
-                    THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
-
-                // Repo size can only be compared to file size when not bundled
-                if (!bundle)
+                for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
                 {
-                    if (info->size != file.sizeRepo)
-                        THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
+                    ManifestFilePack **const filePack = *(ManifestFilePack ***)lstGet(fileList, fileIdx);
+                    ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+                    if (bundle)
+                        strCatFmt(result, "%s/%s {file", strZ(info.name), strZ(file.name));
+                    else
+                        strCatFmt(result, "%s {file", strZ(info.name));
+
+                    // Calculate checksum/size and decompress if needed
+                    // -------------------------------------------------------------------------------------------------------------
+                    StorageRead *read = storageNewReadP(
+                        storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
+                        .limit = VARUINT64(file.sizeRepo));
+
+                    if (manifestData->backupOptionCompressType != compressTypeNone)
+                    {
+                        ioFilterGroupAdd(
+                            ioReadFilterGroup(storageReadIo(read)), decompressFilter(manifestData->backupOptionCompressType));
+                    }
+
+                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+
+                    uint64_t size = bufUsed(storageGetP(read));
+                    const String *checksum = pckReadStrP(
+                        ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+
+                    strCatFmt(result, ", s=%" PRIu64, size);
+
+                    if (!strEqZ(checksum, file.checksumSha1))
+                        THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
+
+                    // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even
+                    // the same compression algorithm can give slightly different results based on the version so repo-size is not
+                    // deterministic for compression.
+                    // -------------------------------------------------------------------------------------------------------------
+                    if (size != file.size)
+                        THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
+
+                    // Repo size can only be compared to file size when not bundled
+                    if (!bundle)
+                    {
+                        if (info.size != file.sizeRepo)
+                            THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
+                    }
+
+                    if (manifestData->backupOptionCompressType != compressTypeNone)
+                        file.sizeRepo = file.size;
+
+                    // Bundle id/offset are too noisy so remove them. They are checked size/checksum and listed with the files.
+                    // -------------------------------------------------------------------------------------------------------------
+                    file.bundleId = 0;
+                    file.bundleOffset = 0;
+
+                    // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from
+                    // the test output.
+                    // -------------------------------------------------------------------------------------------------------------
+                    if (strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
+                        strBeginsWith(
+                            file.name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(manifestData->pgVersion)))))
+                    {
+                        file.checksumSha1[0] = '\0';
+                    }
+
+                    strCatZ(result, "}\n");
+
+                    // Update changes to manifest file
+                    manifestFilePackUpdate(manifest, filePack, &file);
                 }
 
-                if (data->manifestData->backupOptionCompressType != compressTypeNone)
-                    file.sizeRepo = file.size;
-
-                // Bundle id/offset are too noisy so remove them. They are checked size/checksum and listed with the files.
-                // -----------------------------------------------------------------------------------------------------------------
-                file.bundleId = 0;
-                file.bundleOffset = 0;
-
-                // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from the
-                // test output.
-                // -----------------------------------------------------------------------------------------------------------------
-                if (strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-                    strBeginsWith(
-                        file.name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(data->manifestData->pgVersion)))))
-                {
-                    file.checksumSha1[0] = '\0';
-                }
-
-                strCatZ(data->content, "}\n");
-
-                // Update changes to manifest file
-                manifestFilePackUpdate(data->manifest, filePack, &file);
+                break;
             }
 
-            break;
+            case storageTypeLink:
+                strCatFmt(result, "%s {link, d=%s}\n", strZ(info.name), strZ(info.linkDestination));
+                break;
+
+            case storageTypePath:
+            {
+                strCatFmt(result, "%s {path", strZ(info.name));
+
+                // Check against the manifest
+                // -----------------------------------------------------------------------------------------------------------------
+                if (!strEq(info.name, STRDEF("bundle")))
+                    manifestPathFind(manifest, info.name);
+
+                // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
+                // mode and current user/group.
+                if (info.mode != 0750)
+                    THROW_FMT(AssertError, "'%s' mode is not 00750", strZ(info.name));
+
+                if (!strEq(info.user, TEST_USER_STR))
+                    THROW_FMT(AssertError, "'%s' user should be '" TEST_USER "'", strZ(info.name));
+
+                if (!strEq(info.group, TEST_GROUP_STR))
+                    THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(info.name));
+
+                strCatZ(result, "}\n");
+                break;
+            }
+
+            case storageTypeSpecial:
+                THROW_FMT(AssertError, "unexpected special file '%s'", strZ(info.name));
         }
-
-        case storageTypeLink:
-            strCatFmt(data->content, "%s {link, d=%s}\n", strZ(info->name), strZ(info->linkDestination));
-            break;
-
-        case storageTypePath:
-        {
-            strCatFmt(data->content, "%s {path", strZ(info->name));
-
-            // Check against the manifest
-            // ---------------------------------------------------------------------------------------------------------------------
-            if (!strEq(info->name, STRDEF("bundle")))
-                manifestPathFind(data->manifest, info->name);
-
-            // Test mode, user, group. These values are not in the manifest but we know what they should be based on the default
-            // mode and current user/group.
-            if (info->mode != 0750)
-                THROW_FMT(AssertError, "'%s' mode is not 00750", strZ(info->name));
-
-            if (!strEq(info->user, TEST_USER_STR))
-                THROW_FMT(AssertError, "'%s' user should be '" TEST_USER "'", strZ(info->name));
-
-            if (!strEq(info->group, TEST_GROUP_STR))
-                THROW_FMT(AssertError, "'%s' group should be '" TEST_GROUP "'", strZ(info->name));
-
-            strCatZ(data->content, "}\n");
-            break;
-        }
-
-        case storageTypeSpecial:
-            THROW_FMT(AssertError, "unexpected special file '%s'", strZ(info->name));
     }
 
+    return result;
 }
 
 static String *
@@ -210,24 +214,14 @@ testBackupValidate(const Storage *storage, const String *path)
     ASSERT(storage != NULL);
     ASSERT(path != NULL);
 
-    String *result = strNew();
+    String *const result = strNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build a list of files in the backup path and verify against the manifest
         // -------------------------------------------------------------------------------------------------------------------------
         Manifest *manifest = manifestLoadFile(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), cipherTypeNone, NULL);
-
-        TestBackupValidateCallbackData callbackData =
-        {
-            .storage = storage,
-            .path = path,
-            .content = result,
-            .manifest = manifest,
-            .manifestData = manifestData(manifest),
-        };
-
-        storageInfoListP(storage, path, testBackupValidateCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc);
+        testBackupValidateList(storage, path, manifest, manifestData(manifest), result);
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
         if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path))))

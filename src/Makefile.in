@@ -25,6 +25,7 @@ SRCS_BUILD = \
 	common/regExp.c \
 	common/stackTrace.c \
 	common/time.c \
+	common/type/blob.c \
 	common/type/buffer.c \
 	common/type/convert.c \
 	common/type/keyValue.c \
@@ -44,6 +45,8 @@ SRCS_BUILD = \
 	storage/posix/read.c \
 	storage/posix/storage.c \
 	storage/posix/write.c \
+	storage/iterator.c \
+	storage/list.c \
 	storage/read.c \
 	storage/storage.c \
 	storage/write.c
