@@ -149,6 +149,9 @@ FN_EXTERN String *pgVersionToStr(unsigned int version);
 FN_EXTERN PgWal pgWalFromFile(const String *walFile, const Storage *storage, const String *pgVersionForce);
 FN_EXTERN PgWal pgWalFromBuffer(const Buffer *walBuffer, const String *pgVersionForce);
 
+// Get default WAL segment size
+FN_EXTERN unsigned int pgWalSegmentSizeDefault(unsigned int pgVersion);
+
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_15_202209061
 FN_EXTERN String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
 

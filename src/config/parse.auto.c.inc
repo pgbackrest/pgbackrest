@@ -63,6 +63,8 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("900"),                                                                                             // val/str
     PARSE_RULE_STRPUB("999"),                                                                                             // val/str
     PARSE_RULE_STRPUB("9999999"),                                                                                         // val/str
+    PARSE_RULE_STRPUB("GPDB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("PostgreSQL"),                                                                                      // val/str
     PARSE_RULE_STRPUB("accept-new"),                                                                                      // val/str
     PARSE_RULE_STRPUB("aes-256-cbc"),                                                                                     // val/str
     PARSE_RULE_STRPUB("asc"),                                                                                             // val/str
@@ -187,6 +189,8 @@ typedef enum
     parseRuleValStrQT_900_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_999_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_9999999_QT,                                                                                    // val/str/enum
+    parseRuleValStrQT_GPDB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_PostgreSQL_QT,                                                                                 // val/str/enum
     parseRuleValStrQT_accept_DS_new_QT,                                                                              // val/str/enum
     parseRuleValStrQT_aes_DS_256_DS_cbc_QT,                                                                          // val/str/enum
     parseRuleValStrQT_asc_QT,                                                                                        // val/str/enum
@@ -264,6 +268,8 @@ Rule StringIds
 
 static const StringId parseRuleValueStrId[] =
 {
+    STRID6("GPDB", 0x9e9d6c1),                                                                                          // val/strid
+    STRID6("PostgreSQL", 0xc76e054875133f51),                                                                           // val/strid
     STRID5("accept-new", 0x2e576e9028c610),                                                                             // val/strid
     STRID5("aes-256-cbc", 0xc43dfbbcdcca10),                                                                            // val/strid
     STRID5("asc", 0xe610),                                                                                              // val/strid
@@ -327,6 +333,8 @@ static const StringId parseRuleValueStrId[] =
 
 static const uint8_t parseRuleValueStrIdStrMap[] =
 {
+    parseRuleValStrQT_GPDB_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_PostgreSQL_QT,                                                                             // val/strid/strmap
     parseRuleValStrQT_accept_DS_new_QT,                                                                          // val/strid/strmap
     parseRuleValStrQT_aes_DS_256_DS_cbc_QT,                                                                      // val/strid/strmap
     parseRuleValStrQT_asc_QT,                                                                                    // val/strid/strmap
@@ -390,6 +398,8 @@ static const uint8_t parseRuleValueStrIdStrMap[] =
 
 typedef enum
 {
+    parseRuleValStrIdGPDB,                                                                                         // val/strid/enum
+    parseRuleValStrIdPostgreSQL,                                                                                   // val/strid/enum
     parseRuleValStrIdAcceptNew,                                                                                    // val/strid/enum
     parseRuleValStrIdAes256Cbc,                                                                                    // val/strid/enum
     parseRuleValStrIdAsc,                                                                                          // val/strid/enum
@@ -2454,6 +2464,74 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                                          // opt/force
         ),                                                                                                              // opt/force
     ),                                                                                                                  // opt/force
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                    // opt/fork
+    (                                                                                                                    // opt/fork
+        PARSE_RULE_OPTION_NAME("fork"),                                                                                  // opt/fork
+        PARSE_RULE_OPTION_TYPE(StringId),                                                                                // opt/fork
+        PARSE_RULE_OPTION_RESET(true),                                                                                   // opt/fork
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                                // opt/fork
+        PARSE_RULE_OPTION_SECTION(Global),                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                   // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                          // opt/fork
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                        // opt/fork
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                       // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                            // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                             // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                            // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                           // opt/fork
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                      // opt/fork
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                     // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                            // opt/fork
+        ),                                                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                                  // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                        // opt/fork
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                       // opt/fork
+        ),                                                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                                  // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                        // opt/fork
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                       // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                            // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                           // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                            // opt/fork
+        ),                                                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                                 // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                          // opt/fork
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                        // opt/fork
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                       // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                            // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                             // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                           // opt/fork
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                      // opt/fork
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                     // opt/fork
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                            // opt/fork
+        ),                                                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTIONAL                                                                                              // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTIONAL_GROUP                                                                                    // opt/fork
+            (                                                                                                            // opt/fork
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                           // opt/fork
+                (                                                                                                        // opt/fork
+                    PARSE_RULE_VAL_STRID(PostgreSQL),                                                                    // opt/fork
+                    PARSE_RULE_VAL_STRID(GPDB),                                                                          // opt/fork
+                ),                                                                                                       // opt/fork
+                                                                                                                         // opt/fork
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/fork
+                (                                                                                                        // opt/fork
+                    PARSE_RULE_VAL_STRID(PostgreSQL),                                                                    // opt/fork
+                ),                                                                                                       // opt/fork
+            ),                                                                                                           // opt/fork
+        ),                                                                                                               // opt/fork
+    ),                                                                                                                   // opt/fork
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                    // opt/help
     (                                                                                                                    // opt/help
@@ -11046,6 +11124,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptExecId,                                                                                               // opt-resolve-order
     cfgOptExpireAuto,                                                                                           // opt-resolve-order
     cfgOptFilter,                                                                                               // opt-resolve-order
+    cfgOptFork,                                                                                                 // opt-resolve-order
     cfgOptHelp,                                                                                                 // opt-resolve-order
     cfgOptIgnoreMissing,                                                                                        // opt-resolve-order
     cfgOptIoTimeout,                                                                                            // opt-resolve-order

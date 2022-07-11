@@ -270,6 +270,7 @@ testRun(void)
             "                                      files [default=/etc/pgbackrest]\n"
             "  --delta                             restore or backup using checksums\n"
             "                                      [default=n]\n"
+            "  --fork                              PostgreSQL fork name [default=PostgreSQL]\n"
             "  --io-timeout                        I/O timeout [default=1m]\n"
             "  --lock-path                         path where lock files are stored\n"
             "                                      [default=/tmp/pgbackrest]\n"

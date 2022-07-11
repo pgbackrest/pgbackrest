@@ -163,3 +163,48 @@ Read the version specific WAL header into a general data structure
     }
 
 #endif
+
+/***********************************************************************************************************************************
+Get the tablespace identifier used to distinguish versions in a tablespace directory
+***********************************************************************************************************************************/
+#ifdef FORK_GPDB
+#define PG_INTERFACE_TABLESPACE_ID(version)                                                                                        \
+    static String*                                                                                                                 \
+    pgInterfaceTablespaceId##version(unsigned int pgCatalogVersion)                                                                \
+    {                                                                                                                              \
+        return strNewFmt("GPDB_%i_%u", (PG_CONTROL_VERSION % 10000) / 100, pgCatalogVersion);                                      \
+    }
+
+#else
+#define PG_INTERFACE_TABLESPACE_ID(version)                                                                                        \
+    static String*                                                                                                                 \
+    pgInterfaceTablespaceId##version(unsigned int pgCatalogVersion)                                                                \
+    {                                                                                                                              \
+        String *result = NULL;                                                                                                     \
+                                                                                                                                   \
+        MEM_CONTEXT_TEMP_BEGIN()                                                                                                   \
+        {                                                                                                                          \
+            String *pgVersionStr = pgVersionToStr(PG_VERSION);                                                                     \
+                                                                                                                                   \
+            MEM_CONTEXT_PRIOR_BEGIN()                                                                                              \
+            {                                                                                                                      \
+                result = strNewFmt("PG_%s_%u", strZ(pgVersionStr), pgCatalogVersion);                                              \
+            }                                                                                                                      \
+            MEM_CONTEXT_PRIOR_END();                                                                                               \
+        }                                                                                                                          \
+        MEM_CONTEXT_TEMP_END();                                                                                                    \
+                                                                                                                                   \
+        return result;                                                                                                             \
+    }
+
+#endif
+
+/***********************************************************************************************************************************
+Get default WAL segment size
+***********************************************************************************************************************************/
+#define PG_INTERFACE_WAL_SEGMENT_SIZE_DEFAULT(version)                                                                             \
+    static unsigned int                                                                                                            \
+    pgInterfaceWalSegmentSizeDefault##version(void)                                                                                \
+    {                                                                                                                              \
+        return PG_WAL_SEGMENT_SIZE_DEFAULT;                                                                                        \
+    }

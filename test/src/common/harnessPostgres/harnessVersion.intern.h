@@ -9,11 +9,20 @@ Macros to create harness functions per PostgreSQL version.
 #include "postgres/interface/crc32.h"
 #include "postgres/interface/version.vendor.h"
 
-#include "common/harnessPostgres.h"
-
 /***********************************************************************************************************************************
 Get the catalog version
 ***********************************************************************************************************************************/
+
+#if PG_VERSION > PG_VERSION_94 || defined(FORK_GPDB)
+
+#define CRC crc32cOne
+
+#else
+
+#define CRC crc32One
+
+#endif
+
 #if PG_VERSION > PG_VERSION_MAX
 
 #elif PG_VERSION >= PG_VERSION_94
@@ -57,10 +66,7 @@ Create a pg_control file
         };                                                                                                                         \
                                                                                                                                    \
         ((ControlFileData *)buffer)->crc =                                                                                         \
-            crc == 0 ?                                                                                                             \
-                (PG_VERSION > PG_VERSION_94 ?                                                                                      \
-                    crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc32One(buffer, offsetof(ControlFileData, crc))) :        \
-                crc;                                                                                                               \
+            crc == 0 ? CRC(buffer, offsetof(ControlFileData, crc)) : crc;                                                          \
     }
 
 #endif
