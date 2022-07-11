@@ -302,7 +302,7 @@ testRun(void)
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
-        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
+        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_SIZE_DEFAULT/POSTGRESQL_PAGE_SIZE, POSTGRESQL_PAGE_SIZE, 0));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));

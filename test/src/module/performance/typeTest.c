@@ -22,6 +22,7 @@ running out of memory on the test systems or taking an undue amount of time.  It
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessStorage.h"
 
@@ -154,6 +155,12 @@ static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Test configurations loading to initialize cfgOptFork value (PostgreSQL)
+    StringList *argList = strLstNew();
+    hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+    hrnCfgLoadP(cfgCmdBackup, argList);
 
     // *****************************************************************************************************************************
     if (testBegin("lstFind()"))

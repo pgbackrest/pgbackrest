@@ -18,6 +18,11 @@ testRun(void)
 {
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+    // Test configurations loading to initialize cfgOptFork value (PostgreSQL)
+    StringList *argList = strLstNew();
+    hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+    hrnCfgLoadP(cfgCmdBackup, argList);
 
     // *****************************************************************************************************************************
     if (testBegin("InfoBackup"))

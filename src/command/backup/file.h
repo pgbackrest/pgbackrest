@@ -49,6 +49,6 @@ typedef struct BackupFileResult
 
 List *backupFile(
     const String *repoFile, CompressType repoFileCompressType, int repoFileCompressLevel, bool delta, CipherType cipherType,
-    const String *cipherPass, const List *fileList);
+    const String *cipherPass, const unsigned int pageSize, const List *fileList);
 
 #endif

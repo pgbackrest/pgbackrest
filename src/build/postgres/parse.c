@@ -7,6 +7,7 @@ Parse PostgreSQL Interface Yaml
 
 #include "build/common/yaml.h"
 #include "build/postgres/parse.h"
+#include "config/config.auto.h"
 
 /***********************************************************************************************************************************
 Parse version list
@@ -15,6 +16,7 @@ typedef struct BldPgVersionRaw
 {
     const String *version;                                          // See BldPgVersion for comments
     bool release;
+    StringId fork;
 } BldPgVersionRaw;
 
 static List *
@@ -35,7 +37,7 @@ bldPgVersionList(Yaml *const yaml)
 
             do
             {
-                BldPgVersionRaw pgRaw = {.release = true};
+                BldPgVersionRaw pgRaw = {.release = true, .fork = CFGOPTVAL_FORK_POSTGRESQL};
 
                 if (ver.type == yamlEventTypeMapBegin)
                 {
@@ -43,17 +45,26 @@ bldPgVersionList(Yaml *const yaml)
                     yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
 
                     YamlEvent verDef = yamlEventNextCheck(yaml, yamlEventTypeScalar);
-                    YamlEvent verDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
-
-                    // Get release setting
-                    if (strEqZ(verDef.value, "release"))
+                    do
                     {
-                        pgRaw.release = yamlBoolParse(verDefVal);
-                    }
-                    else
-                        THROW_FMT(FormatError, "unknown postgres definition '%s'", strZ(verDef.value));
+                        YamlEvent verDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
 
-                    yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
+                        // Get release setting
+                        if (strEqZ(verDef.value, "release"))
+                        {
+                            pgRaw.release = yamlBoolParse(verDefVal);
+                        }
+                        else if (strEqZ(verDef.value, "fork"))
+                        {
+                            pgRaw.fork = strIdFromZN(strZ(verDefVal.value), strSize(verDefVal.value), true);
+                        }
+                        else
+                            THROW_FMT(FormatError, "unknown postgres definition '%s'", strZ(verDef.value));
+
+                        verDef = yamlEventNext(yaml);
+                    } while (verDef.type == yamlEventTypeScalar);
+
+                    yamlEventCheck(verDef, yamlEventTypeMapEnd);
                     yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
                 }
                 else
@@ -68,6 +79,7 @@ bldPgVersionList(Yaml *const yaml)
                         {
                             .version = strDup(pgRaw.version),
                             .release = pgRaw.release,
+                            .fork = pgRaw.fork,
                         });
                 }
                 MEM_CONTEXT_END();

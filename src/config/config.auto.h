@@ -75,6 +75,7 @@ Option constants
 #define CFGOPT_EXPIRE_AUTO                                          "expire-auto"
 #define CFGOPT_FILTER                                               "filter"
 #define CFGOPT_FORCE                                                "force"
+#define CFGOPT_FORK                                                 "fork"
 #define CFGOPT_IGNORE_MISSING                                       "ignore-missing"
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
 #define CFGOPT_JOB_RETRY                                            "job-retry"
@@ -128,7 +129,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            155
+#define CFG_OPTION_TOTAL                                            156
 
 /***********************************************************************************************************************************
 Option value constants
@@ -148,6 +149,11 @@ Option value constants
 #define CFGOPTVAL_COMPRESS_TYPE_NONE_Z                              "none"
 #define CFGOPTVAL_COMPRESS_TYPE_ZST                                 STRID5("zst", 0x527a0)
 #define CFGOPTVAL_COMPRESS_TYPE_ZST_Z                               "zst"
+
+#define CFGOPTVAL_FORK_GPDB                                         STRID6("GPDB", 0x9e9d6c1)
+#define CFGOPTVAL_FORK_GPDB_Z                                       "GPDB"
+#define CFGOPTVAL_FORK_POSTGRESQL                                   STRID6("PostgreSQL", 0xc76e054875133f51)
+#define CFGOPTVAL_FORK_POSTGRESQL_Z                                 "PostgreSQL"
 
 #define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG                           STRID5("debug", 0x7a88a40)
 #define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG_Z                         "debug"
@@ -389,6 +395,7 @@ typedef enum
     cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptForce,
+    cfgOptFork,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
     cfgOptJobRetry,
