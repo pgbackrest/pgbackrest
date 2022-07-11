@@ -280,6 +280,21 @@
                         <example>y</example>
                     </config-key>
 
+                    <config-key id="fork" name="Fork">
+                        <summary>PostgreSQL fork name.</summary>
+
+                        <text>
+                            <p>The following forks are supported:</p>
+
+                            <list>
+                                <list-item><id>PostgreSQL</id> - vanilla</list-item>
+                                <list-item><id>GPDB</id> - Greenplum</list-item>
+                            </list>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <config-key id="io-timeout" name="I/O Timeout">
                         <summary>I/O timeout.</summary>
 

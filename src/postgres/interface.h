@@ -87,14 +87,6 @@ something far larger needed but <= the minimum read size on just about any syste
 #define PG_WAL_HEADER_SIZE                                          ((unsigned int)(512))
 
 /***********************************************************************************************************************************
-Define default wal segment size
-
-Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the default
-WAL segment size is supported for versions below 11.
-***********************************************************************************************************************************/
-#define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
-
-/***********************************************************************************************************************************
 Checkpoint written into pg_control on restore. This will prevent PostgreSQL from starting if backup_label is not present.
 ***********************************************************************************************************************************/
 #define PG_CONTROL_CHECKPOINT_INVALID                               0xDEAD
@@ -156,6 +148,9 @@ FN_EXTERN String *pgVersionToStr(unsigned int version);
 // Get info from WAL header
 FN_EXTERN PgWal pgWalFromFile(const String *walFile, const Storage *storage, const String *pgVersionForce);
 FN_EXTERN PgWal pgWalFromBuffer(const Buffer *walBuffer, const String *pgVersionForce);
+
+// Get default WAL segment size
+FN_EXTERN unsigned int pgWalSegmentSizeDefault(unsigned int pgVersion);
 
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_15_202209061
 FN_EXTERN String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);

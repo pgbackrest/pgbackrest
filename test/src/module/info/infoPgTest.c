@@ -4,6 +4,7 @@ Test PostgreSQL Info Handler
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 
+#include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
 
@@ -31,6 +32,12 @@ Test Run
 static void
 testRun(void)
 {
+    // Test configurations loading to initialize cfgOptFork value (PostgreSQL)
+    StringList *argList = strLstNew();
+    hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+    hrnCfgLoadP(cfgCmdBackup, argList);
+
     // *****************************************************************************************************************************
     if (testBegin("infoPgNew(), infoPgNewInternal(), infoPgSet()"))
     {

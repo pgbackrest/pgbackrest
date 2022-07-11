@@ -7,6 +7,7 @@ Render PostgreSQL Interface
 
 #include "build/common/render.h"
 #include "build/postgres/render.h"
+#include "config/config.auto.h"
 
 /***********************************************************************************************************************************
 Render interface.auto.c.inc
@@ -24,17 +25,21 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
     for (unsigned int pgIdx = lstSize(bldPg.pgList) - 1; pgIdx < lstSize(bldPg.pgList); pgIdx--)
     {
         const BldPgVersion *const pgVersion = lstGet(bldPg.pgList, pgIdx);
-        const char *const versionNoDot = strZ(strLstJoin(strLstNewSplitZ(pgVersion->version, "."), ""));
+        const String *const pgVersionNoDot = strLstJoin(strLstNewSplitZ(pgVersion->version, "."), "");
+        const char *const versionNoDot = strZ(strCat(strCat(strNew(), pgVersionNoDot), strIdToStr(pgVersion->fork)));
 
         strCatFmt(
             pg,
             "\n"
             COMMENT_BLOCK_BEGIN "\n"
-            "PostgreSQL %s interface\n"
+            "%s %s interface\n"
             COMMENT_BLOCK_END "\n"
             "#define PG_VERSION                                                  PG_VERSION_%s\n"
+            "#define FORK_%s\n"
             "\n",
-            strZ(pgVersion->version), versionNoDot);
+            strZ(strIdToStr(pgVersion->fork)), strZ(pgVersion->version),
+            strZ(pgVersionNoDot),
+            strZ(strUpper(strIdToStr(pgVersion->fork))));
 
         for (unsigned int typeIdx = 0; typeIdx < strLstSize(bldPg.typeList); typeIdx++)
         {
@@ -75,6 +80,10 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
 
         for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
             strCatFmt(pg, "#undef %s\n", strZ(strLstGet(bldPg.functionList, functionIdx)));
+
+        strCatChr(pg, '\n');
+
+        strCatFmt(pg, "#undef FORK_%s\n\n", strZ(strUpper(strIdToStr(pgVersion->fork))));
     }
 
     // Interface struct
@@ -91,14 +100,16 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
     for (unsigned int pgIdx = lstSize(bldPg.pgList) - 1; pgIdx < lstSize(bldPg.pgList); pgIdx--)
     {
         const BldPgVersion *const pgVersion = lstGet(bldPg.pgList, pgIdx);
-        const char *const versionNoDot = strZ(strLstJoin(strLstNewSplitZ(pgVersion->version, "."), ""));
+        const String *const pgVersionNoDot = strLstJoin(strLstNewSplitZ(pgVersion->version, "."), "");
+        const char *const versionNoDot = strZ(strCat(strCat(strNew(), pgVersionNoDot), strIdToStr(pgVersion->fork)));
 
         strCatFmt(
             pg,
             "    {\n"
             "        .version = PG_VERSION_%s,\n"
+            "        .fork = CFGOPTVAL_FORK_%s,\n"
             "\n",
-            versionNoDot);
+            strZ(pgVersionNoDot), strZ(strUpper(strIdToStr(pgVersion->fork))));
 
         for (unsigned int functionIdx = 0; functionIdx < strLstSize(bldPg.functionList); functionIdx++)
         {

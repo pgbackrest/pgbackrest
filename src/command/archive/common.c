@@ -420,7 +420,7 @@ walSegmentNext(const String *const walSegment, const size_t walSegmentSize, cons
     ASSERT(walSegment != NULL);
     ASSERT(strSize(walSegment) == 24);
     ASSERT(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
-    ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == PG_WAL_SEGMENT_SIZE_DEFAULT);
+    ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == pgWalSegmentSizeDefault(pgVersion));
 
     // Extract WAL parts
     uint32_t timeline;

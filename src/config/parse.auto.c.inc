@@ -32,6 +32,7 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("5432"),                                                                                            // val/str
     PARSE_RULE_STRPUB("60"),                                                                                              // val/str
     PARSE_RULE_STRPUB("8432"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("PostgreSQL"),                                                                                      // val/str
     PARSE_RULE_STRPUB("asc"),                                                                                             // val/str
     PARSE_RULE_STRPUB("blob.core.windows.net"),                                                                           // val/str
     PARSE_RULE_STRPUB("count"),                                                                                           // val/str
@@ -84,6 +85,7 @@ typedef enum
     parseRuleValStrQT_5432_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_60_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_8432_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_PostgreSQL_QT,                                                                                 // val/str/enum
     parseRuleValStrQT_asc_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_blob_DT_core_DT_windows_DT_net_QT,                                                             // val/str/enum
     parseRuleValStrQT_count_QT,                                                                                      // val/str/enum
@@ -120,6 +122,8 @@ Rule StringIds
 
 static const StringId parseRuleValueStrId[] =
 {
+    STRID6("GPDB", 0x9e9d6c1),                                                                                          // val/strid
+    STRID6("PostgreSQL", 0xc76e054875133f51),                                                                           // val/strid
     STRID5("accept-new", 0x2e576e9028c610),                                                                             // val/strid
     STRID5("aes-256-cbc", 0xc43dfbbcdcca10),                                                                            // val/strid
     STRID5("asc", 0xe610),                                                                                              // val/strid
@@ -180,6 +184,8 @@ static const StringId parseRuleValueStrId[] =
 
 typedef enum
 {
+    parseRuleValStrIdGPDB,                                                                                         // val/strid/enum
+    parseRuleValStrIdPostgreSQL,                                                                                   // val/strid/enum
     parseRuleValStrIdAcceptNew,                                                                                    // val/strid/enum
     parseRuleValStrIdAes256Cbc,                                                                                    // val/strid/enum
     parseRuleValStrIdAsc,                                                                                          // val/strid/enum
@@ -2176,6 +2182,75 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                                          // opt/force
         ),                                                                                                              // opt/force
     ),                                                                                                                  // opt/force
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                    // opt/fork
+    (                                                                                                                    // opt/fork
+        PARSE_RULE_OPTION_NAME("fork"),                                                                                  // opt/fork
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),                                                                      // opt/fork
+        PARSE_RULE_OPTION_RESET(true),                                                                                   // opt/fork
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                                // opt/fork
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                                     // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                   // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                    // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                       // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                                      // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                     // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/fork
+        ),                                                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                                  // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/fork
+        ),                                                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                                  // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                     // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/fork
+        ),                                                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                                 // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                    // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                  // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                       // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                     // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/fork
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                      // opt/fork
+        ),                                                                                                               // opt/fork
+                                                                                                                         // opt/fork
+        PARSE_RULE_OPTIONAL                                                                                              // opt/fork
+        (                                                                                                                // opt/fork
+            PARSE_RULE_OPTIONAL_GROUP                                                                                    // opt/fork
+            (                                                                                                            // opt/fork
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                           // opt/fork
+                (                                                                                                        // opt/fork
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdPostgreSQL),                                                   // opt/fork
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdGPDB),                                                         // opt/fork
+                ),                                                                                                       // opt/fork
+                                                                                                                         // opt/fork
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/fork
+                (                                                                                                        // opt/fork
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdPostgreSQL),                                                   // opt/fork
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_PostgreSQL_QT),                                                 // opt/fork
+                ),                                                                                                       // opt/fork
+            ),                                                                                                           // opt/fork
+        ),                                                                                                               // opt/fork
+    ),                                                                                                                   // opt/fork
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                          // opt/ignore-missing
     (                                                                                                          // opt/ignore-missing
@@ -10947,6 +11022,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptExecId,                                                                                               // opt-resolve-order
     cfgOptExpireAuto,                                                                                           // opt-resolve-order
     cfgOptFilter,                                                                                               // opt-resolve-order
+    cfgOptFork,                                                                                                 // opt-resolve-order
     cfgOptIgnoreMissing,                                                                                        // opt-resolve-order
     cfgOptIoTimeout,                                                                                            // opt-resolve-order
     cfgOptJobRetry,                                                                                             // opt-resolve-order

@@ -303,6 +303,25 @@ option:
     command-role:
       main: {}
 
+  fork:
+    section: global
+    type: string-id
+    allow-list:
+      - PostgreSQL
+      - GPDB
+    default: PostgreSQL
+    command:
+      annotate: {}
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      expire: {}
+      restore: {}
+      stanza-create: {}
+      stanza-upgrade: {}
+      verify: {}
+
   online:
     type: boolean
     default: true
