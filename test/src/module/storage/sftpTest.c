@@ -28,7 +28,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 100, 100, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"), .write = true);
+    Storage *storageTest = storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"), .write = true);
 //    Storage *storageTmp = storageSftpNewP(STRDEF("/tmp"), .write = true);
     ioBufferSizeSet(2);
 
@@ -68,7 +68,7 @@ testRun(void)
         TEST_TITLE("create new storage with defaults");
 
         Storage *storageTest = NULL;
-        TEST_ASSIGN(storageTest, storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 100, 100, .user = strNewZ("vagrant"),
+        TEST_ASSIGN(storageTest, storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 10000, 10000, .user = strNewZ("vagrant"),
                     .password = strNewZ("vagrant")), "new storage (defaults)");
         TEST_RESULT_STR_Z(storageTest->path, "/tmp", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "check file mode");
@@ -82,7 +82,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/path/to"), STRDEF("localhost"), 22, 100, 100, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+                STRDEF("/path/to"), STRDEF("localhost"), 22, 10000, 10000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
                 .modeFile = 0600, .modePath = 0700, .write = true), "new storage (non-default)");
         TEST_RESULT_STR_Z(storageTest->path, "/path/to", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "check file mode");
@@ -110,7 +110,7 @@ testRun(void)
         TEST_TITLE("file");
 
         TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF("missing")), false, "file does not exist");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF("missing"), .timeout = 100), false, "file does not exist");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF("missing"), .timeout = 1000), false, "file does not exist");
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path");
 
@@ -145,7 +145,7 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 1000), true, "file exists after wait");
+                TEST_RESULT_BOOL(storageExistsP(storageTest, fileExists, .timeout = 10000), true, "file exists after wait");
             }
             HRN_FORK_PARENT_END();
         }
@@ -163,7 +163,6 @@ testRun(void)
         TEST_TITLE("info for / exists");
 
         TEST_RESULT_BOOL(storageInfoP(storagePosixNewP(FSLASH_STR), NULL).exists, true, "info for /");
-
         // -----------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info for / does not exist with no path feature");
 
@@ -256,8 +255,6 @@ testRun(void)
         TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
-
-
 
     }
 
