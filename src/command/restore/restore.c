@@ -41,9 +41,11 @@ Recovery constants
 #define RECOVERY_TARGET_XID                                         "recovery_target_xid"
 
 #define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
-
 #define RECOVERY_TARGET_INCLUSIVE                                   "recovery_target_inclusive"
+
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
+#define RECOVERY_TARGET_TIMELINE_CURRENT                            "current"
+
 #define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
 #define STANDBY_MODE                                                "standby_mode"
     STRING_STATIC(STANDBY_MODE_STR,                                 STANDBY_MODE);
@@ -1656,9 +1658,18 @@ restoreRecoveryOption(unsigned int pgVersion)
             }
         }
 
-        // Write recovery_target_timeline
+        // Write recovery_target_timeline if set
         if (cfgOptionTest(cfgOptTargetTimeline))
+        {
             kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
+        }
+        // Else set to current when type=immediate and PostgreSQL >= 12. The reason for this is that PostgreSQL will fail if the
+        // latest timeline is not recoverable from the backup timeline, even though replay should never go that far. This is
+        // arguably a bug in PostgreSQL but we'll handle it here until it can be fixed in PostgreSQL.
+        //
+        // PostgreSQL < 12 defaults to current (but does not accept current as a parameter) so no need set it explicitly.
+        else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE && pgVersion >= PG_VERSION_12)
+            kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTRDEF(RECOVERY_TARGET_TIMELINE_CURRENT));
 
         // Move to prior context
         kvMove(result, memContextPrior());
