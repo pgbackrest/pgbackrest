@@ -46,6 +46,17 @@
                     </release-item>
 
                     <release-item>
+                        <github-pull-request id="1814"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Force <br-option>target-timeline=current</br-option> when restore <br-option>type=immediate</br-option>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-pull-request id="1758"/>
 
                         <release-item-contributor-list>
