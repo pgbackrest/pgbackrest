@@ -1663,11 +1663,15 @@ restoreRecoveryOption(unsigned int pgVersion)
         {
             kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
         }
-        // Else set to current when type=immediate and PostgreSQL >= 12. The reason for this is that PostgreSQL will fail if the
-        // latest timeline is not recoverable from the backup timeline, even though replay should never go that far. This is
-        // arguably a bug in PostgreSQL but we'll handle it here until it can be fixed in PostgreSQL.
+        // Else explicitly set target timeline to "current" when type=immediate and PostgreSQL >= 12. We do this because
+        // type=immediate means there won't be any actual attempt to change timelines, but if we leave the target timeline as the
+        // default of "latest" then PostgreSQL might fail to restore because it can't reach the "latest" timeline in the repository
+        // from this backup.
         //
-        // PostgreSQL < 12 defaults to current (but does not accept current as a parameter) so no need set it explicitly.
+        // This is really a PostgreSQL bug and will hopefully be addressed there, but we'll handle it here for older versions, at
+        // least until they aren't really seen in the wild any longer.
+        //
+        // PostgreSQL < 12 defaults to "current" (but does not accept "current" as a parameter) so no need set it explicitly.
         else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE && pgVersion >= PG_VERSION_12)
             kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTRDEF(RECOVERY_TARGET_TIMELINE_CURRENT));
 
