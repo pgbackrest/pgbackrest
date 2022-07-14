@@ -41,9 +41,11 @@ Recovery constants
 #define RECOVERY_TARGET_XID                                         "recovery_target_xid"
 
 #define RECOVERY_TARGET_ACTION                                      "recovery_target_action"
-
 #define RECOVERY_TARGET_INCLUSIVE                                   "recovery_target_inclusive"
+
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
+#define RECOVERY_TARGET_TIMELINE_CURRENT                            "current"
+
 #define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
 #define STANDBY_MODE                                                "standby_mode"
     STRING_STATIC(STANDBY_MODE_STR,                                 STANDBY_MODE);
@@ -1656,9 +1658,22 @@ restoreRecoveryOption(unsigned int pgVersion)
             }
         }
 
-        // Write recovery_target_timeline
+        // Write recovery_target_timeline if set
         if (cfgOptionTest(cfgOptTargetTimeline))
+        {
             kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
+        }
+        // Else explicitly set target timeline to "current" when type=immediate and PostgreSQL >= 12. We do this because
+        // type=immediate means there won't be any actual attempt to change timelines, but if we leave the target timeline as the
+        // default of "latest" then PostgreSQL might fail to restore because it can't reach the "latest" timeline in the repository
+        // from this backup.
+        //
+        // This is really a PostgreSQL bug and will hopefully be addressed there, but we'll handle it here for older versions, at
+        // least until they aren't really seen in the wild any longer.
+        //
+        // PostgreSQL < 12 defaults to "current" (but does not accept "current" as a parameter) so no need set it explicitly.
+        else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE && pgVersion >= PG_VERSION_12)
+            kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTRDEF(RECOVERY_TARGET_TIMELINE_CURRENT));
 
         // Move to prior context
         kvMove(result, memContextPrior());
