@@ -313,8 +313,50 @@ storageWriteSftpClose(THIS_VOID)
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
-            if (rc != 0)
-                THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
+            // Some versions of sftp do not support overwriting an existing file and will return LIBSSH2_FX_FAILURE
+            // need to find out if we can determine server version
+            // ??? Do we want to to just fail, or do we want to check if the file exists and rm it and try the rename again
+            if (rc)
+            {
+                if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+                {
+                    // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
+                    if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
+                    {
+                        LIBSSH2_SFTP_ATTRIBUTES attrs;
+                        this->wait = waitNew(this->timeoutConnect);
+
+                        // Check if the file already exists
+                        do
+                        {
+                            rc = libssh2_sftp_stat_ex(
+                                this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name),
+                                LIBSSH2_SFTP_STAT, &attrs);
+                        }
+                        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+                        // If it already exists, remove it and retry the rename
+                        if (rc == 0)
+                        {
+                            LOG_DEBUG_FMT("jrt remove and retry");
+                            storageInterfaceRemoveP(this->storage, this->interface.name);
+                            this->wait = waitNew(this->timeoutConnect);
+                            do
+                            {
+                                rc = libssh2_sftp_rename_ex(
+                                    this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp),
+                                    strZ(this->interface.name), (unsigned int)strSize(this->interface.name),
+                                    LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
+                            }
+                            while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+                        }
+                    }
+                }
+
+                if(rc)
+                    THROW_SYS_ERROR_FMT(
+                        FileMoveError, "unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
+            }
         }
 
         // Sync the path

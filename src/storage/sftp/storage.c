@@ -45,7 +45,7 @@ struct StorageSftp
     LIBSSH2_SFTP_ATTRIBUTES *attr;
     TimeMSec timeoutConnect;
     TimeMSec timeoutSession;
-    Wait * wait;
+    Wait *wait;
 };
 
 /**********************************************************************************************************************************/
@@ -98,17 +98,17 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
     if (rc)
     {
         //!!! verify/validate the below notes
-        int errval = errno;
+        //int errval = errno;
         // !!! jrt libssh2 on missing file returns sftp error 2 LIBSSH2_FX_NO_SUCH_FILE but it or something else evidently sets
         // !!! errno to 11 - Resource temporarily unavailable
         // !!! do we override errno and set it 2, or do we update tests to match
-        LOG_DEBUG_FMT("jrt errno %d", errval);
-        LOG_DEBUG_FMT("jrt error on ssh2 stat %d", libssh2_session_last_errno(this->session));
+//        LOG_DEBUG_FMT("jrt errno %d", errval);
+//        LOG_DEBUG_FMT("jrt error on ssh2 stat %d", libssh2_session_last_errno(this->session));
         // If session indicates sftp error, can query for sftp error
         // !!! see also libssh2_session_last_error() - possible to return more detailed error
         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
-        LOG_DEBUG_FMT("jrt sftp error %lu", libssh2_sftp_last_error(this->sftpSession));
+//        LOG_DEBUG_FMT("jrt sftp error %lu", libssh2_sftp_last_error(this->sftpSession));
 //            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)                              // {vm_covered}
 //                errno = 2;
             if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)                              // {vm_covered}
@@ -118,15 +118,15 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
     // On success the file exists
     else
     {
-        LOG_DEBUG_FMT("jrt success on ssh2 stat %s", strZ(file));
+//        LOG_DEBUG_FMT("jrt success on ssh2 stat %s", strZ(file));
         result.exists = true;
 
         // Add type info (no need set file type since it is the default)
         if (result.level >= storageInfoLevelType && !LIBSSH2_SFTP_S_ISREG(attrs.permissions))
         {
-            if (S_ISDIR(attrs.permissions))
+            if (LIBSSH2_SFTP_S_ISDIR(attrs.permissions))
                 result.type = storageTypePath;
-            else if (S_ISLNK(attrs.permissions))
+            else if (LIBSSH2_SFTP_S_ISLNK(attrs.permissions))
                 result.type = storageTypeLink;
             else
                 result.type = storageTypeSpecial;
@@ -135,33 +135,44 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
         // Add basic level info
         if (result.level >= storageInfoLevelBasic)
         {
-            result.timeModified = (time_t)attrs.mtime;
+            if ((attrs.flags & LIBSSH2_SFTP_ATTR_ACMODTIME) != 0)
+                result.timeModified = (time_t)attrs.mtime;
+
 
             if (result.type == storageTypeFile)
-                result.size = (uint64_t)attrs.filesize;
+                if ((attrs.flags & LIBSSH2_SFTP_ATTR_SIZE) != 0)
+                    result.size = (uint64_t)attrs.filesize;
         }
 
         // Add detail level info
         if (result.level >= storageInfoLevelDetail)
         {
-            result.groupId = (unsigned int)attrs.gid;
-            result.group = groupNameFromId(result.groupId);
-            result.userId = (unsigned int)attrs.uid;
-            result.user = userNameFromId(result.userId);
+            if ((attrs.flags & LIBSSH2_SFTP_ATTR_UIDGID) != 0)
+            {
+                result.groupId = (unsigned int)attrs.gid;
+                result.group = groupNameFromId(result.groupId);
+                result.userId = (unsigned int)attrs.uid;
+                result.user = userNameFromId(result.userId);
+            }
             //jrt !!! verify this
-            result.mode = attrs.permissions & (LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO);
+            if ((attrs.flags & LIBSSH2_SFTP_ATTR_PERMISSIONS) != 0)
+                result.mode = attrs.permissions & (LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO);
 
             if (result.type == storageTypeLink)
             {
-                char linkDestination[PATH_MAX];
+                char linkDestination[PATH_MAX + 1] = {};
                 ssize_t linkDestinationSize = 0;
 
+                do
+                {
+                    linkDestinationSize = libssh2_sftp_symlink_ex(
+                        this->sftpSession, strZ(file), (unsigned int)strSize(file), linkDestination, PATH_MAX,
+                        LIBSSH2_SFTP_READLINK);
+                }
+                while (linkDestinationSize == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
                 THROW_ON_SYS_ERROR_FMT(
-                    (linkDestinationSize =
-                     libssh2_sftp_symlink_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file), linkDestination,
-                         sizeof(linkDestination) - 1, LIBSSH2_SFTP_READLINK)) <= -1, FileReadError,
-                    "unable to get destination for link '%s'",
-                    strZ(file));
+                    linkDestinationSize < 0, FileReadError, "unable to get destination for link '%s'", strZ(file));
 
                 result.linkDestination = strNewZN(linkDestination, (size_t)linkDestinationSize);
             }
@@ -175,7 +186,7 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
 // Helper function to get info for a file if it exists.  This logic can't live directly in storageSftpInfoList() because there is
 // a race condition where a file might exist while listing the directory but it is gone before stat() can be called.  In order to
 // get complete test coverage this function must be split out.
-/*
+
 static void
 storageSftpInfoListEntry(
     StorageSftp *this, const String *path, const String *name, StorageInfoLevel level, StorageInfoListCallback callback,
@@ -206,7 +217,6 @@ storageSftpInfoListEntry(
 
     FUNCTION_TEST_RETURN_VOID();
 }
-*/
 
 static bool
 storageSftpInfoList(
@@ -231,8 +241,19 @@ storageSftpInfoList(
     bool result = false;
 
     // Open the directory for read
+    /*
     LIBSSH2_SFTP_HANDLE *sftpHandle = libssh2_sftp_open_ex(
         this->sftpSession, strZ(path), (unsigned int)strSize(path), 0, 0, LIBSSH2_SFTP_OPENDIR);
+        */
+    LIBSSH2_SFTP_HANDLE *sftpHandle;
+
+    this->wait = waitNew(this->timeoutConnect);
+
+    do
+    {
+        sftpHandle = libssh2_sftp_open_ex(this->sftpSession, strZ(path), (unsigned int)strSize(path), 0, 0, LIBSSH2_SFTP_OPENDIR);
+    }
+    while (sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
     // If the directory could not be opened process errors and report missing directories
     if (sftpHandle == NULL)
@@ -243,8 +264,8 @@ storageSftpInfoList(
         {
             //jrt ??? should check be against LIBSSH2_FX_NO_SUCH_FILE and LIBSSH2_FX_NO_SUCH_PATH
             //verify PATH or FILE or both
-            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)                              // {vm_covered}
-            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));                                // {vm_covered}
+            if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
+                THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO_MISSING, strZ(path));
         }
     }
     else
@@ -256,29 +277,43 @@ storageSftpInfoList(
         {
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
-                char filename[PATH_MAX+1];
+                char filename[PATH_MAX + 1] = {};
                 int len = 0;
                 LIBSSH2_SFTP_ATTRIBUTES attrs;
 
-                // Read the directory entries
-                while ((len = libssh2_sftp_readdir(this->sftpHandle, filename, PATH_MAX, &attrs)) > 0)
+                this->wait = waitNew(this->timeoutConnect);
+                do
                 {
-                    filename[len] = '\0';
-                    const String *name = STR(filename);
+                    //len = libssh2_sftp_readdir(this->sftpHandle, filename, PATH_MAX, &attrs);
+                    len = libssh2_sftp_readdir_ex(sftpHandle, filename, PATH_MAX, NULL, 0, &attrs);
+                    if (len > 0)
+                    {
+                        filename[len] = '\0';
+                        const String *name = STR(filename);
 
-                    // Always skip ..
-                    if (!strEq(name, DOTDOT_STR))
-                        callback(callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
-                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
-                    MEM_CONTEXT_TEMP_RESET(1000);
+                        // Always skip ..
+                        if (!strEq(name, DOTDOT_STR))
+                        {
+                            if (level == storageInfoLevelExists)
+                            {
+                                callback(
+                                    callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
+                            }
+                            else
+                                storageSftpInfoListEntry(this, path, name, level, callback, callbackData);
+                        }
+                        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                        MEM_CONTEXT_TEMP_RESET(1000);
+                    }
                 }
+                while ((len == LIBSSH2_ERROR_EAGAIN || len > 0) && waitMore(this->wait));
             }
             MEM_CONTEXT_TEMP_END();
         }
         FINALLY()
         {
             //jrt ??? check/report errors
-            libssh2_sftp_closedir(this->sftpHandle);
+            libssh2_sftp_closedir(sftpHandle);
         }
         TRY_END();
     }
@@ -472,10 +507,13 @@ fprintf(stderr, "jrt libssh2_sftp_last_error %lu path %s\n", libssh2_sftp_last_e
          if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
          {
              // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
+            // need to find out if we can determine server version
              if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
              {
                  LIBSSH2_SFTP_ATTRIBUTES attrs;
                  this->wait = waitNew(this->timeoutConnect);
+
+                 // Check if the directory already exists
                  do
                  {
                      rc = libssh2_sftp_stat_ex(
@@ -489,10 +527,8 @@ fprintf(stderr, "jrt libssh2_sftp_last_error %lu path %s\n", libssh2_sftp_last_e
                         PathCreateError, "unable to create path '%s' '%lu'", strZ(path),
                         libssh2_sftp_last_error(this->sftpSession));
                  }
-                 /*
-                 else
-                     fprintf(stderr, "jrt path exists %s\n", strZ(path));
-                     */
+                 // Otherwise it already exists
+                 // ??? Make an explicit call here to set the mode in case it's different from the existing directory's mode ???
              }
              // If the parent path does not exist then create it if allowed
              //if (errno == ENOENT && !noParentCreate)
@@ -884,12 +920,10 @@ storageSftpNewInternal(
 
         if (driver->sftpSession == NULL)
         {
-            LOG_DEBUG_FMT("jrt error on sftp init session err %d", libssh2_session_last_errno(driver->session));
+//            LOG_DEBUG_FMT("jrt error on sftp init session err %d", libssh2_session_last_errno(driver->session));
 
-            if (libssh2_session_last_errno(driver->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
-            {
-                LOG_DEBUG_FMT("jrt sftp init error %lu", libssh2_sftp_last_error(driver->sftpSession));
-            }
+            // jrtif (libssh2_session_last_errno(driver->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+            //    LOG_DEBUG_FMT("jrt sftp init error %lu", libssh2_sftp_last_error(driver->sftpSession));
             THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2_sftp session");                                 // {vm_covered}
         }
         // Disable path sync when not supported

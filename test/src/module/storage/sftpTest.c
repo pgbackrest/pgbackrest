@@ -32,14 +32,12 @@ testRun(void)
 //    Storage *storageTmp = storageSftpNewP(STRDEF("/tmp"), .write = true);
     ioBufferSizeSet(2);
 
-    /*
     // Directory and file that cannot be accessed to test permissions errors
 #ifdef TEST_CONTAINER_REQUIRED
     const String *fileNoPerm = STRDEF(TEST_PATH "/noperm/noperm");
     String *pathNoPerm = strPath(fileNoPerm);
 #endif // TEST_CONTAINER_REQUIRED
 
-*/
     // This test should always be first so the storage helper is uninitialized
     // *****************************************************************************************************************************
     if (testBegin("storageHelperDryRunInit()"))
@@ -100,11 +98,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageExists() and storagePathExists()"))
     {
-/*
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_CREATE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
-*/
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file");
@@ -116,6 +112,18 @@ testRun(void)
 
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, STRDEF("missing")), false, "path does not exist");
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, NULL), true, "test path exists");
+
+#ifdef TEST_CONTAINER_REQUIRED
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("permission denied");
+
+        TEST_ERROR_FMT(
+            storageExistsP(storageTest, fileNoPerm), FileOpenError,
+            "unable to get info for path/file '%s': [13] Permission denied", strZ(fileNoPerm));
+        TEST_ERROR_FMT(
+            storagePathExistsP(storageTest, fileNoPerm), FileOpenError,
+            "unable to get info for path/file '%s': [13] Permission denied", strZ(fileNoPerm));
+#endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file and path");
@@ -159,6 +167,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageInfo()"))
     {
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_CREATE_NOPERM();
+
+        TEST_ERROR_FMT(
+            storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO ": [13] Permission denied", strZ(fileNoPerm));
+#endif // TEST_CONTAINER_REQUIRED
+
         // -----------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info for / exists");
 
@@ -245,6 +260,10 @@ testRun(void)
 
         HRN_STORAGE_TIME(storageTest, strZ(fileName), 1555155555);
 
+#ifdef TEST_CONTAINER_REQUIRED
+        HRN_SYSTEM_FMT("sudo chown 99999:99999 %s", strZ(fileName));
+#endif // TEST_CONTAINER_REQUIRED
+
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName), "get file info");
         TEST_RESULT_STR(info.name, NULL, "name is not set");
         TEST_RESULT_BOOL(info.exists, true, "check exists");
@@ -253,10 +272,335 @@ testRun(void)
         TEST_RESULT_INT(info.mode, 0640, "check mode");
         TEST_RESULT_INT(info.timeModified, 1555155555, "check mod time");
         TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_RESULT_STR(info.user, NULL, "check user");
+        TEST_RESULT_STR(info.group, NULL, "check group");
+#endif // TEST_CONTAINER_REQUIRED
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info - link");
+
+        const String *linkName = STRDEF(TEST_PATH "/testlink");
+        HRN_SYSTEM_FMT("ln -s /tmp %s", strZ(linkName));
+
+        TEST_ASSIGN(info, storageInfoP(storageTest, linkName), "get link info");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeLink, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0777, "check mode");
+        TEST_RESULT_STR_Z(info.linkDestination, "/tmp", "check link destination");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
+
+        TEST_ASSIGN(info, storageInfoP(storageTest, linkName, .followLink = true), "get info from path pointed to by link");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypePath, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0777, "check mode");
+        TEST_RESULT_STR(info.linkDestination, NULL, "check link destination");
+        TEST_RESULT_STR_Z(info.user, "root", "check user");
+        TEST_RESULT_STR_Z(info.group, strEqZ(info.group, "wheel") ? "wheel" : "root", "check group");
+
+        storageRemoveP(storageTest, linkName, .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info - pipe");
+
+        const String *pipeName = STRDEF(TEST_PATH "/testpipe");
+        HRN_SYSTEM_FMT("mkfifo -m 666 %s", strZ(pipeName));
+
+        TEST_ASSIGN(info, storageInfoP(storageTest, pipeName), "get info from pipe (special file)");
+        TEST_RESULT_STR(info.name, NULL, "name is not set");
+        TEST_RESULT_BOOL(info.exists, true, "check exists");
+        TEST_RESULT_INT(info.type, storageTypeSpecial, "check type");
+        TEST_RESULT_UINT(info.size, 0, "check size");
+        TEST_RESULT_INT(info.mode, 0666, "check mode");
+        TEST_RESULT_STR(info.linkDestination, NULL, "check link destination");
+        TEST_RESULT_STR(info.user, TEST_USER_STR, "check user");
+        TEST_RESULT_STR(info.group, TEST_GROUP_STR, "check group");
+
+        storageRemoveP(storageTest, pipeName, .errorOnMissing = true);
+
     }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageInfoList()"))
+    {
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_CREATE_NOPERM();
+#endif // TEST_CONTAINER_REQUIRED
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path missing");
+
+        TEST_ERROR_FMT(
+            storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL, .errorOnMissing = true),
+            PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
+
+        TEST_RESULT_BOOL(
+            storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
+
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_ERROR_FMT(
+            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+
+        // Should still error even when ignore missing
+        TEST_ERROR_FMT(
+            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+#endif // TEST_CONTAINER_REQUIRED
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("helper function - storagePosixInfoListEntry()");
+
+        HarnessStorageInfoListCallbackData callbackData =
+        {
+            .content = strNew(),
+        };
+
+        TEST_RESULT_VOID(
+            storageSftpInfoListEntry(
+                (StorageSftp *)storageDriver(storageTest), STRDEF("pg"), STRDEF("missing"), storageInfoLevelBasic,
+                hrnStorageInfoListCallback, &callbackData),
+            "missing path");
+        TEST_RESULT_STR_Z(callbackData.content, "", "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path with only dot");
+
+        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
+
+        callbackData.content = strNew();
+
+        TEST_RESULT_VOID(
+            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
+        // jrt !!!
+        // NOTE: in my tests with --vm=none the resultant file would have the incorrect permissions. The request was coming through
+        // properly but the umask resulted in altered permissions.
+        //
+        // vagrant@pgbackrest-test:~$ umask
+        // 0002
+        //
+        // Jul 13 16:38:33 localhost sftp-server[340225]: mkdir name "/home/vagrant/test/test-0/pg" mode 0766
+        // But the directory would be created with 0764
+        // test/test-0:
+        // total 0
+        // drwxrw-r-- 2 vagrant vagrant 40 Jul 14 15:37 pg
+        //
+        // Updating sshd_config to
+        // Subsystem	sftp	/usr/lib/openssh/sftp-server -u 000
+        // would result in the file being created with 0766 permissions
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path with file, link, pipe");
+
+#ifdef TEST_CONTAINER_REQUIRED
+        storagePathCreateP(storageTest, STRDEF("pg/.include"), .mode = 0755);
+        HRN_SYSTEM("sudo chown 77777:77777 " TEST_PATH "/pg/.include");
+#endif // TEST_CONTAINER_REQUIRED
+
+        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
+
+        HRN_SYSTEM("ln -s ../file " TEST_PATH "/pg/link");
+        HRN_SYSTEM("mkfifo -m 777 " TEST_PATH "/pg/pipe");
+
+        callbackData = (HarnessStorageInfoListCallbackData)
+        {
+            .content = strNew(),
+            .timestampOmit = true,
+            .modeOmit = true,
+            .modePath = 0766,
+            .modeFile = 0600,
+            .userOmit = true,
+            .groupOmit = true,
+        };
+
+        TEST_RESULT_VOID(
+            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            ". {path}\n"
+#ifdef TEST_CONTAINER_REQUIRED
+            ".include {path, m=0755, u=77777, g=77777}\n"
+#endif // TEST_CONTAINER_REQUIRED
+            "file {file, s=8, m=0660}\n"
+            "link {link, d=../file}\n"
+            "pipe {special}\n",
+            "check content");
+
+#ifdef TEST_CONTAINER_REQUIRED
+        HRN_SYSTEM("sudo rmdir " TEST_PATH "/pg/.include");
+#endif // TEST_CONTAINER_REQUIRED
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path - recurse");
+
+        storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
+        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+
+        callbackData.content = strNew();
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
+            "recurse descending");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "pipe {special}\n"
+            "path/file {file, s=8}\n"
+            "path {path, m=0700}\n"
+            "link {link, d=../file}\n"
+            "file {file, s=8, m=0660}\n"
+            ". {path}\n",
+            "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path basic info - recurse");
+
+        storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
+        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+
+        callbackData.content = strNew();
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
+            "recurse descending");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "pipe {special}\n"
+            "path/file {file, s=8}\n"
+            "path {path}\n"
+            "link {link}\n"
+            "file {file, s=8}\n"
+            ". {path}\n",
+            "check content");
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path - filter");
+
+        callbackData.content = strNew();
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc,
+                .expression = STRDEF("^path")),
+            "filter");
+        TEST_RESULT_STR_Z(
+            callbackData.content,
+            "path {path, m=0700}\n",
+            "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("filter in subpath during recursion");
+
+        callbackData.content = strNew();
+
+        TEST_RESULT_VOID(
+            storageInfoListP(
+                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc, .recurse = true,
+                .expression = STRDEF("\\/file$")),
+            "filter");
+        TEST_RESULT_STR_Z(callbackData.content, "path/file {file, s=8}\n", "check content");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageList()"))
+    {
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_CREATE_NOPERM();
+#endif // TEST_CONTAINER_REQUIRED
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path missing");
+
+        TEST_ERROR_FMT(
+            storageListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING,
+            TEST_PATH "/BOGUS");
+
+        TEST_RESULT_PTR(storageListP(storageTest, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
+        TEST_RESULT_UINT(strLstSize(storageListP(storageTest, STRDEF(BOGUS_STR))), 0, "empty list for missing dir");
+
+#ifdef TEST_CONTAINER_REQUIRED
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on missing, regardless of errorOnMissing setting");
+
+        TEST_ERROR_FMT(
+            storageListP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+
+        // Should still error even when ignore missing
+        TEST_ERROR_FMT(
+            storageListP(storageTest, pathNoPerm), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+#endif // TEST_CONTAINER_REQUIRED
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list - path with files");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, STRDEF(".aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
+        TEST_RESULT_STRLST_Z(strLstSort(storageListP(storageTest, NULL), sortOrderAsc), ".aaa.txt\n"
+#ifdef TEST_CONTAINER_REQUIRED
+            "noperm\n"
+#endif // TEST_CONTAINER_REQUIRED
+            , "dir list");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, STRDEF("bbb.txt")), BUFSTRDEF("bbb")), "write bbb.text");
+        TEST_RESULT_STRLST_Z(storageListP(storageTest, NULL, .expression = STRDEF("^bbb")), "bbb.txt\n", "dir list");
+    }
+
+/*
+    // *****************************************************************************************************************************
+    if (testBegin("storageCopy()"))
+    {
+        const String *sourceFile = STRDEF(TEST_PATH "/source.txt");
+        const String *const destinationFile = STRDEF(TEST_PATH "/destination.txt");
+
+        StorageRead *source = storageNewReadP(storageTest, sourceFile);
+        StorageWrite *destination = storageNewWriteP(storageTest, destinationFile);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy - missing source");
+
+        TEST_ERROR_FMT(storageCopyP(source, destination), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(sourceFile));
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy - ignore missing source");
+
+        source = storageNewReadP(storageTest, sourceFile, .ignoreMissing = true);
+
+        TEST_RESULT_BOOL(storageCopyP(source, destination), false, "copy and ignore missing file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy - success");
+
+        const Buffer *expectedBuffer = BUFSTRDEF("TESTFILE\n");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, sourceFile), expectedBuffer), "write source file");
+
+        source = storageNewReadP(storageTest, sourceFile);
+
+        TEST_RESULT_BOOL(storageCopyP(source, destination), true, "copy file");
+        TEST_RESULT_BOOL(bufEq(expectedBuffer, storageGetP(storageNewReadP(storageTest, destinationFile))), true, "check file");
+
+        storageRemoveP(storageTest, sourceFile, .errorOnMissing = true);
+        storageRemoveP(storageTest, destinationFile, .errorOnMissing = true);
+    }
+        */
+
+
+
 
 
     FUNCTION_HARNESS_RETURN_VOID();
