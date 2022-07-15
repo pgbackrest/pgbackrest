@@ -12,7 +12,7 @@ Posix Storage
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
     #include <Windows.h>
 
     #include <accctrl.h>
@@ -62,63 +62,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 
     StorageInfo result = {.level = level};
 
-#ifndef _WIN32
-    // Stat the file to check if it exists
-    struct stat statFile;
-
-    if ((param.followLink ? stat(strZ(file), &statFile) : lstat(strZ(file), &statFile)) == -1)
-    {
-        if (errno != ENOENT)                                                                                        // {vm_covered}
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                                     // {vm_covered}
-    }
-    // On success the file exists
-    else
-    {
-        result.exists = true;
-
-        // Add type info (no need set file type since it is the default)
-        if (result.level >= storageInfoLevelType && !S_ISREG(statFile.st_mode))
-        {
-            if (S_ISDIR(statFile.st_mode))
-                result.type = storageTypePath;
-            else if (S_ISLNK(statFile.st_mode))
-                result.type = storageTypeLink;
-            else
-                result.type = storageTypeSpecial;
-        }
-
-        // Add basic level info
-        if (result.level >= storageInfoLevelBasic)
-        {
-            result.timeModified = statFile.st_mtime;
-
-            if (result.type == storageTypeFile)
-                result.size = (uint64_t)statFile.st_size;
-        }
-
-        // Add detail level info
-        if (result.level >= storageInfoLevelDetail)
-        {
-            result.groupId = statFile.st_gid;
-            result.group = groupNameFromId(result.groupId);
-            result.userId = statFile.st_uid;
-            result.user = userNameFromId(result.userId);
-            result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
-
-            if (result.type == storageTypeLink)
-            {
-                char linkDestination[PATH_MAX];
-                ssize_t linkDestinationSize = 0;
-
-                THROW_ON_SYS_ERROR_FMT(
-                    (linkDestinationSize = readlink(strZ(file), linkDestination, sizeof(linkDestination) - 1)) == -1,
-                    FileReadError, "unable to get destination for link '%s'", strZ(file));
-
-                result.linkDestination = strNewZN(linkDestination, (size_t)linkDestinationSize);
-            }
-        }
-    }
-#else 
+#ifdef _MSC_VER
     DWORD fileAttributes = GetFileAttributesA(strZ(file));
 
     if (fileAttributes == INVALID_FILE_ATTRIBUTES)
@@ -188,7 +132,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 
                     result.size = (uint64_t)fileSize.QuadPart;
                 }
-            }
+}
 
             CloseHandle(fileHandle);
         }
@@ -327,6 +271,62 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
             CloseHandle(fileHandle);
         }
     }
+#else
+    // Stat the file to check if it exists
+    struct stat statFile;
+
+    if ((param.followLink ? stat(strZ(file), &statFile) : lstat(strZ(file), &statFile)) == -1)
+    {
+        if (errno != ENOENT)                                                                                        // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));                                     // {vm_covered}
+    }
+    // On success the file exists
+    else
+    {
+        result.exists = true;
+
+        // Add type info (no need set file type since it is the default)
+        if (result.level >= storageInfoLevelType && !S_ISREG(statFile.st_mode))
+        {
+            if (S_ISDIR(statFile.st_mode))
+                result.type = storageTypePath;
+            else if (S_ISLNK(statFile.st_mode))
+                result.type = storageTypeLink;
+            else
+                result.type = storageTypeSpecial;
+        }
+
+        // Add basic level info
+        if (result.level >= storageInfoLevelBasic)
+        {
+            result.timeModified = statFile.st_mtime;
+
+            if (result.type == storageTypeFile)
+                result.size = (uint64_t)statFile.st_size;
+        }
+
+        // Add detail level info
+        if (result.level >= storageInfoLevelDetail)
+        {
+            result.groupId = statFile.st_gid;
+            result.group = groupNameFromId(result.groupId);
+            result.userId = statFile.st_uid;
+            result.user = userNameFromId(result.userId);
+            result.mode = statFile.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+
+            if (result.type == storageTypeLink)
+            {
+                char linkDestination[PATH_MAX];
+                ssize_t linkDestinationSize = 0;
+
+                THROW_ON_SYS_ERROR_FMT(
+                    (linkDestinationSize = readlink(strZ(file), linkDestination, sizeof(linkDestination) - 1)) == -1,
+                    FileReadError, "unable to get destination for link '%s'", strZ(file));
+
+                result.linkDestination = strNewZN(linkDestination, (size_t)linkDestinationSize);
+            }
+        }
+    }
 #endif
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
@@ -389,7 +389,67 @@ storagePosixInfoList(
 
     bool result = false;
 
-#ifndef _WIN32
+#ifdef _MSC_VER
+
+    // Open the directory for read
+    HANDLE findHandle = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATAA fileData = { 0 };
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *searchPath = strNewFmt("%s/*", strZ(path)) ;
+        findHandle = FindFirstFileA(strZ(searchPath), &fileData);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    // If the directory could not be opened process errors and report missing directories
+    if (findHandle == INVALID_HANDLE_VALUE)
+    {
+        if (GetLastError() != ERROR_FILE_NOT_FOUND )
+            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));
+    }
+    else
+    {
+        // Directory was found
+        result = true;
+
+        TRY_BEGIN()
+        {
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
+            {
+                do
+                {
+                    const String *name = STR(fileData.cFileName);
+
+                    // Always skip . and ..
+                    if (!strEq(name, DOT_STR) && !strEq(name, DOTDOT_STR))
+                    {
+                        // If only making a list of files that exist then no need to go get detailed info which requires calling
+                        // stat() and is therefore relatively slow
+                        if (level == storageInfoLevelExists)
+                        {
+                            callback(callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
+                        }
+                        // Else more info is required which requires a call to stat()
+                        else
+                        {
+                            storagePosixInfoListEntry(this, path, name, level, callback, callbackData);
+                        }
+                    }
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
+                while (FindNextFileA(findHandle, &fileData));
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+        FINALLY()
+        {
+            FindClose(findHandle);
+        }
+        TRY_END();
+    }
+#else
     // Open the directory for read
     DIR *dir = opendir(strZ(path));
 
@@ -441,66 +501,6 @@ storagePosixInfoList(
         FINALLY()
         {
             closedir(dir);
-        }
-        TRY_END();
-    }
-#else
-
-    // Open the directory for read
-    HANDLE findHandle = INVALID_HANDLE_VALUE;
-    WIN32_FIND_DATAA fileData = { 0 };
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        const String *searchPath = strNewFmt("%s/*", strZ(path)) ;
-        findHandle = FindFirstFileA(strZ(searchPath), &fileData);
-    }
-    MEM_CONTEXT_TEMP_END();
-    
-    // If the directory could not be opened process errors and report missing directories
-    if (findHandle == INVALID_HANDLE_VALUE)
-    {
-        if (GetLastError() != ERROR_FILE_NOT_FOUND )
-            THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));
-    }
-    else
-    {
-        // Directory was found
-        result = true;
-
-        TRY_BEGIN()
-        {
-            MEM_CONTEXT_TEMP_RESET_BEGIN()
-            {
-                do
-                {
-                    const String *name = STR(fileData.cFileName);
-
-                    // Always skip . and ..
-                    if (!strEq(name, DOT_STR) && !strEq(name, DOTDOT_STR))
-                    {
-                        // If only making a list of files that exist then no need to go get detailed info which requires calling
-                        // stat() and is therefore relatively slow
-                        if (level == storageInfoLevelExists)
-                        {
-                            callback(callbackData, &(StorageInfo){.name = name, .level = storageInfoLevelExists, .exists = true});
-                        }
-                        // Else more info is required which requires a call to stat()
-                        else
-                        {
-                            storagePosixInfoListEntry(this, path, name, level, callback, callbackData);
-                        }
-                    }
-                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
-                    MEM_CONTEXT_TEMP_RESET(1000);
-                }
-                while (FindNextFileA(findHandle, &fileData));
-            }
-            MEM_CONTEXT_TEMP_END();
-        }
-        FINALLY()
-        {
-            FindClose(findHandle);
         }
         TRY_END();
     }
@@ -843,11 +843,11 @@ static const StorageInterface storageInterfacePosix =
     .newWrite = storagePosixNewWrite,
     .pathCreate = storagePosixPathCreate,
     .pathRemove = storagePosixPathRemove,
-#ifndef _MSC_VER
-    .pathSync = storagePosixPathSync,
-#else
+#ifdef _MSC_VER
     // Disable path sync, as it is not available on Windows
     .pathSync = NULL,
+#else
+    .pathSync = storagePosixPathSync,
 #endif
     .remove = storagePosixRemove,
 };

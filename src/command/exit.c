@@ -6,7 +6,7 @@ Exit Routines
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
     #include <Windows.h>
 #endif
 
@@ -34,22 +34,7 @@ exitSignalName(SignalType signalType)
 
     switch (signalType)
     {
-    #ifndef _WIN32
-        case signalTypeHup:
-            name = "HUP";
-            break;
-
-        case signalTypeInt:
-            name = "INT";
-            break;
-
-        case signalTypeTerm:
-            name = "TERM";
-            break;
-
-        case signalTypeNone:
-            THROW(AssertError, "no name for signal none");
-    #else
+#ifdef _MSC_VER
         case signalTypeCtrlC:
             name = "Ctrl-C";
             break;
@@ -73,7 +58,22 @@ exitSignalName(SignalType signalType)
         case signalTypeNone:
         default:
             THROW(AssertError, "no name for signal none");
-    #endif
+#else
+        case signalTypeHup:
+            name = "HUP";
+            break;
+
+        case signalTypeInt:
+            name = "INT";
+            break;
+
+        case signalTypeTerm:
+            name = "TERM";
+            break;
+
+        case signalTypeNone:
+            THROW(AssertError, "no name for signal none");
+#endif
     }
 
     FUNCTION_TEST_RETURN_CONST(STRINGZ, name);
@@ -82,19 +82,7 @@ exitSignalName(SignalType signalType)
 /***********************************************************************************************************************************
 Catch signals
 ***********************************************************************************************************************************/
-#ifndef _WIN32
-static void
-exitOnSignal(int signalType)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, signalType);
-    FUNCTION_LOG_END();
-
-    exit(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-#else
+#ifdef _MSC_VER
 static BOOL
 exitOnSignal(_In_ DWORD signalType)
 {
@@ -106,6 +94,18 @@ exitOnSignal(_In_ DWORD signalType)
 
     FUNCTION_TEST_RETURN(BOOL, TRUE);
 }
+#else
+static void
+exitOnSignal(int signalType)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, signalType);
+    FUNCTION_LOG_END();
+
+    exit(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 #endif
 
 /**********************************************************************************************************************************/
@@ -113,15 +113,15 @@ void
 exitInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
-#ifndef _WIN32
+#ifdef _MSC_VER
+    SetConsoleCtrlHandler(exitOnSignal, TRUE);
+#else
     signal(SIGHUP, exitOnSignal);
     signal(SIGINT, exitOnSignal);
     signal(SIGTERM, exitOnSignal);
 
     // Ignore SIGPIPE and check for EPIPE errors on write() instead
     signal(SIGPIPE, SIG_IGN);
-#else
-    SetConsoleCtrlHandler(exitOnSignal, TRUE);
 #endif
     FUNCTION_LOG_RETURN_VOID();
 }

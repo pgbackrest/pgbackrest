@@ -40,20 +40,21 @@ typedef struct MemContextAlloc
 Contains information about the memory context
 ***********************************************************************************************************************************/
 // Quantity of child contexts, allocations, or callbacks
-#ifndef _WIN32
+#ifdef _MSC_VER
+// In msvc, enums as defined as int.
+// Leading to MemQty not working properly as bit fields.
+#define memQtyNone  0
+#define memQtyOne   1
+#define memQtyMany  2
+
+typedef unsigned int MemQty;
+#else
 typedef enum
 {
     memQtyNone = 0,                                                 // None for this type
     memQtyOne = 1,                                                  // One for this type
     memQtyMany = 2,                                                 // Many for this type
 } MemQty;
-#else
-    // In msvc, enums as defined as int.
-    // Leading to MemQty not working properly as bit fields.
-    #define memQtyNone  0
-    #define memQtyOne   1
-    #define memQtyMany  2
-    typedef unsigned int MemQty;
 #endif
 // Main structure required by every mem context
 struct MemContext

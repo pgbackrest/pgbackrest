@@ -6,7 +6,7 @@ Storage Interface
 #include <stdio.h>
 #include <string.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
     #include <Shlwapi.h>
 #endif
 
@@ -51,10 +51,10 @@ storageNew(
     FUNCTION_LOG_END();
 
     ASSERT(type != 0);
-#ifndef _WIN32
-    ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
-#else
+#ifdef _MSC_VER
     ASSERT(strSize(path) >= 1 && PathIsRelativeA(strZ(path)) == FALSE);
+#else
+    ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
 #endif
     ASSERT(driver != NULL);
     ASSERT(interface.info != NULL);
@@ -693,22 +693,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
     else
     {
         // If the path expression is absolute then use it as is
-#ifndef _WIN32
-        if ((strZ(pathExp))[0] == '/')
-        {
-            // Make sure the base storage path is contained within the path expression
-            if (!strEqZ(this->path, "/"))
-            {
-                if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
-                    !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
-                {
-                    THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strZ(pathExp), strZ(this->path));
-                }
-            }
-
-            result = strDup(pathExp);
-        }
-#else
+#ifdef _MSC_VER
         if (PathIsRelativeA(strZ(pathExp)) == FALSE)
         {
             // Make sure the base storage path is contained within the path expression
@@ -717,6 +702,21 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                 // TODO: Convert to either PathIsPrefix, or PathIsSameRoot
                 if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
                     !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/' || *(strZ(pathExp) + strSize(this->path)) == '\\')))
+                {
+                    THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strZ(pathExp), strZ(this->path));
+                }
+            }
+
+            result = strDup(pathExp);
+        }
+#else
+        if ((strZ(pathExp))[0] == '/')
+        {
+            // Make sure the base storage path is contained within the path expression
+            if (!strEqZ(this->path, "/"))
+            {
+                if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
+                    !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
                 {
                     THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strZ(pathExp), strZ(this->path));
                 }
@@ -753,12 +753,12 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                 if (strSize(expression) < strSize(pathExp))
                 {
                     // Error if path separator is not found
-#ifndef _WIN32
-                    if (end[1] != '/')
-                        THROW_FMT(AssertError, "'/' should separate expression and path '%s'", strZ(pathExp));
-#else
+#ifdef _MSC_VER
                     if (end[1] != '/' && end[1] != '\\')
                         THROW_FMT(AssertError, "'/' or '\\' should separate expression and path '%s'", strZ(pathExp));
+#else
+                    if (end[1] != '/')
+                        THROW_FMT(AssertError, "'/' should separate expression and path '%s'", strZ(pathExp));               
 #endif
                     // Only create path if there is something after the path separator
                     if (end[2] == 0)

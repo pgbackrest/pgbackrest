@@ -151,18 +151,8 @@ testBldUnit(TestBuild *const this)
         strReplace(mesonBuild, STRDEF("subdir('"), STRDEF("# subdir('"));
 
         // Write build.auto.in
-#ifndef _WIN32
-        strCatZ(
-            mesonBuild,
-            "\n"
-            MESON_COMMENT_BLOCK "\n"
-            "# Write configuration\n"
-            MESON_COMMENT_BLOCK "\n"
-            "configure_file(output: 'build.auto.h', configuration: configuration)\n"
-            "\n"
-            "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
-#else
-//#error FIX configure_file
+#ifdef _MSC_VER
+        //#error FIX configure_file
         strCatZ(
             mesonBuild,
             "\n"
@@ -211,10 +201,20 @@ testBldUnit(TestBuild *const this)
             ")\n",
             strZ(testBldPathRepo(this)),
             strZ(testBldPathRepo(this)));
-        
+
 
         strCatZ(
             mesonBuild,
+            "\n"
+            "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
+#else
+        strCatZ(
+            mesonBuild,
+            "\n"
+            MESON_COMMENT_BLOCK "\n"
+            "# Write configuration\n"
+            MESON_COMMENT_BLOCK "\n"
+            "configure_file(output: 'build.auto.h', configuration: configuration)\n"
             "\n"
             "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
 #endif
@@ -253,21 +253,8 @@ testBldUnit(TestBuild *const this)
                 mesonBuild, "    '%s/src/%s.c',\n", strZ(testBldPathRepo(this)),
                 strZ(strLstGet(testBldModule(this)->dependList, dependIdx)));
         }
-#ifndef _WIN32
-        strCatFmt(
-            mesonBuild,
-            "    '%s/test/src/common/harnessTest.c',\n"
-            "    'test.c',\n"
-            "    include_directories:\n"
-            "        include_directories(\n"
-            "            '.',\n"
-            "            '%s/test/src',\n"
-            "            '%s/src',\n"
-            "        ),\n"
-            ")\n",
-            strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)));
-#else
-//#error FIXME HERE
+#ifdef _MSC_VER
+        //#error FIXME HERE
         strCatFmt(
             mesonBuild,
             "    '%s/test/src/common/harnessTest.c',\n"
@@ -287,6 +274,19 @@ testBldUnit(TestBuild *const this)
             "   ],\n"
             ")\n",
             strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)),
+            strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)));
+#else
+        strCatFmt(
+            mesonBuild,
+            "    '%s/test/src/common/harnessTest.c',\n"
+            "    'test.c',\n"
+            "    include_directories:\n"
+            "        include_directories(\n"
+            "            '.',\n"
+            "            '%s/test/src',\n"
+            "            '%s/src',\n"
+            "        ),\n"
+            ")\n",
             strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)), strZ(testBldPathRepo(this)));
 #endif
 
