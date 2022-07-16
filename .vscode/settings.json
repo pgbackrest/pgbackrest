@@ -24,6 +24,7 @@
         "*.rexx": "rexx",
         "get.h": "c",
         "*.in": "cpp",
-        "config.h": "c"
+        "config.h": "c",
+        "*.inc": "c"
     }
 }

@@ -324,10 +324,15 @@ testBldUnit(TestBuild *const this)
         {
             if (testIncludeFileIdx != 0)
                 strCatChr(testIncludeFile, '\n');
-
+#ifdef _MSC_VER
+            strCatFmt(
+                testIncludeFile, "#include \"src/%s.c\"",
+                strZ(strLstGet(testIncludeFileList, testIncludeFileIdx)));
+#else
             strCatFmt(
                 testIncludeFile, "#include \"%s/src/%s.c\"", strZ(testBldPathRepo(this)),
                 strZ(strLstGet(testIncludeFileList, testIncludeFileIdx)));
+#endif
         }
 
         strReplace(testC, STRDEF("{[C_INCLUDE]}"), testIncludeFile);

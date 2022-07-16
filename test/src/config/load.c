@@ -50,6 +50,29 @@ cfgLoadUpdateOption(void)
     // Invalidate config option so it does not show up in option list
     cfgOptionInvalidate(cfgOptConfig);
 
+#ifdef _MSC_VER
+    // Replace '\' with '/', since the '\' doesn't behave correctly in some cases (e.g when writing path to file)
+    for (int i = 0; i < sizeof(currentWorkDir); ++i)
+    {
+        if (currentWorkDir[i] == '\\')
+            currentWorkDir[i] = '/';
+        else if (currentWorkDir[i] == '\0')
+            break;
+    }
+
+    // If repo-path is relative then make it absolute (local and UNC)
+    const String *const repoPath = cfgOptionStr(cfgOptRepoPath);
+
+    if (!strBeginsWithZ(repoPath, "\\\\") && (strChr(repoPath, ':') == -1))
+        cfgOptionSet(cfgOptRepoPath, cfgOptionSource(cfgOptRepoPath), VARSTR(strNewFmt("%s/%s", currentWorkDir, strZ(repoPath))));
+        
+
+    // If test-path is relative then make it absolute (local and UNC)
+    const String *const testPath = cfgOptionStr(cfgOptTestPath);
+
+    if (!strBeginsWithZ(testPath, "\\\\") && (strChr(testPath, ':') == -1))
+        cfgOptionSet(cfgOptTestPath, cfgOptionSource(cfgOptTestPath), VARSTR(strNewFmt("%s/%s", currentWorkDir, strZ(testPath))));
+#else
     // If repo-path is relative then make it absolute
     const String *const repoPath = cfgOptionStr(cfgOptRepoPath);
 
@@ -61,7 +84,7 @@ cfgLoadUpdateOption(void)
 
     if (!strBeginsWithZ(testPath, "/"))
         cfgOptionSet(cfgOptTestPath, cfgOptionSource(cfgOptTestPath), VARSTR(strNewFmt("%s/%s", currentWorkDir, strZ(testPath))));
-
+#endif
     FUNCTION_LOG_RETURN_VOID();
 }
 
