@@ -326,7 +326,7 @@ testBldUnit(TestBuild *const this)
                 strCatChr(testIncludeFile, '\n');
 #ifdef _MSC_VER
             strCatFmt(
-                testIncludeFile, "#include \"src/%s.c\"",
+                testIncludeFile, "#include \"%s.c\"",
                 strZ(strLstGet(testIncludeFileList, testIncludeFileIdx)));
 #else
             strCatFmt(
@@ -386,12 +386,19 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_IDX]}"), strNewFmt("%u", testBldVmId(this)));
 
         // Include test file
+#ifdef _MSC_VER
+        strReplace(
+            testC, STRDEF("{[C_TEST_INCLUDE]}"),
+            strNewFmt(
+                "#include \"module/%sTest.c\"",
+                strZ(bldEnum(NULL, testBldModuleName(this)))));
+#else
         strReplace(
             testC, STRDEF("{[C_TEST_INCLUDE]}"),
             strNewFmt(
                 "#include \"%s/test/src/module/%sTest.c\"", strZ(testBldPathRepo(this)),
                 strZ(bldEnum(NULL, testBldModuleName(this)))));
-
+#endif
         // Test list
         String *const testList = strNew();
 
