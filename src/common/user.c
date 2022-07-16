@@ -53,7 +53,7 @@ userInitInternal(void)
             userLocalData.memContext = MEM_CONTEXT_NEW();
 
             userLocalData.userId = (uid_t)-1;
-            userLocalData.userName = strNewZN(buffer, bufferSize);
+            userLocalData.userName = strNewZN(buffer, bufferSize - 1);
             userLocalData.userRoot = userLocalData.userId == 0;
 
             userLocalData.groupId = (gid_t)-1;
