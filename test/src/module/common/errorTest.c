@@ -406,6 +406,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+#ifndef _MSC_VER
     if (testBegin("Uncaught error"))
     {
         // Test in a fork so the process does not actually exit
@@ -422,6 +423,6 @@ testRun(void)
         }
         HRN_FORK_END();
     }
-
+#endif
     FUNCTION_HARNESS_RETURN_VOID();
 }
