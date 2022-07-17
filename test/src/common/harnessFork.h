@@ -30,6 +30,168 @@ is not intended for long-lived child processes.
 
 There should not be any code outside the HRN_FORK_CHILD_BEGIN/END() and HRN_FORK_PARENT_BEGIN/END() blocks.
 ***********************************************************************************************************************************/
+#ifdef _MSC_VER
+
+#define HRN_FORK_CHILD_MAX                                          4
+#define HRN_FORK_TIMEOUT                                            2000
+#define HRN_FORK_PROCESS_TOTAL()
+#define HRN_FORK_PROCESS_IDX()
+#define HRN_FORK_PROCESS_ID(processIdx)
+#define HRN_FORK_PIPE(processIdx)
+#define HRN_FORK_CHILD_READ_FD()
+
+#define HRN_FORK_CHILD_WRITE_FD()
+
+#define HRN_FORK_PARENT_READ_FD(processIdx)
+
+#define HRN_FORK_PARENT_WRITE_FD(processIdx)
+#undef HRN_FEATURE_IO
+
+#ifdef HRN_FEATURE_IO
+    #define HRN_FORK_CHILD_READ()                                                                                                  \
+        HRN_FORK_ioReadChild
+
+    #define HRN_FORK_CHILD_WRITE()                                                                                                 \
+        HRN_FORK_ioWriteChild
+
+    #define HRN_FORK_PARENT_READ(processIdx)                                                                                       \
+        HRN_FORK_ioReadParent[processIdx]
+
+    #define HRN_FORK_PARENT_WRITE(processIdx)                                                                                      \
+        HRN_FORK_ioWriteParent[processIdx]
+#endif
+
+/***********************************************************************************************************************************
+Get/put notify messages. These macros allow the parent and child process to synchronize which is useful, e.g. releasing locks.
+***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_IO
+    // General notify get macro used by parent/child
+    #define HRN_FORK_NOTIFY_GET(read)                                                                                              \
+        ioReadLine(read)
+
+    // General notify put macro used by parent/child
+    #define HRN_FORK_NOTIFY_PUT(write)                                                                                             \
+        do                                                                                                                         \
+        {                                                                                                                          \
+            ioWriteStrLine(write, EMPTY_STR);                                                                                      \
+            ioWriteFlush(write);                                                                                                   \
+        }                                                                                                                          \
+        while (0)
+
+    // Put notification to parent from child
+    #define HRN_FORK_CHILD_NOTIFY_GET()                                                                                            \
+        HRN_FORK_NOTIFY_GET(HRN_FORK_CHILD_READ())
+
+    // Get notification from parent to child
+    #define HRN_FORK_CHILD_NOTIFY_PUT()                                                                                            \
+        HRN_FORK_NOTIFY_PUT(HRN_FORK_CHILD_WRITE())
+
+    // Put notification to child from parent
+    #define HRN_FORK_PARENT_NOTIFY_GET(processIdx)                                                                                 \
+        HRN_FORK_NOTIFY_GET(HRN_FORK_PARENT_READ(processIdx))
+
+    // Get notification from child to parent
+    #define HRN_FORK_PARENT_NOTIFY_PUT(processIdx)                                                                                 \
+        HRN_FORK_NOTIFY_PUT(HRN_FORK_PARENT_WRITE(processIdx))
+#endif
+
+/***********************************************************************************************************************************
+At the end of the HRN_FORK block the parent will wait for the child to exit.  By default an exit code of 0 is expected but that can
+be modified when the child begins.
+***********************************************************************************************************************************/
+#define HRN_FORK_CHILD_EXPECTED_EXIT_STATUS(processIdx)
+
+/***********************************************************************************************************************************
+Begin the fork block
+***********************************************************************************************************************************/
+typedef struct HrnForkParam
+{
+    //VAR_PARAM_HEADER;
+
+    // Timeout in ms for IoRead/IoWrite interfaces (defaults to HRN_FORK_TIMEOUT). May be overridden in HRN_FORK_CHILD_BEGIN() or
+    // HRN_FORK_PARENT_BEGIN().
+    uint64_t timeout;
+} HrnForkParam;
+
+#define HRN_FORK_BEGIN(...)
+
+/***********************************************************************************************************************************
+Create a child process
+***********************************************************************************************************************************/
+typedef struct HrnForkChildParam
+{
+    //VAR_PARAM_HEADER;
+
+    // Expected exit status. Defaults to 0. This does not need to be changed unless the child is expected to exit with a non-zero
+    // code for testing purposes.
+    int expectedExitStatus;
+
+    // Prefix used to name IoRead/IoWrite interfaces. Defaults to "child" so the default name is "child [idx] read/write".
+    const char *prefix;
+
+    // Timeout in ms for IoRead/IoWrite interfaces. Defaults to the value passed in HRN_FORK_BEGIN().
+    uint64_t timeout;
+} HrnForkChildParam;
+
+// Declare/assign IoRead/IoWrite
+#ifdef HRN_FEATURE_IO
+    #include "common/io/fdRead.h"
+    #include "common/io/fdWrite.h"
+    #include "common/type/string.h"
+
+    #define HRN_FORK_CHILD_IO()                                                                                                    \
+        IoRead *HRN_FORK_CHILD_READ() = ioFdReadNewOpen(                                                                           \
+            strNewFmt("%s %u read", paramChild.prefix, HRN_FORK_PROCESS_IDX()), HRN_FORK_CHILD_READ_FD(), paramChild.timeout);     \
+        (void)HRN_FORK_CHILD_READ();                                                                                               \
+        IoWrite *HRN_FORK_CHILD_WRITE() = ioFdWriteNewOpen(                                                                        \
+            strNewFmt("%s %u write", paramChild.prefix, HRN_FORK_PROCESS_IDX()), HRN_FORK_CHILD_WRITE_FD(), paramChild.timeout);   \
+        (void)HRN_FORK_CHILD_WRITE()
+#else
+    #define HRN_FORK_CHILD_IO()
+#endif
+
+#define HRN_FORK_CHILD_BEGIN(...)
+
+#define HRN_FORK_CHILD_END()
+
+/***********************************************************************************************************************************
+Process in the parent
+***********************************************************************************************************************************/
+typedef struct HrnForkParentParam
+{
+    //VAR_PARAM_HEADER;
+
+    // Prefix used to name IoRead/IoWrite interfaces. Defaults to "parent" so the default name is "parent [idx] read/write".
+    const char *prefix;
+
+    // Timeout in ms for IoRead/IoWrite interfaces. Defaults to the value passed in HRN_FORK_BEGIN().
+    uint64_t timeout;
+} HrnForkParentParam;
+
+// Declare IoRead/IoWrite
+#ifdef HRN_FEATURE_IO
+    #define HRN_FORK_PARENT_IO_DECLARE()                                                                                           \
+        IoRead *HRN_FORK_PARENT_READ(HRN_FORK_CHILD_MAX) = {0};                                                                    \
+        (void)HRN_FORK_PARENT_READ(0);                                                                                             \
+        IoWrite *HRN_FORK_PARENT_WRITE(HRN_FORK_CHILD_MAX) = {0};                                                                  \
+        (void)HRN_FORK_PARENT_WRITE(0)
+
+    #define HRN_FORK_PARENT_IO_ASSIGN(processIdx)                                                                                  \
+        HRN_FORK_PARENT_READ(processIdx) = ioFdReadNewOpen(                                                                        \
+            strNewFmt("%s %u read", paramParent.prefix, processIdx), HRN_FORK_PARENT_READ_FD(processIdx), paramParent.timeout);    \
+        HRN_FORK_PARENT_WRITE(processIdx) = ioFdWriteNewOpen(                                                                      \
+            strNewFmt("%s %u write", paramParent.prefix, processIdx), HRN_FORK_PARENT_WRITE_FD(processIdx), paramParent.timeout)
+#else
+    #define HRN_FORK_PARENT_IO_DECLARE()
+    #define HRN_FORK_PARENT_IO_ASSIGN(processIdx)
+#endif
+
+#define HRN_FORK_PARENT_BEGIN(...)
+
+#define HRN_FORK_PARENT_END()
+#define HRN_FORK_END()
+#else
+
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -347,3 +509,4 @@ End the fork block and check exit status for all child processes
         }                                                                                                                          \
     }                                                                                                                              \
     while (0)
+#endif
