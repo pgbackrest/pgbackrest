@@ -416,17 +416,18 @@ hrnTestResultException(void)
 
     if (harnessTestLocal.result.running)
     {
-        THROW_FMT(
 #ifdef DEBUG
-            TestError,
+    #define LOCAL_ERROR TestError
 #else
-            AssertError,
+    #define LOCAL_ERROR AssertError
 #endif
+        THROW_FMT(
+            LOCAL_ERROR,
             "EXPECTED %sRESULT FROM STATEMENT: %s\n\nBUT GOT %s: %s\n\nTHROWN AT:\n%s",
             harnessTestLocal.result.result ? "" : "VOID ",
             harnessTestLocal.result.statement, errorName(), errorMessage(), errorStackTrace());
     }
-
+#undef LOCAL_ERROR
     FUNCTION_HARNESS_RETURN(BOOL, false);
 }
 
@@ -446,26 +447,24 @@ static void hrnTestResultDiff(const char *actual, const char *expected)
 {
     if (actual != NULL && expected != NULL && (strstr(actual, "\n") != NULL || strstr(expected, "\n") != NULL))
     {
-        THROW_FMT(
 #ifdef DEBUG
-            TestError,
+#define LOCAL_ERROR TestError
 #else
-            AssertError,
+#define LOCAL_ERROR AssertError
 #endif
+        THROW_FMT(
+            LOCAL_ERROR,
             "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n%s\n\n",
             harnessTestLocal.result.statement, actual, hrnDiff(expected, actual));
     }
     else
     {
         THROW_FMT(
-#ifdef DEBUG
-            TestError,
-#else
-            AssertError,
-#endif
+            LOCAL_ERROR,
             "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s",
             harnessTestLocal.result.statement, actual == NULL ? "NULL" : actual, expected == NULL ? "NULL" : expected);                                                 \
     }
+#undef LOCAL_ERROR
 }
 
 void
