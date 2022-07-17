@@ -32,6 +32,16 @@ The test code is included directly so it can freely interact with the included C
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _MSC_VER
+    // Imports for umask
+    #include <sys/types.h>
+    #include <io.h>
+
+    #define umask _umask
+    // As SIGPIPE is not available on Windows, define it to SIGINT
+    // SIGINT is also not supported. Used as dummy.
+    #define SIGPIPE SIGINT
+#endif
 
 #ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
