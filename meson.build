@@ -92,6 +92,10 @@ warning_disable = [
 
     # [msvc]:[C4116]: Warn for unnamed type definition in parentheses, triggers with ALIGN_OF macro
     '/wd4116',
+
+    # [msvc]:[C5105]: Warn for macro expansion producing 'defined' has undefined behavior. Disable as it triggers
+    # from winbase.h
+    '/wd5105',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
