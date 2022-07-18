@@ -14,6 +14,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.41dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2022-07-18" version="2.40" title="OpenSSL 3 Support">
             <release-core-list>
                 <text>

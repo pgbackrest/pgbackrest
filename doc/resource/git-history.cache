@@ -1,5 +1,10 @@
 [
     {
+        "commit": "1ff531090b9d1eccd9107592398148a51486c9f8",
+        "date": "2022-07-18 09:32:30 -0400",
+        "subject": "v2.40: OpenSSL 3 Support"
+    },
+    {
         "commit": "1df1e0281b94a06ff0f16622e2cbb76598d430d1",
         "date": "2022-07-14 17:13:33 -0400",
         "subject": "Replace AC_PROG_CC_C99 configure macro with AC_PROG_CC.",
