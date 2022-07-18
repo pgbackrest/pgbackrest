@@ -1175,6 +1175,14 @@ src/common/time.h:
   class: core
   type: c/h
 
+src/common/type/blob.c:
+  class: core
+  type: c
+
+src/common/type/blob.h:
+  class: core
+  type: c/h
+
 src/common/type/buffer.c:
   class: core
   type: c
@@ -1635,6 +1643,22 @@ src/storage/info.h:
   class: core
   type: c/h
 
+src/storage/iterator.c:
+  class: core
+  type: c
+
+src/storage/iterator.h:
+  class: core
+  type: c/h
+
+src/storage/list.c:
+  class: core
+  type: c
+
+src/storage/list.h:
+  class: core
+  type: c/h
+
 src/storage/posix/read.c:
   class: core
   type: c
@@ -1975,6 +1999,42 @@ test/lib/pgBackRestTest/Module/Real/RealAllTest.pm:
   class: test/module
   type: perl
 
+test/src/build/config/config.yaml:
+  class: test/harness
+  type: yaml
+
+test/src/build/help/help.xml:
+  class: test/harness
+  type: xml
+
+test/src/command/help/meson.build:
+  class: build
+  type: meson
+
+test/src/command/test/build.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/build.h:
+  class: test/harness
+  type: c/h
+
+test/src/command/test/define.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/define.h:
+  class: test/harness
+  type: c/h
+
+test/src/command/test/test.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/test.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessConfig.c:
   class: test/harness
   type: c
@@ -2130,6 +2190,26 @@ test/src/common/harnessTest.h:
 test/src/common/harnessTest.intern.h:
   class: test/harness
   type: c/h
+
+test/src/config/load.c:
+  class: test/harness
+  type: c
+
+test/src/config/load.h:
+  class: test/harness
+  type: c/h
+
+test/src/config/meson.build:
+  class: build
+  type: meson
+
+test/src/main.c:
+  class: test/harness
+  type: c
+
+test/src/meson.build:
+  class: build
+  type: meson
 
 test/src/module/build/commonTest.c:
   class: test/module
@@ -2304,6 +2384,10 @@ test/src/module/common/statTest.c:
   type: c
 
 test/src/module/common/timeTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeBlobTest.c:
   class: test/module
   type: c
 

@@ -4,7 +4,7 @@
 
 pgBackRest aims to be a reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads by utilizing algorithms that are optimized for database-specific requirements.
 
-pgBackRest [v2.39](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.39) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.40](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.40) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 Please find us on [GitHub](https://github.com/pgbackrest/pgbackrest) and give us a star if you like pgBackRest!
 
