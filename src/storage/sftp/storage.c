@@ -367,103 +367,6 @@ storageSftpRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam par
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageSftpMove(THIS_VOID, StorageRead *source, StorageWrite *destination, StorageInterfaceMoveParam param)
-{
-    THIS(StorageSftp);
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-        FUNCTION_LOG_PARAM(STORAGE_READ, source);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE, destination);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(source != NULL);
-    ASSERT(destination != NULL);
-
-    bool result = true;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        const String *sourceFile = storageReadName(source);
-        const String *destinationFile = storageWriteName(destination);
-        const String *destinationPath = strPath(destinationFile);
-
-        int rc = 0;
-        this->wait = waitNew(this->timeoutConnect);
-
-        do
-        {
-            rc = libssh2_sftp_rename_ex(
-                    this->sftpSession, strZ(sourceFile), (unsigned int)strSize(sourceFile), strZ(destinationFile),
-                    (unsigned int)strSize(destinationFile),
-                    LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-
-        if (rc)
-        {
-            // If session indicates sftp error, can query for sftp error
-            // !!! see also libssh2_session_last_error() - possible to return more detailed error
-            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
-            {
-               // Determine which file/path is missing
-               //if (errno == ENOENT)
-               //jrt verify PATH or FILE or both
-               if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
-               {
-                   // Check if the source is missing. Rename does not follow links so there is no need to set followLink.
-                   if (!storageInterfaceInfoP(this, sourceFile, storageInfoLevelExists).exists)
-                   {
-                       // libssh2 seems to mostly/always populate errno with 11 Resource temporarily unavailable. Overwrite it.
-                       errno = LIBSSH2_FX_NO_SUCH_FILE;
-                       THROW_SYS_ERROR_FMT(FileMissingError, "unable to move missing source '%s'", strZ(sourceFile));
-                   }
-
-                   if (!storageWriteCreatePath(destination))
-                   {
-                       // libssh2 seems to mostly/always populate errno with 11 Resource temporarily unavailable. Overwrite it
-                       errno = LIBSSH2_FX_NO_SUCH_FILE;
-                       THROW_SYS_ERROR_FMT(
-                           PathMissingError, "unable to move '%s' to missing path '%s'", strZ(sourceFile), strZ(destinationPath));
-                   }
-
-                   storageInterfacePathCreateP(this, destinationPath, false, false, storageWriteModePath(destination));
-                   result = storageInterfaceMoveP(this, source, destination);
-               }
-               else
-               {
-                   THROW_SYS_ERROR_FMT(
-                       FileMoveError, "unable to move '%s' to '%s'", strZ(sourceFile), strZ(destinationFile));
-               }
-            }
-            else
-            {
-                // ssh session error
-                THROW_SYS_ERROR_FMT(
-                    FileMoveError, "unable to move '%s' to '%s'", strZ(sourceFile), strZ(destinationFile));
-            }
-        }
-
-        if (rc == 0)
-        {
-            // Sync source path if the destination path was synced and the paths are not equal
-            if (storageWriteSyncPath(destination))
-            {
-                String *sourcePath = strPath(sourceFile);
-
-                if (!strEq(destinationPath, sourcePath))
-                    storageInterfacePathSyncP(this, sourcePath);
-            }
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
 static StorageRead *
 storageSftpNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
 {
@@ -753,103 +656,16 @@ storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterf
 }
 
 /**********************************************************************************************************************************/
-void
-storageSftpPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param)
-{
-    THIS(StorageSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-        FUNCTION_LOG_PARAM(STRING, path);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(path != NULL);
-
-    // Open directory and handle errors
-    this->wait = waitNew(this->timeoutConnect);
-
-    do
-    {
-        this->sftpHandle = libssh2_sftp_open_ex(
-            this->sftpSession, strZ(path), (unsigned int)strSize(path), LIBSSH2_FXF_READ, 0, LIBSSH2_SFTP_OPENDIR);
-    }
-    while (this->sftpHandle == NULL && waitMore(this->wait));
-    //while (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-
-    // Handle errors
-    if (this->sftpHandle == NULL)
-    {
-            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
-            {
-                ///jrt if (errno == ENOENT)
-                //jrt verify PATH or FILE or both
-                if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
-                    THROW_FMT(PathMissingError, STORAGE_ERROR_PATH_SYNC_MISSING, strZ(path));
-                else
-                    THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_PATH_SYNC_OPEN, strZ(path));
-            }
-            else
-                // ssh error
-                THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_PATH_SYNC_OPEN, strZ(path));
-    }
-    else
-    {
-        // Attempt to sync the directory
-        int rc = 0;
-        this->wait = waitNew(this->timeoutConnect);
-
-        do
-        {
-            rc = libssh2_sftp_fsync(this->sftpHandle);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-
-        if (rc)
-        {
-            // Close the file descriptor to free resources but don't check for failure
-            libssh2_sftp_close(this->sftpHandle);
-
-            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
-            {
-                THROW_SYS_ERROR_CODE_FMT(
-                    (int)libssh2_sftp_last_error(this->sftpSession), PathSyncError, STORAGE_ERROR_PATH_SYNC, strZ(path));
-            }
-            else
-            {
-                THROW_SYS_ERROR_CODE_FMT(
-                    libssh2_session_last_errno(this->session), PathSyncError, STORAGE_ERROR_PATH_SYNC, strZ(path));
-            }
-        }
-
-        this->wait = waitNew(this->timeoutConnect);
-
-        do
-        {
-            rc = libssh2_sftp_close(this->sftpHandle);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-
-        THROW_ON_SYS_ERROR_FMT(rc != 0, PathCloseError, STORAGE_ERROR_PATH_SYNC_CLOSE, strZ(path));
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceSftp =
 {
     .feature = 1 << storageFeaturePath,
 
     .info = storageSftpInfo,
     .infoList = storageSftpInfoList,
-    .move = storageSftpMove,
     .newRead = storageSftpNewRead,
     .newWrite = storageSftpNewWrite,
     .pathCreate = storageSftpPathCreate,
     .pathRemove = storageSftpPathRemove,
-    .pathSync = storageSftpPathSync,
     .remove = storageSftpRemove,
 };
 

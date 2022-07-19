@@ -598,7 +598,6 @@ testRun(void)
         storageRemoveP(storageTest, sourceFile, .errorOnMissing = true);
         storageRemoveP(storageTest, destinationFile, .errorOnMissing = true);
     }
-        */
 
     // *****************************************************************************************************************************
     if (testBegin("storageMove()"))
@@ -676,7 +675,7 @@ testRun(void)
         TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to parent path (no sync)");
 
     }
-
+*/
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
