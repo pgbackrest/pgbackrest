@@ -44,6 +44,24 @@ testTryRecurse(void)
     TRY_END();
 }                                                                   // {uncoverable - function throws error, never returns}
 
+#ifdef _MSC_VER
+
+#include <Windows.h>
+
+static 
+int pathStrcmp(const char *path1, const char *path2)
+{
+    char pathBuffer1[MAX_PATH + 1];
+    char pathBuffer2[MAX_PATH + 1];
+
+    // Get full (normalized) path names
+    GetFullPathNameA(path1, MAX_PATH + 1, pathBuffer1, NULL);
+    GetFullPathNameA(path2, MAX_PATH + 1, pathBuffer2, NULL);
+
+    return strcmp(pathBuffer1, pathBuffer2);
+}
+#endif
+
 /***********************************************************************************************************************************
 Test error handler
 ***********************************************************************************************************************************/
@@ -241,14 +259,26 @@ testRun(void)
         CATCH(AssertError)
         {
             assert(errorCode() == AssertError.code);
+#ifdef _MSC_VER
+            assert(pathStrcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/errorTest.c") == 0);
+#else
             assert(strcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/errorTest.c") == 0);
+#endif
             assert(strcmp(errorFunctionName(), "testTryRecurse") == 0);
             assert(errorFileLine() == 29);
+#ifdef _MSC_VER
+            assert(
+                pathStrcmp(
+                    errorStackTrace(),
+                    TEST_PGB_PATH "/test/src/module/common/errorTest.c:testTryRecurse:29:(test build required for parameters)")
+                == 0);
+#else
             assert(
                 strcmp(
                     errorStackTrace(),
                     TEST_PGB_PATH "/test/src/module/common/errorTest.c:testTryRecurse:29:(test build required for parameters)")
                 == 0);
+#endif
             assert(strcmp(errorMessage(), "too many nested try blocks") == 0);
             assert(strcmp(errorName(), AssertError.name) == 0);
             assert(errorType() == &AssertError);
