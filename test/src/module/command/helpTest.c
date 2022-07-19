@@ -11,7 +11,7 @@ Test Help Command
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
-Configuration load with just enough funcionality to test help
+Configuration load with just enough functionality to test help
 ***********************************************************************************************************************************/
 static void
 testCfgLoad(const StringList *const argList)
