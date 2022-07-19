@@ -405,7 +405,7 @@ storagePosixInfoList(
     // If the directory could not be opened process errors and report missing directories
     if (findHandle == INVALID_HANDLE_VALUE)
     {
-        if (GetLastError() != ERROR_FILE_NOT_FOUND )
+        if ((GetLastError() != ERROR_FILE_NOT_FOUND) && (GetLastError() != ERROR_PATH_NOT_FOUND))
             THROW_SYS_ERROR_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));
     }
     else
