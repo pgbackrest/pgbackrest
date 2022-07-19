@@ -23,7 +23,10 @@ Error-silencing macros
 #define __attribute__(...)
 
 // Silence noisy warnings about non-secure CRT functions
-#define _CRT_SECURE_NO_WARNINGS
+// Don't define if it is passed from the command line
+#if !defined(_CRT_SECURE_NO_WARNINGS)
+    #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 // Silence noisy warnings about old Winsock API
 #define _WINSOCK_DEPRECATED_NO_WARNINGS

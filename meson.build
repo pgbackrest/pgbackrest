@@ -161,20 +161,22 @@ if lib_zstd.found()
 endif
 else
 
-dep_inc_dir = include_directories('D:/Dep/include')
-lib_yaml = cc.find_library('yaml', dirs: ['D:/Dep/lib'], )
+# This section assumes default install path for CMAKE (C:/Program Files (x86))
 
-# regex_inc_dir = include_directories('D:/Dep/regex/include')
-# lib_regex = cc.find_library('regex', dirs: ['D:/Dep/regex/lib'], )
+# Due to a meson bug that throws ValueError: path is on mount 'C:', start on mount 'D:'
+# The pgbackrest HAS to be on the same drive as the dependencies
 
+dep_inc_dir = []
 
+# Find required yaml library (only used for build)
+lib_yaml = dependency('yaml')
+
+# Find required regex library (not available by default in msvc)
+lib_regex = dependency('RXSpencer')
 
 # Find required bz2 library
-lib_bz2 = cc.find_library('bz2', dirs: ['D:/Dep/lib'],)
-
-if not lib_yaml.found()
-    error('lib yaml not found')
-endif
+dep_inc_dir += include_directories('C:/Program Files (x86)/bzip2/include')
+lib_bz2 = cc.find_library('bz2', dirs: ['C:/Program Files (x86)/bzip2/lib'],)
 
 # Find required openssl library
 # lib_openssl = dependency('openssl')
@@ -183,17 +185,19 @@ endif
 # lib_pq = dependency('libpq')
 
 # Find required xml library
-# lib_xml = dependency('libxml2', method: 'cmake')
-lib_xml = cc.find_library('xml2s', dirs: ['D:/Dep/lib'],)
-
-# Find required yaml library (only used for build)
-# lib_yaml = dependency('yaml-0.1')
+dep_inc_dir += include_directories('C:/Program Files (x86)/libxml2/include/libxml2')
+lib_xml = cc.find_library('xml2s', dirs: ['C:/Program Files (x86)/libxml2/lib'],)
 
 # Find required gz library
 # lib_z = dependency('zlib')
 
 # Find optional zstd library
 # lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
+
+if not lib_yaml.found()
+    error('lib yaml not found')
+endif
+
 endif
 
 # Check if the C compiler supports _Static_assert()
@@ -230,7 +234,7 @@ if cc.get_id() == 'msvc'
         configuration.set('ENABLE_YAML', '')
     endif
     # Enable static import for lib regex
-    if true # lib_regex.found()
+    if lib_regex.found()
         configuration.set('ENABLE_REGEX', '#define ENABLE_REGEX', description: 'Enable lib_regex static import')
     else
         configuration.set('ENABLE_REGEX', '')

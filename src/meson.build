@@ -328,7 +328,7 @@ alias_target('pgbackrest', pgbackrest)
 else
     configure_file(input: 'win32_msvc/build.auto.h.in', output: 'build.auto.h', configuration: configuration)
 
-    subdir('win32_msvc/regex')
+    # subdir('win32_msvc/regex')
 
     ################################################################################################################################
     # MSVC specific include dirs and sources
@@ -401,8 +401,6 @@ else
         'build/config/parse.c',
         'build/config/render.c',
     ]
-
-    lib_regex = declare_dependency(link_with : dep_regex)
 
     build_config = executable(
         'build-config',
