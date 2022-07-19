@@ -28,8 +28,9 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Create default storage object for testing
-    Storage *storageTest = storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"), .write = true);
-//    Storage *storageTmp = storageSftpNewP(STRDEF("/tmp"), .write = true);
+    // jrt !!!  -- write test with small timout to error on EAGAIN and cover EAGAIN paths
+    Storage *storageTest = storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 20000, 20000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"), .write = true);
+    //Storage *storageTmp = storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 20000, 20000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"), .write = true);
     ioBufferSizeSet(2);
 
     // Directory and file that cannot be accessed to test permissions errors
@@ -66,7 +67,7 @@ testRun(void)
         TEST_TITLE("create new storage with defaults");
 
         Storage *storageTest = NULL;
-        TEST_ASSIGN(storageTest, storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 10000, 10000, .user = strNewZ("vagrant"),
+        TEST_ASSIGN(storageTest, storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 20000, 20000, .user = strNewZ("vagrant"),
                     .password = strNewZ("vagrant")), "new storage (defaults)");
         TEST_RESULT_STR_Z(storageTest->path, "/tmp", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "check file mode");
@@ -80,7 +81,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/path/to"), STRDEF("localhost"), 22, 10000, 10000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+                STRDEF("/path/to"), STRDEF("localhost"), 22, 20000, 20000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
                 .modeFile = 0600, .modePath = 0700, .write = true), "new storage (non-default)");
         TEST_RESULT_STR_Z(storageTest->path, "/path/to", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "check file mode");
@@ -562,7 +563,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(storageListP(storageTest, NULL, .expression = STRDEF("^bbb")), "bbb.txt\n", "dir list");
     }
 
-/*
+/*  Optional -- can look at adding later
     // *****************************************************************************************************************************
     if (testBegin("storageCopy()"))
     {
@@ -599,8 +600,82 @@ testRun(void)
     }
         */
 
+    // *****************************************************************************************************************************
+    if (testBegin("storageMove()"))
+    {
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_CREATE_NOPERM();
+#endif // TEST_CONTAINER_REQUIRED
 
+        const String *sourceFile = STRDEF(TEST_PATH "/source.txt");
+        const String *destinationFile = STRDEF(TEST_PATH "/sub/destination.txt");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("move - missing source");
+
+        StorageRead *source = storageNewReadP(storageTest, sourceFile);
+        StorageWrite *destination = storageNewWriteP(storageTest, destinationFile);
+
+        TEST_ERROR_FMT(
+            storageMoveP(storageTest, source, destination), FileMissingError,
+            "unable to move missing source '%s': [2] No such file or directory", strZ(sourceFile));
+#ifdef TEST_CONTAINER_REQUIRED
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("move - source file permission denied");
+
+        source = storageNewReadP(storageTest, fileNoPerm);
+
+        TEST_ERROR_FMT(
+            storageMoveP(storageTest, source, destination), FileMoveError,
+            "unable to move '%s' to '%s': [13] Permission denied", strZ(fileNoPerm), strZ(destinationFile));
+#endif // TEST_CONTAINER_REQUIRED
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("move - missing destination");
+
+        const Buffer *buffer = BUFSTRDEF("TESTFILE");
+        storagePutP(storageNewWriteP(storageTest, sourceFile), buffer);
+
+        source = storageNewReadP(storageTest, sourceFile);
+        destination = storageNewWriteP(storageTest, destinationFile, .noCreatePath = true);
+
+        TEST_ERROR_FMT(
+            storageMoveP(storageTest, source, destination), PathMissingError,
+            "unable to move '%s' to missing path '%s': [2] No such file or directory", strZ(sourceFile),
+            strZ(strPath(destinationFile)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("move - success");
+
+        destination = storageNewWriteP(storageTest, destinationFile);
+
+        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to subpath");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, sourceFile), false, "check source file not exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, destinationFile), true, "check destination file exists");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageTest, destinationFile))), "TESTFILE", "check destination contents");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("move - same path");
+
+        sourceFile = destinationFile;
+        source = storageNewReadP(storageTest, sourceFile);
+        destinationFile = STRDEF(TEST_PATH "/sub/destination2.txt");
+        destination = storageNewWriteP(storageTest, destinationFile);
+
+        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to same path");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("move - parent path");
+
+        sourceFile = destinationFile;
+        source = storageNewReadP(storageTest, sourceFile);
+        destinationFile = STRDEF(TEST_PATH "/source.txt");
+        destination = storageNewWriteP(storageTest, destinationFile, .noSyncPath = true);
+
+        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to parent path (no sync)");
+
+    }
 
 
     FUNCTION_HARNESS_RETURN_VOID();

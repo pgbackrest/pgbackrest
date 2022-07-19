@@ -72,11 +72,10 @@ storageWriteSftpFreeResource(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->sftpHandle != NULL);
 
-    //jrt fd becomes handle, libssh2*close()
-    //THROW_ON_SYS_ERROR_FMT(
-    //    libssh2_sftp_close(this->sftpHandle) != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
-    this->wait = waitNew(this->timeoutConnect);
+    // Close the libssh2 sftpHandle
     int rc = 0;
+    this->wait = waitNew(this->timeoutConnect);
+
     do
     {
         rc = libssh2_sftp_close(this->sftpHandle);
@@ -105,25 +104,32 @@ storageWriteSftpOpen(THIS_VOID)
     ASSERT(this->sftpSession != NULL);
 
     // Open the file
-    //this->fd = open(strZ(this->nameTmp), FILE_OPEN_FLAGS, this->interface.modeFile);
-    //jrt !!! rework file open flags if they don't match LIBSSH2_FXF* flags,
-    //same with mode -> see  LIBSSH2_SFTP_S_* convenience defines in <lib‐ssh2_sftp.h>
-    this->sftpHandle = libssh2_sftp_open_ex(
-        this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), FILE_OPEN_FLAGS,
-        (int)this->interface.modeFile, LIBSSH2_SFTP_OPENFILE);
+    this->wait = waitNew(this->timeoutConnect);
 
-    //if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                 // {vm_covered}
+    do
+    {
+        this->sftpHandle = libssh2_sftp_open_ex(
+            this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), FILE_OPEN_FLAGS,
+            (int)this->interface.modeFile, LIBSSH2_SFTP_OPENFILE);
+    }
+    while (this->sftpHandle == NULL && waitMore(this->wait));
+
     // Attempt to create the path if it is missing
-    if (this->sftpHandle == NULL && this->interface.createPath)                                            // {vm_covered} jrt need explanation  on this
+    if (this->sftpHandle == NULL && this->interface.createPath)
     {
          // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again
-        //jrt fd becomes handle, libssh2*open()
-        this->sftpHandle = libssh2_sftp_open_ex(
-        this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), FILE_OPEN_FLAGS,
-        (int)this->interface.modeFile, LIBSSH2_SFTP_OPENFILE);
+        this->wait = waitNew(this->timeoutConnect);
+
+        do
+        {
+            this->sftpHandle = libssh2_sftp_open_ex(
+                    this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), FILE_OPEN_FLAGS,
+                    (int)this->interface.modeFile, LIBSSH2_SFTP_OPENFILE);
+        }
+        while (this->sftpHandle == NULL && waitMore(this->wait));
     }
 
     // Handle errors
@@ -136,10 +142,10 @@ storageWriteSftpOpen(THIS_VOID)
         {
             //jrt should should check be against LIBSSH2_FX_NO_SUCH_FILE and LIBSSH2_FX_NO_SUCH_PATH
             //verify PATH or FILE or both
-            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)                        // {vm_covered}
+            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
                 THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
             else
-                THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));    // {vm_covered}
+                THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));
         }
     }
 
@@ -150,8 +156,9 @@ storageWriteSftpOpen(THIS_VOID)
     // jrt libssh2_sftp_setstat() libssh2_sftp_fsetstat()
     if (this->interface.user != NULL || this->interface.group != NULL)
     {
-        this->attr->flags = LIBSSH2_SFTP_ATTR_UIDGID;
+        int rc = 0;
 
+        this->attr->flags = LIBSSH2_SFTP_ATTR_UIDGID;
         this->attr->uid = userIdFromName(this->interface.user);
 
         if (this->attr->uid == userId())
@@ -162,10 +169,16 @@ storageWriteSftpOpen(THIS_VOID)
         if (this->attr->gid == groupId())
             this->attr->gid = (gid_t)-1;
 
+        this->wait = waitNew(this->timeoutConnect);
+
+        do
+        {
+            rc = libssh2_sftp_fsetstat(this->sftpHandle, this->attr);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
         // !!! see also libssh2_session_last_error()
-        THROW_ON_SYS_ERROR_FMT(
-            libssh2_sftp_fsetstat(this->sftpHandle, this->attr) != 0, FileOwnerError, "unable to set ownership for '%s'",
-            strZ(this->nameTmp));
+        THROW_ON_SYS_ERROR_FMT(rc != 0, FileOwnerError, "unable to set ownership for '%s'", strZ(this->nameTmp));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -186,23 +199,18 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
 
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
-    //jrt fd becomes handle
     ASSERT(this->sftpHandle != NULL);
 
     // Write the data
-    // jrt libssh2_sftp_write()
-    // fd becomes handle
-    //if (write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
     // !!! verify this cast is valid
-    //if (libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
-    this->wait = waitNew(this->timeoutConnect);
     ssize_t rc = 0;
+    this->wait = waitNew(this->timeoutConnect);
+
     do
     {
         rc = libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer), bufUsed(buffer));
     }
     while (rc == LIBSSH2_ERROR_EAGAIN  && waitMore(this->wait));
-    // jrt while ((rc == LIBSSH2_ERROR_EAGAIN || rc != (ssize_t)bufUsed(buffer)) && waitMore(this->wait));
 
     if (rc != (ssize_t)bufUsed(buffer))
         THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
@@ -225,16 +233,12 @@ storageWriteSftpClose(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->sftpHandle != NULL);
 
-    int rc = 0;
-
     // Close if the file has not already been closed
-    // jrt fd becomes handle
-    // jrt libssh2*close()
-    //if (this->fd != -1)
     if (this->sftpHandle != NULL)
     {
+        int rc = 0;
+
         // Sync the file
-        //jrt fd becomes handle, libssh2_sftp_fsync if available -- determine how to query hello for fsync capability
         //!!! per below, if cannot query hellow for capability then we can act accordingly upon receipt of LIBSSH2_FX_OP_UNSUPPORTED
         //bail out/issue/log warning etc
         //jrt !!! LIBSSH2_ERROR_SFTP_PROTOCOL - An invalid SFTP protocol response was received on the socket, or an SFTP operation
@@ -242,9 +246,8 @@ storageWriteSftpClose(THIS_VOID)
         //the fsync operation: the SFTP subcode LIBSSH2_FX_OP_UNSUPPORTED will be returned in this case.
         if (this->interface.syncFile)
         {
-            //THROW_ON_SYS_ERROR_FMT(
-            //    libssh2_sftp_fsync(this->sftpHandle) != 0, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
             this->wait = waitNew(this->timeoutConnect);
+
             do
             {
                 rc = libssh2_sftp_fsync(this->sftpHandle);
@@ -263,47 +266,36 @@ storageWriteSftpClose(THIS_VOID)
             this->attr->flags = LIBSSH2_SFTP_ATTR_ACMODTIME;
             this->attr->atime = (unsigned int)this->interface.timeModified;
             this->attr->mtime = (unsigned int)this->interface.timeModified;
-            /*
-               THROW_ON_SYS_ERROR_FMT(
-               libssh2_sftp_fsetstat(
-               this->sftpHandle, this->attr) != 0,
-               FileInfoError, "unable to set time for '%s'", strZ(this->nameTmp));
-               */
+
+            this->wait = waitNew(this->timeoutConnect);
+
             do
             {
                 rc = libssh2_sftp_fsetstat( this->sftpHandle, this->attr);
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-            THROW_ON_SYS_ERROR_FMT(rc != 0, FileInfoError, "unable to set time for '%s'", strZ(this->nameTmp));
 
+            THROW_ON_SYS_ERROR_FMT(rc != 0, FileInfoError, "unable to set time for '%s'", strZ(this->nameTmp));
         }
 
         // Close the file
-        //jrt fd becomes handle, libssh2_*close()
-        /*THROW_ON_SYS_ERROR_FMT(
-          libssh2_sftp_close(this->sftpHandle) != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
-          */
         this->wait = waitNew(this->timeoutConnect);
+
         do
         {
             rc = libssh2_sftp_close(this->sftpHandle);
         }
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+        THROW_ON_SYS_ERROR_FMT(rc != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
+
         this->sftpHandle = NULL;
 
         // Rename from temp file
-        // jrt libssh2_sftp_rename
         if (this->interface.atomic)
         {
-            //if (libssh2_sftp_rename(this->sftpSession, strZ(this->nameTmp), strZ(this->interface.name)) != 0)
-            /*
-            if (libssh2_sftp_rename_ex(
-                this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), strZ(this->interface.name),
-                (unsigned int)strSize(this->interface.name),
-                LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE) != 0)
-                THROW_SYS_ERROR_FMT(FileMoveError, "unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name));
-                */
             this->wait = waitNew(this->timeoutConnect);
+
             do
             {
                 rc = libssh2_sftp_rename_ex(
@@ -313,14 +305,14 @@ storageWriteSftpClose(THIS_VOID)
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
-            // Some versions of sftp do not support overwriting an existing file and will return LIBSSH2_FX_FAILURE
+            // Most versions of sftp do not support overwriting an existing file and will return LIBSSH2_FX_FAILURE
             // need to find out if we can determine server version
             // ??? Do we want to to just fail, or do we want to check if the file exists and rm it and try the rename again
             if (rc)
             {
                 if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
                 {
-                    // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
+                    // libssh2 may return LIBSSH2_FX_FAILURE if the file already exists
                     if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
                     {
                         LIBSSH2_SFTP_ATTRIBUTES attrs;
@@ -338,9 +330,10 @@ storageWriteSftpClose(THIS_VOID)
                         // If it already exists, remove it and retry the rename
                         if (rc == 0)
                         {
-                            LOG_DEBUG_FMT("jrt remove and retry");
                             storageInterfaceRemoveP(this->storage, this->interface.name);
+
                             this->wait = waitNew(this->timeoutConnect);
+
                             do
                             {
                                 rc = libssh2_sftp_rename_ex(
@@ -360,7 +353,7 @@ storageWriteSftpClose(THIS_VOID)
         }
 
         // Sync the path
-        // jrt determine if a libssh2 function supports this
+        // jrt determine if a libssh2 function/sftp version supports this
         if (this->interface.syncPath)
             storageInterfacePathSyncP(this->storage, this->path);
     }
@@ -368,15 +361,24 @@ storageWriteSftpClose(THIS_VOID)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+// jrt !!! declare const where needed
 /**********************************************************************************************************************************/
 StorageWrite *
 storageWriteSftpNew(
-    StorageSftp *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic)
+    StorageSftp *storage, const String *name, LIBSSH2_SESSION *session, LIBSSH2_SFTP *sftpSession, LIBSSH2_SFTP_HANDLE *sftpHandle,
+    LIBSSH2_SFTP_ATTRIBUTES *attr, const TimeMSec timeoutConnect, const TimeMSec timeoutSession, const mode_t modeFile,
+    const mode_t modePath, const String *user, const String *group, const time_t timeModified, const bool createPath,
+    const bool syncFile, const bool syncPath, const bool atomic)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, storage);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM_P(VOID, session);
+        FUNCTION_LOG_PARAM_P(VOID, sftpSession);
+        FUNCTION_LOG_PARAM_P(VOID, sftpHandle);
+        FUNCTION_LOG_PARAM_P(VOID, attr);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(STRING, user);
@@ -403,12 +405,12 @@ storageWriteSftpNew(
         {
             .storage = storage,
             .path = strPath(name),
-            .session = storage->session,
-            .sftpSession = storage->sftpSession,
-            .sftpHandle = storage->sftpHandle,
-            .attr = storage->attr,
-            .timeoutConnect = storage->timeoutConnect,
-            .timeoutSession = storage->timeoutSession,
+            .session = session,
+            .sftpSession = sftpSession,
+            .sftpHandle = sftpHandle,
+            .attr = attr,
+            .timeoutConnect = timeoutConnect,
+            .timeoutSession = timeoutSession,
 
             .interface = (StorageWriteInterface)
             {

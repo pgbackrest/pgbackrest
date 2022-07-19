@@ -13,7 +13,9 @@ Sftp Storage Read
 Constructors
 ***********************************************************************************************************************************/
 StorageRead *storageReadSftpNew(
-    StorageSftp *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
+    StorageSftp *const storage, const String *const name, const bool ignoreMissing, LIBSSH2_SESSION *session,
+    LIBSSH2_SFTP *sftpSession, LIBSSH2_SFTP_HANDLE *sftpHandle, TimeMSec timeoutSession, TimeMSec timeoutConnect,
+    const uint64_t offset, const Variant *const limit);
 
 #endif
 
