@@ -26,6 +26,8 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
     // Global lists to be copied to next test
     StringList *const globalDependList = strLstNew();
     StringList *const globalFeatureList = strLstNew();
+    List *const globalHarnessList = lstNewP(sizeof(TestDefHarness), .comparator = lstComparatorStr);
+    List *const globalShimList = lstNewP(sizeof(TestDefShim), .comparator = lstComparatorStr);
 
     // Module list
     YAML_SEQ_BEGIN(yaml)
@@ -43,8 +45,8 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
             YAML_SEQ_BEGIN(yaml)
             {
                 TestDefModule testDefModule = {0};
-                StringList *includeList = NULL;
-                List *coverageList = NULL;
+                StringList *const includeList = strLstNew();
+                List *const coverageList = lstNewP(sizeof(TestDefCoverage), .comparator = lstComparatorStr);
 
                 // Submodule
                 YAML_MAP_BEGIN(yaml)
@@ -61,8 +63,6 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                     }
                     else if (strEqZ(subModuleDef.value, "coverage"))
                     {
-                        coverageList = lstNewP(sizeof(TestDefCoverage), .comparator = lstComparatorStr);
-
                         YAML_SEQ_BEGIN(yaml)
                         {
                             TestDefCoverage testDefCoverage = {0};
@@ -82,6 +82,9 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                 YAML_MAP_END();
                             }
 
+                            testDefCoverage.include =
+                                strEndsWithZ(testDefCoverage.name, ".vendor") || strEndsWithZ(testDefCoverage.name, ".auto");
+
                             MEM_CONTEXT_OBJ_BEGIN(coverageList)
                             {
                                 testDefCoverage.name = strDup(testDefCoverage.name);
@@ -90,7 +93,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             MEM_CONTEXT_OBJ_END();
 
                             // Also add to the global depend list
-                            if (testDefCoverage.coverable)
+                            if (testDefCoverage.coverable && !testDefCoverage.include)
                                 strLstAddIfMissing(globalDependList, testDefCoverage.name);
                         }
                         YAML_SEQ_END();
@@ -113,22 +116,26 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                     }
                     else if (strEqZ(subModuleDef.value, "harness"))
                     {
+                        TestDefHarness testDefHarness = {0};
+                        StringList *harnessIncludeList = strLstNew();
+
                         if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
                         {
-                            yamlScalarNext(yaml);
+                            testDefHarness.name = yamlScalarNext(yaml).value;
                         }
                         else
                         {
                             YAML_MAP_BEGIN(yaml)
                             {
                                 yamlScalarNextCheckZ(yaml, "name");
-                                yamlScalarNext(yaml);
+                                testDefHarness.name = yamlScalarNext(yaml).value;
 
                                 yamlScalarNextCheckZ(yaml, "shim");
 
                                 YAML_MAP_BEGIN(yaml)
                                 {
-                                    yamlScalarNext(yaml);
+                                    const String *const shim = yamlScalarNext(yaml).value;
+                                    strLstAdd(harnessIncludeList, shim);
 
                                     if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
                                     {
@@ -136,28 +143,37 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                     }
                                     else
                                     {
+                                        TestDefShim testDefShim = {.name = shim, .functionList = strLstNew()};
+
                                         YAML_MAP_BEGIN(yaml)
                                         {
                                             yamlScalarNextCheckZ(yaml, "function");
 
+                                            StringList *const functionList = strLstNew();
+
                                             YAML_SEQ_BEGIN(yaml)
                                             {
-                                                yamlScalarNext(yaml);
+                                                strLstAdd(functionList, yamlScalarNext(yaml).value);
                                             }
                                             YAML_SEQ_END();
+
+                                            testDefShim.functionList = functionList;
                                         }
                                         YAML_MAP_END();
+
+                                        lstAdd(globalShimList, &testDefShim);
                                     }
                                 }
                                 YAML_MAP_END();
                             }
                             YAML_MAP_END();
                         }
+
+                        testDefHarness.includeList = harnessIncludeList;
+                        lstAdd(globalHarnessList, &testDefHarness);
                     }
                     else if (strEqZ(subModuleDef.value, "include"))
                     {
-                        includeList = strLstNew();
-
                         YAML_SEQ_BEGIN(yaml)
                         {
                             strLstAdd(includeList, yamlEventNext(yaml).value);
@@ -211,6 +227,50 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
 
                     if (strLstSize(globalFeatureList) > 0)
                         testDefModule.featureList = strLstDup(globalFeatureList);
+
+                    // Copy harness list
+                    List *const harnessList = lstNewP(sizeof(TestDefHarness), .comparator = lstComparatorStr);
+
+                    MEM_CONTEXT_OBJ_BEGIN(harnessList)
+                    {
+                        for (unsigned int harnessIdx = 0; harnessIdx < lstSize(globalHarnessList); harnessIdx++)
+                        {
+                            const TestDefHarness *const globalHarness = lstGet(globalHarnessList, harnessIdx);
+
+                            lstAdd(
+                                harnessList,
+                                &(TestDefHarness)
+                                {
+                                    .name = strDup(globalHarness->name),
+                                    .includeList = strLstDup(globalHarness->includeList),
+                                });
+                        }
+                    }
+                    MEM_CONTEXT_OBJ_END();
+
+                    testDefModule.harnessList = harnessList;
+
+                    // Copy shim list
+                    List *const shimList = lstNewP(sizeof(TestDefShim), .comparator = lstComparatorStr);
+
+                    MEM_CONTEXT_OBJ_BEGIN(shimList)
+                    {
+                        for (unsigned int shimIdx = 0; shimIdx < lstSize(globalShimList); shimIdx++)
+                        {
+                            const TestDefShim *const globalShim = lstGet(globalShimList, shimIdx);
+
+                            lstAdd(
+                                shimList,
+                                &(TestDefShim)
+                                {
+                                    .name = strDup(globalShim->name),
+                                    .functionList = strLstDup(globalShim->functionList),
+                                });
+                        }
+                    }
+                    MEM_CONTEXT_OBJ_END();
+
+                    testDefModule.shimList = shimList;
                 }
                 MEM_CONTEXT_OBJ_END();
 

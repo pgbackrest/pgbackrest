@@ -8,11 +8,27 @@ Parse Define Yaml
 #include "common/type/string.h"
 #include "storage/storage.h"
 
+// Covered code modules
 typedef struct TestDefCoverage
 {
     const String *name;                                             // Code module name
     bool coverable;                                                 // Does this code module include coverable code?
+    bool include;                                                   // Is this module included in another module?
 } TestDefCoverage;
+
+// Harness modules
+typedef struct TestDefHarness
+{
+    const String *name;                                             // Harness module name
+    const StringList *includeList;                                  // List of modules to include directly in harness
+} TestDefHarness;
+
+// Shimmed code modules
+typedef struct TestDefShim
+{
+    const String *name;                                             // Shim module name
+    const StringList *functionList;                                 // List of functions to shim
+} TestDefShim;
 
 typedef struct TestDefModule
 {
@@ -26,6 +42,8 @@ typedef struct TestDefModule
     const List *coverageList;                                       // Code modules covered by this test module
     const StringList *dependList;                                   // Code modules that this test module depends on
     const StringList *includeList;                                  // Additional code modules to include in the test module
+    const List *harnessList;                                        // Harnesses to use for this test
+    const List *shimList;                                           // Shims for this test
 } TestDefModule;
 
 typedef struct TestDef
