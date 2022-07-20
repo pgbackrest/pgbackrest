@@ -40,8 +40,13 @@ cmdTest(
         // Remove and recreate the test path
         const Storage *const storageTestId = storagePosixNewP(
             strNewFmt("%s/test-%u", strZ(testBldPathTest(testBld)), testBldVmId(testBld)), .write = true);
+        const char *const permReset = zNewFmt("chmod -R 777 %s", strZ(storagePathP(storageTestId, NULL)));
+
+        if (system(permReset) != 0)
+            THROW_FMT(ExecuteError, "unable to execute: %s", permReset);
+
         storagePathRemoveP(storageTestId, NULL, .recurse = true);
-        storagePathCreateP(storageTestId, NULL);
+        storagePathCreateP(storageTestId, NULL, .mode = 0770);
 
         // Meson setup
         const String *const pathUnit = strNewFmt("%s/unit-%u", strZ(testBldPathTest(testBld)), testBldVmId(testBld));

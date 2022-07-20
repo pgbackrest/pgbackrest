@@ -332,10 +332,21 @@ testBldUnit(TestBuild *const this)
             strCatFmt(mesonBuild, "    '%s/src/%s.c',\n", strZ(pathRepo), strZ(depend));
         }
 
-        // Add harnesses to meson build if no includes are in module or coverage includes
+        // Add harnesses
         for (unsigned int harnessIdx = 0; harnessIdx < strLstSize(harnessList); harnessIdx++)
         {
             const TestDefHarness *const harness = lstGet(module->harnessList, harnessIdx);
+
+            // Add harness depends
+            const String *const harnessDependPath = strNewFmt(
+                "%s/test/src/common/%s", strZ(pathRepo), strZ(bldEnum("harness", harness->name)));
+            StorageIterator *const storageItr = storageNewItrP(
+                testBldStorageRepo(this), harnessDependPath, .expression = STRDEF("\\.c$"), .sortOrder = sortOrderAsc);
+
+            while (storageItrMore(storageItr))
+                strCatFmt(mesonBuild, "    '%s/%s',\n", strZ(harnessDependPath), strZ(storageItrNext(storageItr).name));
+
+            // Add harness if no includes are in module or coverage includes
             unsigned int includeIdx = 0;
 
             for (; includeIdx < strLstSize(harness->includeList); includeIdx++)
@@ -368,6 +379,7 @@ testBldUnit(TestBuild *const this)
             "        lib_lz4,\n"
             "        lib_pq,\n"
             "        lib_xml,\n"
+            "        lib_yaml,\n"
             "        lib_z,\n"
             "        lib_zstd,\n"
             "    ],\n"
