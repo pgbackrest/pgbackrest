@@ -9,7 +9,8 @@ test_help_auto_c_inc = custom_target(
         '../../build/help/help.xml',
     ],
     command: [
-        build_help,
+        build_code,
+        'help',
         '@CURRENT_SOURCE_DIR@/../../..',
         '@BUILD_ROOT@/test/src',
     ],

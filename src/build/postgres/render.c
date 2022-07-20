@@ -131,7 +131,7 @@ bldPgRenderInterfaceAutoC(const Storage *const storageRepo, const BldPg bldPg)
         pg,
         "};\n");
 
-    bldPut(storageRepo, "postgres/interface.auto.c.inc", BUFSTR(pg));
+    bldPut(storageRepo, "src/postgres/interface.auto.c.inc", BUFSTR(pg));
 }
 
 /**********************************************************************************************************************************/
