@@ -197,7 +197,7 @@ storageWritePosixClose(THIS_VOID)
         // Rename from temp file
         if (this->interface.atomic)
         {
-#ifdef _MSC_VER
+#ifdef _WIN64
             remove(strZ(this->interface.name));
 #endif
             if (rename(strZ(this->nameTmp), strZ(this->interface.name)) == -1)

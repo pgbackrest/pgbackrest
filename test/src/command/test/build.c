@@ -389,7 +389,7 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_IDX]}"), strNewFmt("%u", testBldVmId(this)));
 
         // Include test file
-#ifdef _WIN32
+#ifdef _WIN64
         // This change is applied on _WIN32 and not _MSC_VER as the main command fails with both msvc and mingw32
         strReplace(
             testC, STRDEF("{[C_TEST_INCLUDE]}"),

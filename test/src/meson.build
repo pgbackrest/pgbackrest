@@ -2,10 +2,10 @@
 # Write configuration
 ####################################################################################################################################
 # if cc.get_id() != 'msvc'
-if host_machine.system() == 'windows'
-configure_file(output: 'build.auto.h', configuration: configuration)
-else
+if cc.get_id() == 'msvc'
 configure_file(input: '../../src/win32_msvc/build.auto.h.in', output: 'build.auto.h', configuration: configuration)
+else
+configure_file(output: 'build.auto.h', configuration: configuration)
 endif
 
 ####################################################################################################################################

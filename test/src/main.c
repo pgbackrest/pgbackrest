@@ -5,7 +5,7 @@ Main
 
 #include <stdio.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     #include <Windows.h>
 #endif
 

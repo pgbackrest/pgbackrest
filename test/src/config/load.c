@@ -50,7 +50,7 @@ cfgLoadUpdateOption(void)
     // Invalidate config option so it does not show up in option list
     cfgOptionInvalidate(cfgOptConfig);
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     // Replace '\' with '/', since the '\' doesn't behave correctly in some cases (e.g when writing path to file)
     for (int i = 0; i < sizeof(currentWorkDir); ++i)
     {
@@ -111,7 +111,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         // Parse config from command line
         TRY_BEGIN()
         {
-#ifdef _MSC_VER
+#ifdef _WIN64
             String *rootPath = strNewZ("C:\\");
             configParse(storagePosixNewP(rootPath), strLstSize(argListNew), strLstPtr(argListNew), true);
 #else

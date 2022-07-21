@@ -9,7 +9,7 @@ Lock Handler
 #include <sys/file.h>
 #include <unistd.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     #include <Windows.h>
 #endif
 
@@ -163,7 +163,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
         else
         {
             // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing the lock
-#ifdef _MSC_VER
+#ifdef _WIN64
             HANDLE fileHandle = (HANDLE)_get_osfhandle(fd);
             ASSERT(fileHandle != INVALID_HANDLE_VALUE);
             
@@ -258,7 +258,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         if (param.percentComplete != NULL)
             jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
 
-#ifdef _MSC_VER
+#ifdef _WIN64
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), GetCurrentProcessId());
 #else
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
@@ -274,7 +274,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
                 strZ(lockLocal.file[lockType].name));
 
             // In case the current write is ever shorter than the previous one
-#ifdef _MSC_VER
+#ifdef _WIN64
             HANDLE fileHandle = (HANDLE)_get_osfhandle(lockLocal.file[lockType].fd);
             ASSERT(fileHandle != INVALID_HANDLE_VALUE);
 
@@ -285,7 +285,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
             THROW_ON_SYS_ERROR_FMT(
                 ftruncate(lockLocal.file[lockType].fd, 0) == -1, FileWriteError, "unable to truncate '%s'",
                 strZ(lockLocal.file[lockType].name));
-#endif // !_MSC_VER
+#endif // !_WIN64
 
         }
 
@@ -342,7 +342,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
             else
             {
                 // Attempt to lock the file
-#ifdef _MSC_VER
+#ifdef _WIN64
                 HANDLE fileHandle = (HANDLE)_get_osfhandle(result);
                 ASSERT(fileHandle != INVALID_HANDLE_VALUE);
             

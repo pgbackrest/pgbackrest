@@ -6,7 +6,7 @@ Exit Routines
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     #include <Windows.h>
 #endif
 
@@ -34,7 +34,7 @@ exitSignalName(SignalType signalType)
 
     switch (signalType)
     {
-#ifdef _MSC_VER
+#ifdef _WIN64
         case signalTypeCtrlC:
             name = "Ctrl-C";
             break;
@@ -82,7 +82,7 @@ exitSignalName(SignalType signalType)
 /***********************************************************************************************************************************
 Catch signals
 ***********************************************************************************************************************************/
-#ifdef _MSC_VER
+#ifdef _WIN64
 static BOOL
 exitOnSignal(_In_ DWORD signalType)
 {
@@ -113,7 +113,7 @@ void
 exitInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
-#ifdef _MSC_VER
+#ifdef _WIN64
     SetConsoleCtrlHandler(exitOnSignal, TRUE);
 #else
     signal(SIGHUP, exitOnSignal);
