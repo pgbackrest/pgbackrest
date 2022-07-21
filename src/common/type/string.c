@@ -801,17 +801,40 @@ strPathAbsolute(const String *this, const String *base)
     String *result = NULL;
 
 #ifdef _WIN64
-    UNREFERENCED_PARAMETER(base);
-
     // We always call GetFullPathNameA, as PathIsRelativeA returns false on paths like C:\x\y\..\..
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        DWORD bufferSize = GetFullPathNameA(strZ(this), 0, NULL, NULL);
+        const String *pathToNormalize = NULL;
+
+        // Path is already absolute so use it
+        if (strBeginsWithZ(this, "\\\\") || strZ(this)[1] == ':')
+        {
+            pathToNormalize = this;
+        }
+        // Else we'll need to construct the absolute path.  You would hope we could use realpath() here but it is so broken in the
+        // Posix spec that is seems best avoided.
+        else
+        {
+            // Base must be absolute to start
+            if (!(strBeginsWithZ(base, "\\\\") || strZ(base)[1] == ':'))
+                THROW_FMT(AssertError, "base path '%s' is not absolute", strZ(base));
+
+            if (strEndsWithZ(base, "\\") || strEndsWithZ(base, "/"))
+                pathToNormalize = strNewFmt("%s%s", strZ(base), strZ(this));
+            else
+                pathToNormalize = strNewFmt("%s/%s", strZ(base), strZ(this));
+        }
+        
+        // In both cases, normalize the path using GetFullPathName.
+        // This unifies the slashes, and removes any intermediate dots
+        // Get buffer size
+        DWORD bufferSize = GetFullPathNameA(strZ(pathToNormalize), 0, NULL, NULL);
         if (bufferSize == 0)
             THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
 
+        // Allocate and fill the buffer
         Buffer *fullPathBuffer = bufNew((size_t)bufferSize);
-        DWORD writtenCount = GetFullPathNameA(strZ(this), bufferSize, (LPSTR)bufPtr(fullPathBuffer), NULL);
+        DWORD writtenCount = GetFullPathNameA(strZ(pathToNormalize), bufferSize, (LPSTR)bufPtr(fullPathBuffer), NULL);
         if (writtenCount == 0 || writtenCount != (bufferSize - 1))
             THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
 
