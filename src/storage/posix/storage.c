@@ -204,16 +204,16 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
                         retResult = LookupAccountSidA(
                             NULL,
                             sidOwner,
-                            bufPtr(accountName),
+                            (LPSTR)bufPtr(accountName),
                             (LPDWORD)&accountNameSize,
-                            bufPtr(domainName),
+                            (LPSTR)bufPtr(domainName),
                             (LPDWORD)&domainNameSize,
                             &sidNameUse);
                         if ( retResult )
                         {
                             MEM_CONTEXT_PRIOR_BEGIN()
                             {
-                                result.user = strNewZN(bufPtr(accountName), accountNameSize);
+                                result.user = strNewZN((const char *)bufPtr(accountName), accountNameSize);
                             }
                             MEM_CONTEXT_PRIOR_END();
                         }

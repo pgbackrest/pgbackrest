@@ -93,16 +93,10 @@ groupIdFromName(const String *groupName)
     FUNCTION_TEST_PARAM(STRING, groupName);
     FUNCTION_TEST_END();
 
-    //if (groupName != NULL)
-    //{
-    //    struct group *groupData = getgrnam(strZ(groupName));
-
-    //    if (groupData != NULL)
-    //        FUNCTION_TEST_RETURN_TYPE(gid_t, groupData->gr_gid);
-    //}
-
     // group name is always NULL
     // getgrnam is not available on Windows
+
+    UNREFERENCED_PARAMETER(groupName);
 
     FUNCTION_TEST_RETURN_TYPE(gid_t, (gid_t)-1);
 }
@@ -123,13 +117,10 @@ groupNameFromId(gid_t groupId)
     FUNCTION_TEST_PARAM(UINT, groupId);
     FUNCTION_TEST_END();
 
-    //struct group *groupData = getgrgid(groupId);
-
-    //if (groupData != NULL)
-    //    FUNCTION_TEST_RETURN(STRING, strNewZ(groupData->gr_name));
-
     // group data is always NULL
     // getgrgid is not available on Windows
+
+    UNREFERENCED_PARAMETER(groupId);
 
     FUNCTION_TEST_RETURN(STRING, NULL);
 }
@@ -150,13 +141,7 @@ userIdFromName(const String *userName)
     FUNCTION_TEST_PARAM(STRING, userName);
     FUNCTION_TEST_END();
 
-    //if (userName != NULL)
-    //{
-    //    struct passwd *userData = getpwnam(strZ(userName));
-
-    //    if (userData != NULL)
-    //        FUNCTION_TEST_RETURN_TYPE(uid_t, userData->pw_uid);
-    //}
+    UNREFERENCED_PARAMETER(userName);
 
     FUNCTION_TEST_RETURN_TYPE(uid_t, (uid_t)-1);
 }
@@ -177,10 +162,7 @@ userNameFromId(uid_t userId)
     FUNCTION_TEST_PARAM(UINT, userId);
     FUNCTION_TEST_END();
 
-    //struct passwd *userData = getpwuid(userId);
-
-    //if (userData != NULL)
-    //    FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_name));
+    UNREFERENCED_PARAMETER(userId);
 
     FUNCTION_TEST_RETURN(STRING, NULL);
 }

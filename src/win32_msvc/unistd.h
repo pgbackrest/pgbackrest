@@ -4,7 +4,7 @@ MSVC compatibility header for <unistd.h>
 #ifndef UNISTD_WIN32_H
 #define UNISTD_WIN32_H
 
-#if defined(_WIN64) && defined(_MSC_VER)
+#if defined(_WIN64)
 
 // For io functions
 #include <io.h>
@@ -20,7 +20,6 @@ MSVC compatibility header for <unistd.h>
 #define read(fd, buffer, buffer_size) _read(fd, buffer, (unsigned int)buffer_size)
 #define open  _open
 #define close _close
-#define lseek _lseek
 #define fsync _commit
 #define unlink _unlink
 #define rmdir _rmdir
@@ -30,6 +29,11 @@ MSVC compatibility header for <unistd.h>
 
 #ifdef interface
     #undef interface
+#endif
+
+#ifndef lseek
+    // lseek is defined in MingW
+    #define lseek _lseek
 #endif
 
 #endif

@@ -7,6 +7,7 @@ Posix Storage File write
 #include <stdio.h>
 #include <unistd.h>
 #ifdef _MSC_VER
+    // msvc specific
     #include <sys/utime.h>
 #else
     #include <utime.h>
@@ -123,7 +124,7 @@ storageWritePosixOpen(THIS_VOID)
             updateGroupId = (gid_t)-1;
 
         // TBD
-#ifndef _MSC_VER
+#ifndef _WIN64
         THROW_ON_SYS_ERROR_FMT(
             chown(strZ(this->nameTmp), updateUserId, updateGroupId) == -1, FileOwnerError, "unable to set ownership for '%s'",
             strZ(this->nameTmp));

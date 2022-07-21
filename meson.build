@@ -207,7 +207,7 @@ endif
 
 # Enable debug code
 if get_option('debug')
-    if cc.get_id() == 'msvc'
+    if host_machine.system() == 'windows'
         configuration.set('DEBUG', '#define DEBUG 1', description: 'Enable debug code')
     else
         configuration.set('DEBUG', true, description: 'Enable debug code')
@@ -229,7 +229,11 @@ if host_machine.system() == 'windows'
     if cc.get_id() != 'msvc'
         # lib regex for mingW
         lib_regex = dependency('rxspencer')
+        # Set dep_inc_dir to empty, as include dirs are automatically set with autoconf
         dep_inc_dir = []
+        # Silence formatting errors, as they are supported with the underlying runtime (ucrt)
+        # add_global_arguments('-D__USE_MINGW_ANSI_STDIO=1', language : 'c')
+        add_project_arguments(cc.get_supported_arguments(['-Wno-format-extra-args', '-Wno-format', '-Wno-format-nonliteral']), language: 'c')
     endif
     # Include MSVC compatibility header
     configuration.set('INCLUDE_MSVC_COMPAT', '#include "msvcCompat.h"', description: 'MSVC compatibility header')

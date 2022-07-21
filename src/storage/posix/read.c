@@ -5,11 +5,6 @@ Posix Storage Read
 
 #include <fcntl.h>
 #include <unistd.h>
-#ifdef _WIN64
-    // Needed for SEEK_SET
-    #include <stdio.h>
-#endif
-
 
 #include "common/debug.h"
 #include "common/io/read.h"
