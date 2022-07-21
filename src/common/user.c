@@ -3,7 +3,7 @@ System User/Group Management
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     #include <Windows.h>
     #include <Lmcons.h>
     #include <tchar.h>
@@ -35,7 +35,7 @@ static struct
 
 /**********************************************************************************************************************************/
 
-#ifdef _MSC_VER
+#ifdef _WIN64
 static void
 userInitInternal(void)
 {

@@ -224,7 +224,13 @@ else
     configuration.set('FN_NO_RETURN', '__declspec(noreturn)', description: 'Indicate that a function does not return')
 endif
 
-if cc.get_id() == 'msvc'
+# if cc.get_id() == 'msvc'
+if host_machine.system() == 'windows'
+    if cc.get_id() != 'msvc'
+        # lib regex for mingW
+        lib_regex = dependency('rxspencer')
+        dep_inc_dir = []
+    endif
     # Include MSVC compatibility header
     configuration.set('INCLUDE_MSVC_COMPAT', '#include "msvcCompat.h"', description: 'MSVC compatibility header')
     # Enable static import for lib yaml

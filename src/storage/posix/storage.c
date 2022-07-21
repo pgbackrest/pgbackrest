@@ -12,7 +12,7 @@ Posix Storage
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     #include <Windows.h>
 
     #include <accctrl.h>
@@ -62,7 +62,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 
     StorageInfo result = {.level = level};
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     DWORD fileAttributes = GetFileAttributesA(strZ(file));
 
     if (fileAttributes == INVALID_FILE_ATTRIBUTES)
@@ -389,7 +389,7 @@ storagePosixInfoList(
 
     bool result = false;
 
-#ifdef _MSC_VER
+#ifdef _WIN64
 
     // Open the directory for read
     HANDLE findHandle = INVALID_HANDLE_VALUE;
@@ -843,7 +843,7 @@ static const StorageInterface storageInterfacePosix =
     .newWrite = storagePosixNewWrite,
     .pathCreate = storagePosixPathCreate,
     .pathRemove = storagePosixPathRemove,
-#ifdef _MSC_VER
+#ifdef _WIN64
     // Disable path sync, as it is not available on Windows
     .pathSync = NULL,
 #else

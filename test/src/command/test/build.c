@@ -324,11 +324,14 @@ testBldUnit(TestBuild *const this)
         {
             if (testIncludeFileIdx != 0)
                 strCatChr(testIncludeFile, '\n');
-#ifdef _MSC_VER
+#if 1 //defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)
+#error 123
+            // This change is applied on _WIN32 and not _MSC_VER as the main command fails with both msvc and mingw32
             strCatFmt(
                 testIncludeFile, "#include \"%s.c\"",
                 strZ(strLstGet(testIncludeFileList, testIncludeFileIdx)));
 #else
+#error ABC
             strCatFmt(
                 testIncludeFile, "#include \"%s/src/%s.c\"", strZ(testBldPathRepo(this)),
                 strZ(strLstGet(testIncludeFileList, testIncludeFileIdx)));
@@ -386,7 +389,8 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_IDX]}"), strNewFmt("%u", testBldVmId(this)));
 
         // Include test file
-#ifdef _MSC_VER
+#ifdef _WIN32
+        // This change is applied on _WIN32 and not _MSC_VER as the main command fails with both msvc and mingw32
         strReplace(
             testC, STRDEF("{[C_TEST_INCLUDE]}"),
             strNewFmt(

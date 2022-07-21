@@ -1,7 +1,8 @@
 ####################################################################################################################################
 # Write configuration
 ####################################################################################################################################
-if cc.get_id() != 'msvc'
+# if cc.get_id() != 'msvc'
+if host_machine.system() == 'windows'
 configure_file(output: 'build.auto.h', configuration: configuration)
 else
 configure_file(input: '../../src/win32_msvc/build.auto.h.in', output: 'build.auto.h', configuration: configuration)
@@ -34,13 +35,13 @@ src_test = [
     '../../src/command/help/help.c',
 	'../../src/common/compress/bz2/common.c',
 	'../../src/common/compress/bz2/decompress.c',
-    '../../src/common/ini.c',
+    # '../../src/common/ini.c',
     '../../src/common/io/fd.c',
     '../../src/common/io/fdRead.c',
     '../../src/common/io/fdWrite.c',
     '../../src/common/lock.c',
-    '../../src/common/stat.c',
-    '../../src/common/type/json.c',
+    # '../../src/common/stat.c',
+    # '../../src/common/type/json.c',
     '../../src/config/config.c',
     '../../src/config/parse.c',
     'command/test/build.c',
@@ -50,7 +51,8 @@ src_test = [
     'main.c',
 ]
 
-if cc.get_id() != 'msvc'
+# if cc.get_id() != 'msvc'
+if host_machine.system() != 'windows'
 test_pgbackrest = executable(
     'test-pgbackrest',
     src_common,

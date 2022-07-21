@@ -8,7 +8,7 @@ Defines the necessary or missing macros / typedefs, that are available on POSIX 
 #define MSVC_COMPAT_H
 
 #ifndef _MSC_VER
-    #error "Only MSVC is supported on Windows platforms."
+//    #error "Only MSVC is supported on Windows platforms."
 #endif
 
 #ifndef _WIN64
@@ -20,7 +20,9 @@ Error-silencing macros
 ***********************************************************************************************************************************/
 
 // Fix for the absence of __attribute__ in msvc
-#define __attribute__(...)
+#if defined(_MSC_VER)
+    #define __attribute__(...)
+#endif
 
 // Silence noisy warnings about non-secure CRT functions
 // Don't define if it is passed from the command line
@@ -39,17 +41,28 @@ Include
 /***********************************************************************************************************************************
 Missing types
 ***********************************************************************************************************************************/
-typedef __int64 ssize_t;
+#if defined(_MSC_VER)
+    typedef __int64 ssize_t;
 
-typedef unsigned short mode_t;
+    typedef unsigned short mode_t;
 
-typedef long long time_t;
+    typedef long long time_t;
 
-typedef unsigned __int32 uid_t;
+    typedef unsigned __int32 uid_t;
 
-typedef unsigned __int32 gid_t;
+    typedef unsigned __int32 gid_t;
 
-typedef unsigned long pid_t; // Same as DWORD
+    typedef unsigned long pid_t; // Same as DWORD
+#else
+    // MingW
+    typedef unsigned short mode_t;
+
+    typedef long long time_t;
+
+    typedef unsigned int uid_t;
+
+    typedef unsigned int gid_t;
+#endif
 
 /***********************************************************************************************************************************
 Missing routines

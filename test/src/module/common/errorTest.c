@@ -360,7 +360,7 @@ testRun(void)
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
-            assert(strcmp(errorMessage(), "message: [7] Argument list too long") == 0);
+            assert(strcmp(errorMessage(), "message: [7] Arg list too long") == 0);
         }
         TRY_END();
 
@@ -388,7 +388,7 @@ testRun(void)
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
-            assert(strcmp(errorMessage(), "message 77: [7] Argument list too long") == 0);
+            assert(strcmp(errorMessage(), "message 77: [7] Arg list too long") == 0);
         }
         TRY_END();
 
@@ -436,9 +436,12 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-#ifndef _MSC_VER
     if (testBegin("Uncaught error"))
     {
+#ifdef _MSC_VER
+        // Dummy test for harness fork
+        assert(1);
+#else
         // Test in a fork so the process does not actually exit
         HRN_FORK_BEGIN()
         {
@@ -452,7 +455,8 @@ testRun(void)
             HRN_FORK_CHILD_END();
         }
         HRN_FORK_END();
-    }
 #endif
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
