@@ -80,7 +80,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         String *dirLock = strNewZ(TEST_PATH "/dir" LOCK_FILE_EXT);
 
-        HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(dirLock));
+        HRN_SYSTEM_FMT("mkdir -p %s", strZ(dirLock));
 
         TEST_ERROR_FMT(
             lockAcquireFile(dirLock, 0, true), LockAcquireError, "unable to acquire lock on file '%s': Is a directory",
@@ -91,7 +91,7 @@ testRun(void)
 
         String *noPermLock = strNewZ(TEST_PATH "/noperm/noperm");
 
-        HRN_SYSTEM_FMT("mkdir -p 750 %s", strZ(strPath(noPermLock)));
+        HRN_SYSTEM_FMT("mkdir -p %s", strZ(strPath(noPermLock)));
         HRN_SYSTEM_FMT("chmod 000 %s", strZ(strPath(noPermLock)));
 
         TEST_ERROR_FMT(
