@@ -72,7 +72,13 @@ storageReadPosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
+#ifdef _WIN64
+    // On Windows, open needs to have the O_BINARY flag, otherwise, it will do
+    // its own buffering, messing up the read calls later.
+    this->fd = open(strZ(this->interface.name), O_RDONLY | O_BINARY, 0);
+#else
     this->fd = open(strZ(this->interface.name), O_RDONLY, 0);
+#endif
 
     // Handle errors
     if (this->fd == -1)
