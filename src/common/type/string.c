@@ -9,7 +9,7 @@ String Handler
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     #include <shlwapi.h>
 #endif
 
@@ -298,13 +298,13 @@ strBaseZ(const String *this)
 
     const char *end = this->pub.buffer + strSize(this);
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     while (end > this->pub.buffer && *(end - 1) != '/' && *(end - 1) != '\\')
         end--;
 #else
     while (end > this->pub.buffer && *(end - 1) != '/')
         end--;
-#endif // _MSC_VER
+#endif // _WIN64
 
 
     FUNCTION_TEST_RETURN_CONST(STRINGZ, end);
@@ -771,13 +771,13 @@ strPath(const String *this)
 
     const char *end = this->pub.buffer + strSize(this);
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     while (end > this->pub.buffer && *(end - 1) != '/' && *(end - 1) != '\\') 
         end--;
 #else
     while (end > this->pub.buffer && *(end - 1) != '/')
         end--;
-#endif // !_MSC_VER
+#endif // !_WIN64
 
 
     FUNCTION_TEST_RETURN(
@@ -800,7 +800,9 @@ strPathAbsolute(const String *this, const String *base)
 
     String *result = NULL;
 
-#ifdef _MSC_VER
+#ifdef _WIN64
+    UNREFERENCED_PARAMETER(base);
+
     // We always call GetFullPathNameA, as PathIsRelativeA returns false on paths like C:\x\y\..\..
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -809,13 +811,13 @@ strPathAbsolute(const String *this, const String *base)
             THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
 
         Buffer *fullPathBuffer = bufNew((size_t)bufferSize);
-        DWORD writtenCount = GetFullPathNameA(strZ(this), bufferSize, bufPtr(fullPathBuffer), NULL);
+        DWORD writtenCount = GetFullPathNameA(strZ(this), bufferSize, (LPSTR)bufPtr(fullPathBuffer), NULL);
         if (writtenCount == 0 || writtenCount != (bufferSize - 1))
             THROW_FMT(AssertError, "'%s' is not a valid relative path", strZ(this));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = strNewZ(bufPtr(fullPathBuffer));
+            result = strNewZ((const char *)bufPtr(fullPathBuffer));
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -893,7 +895,7 @@ strPathAbsolute(const String *this, const String *base)
     // There should not be any stray .. or // in the final result
     if (strstr(strZ(result), "/..") != NULL || strstr(strZ(result), "//") != NULL)
         THROW_FMT(AssertError, "result path '%s' is not absolute", strZ(result));
-#endif // _MSC_VER
+#endif // _WIN64
 
     FUNCTION_TEST_RETURN(STRING, result);
 }

@@ -6,7 +6,7 @@ Storage Interface
 #include <stdio.h>
 #include <string.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN64
     #include <Shlwapi.h>
 #endif
 
@@ -51,7 +51,7 @@ storageNew(
     FUNCTION_LOG_END();
 
     ASSERT(type != 0);
-#ifdef _MSC_VER
+#ifdef _WIN64
     ASSERT(strSize(path) >= 1 && PathIsRelativeA(strZ(path)) == FALSE);
 #else
     ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
@@ -693,7 +693,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
     else
     {
         // If the path expression is absolute then use it as is
-#ifdef _MSC_VER
+#ifdef _WIN64
         if (PathIsRelativeA(strZ(pathExp)) == FALSE)
         {
             // Make sure the base storage path is contained within the path expression
@@ -753,7 +753,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                 if (strSize(expression) < strSize(pathExp))
                 {
                     // Error if path separator is not found
-#ifdef _MSC_VER
+#ifdef _WIN64
                     if (end[1] != '/' && end[1] != '\\')
                         THROW_FMT(AssertError, "'/' or '\\' should separate expression and path '%s'", strZ(pathExp));
 #else
