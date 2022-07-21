@@ -10,7 +10,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         libdbd-pg-perl libxml-checker-perl libyaml-perl \
         devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev libxml2-dev liblz4-dev \
         liblz4-tool libpq-dev lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev pkg-config libyaml-dev libc6-dbg wget meson \
-        ccache valgrind
+        ccache valgrind tzdata
 
 # Install Docker
 RUN groupadd -g5000 docker
@@ -19,17 +19,15 @@ RUN curl -fsSL https://get.docker.com | sh
 # Create vagrant user
 RUN adduser --ingroup=docker -uid=5000 --disabled-password --gecos \"\" vagrant
 
+# Mark git path as safe
+RUN sudo -u vagrant git config --global --add safe.directory /home/vagrant/pgbackrest
+
 # Configure sudo
 RUN echo '%docker ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
 # Mount tmpfs at /home/vagrant/test for faster testing
 RUN sudo -u vagrant mkdir -m 770 /home/vagrant/test
 RUN echo 'tmpfs /home/vagrant/test tmpfs size=4096M 0 1' >> /etc/fstab
-
-# Cleanup
-RUN apt-get autoremove -y
-RUN apt-get clean
-RUN rm -rf /var/lib/apt/lists/*
 
 USER vagrant
 WORKDIR /home/vagrant
