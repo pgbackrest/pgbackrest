@@ -52,7 +52,7 @@ cfgLoadUpdateOption(void)
 
 #ifdef _WIN64
     // Replace '\' with '/', since the '\' doesn't behave correctly in some cases (e.g when writing path to file)
-    for (int i = 0; i < sizeof(currentWorkDir); ++i)
+    for (size_t i = 0; i < sizeof(currentWorkDir); ++i)
     {
         if (currentWorkDir[i] == '\\')
             currentWorkDir[i] = '/';
