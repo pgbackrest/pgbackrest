@@ -8,7 +8,8 @@ test_parse_auto_c_inc = custom_target(
         '../build/config/config.yaml',
     ],
     command : [
-        build_config,
+        build_code,
+        'config',
         '@CURRENT_SOURCE_DIR@/../..',
         '@BUILD_ROOT@/test',
     ],

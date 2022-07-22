@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Auto-Generate Help
+Code Builder
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -9,14 +9,19 @@ Auto-Generate Help
 #include "storage/posix/storage.h"
 
 #include "build/config/parse.h"
+#include "build/config/render.h"
+#include "build/error/parse.h"
+#include "build/error/render.h"
 #include "build/help/parse.h"
 #include "build/help/render.h"
+#include "build/postgres/parse.h"
+#include "build/postgres/render.h"
 
 int
-main(int argListSize, const char *argList[])
+main(const int argListSize, const char *const argList[])
 {
     // Check parameters
-    CHECK(ParamInvalidError, argListSize <= 3, "only two parameters allowed");
+    CHECK(ParamInvalidError, argListSize >= 2 && argListSize <= 4, "only one to three parameters allowed");
 
     // Initialize logging
     logInit(logLevelWarn, logLevelError, logLevelOff, false, 0, 1, false);
@@ -27,37 +32,53 @@ main(int argListSize, const char *argList[])
 
     // Get repo path (cwd if it was not passed)
     const String *pathRepo = strPath(STR(currentWorkDir));
-    String *pathBuild = strCatZ(strNew(), currentWorkDir);
+    String *pathBuild = strCat(strNew(), pathRepo);
 
-    if (argListSize >= 2)
-    {
-        const String *const pathArg = STR(argList[1]);
-
-        if (strBeginsWith(pathArg, FSLASH_STR))
-            pathRepo = strPath(pathArg);
-        else
-        {
-            pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
-            strCatZ(pathBuild, "/src");
-        }
-    }
-
-    // If the build path was specified
     if (argListSize >= 3)
     {
         const String *const pathArg = STR(argList[2]);
 
         if (strBeginsWith(pathArg, FSLASH_STR))
-            pathBuild = strPath(pathArg);
+            pathRepo = strPath(pathArg);
+        else
+            pathRepo = strPathAbsolute(pathArg, STR(currentWorkDir));
+
+        pathBuild = strDup(pathRepo);
+    }
+
+    // If the build path was specified
+    if (argListSize >= 4)
+    {
+        const String *const pathArg = STR(argList[3]);
+
+        if (strBeginsWith(pathArg, FSLASH_STR))
+            pathBuild = strDup(pathArg);
         else
             pathBuild = strPathAbsolute(pathArg, STR(currentWorkDir));
     }
 
-    // Render help
+    // Repo and build storage
     const Storage *const storageRepo = storagePosixNewP(pathRepo);
     const Storage *const storageBuild = storagePosixNewP(pathBuild, .write = true);
-    const BldCfg bldCfg = bldCfgParse(storageRepo);
-    bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg));
+
+    // Config
+    if (strEqZ(STRDEF("config"), argList[1]))
+        bldCfgRender(storageBuild, bldCfgParse(storageRepo), true);
+
+    // Error
+    if (strEqZ(STRDEF("error"), argList[1]))
+        bldErrRender(storageRepo, bldErrParse(storageRepo));
+
+    // Help
+    if (strEqZ(STRDEF("help"), argList[1]))
+    {
+        const BldCfg bldCfg = bldCfgParse(storageRepo);
+        bldHlpRender(storageBuild, bldCfg, bldHlpParse(storageRepo, bldCfg));
+    }
+
+    // PostgreSQL
+    if (strEqZ(STRDEF("postgres"), argList[1]))
+        bldPgRender(storageBuild, bldPgParse(storageRepo));
 
     return 0;
 }

@@ -19,7 +19,7 @@ typedef struct TestBuild TestBuild;
 Constructors
 ***********************************************************************************************************************************/
 TestBuild *testBldNew(
-    const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const String *moduleName,
+    const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const TestDefModule *module,
     unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone);
 
 /***********************************************************************************************************************************
@@ -33,7 +33,6 @@ typedef struct TestBuildPub
     const Storage *storageTest;                                     // Test storage
     const String *vm;                                               // Vm to run the test on
     unsigned int vmId;                                              // Vm id (0-based) to run the test on
-    const String *moduleName;                                       // Module to run
     const TestDefModule *module;                                    // Module definition
     unsigned int test;                                              // Specific test to run (0 if all)
     LogLevel logLevel;                                              // Test log level
@@ -91,13 +90,6 @@ __attribute__((always_inline)) static inline const TestDefModule *
 testBldModule(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->module;
-}
-
-// Module to run
-__attribute__((always_inline)) static inline const String *
-testBldModuleName(const TestBuild *const this)
-{
-    return THIS_PUB(TestBuild)->moduleName;
 }
 
 // Specific test to run

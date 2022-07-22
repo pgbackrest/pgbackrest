@@ -51,66 +51,29 @@ src_common = files(
 )
 
 ####################################################################################################################################
-# Build config target
+# Build code target
 ####################################################################################################################################
-src_build_config = [
+src_build_code = [
 	'build/common/render.c',
 	'build/common/yaml.c',
-	'build/config/main.c',
 	'build/config/parse.c',
 	'build/config/render.c',
-]
-
-build_config = executable(
-    'build-config',
-    src_common,
-    src_build_config,
-    dependencies : [
-        lib_yaml
-    ],
-    build_by_default: false,
-)
-
-####################################################################################################################################
-# Build error target
-####################################################################################################################################
-src_build_error = [
-	'build/common/render.c',
-	'build/common/yaml.c',
-	'build/error/main.c',
 	'build/error/parse.c',
 	'build/error/render.c',
-]
-
-build_error = executable(
-    'build-error',
-    src_common,
-    src_build_error,
-    dependencies : [
-        lib_yaml
-    ],
-    build_by_default: false,
-)
-
-####################################################################################################################################
-# Build help target
-####################################################################################################################################
-src_build_help = [
-	'build/common/render.c',
-	'build/common/yaml.c',
-	'build/config/parse.c',
-	'build/help/main.c',
 	'build/help/parse.c',
 	'build/help/render.c',
+	'build/postgres/parse.c',
+	'build/postgres/render.c',
+	'build/main.c',
 	'common/compress/bz2/common.c',
 	'common/compress/bz2/compress.c',
 	'common/type/xml.c',
 ]
 
-build_help = executable(
-    'build-help',
+build_code = executable(
+    'build-code',
     src_common,
-    src_build_help,
+    src_build_code,
     dependencies: [
         lib_bz2,
         lib_xml,
@@ -118,30 +81,10 @@ build_help = executable(
     ],
 )
 
-# build help.auto.c.inc
+# Build help.auto.c.inc
 subdir('command/help')
 
-####################################################################################################################################
-# Build postgres target
-####################################################################################################################################
-src_build_postgres = [
-	'build/common/render.c',
-	'build/common/yaml.c',
-	'build/postgres/main.c',
-	'build/postgres/parse.c',
-	'build/postgres/render.c',
-]
-
-build_postgres = executable(
-    'build-postgres',
-    src_common,
-    src_build_postgres,
-    dependencies : [
-        lib_yaml
-    ],
-)
-
-# build interface.auto.c.inc
+# Build interface.auto.c.inc
 subdir('postgres')
 
 ####################################################################################################################################

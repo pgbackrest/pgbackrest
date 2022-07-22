@@ -77,16 +77,6 @@
                     <example>n</example>
                 </option>
 
-                <option id="module">
-                    <summary>Module to test.</summary>
-
-                    <text>
-                        <p>Unit test module to be tested.</p>
-                    </text>
-
-                    <example>common/error</example>
-                </option>
-
                 <option id="neutral-umask">
                     <summary>Use a neutral umask.</summary>
 
@@ -99,6 +89,16 @@
                     <example>n</example>
                 </option>
 
+                <option id="repo-copy">
+                    <summary>Make copy of code repository.</summary>
+
+                    <text>
+                        <p>Make a copy of the code repository for testing so changes to the code repository do not affect tests.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
                 <option id="repo-path">
                     <summary>Path to code repository.</summary>
 
@@ -106,7 +106,7 @@
                         <p>Path to the original code repository or a copy.</p>
                     </text>
 
-                    <example>n</example>
+                    <example>/path/to/pgbackrest</example>
                 </option>
 
                 <option id="scale">

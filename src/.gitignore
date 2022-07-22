@@ -7,4 +7,4 @@ autom4te.cache
 /build.auto.h
 /pgbackrest
 /postgres/interface.auto.c.inc
-/build-*
+/build-code

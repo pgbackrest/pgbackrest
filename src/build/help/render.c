@@ -325,7 +325,7 @@ bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, con
     strCatZ(help, "\n};\n");
 
     // Write to storage
-    bldPut(storageRepo, "command/help/help.auto.c.inc", BUFSTR(help));
+    bldPut(storageRepo, "src/command/help/help.auto.c.inc", BUFSTR(help));
 }
 
 /**********************************************************************************************************************************/

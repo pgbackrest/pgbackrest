@@ -786,7 +786,7 @@ backupResume(Manifest *manifest, const String *cipherPassBackup)
             manifestBackupLabelSet(manifest, manifestData(manifestResume)->backupLabel);
 
             LOG_WARN_FMT(
-                "resumable backup %s of same type exists -- remove invalid files and resume",
+                "resumable backup %s of same type exists -- invalid files will be removed then the backup will resume",
                 strZ(manifestData(manifest)->backupLabel));
 
             // If resuming a full backup then copy cipher subpass since it was used to encrypt the resumable files

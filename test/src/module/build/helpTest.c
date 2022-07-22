@@ -402,7 +402,7 @@ testRun(void)
         TEST_TITLE("check help file");
 
         TEST_RESULT_VOID(bldHlpRender(storageTest, bldCfg, bldHlpParse(storageTest, bldCfg)), "write file");
-        TEST_STORAGE_EXISTS(storageTest, "command/help/help.auto.c.inc");
+        TEST_STORAGE_EXISTS(storageTest, "src/command/help/help.auto.c.inc");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
