@@ -46,9 +46,10 @@ userInitInternal(void)
         MEM_CONTEXT_NEW_BEGIN(UserLocalData, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             char buffer[UNLEN + 1];
-            DWORD bufferSize;
+            DWORD bufferSize = (DWORD)sizeof(buffer);
+            BOOL result = GetUserNameA(buffer, &bufferSize);
 
-            GetUserNameA(buffer, &bufferSize);
+            ASSERT(result > 0);
 
             userLocalData.memContext = MEM_CONTEXT_NEW();
 
