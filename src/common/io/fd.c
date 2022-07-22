@@ -13,6 +13,16 @@ File Descriptor Functions
 #include "common/log.h"
 #include "common/wait.h"
 
+#if defined(_WIN32)
+    // For pollfd
+    #include <WinSock2.h>
+
+    #if !defined(poll)
+        // poll needs to be manually defined for MingW
+        #define poll WSAPoll
+    #endif
+#endif
+
 /***********************************************************************************************************************************
 Use poll() to determine when data is ready to read/write on a socket. Retry after EINTR with whatever time is left on the timer.
 ***********************************************************************************************************************************/
@@ -76,7 +86,7 @@ fdReady(int fd, bool read, bool write, TimeMSec timeout)
     ASSERT(timeout < INT_MAX);
 
     // Poll settings
-    struct pollfd inputFd = {.fd = fd};
+    struct pollfd inputFd = {.fd = (SOCKET)fd};
 
     if (read)
         inputFd.events |= POLLIN;
