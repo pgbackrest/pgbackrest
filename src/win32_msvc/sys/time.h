@@ -21,6 +21,8 @@ typedef long suseconds_t;
 
 #elif defined(__MINGW64__)
 
+    #include <time.h>
+
     #define gettimeofday mingw_gettimeofday
 
 #endif

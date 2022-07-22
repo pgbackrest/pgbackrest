@@ -44,11 +44,11 @@ testTryRecurse(void)
     TRY_END();
 }                                                                   // {uncoverable - function throws error, never returns}
 
-#ifdef _MSC_VER
+#ifdef _WIN64
 
 #include <Windows.h>
 
-static 
+static
 int pathStrcmp(const char *path1, const char *path2)
 {
     char pathBuffer1[MAX_PATH + 1];
@@ -259,14 +259,14 @@ testRun(void)
         CATCH(AssertError)
         {
             assert(errorCode() == AssertError.code);
-#ifdef _MSC_VER
+#ifdef _WIN64
             assert(pathStrcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/errorTest.c") == 0);
 #else
             assert(strcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/errorTest.c") == 0);
 #endif
             assert(strcmp(errorFunctionName(), "testTryRecurse") == 0);
             assert(errorFileLine() == 29);
-#ifdef _MSC_VER
+#ifdef _WIN64
             assert(
                 pathStrcmp(
                     errorStackTrace(),
@@ -438,7 +438,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("Uncaught error"))
     {
-#ifdef _MSC_VER
+#ifdef _WIN64
         // Dummy test for harness fork
         assert(1);
 #else

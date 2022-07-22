@@ -151,7 +151,7 @@ testBldUnit(TestBuild *const this)
         strReplace(mesonBuild, STRDEF("subdir('"), STRDEF("# subdir('"));
 
         // Write build.auto.in
-#ifdef _MSC_VER
+#if defined(_WIN64)
         //#error FIX configure_file
         strCatZ(
             mesonBuild,
@@ -253,7 +253,7 @@ testBldUnit(TestBuild *const this)
                 mesonBuild, "    '%s/src/%s.c',\n", strZ(testBldPathRepo(this)),
                 strZ(strLstGet(testBldModule(this)->dependList, dependIdx)));
         }
-#ifdef _MSC_VER
+#if defined(_WIN64)
         //#error FIXME HERE
         strCatFmt(
             mesonBuild,
@@ -324,7 +324,7 @@ testBldUnit(TestBuild *const this)
         {
             if (testIncludeFileIdx != 0)
                 strCatChr(testIncludeFile, '\n');
-#if defined(_MSC_VER) || defined(__MINGW64__)
+#if defined(_WIN64)
             // This change is applied on _WIN32 and not _MSC_VER as the main command fails with both msvc and mingw32
             strCatFmt(
                 testIncludeFile, "#include \"%s.c\"",
@@ -387,7 +387,7 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_IDX]}"), strNewFmt("%u", testBldVmId(this)));
 
         // Include test file
-#ifdef _WIN64
+#if defined(_WIN64)
         // This change is applied on _WIN32 and not _MSC_VER as the main command fails with both msvc and mingw32
         strReplace(
             testC, STRDEF("{[C_TEST_INCLUDE]}"),

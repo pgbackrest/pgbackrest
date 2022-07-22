@@ -30,7 +30,7 @@ is not intended for long-lived child processes.
 
 There should not be any code outside the HRN_FORK_CHILD_BEGIN/END() and HRN_FORK_PARENT_BEGIN/END() blocks.
 ***********************************************************************************************************************************/
-#ifdef _MSC_VER
+#ifdef _WIN64
 
 #define HRN_FORK_CHILD_MAX                                          4
 #define HRN_FORK_TIMEOUT                                            2000

@@ -32,7 +32,7 @@ The test code is included directly so it can freely interact with the included C
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#ifdef _MSC_VER
+#ifdef _WIN64
     // Imports for umask
     #include <sys/types.h>
     #include <io.h>
