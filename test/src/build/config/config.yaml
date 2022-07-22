@@ -10,7 +10,8 @@ command:
     log-level-default: DEBUG
     parameter-allowed: true
 
-  test: {}
+  test:
+    parameter-allowed: true
 
   noop:
     internal: true
@@ -44,15 +45,17 @@ option:
       - 512KiB
       - 1MiB
 
-  module:
-    type: string
-    command:
-      test: {}
-
   neutral-umask:
     type: boolean
     internal: true
     default: true
+
+  repo-copy:
+    type: boolean
+    default: true
+    negate: true
+    command:
+      test: {}
 
   repo-path:
     type: string

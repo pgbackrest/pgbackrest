@@ -12,6 +12,6 @@ test_help_auto_c_inc = custom_target(
         build_code,
         'help',
         '@CURRENT_SOURCE_DIR@/../../..',
-        '@BUILD_ROOT@/test/src',
+        '@BUILD_ROOT@/test',
     ],
 )

@@ -30,7 +30,7 @@ Constants
 TestBuild *
 testBldNew(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
-    const String *const moduleName, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
+    const TestDefModule *const module, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
     const String *const timeZone)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -38,7 +38,7 @@ testBldNew(
         FUNCTION_LOG_PARAM(STRING, pathTest);
         FUNCTION_LOG_PARAM(STRING, vm);
         FUNCTION_LOG_PARAM(UINT, vmId);
-        FUNCTION_LOG_PARAM(STRING, moduleName);
+        FUNCTION_LOG_PARAM_P(VOID, module);
         FUNCTION_LOG_PARAM(UINT, test);
         FUNCTION_LOG_PARAM(UINT64, scale);
         FUNCTION_LOG_PARAM(ENUM, logLevel);
@@ -49,7 +49,7 @@ testBldNew(
     ASSERT(pathRepo != NULL);
     ASSERT(pathTest != NULL);
     ASSERT(vm != NULL);
-    ASSERT(moduleName != NULL);
+    ASSERT(module != NULL);
     ASSERT(scale != 0);
 
     TestBuild *this = NULL;
@@ -67,7 +67,7 @@ testBldNew(
                 .pathTest = strDup(pathTest),
                 .vm = strDup(vm),
                 .vmId = vmId,
-                .moduleName = strDup(moduleName),
+                .module = module,
                 .test = test,
                 .scale = scale,
                 .logLevel = logLevel,
@@ -78,10 +78,6 @@ testBldNew(
 
         this->pub.storageRepo = storagePosixNewP(testBldPathRepo(this));
         this->pub.storageTest = storagePosixNewP(testBldPathTest(this));
-
-        // Find the module to test
-        this->pub.module = lstFind(testDefParse(testBldStorageRepo(this)).moduleList, &this->pub.moduleName);
-        CHECK(AssertError, this->pub.module != NULL, "unable to find module");
     }
     OBJ_NEW_END();
 
@@ -451,8 +447,7 @@ testBldUnit(TestBuild *const this)
 
         // Path to the project exe when it exists
         const String *const pathProjectExe = storagePathP(
-            testBldStorageTest(this),
-            strNewFmt("bin/%s%s/" PROJECT_BIN, strZ(testBldVm(this)), strEqZ(testBldVm(this), "none") ? "/src" : ""));
+            testBldStorageTest(this), strNewFmt("build/%s/src/" PROJECT_BIN, strZ(testBldVm(this))));
         strReplace(testC, STRDEF("{[C_TEST_PROJECT_EXE]}"), pathProjectExe);
 
         // Path to source -- used to construct __FILENAME__ tests
@@ -490,7 +485,7 @@ testBldUnit(TestBuild *const this)
         // Include test file
         strReplace(
             testC, STRDEF("{[C_TEST_INCLUDE]}"),
-            strNewFmt("#include \"%s/test/src/module/%sTest.c\"", strZ(pathRepo), strZ(bldEnum(NULL, testBldModuleName(this)))));
+            strNewFmt("#include \"%s/test/src/module/%sTest.c\"", strZ(pathRepo), strZ(bldEnum(NULL, module->name))));
 
         // Test list
         String *const testList = strNew();
