@@ -62,7 +62,7 @@ cfgLoadUpdateOption(void)
 
     // If repo-path is relative then make it absolute (local and UNC)
     const String *const repoPath = cfgOptionStr(cfgOptRepoPath);
-
+#pragma message("FIX ME, and generatlize this function")
     if (!strBeginsWithZ(repoPath, "\\\\") && (strChr(repoPath, ':') == -1))
         cfgOptionSet(cfgOptRepoPath, cfgOptionSource(cfgOptRepoPath), VARSTR(strNewFmt("%s/%s", currentWorkDir, strZ(repoPath))));
         
@@ -112,6 +112,7 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         TRY_BEGIN()
         {
 #ifdef _WIN64
+#pragma message("Fix me")
             String *rootPath = strNewZ("C:\\");
             configParse(storagePosixNewP(rootPath), strLstSize(argListNew), strLstPtr(argListNew), true);
 #else
@@ -121,7 +122,12 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         CATCH(CommandRequiredError)
         {
             strLstAddZ(argListNew, CFGCMD_TEST);
+#ifdef _WIN64
+            String *rootPath = strNewZ("C:\\");
+            configParse(storagePosixNewP(rootPath), strLstSize(argListNew), strLstPtr(argListNew), true);
+#else
             configParse(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew), true);
+#endif
         }
         TRY_END();
 
