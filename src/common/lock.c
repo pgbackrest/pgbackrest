@@ -259,7 +259,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
             jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
 
 #ifdef _WIN64
-        jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), GetCurrentProcessId());
+        jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), GetCurrentProcessId());
 #else
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
 #endif

@@ -90,7 +90,7 @@ exitOnSignal(_In_ DWORD signalType)
     FUNCTION_LOG_PARAM(UINT32, signalType);
     FUNCTION_LOG_END();
 
-    ExitProcess(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
+    ExitProcess((UINT)exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
 
     FUNCTION_TEST_RETURN(BOOL, TRUE);
 }
