@@ -25,6 +25,16 @@ typedef enum
 } CipherType;
 
 /***********************************************************************************************************************************
+Hash types
+***********************************************************************************************************************************/
+typedef enum
+{
+    hashTypeMd5 = STRID5("md5", 0x748d0),
+    hashTypeSha1 = STRID6("sha1", 0x7412131),
+    hashTypeSha256 = STRID5("sha256", 0x3dde05130),
+} HashType;
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Initialize crypto
@@ -35,7 +45,7 @@ bool cryptoIsInit(void);
 
 // Throw crypto errors
 void cryptoError(bool error, const char *description);
-void cryptoErrorCode(unsigned long code, const char *description) __attribute__((__noreturn__));
+FN_NO_RETURN void cryptoErrorCode(unsigned long code, const char *description);
 
 // Generate random bytes
 void cryptoRandomBytes(unsigned char *buffer, size_t size);

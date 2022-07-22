@@ -76,7 +76,7 @@ harnessInfoChecksum(const String *info)
         HarnessInfoChecksumData data =
         {
             .memContext = MEM_CONTEXT_TEMP(),
-            .checksum = cryptoHashNew(HASH_TYPE_SHA1_STR),
+            .checksum = cryptoHashNew(hashTypeSha1),
         };
 
         // Create buffer with space for data, header, and checksum

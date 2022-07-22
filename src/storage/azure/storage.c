@@ -167,7 +167,7 @@ storageAzureAuth(
             // Generate authorization header
             httpHeaderPut(
                 httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
-                strZ(strNewEncode(encodeBase64, cryptoHmacOne(HASH_TYPE_SHA256_STR, this->sharedKey, BUFSTR(stringToSign))))));
+                strZ(strNewEncode(encodeBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else
@@ -216,8 +216,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         if (param.content != NULL)
         {
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
-                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
         // Encode path
@@ -304,7 +303,7 @@ General function for listing files to be used by other list routines
 static void
 storageAzureListInternal(
     StorageAzure *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
-    StorageInfoListCallback callback, void *callbackData)
+    StorageListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
@@ -507,10 +506,24 @@ storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageAzureInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static void
+storageAzureListCallback(void *const callbackData, const StorageInfo *const info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
+
+    storageLstAdd(callbackData, info);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static StorageList *
+storageAzureList(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
     THIS(StorageAzure);
 
@@ -518,18 +531,17 @@ storageAzureInfoList(
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
         FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(callback != NULL);
 
-    storageAzureListInternal(this, path, level, param.expression, false, callback, callbackData);
+    StorageList *const result = storageLstNew(level);
 
-    FUNCTION_LOG_RETURN(BOOL, true);
+    storageAzureListInternal(this, path, level, param.expression, false, storageAzureListCallback, result);
+
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -678,7 +690,7 @@ storageAzureRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
 static const StorageInterface storageInterfaceAzure =
 {
     .info = storageAzureInfo,
-    .infoList = storageAzureInfoList,
+    .list = storageAzureList,
     .newRead = storageAzureNewRead,
     .newWrite = storageAzureNewWrite,
     .pathRemove = storageAzurePathRemove,

@@ -16,6 +16,8 @@ Object type
 struct Yaml
 {
     yaml_parser_t parser;                                           // Parse context
+    bool eventNextSet;                                              // Is the next event set?
+    YamlEvent eventNext;                                            // Next event, stored after a peek
 };
 
 /***********************************************************************************************************************************
@@ -117,6 +119,54 @@ yamlEventType(yaml_event_type_t type)
 }
 
 YamlEvent
+yamlEventPeek(Yaml *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(YAML, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (!this->eventNextSet)
+    {
+        yaml_event_t event;
+
+        if (!yaml_parser_parse(&this->parser, &event))
+        {
+            // These should always be set
+            CHECK(ServiceError, this->parser.problem_mark.line && this->parser.problem_mark.column, "invalid yaml error info");
+
+            THROW_FMT(
+                FormatError, "yaml parse error: %s at line: %lu column: %lu", this->parser.problem,
+                (unsigned long)this->parser.problem_mark.line + 1, (unsigned long)this->parser.problem_mark.column + 1);
+        }
+
+        this->eventNext = (YamlEvent)
+        {
+            .type = yamlEventType(event.type),
+            .line = event.start_mark.line + 1,
+            .column = event.start_mark.column + 1,
+        };
+
+        if (this->eventNext.type == yamlEventTypeScalar)
+        {
+            MEM_CONTEXT_OBJ_BEGIN(this)
+            {
+                this->eventNext.value = strNewZ((const char *)event.data.scalar.value);
+            }
+            MEM_CONTEXT_OBJ_END();
+        }
+
+        yaml_event_delete(&event);
+
+        this->eventNextSet = true;
+    }
+
+    FUNCTION_TEST_RETURN_TYPE(YamlEvent, this->eventNext);
+}
+
+
+YamlEvent
 yamlEventNext(Yaml *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -125,31 +175,12 @@ yamlEventNext(Yaml *this)
 
     ASSERT(this != NULL);
 
-    yaml_event_t event;
+    if (!this->eventNextSet)
+        yamlEventPeek(this);
 
-    if (!yaml_parser_parse(&this->parser, &event))
-    {
-        // These should always be set
-        CHECK(ServiceError, this->parser.problem_mark.line && this->parser.problem_mark.column, "invalid yaml error info");
+    this->eventNextSet = false;
 
-        THROW_FMT(
-            FormatError, "yaml parse error: %s at line: %lu column: %lu", this->parser.problem,
-            (unsigned long)this->parser.problem_mark.line + 1, (unsigned long)this->parser.problem_mark.column + 1);
-    }
-
-    YamlEvent result =
-    {
-        .type = yamlEventType(event.type),
-        .line = event.start_mark.line + 1,
-        .column = event.start_mark.column + 1,
-    };
-
-    if (result.type == yamlEventTypeScalar)
-        result.value = strNewZ((const char *)event.data.scalar.value);
-
-    yaml_event_delete(&event);
-
-    FUNCTION_TEST_RETURN_TYPE(YamlEvent, result);
+    FUNCTION_TEST_RETURN_TYPE(YamlEvent, this->eventNext);
 }
 
 /**********************************************************************************************************************************/
@@ -168,7 +199,7 @@ yamlEventNextCheck(Yaml *this, YamlEventType type)
 }
 
 /**********************************************************************************************************************************/
-void
+YamlEvent
 yamlEventCheck(YamlEvent event, YamlEventType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -178,10 +209,58 @@ yamlEventCheck(YamlEvent event, YamlEventType type)
 
     if (event.type != type)
     {
+        if (event.type == yamlEventTypeScalar)
+        {
+            THROW_FMT(
+                FormatError, "expected event type '%s' but got scalar '%s' at line %zu, column %zu", strZ(strIdToStr(type)),
+                strZ(event.value), event.line, event.column);
+        }
+        else
+        {
+            THROW_FMT(
+                FormatError, "expected event type '%s' but got '%s' at line %zu, column %zu", strZ(strIdToStr(type)),
+                strZ(strIdToStr(event.type)), event.line, event.column);
+        }
+    }
+
+    FUNCTION_TEST_RETURN_TYPE(YamlEvent, event);
+}
+
+/**********************************************************************************************************************************/
+void
+yamlScalarCheck(const YamlEvent event, const String *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(YAML_EVENT, event);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    if (event.type != yamlEventTypeScalar)
+    {
         THROW_FMT(
-            FormatError, "expected event type '%s' but got '%s' at line %zu, column %zu", strZ(strIdToStr(type)),
+            FormatError, "expected scalar '%s' but got event  type '%s' at line %zu, column %zu", strZ(value),
             strZ(strIdToStr(event.type)), event.line, event.column);
     }
+
+    if (!strEq(event.value, value))
+    {
+        THROW_FMT(
+            FormatError, "expected scalar '%s' but got '%s' at line %zu, column %zu", strZ(value), strZ(event.value), event.line,
+            event.column);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+void
+yamlScalarNextCheck(Yaml *const this, const String *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(YAML, this);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    yamlScalarCheck(yamlEventNext(this), value);
 
     FUNCTION_TEST_RETURN_VOID();
 }

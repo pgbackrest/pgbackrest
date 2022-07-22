@@ -532,7 +532,7 @@ storageGcsInfoFile(StorageInfo *info, const KeyValue *file)
 static void
 storageGcsListInternal(
     StorageGcs *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
-    StorageInfoListCallback callback, void *callbackData)
+    StorageListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
@@ -744,10 +744,24 @@ storageGcsInfo(THIS_VOID, const String *const file, const StorageInfoLevel level
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageGcsInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static void
+storageGcsListCallback(void *const callbackData, const StorageInfo *const info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
+
+    storageLstAdd(callbackData, info);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static StorageList *
+storageGcsList(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
     THIS(StorageGcs);
 
@@ -755,22 +769,17 @@ storageGcsInfoList(
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
         FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(callback != NULL);
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        storageGcsListInternal(this, path, level, param.expression, false, callback, callbackData);
-    }
-    MEM_CONTEXT_TEMP_END();
+    StorageList *const result = storageLstNew(level);
 
-    FUNCTION_LOG_RETURN(BOOL, true);
+    storageGcsListInternal(this, path, level, param.expression, false, storageGcsListCallback, result);
+
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -919,7 +928,7 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
 static const StorageInterface storageInterfaceGcs =
 {
     .info = storageGcsInfo,
-    .infoList = storageGcsInfoList,
+    .list = storageGcsList,
     .newRead = storageGcsNewRead,
     .newWrite = storageGcsNewWrite,
     .pathRemove = storageGcsPathRemove,

@@ -53,9 +53,11 @@ STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefi
 STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
 STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
 STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
+STRING_STATIC(S3_XML_TAG_IS_TRUNCATED_STR,                          "IsTruncated");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
-STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               "NextContinuationToken");
+#define S3_XML_TAG_NEXT_CONTINUATION_TOKEN                          "NextContinuationToken"
+    STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,           S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
@@ -202,7 +204,7 @@ storageS3Auth(
         // Generate string to sign
         const String *stringToSign = strNewFmt(
             AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
-            strZ(bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, BUFSTR(canonicalRequest)))));
+            strZ(bufHex(cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
 
         // Generate signing key.  This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple.  It's a relatively expensive operation so we'd rather not do it for every request.
@@ -210,14 +212,14 @@ storageS3Auth(
         if (!strEq(date, this->signingKeyDate))
         {
             const Buffer *dateKey = cryptoHmacOne(
-                HASH_TYPE_SHA256_STR, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
-            const Buffer *regionKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, dateKey, BUFSTR(this->region));
-            const Buffer *serviceKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, regionKey, S3_BUF);
+                hashTypeSha256, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
+            const Buffer *regionKey = cryptoHmacOne(hashTypeSha256, dateKey, BUFSTR(this->region));
+            const Buffer *serviceKey = cryptoHmacOne(hashTypeSha256, regionKey, S3_BUF);
 
             // Switch to the object context so signing key and date are not lost
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
-                this->signingKey = cryptoHmacOne(HASH_TYPE_SHA256_STR, serviceKey, AWS4_REQUEST_BUF);
+                this->signingKey = cryptoHmacOne(hashTypeSha256, serviceKey, AWS4_REQUEST_BUF);
                 this->signingKeyDate = strDup(date);
             }
             MEM_CONTEXT_OBJ_END();
@@ -227,7 +229,7 @@ storageS3Auth(
         const String *authorization = strNewFmt(
             AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
             strZ(this->accessKey), strZ(date), strZ(this->region), strZ(signedHeaders),
-            strZ(bufHex(cryptoHmacOne(HASH_TYPE_SHA256_STR, this->signingKey, BUFSTR(stringToSign)))));
+            strZ(bufHex(cryptoHmacOne(hashTypeSha256, this->signingKey, BUFSTR(stringToSign)))));
 
         httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, authorization);
     }
@@ -474,8 +476,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         if (param.content != NULL)
         {
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
-                strNewEncode(encodeBase64, cryptoHashOne(HASH_TYPE_MD5_STR, param.content)));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
         // Set KMS headers when requested
@@ -531,7 +532,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         storageS3Auth(
             this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
             param.content == NULL || bufEmpty(param.content) ?
-                HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(HASH_TYPE_SHA256_STR, param.content)));
+                HASH_TYPE_SHA256_ZERO_STR : bufHex(cryptoHashOne(hashTypeSha256, param.content)));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -607,7 +608,7 @@ General function for listing files to be used by other list routines
 static void
 storageS3ListInternal(
     StorageS3 *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
-    StorageInfoListCallback callback, void *callbackData)
+    StorageListCallback callback, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -687,13 +688,14 @@ storageS3ListInternal(
 
                 XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
-                // If a continuation token exists then send an async request to get more data
-                const String *continuationToken = xmlNodeContent(
-                    xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, false));
-
-                if (continuationToken != NULL)
+                // If list is truncated then send an async request to get more data
+                if (strEq(xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_IS_TRUNCATED_STR, true)), TRUE_STR))
                 {
-                    httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, continuationToken);
+                    const String *const nextContinuationToken = xmlNodeContent(
+                        xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, true));
+                    CHECK(FormatError, !strEmpty(nextContinuationToken), S3_XML_TAG_NEXT_CONTINUATION_TOKEN " may not be empty");
+
+                    httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, nextContinuationToken);
 
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
@@ -811,10 +813,24 @@ storageS3Info(THIS_VOID, const String *const file, const StorageInfoLevel level,
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageS3InfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static void
+storageS3ListCallback(void *const callbackData, const StorageInfo *const info)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, callbackData);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, info);
+    FUNCTION_TEST_END();
+
+    ASSERT(callbackData != NULL);
+    ASSERT(info != NULL);
+
+    storageLstAdd(callbackData, info);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+static StorageList *
+storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
     THIS(StorageS3);
 
@@ -822,18 +838,17 @@ storageS3InfoList(
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
         FUNCTION_LOG_PARAM(STRING, param.expression);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(callback != NULL);
 
-    storageS3ListInternal(this, path, level, param.expression, false, callback, callbackData);
+    StorageList *const result = storageLstNew(level);
 
-    FUNCTION_LOG_RETURN(BOOL, true);
+    storageS3ListInternal(this, path, level, param.expression, false, storageS3ListCallback, result);
+
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1064,7 +1079,7 @@ storageS3Remove(THIS_VOID, const String *const file, const StorageInterfaceRemov
 static const StorageInterface storageInterfaceS3 =
 {
     .info = storageS3Info,
-    .infoList = storageS3InfoList,
+    .list = storageS3List,
     .newRead = storageS3NewRead,
     .newWrite = storageS3NewWrite,
     .pathRemove = storageS3PathRemove,

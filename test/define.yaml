@@ -135,6 +135,13 @@ unit:
           - common/type/object
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: type-blob
+        total: 1
+
+        coverage:
+          - common/type/blob
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-string
         total: 27
         feature: string
@@ -283,8 +290,39 @@ unit:
           - common/type/pack
 
       # ----------------------------------------------------------------------------------------------------------------------------
+      - name: compress
+        total: 5
+
+        coverage:
+          - common/compress/bz2/common
+          - common/compress/bz2/compress
+          - common/compress/bz2/decompress
+          - common/compress/gz/common
+          - common/compress/gz/compress
+          - common/compress/gz/decompress
+          - common/compress/lz4/common
+          - common/compress/lz4/compress
+          - common/compress/lz4/decompress
+          - common/compress/zst/common
+          - common/compress/zst/compress
+          - common/compress/zst/decompress
+          - common/compress/helper
+
+        depend:
+          - storage/posix/read
+          - storage/posix/storage
+          - storage/posix/write
+          - storage/iterator
+          - storage/list
+          - storage/read
+          - storage/storage
+          - storage/write
+
+      # ----------------------------------------------------------------------------------------------------------------------------
       - name: crypto
         total: 3
+        feature: STORAGE
+        harness: storage
 
         coverage:
           - common/crypto/cipherBlock
@@ -315,14 +353,6 @@ unit:
           - common/io/fdRead
           - common/io/read
 
-        depend:
-          - storage/posix/read
-          - storage/posix/storage
-          - storage/posix/write
-          - storage/read
-          - storage/storage
-          - storage/write
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-http
         total: 6
@@ -352,31 +382,12 @@ unit:
           - common/ini
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: compress
-        total: 5
-
-        coverage:
-          - common/compress/bz2/common
-          - common/compress/bz2/compress
-          - common/compress/bz2/decompress
-          - common/compress/gz/common
-          - common/compress/gz/compress
-          - common/compress/gz/decompress
-          - common/compress/lz4/common
-          - common/compress/lz4/compress
-          - common/compress/lz4/decompress
-          - common/compress/zst/common
-          - common/compress/zst/compress
-          - common/compress/zst/decompress
-          - common/compress/helper
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: exit
+      - name: lock
         total: 3
         harness: config
 
         coverage:
-          - common/exit
+          - common/lock
 
         depend:
           - command/backup/pageChecksum
@@ -390,19 +401,6 @@ unit:
           - command/command
           - postgres/interface
           - postgres/interface/page
-          - postgres/interface/v090
-          - postgres/interface/v091
-          - postgres/interface/v092
-          - postgres/interface/v093
-          - postgres/interface/v094
-          - postgres/interface/v095
-          - postgres/interface/v096
-          - postgres/interface/v100
-          - postgres/interface/v110
-          - postgres/interface/v120
-          - postgres/interface/v130
-          - postgres/interface/v140
-          - postgres/interface/v150
           - protocol/client
           - protocol/command
           - protocol/helper
@@ -412,15 +410,6 @@ unit:
           - storage/remote/protocol
           - storage/remote/storage
           - storage/remote/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: lock
-        total: 3
-        feature: STORAGE
-        harness: storage
-
-        coverage:
-          - common/lock
 
   # ********************************************************************************************************************************
   - name: protocol
@@ -503,6 +492,8 @@ unit:
           - storage/posix/storage
           - storage/posix/write
           - storage/helper
+          - storage/iterator
+          - storage/list
           - storage/read
           - storage/storage
           - storage/write
@@ -625,6 +616,14 @@ unit:
           - build/help/parse
           - build/help/render
 
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: postgres
+        total: 1
+
+        coverage:
+          - build/postgres/parse
+          - build/postgres/render
+
   # ********************************************************************************************************************************
   - name: info
 
@@ -740,7 +739,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: check
-        total: 4
+        total: 3
         containerReq: true
 
         coverage:
@@ -852,6 +851,13 @@ unit:
 
         coverage:
           - command/local/local
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: exit
+        total: 3
+
+        coverage:
+          - command/exit
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: server

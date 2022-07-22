@@ -71,7 +71,7 @@ typedef struct ParseRuleCommand
     bool parameterAllowed:1;                                        // Command-line parameters are allowed
 } ParseRuleCommand;
 
-// Macros used to define parse rules in parse.auto.c in a format that diffs well
+// Macros used to define parse rules in parse.auto.c.inc in a format that diffs well
 #define PARSE_RULE_COMMAND(...)                                                                                                    \
     {__VA_ARGS__}
 
@@ -110,7 +110,7 @@ typedef struct ParseRuleOptionGroup
     const char *name;                                               // All options in the group must be prefixed with this name
 } ParseRuleOptionGroup;
 
-// Macros used to define parse rules in parse.auto.c in a format that diffs well
+// Macros used to define parse rules in parse.auto.c.inc in a format that diffs well
 #define PARSE_RULE_OPTION_GROUP(...)                                                                                               \
     {__VA_ARGS__}
 
@@ -157,7 +157,7 @@ typedef enum
     parseRuleFilterTypeCommand = 1,
 } ParseRuleFilterType;
 
-// Macros used to define parse rules in parse.auto.c in a format that diffs well
+// Macros used to define parse rules in parse.auto.c.inc in a format that diffs well
 #define PARSE_RULE_OPTION(...)                                                                                                     \
     {__VA_ARGS__}
 
@@ -265,7 +265,7 @@ typedef struct ParseRuleOptionDeprecate
 /***********************************************************************************************************************************
 Include automatically generated parse data
 ***********************************************************************************************************************************/
-#include "config/parse.auto.c"
+#include "config/parse.auto.c.inc"
 
 /***********************************************************************************************************************************
 Struct to hold options parsed from the command line
@@ -2264,7 +2264,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                         // If the path ends with a / we'll strip it off (unless the value is just /)
                                         if (strEndsWithZ(value, "/") && strSize(value) != 1)
                                         {
-                                            strTrunc(value, (int)strSize(value) - 1);
+                                            strTruncIdx(value, (int)strSize(value) - 1);
 
                                             // Reset string value since it was modified
                                             MEM_CONTEXT_BEGIN(config->memContext)

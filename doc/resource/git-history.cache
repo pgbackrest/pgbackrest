@@ -1,5 +1,356 @@
 [
     {
+        "commit": "1ff531090b9d1eccd9107592398148a51486c9f8",
+        "date": "2022-07-18 09:32:30 -0400",
+        "subject": "v2.40: OpenSSL 3 Support"
+    },
+    {
+        "commit": "1df1e0281b94a06ff0f16622e2cbb76598d430d1",
+        "date": "2022-07-14 17:13:33 -0400",
+        "subject": "Replace AC_PROG_CC_C99 configure macro with AC_PROG_CC.",
+        "body": "AC_PROG_CC_C99 is now obsolete.\n\nThe AC_PROG_CC macro does not guarantee C99 compliance but we add an option to check for that a bit later."
+    },
+    {
+        "commit": "364af1635d40431276cc6fd87d6ddd689b611e09",
+        "date": "2022-07-14 08:26:03 -0400",
+        "subject": "Force target-timeline=current when restore type=immediate.",
+        "body": "Explicitly set target timeline to \"current\" when type=immediate and PostgreSQL >= 12. We do this because type=immediate means there won't be any actual attempt to change timelines, but if we leave the target timeline as the default of \"latest\" then PostgreSQL might fail to restore because it can't reach the \"latest\" timeline in the repository from this backup.\r\n\r\nThis is really a PostgreSQL bug and will hopefully be addressed there, but we'll handle it here for older versions, at least until they aren't really seen in the wild any longer.\r\n\r\nPostgreSQL < 12 defaults to \"current\" (but does not accept \"current\" as a parameter) so no need set it explicitly."
+    },
+    {
+        "commit": "75623d4583bfdaccb3a19b935fd04d744b363923",
+        "date": "2022-07-08 17:21:39 -0400",
+        "subject": "Create snapshot when listing contents of a path.",
+        "body": "Previously a callback was used to list path contents and if no sort was specified then a snapshot was not required. When deleting files from the path some filesystems could omit files that still existed, which meant the path could not be removed.\r\n\r\nFilter . out of lists in the Posix driver since this special entry was only used by test code (and filtered everywhere in the core code).\r\n\r\nAlso remove callbacks from the storage interface and replace with an iterator that should be easier to use and guarantees efficient use of the snapshots."
+    },
+    {
+        "commit": "f9ac53db92574e8b499187ee4f2a7258bc2f4794",
+        "date": "2022-07-08 14:38:14 -0400",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "74a4ac801db921f7b11b63b9f927228c6a6af861",
+        "date": "2022-07-08 11:13:55 -0400",
+        "subject": "Add link to PostgreSQL configuration in repository host section.",
+        "body": "This should make the documentation clearer when starting from this section."
+    },
+    {
+        "commit": "0eccbc8bf47073ab8ec1f13fed9865d0bd7c3635",
+        "date": "2022-07-06 18:17:52 -0400",
+        "subject": "Meson builds work on version 0.45.",
+        "body": "v0.45 ships with Ubuntu 18.04, which is currently the oldest distro we support. We may never do a Meson release on Ubuntu 18.04 but this allows us to start running unit tests with Meson in the meantime.\n\nSome more granular options are not available so we use buildtype in more places.\n\nThe check for a in-tree autoconf/make build had to be removed since the filesystem APIs are not available.\n\nFinally, alias_target was removed. This means that full paths must be used for build targets, which does not seem too bad. For instance, test/src/test-pgbackrest must now be used as a build target instead of simple test-pgbackrest."
+    },
+    {
+        "commit": "72960bbf179b4e8051bd4fc50be57d95159e9e13",
+        "date": "2022-07-06 09:55:32 -0400",
+        "subject": "Rename strTrunc() to strTruncIdx() and add strTrunc().",
+        "body": "strTrunc() is now shorthand for truncating to index 0. This is convenient when a string is being reused."
+    },
+    {
+        "commit": "cd25cec1471dde60f85404744252b675efff2522",
+        "date": "2022-07-05 14:34:31 -0400",
+        "subject": "Add comment to indicate that type is in a different info level."
+    },
+    {
+        "commit": "1c0bf0b15da8c0d15cc639851ff1d1bd05b51d06",
+        "date": "2022-07-05 14:28:40 -0400",
+        "subject": "Reorder null user/group checks in remote protocol and add tests.",
+        "body": "Coverage for these checks was dependent on the order the files were read from disk, which made the tests fragile.\n\nRearrange the checks and add a test that won't depend on order."
+    },
+    {
+        "commit": "326d152a14121cb298089847a3694aa9f50bcbd2",
+        "date": "2022-07-05 06:58:19 -0400",
+        "subject": "Update contributor name."
+    },
+    {
+        "commit": "845d82f6825d4101e6a465a435ef056ff6ec15a2",
+        "date": "2022-07-01 20:32:10 -0400",
+        "subject": "Use S3 IsTruncated flag to determine list continuation.",
+        "body": "Previously we were just checking for the existence of NextContinuationToken, which the S3 documentation indicates will not be present when the list is not truncated. However, recent versions of Scality send a blank NextContinuationToken when IsTruncated is false. Sending the blank continuation token back causes Scality to send another blank continuation token and an infinite loop occurs.\r\n\r\nInstead use IsTruncated (which is required to be present) to determine whether NextContinuationToken should be present. Error if NextContinuationToken is then missing or empty, since an empty token caused an infinite loop with the Scality server (which arguably should have errored when passed an empty token)."
+    },
+    {
+        "commit": "61ca9b58a000aa8789ef3267682519bdb15e8a6b",
+        "date": "2022-06-28 14:15:08 -0400",
+        "subject": "Replace hrnStorageInfoListCallback() with TEST_STORAGE_LIST() in tests.",
+        "body": "The TEST_STORAGE_LIST() macro is more robust and hides the callback mechanism from the caller.\n\nAdd features to TEST_STORAGE_LIST() that hrnStorageInfoListCallback() had.\n\nUpdate tests to use the abbreviated type output (e.g. path/) generated by TEST_STORAGE_LIST()."
+    },
+    {
+        "commit": "59f148bf6ea8c090d4d65ce5b135a71501e8ae22",
+        "date": "2022-06-26 08:42:43 -0400",
+        "subject": "Generate -fmacro-prefix-map to strip relative path from __FILE__.",
+        "body": "This provides reproducible builds and minimizes the file path in debug messages, just like an in-tree make build.\n\nFor test source, prefix with test/ in case there are any module name collisions."
+    },
+    {
+        "commit": "f863fc98886f4d6c2803b9a2396539597d0d7be2",
+        "date": "2022-06-23 12:20:56 -0400",
+        "subject": "Add experimental unit test harness written in C.",
+        "body": "Having the test harness in C will allow us to remove duplicated Perl code and test on systems where Perl support is not present.\n\nCustom harnesses and shims are currently not implemented, which means only the following tests in the common module will run: error, stack-trace, type-convert, assert-on, mem-context, time, encode, type-object, type-string, type-list, type-buffer, type-variant, reg-exp, log.\n\nThe experimental test harness is being committed with partial functionality so it can be used in Windows development. The remaining features will follow as needed."
+    },
+    {
+        "commit": "b7a1b3ec2c16fde6a201f404a27d8343595900b6",
+        "date": "2022-06-23 10:57:58 -0400",
+        "subject": "Used DEBUG instead of NDEBUG in common/stackTrace module.",
+        "body": "In some testing cases these might not be in sync, which causes unpredictable behavior."
+    },
+    {
+        "commit": "29d2f0f9fda4dbba0dc5eca6f84368a6f655bd28",
+        "date": "2022-06-22 09:52:30 -0400",
+        "subject": "Add cast to handle compilers (e.g. MSVC) that coerce to signed int.",
+        "body": "MSVC changes the sign in this case, presumable because of the subtraction. Cast so that MSVC does not also trigger a mixed sign warning."
+    },
+    {
+        "commit": "9fd85a104ad56061b028afd9057ce8c1d636d3dd",
+        "date": "2022-06-21 09:50:38 -0400",
+        "subject": "Disable meson for all but debug builds.",
+        "body": "The meson builds are still experimental so for now the configure/make build process is preferred for release builds. This message should help prevent any automated build systems from picking up meson instead."
+    },
+    {
+        "commit": "665da12ae7f519077512e60ce3a5ec6c6a9997fd",
+        "date": "2022-06-17 16:41:48 -0400",
+        "subject": "Update meson.build include comment to be more general.",
+        "body": "Eventually multiple subdirs will be included so update the comment to reflect that."
+    },
+    {
+        "commit": "5ecae90f0254ef752d8323ea5be3b99673ec46f7",
+        "date": "2022-06-17 16:31:48 -0400",
+        "subject": "Use constants rather than replacements when possible in test.c.",
+        "body": "Some of the replacements that were being done already existed as constants, so use the constants instead.\n\nAlso fix a minor formatting error introduced when testAdd() was renamed to hrnAdd()."
+    },
+    {
+        "commit": "dab1e4b6c66018c03c6e01309c41a89ef82ff5bc",
+        "date": "2022-06-17 16:27:31 -0400",
+        "subject": "Add strReplace().",
+        "body": "Allows substrings to be replaced with another string."
+    },
+    {
+        "commit": "fb9acc1c93d504d366493bc42038f15faa80300d",
+        "date": "2022-06-17 16:17:02 -0400",
+        "subject": "Add higher level YAML functions.",
+        "body": "These functions make parsing YAML simpler."
+    },
+    {
+        "commit": "55bcb933eee753a0cdd13f9861a00c33d194c1e7",
+        "date": "2022-06-17 11:17:52 -0400",
+        "subject": "Move protocol module from common to command.",
+        "body": "This module has dependencies on command/command so it does not make sense for it to be in the common module. Also move protocolFree() to main() since this is a very large dependency.\n\nAdjust the tests so command/exit can be tested later. This is a bit messy but will get adjusted as we improve the test harness."
+    },
+    {
+        "commit": "eb72a80b471145d97ac4170e3215f7c67aa83082",
+        "date": "2022-06-15 09:06:25 -0400",
+        "subject": "Fix continuation character spacing."
+    },
+    {
+        "commit": "716bba5800d504a76d4bdc99588448824be3d83f",
+        "date": "2022-06-14 08:13:22 -0400",
+        "subject": "Fix hard-coded WAL size assertion in walSegmentNext().",
+        "body": "PG_WAL_SEGMENT_SIZE_DEFAULT is used to compare and check WAL size on pre-11 installations. However, there is a hard-coded assertion in walSegmentNext() which doesn't respect PG_WAL_SEGMENT_SIZE_DEFAULT.\r\n\r\nUpdate the assertion to use PG_WAL_SEGMENT_SIZE_DEFAULT."
+    },
+    {
+        "commit": "282edda661b5f1eb189998e7db680b91a2b8a66b",
+        "date": "2022-06-09 17:42:00 -0400",
+        "subject": "Remove storageLocal() dependency from common/lock module.",
+        "body": "The storage/helper module is a very heavy dependency to introduce in the common module. Creating Posix storage objects is cheap so just do that instead."
+    },
+    {
+        "commit": "04f5ef25faf276e51bd546199f1197b5c70003e8",
+        "date": "2022-06-09 17:18:32 -0400",
+        "subject": "Add valgrind to Dockerfile missed in a16cf5ea."
+    },
+    {
+        "commit": "79443bea3634f7dd3858b6f65838e31fb9b87c3f",
+        "date": "2022-06-09 16:55:07 -0400",
+        "subject": "Move bldEnum() to the build/common/render module.",
+        "body": "This function will be useful for other build/test modules so extern it.\n\nAlso skip the first upper-case when no prefix is provided."
+    },
+    {
+        "commit": "1a00ab10033e9ac6e6f797627567e8b91e143432",
+        "date": "2022-06-09 07:34:11 -0400",
+        "subject": "Fix compile error when DEBUG_EXEC_TIME is defined without DEBUG.",
+        "body": "If DEBUG is not defined then the ASSERT() macro expands to nothing. In this case the timeBegin variable is never used and a compilation error occurs.\r\n\r\nThis test should work without DEBUG defined so use CHECK() instead of ASSERT()."
+    },
+    {
+        "commit": "0dabf88e9d85e4db2ff65ebbb14b4320e1092a8b",
+        "date": "2022-06-08 17:43:23 -0400",
+        "subject": "Add FN_NO_RETURN macro.",
+        "body": "Change all instances of __attribute__((__noreturn__)) to a macro in meson.build / build.auto.h.in.\r\n\r\nAs compiler attributes written in the form of __attribute__ are not supported by MSVC, this is one of several commits to make the code-base more robust and allow using MSVC-style attributes later."
+    },
+    {
+        "commit": "8babd558bc3a5b930fd096ffb306551773f1f14d",
+        "date": "2022-06-08 07:26:15 -0400",
+        "subject": "Add missing build.auto.h includes.",
+        "body": "These are required for proper building but were probably not noticed before since they are not part of the core code."
+    },
+    {
+        "commit": "a16cf5eac7217e79d8669fab5dff1863e26208c9",
+        "date": "2022-06-06 16:32:20 -0400",
+        "subject": "Update CI to use Ubuntu 22.04 and Fedora 36.",
+        "body": "Both have newer gcc and OpenSSL 3.\n\nFedora 36 runs horribly slow with valgrind enabled so run the valgrind tests on Ubuntu 22.04. Fedora 36 has a newer gcc so it is still worth testing on."
+    },
+    {
+        "commit": "08242ee6ac93b9eb9c05cc39e3db15bbafb9052c",
+        "date": "2022-06-06 14:47:47 -0400",
+        "subject": "OpenSSL 3 support.",
+        "body": "There are two changes:\r\n\r\n* Suppress deprecation warnings so we can build with -Werror and -Wfatal-errors. At some point we'll need to migrate to the new APIs but there does not seem to be a good reason to support two sets of code right now.\r\n\r\n* Update the handling for unexpected EOF to handle EOF or error. The error code for EOF has changed and become harder to identify, but we probably don't care whether it is an error or EOF."
+    },
+    {
+        "commit": "f92ce674f79e2d6056794c1af4002c01dad93aed",
+        "date": "2022-06-06 13:52:56 -0400",
+        "subject": "Automatically create PostgreSQL version interfaces.",
+        "body": "Maintaining the version interfaces was complicated by the fact that each interface needed to be in separate compilation unit to avoid type conflicts. This also meant that various build/test files needed to be updated to add the new interfaces.\r\n\r\nSolve these problems by auto-generating all the interfaces into a single file. This is made possible by parsing defines and types out of the header files and creating macros to rename the types. At the end of the version interface everything is undef'd. Another benefit is that the auto-generated interfaces can be static and included directly into postgres/interface.c.\r\n\r\nSince some code generation is now always required for tests, change --no-gen to --min-gen in test.pl.\r\n\r\nIt would also make sense to auto-generate the version defines in postgres/version.h, but that will be left for a future commit."
+    },
+    {
+        "commit": "b8fc20d5b8e7ca003ff39f29ea6e3ba57653f55c",
+        "date": "2022-06-03 14:13:56 -0400",
+        "subject": "Add experimental Meson build.",
+        "body": "Meson is a new build system that offers simpler syntax and superior performance to autoconf/make. In addition, Windows is supported natively.\r\n\r\nThe Meson build appears complete, but currently is used only for auto-generation of code and the host build of pgbackrest. Some container upgrades will be required before Meson can be used for container builds.\r\n\r\nAlso patch the Debian package to force autoconf/make rather than Meson."
+    },
+    {
+        "commit": "148956aed8aca201aa800af321d946094b96f176",
+        "date": "2022-06-01 10:13:57 -0400",
+        "subject": "Remove useless command/check unit test.",
+        "body": "This test was a placeholder and did not provide any coverage, but it did give inconsistent results on different shell versions."
+    },
+    {
+        "commit": "29b2a54fcc74457af5c63ffb505c5fbb24bb2ade",
+        "date": "2022-05-31 17:28:58 -0400",
+        "subject": "Allow any path to be passed to the --test-path option.",
+        "body": "A hard-coded path prevented this from working correctly."
+    },
+    {
+        "commit": "be354c489017ea84ed825f226b50d170bec1ff68",
+        "date": "2022-05-31 16:52:26 -0400",
+        "subject": "Update CodeQL to version 2.",
+        "body": "Version 1 will be deprecated on December 12, so upgrade now to avoid nasty surprises."
+    },
+    {
+        "commit": "2c38c9a56f95efea42d489792751b77acfc470e4",
+        "date": "2022-05-31 16:43:18 -0400",
+        "subject": "Skip stopping PostgreSQL 9.1 in real/all integration test.",
+        "body": "Stopping the cluster has started consistently running out of memory on PostgreSQL 9.1. This seems to have happened after pulling in new packages at some point so it might be build related.\n\nStopping the cluster is not critical for 9.1 so skip it."
+    },
+    {
+        "commit": "2feaaeaac803d6c0193477b56dbeb622fd991156",
+        "date": "2022-05-31 16:06:41 -0400",
+        "subject": "Add .inc extension to C files included in other C files.",
+        "body": "These files were never intended to be compiled on their own so the .c extension was a bit misleading. In particular Meson does not like .c files that are not intended to be compiled independently.\n\nLeave header files as is since they are already protected against being included more than once and are never expected to be compiled."
+    },
+    {
+        "commit": "cb891fa2d402ee338b72d2c0962cc5cd49eea4f1",
+        "date": "2022-05-31 13:02:51 -0400",
+        "subject": "Run remaining Github Actions CI on Ubuntu 20.04.",
+        "body": "The s390x/ppc64le tests are already running on 20.04."
+    },
+    {
+        "commit": "2643050be0dc4b7363c434f58373919bd6fdac68",
+        "date": "2022-05-31 12:36:21 -0400",
+        "subject": "Skip internal options in the configuration reference.",
+        "body": "Most internal options were being skipped, but not in the case where an option was marked internal for a specific command.\n\nThe command-line help was not affected by this issue."
+    },
+    {
+        "commit": "f0aae6ceab9a95c6d63b8955abd2592ddbbce90a",
+        "date": "2022-05-31 12:26:57 -0400",
+        "subject": "Remote repo options should not be valid for the backup command.",
+        "body": "Some of the remote repo options were gated by repo-local, but the rest relied on repo-host-cmd.\n\nRemove backup from the repo-host-cmd option since none of the dependent options are valid for backup."
+    },
+    {
+        "commit": "a902c7808d8bf651389e2479d4622b0fd49ab09d",
+        "date": "2022-05-31 12:24:21 -0400",
+        "subject": "Make all repo-* options visible for stanza create/update/delete.",
+        "body": "31c7824a allowed these commands to run remotely but neglected to remove some internal flags, which prevented all the repo-* options from being visible in the documentation."
+    },
+    {
+        "commit": "60d70fa66fc3f709914f40dd088bac1b467001f2",
+        "date": "2022-05-25 18:18:37 -0400",
+        "subject": "Disable incremental manifest save when resume=n.",
+        "body": "The manifest is saved on a regular basis during a backup so a failed backup can be resumed. For backups that the user has configured/invoked as not resumable, skip the incremental save of the manifest."
+    },
+    {
+        "commit": "8c2b3a044fa175031366fb4f676b5c1a0a319ec0",
+        "date": "2022-05-25 15:27:53 -0400",
+        "subject": "Use StringId for type in cryptoHash() and cryptoHmacOne().",
+        "body": "This brings hash types in line with cipher types (i.e. a StringId enum) and allows removal of some Strings."
+    },
+    {
+        "commit": "38ad2838d553febae1b7fe0244d942dfaa9cf548",
+        "date": "2022-05-25 14:20:19 -0400",
+        "subject": "Set backup percent complete to zero before copy start.",
+        "body": "Waiting to write percent complete until the first file completed resulted in a period of time where the backup was running without status available to the user.\r\n\r\nRemedy this by initializing percent complete to zero when the backup is ready to start copying files."
+    },
+    {
+        "commit": "7b1935c71005a5a928e34caf7b8b48e5d871cc66",
+        "date": "2022-05-25 10:23:43 -0400",
+        "subject": "Remove unused errors.",
+        "body": "Most of these were probably never ported from Perl to C and others became obsolete over time.\n\nFix one error that was the wrong type.\n\nAlso fix/improve some comments."
+    },
+    {
+        "commit": "f6f2f2e2a34c01e20bbf6c26e5e8a232a6bd232d",
+        "date": "2022-05-25 09:42:49 -0400",
+        "subject": "Add missing static keywords.",
+        "body": "Add static keyword to local variables where missing."
+    },
+    {
+        "commit": "7ec51e7e6279ea576ad3b4b5c2ea1fc389d08ab5",
+        "date": "2022-05-24 16:39:35 -0400",
+        "subject": "Truncate files during delta restore when they are larger than expected.",
+        "body": "Previously the behavior was to download the file from the repository when it was not exactly the same size in PGDATA. However, it may just be that the file was extended and the contents are the same up to the file size recorded in the manifest. This could also be very valuable for files that are always append only, like logs.\r\n\r\nChange info.size to file->size in one place. Both are technically correct but file->size makes more sense.\r\n\r\nUse the new fileName variable in a few existing places.\r\n\r\nAlso adjust some existing comments to make them clearer."
+    },
+    {
+        "commit": "c98baab6b56967e222b825e22e5808e17c02d025",
+        "date": "2022-05-19 18:24:09 -0400",
+        "subject": "New CI container builds for PostgreSQL 15 beta1 and minor releases.",
+        "body": "Remove VM_OS_REPO since it is no longer required.\n\nRebalance PostgreSQL versions for more efficient test times.\n\nAlways print version of PostgreSQL when testing. This helps verify that new minor releases are being used."
+    },
+    {
+        "commit": "69adb990dced3bf1d76a3e2482aad38016165d6c",
+        "date": "2022-05-19 12:25:58 -0400",
+        "subject": "Use storagePathP() instead of cfgOptionStr() to get base repo path.",
+        "body": "cfgOptionStr() may not have the correct value if the repo is remote.\n\nUse storagePathP() instead since it can ask the remote for the correct value when required."
+    },
+    {
+        "commit": "c7a66ac1afb9a55b049dc18493b602b7bf62bda4",
+        "date": "2022-05-18 10:52:01 -0400",
+        "subject": "Improve memory usage of mem contexts.",
+        "body": "Each mem context can track child contexts, allocations, and a callback. Before this change memory was allocated for tracking all three even if they were not used for a particular context. This made mem contexts unsuitable for String and Variant objects since they are plentiful and need to be as small as possible.\r\n\r\nThis change allows mem contexts to be configured to track any combination of child contexts, allocations, and a callback. In addition, the mem context can be configured to track a single child context and/or allocation, which saves memory and is a common use case.\r\n\r\nAnother benefit is that Variants can own objects (e.g. KeyValue) that they encapsulate. All of this makes memory accounting simpler because mem contexts have names while allocations do not. No more memory is used than before since Variants and Strings still had to store the memory context they were originally allocated in so they could be easily freed.\r\n\r\nUpdate the String and Variant objects to use this new functionality. The custom strFree() and varFree() functions are no longer required and can now be a wrapper around objFree().\r\n\r\nLastly, this will allow strMove() and varMove() to be implemented and used in cases where strDup() and varDup() are being used to move a String or Variant to a new context. Since this will be a bit noisy it is saved for a future commit."
+    },
+    {
+        "commit": "83af3f1b7ae78b150849939766e2e555366b95d5",
+        "date": "2022-05-18 08:48:48 -0400",
+        "subject": "Add additional detail to warnings when delta checksum is auto-enabled.",
+        "body": "Hopefully this will help with debugging when it is not clear why delta checksum is being enabled."
+    },
+    {
+        "commit": "5dfd00bb6ce0d6d2ead0ba6c899c18983f9a7ac9",
+        "date": "2022-05-18 08:18:34 -0400",
+        "subject": "Fix RHEL container build for documentation.",
+        "body": "For some reason /lib/systemd/system/sysinit.target.wants no longer exists in the rockylinux:8 container.\n\nCreate this directory explicitly in case it does not exist."
+    },
+    {
+        "commit": "5360f2ec0af08ac1755d48f234347c240ff09f4a",
+        "date": "2022-05-16 10:50:07 -0400",
+        "subject": "Fix comment indentation."
+    },
+    {
+        "commit": "b598f49dedbfb2bdd19d43dae9fa9ba654f2287c",
+        "date": "2022-05-16 09:17:00 -0400",
+        "subject": "Udpate parse.auto.c with labels from 4dcc9df2.",
+        "body": "Committed separately so it can be ignored in history/blame."
+    },
+    {
+        "commit": "4dcc9df222d2ecef6721c9ecd52b05e24024cc3d",
+        "date": "2022-05-16 09:14:46 -0400",
+        "subject": "Add labels in parse.auto.c to make diffs easier to read.",
+        "body": "Because there is a lot of repetition in this file, changes can look very jumbled with existing data in a diff. Also, if can be hard to tell what is being modified if the diff does not show enough lines before and after.\n\nThis change adds labels to the end of the line to localize the diff and make it easier to see what has been changed. Also, remove some linefeeds and make separators more consistent.\n\nThe change to parse.auto.c will be committed separately so it can be ignored in history/blame."
+    },
+    {
+        "commit": "f5023a769d4580258a336cf26f2b293aa2341b29",
+        "date": "2022-05-16 08:54:19 -0400",
+        "subject": "Update config.guess to latest version."
+    },
+    {
+        "commit": "243eef1e520bb72ae2b28a627dda323305e38862",
+        "date": "2022-05-16 08:51:37 -0400",
+        "subject": "Begin v2.40 development."
+    },
+    {
         "commit": "901e829f6dd05fdc15d899bc7f1108883002b1d5",
         "date": "2022-05-16 08:46:24 -0400",
         "subject": "v2.39: Verify and File Bundling"

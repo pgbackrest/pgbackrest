@@ -52,8 +52,10 @@ typedef struct StorageInfo
     StorageInfoLevel level;                                         // Level of information provided
     bool exists;                                                    // Does the path/file/link exist?
 
-    // Set when info type >= storageInfoLevelBasic (undefined at lower levels)
+    // Set when info type >= storageInfoLevelType (undefined at lower levels)
     StorageType type;                                               // Type file/path/link)
+
+    // Set when info type >= storageInfoLevelBasic (undefined at lower levels)
     uint64_t size;                                                  // Size (path/link is 0)
     time_t timeModified;                                            // Time file was last modified
 

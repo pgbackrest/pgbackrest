@@ -6,6 +6,7 @@ Generate a hash (sha1, md5, etc.) from a string, Buffer, or using an IoFilter.
 #ifndef COMMON_CRYPTO_HASH_H
 #define COMMON_CRYPTO_HASH_H
 
+#include "common/crypto/common.h"
 #include "common/io/filter/filter.h"
 #include "common/type/string.h"
 
@@ -13,16 +14,6 @@ Generate a hash (sha1, md5, etc.) from a string, Buffer, or using an IoFilter.
 Filter type constant
 ***********************************************************************************************************************************/
 #define CRYPTO_HASH_FILTER_TYPE                                     STRID5("hash", 0x44c280)
-
-/***********************************************************************************************************************************
-Hash types
-***********************************************************************************************************************************/
-#define HASH_TYPE_MD5                                               "md5"
-    STRING_DECLARE(HASH_TYPE_MD5_STR);
-#define HASH_TYPE_SHA1                                              "sha1"
-    STRING_DECLARE(HASH_TYPE_SHA1_STR);
-#define HASH_TYPE_SHA256                                            "sha256"
-    STRING_DECLARE(HASH_TYPE_SHA256_STR);
 
 /***********************************************************************************************************************************
 Hashes for zero-length files (i.e., starting hash)
@@ -49,16 +40,16 @@ Hash type sizes
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *cryptoHashNew(const String *type);
+IoFilter *cryptoHashNew(HashType type);
 IoFilter *cryptoHashNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Get hash for one buffer
-Buffer *cryptoHashOne(const String *type, const Buffer *message);
+Buffer *cryptoHashOne(HashType type, const Buffer *message);
 
 // Get hmac for one message/key
-Buffer *cryptoHmacOne(const String *type, const Buffer *key, const Buffer *message);
+Buffer *cryptoHmacOne(HashType type, const Buffer *key, const Buffer *message);
 
 #endif
