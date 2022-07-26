@@ -25,6 +25,8 @@
                             <release-item-ideator id="keith.fiske"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="stefan.fercot"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="keith.fiske"/>
                         </release-item-contributor-list>
 
                         <p>Move standby timeline check after checkpoint.</p>
