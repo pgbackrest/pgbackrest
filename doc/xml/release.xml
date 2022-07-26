@@ -40,6 +40,19 @@
                     </release-item>
                 </release-improvement-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="don.seiler"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add absolute path for <id>kill</id> in <file>pgbackrest.service</file>.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2022-07-18" version="2.40" title="OpenSSL 3 Support">
