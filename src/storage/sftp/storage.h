@@ -42,13 +42,6 @@ typedef struct StorageSftpNewParam
 Storage *storageSftpNew(const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
         StorageSftpNewParam param);
 
-
-/***********************************************************************************************************************************
-Functions
-***********************************************************************************************************************************/
-// Convert libssh2 sftp errno to errno
-void sftperror_to_errno(uint64_t sftperrno);
-
 #endif
 
 //#endif // HAVE_LIBSSH2

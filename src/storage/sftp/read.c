@@ -3,7 +3,7 @@ Sftp Storage Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-//#ifdef HAVE_LIBSSH2
+// #ifdef HAVE_LIBSSH2
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -78,7 +78,7 @@ storageReadSftpFreeResource(THIS_VOID)
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
         if (rc)
-            THROW_SYS_ERROR_FMT(FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+            THROW_FMT(FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
     }
 */
 
@@ -120,22 +120,16 @@ storageReadSftpOpen(THIS_VOID)
             if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
             {
                 if (!this->interface.ignoreMissing)
-                {
-                    sftperror_to_errno(libssh2_sftp_last_error(this->sftpSession));
                     THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
-                }
             }
             else
-            {
-                sftperror_to_errno(libssh2_sftp_last_error(this->sftpSession));
-                THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));
-            }
+                THROW_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));
         }
     }
     // Else success
     else
     {
-        // Set free callback to ensure the sftpHandle is close
+        // Set free callback to ensure the sftpHandle is closed
         // jrt is this needed???
         memContextCallbackSet(objMemContext(this), storageReadSftpFreeResource, this);
 
@@ -191,26 +185,19 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
         // jrt ??? pull ssh/sftp error???
         if (actualBytes < 0)
         {
-            // This is extremely hacky. libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
             if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
+                // This is extremely hacky. libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
                 if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_BAD_MESSAGE && this->interface.offset > 0)
-                {
-                    errno = 22;
-                    THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.offset, strZ(this->interface.name));
-                }
+                    THROW_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.offset, strZ(this->interface.name));
 
-                // jrt !!! libssh2 seems to always set errno to 11 Resource temporarily unavailable
-                // do we want to override it with 0 or another errno
-                THROW_SYS_ERROR_FMT(
-                    FileReadError, "unable to read '%s' sftperrno [%lu]", strZ(this->interface.name),
+                // Otherwise
+                THROW_FMT(
+                    FileReadError, "unable to read '%s': sftp errno [%lu]", strZ(this->interface.name),
                     libssh2_sftp_last_error(this->sftpSession));
             }
-            // ssh error
             else
-            {
-                THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s' libssh2 error", strZ(this->interface.name));
-            }
+                THROW_FMT(FileReadError, "unable to read '%s'", strZ(this->interface.name));
         }
 
         // Update amount of buffer used
@@ -332,4 +319,4 @@ storageReadSftpNew(
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }
 
-//#endif // HAVE_LIBSSH2
+// #endif // HAVE_LIBSSH2

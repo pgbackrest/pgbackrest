@@ -490,7 +490,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path basic info - recurse");
 
-        // jrt !!! sftp will not overwrite file -- do we need to add additionl param to force removal and write in these cases
+        // jrt !!! sftp will not overwrite file -- do we need to add additional param to force removal and write in these cases
         storageRemoveP(storageTest, STRDEF("pg/path/file"), .errorOnMissing = true);
 
         storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
@@ -767,14 +767,14 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub1")), "create sub1 again");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub1"), .errorOnExists = true), PathCreateError,
-            "unable to create path '" TEST_PATH "/sub1': [17] File exists");
+            "unable to create path '" TEST_PATH "/sub1': path already exists");
 
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub2"), .mode = 0777), "create sub2 with custom mode");
         TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub2")).mode, 0777, "check sub2 dir mode");
 
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub3/sub4"), .noParentCreate = true), PathCreateError,
-            "unable to create path '" TEST_PATH "/sub3/sub4': [2] No such file or directory");
+            "unable to create path '" TEST_PATH "/sub3/sub4'");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
         HRN_SYSTEM("rm -rf " TEST_PATH "/sub*");
@@ -949,7 +949,7 @@ testRun(void)
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, TEST_PATH_STR)), FileReadError,
-            "unable to read '" TEST_PATH "' sftperrno [4]: [11] Resource temporarily unavailable");
+            "unable to read '" TEST_PATH "': sftp errno [4]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("put - empty file");
@@ -1013,7 +1013,7 @@ testRun(void)
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = UINT64_MAX)), FileOpenError,
-            "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt': [22] Invalid argument");
+            "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read limited bytes");
@@ -1052,7 +1052,7 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("missing")), "remove missing file");
         TEST_ERROR(
             storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
-            "unable to remove '" TEST_PATH "/missing': [2] No such file or directory");
+            "unable to remove '" TEST_PATH "/missing'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file exists");
@@ -1111,32 +1111,25 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bad file descriptor");
-
         Buffer *outBuffer = bufNew(2);
         const Buffer *expectedBuffer = BUFSTRDEF("TESTFILE\n");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, fileName), expectedBuffer), "write test file");
 
-/* investigate whether this can be implemented
- * just closing the sftpHandle doesn't generate a failure - appears to still read 2 bytes
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
 
-        // Close the file descriptor so operations will fail
-        //close(((StorageReadSftp *)file->driver)->fd);
-        libssh2_sftp_close(((StorageWriteSftp *)file->driver)->sftpHandle);
-
+        libssh2_sftp_close(((StorageReadSftp *)file->driver)->sftpHandle);
 
         TEST_ERROR_FMT(
-            ioRead(storageReadIo(file), outBuffer), FileReadError, "unable to read '%s': [9] Bad file descriptor", strZ(fileName));
-
-        // Set file descriptor to -1 so the close on free will not fail
-        ((StorageReadSftp *)file->driver)->fd = -1;
-        // Set sftpHandle to NULL so the close on free with not fail
-        ((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
-*/
+            ioRead(storageReadIo(file), outBuffer), FileReadError, "unable to read '%s': sftp errno [4]", strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental load");
+
+        // Recreate storageTest as previous test closed socket fd
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+            .write = true);
 
         Buffer *buffer = bufNew(0);
 
@@ -1235,10 +1228,9 @@ testRun(void)
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("bad file descriptor");
-// jrt TBD i think this may need to be broken into two tests
-// jrt also think may needs section of tests where the filesystem file descriptor is bad vs the sftpHandle file descriptor
-// jrt need to re-implement/add flag to signify that handle is closed to avoid double *sftp_close* free error
+        TEST_TITLE("bad sftp handle - error in sync");
+// jrt also think may needs section of tests where the filesystem file descriptor is bad vs the sftpHandle file descriptor - next test
+// jrt look at re-implement/add flag to signify that handle is closed to avoid double *sftp_close* free error
         String *fileTmp = strNewFmt("%s.pgbackrest.tmp", strZ(fileName));
         ioBufferSizeSet(10);
         const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
@@ -1249,19 +1241,58 @@ testRun(void)
 
         // Close the sftp handle so operations will fail
         libssh2_sftp_close(((StorageWriteSftp *)file->driver)->sftpHandle);
-//        close(((StorageWritePosix *)file->driver)->fd);
-//        close(ioSessionFd(((StorageWriteSftp *)file->driver)->ioSession));
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
+        // jrt ??? can we gen a better errmsg
         TEST_ERROR_FMT(
-            storageWriteSftp(file->driver, buffer), FileWriteError, "unable to write '%s.pgbackrest.tmp' sftperrno [4]",
+            storageWriteSftp(file->driver, buffer), FileWriteError, "unable to write '%s.pgbackrest.tmp'",
             strZ(fileName));
         TEST_ERROR_FMT(
-            storageWriteSftpClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [2] No such file or directory",
-            strZ(fileTmp));
+            storageWriteSftpClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(fileTmp));
 /*
         // Disable file sync so close() can be reached
         ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
+        TEST_ERROR_FMT(
+            storageWriteSftpClose(file->driver), FileMoveError, "unable to move '%s' to '%s': [2] No such file or directory",
+            strZ(fileTmp), strZ(fileName));
+*/
+
+        // Set sftpHandle to NULL so the close on free with not fail
+        //((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
+        // Set file descriptor to -1 so the close on free with not fail
+        //((StorageWritePosix *)file->driver)->fd = -1;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bad file descriptor - error in close");
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
+        TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+
+        // Close the sftp handle so operations will fail
+//        libssh2_sftp_close(((StorageWriteSftp *)file->driver)->sftpHandle);
+//        close(((StorageWritePosix *)file->driver)->fd);
+        storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
+
+        // Close the socket file descriptor
+        close(ioSessionFd(((StorageWriteSftp *)file->driver)->ioSession));
+
+        TEST_ERROR_FMT(
+            storageWriteSftp(file->driver, buffer), FileWriteError, "unable to write '%s.pgbackrest.tmp'",
+            strZ(fileName));
+        /*
+        TEST_ERROR_FMT(
+            storageWriteSftpClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [2] No such file or directory",
+            strZ(fileTmp));
+            */
+
+        // Disable file sync so close() can be reached
+        ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
+        TEST_ERROR_FMT(
+            storageWriteSftpClose(file->driver), FileCloseError, "unable to close file '%s' after write",
+            strZ(fileTmp));
+
+        /*
         TEST_ERROR_FMT(
             storageWriteSftpClose(file->driver), FileMoveError, "unable to move '%s' to '%s': [2] No such file or directory",
             strZ(fileTmp), strZ(fileName));
@@ -1272,9 +1303,18 @@ testRun(void)
         // Set file descriptor to -1 so the close on free with not fail
         //((StorageWritePosix *)file->driver)->fd = -1;
 
+//        const String *fileName = STRDEF(TEST_PATH "/sub1/test.file");
+//        HRN_SYSTEM_FMT("rmdir %s", strZ(strPath(fileName)));
+        //storagePathRemoveP(storageTest, STRDEF("sub1"), .errorOnMissing = true, .recurse = true);
+
         // -------------------------------------------------------------------------------------------------------------------------
 
         TEST_TITLE("fail rename in close");
+
+        // Recreate storageTest as previous test closed socket fd
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+            .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
@@ -1284,8 +1324,7 @@ testRun(void)
         // Rename the file back to original name from tmp -- this will cause the rename in close to fail
         TEST_RESULT_INT(rename(strZ(fileTmp), strZ(fileName)), 0, "rename tmp file");
         TEST_ERROR_FMT(
-            ioWriteClose(storageWriteIo(file)), FileMoveError, "unable to move '%s' to '%s': [2] No such file or directory",
-            strZ(fileTmp), strZ(fileName));
+            ioWriteClose(storageWriteIo(file)), FileMoveError, "unable to move '%s' to '%s'", strZ(fileTmp), strZ(fileName));
 
         // Set file descriptor to -1 so the close on free with not fail
         //((StorageWriteSftp *)file->driver)->fd = -1;
