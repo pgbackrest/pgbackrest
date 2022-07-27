@@ -63,6 +63,13 @@ option:
     command:
       test: {}
 
+  run:
+    type: boolean
+    default: true
+    negate: true
+    command:
+      test: {}
+
   scale:
     type: integer
     internal: true
@@ -89,6 +96,13 @@ option:
     type: string
     internal: true
     required: false
+    command:
+      test: {}
+
+  valgrind:
+    type: boolean
+    default: true
+    negate: true
     command:
       test: {}
 

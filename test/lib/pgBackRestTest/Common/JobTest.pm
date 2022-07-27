@@ -114,8 +114,14 @@ sub new
     # Set try to 0
     $self->{iTry} = 0;
 
-    # Setup the path where gcc coverage will be performed
-    $self->{strGCovPath} = "$self->{strTestPath}/gcov-$self->{oTest}->{&TEST_VM}-$self->{iVmIdx}";
+    # Use the new C test harness?
+    $self->{bTestC} =
+        $self->{oTest}->{&TEST_C} && !$self->{bCoverageUnit} && !$self->{bProfile} &&
+        $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE;
+
+    # Setup the path where unit test will be built
+    $self->{strUnitPath} =
+        "$self->{strTestPath}/" . ($self->{bTestC} ? 'unit' : 'gcov') . "-$self->{iVmIdx}/$self->{oTest}->{&TEST_VM}";
     $self->{strDataPath} = "$self->{strTestPath}/data-$self->{iVmIdx}";
     $self->{strRepoPath} = "$self->{strTestPath}/repo";
 
@@ -180,13 +186,10 @@ sub run
             # Create host test directory
             $self->{oStorageTest}->pathCreate($strHostTestPath, {strMode => '0770'});
 
-            # Create gcov directory
-            my $bGCovExists = true;
-
-            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strGCovPath}))
+            # Create unit directory
+            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strUnitPath}))
             {
-                $self->{oStorageTest}->pathCreate($self->{strGCovPath}, {strMode => '0770'});
-                $bGCovExists = false;
+                $self->{oStorageTest}->pathCreate($self->{strUnitPath}, {strMode => '0770', bCreateParent => true});
             }
 
             # Create data directory
@@ -195,20 +198,31 @@ sub run
                 $self->{oStorageTest}->pathCreate($self->{strDataPath}, {strMode => '0770'});
             }
 
+            # Create ccache directory
+            my $strCCachePath = "$self->{strTestPath}/ccache-$self->{iVmIdx}/$self->{oTest}->{&TEST_VM}";
+
+            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($strCCachePath))
+            {
+                $self->{oStorageTest}->pathCreate($strCCachePath, {strMode => '0770', bCreateParent => true});
+            }
+
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
                 if ($self->{oTest}->{&TEST_VM} ne VM_NONE)
                 {
                     my $strBinPath = $self->{strTestPath} . '/bin/' . $self->{oTest}->{&TEST_VM} . '/' . PROJECT_EXE;
+                    my $strBuildPath = $self->{strTestPath} . '/build/' . $self->{oTest}->{&TEST_VM};
 
                     executeTest(
                         'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
                         " -v ${strHostTestPath}:${strVmTestPath}" .
-                        ($self->{oTest}->{&TEST_C} ? " -v $self->{strGCovPath}:$self->{strGCovPath}" : '') .
+                        ($self->{oTest}->{&TEST_C} ? " -v $self->{strUnitPath}:$self->{strUnitPath}" : '') .
                         ($self->{oTest}->{&TEST_C} ? " -v $self->{strDataPath}:$self->{strDataPath}" : '') .
                         " -v $self->{strBackRestBase}:$self->{strBackRestBase}" .
-                        " -v $self->{strRepoPath}:$self->{strRepoPath}:ro" .
+                        " -v $self->{strRepoPath}:$self->{strRepoPath}" .
                         ($self->{oTest}->{&TEST_BIN_REQ} ? " -v ${strBinPath}:${strBinPath}:ro" : '') .
+                        ($self->{bTestC} ? " -v ${strBuildPath}:${strBuildPath}:ro" : '') .
+                        ($self->{bTestC} ? " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" : '') .
                         ' ' . containerRepo() . ':' . $self->{oTest}->{&TEST_VM} . '-test',
                         {bSuppressStdErr => true});
                 }
@@ -227,27 +241,52 @@ sub run
         {
             my $strCommand = undef;                                 # Command to run test
 
-            # If testing C code
-            if ($self->{oTest}->{&TEST_C})
+            # If testing with C harness
+            if ($self->{bTestC})
+            {
+                # Create command
+                # ------------------------------------------------------------------------------------------------------------------
+                # Build filename for valgrind suppressions
+                my $strValgrindSuppress = $self->{strRepoPath} . '/test/src/valgrind.suppress.' . $self->{oTest}->{&TEST_VM};
+
+                $strCommand =
+                    ($self->{oTest}->{&TEST_VM} ne VM_NONE ? "docker exec -i -u ${\TEST_USER} ${strImage} bash -l -c '" : '') .
+                    " \\\n" .
+                    $self->{strTestPath} . '/build/' . $self->{oTest}->{&TEST_VM} . '/test/src/test-pgbackrest --no-run' .
+                        ' --no-repo-copy --repo-path=' . $self->{strTestPath} . '/repo' . '  --test-path=' . $self->{strTestPath} .
+                        ' --vm=' . $self->{oTest}->{&TEST_VM} . ' --vm-id=' . $self->{iVmIdx} . ' test ' .
+                        $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
+                    # Allow stderr to be copied to stderr and stdout
+                    "exec 3>&1 && \\\n" .
+                    # Test with valgrind when requested
+                    ($self->{bValgrindUnit} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
+                        'valgrind -q --gen-suppressions=all' .
+                        ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
+                        " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
+                        $self->{strUnitPath} . '/build/test-unit 2>&1 1>&3 | tee /dev/stderr' .
+                    ($self->{oTest}->{&TEST_VM} ne VM_NONE ? "'" : '');
+            }
+            # Else still testing with Perl harness
+            elsif ($self->{oTest}->{&TEST_C})
             {
                 my $strRepoCopyPath = $self->{strTestPath} . '/repo';           # Path to repo copy
                 my $strRepoCopySrcPath = $strRepoCopyPath . '/src';             # Path to repo copy src
                 my $strRepoCopyTestSrcPath = $strRepoCopyPath . '/test/src';    # Path to repo copy test src
-                my $strShimSrcPath = $self->{strGCovPath} . '/src';             # Path to shim src
-                my $strShimTestSrcPath = $self->{strGCovPath} . '/test/src';    # Path to shim test src
+                my $strShimSrcPath = $self->{strUnitPath} . '/src';             # Path to shim src
+                my $strShimTestSrcPath = $self->{strUnitPath} . '/test/src';    # Path to shim test src
 
                 my $bCleanAll = false;                              # Do all object files need to be cleaned?
                 my $bConfigure = false;                             # Does configure need to be run?
 
                 # If the build.processing file exists then wipe the path to start clean
                 # ------------------------------------------------------------------------------------------------------------------
-                my $strBuildProcessingFile = $self->{strGCovPath} . "/build.processing";
+                my $strBuildProcessingFile = $self->{strUnitPath} . "/build.processing";
 
                 # If the file exists then processing terminated before test.bin was run in the last test and the path might be in a
                 # bad state.
                 if ($self->{oStorageTest}->exists($strBuildProcessingFile))
                 {
-                    executeTest("find $self->{strGCovPath} -mindepth 1 -print0 | xargs -0 rm -rf");
+                    executeTest("find $self->{strUnitPath} -mindepth 1 -print0 | xargs -0 rm -rf");
                 }
 
                 # Write build.processing to track processing of this test
@@ -263,7 +302,7 @@ sub run
                     "LIBS_CONFIG = \@LIBS\@ \@LIBS_BUILD\@\n";
 
                 # If Makefile.in has changed then configure needs to be run and all files cleaned
-                if (buildPutDiffers($self->{oStorageTest}, $self->{strGCovPath} . "/Makefile.in", $strMakefileIn))
+                if (buildPutDiffers($self->{oStorageTest}, $self->{strUnitPath} . "/Makefile.in", $strMakefileIn))
                 {
                     $bConfigure = true;
                     $bCleanAll = true;
@@ -334,7 +373,7 @@ sub run
                     "vpath \%.c ${strShimSrcPath}:${strShimTestSrcPath}:${strRepoCopySrcPath}:${strRepoCopyTestSrcPath}\n";
 
                 # If Makefile.param has changed then clean all files
-                if (buildPutDiffers($self->{oStorageTest}, $self->{strGCovPath} . "/Makefile.param", $strMakefileParam))
+                if (buildPutDiffers($self->{oStorageTest}, $self->{strUnitPath} . "/Makefile.param", $strMakefileParam))
                 {
                     $bCleanAll = true;
                 }
@@ -543,7 +582,7 @@ sub run
                     "DEP_FILES = \$(call rwildcard,.build,*.dep)\n" .
                     "include \$(DEP_FILES)\n";
 
-                buildPutDiffers($self->{oStorageTest}, $self->{strGCovPath} . "/Makefile", $strMakefile);
+                buildPutDiffers($self->{oStorageTest}, $self->{strUnitPath} . "/Makefile", $strMakefile);
 
                 # Create test.c
                 # ------------------------------------------------------------------------------------------------------------------
@@ -673,12 +712,12 @@ sub run
 
                 # Save test.c and make sure it gets a new timestamp
                 # ------------------------------------------------------------------------------------------------------------------
-                my $strTestCFile = "$self->{strGCovPath}/test.c";
+                my $strTestCFile = "$self->{strUnitPath}/test.c";
 
-                if (buildPutDiffers($self->{oStorageTest}, "$self->{strGCovPath}/test.c", $strTestC))
+                if (buildPutDiffers($self->{oStorageTest}, "$self->{strUnitPath}/test.c", $strTestC))
                 {
                     # Get timestamp for test.bin if it existss
-                    my $oTestBinInfo = $self->{oStorageTest}->info("$self->{strGCovPath}/test.bin", {bIgnoreMissing => true});
+                    my $oTestBinInfo = $self->{oStorageTest}->info("$self->{strUnitPath}/test.bin", {bIgnoreMissing => true});
                     my $iTestBinOriginalTime = defined($oTestBinInfo) ? $oTestBinInfo->mtime : 0;
 
                     # Get timestamp for test.c
@@ -709,7 +748,7 @@ sub run
                 $strCommand =
                     ($self->{oTest}->{&TEST_VM} ne VM_NONE ? "docker exec -i -u ${\TEST_USER} ${strImage} bash -l -c '" : '') .
                     " \\\n" .
-                    "cd $self->{strGCovPath} && \\\n" .
+                    "cd $self->{strUnitPath} && \\\n" .
                     # Clean build
                     ($bCleanAll ? "rm -rf .build && \\\n" : '') .
                     # Remove coverage data
@@ -811,12 +850,12 @@ sub end
         {
             executeTest(
                 ($self->{oTest}->{&TEST_VM} ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-                    "gprof $self->{strGCovPath}/test.bin $self->{strGCovPath}/gmon.out > $self->{strGCovPath}/gprof.txt");
+                    "gprof $self->{strUnitPath}/test.bin $self->{strUnitPath}/gmon.out > $self->{strUnitPath}/gprof.txt");
 
             $self->{oStorageTest}->pathCreate(
                 "$self->{strBackRestBase}/test/result/profile", {strMode => '0750', bIgnoreExists => true, bCreateParent => true});
             $self->{oStorageTest}->copy(
-                "$self->{strGCovPath}/gprof.txt", "$self->{strBackRestBase}/test/result/profile/gprof.txt");
+                "$self->{strUnitPath}/gprof.txt", "$self->{strBackRestBase}/test/result/profile/gprof.txt");
         }
 
         # If C code generate coverage info
@@ -826,7 +865,7 @@ sub end
                 $self->{oStorageTest}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME},
                 $self->{oTest}->{&TEST_VM} ne VM_NONE, $self->{bCoverageSummary},
                 $self->{oTest}->{&TEST_VM} eq VM_NONE ? undef : $strImage, $self->{strTestPath}, "$self->{strTestPath}/temp",
-                $self->{strGCovPath}, $self->{strBackRestBase} . '/test/result');
+                $self->{strUnitPath}, $self->{strBackRestBase} . '/test/result');
         }
 
         # Record elapsed time

@@ -396,8 +396,9 @@
         # Set locale
         RUN echo en_US.UTF-8 UTF-8 > /etc/locale.conf
 
-        # Add path to PostgreSQL
+        # Add path to PostgreSQL and package
         ENV PATH=/usr/pgsql-{[pg-version]}/bin:$PATH
+        ENV PKG_CONFIG_PATH=/usr/pgsql-{[pg-version]}/lib/pkgconfig:$PKG_CONFIG_PATH
 
         CMD ["/usr/sbin/init"]
     </host-define>

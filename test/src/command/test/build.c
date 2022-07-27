@@ -190,6 +190,60 @@ testBldWrite(const Storage *const storage, StringList *const fileList, const cha
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Generate a relative path from the compare path to the base path
+
+??? This function has not been hardened for edge cases, e.g. paths are equal. Probably this should he moved to the storage module.
+***********************************************************************************************************************************/
+static String *
+cmdBldPathRelative(const String *const base, const String *const compare)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, base);
+        FUNCTION_LOG_PARAM(STRING, compare);
+    FUNCTION_LOG_END();
+
+    ASSERT(base != NULL);
+    ASSERT(compare != NULL);
+
+    String *const result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const StringList *const baseList = strLstNewSplitZ(base, "/");
+        const StringList *const compareList = strLstNewSplitZ(compare, "/");
+        unsigned int compareIdx = 0;
+
+        // Find the part of the paths that is the same
+        while (
+            compareIdx < strLstSize(baseList) && compareIdx < strLstSize(compareList) &&
+            strEq(strLstGet(baseList, compareIdx), strLstGet(compareList, compareIdx)))
+        {
+            compareIdx++;
+        }
+
+        // Generate ../ part of relative path
+        bool first = true;
+
+        for (unsigned int dotIdx = compareIdx; dotIdx < strLstSize(baseList); dotIdx++)
+        {
+            if (!first)
+                strCatChr(result, '/');
+            else
+                first = false;
+
+            strCatZ(result, "..");
+        }
+
+        // Add remaining path
+        for (unsigned int pathIdx = compareIdx; pathIdx < strLstSize(compareList); pathIdx++)
+            strCatFmt(result, "/%s", strZ(strLstGet(compareList, pathIdx)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
 /**********************************************************************************************************************************/
 void
 testBldUnit(TestBuild *const this)
@@ -205,13 +259,14 @@ testBldUnit(TestBuild *const this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const Storage *const storageUnit = storagePosixNewP(
-            strNewFmt("%s/unit-%u", strZ(testBldPathTest(this)), testBldVmId(this)), .write = true);
+            strNewFmt("%s/unit-%u/%s", strZ(testBldPathTest(this)), testBldVmId(this), strZ(testBldVm(this))), .write = true);
         const Storage *const storageTestId = storagePosixNewP(
             strNewFmt("%s/test-%u", strZ(testBldPathTest(this)), testBldVmId(this)), .write = true);
         StringList *const storageUnitList = strLstNew();
         const TestDefModule *const module = testBldModule(this);
-        const String *const pathRepo = testBldPathRepo(this);
         const String *const pathUnit = storagePathP(storageUnit, NULL);
+        const String *const pathRepo = testBldPathRepo(this);
+        const String *const pathRepoRel = cmdBldPathRelative(pathUnit, pathRepo);
 
         // Build shim modules
         // -------------------------------------------------------------------------------------------------------------------------
@@ -258,11 +313,11 @@ testBldUnit(TestBuild *const this)
 
                 strReplace(harnessC, STRDEF("{[SHIM_MODULE]}"), includeReplace);
                 testBldWrite(storageUnit, storageUnitList, strZ(harnessFile), BUFSTR(harnessC));
-                strLstAddFmt(harnessList, "%s/%s", strZ(pathUnit), strZ(harnessFile));
+                strLstAdd(harnessList, harnessFile);
             }
             // Else harness can be referenced directly from the repo path
             else
-                strLstAdd(harnessList, harnessPath);
+                strLstAddFmt(harnessList, "%s/%s", strZ(pathRepoRel), strZ(harnessFile));
         }
 
         // Copy meson_options.txt
@@ -315,8 +370,7 @@ testBldUnit(TestBuild *const this)
             MESON_COMMENT_BLOCK "\n"
             "# Unit test\n"
             MESON_COMMENT_BLOCK "\n"
-            "executable(\n"
-            "    'test-unit',\n");
+            "src_unit = files(\n");
 
         for (unsigned int dependIdx = 0; dependIdx < strLstSize(module->dependList); dependIdx++)
         {
@@ -325,7 +379,7 @@ testBldUnit(TestBuild *const this)
             if (strLstExists(harnessIncludeList, depend))
                 continue;
 
-            strCatFmt(mesonBuild, "    '%s/src/%s.c',\n", strZ(pathRepo), strZ(depend));
+            strCatFmt(mesonBuild, "    '%s/src/%s.c',\n", strZ(pathRepoRel), strZ(depend));
         }
 
         // Add harnesses
@@ -334,13 +388,16 @@ testBldUnit(TestBuild *const this)
             const TestDefHarness *const harness = lstGet(module->harnessList, harnessIdx);
 
             // Add harness depends
-            const String *const harnessDependPath = strNewFmt(
-                "%s/test/src/common/%s", strZ(pathRepo), strZ(bldEnum("harness", harness->name)));
+            const String *const harnessDependPath = strNewFmt("test/src/common/%s", strZ(bldEnum("harness", harness->name)));
             StorageIterator *const storageItr = storageNewItrP(
                 testBldStorageRepo(this), harnessDependPath, .expression = STRDEF("\\.c$"), .sortOrder = sortOrderAsc);
 
             while (storageItrMore(storageItr))
-                strCatFmt(mesonBuild, "    '%s/%s',\n", strZ(harnessDependPath), strZ(storageItrNext(storageItr).name));
+            {
+                strCatFmt(
+                    mesonBuild, "    '%s/%s/%s',\n", strZ(pathRepoRel), strZ(harnessDependPath),
+                    strZ(storageItrNext(storageItr).name));
+            }
 
             // Add harness if no includes are in module or coverage includes
             unsigned int includeIdx = 0;
@@ -363,6 +420,11 @@ testBldUnit(TestBuild *const this)
             mesonBuild,
             "    '%s/test/src/common/harnessTest.c',\n"
             "    'test.c',\n"
+            ")\n"
+            "\n"
+            "executable(\n"
+            "    'test-unit',\n"
+            "    sources: src_unit,\n"
             "    include_directories:\n"
             "        include_directories(\n"
             "            '.',\n"
@@ -380,7 +442,7 @@ testBldUnit(TestBuild *const this)
             "        lib_zstd,\n"
             "    ],\n"
             ")\n",
-            strZ(pathRepo), strZ(pathRepo), strZ(pathRepo));
+            strZ(pathRepoRel), strZ(pathRepoRel), strZ(pathRepoRel));
 
         testBldWrite(storageUnit, storageUnitList, "meson.build", BUFSTR(mesonBuild));
 
@@ -394,9 +456,9 @@ testBldUnit(TestBuild *const this)
 
         if (module->coverageList != NULL)
         {
-        for (unsigned int coverageIdx = 0; coverageIdx < lstSize(module->coverageList); coverageIdx++)
-        {
-            const TestDefCoverage *const coverage = lstGet(module->coverageList, coverageIdx);
+            for (unsigned int coverageIdx = 0; coverageIdx < lstSize(module->coverageList); coverageIdx++)
+            {
+                const TestDefCoverage *const coverage = lstGet(module->coverageList, coverageIdx);
 
                 if (coverage->coverable && !coverage->include)
                     strLstAdd(testIncludeFileList, coverage->name);
@@ -405,8 +467,8 @@ testBldUnit(TestBuild *const this)
 
         if (module->includeList != NULL)
         {
-        for (unsigned int includeIdx = 0; includeIdx < strLstSize(module->includeList); includeIdx++)
-            strLstAdd(testIncludeFileList, strLstGet(module->includeList, includeIdx));
+            for (unsigned int includeIdx = 0; includeIdx < strLstSize(module->includeList); includeIdx++)
+                strLstAdd(testIncludeFileList, strLstGet(module->includeList, includeIdx));
         }
 
         String *const testIncludeFile = strNew();
@@ -430,7 +492,7 @@ testBldUnit(TestBuild *const this)
             if (harnessIdx != lstSize(module->harnessList))
                 strCatFmt(testIncludeFile, "#include \"%s\"", strZ(strLstGet(harnessList, harnessIdx)));
             else
-                strCatFmt(testIncludeFile, "#include \"%s/src/%s.c\"", strZ(pathRepo), strZ(include));
+                strCatFmt(testIncludeFile, "#include \"%s/src/%s.c\"", strZ(pathRepoRel), strZ(include));
         }
 
         strReplace(testC, STRDEF("{[C_INCLUDE]}"), testIncludeFile);
@@ -447,11 +509,14 @@ testBldUnit(TestBuild *const this)
 
         // Path to the project exe when it exists
         const String *const pathProjectExe = storagePathP(
-            testBldStorageTest(this), strNewFmt("build/%s/src/" PROJECT_BIN, strZ(testBldVm(this))));
+            testBldStorageTest(this),
+            strNewFmt(
+                "%s/%s%s/" PROJECT_BIN, strEqZ(testBldVm(this), "none") ? "build" : "bin", strZ(testBldVm(this)),
+                strEqZ(testBldVm(this), "none") ? "/src" : ""));
         strReplace(testC, STRDEF("{[C_TEST_PROJECT_EXE]}"), pathProjectExe);
 
         // Path to source -- used to construct __FILENAME__ tests
-        strReplace(testC, STRDEF("{[C_TEST_PGB_PATH]}"), pathRepo);
+        strReplace(testC, STRDEF("{[C_TEST_PGB_PATH]}"), strNewFmt("../%s", strZ(pathRepoRel)));
 
         // Test log level
         strReplace(
@@ -485,7 +550,7 @@ testBldUnit(TestBuild *const this)
         // Include test file
         strReplace(
             testC, STRDEF("{[C_TEST_INCLUDE]}"),
-            strNewFmt("#include \"%s/test/src/module/%sTest.c\"", strZ(pathRepo), strZ(bldEnum(NULL, module->name))));
+            strNewFmt("#include \"%s/test/src/module/%sTest.c\"", strZ(pathRepoRel), strZ(bldEnum(NULL, module->name))));
 
         // Test list
         String *const testList = strNew();

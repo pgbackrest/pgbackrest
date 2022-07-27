@@ -65,7 +65,7 @@ jobs:
   testc:
     runs-on: ubuntu-22.04
     container:
-      image: ubuntu:22.04
+      image: ubuntu:18.04
 
     steps:
       - name: Checkout Code
@@ -76,18 +76,18 @@ jobs:
       - name: Install
         run: |
             apt-get update
-            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y sudo zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config gcc ccache meson liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev tzdata
+            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y sudo zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config gcc ccache meson liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev tzdata valgrind
             adduser --disabled-password --gecos \"\" runner
 
       - name: Build
         run: |
-          sudo -u runner cp -rp ${GITHUB_WORKSPACE?}/pgbackrest /home/runner
-          sudo -u runner meson -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug /home/runner/test/build/none /home/runner/pgbackrest
-          sudo -u runner ninja -C /home/runner/test/build/none test/src/test-pgbackrest
+          sudo -iu runner cp -rp ${GITHUB_WORKSPACE?}/pgbackrest /home/runner
+          sudo -iu runner meson -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug /home/runner/test/build/none /home/runner/pgbackrest
+          sudo -iu runner ninja -C /home/runner/test/build/none test/src/test-pgbackrest
 
       - name: Test
         run: |
-          sudo -u runner /home/runner/test/build/none/test/src/test-pgbackrest --repo-path=/home/runner/pgbackrest --test-path=/home/runner/test --no-repo-copy test
+          sudo -iu runner /home/runner/test/build/none/test/src/test-pgbackrest --repo-path=/home/runner/pgbackrest --test-path=/home/runner/test --no-repo-copy test
 
   # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to

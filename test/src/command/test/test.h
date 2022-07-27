@@ -14,6 +14,7 @@ Functions
 ***********************************************************************************************************************************/
 void cmdTest(
     const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const StringList *moduleFilterList,
-    unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone, bool repoCopy);
+    unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone, bool repoCopy, bool valgrind,
+    bool run);
 
 #endif

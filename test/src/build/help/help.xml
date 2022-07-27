@@ -109,6 +109,16 @@
                     <example>/path/to/pgbackrest</example>
                 </option>
 
+                <option id="run">
+                    <summary>Run the test?</summary>
+
+                    <text>
+                        <p>When negated the test will only be built.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
                 <option id="scale">
                     <summary>Scale performance test.</summary>
 
@@ -147,6 +157,16 @@
                     </text>
 
                     <example>America/New_York</example>
+                </option>
+
+                <option id="valgrind">
+                    <summary>Run test with valgrind.</summary>
+
+                    <text>
+                        <p>Valgrind helps find various memory issues.</p>
+                    </text>
+
+                    <example>n</example>
                 </option>
 
                 <option id="vm">
