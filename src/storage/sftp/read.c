@@ -9,7 +9,9 @@ Sftp Storage Read
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/fd.h"
 #include "common/io/read.h"
+#include "common/io/session.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/wait.h"
@@ -25,6 +27,7 @@ typedef struct StorageReadSftp
     StorageReadInterface interface;                                 // Interface
     StorageSftp *storage;                                           // Storage that created this object
 
+    IoSession *ioSession;
     LIBSSH2_SESSION *session;
     LIBSSH2_SFTP *sftpSession;
     LIBSSH2_SFTP_HANDLE *sftpHandle;
@@ -59,17 +62,25 @@ storageReadSftpFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    int rc = 0;
-    this->wait = waitNew(this->timeoutConnect);
-
-    // Close the libssh2 sftpHandle
-    do
+    // jrt need to remedy -- ?? add flag to struct indicating handle is closed
+    // socket freeresource is closing fd before we get here in test 12
+/*
+    if (this->sftpHandle != NULL)
     {
-        rc = libssh2_sftp_close(this->sftpHandle);
-    }
-    while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+        int rc = 0;
+        this->wait = waitNew(this->timeoutConnect);
 
-    THROW_ON_SYS_ERROR_FMT(rc != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->interface.name));
+        // Close the libssh2 sftpHandle
+        do
+        {
+            rc = libssh2_sftp_close(this->sftpHandle);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+        if (rc)
+            THROW_SYS_ERROR_FMT(FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+    }
+*/
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -106,10 +117,33 @@ storageReadSftpOpen(THIS_VOID)
         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL ||
                 libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN)
         {
-            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_PATH)
-                THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
+            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
+            {
+                if (!this->interface.ignoreMissing)
+                {
+                    sftperror_to_errno(libssh2_sftp_last_error(this->sftpSession));
+                    THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
+                }
+            }
             else
-                THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name));
+            {
+                sftperror_to_errno(libssh2_sftp_last_error(this->sftpSession));
+                THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->interface.name));
+            }
+        }
+    }
+    // Else success
+    else
+    {
+        // Set free callback to ensure the sftpHandle is close
+        // jrt is this needed???
+        memContextCallbackSet(objMemContext(this), storageReadSftpFreeResource, this);
+
+        // Seek to offset
+        if (this->interface.offset != 0)
+        {
+            // Returns void
+            libssh2_sftp_seek64(this->sftpHandle, this->interface.offset);
         }
     }
 
@@ -156,7 +190,28 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
         // Error occurred during read
         // jrt ??? pull ssh/sftp error???
         if (actualBytes < 0)
-            THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->interface.name));
+        {
+            // This is extremely hacky. libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
+            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+            {
+                if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_BAD_MESSAGE && this->interface.offset > 0)
+                {
+                    errno = 22;
+                    THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.offset, strZ(this->interface.name));
+                }
+
+                // jrt !!! libssh2 seems to always set errno to 11 Resource temporarily unavailable
+                // do we want to override it with 0 or another errno
+                THROW_SYS_ERROR_FMT(
+                    FileReadError, "unable to read '%s' sftperrno [%lu]", strZ(this->interface.name),
+                    libssh2_sftp_last_error(this->sftpSession));
+            }
+            // ssh error
+            else
+            {
+                THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s' libssh2 error", strZ(this->interface.name));
+            }
+        }
 
         // Update amount of buffer used
         bufUsedInc(buffer, (size_t)actualBytes);
@@ -212,18 +267,19 @@ storageReadSftpEof(THIS_VOID)
 /**********************************************************************************************************************************/
 StorageRead *
 storageReadSftpNew(
-    StorageSftp *const storage, const String *const name, const bool ignoreMissing, LIBSSH2_SESSION *session,
+    StorageSftp *const storage, const String *const name, const bool ignoreMissing, IoSession *ioSession, LIBSSH2_SESSION *session,
     LIBSSH2_SFTP *sftpSession, LIBSSH2_SFTP_HANDLE *sftpHandle, TimeMSec timeoutSession, TimeMSec timeoutConnect,
     const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
         FUNCTION_LOG_PARAM_P(VOID, session);
         FUNCTION_LOG_PARAM_P(VOID, sftpSession);
         FUNCTION_LOG_PARAM_P(VOID, sftpHandle);
-        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
+        FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
@@ -239,6 +295,7 @@ storageReadSftpNew(
         *driver = (StorageReadSftp)
         {
             .storage = storage,
+            .ioSession = ioSession,
             .session = session,
             .sftpSession = sftpSession,
             .sftpHandle = sftpHandle,

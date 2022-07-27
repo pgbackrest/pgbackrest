@@ -557,9 +557,10 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
-        total: 6
+        total: 19
 
         coverage:
+          - storage/sftp/helper
           - storage/sftp/read
           - storage/sftp/storage
           - storage/sftp/write
