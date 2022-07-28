@@ -33,6 +33,16 @@
                     <example>1MiB</example>
                 </option>
 
+                <option id="coverage">
+                    <summary>Generate code coverage.</summary>
+
+                    <text>
+                        <p>Coverage helps determine that tests adequately test the code.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
                 <option id="log-level">
                     <summary>Level for harness logging.</summary>
 

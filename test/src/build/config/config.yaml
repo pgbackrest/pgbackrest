@@ -45,6 +45,13 @@ option:
       - 512KiB
       - 1MiB
 
+  coverage:
+    type: boolean
+    default: true
+    negate: true
+    command:
+      test: {}
+
   neutral-umask:
     type: boolean
     internal: true

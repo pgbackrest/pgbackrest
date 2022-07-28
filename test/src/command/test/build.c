@@ -31,7 +31,7 @@ TestBuild *
 testBldNew(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
     const TestDefModule *const module, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
-    const String *const timeZone)
+    const String *const timeZone, const bool coverage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -44,6 +44,7 @@ testBldNew(
         FUNCTION_LOG_PARAM(ENUM, logLevel);
         FUNCTION_LOG_PARAM(BOOL, logTime);
         FUNCTION_LOG_PARAM(STRING, timeZone);
+        FUNCTION_LOG_PARAM(BOOL, coverage);
     FUNCTION_LOG_END();
 
     ASSERT(pathRepo != NULL);
@@ -73,6 +74,7 @@ testBldNew(
                 .logLevel = logLevel,
                 .logTime = logTime,
                 .timeZone = strDup(timeZone),
+                .coverage = coverage,
             },
         };
 
@@ -363,6 +365,14 @@ testBldUnit(TestBuild *const this)
         if (module->flag != NULL)
             strCatFmt(mesonBuild, "add_global_arguments('%s', language : 'c')\n", strZ(module->flag));
 
+        // Add coverage
+        if (testBldCoverage(this))
+            strCatZ(mesonBuild, "add_global_arguments('-DDEBUG_COVERAGE', language : 'c')\n");
+
+        // Add container flag
+        if (!strEqZ(testBldVm(this), "none"))
+            strCatZ(mesonBuild, "add_global_arguments('-DTEST_CONTAINER_REQUIRED', language : 'c')\n");
+
         // Build unit test
         strCatZ(
             mesonBuild,
@@ -536,7 +546,7 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_SCALE]}"), strNewFmt("%" PRIu64, testBldScale(this)));
 
         // Does this test run in a container?
-        strReplace(testC, STRDEF("{[C_TEST_CONTAINER]}"), STR(cvtBoolToConstZ(module->containerRequired)));
+        strReplace(testC, STRDEF("{[C_TEST_CONTAINER]}"), STR(cvtBoolToConstZ(!strEqZ(testBldVm(this), "none"))));
 
         // User/group info
         strReplace(testC, STRDEF("{[C_TEST_GROUP]}"), groupName());

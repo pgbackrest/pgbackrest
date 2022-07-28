@@ -115,9 +115,7 @@ sub new
     $self->{iTry} = 0;
 
     # Use the new C test harness?
-    $self->{bTestC} =
-        $self->{oTest}->{&TEST_C} && !$self->{bCoverageUnit} && !$self->{bProfile} &&
-        $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE;
+    $self->{bTestC} = $self->{oTest}->{&TEST_C} && !$self->{bProfile} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE;
 
     # Setup the path where unit test will be built
     $self->{strUnitPath} =
@@ -249,13 +247,17 @@ sub run
                 # Build filename for valgrind suppressions
                 my $strValgrindSuppress = $self->{strRepoPath} . '/test/src/valgrind.suppress.' . $self->{oTest}->{&TEST_VM};
 
+                # Is coverage enabled?
+                my $bCoverage = vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit};
+
                 $strCommand =
                     ($self->{oTest}->{&TEST_VM} ne VM_NONE ? "docker exec -i -u ${\TEST_USER} ${strImage} bash -l -c '" : '') .
                     " \\\n" .
                     $self->{strTestPath} . '/build/' . $self->{oTest}->{&TEST_VM} . '/test/src/test-pgbackrest --no-run' .
                         ' --no-repo-copy --repo-path=' . $self->{strTestPath} . '/repo' . '  --test-path=' . $self->{strTestPath} .
-                        ' --vm=' . $self->{oTest}->{&TEST_VM} . ' --vm-id=' . $self->{iVmIdx} . ' test ' .
-                        $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
+                        ' --vm=' . $self->{oTest}->{&TEST_VM} . ' --vm-id=' . $self->{iVmIdx} .
+                        ($bCoverage ? '' : ' --no-coverage') . ' test ' . $self->{oTest}->{&TEST_MODULE} . '/' .
+                        $self->{oTest}->{&TEST_NAME} . " && \\\n" .
                     # Allow stderr to be copied to stderr and stdout
                     "exec 3>&1 && \\\n" .
                     # Test with valgrind when requested
@@ -865,7 +867,9 @@ sub end
                 $self->{oStorageTest}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME},
                 $self->{oTest}->{&TEST_VM} ne VM_NONE, $self->{bCoverageSummary},
                 $self->{oTest}->{&TEST_VM} eq VM_NONE ? undef : $strImage, $self->{strTestPath}, "$self->{strTestPath}/temp",
-                $self->{strUnitPath}, $self->{strBackRestBase} . '/test/result');
+                -e "$self->{strUnitPath}/build/test-unit.p" ?
+                    "$self->{strUnitPath}/build/test-unit.p" : "$self->{strUnitPath}/build/test-unit\@exe",
+                $self->{strBackRestBase} . '/test/result');
         }
 
         # Record elapsed time

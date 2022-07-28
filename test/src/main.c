@@ -75,7 +75,7 @@ main(int argListSize, const char *argList[])
                         cfgOptionUInt(cfgOptVmId), cfgCommandParam(), cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0,
                         cfgOptionUInt64(cfgOptScale), logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)),
                         cfgOptionBool(cfgOptLogTimestamp), cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptRepoCopy),
-                        cfgOptionBool(cfgOptValgrind), cfgOptionBool(cfgOptRun));
+                        cfgOptionBool(cfgOptValgrind), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptRun));
 
                     break;
                 }

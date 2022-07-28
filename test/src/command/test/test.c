@@ -74,7 +74,7 @@ void
 cmdTest(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
     const StringList *moduleFilterList, const unsigned int test, const uint64_t scale, const LogLevel logLevel,
-    const bool logTime, const String *const timeZone, const bool repoCopy, const bool valgrind, const bool run)
+    const bool logTime, const String *const timeZone, const bool repoCopy, const bool valgrind, const bool coverage, const bool run)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -89,6 +89,7 @@ cmdTest(
         FUNCTION_LOG_PARAM(STRING, timeZone);
         FUNCTION_LOG_PARAM(BOOL, repoCopy);
         FUNCTION_LOG_PARAM(BOOL, valgrind);
+        FUNCTION_LOG_PARAM(BOOL, coverage);
         FUNCTION_LOG_PARAM(BOOL, run);
     FUNCTION_LOG_END();
 
@@ -188,7 +189,7 @@ cmdTest(
         // Process test list
         unsigned int errorTotal = 0;
         bool buildRetry = false;
-        const char *buildTypeLast = NULL;
+        String *const mesonSetupLast = strNew();
 
         for (unsigned int moduleIdx = 0; moduleIdx < strLstSize(moduleList); moduleIdx++)
         {
@@ -201,6 +202,7 @@ cmdTest(
                 // Build unit test
                 const String *const pathUnit = strNewFmt("%s/unit-%u/%s", strZ(pathTest), vmId, strZ(vm));
                 const String *const pathUnitBuild = strNewFmt("%s/build", strZ(pathUnit));
+                const Storage *const storageUnitBuild = storagePosixNewP(pathUnitBuild, .write = true);
                 const TimeMSec buildTimeBegin = timeMSec();
                 TimeMSec buildTimeEnd;
                 TestBuild *testBld;
@@ -209,35 +211,52 @@ cmdTest(
                 {
                     // Build unit
                     testBld = testBldNew(
-                        pathRepoCopy, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone);
+                        pathRepoCopy, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone, coverage);
                     testBldUnit(testBld);
 
                     // Meson setup
-                    const char *buildType = "debug";
+                    String *const mesonSetup = strCatZ(strNew(), "-Dbuildtype=");
 
                     if (module->flag != NULL)
                     {
                         ASSERT(strEqZ(module->flag, "-DNDEBUG"));
-                        buildType = "release";
+                        strCatZ(mesonSetup, "release");
                     }
+                    else
+                        strCatZ(mesonSetup, "debug");
+
+                    strCatFmt(mesonSetup, " -Db_coverage=%s", cvtBoolToConstZ(coverage));
 
                     if (!storageExistsP(testBldStorageTest(testBld), strNewFmt("%s/build.ninja", strZ(pathUnitBuild))))
                     {
                         LOG_DETAIL("meson setup");
+
                         cmdTestExec(
                             strNewFmt(
-                                "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=%s %s %s", buildType,
-                                strZ(pathUnitBuild), strZ(pathUnit)));
-
-                        buildTypeLast = buildType;
+                                "meson setup -Dwerror=true -Dfatal-errors=true %s %s %s", strZ(mesonSetup), strZ(pathUnitBuild),
+                                strZ(pathUnit)));
                     }
-
-                    // Reconfigure as needed
-                    if (buildType != buildTypeLast)
+                    // Else reconfigure as needed
+                    else if (!strEq(mesonSetup, mesonSetupLast))
                     {
                         LOG_DETAIL("meson configure");
-                        cmdTestExec(strNewFmt("meson configure -Dbuildtype=%s %s", buildType, strZ(pathUnitBuild)));
-                        buildTypeLast = buildType;
+
+                        cmdTestExec(strNewFmt("meson configure %s %s", strZ(mesonSetup), strZ(pathUnitBuild)));
+                    }
+
+                    strCat(strTrunc(mesonSetupLast), mesonSetup);
+
+                    // Remove old coverage data. Note that coverage can be in different paths depending on the meson version.
+                    const String *const pathCoverage = storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
+                        STRDEF("test-unit.p") : STRDEF("test-unit@exe");
+
+                    StorageIterator *const storageItr = storageNewItrP(
+                        storageUnitBuild, pathCoverage, .expression = STRDEF("\\.gcda$"));
+
+                    while (storageItrMore(storageItr))
+                    {
+                        storageRemoveP(
+                            storageUnitBuild, strNewFmt("%s/%s", strZ(pathCoverage), strZ(storageItrNext(storageItr).name)));
                     }
 
                     // Ninja build
