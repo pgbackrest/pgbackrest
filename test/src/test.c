@@ -6,12 +6,10 @@ This wrapper runs the C unit tests.
 #include "build.auto.h"
 
 // Enable FUNCTION_TEST*() macros for enhanced debugging
-#ifndef DEBUG_TEST_TRACE
-    #define DEBUG_TEST_TRACE
-#endif
+{[C_TEST_DEBUG_TEST_TRACE]}
 
-// This must be before all includes except build.auto.h
-#ifdef HRN_FEATURE_MEMCONTEXT
+// Enable memory debugging
+#if defined(HRN_FEATURE_MEMCONTEXT) && defined(DEBUG)
     #define DEBUG_MEM
 #endif
 
@@ -288,6 +286,16 @@ main(int argListSize, const char *argList[])
     }
 #endif
     TRY_END();
+#endif
+
+    // Switch to build path when profiling so profile data gets written to a predictable location
+#if {[C_TEST_PROFILE]}
+    if (chdir("{[C_TEST_PATH_BUILD]}") != 0)
+    {
+        fprintf(stderr, "unable to chdir to '{[C_TEST_PATH_BUILD]}'");
+        fflush(stderr);
+        result = 25;
+    }
 #endif
 
     FUNCTION_HARNESS_RETURN(INT, result);

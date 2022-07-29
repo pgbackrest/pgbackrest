@@ -8,6 +8,14 @@ Parse Define Yaml
 #include "common/type/string.h"
 #include "storage/storage.h"
 
+// Test definition types
+typedef enum
+{
+    testDefTypeUnit,
+    testDefTypeIntegration,
+    testDefTypePerformance,
+} TestDefType;
+
 // Covered code modules
 typedef struct TestDefCoverage
 {
@@ -33,7 +41,9 @@ typedef struct TestDefShim
 typedef struct TestDefModule
 {
     const String *name;                                             // Test module name
+    TestDefType type;                                               // Module type (unit, performance, etc.)
     unsigned int total;                                             // Total sub-tests
+    bool pgRequired;                                                // Is PostgreSQL required?
     bool binRequired;                                               // Is a binary required to run this test?
     bool containerRequired;                                         // Is a container required to run this test?
     const String *flag;                                             // Compilation flags

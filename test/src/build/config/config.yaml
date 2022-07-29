@@ -57,23 +57,21 @@ option:
     internal: true
     default: true
 
-  repo-copy:
+  optimize:
     type: boolean
-    default: true
-    negate: true
+    default: false
+    command:
+      test: {}
+
+  profile:
+    type: boolean
+    default: false
     command:
       test: {}
 
   repo-path:
     type: string
     default: pgbackrest
-    command:
-      test: {}
-
-  run:
-    type: boolean
-    default: true
-    negate: true
     command:
       test: {}
 
@@ -103,13 +101,6 @@ option:
     type: string
     internal: true
     required: false
-    command:
-      test: {}
-
-  valgrind:
-    type: boolean
-    default: true
-    negate: true
     command:
       test: {}
 

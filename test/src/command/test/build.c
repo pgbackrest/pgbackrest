@@ -31,7 +31,7 @@ TestBuild *
 testBldNew(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
     const TestDefModule *const module, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
-    const String *const timeZone, const bool coverage)
+    const String *const timeZone, const bool coverage, const bool profile, const bool optimize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -45,6 +45,8 @@ testBldNew(
         FUNCTION_LOG_PARAM(BOOL, logTime);
         FUNCTION_LOG_PARAM(STRING, timeZone);
         FUNCTION_LOG_PARAM(BOOL, coverage);
+        FUNCTION_LOG_PARAM(BOOL, profile);
+        FUNCTION_LOG_PARAM(BOOL, optimize);
     FUNCTION_LOG_END();
 
     ASSERT(pathRepo != NULL);
@@ -75,6 +77,8 @@ testBldNew(
                 .logTime = logTime,
                 .timeZone = strDup(timeZone),
                 .coverage = coverage,
+                .profile = profile,
+                .optimize = optimize,
             },
         };
 
@@ -434,7 +438,54 @@ testBldUnit(TestBuild *const this)
             "\n"
             "executable(\n"
             "    'test-unit',\n"
-            "    sources: src_unit,\n"
+            "    sources: src_unit,\n",
+            strZ(pathRepoRel));
+
+        // Add C args
+        String *const cArg = strNew();
+
+        if (testBldOptimize(this) || module->type == testDefTypePerformance)
+            strCatZ(cArg, "\n        '-O2',");
+
+        if (testBldProfile(this))
+        {
+            strCatZ(
+                cArg,
+                "\n        '-pg',"
+                "\n        '-no-pie',");
+        }
+
+        if (!strEmpty(cArg))
+        {
+            strCatFmt(
+                mesonBuild,
+                "    c_args: [%s\n"
+                "    ],\n",
+                strZ(cArg));
+        }
+
+        // Add linker args
+        String *const linkArg = strNew();
+
+        if (testBldProfile(this))
+        {
+            strCatZ(
+                linkArg,
+                "\n        '-pg',"
+                "\n        '-no-pie',");
+        }
+
+        if (!strEmpty(linkArg))
+        {
+            strCatFmt(
+                mesonBuild,
+                "    link_args: [%s\n"
+                "    ],\n",
+                strZ(linkArg));
+        }
+
+        strCatFmt(
+            mesonBuild,
             "    include_directories:\n"
             "        include_directories(\n"
             "            '.',\n"
@@ -452,7 +503,7 @@ testBldUnit(TestBuild *const this)
             "        lib_zstd,\n"
             "    ],\n"
             ")\n",
-            strZ(pathRepoRel), strZ(pathRepoRel), strZ(pathRepoRel));
+            strZ(pathRepoRel), strZ(pathRepoRel));
 
         testBldWrite(storageUnit, storageUnitList, "meson.build", BUFSTR(mesonBuild));
 
@@ -460,6 +511,12 @@ testBldUnit(TestBuild *const this)
         // -------------------------------------------------------------------------------------------------------------------------
         String *const testC = strCatBuf(
             strNew(), storageGetP(storageNewReadP(testBldStorageRepo(this), STRDEF("test/src/test.c"))));
+
+        // Enable debug test trace
+        if (!testBldProfile(this) && module->type != testDefTypePerformance)
+            strReplace(testC, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("#define DEBUG_TEST_TRACE"));
+        else
+            strReplace(testC, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
 
         // Files to test/include
         StringList *const testIncludeFileList = strLstNew();
@@ -576,6 +633,10 @@ testBldUnit(TestBuild *const this)
         }
 
         strReplace(testC, STRDEF("{[C_TEST_LIST]}"), testList);
+
+        // Profiling
+        strReplace(testC, STRDEF("{[C_TEST_PROFILE]}"), STR(cvtBoolToConstZ(testBldProfile(this))));
+        strReplace(testC, STRDEF("{[C_TEST_PATH_BUILD]}"), strNewFmt("%s/build", strZ(pathUnit)));
 
         // Write file
         testBldWrite(storageUnit, storageUnitList, "test.c", BUFSTR(testC));

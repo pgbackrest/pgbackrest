@@ -26,10 +26,6 @@ use constant TEST_DB                                                => 'db';
     push @EXPORT, qw(TEST_DB);
 use constant TEST_C                                                 => 'c';
     push @EXPORT, qw(TEST_C);
-use constant TEST_CDEF                                              => 'cdef';
-    push @EXPORT, qw(TEST_CDEF);
-use constant TEST_CTESTDEF                                          => 'ctestdef';
-    push @EXPORT, qw(TEST_CTESTDEF);
 use constant TEST_CONTAINER                                         => 'container';
     push @EXPORT, qw(TEST_CONTAINER);
 use constant TEST_MODULE                                            => 'module';
@@ -168,8 +164,6 @@ sub testListGet
                                         &TEST_TYPE => $hTest->{&TESTDEF_TYPE},
                                         &TEST_VM => $strTestOS,
                                         &TEST_C => coalesce($hTest->{&TESTDEF_C}, $hModule->{&TESTDEF_C}, false),
-                                        &TEST_CDEF => $hTest->{&TESTDEF_DEFINE},
-                                        &TEST_CTESTDEF => $hTest->{&TESTDEF_FEATURE},
                                         &TEST_CONTAINER => defined($hTest->{&TESTDEF_CONTAINER}) ?
                                             $hTest->{&TESTDEF_CONTAINER} : $hModule->{&TESTDEF_CONTAINER},
                                         &TEST_PGSQL_BIN => $strPgSqlBin,

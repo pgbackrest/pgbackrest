@@ -61,34 +61,6 @@ jobs:
       - name: Run Test
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
 
-  # C test harness. Run inside a container so tests that require socket binding work correctly.
-  testc:
-    runs-on: ubuntu-22.04
-    container:
-      image: ubuntu:18.04
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-        with:
-          path: pgbackrest
-
-      - name: Install
-        run: |
-            apt-get update
-            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y sudo zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config gcc ccache meson liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev tzdata valgrind
-            adduser --disabled-password --gecos \"\" runner
-
-      - name: Build
-        run: |
-          sudo -iu runner cp -rp ${GITHUB_WORKSPACE?}/pgbackrest /home/runner
-          sudo -iu runner meson -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug /home/runner/test/build/none /home/runner/pgbackrest
-          sudo -iu runner ninja -C /home/runner/test/build/none test/src/test-pgbackrest
-
-      - name: Test
-        run: |
-          sudo -iu runner /home/runner/test/build/none/test/src/test-pgbackrest --repo-path=/home/runner/pgbackrest --test-path=/home/runner/test --no-repo-copy test
-
   # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
   # test on one big-endian architecture to be sure that checksums are correct.

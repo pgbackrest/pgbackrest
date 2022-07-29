@@ -39,35 +39,14 @@ use constant TESTDEF_TEST                                           => 'test';
 
 use constant TESTDEF_DB                                             => 'db';
     push @EXPORT, qw(TESTDEF_DB);
-use constant TESTDEF_DEPEND                                         => 'depend';
 use constant TESTDEF_CONTAINER                                      => 'container';
     push @EXPORT, qw(TESTDEF_CONTAINER);
 use constant TESTDEF_CONTAINER_REQUIRED                             => 'containerReq';
     push @EXPORT, qw(TESTDEF_CONTAINER_REQUIRED);
 use constant TESTDEF_COVERAGE                                       => 'coverage';
     push @EXPORT, qw(TESTDEF_COVERAGE);
-use constant TESTDEF_CORE                                           => 'core';
-    push @EXPORT, qw(TESTDEF_CORE);
 use constant TESTDEF_C                                              => 'c';
     push @EXPORT, qw(TESTDEF_C);
-use constant TESTDEF_DEFINE                                         => 'define';
-    push @EXPORT, qw(TESTDEF_DEFINE);
-use constant TESTDEF_FEATURE                                        => 'feature';
-    push @EXPORT, qw(TESTDEF_FEATURE);
-use constant TESTDEF_HARNESS                                        => 'harness';
-    push @EXPORT, qw(TESTDEF_HARNESS);
-# Harness name which must match the harness implementation file name
-use constant TESTDEF_HARNESS_NAME                                   => 'name';
-    push @EXPORT, qw(TESTDEF_HARNESS_NAME);
-# The harness contains shimmed elements
-use constant TESTDEF_HARNESS_SHIM                                   => 'shim';
-    push @EXPORT, qw(TESTDEF_HARNESS_SHIM);
-# The harness shim was first defined in the module/test
-use constant TESTDEF_HARNESS_SHIM_DEF                               => 'harnessShimDef';
-    push @EXPORT, qw(TESTDEF_HARNESS_SHIM_DEF);
-# List of shimmed functions for a C module
-use constant TESTDEF_HARNESS_SHIM_FUNCTION                          => 'function';
-    push @EXPORT, qw(TESTDEF_HARNESS_SHIM_FUNCTION);
 use constant TESTDEF_INCLUDE                                        => 'include';
     push @EXPORT, qw(TESTDEF_INCLUDE);
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
@@ -146,7 +125,7 @@ sub testDefLoad
 
                 # Resolve variables that can be set in the module or the test
                 foreach my $strVar (
-                    TESTDEF_DEFINE, TESTDEF_DB, TESTDEF_BIN_REQ, TESTDEF_VM, TESTDEF_CONTAINER_REQUIRED)
+                    TESTDEF_DB, TESTDEF_BIN_REQ, TESTDEF_VM, TESTDEF_CONTAINER_REQUIRED)
                 {
                     $hTestDefHash->{$strModule}{$strTest}{$strVar} = coalesce(
                         $hModuleTest->{$strVar}, $hModule->{$strVar}, $strVar eq TESTDEF_VM ? undef : false);
@@ -165,78 +144,6 @@ sub testDefLoad
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION} = $strModuleType eq TESTDEF_INTEGRATION ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_CONTAINER} = $bContainer;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INDIVIDUAL} = $bIndividual;
-
-                if (!$hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION})
-                {
-                    # Add depends to core files
-                    if (defined($hModuleTest->{&TESTDEF_DEPEND}))
-                    {
-                        foreach my $strDepend (@{$hModuleTest->{&TESTDEF_DEPEND}})
-                        {
-                            if (!grep(/$strDepend/i, @stryCoreFile))
-                            {
-                                push(@stryCoreFile, $strDepend);
-                            }
-                        }
-                    }
-
-                    # Add core files
-                    push(@{$hTestDefHash->{$strModule}{$strTest}{&TESTDEF_CORE}}, @stryCoreFile);
-
-                    # Add harness files
-                    my $rhHarnessShimDef = {};
-
-                    if (defined($hModuleTest->{&TESTDEF_HARNESS}))
-                    {
-                        my $rhHarness = {};
-
-                        # If the harness is a hash then it contains shims
-                        if (ref($hModuleTest->{&TESTDEF_HARNESS}))
-                        {
-                            # Harness name must be set
-                            if (!defined($hModuleTest->{&TESTDEF_HARNESS}{&TESTDEF_HARNESS_NAME}))
-                            {
-                                confess &log(ERROR, "must define 'name' for harness in test '$strTest'");
-                            }
-
-                            # Don't use hash syntax when there are no shims
-                            if (!defined($hModuleTest->{&TESTDEF_HARNESS}{&TESTDEF_HARNESS_SHIM}))
-                            {
-                                confess &log(
-                                    ERROR,
-                                    "use 'harness: $hModuleTest->{&TESTDEF_HARNESS}{&TESTDEF_HARNESS_NAME}' if there are no shims");
-                            }
-
-                            # Note that this shim is defined in the module
-                            $rhHarnessShimDef->{$hModuleTest->{&TESTDEF_HARNESS}{&TESTDEF_HARNESS_NAME}} = true;
-
-                            # Set the harness
-                            $rhHarness = $hModuleTest->{&TESTDEF_HARNESS};
-                        }
-                        # Else set the harness with just a name
-                        else
-                        {
-                            $rhHarness->{&TESTDEF_HARNESS_NAME} = $hModuleTest->{&TESTDEF_HARNESS};
-                        }
-
-                        push(@rhyHarnessFile, $rhHarness);
-                    }
-
-                    push(@{$hTestDefHash->{$strModule}{$strTest}{&TESTDEF_HARNESS}}, @rhyHarnessFile);
-                    $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_HARNESS_SHIM_DEF} = $rhHarnessShimDef;
-
-                    # Add test defines
-                    $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_FEATURE} =
-                        (defined($hModuleTest->{&TESTDEF_FEATURE}) ?
-                            "-DHRN_INTEST_" . uc($hModuleTest->{&TESTDEF_FEATURE}) . ' ' : '') .
-                        $strTestDefine;
-
-                    if (defined($hModuleTest->{&TESTDEF_FEATURE}))
-                    {
-                        $strTestDefine .=
-                            ($strTestDefine eq '' ? '' : ' ') . "-DHRN_FEATURE_" . uc($hModuleTest->{&TESTDEF_FEATURE});
-                    }
-                }
 
                 # Set test count
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TOTAL} = $hModuleTest->{&TESTDEF_TOTAL};

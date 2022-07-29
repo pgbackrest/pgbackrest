@@ -99,11 +99,21 @@
                     <example>n</example>
                 </option>
 
-                <option id="repo-copy">
-                    <summary>Make copy of code repository.</summary>
+                <option id="optimize">
+                    <summary>Optimize test.</summary>
 
                     <text>
-                        <p>Make a copy of the code repository for testing so changes to the code repository do not affect tests.</p>
+                        <p>Compile test with optimizations.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
+                <option id="profile">
+                    <summary>Generate profile report.</summary>
+
+                    <text>
+                        <p>Profiling helps identify bottlenecks in the code.</p>
                     </text>
 
                     <example>n</example>
@@ -117,16 +127,6 @@
                     </text>
 
                     <example>/path/to/pgbackrest</example>
-                </option>
-
-                <option id="run">
-                    <summary>Run the test?</summary>
-
-                    <text>
-                        <p>When negated the test will only be built.</p>
-                    </text>
-
-                    <example>n</example>
                 </option>
 
                 <option id="scale">
@@ -167,16 +167,6 @@
                     </text>
 
                     <example>America/New_York</example>
-                </option>
-
-                <option id="valgrind">
-                    <summary>Run test with valgrind.</summary>
-
-                    <text>
-                        <p>Valgrind helps find various memory issues.</p>
-                    </text>
-
-                    <example>n</example>
                 </option>
 
                 <option id="vm">
