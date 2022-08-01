@@ -1636,6 +1636,16 @@ testRun(void)
             manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, NULL),
             "manifest complete without db");
 
+        // Create empty annotations
+        KeyValue *annotationKV = kvNew();
+        kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
+        kvPut(annotationKV, VARSTRDEF("empty key2"), VARSTRDEF(""));
+
+        TEST_RESULT_VOID(
+            manifestBuildComplete(
+                manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, annotationKV),
+            "manifest complete without db and empty annotations");
+
         // Create db list
         PackWrite *dbList = pckWriteNewP();
 
@@ -1659,10 +1669,9 @@ testRun(void)
 
         pckWriteEndP(dbList);
 
-        KeyValue *annotationKV = kvNew();
+        // Add annotations
         kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
         kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
-        kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
 
         TEST_RESULT_VOID(
             manifestBuildComplete(
