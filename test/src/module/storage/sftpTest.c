@@ -1110,7 +1110,8 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), false, "missing file ignored");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("bad file descriptor");
+        TEST_TITLE("bad sftp handle");
+
         Buffer *outBuffer = bufNew(2);
         const Buffer *expectedBuffer = BUFSTRDEF("TESTFILE\n");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, fileName), expectedBuffer), "write test file");
