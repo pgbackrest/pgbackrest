@@ -972,14 +972,11 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             {
                 const String *const key = strLstGet(annotationKeyList, keyIdx);
                 const String *const value = varStr(kvGet(annotationKv, VARSTR(key)));
-
-                if (value != NULL)
-                    strCatFmt(annotationStr, "                %s: %s\n", strZ(key), strZ(value));
+                ASSERT(value != NULL);
+                strCatFmt(annotationStr, "                %s: %s\n", strZ(key), strZ(value));
             }
 
-            // Only output annotation section if at least one not NULL value has been found
-            if (!strEmpty(annotationStr))
-                strCatFmt(resultStr, "            annotation(s)\n%s", strZ(annotationStr));
+            strCatFmt(resultStr, "            annotation(s)\n%s", strZ(annotationStr));
         }
     }
 
