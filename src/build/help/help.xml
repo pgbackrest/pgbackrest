@@ -1044,7 +1044,7 @@
                         <text>
                             <p>Users can attach informative key/value pairs to the backup. This option can be used multiple times to attach multiple annotations.</p>
 
-                            <p>Annotations are output by the <cmd>info</cmd> command when a backup is specified with <br-option>--set</br-option>.</p>
+                            <p>Annotations are output by the <cmd>info</cmd> command text output when a backup is specified with <br-option>--set</br-option> or in the global JSON output.</p>
                         </text>
 
                         <example>source="Sunday backup for website database"</example>
