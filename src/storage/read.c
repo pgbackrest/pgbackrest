@@ -59,7 +59,21 @@ storageRead(THIS_VOID, Buffer *buffer, bool block)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(SIZE, ioRead(this->io, buffer));
+    size_t result = 0;
+
+    TRY_BEGIN()
+    {
+        result = ioRead(this->io, buffer);
+    }
+    CATCH_ANY()
+    {
+        // !!! NOT SURE HOW TO HANDLE THE ERROR SINCE THE DRIVER MEM CONTEXT CANNOT BE FREED
+
+        RETHROW();
+    }
+    TRY_END();
+
+    FUNCTION_LOG_RETURN(SIZE, result);
 }
 
 /***********************************************************************************************************************************
