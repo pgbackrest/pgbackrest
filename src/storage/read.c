@@ -152,19 +152,22 @@ storageReadNew(void *const driver, const StorageReadInterface *const interface)
 
     StorageRead *this = NULL;
 
-    this = memNew(sizeof(StorageRead));
-
-    *this = (StorageRead)
+    OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        .pub =
+        this = OBJ_NEW_ALLOC();
+
+        *this = (StorageRead)
         {
-            .memContext = memContextCurrent(),
-            .interface = interface,
-            .io = ioReadNew(this, storageIoReadInterface),
-        },
-        .io = ioReadNew(driver, interface->ioInterface),
-        .driver = driver,
-    };
+            .pub =
+            {
+                .interface = interface,
+                .io = ioReadNew(this, storageIoReadInterface),
+            },
+            .io = ioReadNew(driver, interface->ioInterface),
+            .driver = objMove(driver, objMemContext(this)),
+        };
+    }
+    OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }

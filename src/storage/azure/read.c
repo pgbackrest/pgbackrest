@@ -123,13 +123,13 @@ storageReadAzureNew(
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
 
-    StorageRead *this = NULL;
+    StorageReadAzure *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageReadAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageReadAzure, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadAzure *driver = OBJ_NEW_ALLOC();
+        this = OBJ_NEW_ALLOC();
 
-        *driver = (StorageReadAzure)
+        *this = (StorageReadAzure)
         {
             .storage = storage,
 
@@ -150,9 +150,8 @@ storageReadAzureNew(
             },
         };
 
-        this = storageReadNew(driver, &driver->interface);
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, this);
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
 }

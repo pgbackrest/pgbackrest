@@ -20,7 +20,7 @@ Functions
 __attribute__((always_inline)) static inline StorageRead *
 storageReadMove(StorageRead *const this, MemContext *const parentNew)
 {
-    return objMoveContext(this, parentNew);
+    return objMove(this, parentNew);
 }
 
 /***********************************************************************************************************************************
@@ -28,7 +28,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StorageReadPub
 {
-    MemContext *memContext;                                         // Mem context
     const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
     IoRead *io;                                                     // Read interface
 } StorageReadPub;
@@ -81,7 +80,7 @@ Destructor
 __attribute__((always_inline)) static inline void
 storageReadFree(StorageRead *const this)
 {
-    objFreeContext(this);
+    objFree(this);
 }
 
 /***********************************************************************************************************************************
