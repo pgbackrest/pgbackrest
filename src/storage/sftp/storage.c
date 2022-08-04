@@ -6,7 +6,6 @@ Sftp Storage
 // #ifdef HAVE_LIBSSH2
 
 #include <dirent.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
@@ -134,7 +133,7 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
                 result.userId = (unsigned int)attrs.uid;
                 result.user = userNameFromId(result.userId);
             }
-            // jrt !!! verify this
+
             if ((attrs.flags & LIBSSH2_SFTP_ATTR_PERMISSIONS) != 0)
                 result.mode = attrs.permissions & (LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO);
 
@@ -241,8 +240,6 @@ storageSftpInfoList(
         // !!! see also libssh2_session_last_error() - possible to return more detailed error
         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
-            // jrt ??? should check be against LIBSSH2_FX_NO_SUCH_FILE and LIBSSH2_FX_NO_SUCH_PATH
-            // verify PATH or FILE or both
             if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
                 THROW_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));
         }
@@ -307,7 +304,7 @@ storageSftpInfoList(
             if (rc != 0)
                 THROW_FMT(PathCloseError, "unable to close path %s after listing", strZ(path));
 
-//            sftpHandle = NULL;
+            sftpHandle = NULL;
         }
         TRY_END();
     }
@@ -431,7 +428,6 @@ storageSftpPathCreate(
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
-    // jrt ?? is mode coming in as sftp mode flags??
     int rc = 0;
     this->wait = waitNew(this->timeoutConnect);
 
@@ -471,7 +467,6 @@ storageSftpPathCreate(
                  // jrt ??? Make an explicit call here to set the mode in case it's different from the existing directory's mode ???
              }
              // If the parent path does not exist then create it if allowed
-             // jrt FILE && PATH??
              else if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE && !noParentCreate)
              {
                  String *const pathParent = strPath(path);
@@ -481,7 +476,6 @@ storageSftpPathCreate(
 
                  strFree(pathParent);
              }
-             // Ignore path exists if allowed
              else if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
                 THROW_FMT(PathCreateError, "unable to create path '%s'", strZ(path));
          }
@@ -533,7 +527,7 @@ storageSftpPathRemoveCallback(void *const callbackData, const StorageInfo *const
         {
             if (libssh2_session_last_errno(data->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
-                // jrt !!! attempting to unlink a directory returns LIBSSH2_FX_FAILURE
+                // Attempting to unlink a directory appears to return LIBSSH2_FX_FAILURE
                 if (libssh2_sftp_last_error(data->sftpSession) == LIBSSH2_FX_FAILURE)
                     storageInterfacePathRemoveP(data->driver, file, true);
                 else
@@ -586,7 +580,6 @@ storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterf
         }
 
         // Delete the path
-        // !!! jrt need to validate this logic matches other drivers
         int rc = 0;
         this->wait = waitNew(this->timeoutConnect);
 
@@ -602,7 +595,6 @@ storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterf
             // !!! see also libssh2_session_last_error() - possible to return more detailed error
             if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
-                // jrt verify PATH or FILE or both
                 if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
                     THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));
 
@@ -676,11 +668,8 @@ storageSftpNewInternal(
     {
         StorageSftp *driver = OBJ_NEW_ALLOC();
 
-        // jrt !!! error handling
-
         if (libssh2_init(0) != 0)
             THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2");
-
 
         *driver = (StorageSftp)
         {
@@ -758,8 +747,7 @@ storageSftpNewInternal(
         // jrt !!! verify if these are supported
         if (type == STORAGE_SFTP_TYPE)
             driver->interface.feature |=
-                1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync |
-                1 << storageFeatureInfoDetail;
+                1 << storageFeatureSymLink | 1 << storageFeatureInfoDetail;
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }

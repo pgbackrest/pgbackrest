@@ -2181,6 +2181,31 @@ option:
     command: repo-type
     depend: repo-s3-bucket
 
+  repo-sftp-account:
+    section: global
+    type: string
+    group: repo
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
+#  repo-sftp-password:
+#    section: global
+#    type: string
+#    group: repo
+#    secure: true
+#    command: repo-type
+#    depend:
+#      option: repo-type
+#      list:
+#        - sftp
+
+#jrt repo-sftp-pubkey path
+#jrt repo-sftp-privkey path
+#jrt repo-sftp-keyfilepass string
+
   repo-storage-verify-tls:
     section: global
     group: repo

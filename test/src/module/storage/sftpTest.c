@@ -1264,7 +1264,7 @@ testRun(void)
         //((StorageWritePosix *)file->driver)->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("bad file descriptor - error in close");
+        TEST_TITLE("bad socket - error in close");
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
@@ -1584,10 +1584,10 @@ testRun(void)
         TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");
     }
 
+/* attempt to implement after sftp options have been implemented - see s3/azure/gcs as examples
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet() and StorageDriverCifs"))
     {
-/* attempt to implement after sftp options have been implemented - see s3/azure/gcs as examples
         // Load configuration
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
@@ -1632,8 +1632,8 @@ testRun(void)
 
         // Test the path sync function -- pass a bogus path to ensure that this is a noop
         TEST_RESULT_VOID(storagePathSyncP(storage, STRDEF(BOGUS_STR)), "path sync is a noop");
-        */
     }
+        */
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

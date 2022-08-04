@@ -932,6 +932,16 @@
                         <example>path</example>
                     </config-key>
 
+                    <config-key id="repo-sftp-account" name="SFTP Repository Account">
+                        <summary>SFTP repository account.</summary>
+
+                        <text>
+                            <p>SFTP account used to store the repository.</p>
+                        </text>
+
+                        <example>pg-backup</example>
+                    </config-key>
+
                     <config-key id="repo-storage-ca-file" name="Repository Storage CA File">
                         <summary>Repository storage CA file.</summary>
 

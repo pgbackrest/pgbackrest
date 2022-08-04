@@ -263,7 +263,7 @@ storageWriteSftpClose(THIS_VOID)
     if (this->sftpHandle != NULL)
     {
         int rc = 0;
-
+// !!! jrt handle UNSUPPORTED as noted in comment
         // Sync the file
         // !!! per below, if can't query hello for capability then we can act accordingly upon receipt of LIBSSH2_FX_OP_UNSUPPORTED
         // bail out/issue/log warning etc

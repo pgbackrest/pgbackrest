@@ -78,9 +78,20 @@ storageReadSftpFreeResource(THIS_VOID)
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
         if (rc)
-            THROW_FMT(FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+        {
+            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+            {
+                LOG_DEBUG_FMT("throw sftp free resource error");
+                THROW_FMT(FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+            }
+            else
+            {
+                LOG_DEBUG_FMT("throw sys free resource error");
+                THROW_SYS_ERROR(FileCloseError, STORAGE_ERROR_READ_CLOSE);
+            }
+        }
     }
-*/
+    */
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -182,7 +193,9 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
         while (actualBytes == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
         // Error occurred during read
-        // jrt ??? pull ssh/sftp error???
+        // jrt if remote file is removed, we still read two bytes, but the first byte is null
+        // is it valid to error in this case - i.e. bufEmpty here is an error? can't use bufEmpty as error as empty buffer may be
+        // valid?
         if (actualBytes < 0)
         {
             if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
