@@ -6,6 +6,7 @@ Test SFTP Storage
 #include "common/io/socket/client.h"
 #include "common/time.h"
 #include "storage/read.h"
+#include "storage/cifs/storage.h"
 #include "storage/sftp/storage.h"
 #include "storage/write.h"
 
@@ -1584,7 +1585,6 @@ testRun(void)
         TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");
     }
 
-/* attempt to implement after sftp options have been implemented - see s3/azure/gcs as examples
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet() and StorageDriverCifs"))
     {
@@ -1594,12 +1594,18 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, "vagrant");
+        setenv("PGBACKREST_REPO1_SFTP_PASSWORD", "vagrant", true);
+        hrnCfgArgRawZ(argList, cfgOptRepoHostPort, "22");
+        hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "thisneedstobeabletobeempty");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "thisneedstobeabletobeempty");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid storage type");
 
-        static const StorageHelper storageHelperListError[] = {{.type = STORAGE_SFTP_TYPE}, STORAGE_END_HELPER};
+        static const StorageHelper storageHelperListError[] = {{.type = STORAGE_CIFS_TYPE}, STORAGE_END_HELPER};
         storageHelperInit(storageHelperListError);
 
         TEST_ERROR(storageRepoGet(0, true), AssertError, "invalid storage type");
@@ -1612,9 +1618,6 @@ testRun(void)
         storageHelperInit(storageHelperList);
         const Storage *storage = NULL;
         TEST_ASSIGN(storage, storageRepoGet(0, true), "get sftp repo storage");
-        Storage *storageTest = storageSftpNewP(
-        TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
-        .write = true);
         TEST_RESULT_UINT(storageType(storage), STORAGE_SFTP_TYPE, "check storage type");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "check path feature");
 
@@ -1633,7 +1636,6 @@ testRun(void)
         // Test the path sync function -- pass a bogus path to ensure that this is a noop
         TEST_RESULT_VOID(storagePathSyncP(storage, STRDEF(BOGUS_STR)), "path sync is a noop");
     }
-        */
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

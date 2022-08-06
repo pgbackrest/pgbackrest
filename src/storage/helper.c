@@ -12,6 +12,7 @@ Storage Helper
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/posix/storage.h"
+#include "storage/sftp/storage.h"
 #include "storage/remote/storage.h"
 #include "storage/helper.h"
 
@@ -358,7 +359,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
     Storage *result = NULL;
 
     // Use remote storage
-    if (!repoIsLocal(repoIdx))
+    if (!repoIsLocal(repoIdx) && cfgOptionIdxStrId(cfgOptRepoType, repoIdx) != STORAGE_SFTP_TYPE)
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,

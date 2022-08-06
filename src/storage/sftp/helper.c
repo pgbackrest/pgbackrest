@@ -25,15 +25,28 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
 
     Storage *result = NULL;
 
-    /*
-    StorageSftpNewParam param;
-    param.write = write;
-    param.pathExpressionFunction = pathExpressionCallback;
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        StorageSftpNewParam param;
+        param.write = write;
+        param.pathExpressionFunction = pathExpressionCallback;
+        param.user = strDup(cfgOptionStr(cfgOptRepoSftpAccount));
+        param.password = strDup(cfgOptionStr(cfgOptRepoSftpPassword));
+        param.keyPub = strDup(cfgOptionStr(cfgOptRepoSftpPublicKeyfile));
+        param.keyPriv = strDup(cfgOptionStr(cfgOptRepoSftpPrivateKeyfile));
+        param.modeFile = STORAGE_MODE_FILE_DEFAULT;
+        param.modePath = STORAGE_MODE_PATH_DEFAULT;
 
-    result = storageSftpNew(
-        cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptSftpHost, repoIdx),
-        cfgOptionIdxInt(cfgOptSftpPort, repoIdx), cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptIoTimeout), param);
-        */
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = storageSftpNew(
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoHost, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoHostPort, repoIdx), cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptIoTimeout),
+                param);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STORAGE, result);
 }

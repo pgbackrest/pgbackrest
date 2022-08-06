@@ -135,6 +135,9 @@ lib_yaml = dependency('yaml-0.1')
 # Find required gz library
 lib_z = dependency('zlib')
 
+# Find optional libssh2 library
+lib_ssh2 = dependency('libssh2', required: false)
+
 # Find optional zstd library
 lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
 

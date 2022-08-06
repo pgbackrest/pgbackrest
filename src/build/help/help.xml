@@ -936,10 +936,50 @@
                         <summary>SFTP repository account.</summary>
 
                         <text>
-                            <p>SFTP account used to store the repository.</p>
+                            <p>Account used to store the repository.</p>
                         </text>
 
                         <example>pg-backup</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-keyfile-passphrase" name="SFTP Repository Private Keyfile Passphrase">
+                        <summary>SFTP private keyfile passphrase.</summary>
+
+                        <text>
+                            <p>Passphrase used to access private keyfile. This is an optional feature when creating a SSH public/private keypair.</p>
+                        </text>
+
+                        <example>BeSureToGenerateAndUseASecurePassphrase</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-password" name="SFTP Repository Account Password">
+                        <summary>SFTP account password.</summary>
+
+                        <text>
+                            <p>SFTP account password used for authentication.</p>
+                        </text>
+
+                        <example>BeSureToGenerateAndUseASecurePassword</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-private-keyfile" name="SFTP Repository Private Keyfile">
+                        <summary>SFTP private keyfile.</summary>
+
+                        <text>
+                            <p>SFTP private keyfile used for authentication.</p>
+                        </text>
+
+                        <example>~/.ssh/id_ed25519</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-public-keyfile" name="SFTP Repository Public Keyfile">
+                        <summary>SFTP public keyfile.</summary>
+
+                        <text>
+                            <p>SFTP public keyfile used for authentication.</p>
+                        </text>
+
+                        <example>~/.ssh/id_ed25519.pub</example>
                     </config-key>
 
                     <config-key id="repo-storage-ca-file" name="Repository Storage CA File">

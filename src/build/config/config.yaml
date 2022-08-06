@@ -2191,20 +2191,43 @@ option:
       list:
         - sftp
 
-#  repo-sftp-password:
-#    section: global
-#    type: string
-#    group: repo
-#    secure: true
-#    command: repo-type
-#    depend:
-#      option: repo-type
-#      list:
-#        - sftp
+  repo-sftp-keyfile-passphrase:
+    section: global
+    type: string
+    required: false
+    group: repo
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
 
-#jrt repo-sftp-pubkey path
-#jrt repo-sftp-privkey path
-#jrt repo-sftp-keyfilepass string
+  repo-sftp-password:
+    section: global
+    type: string
+    required: false
+    group: repo
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
+  repo-sftp-private-keyfile:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+
+  repo-sftp-public-keyfile:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
 
   repo-storage-verify-tls:
     section: global

@@ -46,6 +46,7 @@ Main
 #include "storage/gcs/helper.h"
 #include "storage/helper.h"
 #include "storage/s3/helper.h"
+#include "storage/sftp/helper.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -67,6 +68,7 @@ main(int argListSize, const char *argList[])
         STORAGE_CIFS_HELPER,
         STORAGE_GCS_HELPER,
         STORAGE_S3_HELPER,
+        STORAGE_SFTP_HELPER,
         STORAGE_END_HELPER
     };
 
