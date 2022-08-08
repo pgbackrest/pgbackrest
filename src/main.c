@@ -68,7 +68,9 @@ main(int argListSize, const char *argList[])
         STORAGE_CIFS_HELPER,
         STORAGE_GCS_HELPER,
         STORAGE_S3_HELPER,
+#ifdef HAVE_LIBSSH2
         STORAGE_SFTP_HELPER,
+#endif
         STORAGE_END_HELPER
     };
 

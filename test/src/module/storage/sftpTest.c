@@ -409,7 +409,8 @@ testRun(void)
         TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
         // jrt !!!
         // NOTE: in my tests with --vm=none the resultant file would have the incorrect permissions. The request was coming through
-        // properly but the umask resulted in altered permissions.
+        // properly but the umask resulted in altered permissions.  Do we want to alter the test result check, or the sshd_config
+        // file as noted below?
         //
         // vagrant@pgbackrest-test:~$ umask
         // 0002

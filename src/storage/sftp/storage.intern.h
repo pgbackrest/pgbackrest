@@ -1,8 +1,6 @@
 /***********************************************************************************************************************************
 Sftp Storage Internal
 ***********************************************************************************************************************************/
-#ifdef  HAVE_LIBSSH2
-
 #ifndef STORAGE_SFTP_STORAGE_INTERN_H
 #define STORAGE_SFTP_STORAGE_INTERN_H
 
@@ -33,5 +31,3 @@ Macros for function logging
     objToLog(value, "StorageSftp *", buffer, bufferSize)
 
 #endif
-
-#endif // HAVE_LIBSSH2

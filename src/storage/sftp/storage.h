@@ -1,8 +1,6 @@
 /***********************************************************************************************************************************
 Sftp Storage
 ***********************************************************************************************************************************/
-#ifdef HAVE_LIBSSH2
-
 #ifndef STORAGE_SFTP_STORAGE_H
 #define STORAGE_SFTP_STORAGE_H
 
@@ -11,9 +9,11 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageSftp StorageSftp;
 
-#include "storage/storage.h"
+#ifdef HAVE_LIBSSH2
 #include <libssh2.h>
 #include <libssh2_sftp.h>
+#endif
+#include "storage/storage.h"
 
 /***********************************************************************************************************************************
 Storage type
@@ -43,5 +43,3 @@ Storage *storageSftpNew(const String *path, const String *host, unsigned int por
         StorageSftpNewParam param);
 
 #endif
-
-#endif // HAVE_LIBSSH2
