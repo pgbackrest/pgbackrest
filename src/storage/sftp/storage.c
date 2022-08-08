@@ -3,7 +3,7 @@ Sftp Storage
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-// #ifdef HAVE_LIBSSH2
+#ifdef HAVE_LIBSSH2
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -785,4 +785,4 @@ storageSftpNew(const String *path, const String *host, unsigned int port, TimeMS
             STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, false));
 }
 
-// #endif // HAVE_LIBSSH2
+#endif // HAVE_LIBSSH2

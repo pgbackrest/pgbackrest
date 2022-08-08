@@ -1598,8 +1598,6 @@ testRun(void)
         setenv("PGBACKREST_REPO1_SFTP_PASSWORD", "vagrant", true);
         hrnCfgArgRawZ(argList, cfgOptRepoHostPort, "22");
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "thisneedstobeabletobeempty");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "thisneedstobeabletobeempty");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------

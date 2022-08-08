@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Sftp Storage
 ***********************************************************************************************************************************/
-//#ifdef HAVE_LIBSSH2
+#ifdef HAVE_LIBSSH2
 
 #ifndef STORAGE_SFTP_STORAGE_H
 #define STORAGE_SFTP_STORAGE_H
@@ -44,4 +44,4 @@ Storage *storageSftpNew(const String *path, const String *host, unsigned int por
 
 #endif
 
-//#endif // HAVE_LIBSSH2
+#endif // HAVE_LIBSSH2

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Sftp Storage Read
 ***********************************************************************************************************************************/
-//#ifdef HAVE_LIBSSH2
+#ifdef HAVE_LIBSSH2
 
 #ifndef STORAGE_SFTP_READ_H
 #define STORAGE_SFTP_READ_H
@@ -20,4 +20,4 @@ StorageRead *storageReadSftpNew(
 
 #endif
 
-//#endif // HAVE_LIBSSH2
+#endif // HAVE_LIBSSH2

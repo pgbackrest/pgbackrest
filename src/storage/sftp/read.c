@@ -3,7 +3,7 @@ Sftp Storage Read
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-// #ifdef HAVE_LIBSSH2
+#ifdef HAVE_LIBSSH2
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -126,7 +126,7 @@ storageReadSftpOpen(THIS_VOID)
         // If session indicates sftp error, can query for sftp error
         // !!! see also libssh2_session_last_error() - possible to return more detailed error
         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL ||
-                libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN)
+            libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN)
         {
             if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
             {
@@ -332,4 +332,4 @@ storageReadSftpNew(
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }
 
-// #endif // HAVE_LIBSSH2
+#endif // HAVE_LIBSSH2

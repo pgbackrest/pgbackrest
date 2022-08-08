@@ -3,6 +3,8 @@ Sftp Storage Helper
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#ifdef HAVE_LIBSSH2
+
 #include "common/debug.h"
 #include "common/io/http/url.h"
 #include "common/io/io.h"
@@ -30,10 +32,10 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
         StorageSftpNewParam param;
         param.write = write;
         param.pathExpressionFunction = pathExpressionCallback;
-        param.user = strDup(cfgOptionStr(cfgOptRepoSftpAccount));
-        param.password = strDup(cfgOptionStr(cfgOptRepoSftpPassword));
-        param.keyPub = strDup(cfgOptionStr(cfgOptRepoSftpPublicKeyfile));
-        param.keyPriv = strDup(cfgOptionStr(cfgOptRepoSftpPrivateKeyfile));
+        param.user = strDup(cfgOptionStrNull(cfgOptRepoSftpAccount));
+        param.password = strDup(cfgOptionStrNull(cfgOptRepoSftpPassword));
+        param.keyPub = strDup(cfgOptionStrNull(cfgOptRepoSftpPublicKeyfile));
+        param.keyPriv = strDup(cfgOptionStrNull(cfgOptRepoSftpPrivateKeyfile));
         param.modeFile = STORAGE_MODE_FILE_DEFAULT;
         param.modePath = STORAGE_MODE_PATH_DEFAULT;
 
@@ -50,3 +52,5 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
 
     FUNCTION_LOG_RETURN(STORAGE, result);
 }
+
+#endif // HAVE_LIBSSH2

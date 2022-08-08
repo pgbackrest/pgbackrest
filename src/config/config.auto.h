@@ -128,7 +128,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            155
+#define CFG_OPTION_TOTAL                                            160
 
 /***********************************************************************************************************************************
 Option value constants
@@ -272,6 +272,8 @@ Option value constants
 #define CFGOPTVAL_REPO_TYPE_POSIX_Z                                 "posix"
 #define CFGOPTVAL_REPO_TYPE_S3                                      STRID6("s3", 0x7d31)
 #define CFGOPTVAL_REPO_TYPE_S3_Z                                    "s3"
+#define CFGOPTVAL_REPO_TYPE_SFTP                                    STRID5("sftp", 0x850d30)
+#define CFGOPTVAL_REPO_TYPE_SFTP_Z                                  "sftp"
 
 #define CFGOPTVAL_SORT_ASC                                          STRID5("asc", 0xe610)
 #define CFGOPTVAL_SORT_ASC_Z                                        "asc"
@@ -479,6 +481,11 @@ typedef enum
     cfgOptRepoS3Role,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
+    cfgOptRepoSftpAccount,
+    cfgOptRepoSftpKeyfilePassphrase,
+    cfgOptRepoSftpPassword,
+    cfgOptRepoSftpPrivateKeyfile,
+    cfgOptRepoSftpPublicKeyfile,
     cfgOptRepoStorageCaFile,
     cfgOptRepoStorageCaPath,
     cfgOptRepoStorageHost,

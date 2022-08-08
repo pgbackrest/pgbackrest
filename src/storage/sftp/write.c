@@ -3,7 +3,7 @@ Sftp Storage File write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-// #ifdef HAVE_LIBSSH2
+#ifdef HAVE_LIBSSH2
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -461,4 +461,4 @@ storageWriteSftpNew(
     FUNCTION_LOG_RETURN(STORAGE_WRITE, this);
 }
 
-// #endif // HAVE_LIBSSH2
+#endif // HAVE_LIBSSH2
