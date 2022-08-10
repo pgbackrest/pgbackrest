@@ -306,7 +306,10 @@ errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
     if (errorInternalState() == errorStateTry)
     {
         for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
-            errorContext.handlerList[handlerIdx].function(errorTryDepth());
+        {
+            if (!errorFatal() || errorContext.handlerList[handlerIdx].fatal)
+                errorContext.handlerList[handlerIdx].function(errorTryDepth());
+        }
 
         errorContext.tryList[errorContext.tryTotal].state++;
     }
