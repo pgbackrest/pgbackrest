@@ -133,7 +133,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("set error handler");
 
-        static const ErrorHandlerFunction testErrorHandlerList[] = {testErrorHandler};
+        static const ErrorHandlerFunction testErrorHandlerList[] = {{.function = testErrorHandler}};
         errorHandlerSet(testErrorHandlerList, LENGTH_OF(testErrorHandlerList));
 
         assert(errorContext.handlerList[0] == testErrorHandler);

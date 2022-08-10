@@ -161,13 +161,13 @@ main(int argListSize, const char *argList[])
     int result = 0;
 
 #ifdef HRN_FEATURE_ERROR
-    static const ErrorHandlerFunction handlerList[] =
+    static const ErrorHandler handlerList[] =
     {
 #if defined(HRN_INTEST_STACKTRACE) || defined(HRN_FEATURE_STACKTRACE)
-        stackTraceClean,
+        {.function = stackTraceClean},
 #endif
 #if defined(HRN_INTEST_MEMCONTEXT) || defined(HRN_FEATURE_MEMCONTEXT)
-        memContextClean,
+        {.function = memContextClean},
 #endif
     };
 

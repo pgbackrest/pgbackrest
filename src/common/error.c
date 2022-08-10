@@ -65,7 +65,7 @@ static struct
     jmp_buf jumpList[ERROR_TRY_MAX];
 
     // Handler list
-    const ErrorHandlerFunction *handlerList;
+    const ErrorHandler *handlerList;
     unsigned int handlerTotal;
 
     // State of each try
@@ -99,7 +99,7 @@ static char messageBufferTemp[ERROR_MESSAGE_BUFFER_SIZE];
 static char stackTraceBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 
 /**********************************************************************************************************************************/
-void errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
+void errorHandlerSet(const ErrorHandler *const list, const unsigned int total)
 {
     assert(total == 0 || list != NULL);
 
@@ -306,7 +306,7 @@ errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
     if (errorInternalState() == errorStateTry)
     {
         for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
-            errorContext.handlerList[handlerIdx](errorTryDepth());
+            errorContext.handlerList[handlerIdx].function(errorTryDepth());
 
         errorContext.tryList[errorContext.tryTotal].state++;
     }
