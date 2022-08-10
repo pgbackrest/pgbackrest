@@ -101,6 +101,7 @@ Option constants
 #define CFGOPT_RECURSE                                              "recurse"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
+#define CFGOPT_REPO_SFTP_HOST_PORT                                  "repo-sftp-host-port"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
 #define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
@@ -128,7 +129,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            160
+#define CFG_OPTION_TOTAL                                            162
 
 /***********************************************************************************************************************************
 Option value constants
@@ -482,6 +483,8 @@ typedef enum
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpAccount,
+    cfgOptRepoSftpHost,
+    cfgOptRepoSftpHostPort,
     cfgOptRepoSftpKeyfilePassphrase,
     cfgOptRepoSftpPassword,
     cfgOptRepoSftpPrivateKeyfile,

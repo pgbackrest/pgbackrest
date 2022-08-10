@@ -1596,9 +1596,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, "vagrant");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
         setenv("PGBACKREST_REPO1_SFTP_PASSWORD", "vagrant", true);
-        hrnCfgArgRawZ(argList, cfgOptRepoHostPort, "22");
-        hrnCfgArgRawZ(argList, cfgOptRepoHost, "localhost");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------

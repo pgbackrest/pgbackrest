@@ -708,6 +708,7 @@ storageSftpNewInternal(
 
         if (!strEmpty(user) && !strEmpty(password))
         {
+            LOG_DEBUG_FMT("attempting password authentication");
             wait = waitNew(timeoutConnect);
 
             do
@@ -720,6 +721,7 @@ storageSftpNewInternal(
         }
         else if (!strEmpty(user) && !strEmpty(keyPub) && !strEmpty(keyPriv))
         {
+            LOG_DEBUG_FMT("attempting public key authentication");
             // !!! jrt need to handle keyfile passphrase
             libssh2_userauth_publickey_fromfile(driver->session, strZ(user), strZ(keyPub), strZ(keyPriv), "");
 

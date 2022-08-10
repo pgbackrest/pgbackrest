@@ -942,6 +942,26 @@
                         <example>pg-backup</example>
                     </config-key>
 
+                    <config-key id="repo-sftp-host" name="SFTP Repository Host">
+                        <summary>SFTP repository host.</summary>
+
+                        <text>
+                            <p>SFTP repository host.</p>
+                        </text>
+
+                        <example>sftprepo.domain</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-port" name="SFTP Repository Host Port">
+                        <summary>SFTP repository host port.</summary>
+
+                        <text>
+                            <p>SFTP repository host port.</p>
+                        </text>
+
+                        <example>22</example>
+                    </config-key>
+
                     <config-key id="repo-sftp-keyfile-passphrase" name="SFTP Repository Private Keyfile Passphrase">
                         <summary>SFTP private keyfile passphrase.</summary>
 

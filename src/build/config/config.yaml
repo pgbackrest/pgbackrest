@@ -2191,6 +2191,27 @@ option:
       list:
         - sftp
 
+  repo-sftp-host:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
+  repo-sftp-host-port:
+    section: global
+    type: integer
+    default: 22
+    allow-range: [1, 65535]
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
   repo-sftp-keyfile-passphrase:
     section: global
     type: string

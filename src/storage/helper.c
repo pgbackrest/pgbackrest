@@ -359,7 +359,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
     Storage *result = NULL;
 
     // Use remote storage
-    if (!repoIsLocal(repoIdx) && cfgOptionIdxStrId(cfgOptRepoType, repoIdx) != STORAGE_SFTP_TYPE)
+    if (!repoIsLocal(repoIdx))
     {
         result = storageRemoteNew(
             STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
