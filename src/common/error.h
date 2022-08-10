@@ -125,6 +125,7 @@ unsigned int errorTryDepth(void);
 typedef struct ErrorHandler
 {
     void (*const function)(unsigned int);
+    const bool fatal;
 } ErrorHandler;
 
 void errorHandlerSet(const ErrorHandler *list, unsigned int total);

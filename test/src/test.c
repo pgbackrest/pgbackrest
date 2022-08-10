@@ -164,10 +164,10 @@ main(int argListSize, const char *argList[])
     static const ErrorHandler handlerList[] =
     {
 #if defined(HRN_INTEST_STACKTRACE) || defined(HRN_FEATURE_STACKTRACE)
-        {.function = stackTraceClean},
+        STACK_TRACE_CLEAN,
 #endif
 #if defined(HRN_INTEST_MEMCONTEXT) || defined(HRN_FEATURE_MEMCONTEXT)
-        {.function = memContextClean},
+        MEM_CONTEXT_CLEAN,
 #endif
     };
 
