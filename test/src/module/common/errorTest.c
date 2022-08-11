@@ -33,7 +33,7 @@ testTryRecurse(void)
 
         testTryRecurse();
     }
-    CATCH(MemoryError)
+    CATCH(UnhandledError)
     {
         testTryRecurseCatch = true;                                 // {uncoverable - catch should never be executed}
     }
@@ -183,37 +183,38 @@ testRun(void)
                     }
                     TRY_END();
                 }
-                CATCH(AssertError)
+                CATCH_FATAL()
                 {
                     assert(testErrorHandlerTryDepth == 3);
                     assert(testErrorHandlerFatal);
 
-                    // Finally below should run even though this error has been rethrown
-                    RETHROW();
+                    // Change to FormatError so error can be caught by normal catches
+                    THROW(FormatError, errorMessage());
                 }
+                // Should run even though an error has been thrown in the catch
                 FINALLY()
                 {
                     finallyDone = true;
                 }
                 TRY_END();
             }
-            CATCH_FATAL()
+            CATCH_ANY()
             {
                 assert(testErrorHandlerTryDepth == 2);
-                assert(testErrorHandlerFatal);
+                assert(!testErrorHandlerFatal);
 
                 RETHROW();
             }
             TRY_END();
         }
-        CATCH(MemoryError)
+        CATCH(UnhandledError)
         {
             assert(false);                                              // {uncoverable - catch should never be executed}
         }
         CATCH(RuntimeError)
         {
             assert(testErrorHandlerTryDepth == 1);
-            assert(testErrorHandlerFatal);
+            assert(!testErrorHandlerFatal);
             assert(errorTryDepth() == 1);
             assert(errorContext.tryList[1].state == errorStateEnd);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
@@ -243,7 +244,7 @@ testRun(void)
             tryDone = true;
             testTryRecurse();
         }
-        CATCH(AssertError)
+        CATCH_FATAL()
         {
             assert(errorCode() == AssertError.code);
             assert(strcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/errorTest.c") == 0);

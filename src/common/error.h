@@ -145,7 +145,7 @@ Catch a specific error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH(errorTypeCatch)                                                                                                      \
         }                                                                                                                          \
-        else if (errorInternalCatch(&errorTypeCatch, true, false))                                                                 \
+        else if (errorInternalCatch(&errorTypeCatch, false))                                                                       \
         {
 
 /***********************************************************************************************************************************
@@ -153,7 +153,7 @@ Catch any non-fatal error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH_ANY()                                                                                                                \
         }                                                                                                                          \
-        else if (errorInternalCatch(&RuntimeError, false, false))                                                                  \
+        else if (errorInternalCatch(&RuntimeError, false))                                                                         \
         {
 
 /***********************************************************************************************************************************
@@ -161,7 +161,7 @@ Catch any error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH_FATAL()                                                                                                              \
         }                                                                                                                          \
-        else if (errorInternalCatch(&RuntimeError, true, true))                                                                    \
+        else if (errorInternalCatch(&RuntimeError, true))                                                                          \
         {
 
 /***********************************************************************************************************************************
@@ -311,7 +311,7 @@ void errorInternalTryBegin(const char *fileName, const char *functionName, int f
 jmp_buf *errorInternalJump(void);
 
 // True when in catch state and the expected error matches
-bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch, bool allFatal);
+bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
 
 // Propagate the error up so it can be caught
 FN_NO_RETURN void errorInternalPropagate(void);

@@ -300,13 +300,15 @@ errorInternalJump(void)
 
 /**********************************************************************************************************************************/
 bool
-errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch, const bool allFatal)
+errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
 {
+    assert(fatalCatch || !errorTypeFatal(errorTypeCatch));
+
     // If just entering error state clean up the stack
     if (errorInternalState() == errorStateTry)
     {
         for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
-            errorContext.handlerList[handlerIdx](errorTryDepth(), allFatal || errorFatal());
+            errorContext.handlerList[handlerIdx](errorTryDepth(), fatalCatch);
 
         errorContext.tryList[errorContext.tryTotal].state++;
     }
@@ -372,8 +374,11 @@ errorInternalThrow(
     errorContext.error.fileLine = fileLine;
 
     // Assign message to the error
-    strncpy(messageBuffer, message, sizeof(messageBuffer));
-    messageBuffer[sizeof(messageBuffer) - 1] = 0;
+    if (message != messageBuffer)
+    {
+        strncpy(messageBuffer, message, sizeof(messageBuffer));
+        messageBuffer[sizeof(messageBuffer) - 1] = 0;
+    }
 
     errorContext.error.message = (const char *)messageBuffer;
 
