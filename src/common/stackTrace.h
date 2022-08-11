@@ -75,6 +75,6 @@ char *stackTraceParamBuffer(const char *param);
 void stackTraceParamAdd(size_t bufferSize);
 
 // Clean the stack at and below the try level. Called by the error to cleanup the stack when an exception occurs.
-void stackTraceClean(unsigned int tryDepth);
+void stackTraceClean(unsigned int tryDepth, bool fatal);
 
 #endif

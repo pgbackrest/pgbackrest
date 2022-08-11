@@ -300,13 +300,13 @@ errorInternalJump(void)
 
 /**********************************************************************************************************************************/
 bool
-errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
+errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch, const bool allFatal)
 {
     // If just entering error state clean up the stack
     if (errorInternalState() == errorStateTry)
     {
         for (unsigned int handlerIdx = 0; handlerIdx < errorContext.handlerTotal; handlerIdx++)
-            errorContext.handlerList[handlerIdx](errorTryDepth());
+            errorContext.handlerList[handlerIdx](errorTryDepth(), allFatal || errorFatal());
 
         errorContext.tryList[errorContext.tryTotal].state++;
     }

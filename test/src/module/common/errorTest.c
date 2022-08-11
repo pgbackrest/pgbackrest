@@ -48,10 +48,12 @@ testTryRecurse(void)
 Test error handler
 ***********************************************************************************************************************************/
 static unsigned int testErrorHandlerTryDepth;
+static bool testErrorHandlerFatal;
 
 static void
-testErrorHandler(unsigned int tryDepth)
+testErrorHandler(unsigned int tryDepth, bool fatal)
 {
+    testErrorHandlerFatal = fatal;
     testErrorHandlerTryDepth = tryDepth;
 }
 
@@ -184,6 +186,7 @@ testRun(void)
                 CATCH(AssertError)
                 {
                     assert(testErrorHandlerTryDepth == 3);
+                    assert(testErrorHandlerFatal);
 
                     // Finally below should run even though this error has been rethrown
                     RETHROW();
@@ -197,6 +200,7 @@ testRun(void)
             CATCH_FATAL()
             {
                 assert(testErrorHandlerTryDepth == 2);
+                assert(testErrorHandlerFatal);
 
                 RETHROW();
             }
@@ -209,6 +213,7 @@ testRun(void)
         CATCH(RuntimeError)
         {
             assert(testErrorHandlerTryDepth == 1);
+            assert(testErrorHandlerFatal);
             assert(errorTryDepth() == 1);
             assert(errorContext.tryList[1].state == errorStateEnd);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
