@@ -145,7 +145,7 @@ Catch a specific error thrown in the try block
 ***********************************************************************************************************************************/
 #define CATCH(errorTypeCatch)                                                                                                      \
         }                                                                                                                          \
-        else if (errorInternalCatch(&errorTypeCatch, true))                                                                        \
+        else if (errorInternalCatch(&errorTypeCatch, false))                                                                       \
         {
 
 /***********************************************************************************************************************************
