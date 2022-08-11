@@ -1062,9 +1062,10 @@ memContextClean(unsigned int tryDepth, bool fatal)
     {
         // Free memory contexts that were not kept. Skip this for fatal errors to avoid calling destructors that could error and
         // mask the original error.
-        if (!fatal && memContextStack[memContextMaxStackIdx].type == memContextStackTypeNew)
+        if (memContextStack[memContextMaxStackIdx].type == memContextStackTypeNew)
         {
-            memContextFree(memContextStack[memContextMaxStackIdx].memContext);
+            if (!fatal)
+                memContextFree(memContextStack[memContextMaxStackIdx].memContext);
         }
         // Else find the prior context and make it the current context
         else
