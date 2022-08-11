@@ -414,11 +414,11 @@ testRun(void)
             {
                 memContext = MEM_CONTEXT_NEW();
                 TEST_RESULT_Z(memContext->name, memContextTestName, "check mem context name");
-                THROW(AssertError, "create failed");
+                THROW(FormatError, "create failed");
             }
             MEM_CONTEXT_NEW_END();
         }
-        CATCH(AssertError)
+        CATCH(FormatError)
         {
             catch = true;
         }
