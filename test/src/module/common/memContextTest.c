@@ -359,10 +359,10 @@ testRun(void)
             MEM_CONTEXT_BEGIN(memContext)
             {
                 TEST_RESULT_Z(memContextCurrent()->name, "test-block", "context is now test-block");
-                THROW(FormatError, "error in test block");
+                THROW(AssertError, "error in test block");
             }
             MEM_CONTEXT_END(),
-            FormatError, "error in test block");
+            AssertError, "error in test block");
 
         TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context is now top");
 
@@ -414,11 +414,11 @@ testRun(void)
             {
                 memContext = MEM_CONTEXT_NEW();
                 TEST_RESULT_Z(memContext->name, memContextTestName, "check mem context name");
-                THROW(FormatError, "create failed");
+                THROW(AssertError, "create failed");
             }
             MEM_CONTEXT_NEW_END();
         }
-        CATCH(FormatError)
+        CATCH(AssertError)
         {
             catch = true;
         }

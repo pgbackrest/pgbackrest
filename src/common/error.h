@@ -122,13 +122,9 @@ Try stack getters/setters
 unsigned int errorTryDepth(void);
 
 // Add a handler to be called when an error occurs
-typedef struct ErrorHandler
-{
-    void (*const function)(unsigned int);
-    const bool fatal;
-} ErrorHandler;
+typedef void (*const ErrorHandlerFunction)(unsigned int);
 
-void errorHandlerSet(const ErrorHandler *list, unsigned int total);
+void errorHandlerSet(const ErrorHandlerFunction *list, unsigned int total);
 
 /***********************************************************************************************************************************
 Begin a block where errors can be thrown

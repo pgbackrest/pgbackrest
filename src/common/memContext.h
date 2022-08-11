@@ -301,6 +301,4 @@ Internal functions
 // Clean up mem contexts after an error.  Should only be called from error handling routines.
 void memContextClean(unsigned int tryDepth);
 
-#define MEM_CONTEXT_CLEAN                                           {.function = memContextClean}
-
 #endif

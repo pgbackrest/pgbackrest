@@ -29,7 +29,7 @@ int
 main(int argListSize, const char *argList[])
 {
     // Set stack trace and mem context error cleanup handlers
-    static const ErrorHandler errorHandlerList[] = {STACK_TRACE_CLEAN, MEM_CONTEXT_CLEAN};
+    static const ErrorHandlerFunction errorHandlerList[] = {stackTraceClean, memContextClean};
     errorHandlerSet(errorHandlerList, LENGTH_OF(errorHandlerList));
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
