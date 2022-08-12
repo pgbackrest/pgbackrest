@@ -221,7 +221,8 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
     }
     while (rc == LIBSSH2_ERROR_EAGAIN  && waitMore(this->wait));
 
-    if (rc != (ssize_t)bufUsed(buffer))
+    //if (rc != (ssize_t)bufUsed(buffer))
+    if (rc < 0)
     {
         THROW_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
         // jrt expand later ala
@@ -352,6 +353,33 @@ storageWriteSftpClose(THIS_VOID)
                     LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+            if (rc && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL &&
+                libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
+            {
+                this->wait = waitNew(this->timeoutConnect);
+
+                do
+                {
+                    rc = libssh2_sftp_unlink_ex(
+                            this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name));
+                } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+                if (rc)
+                    THROW_FMT(FileRemoveError, "unable to remove existing '%s'", strZ(this->interface.name));
+
+                this->wait = waitNew(this->timeoutConnect);
+
+                do
+                {
+                    rc = libssh2_sftp_rename_ex(
+                            this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp),
+                            strZ(this->interface.name), (unsigned int)strSize(this->interface.name),
+                            LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
+                }
+                while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+            }
+
 
             // Most versions of sftp do not support overwriting an existing file and will return LIBSSH2_FX_FAILURE
             // need to find out if we can determine server version

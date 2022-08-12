@@ -13,7 +13,8 @@ Constructors
 Storage *storageSftpNewInternal(
     const StringId type, const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect,
     TimeMSec timeoutSession, const String *user, const String *password, const String *keyPub, const String *keyPriv,
-    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
+    const String *keyPassphrase, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction,
+    bool pathSync);
 
 /***********************************************************************************************************************************
 Functions

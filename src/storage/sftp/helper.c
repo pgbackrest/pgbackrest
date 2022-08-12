@@ -36,15 +36,16 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
         param.password = strDup(cfgOptionStrNull(cfgOptRepoSftpPassword));
         param.keyPub = strDup(cfgOptionStrNull(cfgOptRepoSftpPublicKeyfile));
         param.keyPriv = strDup(cfgOptionStrNull(cfgOptRepoSftpPrivateKeyfile));
+        param.keyPassphrase = strDup(cfgOptionStrNull(cfgOptRepoSftpKeyfilePassphrase));
         param.modeFile = STORAGE_MODE_FILE_DEFAULT;
         param.modePath = STORAGE_MODE_PATH_DEFAULT;
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageSftpNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionUInt64(cfgOptIoTimeout), cfgOptionUInt64(cfgOptIoTimeout),
-                param);
+                        cfgOptionStrNull(cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+                        cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionUInt64(cfgOptIoTimeout),
+                        cfgOptionUInt64(cfgOptIoTimeout), param);
         }
         MEM_CONTEXT_PRIOR_END();
     }

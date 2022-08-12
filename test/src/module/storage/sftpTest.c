@@ -48,7 +48,7 @@ testRun(void)
     // Create default storage object for testing
     // jrt !!!  -- write test with small timout to error on EAGAIN and cover EAGAIN paths
     Storage *storageTest = storageSftpNewP(
-        TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+        TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
         .write = true);
 
     ioBufferSizeSet(2);
@@ -91,8 +91,8 @@ testRun(void)
 
         Storage *storageTest = NULL;
         TEST_ASSIGN(
-            storageTest, storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"),
-            .password = strNewZ("vagrant")), "new storage (defaults)");
+            storageTest, storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+            .password = TEST_USER_STR), "new storage (defaults)");
         TEST_RESULT_STR_Z(storageTest->path, "/tmp", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "check file mode");
         TEST_RESULT_INT(storageTest->modePath, 0750, "check path mode");
@@ -105,7 +105,7 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/path/to"), STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+                STRDEF("/path/to"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
                 .modeFile = 0600, .modePath = 0700, .write = true),
             "new storage (non-default)");
         TEST_RESULT_STR_Z(storageTest->path, "/path/to", "check path");
@@ -202,14 +202,14 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageInfoP(
                 storageSftpNewP(
-                    FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant")),
+                    FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR),
                 NULL).exists,
             true, "info for /");
         // -----------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info for / does not exist with no path feature");
 
         Storage *storageRootNoPath = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"));
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR);
         storageRootNoPath->pub.interface.feature ^= 1 << storageFeaturePath;
 
         TEST_RESULT_BOOL(storageInfoP(storageRootNoPath, NULL, .ignoreMissing = true).exists, false, "no info for /");
@@ -716,8 +716,8 @@ testRun(void)
         TEST_TITLE("path - root path");
 
         TEST_ASSIGN(
-            storageTest, storageSftpNewP(STRDEF("/"), STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"),
-            .password = strNewZ("vagrant")), "new storage /");
+            storageTest, storageSftpNewP(STRDEF("/"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+            .password = TEST_USER_STR), "new storage /");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/", "root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/")), "/", "same as root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("subdir")), "/subdir", "simple subdir");
@@ -729,8 +729,8 @@ testRun(void)
             storagePathP(storageTest, STRDEF("<TEST>")), AssertError, "expression '<TEST>' not valid without callback function");
 
         TEST_ASSIGN(
-            storageTest, storageSftpNewP(STRDEF("/path/to"), STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"),
-            .password = strNewZ("vagrant"), .pathExpressionFunction = storageTestPathExpression),
+            storageTest, storageSftpNewP(STRDEF("/path/to"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+            .password = TEST_USER_STR, .pathExpressionFunction = storageTestPathExpression),
             "new storage /path/to with expression");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/path/to", "root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/path/to")), "/path/to", "absolute root dir");
@@ -943,7 +943,7 @@ testRun(void)
     if (testBegin("storagePut() and storageGet()"))
     {
         Storage *storageTest = storageSftpNewP(
-            STRDEF("/"), STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+            STRDEF("/"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
             .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1131,7 +1131,7 @@ testRun(void)
 
         // Recreate storageTest as previous test closed socket fd
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+            TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
             .write = true);
 
         Buffer *buffer = bufNew(0);
@@ -1316,7 +1316,7 @@ testRun(void)
 
         // Recreate storageTest as previous test closed socket fd
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = strNewZ("vagrant"), .password = strNewZ("vagrant"),
+            TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
             .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
@@ -1595,9 +1595,9 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, "vagrant");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-        setenv("PGBACKREST_REPO1_SFTP_PASSWORD", "vagrant", true);
+        setenv("PGBACKREST_REPO1_SFTP_PASSWORD", TEST_USER, true);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------

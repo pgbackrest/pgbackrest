@@ -632,8 +632,8 @@ static const StorageInterface storageInterfaceSftp =
 Storage *
 storageSftpNewInternal(
     StringId type, const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
-    const String *user, const String *password, const String *keyPub, const String *keyPriv, mode_t modeFile, mode_t modePath,
-    bool write, StoragePathExpressionCallback pathExpressionFunction, bool pathSync)
+    const String *user, const String *password, const String *keyPub, const String *keyPriv, const String *keyPassphrase,
+    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, bool pathSync)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -646,6 +646,7 @@ storageSftpNewInternal(
         FUNCTION_LOG_PARAM(STRING, password);
         FUNCTION_LOG_PARAM(STRING, keyPub);
         FUNCTION_LOG_PARAM(STRING, keyPriv);
+        FUNCTION_LOG_PARAM(STRING, keyPassphrase);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
@@ -705,11 +706,11 @@ storageSftpNewInternal(
         (void)libssh2_hostkey_hash(driver->session, LIBSSH2_HOSTKEY_HASH_SHA1);
 
         rc = 0;
+        wait = waitNew(timeoutConnect);
 
-        if (!strEmpty(user) && !strEmpty(password))
+        if (strZNull(user) != NULL && strZNull(password) != NULL)
         {
             LOG_DEBUG_FMT("attempting password authentication");
-            wait = waitNew(timeoutConnect);
 
             do
             {
@@ -717,16 +718,33 @@ storageSftpNewInternal(
             } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
             if (rc != 0)
-                THROW_SYS_ERROR_FMT(ServiceError, "timeout password authenticate %d", rc);
+                THROW_SYS_ERROR_FMT(ServiceError, "error in password authenticate libssh2 error [%d]", rc);
         }
-        else if (!strEmpty(user) && !strEmpty(keyPub) && !strEmpty(keyPriv))
+        else if (strZNull(user) != NULL && strZNull(keyPub) != NULL && strZNull(keyPriv) != NULL)
         {
             LOG_DEBUG_FMT("attempting public key authentication");
-            // !!! jrt need to handle keyfile passphrase
-            libssh2_userauth_publickey_fromfile(driver->session, strZ(user), strZ(keyPub), strZ(keyPriv), "");
 
-            if (rc != 0)
-                THROW_SYS_ERROR_FMT(ServiceError, "timeout public key from file authentication failed %d", rc);
+            do
+            {
+                rc = libssh2_userauth_publickey_fromfile(
+                        driver->session, strZ(user), strZ(keyPub), strZ(keyPriv),
+                        strZNull(keyPassphrase) == NULL ? NULL : strZ(keyPassphrase));
+            } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+            if (rc != 0 )
+            {
+                // Early versions of libssh2 expect PEM format private key
+                if ((rc == LIBSSH2_ERROR_PUBLICKEY_UNVERIFIED && strncmp(libssh2_version(0), "1.9.0", 5) < 0))
+                {
+                    THROW_SYS_ERROR_FMT(
+                        ServiceError,
+                        "public key from file authentication failed libssh2 error [%d]\n"
+                            "HINT: libssh2 ver: %s - versions before 1.9.0 expect a PEM format private key\n"
+                            "HINT: try ssh-keygen -m PEM -t rsa -P \"\" to generate the keypair", rc, libssh2_version(0));
+                }
+                else
+                    THROW_FMT(ServiceError, "public key from file authentication failed libssh2 error [%d]", rc);
+            }
         }
 
         wait = waitNew(timeoutConnect);
@@ -773,6 +791,7 @@ storageSftpNew(const String *path, const String *host, unsigned int port, TimeMS
         FUNCTION_LOG_PARAM(STRING, param.password);
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
         FUNCTION_LOG_PARAM(STRING, param.keyPriv);
+        FUNCTION_LOG_PARAM(STRING, param.keyPassphrase);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
@@ -783,8 +802,8 @@ storageSftpNew(const String *path, const String *host, unsigned int port, TimeMS
         STORAGE,
         storageSftpNewInternal(
             STORAGE_SFTP_TYPE, path, host, port, timeoutConnect, timeoutSession, param.user, param.password, param.keyPub,
-            param.keyPriv, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile, param.modePath == 0 ?
-            STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, false));
+            param.keyPriv, param.keyPassphrase, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
+            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, false));
 }
 
 #endif // HAVE_LIBSSH2
