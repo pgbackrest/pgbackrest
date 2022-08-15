@@ -759,11 +759,20 @@ protocolRemoteExec(
             {
                 ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
 
-                // Pass parameters to server
-                ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
-                pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
-                protocolClientExecute(helper->client, command, false);
-                protocolCommandFree(command);
+                TRY_BEGIN()
+                {
+                    // Pass parameters to server
+                    ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
+                    pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
+                    protocolClientExecute(helper->client, command, false);
+                    protocolCommandFree(command);
+                }
+                CATCH_ANY()
+                {
+                    memContextCallbackClear(objMemContext(helper->client));
+                    RETHROW();
+                }
+                TRY_END();
 
                 break;
             }
