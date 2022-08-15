@@ -373,7 +373,7 @@ errorInternalThrow(
     errorContext.error.functionName = functionName;
     errorContext.error.fileLine = fileLine;
 
-    // Assign message to the error
+    // Assign message to the error. If errorMessage() is passed as the message there is no need to make a copy.
     if (message != messageBuffer)
     {
         strncpy(messageBuffer, message, sizeof(messageBuffer));
