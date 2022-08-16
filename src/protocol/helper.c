@@ -769,6 +769,8 @@ protocolRemoteExec(
                 }
                 CATCH_ANY()
                 {
+                    // Clear the callback so the client does not try to shut down the connection. This won't work since the server
+                    // has already disconnected and a new error will be thrown, masking the original error.
                     memContextCallbackClear(objMemContext(helper->client));
                     RETHROW();
                 }
