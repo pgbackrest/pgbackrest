@@ -43,7 +43,7 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageSftpNew(
-                        cfgOptionStrNull(cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+                        cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
                         cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionUInt64(cfgOptIoTimeout),
                         cfgOptionUInt64(cfgOptIoTimeout), param);
         }

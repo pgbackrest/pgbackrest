@@ -1,3 +1,6 @@
+- migrate symlink code to driver
+
+
 - Investigate libssh2 supported platforms
    - appears to be no explicit listing of supported platforms/architectures on the website
      build prerequisites are cmake and one of

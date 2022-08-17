@@ -49,6 +49,27 @@ struct StorageSftp
     Wait *wait;
 };
 
+/***********************************************************************************************************************************
+Free connection
+***********************************************************************************************************************************/
+static void
+libssh2SessionFreeResource(THIS_VOID)
+{
+    THIS(StorageSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    libssh2_sftp_close(this->sftpHandle);
+    libssh2_sftp_shutdown(this->sftpSession);
+    libssh2_exit();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 static StorageInfo
 storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
@@ -665,7 +686,7 @@ storageSftpNewInternal(
     // Create the object
     Storage *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         StorageSftp *driver = OBJ_NEW_ALLOC();
 
@@ -768,6 +789,10 @@ storageSftpNewInternal(
         if (type == STORAGE_SFTP_TYPE)
             driver->interface.feature |=
                 1 << storageFeatureSymLink | 1 << storageFeatureInfoDetail;
+
+        // jrt !!! is this valid
+        // Ensure libssh2/libssh2_sftp resources freed
+        memContextCallbackSet(objMemContext(driver), libssh2SessionFreeResource, driver);
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }

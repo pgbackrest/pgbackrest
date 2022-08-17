@@ -49,54 +49,6 @@ Macros for function logging
     objToLog(value, "StorageReadSftp", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Close file descriptor
-***********************************************************************************************************************************/
-static void
-storageReadSftpFreeResource(THIS_VOID)
-{
-    THIS(StorageReadSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_SFTP, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // jrt need to remedy -- ?? add flag to struct indicating handle is closed
-    // socket freeresource is closing fd before we get here in test 12
-/*
-    if (this->sftpHandle != NULL)
-    {
-        int rc = 0;
-        this->wait = waitNew(this->timeoutConnect);
-
-        // Close the libssh2 sftpHandle
-        do
-        {
-            rc = libssh2_sftp_close(this->sftpHandle);
-        }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-
-        if (rc)
-        {
-            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
-            {
-                LOG_DEBUG_FMT("throw sftp free resource error");
-                THROW_FMT(FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
-            }
-            else
-            {
-                LOG_DEBUG_FMT("throw sys free resource error");
-                THROW_SYS_ERROR(FileCloseError, STORAGE_ERROR_READ_CLOSE);
-            }
-        }
-    }
-    */
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
 static bool
@@ -140,10 +92,6 @@ storageReadSftpOpen(THIS_VOID)
     // Else success
     else
     {
-        // Set free callback to ensure the sftpHandle is closed
-        // jrt is this needed???
-        memContextCallbackSet(objMemContext(this), storageReadSftpFreeResource, this);
-
         // Seek to offset
         if (this->interface.offset != 0)
         {
@@ -239,9 +187,34 @@ storageReadSftpClose(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->sftpHandle != NULL);
 
-    memContextCallbackClear(objMemContext(this));
-    storageReadSftpFreeResource(this);
+    if (this->sftpHandle != NULL)
+    {
+        int rc = 0;
+        this->wait = waitNew(this->timeoutConnect);
+
+        // Close the libssh2 sftpHandle
+        do
+        {
+            rc = libssh2_sftp_close(this->sftpHandle);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+        if (rc)
+        {
+            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+            {
+                LOG_DEBUG_FMT("throw sftp free resource error");
+                THROW_FMT(FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
+            }
+            else
+            {
+                LOG_DEBUG_FMT("throw sys free resource error");
+                THROW_SYS_ERROR(FileCloseError, STORAGE_ERROR_READ_CLOSE);
+            }
+        }
+    }
     this->sftpHandle = NULL;
 
     FUNCTION_LOG_RETURN_VOID();
@@ -288,7 +261,7 @@ storageReadSftpNew(
 
     StorageRead *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageReadSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageReadSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageReadSftp *driver = OBJ_NEW_ALLOC();
 

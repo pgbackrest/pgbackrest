@@ -57,42 +57,6 @@ Since open is called more than once use constants to make sure these parameters 
 #define FILE_OPEN_PURPOSE                                           "write"
 
 /***********************************************************************************************************************************
-Close file descriptor
-***********************************************************************************************************************************/
-static void
-storageWriteSftpFreeResource(THIS_VOID)
-{
-    THIS(StorageWriteSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_SFTP, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->sftpHandle != NULL);
-
-    if (this->sftpHandle != NULL)
-    {
-/*  jrt remedy this... looks like sckSessionFreeResource is called first and closes fd
- *  jrt flag to indicate handle already closed vs NULL
-    // Close the libssh2 sftpHandle
-    int rc = 0;
-    this->wait = waitNew(this->timeoutConnect);
-
-    do
-    {
-        rc = libssh2_sftp_close(this->sftpHandle);
-    }
-    while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-
-    THROW_ON_SYS_ERROR_FMT(
-        rc != 0, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
-        */
-    }
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
 static void
@@ -155,7 +119,7 @@ storageWriteSftpOpen(THIS_VOID)
     }
 
     // Set free callback to ensure the file descriptor is freed
-    memContextCallbackSet(objMemContext(this), storageWriteSftpFreeResource, this);
+    //memContextCallbackSet(objMemContext(this), storageWriteSftpFreeResource, this);
 
     // Update user/group owner
     // jrt libssh2_sftp_setstat() libssh2_sftp_fsetstat()
@@ -218,6 +182,8 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
     do
     {
         rc = libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer), bufUsed(buffer));
+        if (rc > 0)
+            this->wait = waitNew(this->timeoutConnect);
     }
     while (rc == LIBSSH2_ERROR_EAGAIN  && waitMore(this->wait));
 
@@ -284,8 +250,6 @@ storageWriteSftpClose(THIS_VOID)
             if (rc)
                 THROW_FMT(FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
         }
-
-        memContextCallbackClear(objMemContext(this));
 
         // Update modified time
         if (this->interface.timeModified != 0)
@@ -441,7 +405,7 @@ storageWriteSftpNew(
 
     StorageWrite *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageWriteSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(StorageWriteSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
         StorageWriteSftp *driver = OBJ_NEW_ALLOC();
 
