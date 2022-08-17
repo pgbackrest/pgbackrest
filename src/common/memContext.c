@@ -1048,7 +1048,7 @@ memContextSize(const MemContext *const this)
 
 /**********************************************************************************************************************************/
 void
-memContextClean(unsigned int tryDepth, bool fatal)
+memContextClean(const unsigned int tryDepth, const bool fatal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, tryDepth);

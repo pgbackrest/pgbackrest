@@ -348,7 +348,7 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
 
 /**********************************************************************************************************************************/
 void
-stackTraceClean(unsigned int tryDepth, bool fatal)
+stackTraceClean(const unsigned int tryDepth, const bool fatal)
 {
     (void)fatal;                                                    // Cleanup is the same for fatal errors
 
