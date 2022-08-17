@@ -141,7 +141,7 @@ Begin a block where errors can be thrown
         {
 
 /***********************************************************************************************************************************
-Catch a specific error thrown in the try block
+Catch a specific error thrown in the try block. Fatal errors cannot be caught with this block.
 ***********************************************************************************************************************************/
 #define CATCH(errorTypeCatch)                                                                                                      \
         }                                                                                                                          \
@@ -157,7 +157,9 @@ Catch any non-fatal error thrown in the try block
         {
 
 /***********************************************************************************************************************************
-Catch any error thrown in the try block
+Catch any error thrown in the try block including fatal errors. To maximize the chance of being able to report the error caught,
+memory contexts will not be freed and mem context callbacks will not be called. If the TRY block is enclosed in a mem context then
+child mem contexts will be freed and child mem context callbacks called when the enclosing mem context is freed.
 ***********************************************************************************************************************************/
 #define CATCH_FATAL()                                                                                                              \
         }                                                                                                                          \
