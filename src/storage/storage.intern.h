@@ -64,6 +64,18 @@ Storage info callback function type - used to return storage info
 typedef void (*StorageListCallback)(void *callbackData, const StorageInfo *info);
 
 /***********************************************************************************************************************************
+Link type
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Signify creation of hard link
+    storageHardLink,
+
+    // Signify creation of soft link
+    storageSoftLink,
+} LinkType;
+
+/***********************************************************************************************************************************
 Required interface functions
 ***********************************************************************************************************************************/
 // Get information about a file/link/path
@@ -243,6 +255,20 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
 #define storageInterfacePathSyncP(thisVoid, path, ...)                                                                             \
     STORAGE_COMMON_INTERFACE(thisVoid).pathSync(thisVoid, path, (StorageInterfacePathSyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Create a hard or soft link
+typedef struct StorageInterfaceLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+} StorageInterfaceLinkCreateParam;
+
+typedef void StorageInterfaceLinkCreate(
+    void *thisVoid, const String *target, const String *linkPath, const LinkType linkType, StorageInterfaceLinkCreateParam param);
+
+#define storageInterfaceLinkCreateP(thisVoid, target, linkPath, linkType, ...)                                                     \
+    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate(thisVoid, target, linkPath, linkType,                                            \
+        (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
 /***********************************************************************************************************************************
 Storage type and helper function struct
 
@@ -278,6 +304,7 @@ typedef struct StorageInterface
     StorageInterfaceMove *move;
     StorageInterfacePathCreate *pathCreate;
     StorageInterfacePathSync *pathSync;
+    StorageInterfaceLinkCreate *linkCreate;
 } StorageInterface;
 
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \

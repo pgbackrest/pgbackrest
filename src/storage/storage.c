@@ -716,6 +716,30 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /**********************************************************************************************************************************/
+void storageLinkCreate(const Storage *this, const String *target, const String *linkPath, const LinkType linkType)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, linkType);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->write);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        storageInterfaceLinkCreateP(storageDriver(this), target, linkPath, linkType);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 String *
 storageToLog(const Storage *this)
 {

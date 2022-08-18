@@ -529,6 +529,46 @@ storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
 }
 
 /**********************************************************************************************************************************/
+void
+storagePosixLinkCreate(
+    THIS_VOID, const String *const target, const String *const linkPath, const LinkType linkType,
+    StorageInterfaceLinkCreateParam param)
+{
+    THIS(StoragePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, linkType);
+        (void)param;                                                // No parameters are used
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+
+    if (linkType == storageSoftLink)
+    {
+        // Create the symlink
+        THROW_ON_SYS_ERROR_FMT(
+            symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
+            strZ(target));
+    }
+    else if (linkType == storageHardLink)
+    {
+        // Create the hard link
+        THROW_ON_SYS_ERROR_FMT(
+            link(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create hardlink '%s' to '%s'", strZ(linkPath),
+            strZ(target));
+    }
+    else
+        THROW_FMT(ParamInvalidError, "unable to create link, invalid linkType requested");
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 static const StorageInterface storageInterfacePosix =
 {
     .feature = 1 << storageFeaturePath,
@@ -542,6 +582,7 @@ static const StorageInterface storageInterfacePosix =
     .pathRemove = storagePosixPathRemove,
     .pathSync = storagePosixPathSync,
     .remove = storagePosixRemove,
+    .linkCreate = storagePosixLinkCreate,
 };
 
 Storage *
