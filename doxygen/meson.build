@@ -10,15 +10,13 @@
 #    - Make flex known to meson.
 #    - Build a doxygen filter so doxygen recognizes the commenting style.
 #    - Update the doxygen configuration file to reflect the current paths.
-#    - Generate documentation under "doxygen" in the build directory.
+#    - Let doxygen generate documentation under "doxygen" in the build directory.
 #########################################################################
 
 #########################################################################
 # Make Flex known to Meson. Flex is a parsing program used to make scanners.
-#   Flex takes lexical analysis file (*.l) and converts it a C file (*.c).
+#   Flex takes a lexical analysis file (*.l) and generates a C file (*.c).
 #########################################################################
-
-# Flex is a program which generates C code.
 flex = find_program('flex', disabler:true, required:false)
 flex_lib = meson.get_compiler('c').find_library('fl', disabler:true, required:false)
 flex_gen = generator(flex,
@@ -72,5 +70,7 @@ doxy_file = doxy_filter and configure_file(  # Pythonic "and" is alternative to 
 # Generate documentation when the command  "ninja doxygen" is given.
 #############################################################################
 doxy = find_program('doxygen', disabler:true, required:false)
-run_target('doxygen', command: [doxy, doxy_file])
+run_target('doxygen', command: [doxy, doxy_file]) or   # DEPRECATED: don't use pythonic or
+    message('Be sure to install flex and doxygen if you want to create doxygen documents.')
+
 
