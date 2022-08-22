@@ -43,7 +43,7 @@ testRun(void)
                     "info"
                     "</setting></proper></pg-setting></path></link></id></i></host></file></exe></code></cmd></br-option></b></p>\n"
                 "\n"
-                "<admonition>think about it</admonition>\n"
+                "<admonition>think <quote>about</quote> it</admonition>\n"
                 "\n"
                 "<p>List:</p>\n"
                 "\n"
@@ -56,7 +56,7 @@ testRun(void)
                 "</doc>")))),
             "pgBackRest PostgreSQL - info\n"
             "\n"
-            "NOTE: think about it\n"
+            "NOTE: think \"about\" it\n"
             "\n"
             "List:\n"
             "\n"
