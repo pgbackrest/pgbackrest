@@ -307,6 +307,7 @@ testRun(void)
             "  --repo-s3-uri-style              S3 URI Style [default=host]\n"
             "  --repo-storage-ca-file           repository storage CA file\n"
             "  --repo-storage-ca-path           repository storage CA path\n"
+            "  --repo-storage-upload-chunk-size repository storage upload chunk size\n"
             "  --repo-storage-host              repository storage host\n"
             "  --repo-storage-port              repository storage port [default=443]\n"
             "  --repo-storage-verify-tls        repository storage certificate verify\n"

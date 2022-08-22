@@ -24,7 +24,7 @@ storageGcsHelper(const unsigned int repoIdx, const bool write, StoragePathExpres
     Storage *const result = storageGcsNew(
         cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback, cfgOptionIdxStr(cfgOptRepoGcsBucket, repoIdx),
         (StorageGcsKeyType)cfgOptionIdxStrId(cfgOptRepoGcsKeyType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoGcsKey, repoIdx),
-        (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageChunkSize, repoIdx), cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx),
+        (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx), cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx),
         ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
         cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
 

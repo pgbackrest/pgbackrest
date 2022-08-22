@@ -2218,7 +2218,7 @@ option:
       repo?-azure-ca-path: {}
       repo?-s3-ca-path: {}
 
-  repo-storage-chunk-size:
+  repo-storage-upload-chunk-size:
     section: global
     group: repo
     type: size

@@ -289,14 +289,14 @@ cfgLoadUpdateOption(void)
     }
 
     // Set default upload chunk size if not set
-    if (cfgOptionValid(cfgOptRepoStorageChunkSize))
+    if (cfgOptionValid(cfgOptRepoStorageUploadChunkSize))
     {
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
-            if (!cfgOptionIdxTest(cfgOptRepoStorageChunkSize, repoIdx))
+            if (!cfgOptionIdxTest(cfgOptRepoStorageUploadChunkSize, repoIdx))
             {
                 cfgOptionIdxSet(
-                    cfgOptRepoStorageChunkSize, repoIdx, cfgSourceDefault,
+                    cfgOptRepoStorageUploadChunkSize, repoIdx, cfgSourceDefault,
                     VARINT64((cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == CFGOPTVAL_REPO_TYPE_S3 ? 5 : 4) * 1024 * 1024));
             }
         }
