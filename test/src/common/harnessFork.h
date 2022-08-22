@@ -33,6 +33,8 @@ There should not be any code outside the HRN_FORK_CHILD_BEGIN/END() and HRN_FORK
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <common/type/param.h>
+
 #include <common/harnessLog.h>
 
 /***********************************************************************************************************************************

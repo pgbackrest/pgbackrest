@@ -1,12 +1,5 @@
 # Release Build Instructions
 
-## Set location of the `pgbackrest` repo
-
-This makes the rest of the commands in the document easier to run (change to your repo path):
-```
-export PGBR_REPO=~/pgbackrest
-```
-
 ## Create a branch to test the release
 
 ```
@@ -35,12 +28,12 @@ to:
 
 ## Update code counts
 ```
-${PGBR_REPO?}/test/test.pl --code-count
+pgbackrest/test/test.pl --code-count
 ```
 
 ## Build release documentation.  Be sure to install latex using the instructions from the Vagrantfile before running this step.
 ```
-${PGBR_REPO?}/doc/release.pl --build
+pgbackrest/doc/release.pl --build
 ```
 
 ## Commit release branch and push to CI for testing
@@ -53,7 +46,7 @@ git push origin release-ci
 
 - Build the documentation with stress testing enabled:
 ```
-${PGBR_REPO?}/doc/doc.pl --out=html --include=user-guide --require=/stress --var=stress=y --var=stress-scale-table=100 --var=stress-scale-data=1000 --pre --no-cache
+pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/stress --var=stress=y --var=stress-scale-table=100 --var=stress-scale-data=1000 --pre --no-cache
 ```
 
 During data load the archive-push and archive-get processes can be monitored with:
@@ -85,13 +78,13 @@ INFO: full backup size = 14.9GB, file total = 101004
 
 ## Clone web documentation into `doc/site`
 ```
-cd ${PGBR_REPO?}/doc
+cd pgbackrest/doc
 git clone git@github.com:pgbackrest/website.git site
 ```
 
 ## Deploy web documentation to `doc/site`
 ```
-${PGBR_REPO?}/doc/release.pl --deploy
+pgbackrest/doc/release.pl --deploy
 ```
 
 ## Final commit of release to integration
@@ -144,7 +137,7 @@ The first line will be the release title and the rest will be the body.  The tag
 
 ## Push web documentation to main and deploy
 ```
-cd ${PGBR_REPO?}/doc/site
+cd pgbackrest/doc/site
 git commit -m "v2.14 documentation."
 git push origin main
 ```
@@ -177,7 +170,7 @@ to:
 
 Run deploy to generate git history (ctrl-c as soon as the file is generated):
 ```
-${PGBR_REPO?}/doc/release.pl --build
+pgbackrest/doc/release.pl --build
 ```
 
 Commit and push to integration:
@@ -197,11 +190,11 @@ https://git.savannah.gnu.org/gitweb/?p=automake.git
 
 If so, update the version above and copy `lib/install-sh` from the `automake` repo to the `pgbackrest` repo at `[repo]/src/build/install-sh`:
 ```
-wget -O ${PGBR_REPO?}/src/build/install-sh '[URL]'
+wget -O pgbackrest/src/build/install-sh '[URL]'
 ```
 
 Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so the newest version is pulled at the beginning of the release cycle to allow time to test stability.
 ```
-wget -O ${PGBR_REPO?}/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-wget -O ${PGBR_REPO?}/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
+wget -O pgbackrest/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
+wget -O pgbackrest/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 ```

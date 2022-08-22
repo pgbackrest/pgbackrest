@@ -4,9 +4,9 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.40dev',
+    version: '2.41dev',
     license: 'MIT',
-    meson_version: '>=0.53.2',
+    meson_version: '>=0.45',
     default_options: [
         # Core options
         'buildtype=release',
@@ -84,9 +84,10 @@ warning_disable = [
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
 
 ####################################################################################################################################
-# Enable additional optimizations if the level is high enough
+# Enable additional optimizations for release builds. We would prefer to use `get_option('optimization') in ['2', '3']` when our
+# minimum version is high enough to allow it.
 ####################################################################################################################################
-if get_option('optimization') in ['2', '3']
+if get_option('buildtype') == 'release'
     optimization_enable = [
         # Unroll loops whose number of iterations can be determined at compile time or upon entry to the loop
         '-funroll-loops',
@@ -104,6 +105,25 @@ endif
 if get_option('fatal-errors')
     add_project_arguments(cc.get_supported_arguments('-Wfatal-errors'), language: 'c')
 endif
+
+####################################################################################################################################
+# Generate -fmacro-prefix-map so the relative path to the source directory is not included in the __FILE__ macro. This provides
+# reproducible builds and minimizes the file path in debug messages, just like an in-tree make build. For test source, prefix with
+# test/ in case there are any module name collisions.
+####################################################################################################################################
+file_prefix = run_command(
+    [
+        'python3',
+        '-c',
+        'import sys, os; print(os.path.relpath(sys.argv[1], sys.argv[2]))',
+        meson.current_source_dir(),
+        meson.current_build_dir(),
+    ],
+    # check: true, # This should be set when the minimum supported meson version is >= 0.47
+).stdout().strip()
+
+add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/src/=' . format(file_prefix)), language: 'c')
+add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/src/=test/' . format(file_prefix)), language: 'c')
 
 ####################################################################################################################################
 # Build configuration
@@ -147,8 +167,8 @@ if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");})
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
 endif
 
-# Enable debug code
-if get_option('debug')
+# Enable debug code. We would prefer to use `get_option('debug')` when our minimum version is high enough to allow it.
+if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
     configuration.set('DEBUG', true, description: 'Enable debug code')
 endif
 
@@ -159,6 +179,7 @@ configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), descr
 configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
 
 ####################################################################################################################################
-# Include src
+# Include subdirs
 ####################################################################################################################################
 subdir('src')
+subdir('test/src')

@@ -181,6 +181,9 @@ String *strPathAbsolute(const String *this, const String *base);
 String *strQuote(const String *this, const String *quote);
 String *strQuoteZ(const String *this, const char *quote);
 
+// Replace a substring with another string
+String *strReplace(String *this, const String *replace, const String *with);
+
 // Replace a character with another character
 String *strReplaceChr(String *this, char find, char replace);
 
@@ -197,7 +200,14 @@ String *strSubN(const String *this, size_t start, size_t size);
 String *strTrim(String *this);
 
 // Truncate the end of a string from the index provided to the current end (e.g. 123KB pass index of K returns 123)
-String *strTrunc(String *this, int idx);
+String *strTruncIdx(String *this, int idx);
+
+// Truncate the string to zero size
+__attribute__((always_inline)) static inline String *
+strTrunc(String *const this)
+{
+    return strTruncIdx(this, 0);
+}
 
 /***********************************************************************************************************************************
 Destructor

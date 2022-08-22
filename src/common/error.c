@@ -302,6 +302,8 @@ errorInternalJump(void)
 bool
 errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
 {
+    assert(fatalCatch || !errorTypeFatal(errorTypeCatch));
+
     // If just entering error state clean up the stack
     if (errorInternalState() == errorStateTry)
     {
@@ -371,9 +373,12 @@ errorInternalThrow(
     errorContext.error.functionName = functionName;
     errorContext.error.fileLine = fileLine;
 
-    // Assign message to the error
-    strncpy(messageBuffer, message, sizeof(messageBuffer));
-    messageBuffer[sizeof(messageBuffer) - 1] = 0;
+    // Assign message to the error. If errorMessage() is passed as the message there is no need to make a copy.
+    if (message != messageBuffer)
+    {
+        strncpy(messageBuffer, message, sizeof(messageBuffer));
+        messageBuffer[sizeof(messageBuffer) - 1] = 0;
+    }
 
     errorContext.error.message = (const char *)messageBuffer;
 

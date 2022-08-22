@@ -610,9 +610,6 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Check that the timeline matches the primary
-        if (dbPgControl(this).timeline != targetTimeline)
-            THROW_FMT(DbMismatchError, "standby is on timeline %u but expected %u", dbPgControl(this).timeline, targetTimeline);
 
         // Standby checkpoint before the backup started must be <= the target LSN. If not, it indicates that the standby was ahead
         // of the primary and cannot be following it.
@@ -727,6 +724,13 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
                     strZ(checkpointLsn));
             }
         }
+
+        // Reload pg_control in case timeline was updated by the checkpoint
+        this->pub.pgControl = pgControlFromFile(this->storage);
+
+        // Check that the timeline matches the primary
+        if (dbPgControl(this).timeline != targetTimeline)
+            THROW_FMT(DbMismatchError, "standby is on timeline %u but expected %u", dbPgControl(this).timeline, targetTimeline);
     }
     MEM_CONTEXT_TEMP_END();
 

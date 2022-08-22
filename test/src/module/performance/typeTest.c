@@ -93,17 +93,17 @@ storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel 
     return result;
 }
 
-static bool
-storageTestManifestNewBuildInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storageTestManifestNewBuildList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
     THIS(StorageTestManifestNewBuild);
     (void)path; (void)level; (void)param;
 
+    StorageList *const result = storageLstNew(storageInfoLevelDetail);
+
     MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-        StorageInfo result =
+        StorageInfo info =
         {
             .level = storageInfoLevelDetail,
             .exists = true,
@@ -117,25 +117,25 @@ storageTestManifestNewBuildInfoList(
 
         if (strEq(path, STRDEF("/pg")))
         {
-            result.name = STRDEF("base");
-            callback(callbackData, &result);
+            info.name = STRDEF("base");
+            storageLstAdd(result, &info);
         }
         else if (strEq(path, STRDEF("/pg/base")))
         {
-            result.name = STRDEF("1000000000");
-            callback(callbackData, &result);
+            info.name = STRDEF("1000000000");
+            storageLstAdd(result, &info);
         }
         else if (strEq(path, STRDEF("/pg/base/1000000000")))
         {
-            result.type = storageTypeFile;
-            result.size = 8192;
-            result.mode = 0600;
-            result.timeModified = 1595627966;
+            info.type = storageTypeFile;
+            info.size = 8192;
+            info.mode = 0600;
+            info.timeModified = 1595627966;
 
             for (unsigned int fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
             {
-                result.name = strNewFmt("%u", 1000000000 + fileIdx);
-                callback(callbackData, &result);
+                info.name = strNewFmt("%u", 1000000000 + fileIdx);
+                storageLstAdd(result, &info);
                 MEM_CONTEXT_TEMP_RESET(10000);
             }
         }
@@ -144,7 +144,7 @@ storageTestManifestNewBuildInfoList(
     }
     MEM_CONTEXT_TEMP_END();
 
-    return true;
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -255,7 +255,7 @@ testRun(void)
         };
 
         driver.interface.info = storageTestManifestNewBuildInfo;
-        driver.interface.infoList = storageTestManifestNewBuildInfoList;
+        driver.interface.list = storageTestManifestNewBuildList;
 
         const Storage *const storagePg = storageNew(
             strIdFromZ("test"), STRDEF("/pg"), 0, 0, false, NULL, &driver, driver.interface);

@@ -87,40 +87,6 @@ Test data for backup.info
     "\"option-hardlink\":false,\"option-online\":true}\n"
 
 /***********************************************************************************************************************************
-Test restores to be sure they match the manifest
-***********************************************************************************************************************************/
-static void
-testRestoreCompare(const Storage *storage, const String *pgPath, const Manifest *manifest, const char *compare)
-{
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STORAGE, storage);
-        FUNCTION_HARNESS_PARAM(STRING, pgPath);
-        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
-        FUNCTION_HARNESS_PARAM(STRINGZ, compare);
-    FUNCTION_HARNESS_END();
-
-    // Get the pg-path as a string
-    HarnessStorageInfoListCallbackData callbackData =
-    {
-        .content = strNew(),
-        .modeOmit = true,
-        .modePath = 0700,
-        .modeFile = 0600,
-        .userOmit = true,
-        .groupOmit = true,
-    };
-
-    TEST_RESULT_VOID(
-        storageInfoListP(storage, pgPath, hrnStorageInfoListCallback, &callbackData, .recurse = true, .sortOrder = sortOrderAsc),
-        "pg path info list for restore compare");
-
-    // Compare
-    TEST_RESULT_STR_Z(callbackData.content, compare, "compare result manifest");
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Build a simple manifest for testing
 ***********************************************************************************************************************************/
 static Manifest *
@@ -1633,17 +1599,32 @@ testRun(void)
             "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("recovery target immediate");
+        TEST_TITLE("recovery target immediate, pg < 12");
 
         argList = strLstDup(argBaseList);
         hrnCfgArgRawZ(argList, cfgOptType, "immediate");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_94, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_11, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
             "recovery_target = 'immediate'\n",
+            "check recovery options");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("recovery target immediate, pg >= 12");
+
+        argList = strLstDup(argBaseList);
+        hrnCfgArgRawZ(argList, cfgOptType, "immediate");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_12, restoreLabel),
+            RECOVERY_SETTING_HEADER
+            "restore_command = 'my_restore_command'\n"
+            "recovery_target = 'immediate'\n"
+            "recovery_target_timeline = 'current'\n",
             "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2132,12 +2113,13 @@ testRun(void)
         // Remove recovery.conf before file comparison since it will have a new timestamp.  Make sure it existed, though.
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_RECOVERYCONF, .errorOnMissing = true);
 
-        testRestoreCompare(
-            storagePg(), NULL, manifest,
-            ". {path}\n"
-            "PG_VERSION {file, s=4, t=1482182860}\n"
-            "global {path}\n"
-            "pg_tblspc {path}\n");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "./\n"
+            "PG_VERSION {s=4, t=1482182860}\n"
+            "global/\n"
+            "pg_tblspc/\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with delta force");
@@ -2309,24 +2291,26 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
             "P00   INFO: restore size = 34B, file total = 6");
 
-        testRestoreCompare(
-            storagePg(), NULL, manifest,
-            ". {path}\n"
-            "PG_VERSION {file, s=4, t=1482182860}\n"
-            "global {path}\n"
-            "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
-            "postgresql.auto.conf {file, s=15, t=1482182861}\n"
-            "postgresql.conf {file, s=10, t=1482182860}\n"
-            "size-mismatch {file, s=1, t=1482182861}\n"
-            "tablespace_map {file, s=0, t=1482182860}\n");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "./\n"
+            "PG_VERSION {s=4, t=1482182860}\n"
+            "global/\n"
+            "pg_tblspc/\n"
+            "pg_tblspc/1> {d=" TEST_PATH "/ts/1}\n"
+            "postgresql.auto.conf {s=15, t=1482182861}\n"
+            "postgresql.conf {s=10, t=1482182860}\n"
+            "size-mismatch {s=1, t=1482182861}\n"
+            "tablespace_map {s=0, t=1482182860}\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
-        testRestoreCompare(
-            storagePg(), STRDEF("pg_tblspc/1"), manifest,
-            ". {link, d=" TEST_PATH "/ts/1}\n"
-            "16384 {path}\n"
-            "16384/PG_VERSION {file, s=4, t=1482182860}\n"
-            "PG_9.0_201008051 {path}\n");
+        TEST_STORAGE_LIST(
+            storagePg(), "pg_tblspc/1",
+            ".> {d=" TEST_PATH "/ts/1}\n"
+            "16384/\n"
+            "16384/PG_VERSION {s=4, t=1482182860}\n"
+            "PG_9.0_201008051/\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was not restored because delta force relies on time and size which were the same in the manifest and on disk
         TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, "BOG\n", .comment = "check PG_VERSION was not restored");
@@ -2379,24 +2363,26 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
             "P00   INFO: restore size = [SIZE], file total = 6");
 
-        testRestoreCompare(
-            storagePg(), NULL, manifest,
-            ". {path}\n"
-            "PG_VERSION {file, s=4, t=1482182860}\n"
-            "global {path}\n"
-            "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
-            "postgresql.auto.conf {file, s=15, t=1482182861}\n"
-            "postgresql.conf {file, s=10, t=1482182860}\n"
-            "size-mismatch {file, s=1, t=1482182861}\n"
-            "tablespace_map {file, s=0, t=1482182860}\n");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "./\n"
+            "PG_VERSION {s=4, t=1482182860}\n"
+            "global/\n"
+            "pg_tblspc/\n"
+            "pg_tblspc/1> {d=" TEST_PATH "/ts/1}\n"
+            "postgresql.auto.conf {s=15, t=1482182861}\n"
+            "postgresql.conf {s=10, t=1482182860}\n"
+            "size-mismatch {s=1, t=1482182861}\n"
+            "tablespace_map {s=0, t=1482182860}\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
-        testRestoreCompare(
-            storagePg(), STRDEF("pg_tblspc/1"), manifest,
-            ". {link, d=" TEST_PATH "/ts/1}\n"
-            "16384 {path}\n"
-            "16384/PG_VERSION {file, s=4, t=1482182860}\n"
-            "PG_9.0_201008051 {path}\n");
+        TEST_STORAGE_LIST(
+            storagePg(), "pg_tblspc/1",
+            ".> {d=" TEST_PATH "/ts/1}\n"
+            "16384/\n"
+            "16384/PG_VERSION {s=4, t=1482182860}\n"
+            "PG_9.0_201008051/\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was restored by the force option
         TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_90_STR "\n", .comment = "check PG_VERSION was restored");
@@ -2844,50 +2830,53 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
             "P00   INFO: restore size = [SIZE], file total = 21");
 
-        testRestoreCompare(
-            storagePg(), NULL, manifest,
-            ". {path}\n"
-            "PG_VERSION {file, s=4, t=1482182860}\n"
-            "base {path}\n"
-            "base/1 {path}\n"
-            "base/1/10 {file, s=8192, t=1482182860}\n"
-            "base/1/2 {file, s=8192, t=1482182860}\n"
-            "base/1/20 {file, s=1, t=1482182860}\n"
-            "base/1/21 {file, s=1, t=1482182860}\n"
-            "base/1/30 {file, s=1, t=1482182860}\n"
-            "base/1/31 {file, s=1, t=1482182860}\n"
-            "base/1/PG_VERSION {file, s=4, t=1482182860}\n"
-            "base/16384 {path}\n"
-            "base/16384/16385 {file, s=16384, t=1482182860}\n"
-            "base/16384/PG_VERSION {file, s=4, t=1482182860}\n"
-            "base/32768 {path}\n"
-            "base/32768/32769 {file, s=32768, t=1482182860}\n"
-            "base/32768/PG_VERSION {file, s=4, t=1482182860}\n"
-            "global {path}\n"
-            "global/888 {file, s=0, t=1482182860}\n"
-            "global/999 {file, s=0, t=1482182860}\n"
-            "global/pg_control {file, s=8192, t=1482182860}\n"
-            "pg_hba.conf {link, d=../config/pg_hba.conf}\n"
-            "pg_tblspc {path}\n"
-            "pg_tblspc/1 {link, d=" TEST_PATH "/ts/1}\n"
-            "pg_wal {link, d=../wal}\n"
-            "pg_xact {link, d=../xact}\n"
-            "postgresql.conf {link, d=../config/postgresql.conf}\n"
-            "xxxxx {file, s=5, t=1482182860}\n"
-            "yyy {file, s=3, t=1482182860}\n"
-            "zero-length {file, s=0, t=1482182866}\n"
-            "zz {file, s=2, t=1482182860}\n");
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "./\n"
+            "PG_VERSION {s=4, t=1482182860}\n"
+            "base/\n"
+            "base/1/\n"
+            "base/1/10 {s=8192, t=1482182860}\n"
+            "base/1/2 {s=8192, t=1482182860}\n"
+            "base/1/20 {s=1, t=1482182860}\n"
+            "base/1/21 {s=1, t=1482182860}\n"
+            "base/1/30 {s=1, t=1482182860}\n"
+            "base/1/31 {s=1, t=1482182860}\n"
+            "base/1/PG_VERSION {s=4, t=1482182860}\n"
+            "base/16384/\n"
+            "base/16384/16385 {s=16384, t=1482182860}\n"
+            "base/16384/PG_VERSION {s=4, t=1482182860}\n"
+            "base/32768/\n"
+            "base/32768/32769 {s=32768, t=1482182860}\n"
+            "base/32768/PG_VERSION {s=4, t=1482182860}\n"
+            "global/\n"
+            "global/888 {s=0, t=1482182860}\n"
+            "global/999 {s=0, t=1482182860}\n"
+            "global/pg_control {s=8192, t=1482182860}\n"
+            "pg_hba.conf> {d=../config/pg_hba.conf}\n"
+            "pg_tblspc/\n"
+            "pg_tblspc/1> {d=" TEST_PATH "/ts/1}\n"
+            "pg_wal> {d=../wal}\n"
+            "pg_xact> {d=../xact}\n"
+            "postgresql.conf> {d=../config/postgresql.conf}\n"
+            "xxxxx {s=5, t=1482182860}\n"
+            "yyy {s=3, t=1482182860}\n"
+            "zero-length {s=0, t=1482182866}\n"
+            "zz {s=2, t=1482182860}\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
-        testRestoreCompare(
-            storagePg(), STRDEF("pg_tblspc/1"), manifest,
-            ". {link, d=" TEST_PATH "/ts/1}\n"
-            "16384 {path}\n"
-            "16384/PG_VERSION {file, s=4, t=1482182860}\n"
-            "PG_10_201707211 {path}\n");
+        TEST_STORAGE_LIST(
+            storagePg(), "pg_tblspc/1",
+            ".> {d=" TEST_PATH "/ts/1}\n"
+            "16384/\n"
+            "16384/PG_VERSION {s=4, t=1482182860}\n"
+            "PG_10_201707211/\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
-        testRestoreCompare(
-            storagePg(), STRDEF("../wal"), manifest,
-            ". {path}\n");
+        TEST_STORAGE_LIST(
+            storagePg(), "../wal",
+            "./\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental delta selective restore");

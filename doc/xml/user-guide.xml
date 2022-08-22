@@ -159,7 +159,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">minio/minio:RELEASE.2022-01-28T02-28-16Z</variable>    <!-- Minio docker image -->
+        <variable key="s3-image">minio/minio:RELEASE.2022-07-30T05-21-40Z</variable>    <!-- Minio docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -396,8 +396,9 @@
         # Set locale
         RUN echo en_US.UTF-8 UTF-8 > /etc/locale.conf
 
-        # Add path to PostgreSQL
+        # Add path to PostgreSQL and package
         ENV PATH=/usr/pgsql-{[pg-version]}/bin:$PATH
+        ENV PKG_CONFIG_PATH=/usr/pgsql-{[pg-version]}/lib/pkgconfig:$PKG_CONFIG_PATH
 
         CMD ["/usr/sbin/init"]
     </host-define>
@@ -454,7 +455,7 @@
                     echo 'ExecStart=/usr/bin/pgbackrest server' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'ExecStartPost=/bin/sleep 3' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'ExecStartPost=/bin/bash -c "[ ! -z $MAINPID ]"' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
-                    echo 'ExecReload=kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'ExecReload=/bin/kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '[Install]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'WantedBy=multi-user.target' | tee -a /etc/systemd/system/pgbackrest.service
@@ -2529,6 +2530,8 @@
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
+
+            <p><postgres/> configuration may be found in the <link section="/quickstart/configure-archiving">Configure Archiving</link> section.</p>
 
             <p>Commands are run the same as on a single host configuration except that some commands such as <cmd>backup</cmd> and <cmd>expire</cmd> are run from the <host>repository</host> host instead of the <host>database</host> host.</p>
 

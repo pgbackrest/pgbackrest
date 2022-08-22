@@ -430,8 +430,8 @@ logPre(LogLevel logLevel, unsigned int processId, const char *fileName, const ch
     // Add debug info
     if (logLevel >= logLevelDebug)
     {
-        // Adding padding for debug and trace levels
-        for (unsigned int paddingIdx = 0; paddingIdx < ((logLevel - logLevelDebug + 1) * 4); paddingIdx++)
+        // Adding padding for debug and trace levels. Cast to handle compilers (e.g. MSVC) that coerce to signed after subtraction.
+        for (unsigned int paddingIdx = 0; paddingIdx < (unsigned int)((logLevel - logLevelDebug + 1) * 4); paddingIdx++)
         {
             logBuffer[result.bufferPos++] = ' ';
             result.indentSize++;

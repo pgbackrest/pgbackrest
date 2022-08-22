@@ -17,6 +17,7 @@ typedef struct Storage Storage;
 #include "common/time.h"
 #include "common/type/param.h"
 #include "storage/info.h"
+#include "storage/iterator.h"
 #include "storage/read.h"
 #include "storage/storage.intern.h"
 #include "storage/write.h"
@@ -94,24 +95,22 @@ typedef struct StorageInfoParam
 
 StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
-// Info for all files/paths in a path
-typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *info);
-
-typedef struct StorageInfoListParam
+// Iterator for all files/links/paths in a path which returns different info based on the value of the level parameter
+typedef struct StorageNewItrParam
 {
     VAR_PARAM_HEADER;
     StorageInfoLevel level;
     bool errorOnMissing;
+    bool nullOnMissing;
     bool recurse;
     SortOrder sortOrder;
     const String *expression;
-} StorageInfoListParam;
+} StorageNewItrParam;
 
-#define storageInfoListP(this, fileExp, callback, callbackData, ...)                                                               \
-    storageInfoList(this, fileExp, callback, callbackData, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageNewItrP(this, fileExp, ...)                                                                                         \
+    storageNewItr(this, fileExp, (StorageNewItrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-bool storageInfoList(
-    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param);
+StorageIterator *storageNewItr(const Storage *this, const String *pathExp, StorageNewItrParam param);
 
 // Get a list of files from a directory
 typedef struct StorageListParam

@@ -1053,6 +1053,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2009-10-12T17:50:30.000Z</LastModified>"
@@ -1063,22 +1064,15 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                HarnessStorageInfoListCallbackData callbackData =
-                {
-                    .content = strNew(),
-                };
-
                 TEST_ERROR(
-                    storageInfoListP(s3, STRDEF("/"), hrnStorageInfoListCallback, NULL, .errorOnMissing = true),
-                    AssertError, "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
+                    storageNewItrP(s3, STRDEF("/"), .errorOnMissing = true), AssertError,
+                    "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
-                TEST_RESULT_VOID(
-                    storageInfoListP(s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData), "list");
-                TEST_RESULT_STR_Z(
-                    callbackData.content,
-                    "test_path {path}\n"
-                    "test_file {file, s=787, t=1255369830}\n",
-                    "check");
+                TEST_STORAGE_LIST(
+                    s3, "/path/to",
+                    "test_file {s=787, t=1255369830}\n"
+                    "test_path/\n",
+                    .level = storageInfoLevelBasic, .noRecurse = true);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list exists level");
@@ -1089,6 +1083,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>test1.txt</Key>"
                         "    </Contents>"
@@ -1097,16 +1092,11 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                callbackData.content = strNew();
-
-                TEST_RESULT_VOID(
-                    storageInfoListP(s3, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
-                    "list");
-                TEST_RESULT_STR_Z(
-                    callbackData.content,
-                    "path1 {}\n"
-                    "test1.txt {}\n",
-                    "check");
+                TEST_STORAGE_LIST(
+                    s3, "/",
+                    "path1/\n"
+                    "test1.txt\n",
+                    .noRecurse = true);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list a file in root with expression");
@@ -1117,22 +1107,16 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>test1.txt</Key>"
                         "    </Contents>"
                         "</ListBucketResult>");
 
-                callbackData.content = strNew();
-
-                TEST_RESULT_VOID(
-                    storageInfoListP(
-                        s3, STRDEF("/"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test.*$"),
-                        .level = storageInfoLevelExists),
-                    "list");
-                TEST_RESULT_STR_Z(
-                    callbackData.content,
-                    "test1.txt {}\n",
-                    "check");
+                TEST_STORAGE_LIST(
+                    s3, "/",
+                    "test1.txt\n",
+                    .noRecurse = true, .expression = "^test.*$");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list files with continuation");
@@ -1143,6 +1127,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>true</IsTruncated>"
                         "    <NextContinuationToken>1ueGcxLPRx1Tr/XYExHnhbYLgveDs2J/wm36Hy4vbOwM=</NextContinuationToken>"
                         "    <Contents>"
                         "        <Key>path/to/test1.txt</Key>"
@@ -1164,6 +1149,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/to/test3.txt</Key>"
                         "    </Contents>"
@@ -1172,20 +1158,14 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                callbackData.content = strNew();
-
-                TEST_RESULT_VOID(
-                    storageInfoListP(
-                        s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .level = storageInfoLevelExists),
-                    "list");
-                TEST_RESULT_STR_Z(
-                    callbackData.content,
-                    "path1 {}\n"
-                    "test1.txt {}\n"
-                    "test2.txt {}\n"
-                    "path2 {}\n"
-                    "test3.txt {}\n",
-                    "check");
+                TEST_STORAGE_LIST(
+                    s3, "/path/to",
+                    "path1/\n"
+                    "path2/\n"
+                    "test1.txt\n"
+                    "test2.txt\n"
+                    "test3.txt\n",
+                    .noRecurse = true);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list files with expression");
@@ -1196,6 +1176,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/to/test1.txt</Key>"
                         "    </Contents>"
@@ -1213,19 +1194,12 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                callbackData.content = strNew();
-
-                TEST_RESULT_VOID(
-                    storageInfoListP(
-                        s3, STRDEF("/path/to"), hrnStorageInfoListCallback, &callbackData, .expression = STRDEF("^test(1|3)"),
-                        .level = storageInfoLevelExists),
-                    "list");
-                TEST_RESULT_STR_Z(
-                    callbackData.content,
-                    "test1.path {}\n"
-                    "test1.txt {}\n"
-                    "test3.txt {}\n",
-                    "check");
+                TEST_STORAGE_LIST(
+                    s3, "/path/to",
+                    "test1.path\n"
+                    "test1.txt\n"
+                    "test3.txt\n",
+                    .level = storageInfoLevelExists, .noRecurse = true, .expression = "^test(1|3)");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to path-style URIs");
@@ -1263,6 +1237,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>test1.txt</Key>"
                         "    </Contents>"
@@ -1293,6 +1268,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "</ListBucketResult>");
 
                 TEST_RESULT_VOID(storagePathRemoveP(s3, STRDEF("/path"), .recurse = true), "remove");
@@ -1306,6 +1282,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>true</IsTruncated>"
                         "    <NextContinuationToken>continue</NextContinuationToken>"
                         "   <CommonPrefixes>"
                         "       <Prefix>path/to/test3/</Prefix>"
@@ -1321,6 +1298,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/to/test3.txt</Key>"
                         "    </Contents>"
@@ -1359,6 +1337,7 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Contents>"
                         "        <Key>path/sample.txt</Key>"
                         "    </Contents>"

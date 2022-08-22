@@ -2264,7 +2264,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                         // If the path ends with a / we'll strip it off (unless the value is just /)
                                         if (strEndsWithZ(value, "/") && strSize(value) != 1)
                                         {
-                                            strTrunc(value, (int)strSize(value) - 1);
+                                            strTruncIdx(value, (int)strSize(value) - 1);
 
                                             // Reset string value since it was modified
                                             MEM_CONTEXT_BEGIN(config->memContext)

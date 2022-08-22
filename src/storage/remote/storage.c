@@ -90,7 +90,7 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
     data->userIdLast = info->userId;
     data->groupIdLast = info->groupId;
 
-    if (!strEq(info->user, data->user) && info->user != NULL)                                                       // {vm_covered}
+    if (info->user != NULL && !strEq(info->user, data->user))                                                       // {vm_covered}
     {
         strFree(data->user);
 
@@ -101,7 +101,7 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
         MEM_CONTEXT_END();
     }
 
-    if (!strEq(info->group, data->group) && info->group != NULL)                                                    // {vm_covered}
+    if (info->group != NULL && !strEq(info->group, data->group))                                                    // {vm_covered}
     {
         strFree(data->group);
 
@@ -168,10 +168,8 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 }
 
 /**********************************************************************************************************************************/
-static bool
-storageRemoteInfoList(
-    THIS_VOID, const String *path, StorageInfoLevel level, StorageInfoListCallback callback, void *callbackData,
-    StorageInterfaceInfoListParam param)
+static StorageList *
+storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
     THIS(StorageRemote);
 
@@ -179,20 +177,17 @@ storageRemoteInfoList(
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(FUNCTIONP, callback);
-        FUNCTION_LOG_PARAM_P(VOID, callbackData);
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(callback != NULL);
 
-    bool result = false;
+    StorageList *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_INFO_LIST);
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LIST);
         PackWrite *const commandParam = protocolCommandParam(command);
 
         pckWriteStrP(commandParam, path);
@@ -203,6 +198,7 @@ storageRemoteInfoList(
 
         // Read list
         StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
+        result = storageLstNew(level);
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
@@ -214,7 +210,7 @@ storageRemoteInfoList(
                 StorageInfo info = {.exists = true, .level = level, .name = pckReadStrP(read)};
 
                 storageRemoteInfoGet(&parseData, read, &info);
-                callback(callbackData, &info);
+                storageLstAdd(result, &info);
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
                 MEM_CONTEXT_TEMP_RESET(1000);
@@ -223,15 +219,17 @@ storageRemoteInfoList(
                 pckReadNext(read);
             }
 
-            result = pckReadBoolP(read);
+            if (!pckReadBoolP(read))
+                result = NULL;
         }
         MEM_CONTEXT_TEMP_END();
 
         protocolClientDataEndGet(this->client);
+        storageLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -422,7 +420,7 @@ storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam p
 static const StorageInterface storageInterfaceRemote =
 {
     .info = storageRemoteInfo,
-    .infoList = storageRemoteInfoList,
+    .list = storageRemoteList,
     .newRead = storageRemoteNewRead,
     .newWrite = storageRemoteNewWrite,
     .pathCreate = storageRemotePathCreate,

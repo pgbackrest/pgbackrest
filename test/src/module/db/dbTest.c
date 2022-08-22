@@ -588,6 +588,14 @@ testRun(void)
             HRNPQ_MACRO_CHECKPOINT(2),
             HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
 
+            // Fail on timeline mismatch
+            HRNPQ_MACRO_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
+            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
+            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
+            HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
+            HRNPQ_MACRO_CHECKPOINT(2),
+            HRNPQ_MACRO_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0),
+
             // Close standby
             HRNPQ_MACRO_CLOSE(2),
 
@@ -611,8 +619,6 @@ testRun(void)
         TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000050000000500000005", "check wal segment check");
 
         TEST_ERROR(
-            dbReplayWait(db.standby, STRDEF("5/5"), 77, 1000), DbMismatchError, "standby is on timeline 5 but expected 77");
-        TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("4/4"), 5, 1000), DbMismatchError, "standby checkpoint '5/5' is ahead of target '4/4'");
 
         TEST_ERROR(
@@ -631,6 +637,12 @@ testRun(void)
             "timeout before standby checkpoint lsn reached 5/5 - only reached 5/4");
 
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 1000), "sync standby");
+
+        // Update timeline to demonstrate that it is reloaded in dbReplayWait()
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_93, .timeline = 6, .checkpoint = pgLsnFromStr(STRDEF("5/5")));
+
+        TEST_ERROR(
+            dbReplayWait(db.standby, STRDEF("5/5"), 77, 1000), DbMismatchError, "standby is on timeline 6 but expected 77");
 
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
 
