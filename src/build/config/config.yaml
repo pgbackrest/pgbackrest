@@ -2218,6 +2218,20 @@ option:
       repo?-azure-ca-path: {}
       repo?-s3-ca-path: {}
 
+  repo-storage-chunk-size:
+    section: global
+    group: repo
+    type: size
+    required: false
+    allow-range: [64KiB, 1TiB]
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
+
   repo-storage-host:
     section: global
     group: repo

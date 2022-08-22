@@ -952,6 +952,16 @@
                         <example>/etc/pki/tls/certs</example>
                     </config-key>
 
+                    <config-key id="repo-storage-chunk-size" name="Repository Storage Upload Chunk Size">
+                        <summary>Repository storage upload chunk size.</summary>
+
+                        <text>
+                            <p>!!! WE DO NOT UPLOAD ALL AT ONCE TO SAVE MEMORY. NOTE THAT ONLY DEFAULT IS SAFE -- 5MiB was picked because it is min for S3 but others might allow lower values. DOCUMENT DIFFERENT DEFAULTS.</p>
+                        </text>
+
+                        <example>16MiB</example>
+                    </config-key>
+
                     <config-key id="repo-storage-host" name="Repository Storage Host">
                         <summary>Repository storage host.</summary>
 

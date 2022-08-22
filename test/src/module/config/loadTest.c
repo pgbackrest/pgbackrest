@@ -532,6 +532,61 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: 'compress' and 'compress-type' options should not both be set\n"
             "            HINT: 'compress-type' is preferred and 'compress' is deprecated.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("S3 default chunk size");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 1, "bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "endpoint");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3KeyType, 1, "auto");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageChunkSize), 5 * 1024 * 1024, "default chunk size");
+        TEST_RESULT_UINT(cfgOptionSource(cfgOptRepoStorageChunkSize), cfgSourceDefault, "chunk size source is default");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("S3 custom chunk size");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 1, "bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "endpoint");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3KeyType, 1, "auto");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoStorageChunkSize, 1, "64KiB");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageChunkSize), 64 * 1024, "chunk size set");
+        TEST_RESULT_UINT(cfgOptionSource(cfgOptRepoStorageChunkSize), cfgSourceParam, "chunk size source is param");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Azure default chunk size");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoAzureAccount, 1, "account");
+        hrnCfgEnvKeyRawZ(cfgOptRepoAzureKey, 1, "mykey");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "azure");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoAzureContainer, 1, "container");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageChunkSize), 4 * 1024 * 1024, "default chunk size");
+        TEST_RESULT_UINT(cfgOptionSource(cfgOptRepoStorageChunkSize), cfgSourceDefault, "chunk size source is default");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureAccount, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureKey, 1);
     }
 
     // *****************************************************************************************************************************

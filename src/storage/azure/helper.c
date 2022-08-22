@@ -79,8 +79,8 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
             result = storageAzureNew(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx), keyType, key,
-                STORAGE_AZURE_BLOCKSIZE_MIN, endpoint, uriStyle, port, ioTimeoutMs(), cfgOptionIdxBool(cfgOptRepoStorageVerifyTls,
-                repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageChunkSize, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(),
+                cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();
