@@ -952,7 +952,27 @@
                         <example>/etc/pki/tls/certs</example>
                     </config-key>
 
-                    <config-key id="repo-storage-chunk-size" name="Repository Storage Upload Chunk Size">
+                    <config-key id="repo-storage-host" name="Repository Storage Host">
+                        <summary>Repository storage host.</summary>
+
+                        <text>
+                            <p>Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is typically used for testing.</p>
+                        </text>
+
+                        <example>127.0.0.1</example>
+                    </config-key>
+
+                    <config-key id="repo-storage-port" name="Repository Storage Port">
+                        <summary>Repository storage port.</summary>
+
+                        <text>
+                            <p>Port to use when connecting to the storage (e.g. S3, Azure) endpoint (or host if specified).</p>
+                        </text>
+
+                        <example>9000</example>
+                    </config-key>
+
+                    <config-key id="repo-storage-upload-chunk-size" name="Repository Storage Upload Chunk Size">
                         <summary>Repository storage upload chunk size.</summary>
 
                         <text>
@@ -972,26 +992,6 @@
                         </text>
 
                         <example>16MiB</example>
-                    </config-key>
-
-                    <config-key id="repo-storage-host" name="Repository Storage Host">
-                        <summary>Repository storage host.</summary>
-
-                        <text>
-                            <p>Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is typically used for testing.</p>
-                        </text>
-
-                        <example>127.0.0.1</example>
-                    </config-key>
-
-                    <config-key id="repo-storage-port" name="Repository Storage Port">
-                        <summary>Repository storage port.</summary>
-
-                        <text>
-                            <p>Port to use when connecting to the storage (e.g. S3, Azure) endpoint (or host if specified).</p>
-                        </text>
-
-                        <example>9000</example>
                     </config-key>
 
                     <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">

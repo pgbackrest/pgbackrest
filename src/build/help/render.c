@@ -76,6 +76,8 @@ bldHlpRenderXmlNode(const xmlNodePtr xml)
             }
             else if (strEq(name, STRDEF("postgres")))
                 strCatZ(result, "PostgreSQL");
+            else if (strEq(name, STRDEF("quote")))
+                strCatZ(result, "\"");
             else if (
                 strEq(name, STRDEF("id")) || strEq(name, STRDEF("br-option")) || strEq(name, STRDEF("cmd")) ||
                 strEq(name, STRDEF("link")) || strEq(name, STRDEF("setting")) || strEq(name, STRDEF("pg-setting")) ||
