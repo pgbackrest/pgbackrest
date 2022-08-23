@@ -63,6 +63,7 @@ cmdAnnotate(void)
                 {
                     // Backup label found in backup.info
                     backupTotalProcessed++;
+
                     LOG_INFO_FMT(
                         "backup set '%s' to annotate found in %s",
                         strZ(backupLabel), cfgOptionGroupName(cfgOptGrpRepo, repoIdx));

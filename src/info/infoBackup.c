@@ -510,8 +510,8 @@ infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const ba
                 kvPut(annotationKv, newKey, newValue);
         }
 
-        // Clean field if there's no annotation left
-        if(varLstSize(kvKeyList(annotationKv)) == 0)
+        // Clean field if there are no annotations left
+        if (varLstSize(kvKeyList(annotationKv)) == 0)
             infoBackupData->backupAnnotation = NULL;
     }
     MEM_CONTEXT_END();

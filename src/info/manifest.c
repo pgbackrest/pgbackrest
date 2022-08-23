@@ -1583,8 +1583,8 @@ manifestBuildComplete(
                     kvPut(manifestAnnotationKv, key, value);
             }
 
-            // Clean field if there's no annotations to save
-            if(varLstSize(kvKeyList(manifestAnnotationKv)) == 0)
+            // Clean field if there are no annotations to save
+            if (varLstSize(kvKeyList(manifestAnnotationKv)) == 0)
                 this->pub.data.annotation = NULL;
         }
 

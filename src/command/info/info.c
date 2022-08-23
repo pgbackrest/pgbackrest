@@ -973,6 +973,7 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
                 const String *const key = strLstGet(annotationKeyList, keyIdx);
                 const String *const value = varStr(kvGet(annotationKv, VARSTR(key)));
                 ASSERT(value != NULL);
+
                 strCatFmt(annotationStr, "                %s: %s\n", strZ(key), strZ(value));
             }
 
