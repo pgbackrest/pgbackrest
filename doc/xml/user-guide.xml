@@ -1563,32 +1563,35 @@
         </section>
 
         <!-- =================================================================================================================== -->
-        <section id="annotations">
-            <title>Backup annotation(s)</title>
+        <section id="annotate">
+            <title>Backup Annotations</title>
 
-            <p>Users can attach informative key/value pairs to the backup. This option can be used multiple times to attach multiple annotations.</p>
-
+            <p>Users can attach informative key/value pairs to the backup. This option may be used multiple times to attach multiple annotations.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Perform a full backup with annotations</title>
 
                 <execute user="postgres">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-annotation=source="demo backup"
-                        {[dash]}-annotation=key=value {[dash]}-type=full backup</exe-cmd>
+                    <exe-cmd>
+                        {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-annotation=source="demo backup"
+                        {[dash]}-annotation=key=value {[dash]}-type=full backup
+                    </exe-cmd>
                 </execute>
             </execute-list>
 
-            <p>Annotations are output by the <cmd>info</cmd> command text output when a backup is specified with <br-option>--set</br-option>.</p>
+            <p>Annotations are output by the <cmd>info</cmd> command when a backup is specified with <br-option>--set</br-option>.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Get info for the {[postgres-cluster-demo]} cluster</title>
 
-                <execute user="postgres" show="n" variable-key="backup-last">
+                <execute user="postgres" show="n" variable-key="backup-annotate-last">
                     <exe-cmd>{[cmd-backup-last]}</exe-cmd>
                 </execute>
 
                 <execute user="postgres" filter="n" output="y">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-last]} info</exe-cmd>
+                    <exe-cmd>
+                        {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]} info
+                    </exe-cmd>
                     <exe-highlight>annotation</exe-highlight>
                 </execute>
             </execute-list>
@@ -1599,12 +1602,16 @@
                 <title>Change backup annotations</title>
 
                 <execute user="postgres">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-last]}
-                        {[dash]}-annotation=key= {[dash]}-annotation=new_key=new_value annotate</exe-cmd>
+                    <exe-cmd>
+                        {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]}
+                        {[dash]}-annotation=key= {[dash]}-annotation=new_key=new_value annotate
+                    </exe-cmd>
                 </execute>
 
                 <execute user="postgres" filter="n" output="y">
-                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-last]} info</exe-cmd>
+                    <exe-cmd>
+                        {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]} info
+                    </exe-cmd>
                     <exe-highlight>annotation</exe-highlight>
                 </execute>
             </execute-list>
