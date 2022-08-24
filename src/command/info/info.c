@@ -34,6 +34,7 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_ANNOTATION_VAR,                    "annotation");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_VAR,                         "error");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_LIST_VAR,                    "error-list");
@@ -468,6 +469,10 @@ backupListAdd(
         kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
         kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
     }
+
+    // Add annotations to json output or --set text
+    if ((outputJson || backupLabelMatch) && backupData->backupAnnotation != NULL)
+        kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, backupData->backupAnnotation);
 
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
     if (backupLabelMatch)
@@ -954,6 +959,25 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             // Else output a general message
             else
                 strCatZ(resultStr, "            error(s) detected during backup\n");
+        }
+
+        // Annotations metadata
+        if (kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR) != NULL)
+        {
+            const KeyValue *const annotationKv = varKv(kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR));
+            const StringList *const annotationKeyList = strLstNewVarLst(kvKeyList(annotationKv));
+            String *const annotationStr = strNew();
+
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(annotationKeyList); keyIdx++)
+            {
+                const String *const key = strLstGet(annotationKeyList, keyIdx);
+                const String *const value = varStr(kvGet(annotationKv, VARSTR(key)));
+                ASSERT(value != NULL);
+
+                strCatFmt(annotationStr, "                %s: %s\n", strZ(key), strZ(value));
+            }
+
+            strCatFmt(resultStr, "            annotation(s)\n%s", strZ(annotationStr));
         }
     }
 
