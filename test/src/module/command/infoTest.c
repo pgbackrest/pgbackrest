@@ -1574,6 +1574,45 @@ testRun(void)
             "        repo2: aes-256-cbc\n",
             "text, multi-repo, backup not found");
 
+        hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "["
+                "{"
+                    "\"archive\":[],"
+                    "\"backup\":[],"
+                    "\"cipher\":\"mixed\","
+                    "\"db\":[],"
+                    "\"name\":\"stanza1\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":6,"
+                                "\"message\":\"requested backup not found\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"cipher\":\"aes-256-cbc\","
+                            "\"key\":2,"
+                            "\"status\":{"
+                                "\"code\":6,"
+                                "\"message\":\"requested backup not found\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":6,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"requested backup not found\""
+                    "}"
+                "}"
+            "]",
+            "json, multi-repo, backup not found");
+
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: backup set requested on single repo, with 1 checksum error");
 
@@ -1608,6 +1647,115 @@ testRun(void)
             "                ts12 (12) => /tblspc/ts12\n"
             "            error list: base/16384/17000\n",
             "text - backup set requested");
+
+        hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "["
+                "{"
+                    "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"id\":\"9.4-1\","
+                            "\"max\":\"000000020000000000000003\","
+                            "\"min\":\"000000010000000000000002\""
+                        "},"
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"id\":\"9.5-2\","
+                            "\"max\":\"000000010000000000000005\","
+                            "\"min\":\"000000010000000000000002\""
+                        "}"
+                    "],"
+                    "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000003\","
+                                "\"stop\":null"
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.08dev\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"database-ref\":["
+                                "{\"name\":\"mail\",\"oid\":16456},"
+                                "{\"name\":\"postgres\",\"oid\":12173}"
+                            "],"
+                            "\"error\":true,"
+                            "\"error-list\":[\"base/16384/17000\"],"
+                            "\"info\":{"
+                                "\"delta\":8428,"
+                                "\"repository\":{"
+                                    "\"delta\":346,"
+                                    "\"size\":2369186"
+                                "},"
+                                "\"size\":20162900"
+                            "},"
+                            "\"label\":\"20181119-152138F_20181119-152155I\","
+                            "\"link\":["
+                                "{\"destination\":\"../pg_config/pg_hba.conf\",\"name\":\"pg_hba.conf\"},"
+                                "{\"destination\":\"../pg_stat\",\"name\":\"pg_stat\"}"
+                            "],"
+                            "\"lsn\":{\"start\":\"285/89000028\",\"stop\":\"285/89001F88\"},"
+                            "\"prior\":\"20181119-152138F_20181119-152152D\","
+                            "\"reference\":[\"20181119-152138F\",\"20181119-152138F_20181119-152152D\"],"
+                            "\"tablespace\":["
+                                "{\"destination\":\"/tblspc/ts1\",\"name\":\"ts1\",\"oid\":1},"
+                                "{\"destination\":\"/tblspc/ts12\",\"name\":\"ts12\",\"oid\":12}"
+                            "],"
+                            "\"timestamp\":{"
+                                "\"start\":1542640915,"
+                                "\"stop\":1542640917"
+                            "},"
+                            "\"type\":\"incr\""
+                        "}"
+                    "],"
+                    "\"cipher\":\"none\","
+                    "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"repo-key\":1,"
+                            "\"system-id\":6625592122879095702,"
+                            "\"version\":\"9.4\""
+                        "},"
+                        "{"
+                            "\"id\":2,"
+                            "\"repo-key\":1,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.5\""
+                        "}"
+                    "],"
+                    "\"name\":\"stanza1\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":0,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"ok\""
+                    "}"
+                "}"
+            "]",
+            "json - backup set requested");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: filter by backup type");
@@ -1684,14 +1832,6 @@ testRun(void)
             "                ts12 (12) => /tblspc/ts12\n"
             "            error list: base/16384/17000\n",
             "text - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("option 'set' not valid for json output");
-
-        hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
-        HRN_CFG_LOAD(cfgCmdInfo, argList2);
-
-        TEST_ERROR(strZ(infoRender()), ConfigError, "option 'set' is currently only valid for text output");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup set requested but no links, multiple checksum errors");
