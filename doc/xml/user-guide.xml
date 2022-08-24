@@ -1561,6 +1561,52 @@
 
             <p>While file bundling is generally more efficient, the downside is that it is more difficult to manually retrieve files from the repository. It may not be ideal for deduplicated storage since each full backup will arrange files in the bundles differently. Lastly, file bundles cannot be resumed, so be careful not to set <br-option>repo-bundle-size</br-option> too high.</p>
         </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="annotations">
+            <title>Backup annotation(s)</title>
+
+            <p>Users can attach informative key/value pairs to the backup. This option can be used multiple times to attach multiple annotations.</p>
+
+
+            <execute-list host="{[host-pg1]}">
+                <title>Perform a full backup with annotations</title>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-annotation=source="demo backup" {[dash]}-annotation=key=value {[dash]}-type=full backup</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Annotations are output by the <cmd>info</cmd> command text output when a backup is specified with <br-option>--set</br-option>.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Get info for the {[postgres-cluster-demo]} cluster</title>
+
+                <execute user="postgres" show="n" variable-key="backup-last">
+                    <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+                </execute>
+
+                <execute user="postgres" filter="n" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-last]} info</exe-cmd>
+                    <exe-highlight>annotation</exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>Annotations included with the <cmd>backup</cmd> command can be added, modified, or removed afterwards using the <cmd>annotate</cmd> command.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Change backup annotations</title>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-annotation=key=value {[dash]}-annotation=new_key=new_value annotate</exe-cmd>
+                </execute>
+
+                <execute user="postgres" filter="n" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-last]} info</exe-cmd>
+                    <exe-highlight>annotation</exe-highlight>
+                </execute>
+            </execute-list>
+        </section>
     </section>
 
     <!-- ======================================================================================================================= -->
