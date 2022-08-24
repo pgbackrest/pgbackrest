@@ -487,6 +487,7 @@ typedef enum
     cfgOptRepoStorageCaPath,
     cfgOptRepoStorageHost,
     cfgOptRepoStoragePort,
+    cfgOptRepoStorageUploadChunkSize,
     cfgOptRepoStorageVerifyTls,
     cfgOptRepoType,
     cfgOptResume,
