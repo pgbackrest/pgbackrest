@@ -7704,6 +7704,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                // opt/repo-storage-upload-chunk-size
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                         // opt/repo-storage-upload-chunk-size
         (                                                                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                          // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                        // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                       // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                            // opt/repo-storage-upload-chunk-size
@@ -7739,6 +7740,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                // opt/repo-storage-upload-chunk-size
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                       // opt/repo-storage-upload-chunk-size
         (                                                                                      // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                          // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                        // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                       // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                             // opt/repo-storage-upload-chunk-size
