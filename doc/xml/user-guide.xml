@@ -1582,7 +1582,7 @@
                 </execute>
             </execute-list>
 
-            <p>Annotations are output by the <cmd>info</cmd> command when a backup is specified with <br-option>--set</br-option>.</p>
+            <p>Annotations are output by the <cmd>info</cmd> command text output when a backup is specified with <br-option>--set</br-option> and always appear in the JSON output.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Get info for the {[postgres-cluster-demo]} cluster</title>

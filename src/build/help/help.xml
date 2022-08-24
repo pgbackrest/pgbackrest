@@ -1042,9 +1042,9 @@
                         <summary>Annotate backup with user-defined key/value pairs.</summary>
 
                         <text>
-                            <p>Users can attach informative key/value pairs to the backup. This option can be used multiple times to attach multiple annotations.</p>
+                            <p>Users can attach informative key/value pairs to the backup. This option may be used multiple times to attach multiple annotations.</p>
 
-                            <p>Annotations are output by the <cmd>info</cmd> command text output when a backup is specified with <br-option>--set</br-option> or in the global JSON output.</p>
+                            <p>Annotations are output by the <cmd>info</cmd> command text output when a backup is specified with <br-option>--set</br-option> and always appear in the JSON output.</p>
                         </text>
 
                         <example>source="Sunday backup for website database"</example>
