@@ -16,6 +16,21 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.41dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1709"/>
+                        <github-pull-request id="1724"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adam.berlin"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Backup key/value annotations.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
                     <release-item>
                         <github-issue id="1816"/>
@@ -11397,6 +11412,11 @@
         <contributor id="abubakar.mohammed">
             <contributor-name-display>Abubakar Mohammed</contributor-name-display>
             <contributor-id type="github">abubakarm94</contributor-id>
+        </contributor>
+
+        <contributor id="adam.berlin">
+            <contributor-name-display>Adam Berlin</contributor-name-display>
+            <contributor-id type="github">berlin-ab</contributor-id>
         </contributor>
 
         <contributor id="adam.brusselback">
