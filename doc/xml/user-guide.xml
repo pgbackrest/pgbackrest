@@ -1577,10 +1577,8 @@
                 <title>Perform a full backup with annotations</title>
 
                 <execute user="postgres">
-                    <exe-cmd>
-                        {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-annotation=source="demo backup"
-                        {[dash]}-annotation=key=value {[dash]}-type=full backup
-                    </exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-annotation=source="demo backup"
+                        {[dash]}-annotation=key=value {[dash]}-type=full backup</exe-cmd>
                 </execute>
             </execute-list>
 
@@ -1594,9 +1592,7 @@
                 </execute>
 
                 <execute user="postgres" filter="n" output="y">
-                    <exe-cmd>
-                        {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]} info
-                    </exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]} info</exe-cmd>
                     <exe-highlight>annotation</exe-highlight>
                 </execute>
             </execute-list>
@@ -1607,16 +1603,12 @@
                 <title>Change backup annotations</title>
 
                 <execute user="postgres">
-                    <exe-cmd>
-                        {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]}
-                        {[dash]}-annotation=key= {[dash]}-annotation=new_key=new_value annotate
-                    </exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]}
+                        {[dash]}-annotation=key= {[dash]}-annotation=new_key=new_value annotate</exe-cmd>
                 </execute>
 
                 <execute user="postgres" filter="n" output="y">
-                    <exe-cmd>
-                        {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]} info
-                    </exe-cmd>
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]} info</exe-cmd>
                     <exe-highlight>annotation</exe-highlight>
                 </execute>
             </execute-list>
