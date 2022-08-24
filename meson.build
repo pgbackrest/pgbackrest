@@ -184,3 +184,4 @@ configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 
 subdir('src')
 subdir('test/src')
 subdir('doc/doxygen')
+subdir('test/doc/doxygen')

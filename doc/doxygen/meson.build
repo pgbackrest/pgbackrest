@@ -24,6 +24,7 @@ doxy = find_program('doxygen', required:false)
 if not doxy.found() or not flex.found() or not flex_lib.found()
     message('Be sure to install flex and doxygen if you want to create doxygen documents.')
     run_target('doxygen', command: ['echo', 'You must install flex and doxygen before creating doxygen documents'])
+    doxy_filter = disabler()
     subdir_done()
 endif
 
@@ -83,11 +84,3 @@ doxy_file = configure_file(
 # Generate documentation when the command  "ninja doxygen" is given.
 #############################################################################
 run_target('doxygen', command: [doxy, doxy_file], depends: doxy_filter)
-
-
-# While we're here, lets include the 'doxygen' test suite.
-#    Although convention would place it under a "../test/doc/doxygen" directory,
-#    The tests are closely coupled with running doxygen - both will not run if flex or doxygen are missing and both
-#    need to access the filter executable.  For now, we package them together, but this needs to be reconsidered.
-# TODO: move ./test directory to ../test/doc/doxygen and subdir from the main meson.build instead of here. ???
-subdir('test')
