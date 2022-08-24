@@ -50,7 +50,7 @@ struct|union|enum                      ECHO; if (level == 0) complexData = true;
 ";"                                    ECHO; if (level == 0) complexData = false; trailing = true;
 
   /* Other keywords or identifiers */  /* Eat them up so they don't confused with keywords */
-  [a-zA-Z_$]+[a-zA-Z_$0-9]*            ECHO;
+[a-zA-Z_$]+[a-zA-Z_$0-9]*              ECHO;
 
   /* Quoted string literals. */        /* Pass them through. */
 \"([^\\\"]|\\.)*\"                     ECHO;
@@ -194,10 +194,10 @@ void echoComment(char comment[]) {
     // Echo the comment's body.
     echoCommentBody(comment);
 
-    // If this is a file comment, then append @file <filename> to the comment.
+    // If this is a file comment, then append @file (without the optional file name) to the comment.
     if (lines == 0)
-        printf(" @file %s ", fileName);
+        putstr(" @file ");
 
-    // Finally, echo the comment's end sequence.
+    // Finally, echo the comment end sequence.
     echoCommentEnd(comment);
 }
