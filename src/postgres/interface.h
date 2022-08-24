@@ -61,11 +61,12 @@ Defines for various Postgres paths and files
     STRING_DECLARE(PG_NAME_XLOG_STR);
 
 /***********************************************************************************************************************************
-Define default page size
+Define default page size for each fork
 
 Page size can only be changed at compile time and is not known to be well-tested, so only the default page size is supported.
 ***********************************************************************************************************************************/
-#define PG_PAGE_SIZE_DEFAULT                                        ((unsigned int)(8 * 1024))
+#define POSTGRESQL_PAGE_SIZE                                        ((unsigned int)( 8 * 1024))
+#define GPDB_PAGE_SIZE                                              ((unsigned int)(32 * 1024))
 
 /***********************************************************************************************************************************
 Define default segment size and pages per segment
@@ -73,21 +74,12 @@ Define default segment size and pages per segment
 Segment size can only be changed at compile time and is not known to be well-tested, so only the default segment size is supported.
 ***********************************************************************************************************************************/
 #define PG_SEGMENT_SIZE_DEFAULT                                     ((unsigned int)(1 * 1024 * 1024 * 1024))
-#define PG_SEGMENT_PAGE_DEFAULT                                     (PG_SEGMENT_SIZE_DEFAULT / PG_PAGE_SIZE_DEFAULT)
 
 /***********************************************************************************************************************************
 WAL header size. It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
 something far larger needed but <= the minimum read size on just about any system.
 ***********************************************************************************************************************************/
 #define PG_WAL_HEADER_SIZE                                          ((unsigned int)(512))
-
-/***********************************************************************************************************************************
-Define default wal segment size
-
-Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the default
-WAL segment size is supported for versions below 11.
-***********************************************************************************************************************************/
-#define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
 
 /***********************************************************************************************************************************
 PostgreSQL Control File Info
@@ -143,6 +135,12 @@ String *pgVersionToStr(unsigned int version);
 PgWal pgWalFromFile(const String *walFile, const Storage *storage);
 PgWal pgWalFromBuffer(const Buffer *walBuffer);
 
+// Get default WAL segment size
+unsigned int pgWalSegmentSizeDefault(unsigned int pgVersion);
+
+// Get default page size
+unsigned int pgPageSizeDefault(unsigned int pgVersion);
+
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_9.0_201008051
 String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
 
@@ -165,7 +163,7 @@ StringList *pgLsnRangeToWalSegmentList(
 const String *pgLsnName(unsigned int pgVersion);
 
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
-uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo);
+uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo, unsigned int pageSize);
 
 const String *pgWalName(unsigned int pgVersion);
 

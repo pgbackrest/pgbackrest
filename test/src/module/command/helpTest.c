@@ -200,6 +200,7 @@ testRun(void)
             "  --db-include                     restore only specified databases\n"
             "                                   [current=db1, db2]\n"
             "  --force                          force a restore [default=n]\n"
+            "  --fork                           postgreSQL fork name [default=PostgreSQL]\n"
             "  --link-all                       restore all symlinks [default=n]\n"
             "  --link-map                       modify the destination of a symlink\n"
             "                                   [current=/link1=/dest1, /link2=/dest2]\n"

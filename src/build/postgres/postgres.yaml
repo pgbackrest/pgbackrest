@@ -3,13 +3,16 @@
 # Version interfaces are auto-generated to src/postgres/interface.auto.c.inc.
 #
 # - 'version' contains a list of all supported versions
-# - For a specific version, 'release' marks it as not released (i.e. this should always be false when used)
+# - For a specific version, 'release' marks it as not released (i.e. this should always be false when used),
+# 'fork' contains name of supported fork based on the version
 version:
   - 9.0
   - 9.1
   - 9.2
   - 9.3
   - 9.4
+  - 9.4:
+      fork: GPDB
   - 9.5
   - 9.6
   - 10

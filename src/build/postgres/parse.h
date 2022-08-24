@@ -13,6 +13,7 @@ typedef struct BldPgVersion
 {
     const String *version;                                          // Version
     bool release;                                                   // Is this a released version?
+    StringId fork;                                                  // Supported PostgreSQL fork or PostgreSQL itself
 } BldPgVersion;
 
 typedef struct BldPg

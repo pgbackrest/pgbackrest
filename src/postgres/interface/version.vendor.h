@@ -286,6 +286,25 @@ Types from src/include/catalog/catversion.h
 
 #elif PG_VERSION >= PG_VERSION_94
 
+
+#ifdef FORK_GPDB // GPDB 6
+
+/*
+ * We could use anything we wanted for version numbers, but I recommend
+ * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
+ * YYYYMMDD are the date of the change, and N is the number of the change
+ * on that day.  (Hopefully we'll never commit ten independent sets of
+ * catalog changes on the same day...)
+ *
+ * For Greenplum, use 3 as the first digit, to distinguish PostgreSQL
+ * catalog versions from Greenplum.
+ */
+
+/*                          3yyymmddN */
+#define CATALOG_VERSION_NO  301908232
+
+#else
+
 /*
  * We could use anything we wanted for version numbers, but I recommend
  * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
@@ -296,6 +315,8 @@ Types from src/include/catalog/catversion.h
 
 /*							yyyymmddN */
 #define CATALOG_VERSION_NO	201409291
+
+#endif // FORK_GPDB
 
 #elif PG_VERSION >= PG_VERSION_93
 
@@ -408,8 +429,21 @@ Types from src/include/catalog/pg_control.h
 
 #elif PG_VERSION >= PG_VERSION_94
 
+#ifdef FORK_GPDB // GPDB 6
+
+/*
+ * Version identifier for Greenplum pg_control format:
+ * first four digits is PG version and the last four
+ * digits - Greenplum one.
+ */
+#define PG_CONTROL_VERSION 9420600
+
+#else
+
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	942
+
+#endif // FORK_GPDB
 
 #elif PG_VERSION >= PG_VERSION_93
 
@@ -595,6 +629,44 @@ typedef struct CheckPoint
 	 * it's set to InvalidTransactionId.
 	 */
 	TransactionId oldestActiveXid;
+} CheckPoint;
+
+#elif PG_VERSION >= PG_VERSION_94 && defined(FORK_GPDB) // GPDB 6
+
+/*
+ * Body of CheckPoint XLOG records.  This is declared here because we keep
+ * a copy of the latest one in pg_control for possible disaster recovery.
+ * Changing this struct requires a PG_CONTROL_VERSION bump.
+ */
+typedef struct CheckPoint
+{
+	XLogRecPtr	redo;			/* next RecPtr available when we began to
+								 * create CheckPoint (i.e. REDO start point) */
+	TimeLineID	ThisTimeLineID;	/* current TLI */
+	TimeLineID	PrevTimeLineID;	/* previous TLI, if this record begins a new
+								 * timeline (equals ThisTimeLineID otherwise) */
+	bool		fullPageWrites;	/* current full_page_writes */
+	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
+	TransactionId	nextXid;	/* next free XID */
+	Oid			nextOid;		/* next free OID */
+	Oid			nextRelfilenode;/* next free Relfilenode */
+	MultiXactId	nextMulti;		/* next free MultiXactId */
+	MultiXactOffset	nextMultiOffset;	/* next free MultiXact offset */
+	TransactionId	oldestXid;	/* cluster-wide minimum datfrozenxid */
+	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
+	MultiXactId	oldestMulti;	/* cluster-wide minimum datminmxid */
+	Oid			oldestMultiDB;	/* database with minimum datminmxid */
+	pg_time_t	time;			/* time stamp of checkpoint */
+
+	/*
+	 * Oldest XID still running. This is only needed to initialize hot standby
+	 * mode from an online checkpoint, so we only bother calculating this for
+	 * online checkpoints and only when wal_level is hot_standby. Otherwise
+	 * it's set to InvalidTransactionId.
+	 */
+	TransactionId oldestActiveXid;
+
+	/* IN XLOG RECORD, MORE DATA FOLLOWS AT END OF STRUCT FOR DTM CHECKPOINT */
 } CheckPoint;
 
 #elif PG_VERSION >= PG_VERSION_93
@@ -2246,5 +2318,32 @@ typedef struct XLogLongPageHeaderData
 
 /* This flag indicates a "long" page header */
 #define XLP_LONG_HEADER				0x0002
+
+#endif
+
+// Default WAL segment size
+// Before PostgreSQL 11 WAL segment size could only be changed at compile time and is not known to be well-tested, so only the
+// default WAL segment size is supported for versions below 11.
+// ---------------------------------------------------------------------------------------------------------------------------------
+#ifdef FORK_GPDB
+
+#define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(64 * 1024 * 1024))
+
+#else
+
+#define PG_WAL_SEGMENT_SIZE_DEFAULT                                 ((unsigned int)(16 * 1024 * 1024))
+
+#endif
+
+// Default page size
+// Page size can only be changed at compile time and is not known to be well-tested, so only the default page size is supported.
+// ---------------------------------------------------------------------------------------------------------------------------------
+#ifdef FORK_GPDB
+
+#define PG_PAGE_SIZE_DEFAULT                                        GPDB_PAGE_SIZE
+
+#else
+
+#define PG_PAGE_SIZE_DEFAULT                                        POSTGRESQL_PAGE_SIZE
 
 #endif

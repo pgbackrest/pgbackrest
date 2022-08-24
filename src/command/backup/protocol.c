@@ -34,6 +34,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         const bool delta = pckReadBoolP(param);
         const CipherType cipherType = (CipherType)pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
+        const unsigned int pageSize = pckReadU32P(param);
 
         // Build the file list
         List *fileList = lstNewP(sizeof(BackupFile));
@@ -54,7 +55,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Backup file
         const List *const result = backupFile(
-            repoFile, repoFileCompressType, repoFileCompressLevel, delta, cipherType, cipherPass, fileList);
+            repoFile, repoFileCompressType, repoFileCompressLevel, delta, cipherType, cipherPass, pageSize, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();

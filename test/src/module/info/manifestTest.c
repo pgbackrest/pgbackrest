@@ -8,6 +8,7 @@ Test Backup Manifest Handler
 #include "info/infoBackup.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
 
@@ -23,6 +24,11 @@ static void
 testRun(void)
 {
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+    // Test configurations loading to initialize cfgOptFork value (PostgreSQL)
+    StringList *argList = strLstNew();
+    hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+    hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+    hrnCfgLoadP(cfgCmdBackup, argList);
 
     // *****************************************************************************************************************************
     if (testBegin("struct sizes"))
