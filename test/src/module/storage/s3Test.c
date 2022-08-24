@@ -419,6 +419,7 @@ testRun(void)
 
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
+                TEST_RESULT_UINT(driver->partSize, 5 * 1024 * 1024, "check part size");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("coverage for noop functions");

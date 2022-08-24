@@ -223,7 +223,7 @@ testRun(void)
         TEST_RESULT_STR_Z(storage->path, "/repo", "check path");
         TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->bucket, TEST_BUCKET_STR, "check bucket");
         TEST_RESULT_STR_Z(((StorageGcs *)storageDriver(storage))->endpoint, "storage.googleapis.com", "check endpoint");
-        TEST_RESULT_UINT(((StorageGcs *)storageDriver(storage))->chunkSize, STORAGE_GCS_CHUNKSIZE_DEFAULT, "check chunk size");
+        TEST_RESULT_UINT(((StorageGcs *)storageDriver(storage))->chunkSize, 4 * 1024 * 1024, "check chunk size");
         TEST_RESULT_STR(((StorageGcs *)storageDriver(storage))->token, TEST_TOKEN_STR, "check token");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "check path feature");
     }
