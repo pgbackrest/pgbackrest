@@ -33,6 +33,19 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="1484"/>
+                        <github-pull-request id="1501"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="anton.kurochkin"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Support <br-option>--set</br-option> in JSON output for <cmd>info</cmd> command.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1816"/>
                         <github-pull-request id="1819"/>
 
