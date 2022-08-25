@@ -470,7 +470,7 @@ backupListAdd(
     }
 
     // Add annotations to json output or --set text
-    if ((outputJson || backupLabelMatch) && backupData->backupAnnotation != NULL)
+    if ((outputJson || backupLabel != NULL) && backupData->backupAnnotation != NULL)
         kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, backupData->backupAnnotation);
 
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
