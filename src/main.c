@@ -7,6 +7,7 @@ Main
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "command/annotate/annotate.h"
 #include "command/archive/get/get.h"
 #include "command/archive/push/push.h"
 #include "command/backup/backup.h"
@@ -133,6 +134,12 @@ main(int argListSize, const char *argList[])
         {
             switch (cfgCommand())
             {
+                // Annotate command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdAnnotate:
+                    cmdAnnotate();
+                    break;
+
                 // Archive get command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdArchiveGet:

@@ -1507,7 +1507,7 @@ manifestBuildComplete(
     const time_t timestampStop, const String *const lsnStop, const String *const archiveStop, const unsigned int pgId,
     const uint64_t pgSystemId, const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy,
     const size_t optionBufferSize, const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork,
-    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby)
+    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby, const KeyValue *const annotation)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1528,6 +1528,7 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionHardLink);
         FUNCTION_LOG_PARAM(UINT, optionProcessMax);
         FUNCTION_LOG_PARAM(BOOL, optionStandby);
+        FUNCTION_LOG_PARAM(KEY_VALUE, annotation);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
@@ -1564,6 +1565,29 @@ manifestBuildComplete(
             lstSort(this->pub.dbList, sortOrderAsc);
         }
 
+        // Save annotations
+        if (annotation != NULL)
+        {
+            this->pub.data.annotation = varNewKv(kvNew());
+
+            KeyValue *const manifestAnnotationKv = varKv(this->pub.data.annotation);
+            const VariantList *const annotationKeyList = kvKeyList(annotation);
+
+            for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
+            {
+                const Variant *const key = varLstGet(annotationKeyList, keyIdx);
+                const Variant *const value = kvGet(annotation, key);
+
+                // Skip empty values
+                if (!strEmpty(varStr(value)))
+                    kvPut(manifestAnnotationKv, key, value);
+            }
+
+            // Clean field if there are no annotations to save
+            if (varLstSize(kvKeyList(manifestAnnotationKv)) == 0)
+                this->pub.data.annotation = NULL;
+        }
+
         // Save options
         this->pub.data.backupOptionArchiveCheck = optionArchiveCheck;
         this->pub.data.backupOptionArchiveCopy = optionArchiveCopy;
@@ -1589,6 +1613,7 @@ manifestBuildComplete(
 #define MANIFEST_SECTION_BACKUP_TARGET                              "backup:target"
 
 #define MANIFEST_SECTION_DB                                         "db"
+#define MANIFEST_SECTION_METADATA                                   "metadata"
 
 #define MANIFEST_SECTION_TARGET_FILE                                "target:file"
 #define MANIFEST_SECTION_TARGET_FILE_DEFAULT                        "target:file:default"
@@ -1597,6 +1622,7 @@ manifestBuildComplete(
 #define MANIFEST_SECTION_TARGET_PATH                                "target:path"
 #define MANIFEST_SECTION_TARGET_PATH_DEFAULT                        "target:path:default"
 
+#define MANIFEST_KEY_ANNOTATION                                     "annotation"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
 #define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
@@ -1966,6 +1992,17 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         db.lastSystemId = jsonReadUInt(jsonReadKeyRequireZ(json, MANIFEST_KEY_DB_LAST_SYSTEM_ID));
 
         manifestDbAdd(manifest, &db);
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEqZ(section, MANIFEST_SECTION_METADATA))
+    {
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+        {
+            if (strEqZ(key, MANIFEST_KEY_ANNOTATION))
+                manifest->pub.data.annotation = jsonToVar(value);
+        }
+        MEM_CONTEXT_END();
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -2396,6 +2433,17 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             }
         }
         MEM_CONTEXT_TEMP_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_METADATA, sectionNext))
+    {
+        if (manifest->pub.data.annotation != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_METADATA, MANIFEST_KEY_ANNOTATION,
+                jsonFromVar(manifest->pub.data.annotation));
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------

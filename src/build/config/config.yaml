@@ -31,6 +31,14 @@
 #   then the command is responsible for ensuring that the parameters are valid.
 ####################################################################################################################################
 command:
+  annotate:
+    command-role:
+      remote: {}
+    lock-remote-required: true
+    lock-required: true
+    lock-type: backup
+    log-file: false
+
   archive-get:
     command-role:
       async: {}
@@ -320,6 +328,8 @@ option:
     type: string
     required: false
     command:
+      annotate:
+        required: true
       expire: {}
       info:
         depend:
@@ -335,6 +345,7 @@ option:
   stanza:
     type: string
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -478,6 +489,7 @@ option:
     required: false
     allow-range: [0, 1024]
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -505,6 +517,7 @@ option:
       - pg
       - repo
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -614,6 +627,7 @@ option:
       - 8MiB
       - 16MiB
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -690,6 +704,7 @@ option:
     default: 3
     allow-range: [0, 9]
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -789,6 +804,7 @@ option:
     type: path
     default: /tmp/pgbackrest
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -806,6 +822,7 @@ option:
     type: boolean
     default: true
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -845,6 +862,7 @@ option:
     default: 1830
     allow-range: [0.1, 604800]
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -1002,6 +1020,7 @@ option:
     type: boolean
     default: false
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
@@ -1079,6 +1098,17 @@ option:
 
   # Backup options
   #---------------------------------------------------------------------------------------------------------------------------------
+  annotation:
+    section: global
+    type: hash
+    required: false
+    command:
+      annotate:
+        required: true
+      backup: {}
+    command-role:
+      main: {}
+
   archive-check:
     section: global
     type: boolean
@@ -1520,6 +1550,10 @@ option:
     required: false
     allow-range: [1, 256]
     command:
+      annotate:
+        command-role:
+          main: {}
+          remote: {}
       archive-get:
         command-role:
           async: {}
@@ -1595,6 +1629,7 @@ option:
     internal: true
     default: false
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       backup:
@@ -1630,6 +1665,10 @@ option:
       - posix
       - s3
     command:
+      annotate:
+        command-role:
+          main: {}
+          remote: {}
       archive-get:
         command-role:
           async: {}
@@ -1928,6 +1967,7 @@ option:
     type: string
     required: false
     command:
+      annotate: {}
       archive-get: {}
       archive-push: {}
       check: {}
@@ -2245,3 +2285,17 @@ option:
     deprecate:
       repo?-azure-port: {}
       repo?-s3-port: {}
+
+  repo-storage-upload-chunk-size:
+    section: global
+    group: repo
+    type: size
+    required: false
+    allow-range: [64KiB, 1TiB]
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3

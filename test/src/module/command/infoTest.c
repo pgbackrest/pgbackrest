@@ -652,7 +652,8 @@ testRun(void)
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20181119-152138F_20181119-152155I={"
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000003\","
             "\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
             "\"backup-lsn-start\":\"285/89000028\",\"backup-lsn-stop\":\"285/89001F88\","
@@ -671,6 +672,7 @@ testRun(void)
             "\"option-online\":true}\n"
             "20201116-155000F_20201119-152100I={"
             "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-annotation\":{\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"},"
             "\"backup-archive-start\":\"000000010000000000000005\",\"backup-archive-stop\":\"000000010000000000000005\","
             "\"backup-error\":false,\"backup-info-repo-size\":2369186,"
             "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
@@ -1228,6 +1230,10 @@ testRun(void)
                                     "\"type\":\"full\""
                                 "},"
                                 "{"
+                                    "\"annotation\":{"
+                                        "\"extra key\":\"this is an annotation\","
+                                        "\"source\":\"this is another annotation\""
+                                    "},"
                                     "\"archive\":{"
                                         "\"start\":\"000000010000000000000005\","
                                         "\"stop\":\"000000010000000000000005\""
@@ -2336,7 +2342,10 @@ testRun(void)
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20201116-155000F\n"
-            "            database list: none\n",
+            "            database list: none\n"
+            "            annotation(s)\n"
+            "                extra key: this is an annotation\n"
+            "                source: this is another annotation\n",
             "text - backup set requested, no lsn start/stop location");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -2550,6 +2559,63 @@ testRun(void)
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
             "            backup reference list: 20201116-155000F\n",
             "text - multi-repo, prior backup: no archives but backups (code coverage)");
+
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Annotation assert not null value");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgRawZ(argList2, cfgOptSet, "20181119-152138F_20181119-152155I");
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640899,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152138F_20181119-152152D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000003\","
+            "\"backup-archive-stop\":\"000000020000000000000003\",\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-prior\":\"20181119-152138F\",\"backup-reference\":[\"20181119-152138F\"],"
+            "\"backup-timestamp-start\":1542640912,\"backup-timestamp-stop\":1542640915,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20181119-152138F_20181119-152155I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-annotation\":{\"key1\":null},"
+            "\"backup-archive-start\":\"000000010000000000000003\","
+            "\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
+            "\"backup-lsn-start\":\"285/89000028\",\"backup-lsn-stop\":\"285/89001F88\","
+            "\"backup-prior\":\"20181119-152138F_20181119-152152D\","
+            "\"backup-reference\":[\"20181119-152138F\",\"20181119-152138F_20181119-152152D\"],"
+            "\"backup-timestamp-start\":1542640915,\"backup-timestamp-stop\":1542640917,\"backup-type\":\"incr\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
+                "\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"9.5\"}\n",
+            .comment = "put backup info to file - stanza1, repo1");
+
+        TEST_ERROR(infoRender(), AssertError, "assertion 'value != NULL' failed");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, stanza requested does not exist, but other stanzas do");

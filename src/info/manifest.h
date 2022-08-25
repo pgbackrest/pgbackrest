@@ -67,6 +67,8 @@ typedef struct ManifestData
     uint64_t pgSystemId;                                            // PostgreSQL system identifier
     unsigned int pgCatalogVersion;                                  // PostgreSQL catalog version
 
+    const Variant *annotation;                                      // Backup annotation(s) metadata
+
     bool backupOptionArchiveCheck;                                  // Will WAL segments be checked at the end of the backup?
     bool backupOptionArchiveCopy;                                   // Will WAL segments be copied to the backup?
     const Variant *backupOptionStandby;                             // Will the backup be performed from a standby?
@@ -216,7 +218,8 @@ void manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
     bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby);
+    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby,
+    const KeyValue *annotation);
 
 /***********************************************************************************************************************************
 Functions
