@@ -203,7 +203,7 @@ testRun(void)
             strNewEncode(encodeBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "check key");
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".blob.core.windows.net", "check host");
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
-        TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, STORAGE_AZURE_BLOCKSIZE_MIN, "check block size");
+        TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, 4 * 1024 * 1024, "check block size");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), false, "check path feature");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -331,3 +331,38 @@ kvGetList(const KeyValue *const this, const Variant *const key)
 
     FUNCTION_TEST_RETURN(VARIANT_LIST, result);
 }
+
+/**********************************************************************************************************************************/
+KeyValue *
+kvRemove(KeyValue *this, const Variant *key)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, this);
+        FUNCTION_TEST_PARAM(VARIANT, key);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+
+    // Find the key
+    unsigned int listIdx = kvGetIdx(this, key);
+
+    // If the key was found, remove it
+    if (listIdx != KEY_NOT_FOUND)
+    {
+        // Free the key/value being removed and remove from the list
+        KeyValuePair *const pair = (KeyValuePair *)lstGet(this->list, listIdx);
+
+        varFree(pair->key);
+        varFree(pair->value);
+        lstRemoveIdx(this->list, listIdx);
+
+        // Remove from the key list (index must be the same as the key/value list)
+        ASSERT(varEq(key, varLstGet(this->pub.keyList, listIdx)));
+
+        varFree(varLstGet(this->pub.keyList, listIdx));
+        lstRemoveIdx((List *)this->pub.keyList, listIdx);
+    }
+
+    FUNCTION_TEST_RETURN(KEY_VALUE, this);
+}

@@ -1491,6 +1491,11 @@ testRun(void)
             "template1={\"db-id\":1,\"db-last-system-id\":99999}\n"                                                                \
             SHRUG_EMOJI "={\"db-id\":18000,\"db-last-system-id\":99999}\n"
 
+        #define TEST_MANIFEST_METADATA                                                                                             \
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
+            "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"
+
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
@@ -1628,8 +1633,18 @@ testRun(void)
         TEST_TITLE("manifest complete");
 
         TEST_RESULT_VOID(
-            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
+            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, NULL),
             "manifest complete without db");
+
+        // Create empty annotations
+        KeyValue *annotationKV = kvNew();
+        kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
+        kvPut(annotationKV, VARSTRDEF("empty key2"), VARSTRDEF(""));
+
+        TEST_RESULT_VOID(
+            manifestBuildComplete(
+                manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, annotationKV),
+            "manifest complete without db and empty annotations");
 
         // Create db list
         PackWrite *dbList = pckWriteNewP();
@@ -1654,11 +1669,15 @@ testRun(void)
 
         pckWriteEndP(dbList);
 
+        // Add annotations
+        kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
+        kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
+
         TEST_RESULT_VOID(
             manifestBuildComplete(
                 manifest, 1565282140, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142,
                 STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, pckWriteResult(dbList),
-                true, true, 16384, 3, 6, true, 32, false),
+                true, true, 16384, 3, 6, true, 32, false, annotationKV),
             "manifest complete with db");
 
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data")), NULL, "check pg_data path");
@@ -1841,6 +1860,7 @@ testRun(void)
             "[cipher]\n"
             "cipher-pass=\"supersecret\"\n"
             TEST_MANIFEST_DB
+            TEST_MANIFEST_METADATA
             TEST_MANIFEST_FILE
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
@@ -1919,6 +1939,10 @@ testRun(void)
             "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
             "\n"                                                                                                                   \
             "[ignore-section]\n"                                                                                                   \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
+            "annotation={\"key\":\"value\"}\n"                                                                                     \
             "ignore-key=\"ignore-value\"\n"                                                                                        \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
