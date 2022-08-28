@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-##############################################################################################
+####################################################################################################################################
 # Script to test a generic doxygen filter program.
 #   filter_test.sh   <path to executable>  <data set name>
 #
@@ -10,8 +10,8 @@
 #    $BLD/<dataset>.diff      - the differences between the expected and the actual.
 #
 # When run under meson, $SRC and $BLD will be the meson build and source directories.
-# When run standalone, $SRC and $BLD will be the current directory.
-###################################################################################################
+# When run standalone, $SRC and $BLD will default to the current directory.
+####################################################################################################################################
 
 # Get the arguments into terms we can use.
 BLD=${MESON_BUILD_DIR:-.}

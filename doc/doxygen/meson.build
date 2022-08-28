@@ -1,4 +1,4 @@
-###############################################################
+####################################################################################################################################
 # This meson script generates doxygen output from the adjoining "../src" code directory.
 #
 # Doxygen documentation is not built by default.
@@ -11,7 +11,10 @@
 #    - Build a doxygen filter so doxygen recognizes the commenting style.
 #    - Update the doxygen configuration file to reflect the current paths.
 #    - Let doxygen generate documentation under "docs/doxygen" in the build directory.
-#########################################################################
+#
+# The Doxyfile.template file is created and maintained through the doxywizard application.
+# Edits made directly to the file could be lost the next time doxywizard is run.
+####################################################################################################################################
 
 ####################################################################################################################################
 # First, check for dependencies. If flex and doxygen are not installed, then display a message and quit.
@@ -28,19 +31,17 @@ if not doxy.found() or not flex.found() or not flex_lib.found()
     subdir_done()
 endif
 
-
-#########################################################################
+####################################################################################################################################
 # Make Flex known to Meson. Flex is a parsing program used to make scanners.
 #   Flex takes a lexical analysis file (*.l) and generates a C file (*.c).
-#########################################################################
+####################################################################################################################################
 flex_gen = generator(flex,
                output: '@PLAINNAME@.c',
                arguments: ['-o', '@OUTPUT@', '@INPUT@'])
 
-##########################################################################
-# Build the doxygen scanner. This scanner annotates comments in a C file
-#    so the comments become visible to doxygen.
-###########################################################################
+####################################################################################################################################
+# Build the doxygen scanner. This scanner annotates comments in a C file so the comments become visible to doxygen.
+####################################################################################################################################
 
 # Step #1: Process flex code to generate C code.
 doxy_filter_l = files('doxy_filter.l')
@@ -52,23 +53,25 @@ doxy_filter = executable('doxy_filter', doxy_filter_c,
                   c_args: ['-w'],  # TODO: disable specific warnings introduced by flex.
                   )
 
-##############################################################################
+####################################################################################################################################
 # Update the Doxygen configuration file.  ("Doxyfile")
 #
-# This file tells doxygen how to generate documentation.
-# Some of the configuration values depend on paths created by meson,
-# so we insert those paths into a template to produce the final Doxyfile.
+# The configuration template ("Doxyfile.template") is generated and maintained by the Doxygen Wizard application.
+# While it is possible to edit specific values by hand, the overall structure and comments are re-generated every
+# time the wizard is run. Any changes to the comments or overall layout will be lost.
 #
-# Ideally, doxygen would allow us to set these values in the command line.
+# Some configuration values depend on paths created by meson. Those values are inserted into "Doxyfile.template"
+# to produce the final "Doxyfile". Ideally, doxygen would allow us to set those values on the command line, and we
+# wouldn't need a template file at all.
 #
-# We need to set the following doxygen values:
+# Here are the configuration values we need to set:
 #      OUTPUT_DIRECTORY - directory where the documentation will be created.
 #      INPUT            - project directory containing the "src" subdirectory.
 #      INPUT_FILTER     - path to the doxy_filter executable.
 #
 # Note: when upgrading to meson 5.6 or greater,
 #     change build_root-->project_build_root and source_root-->project_source_root.
-########################################################################################
+####################################################################################################################################
 doxy_file_template = files('Doxyfile.template')
 doxy_file = configure_file(
     input: doxy_file_template,
@@ -79,8 +82,7 @@ doxy_file = configure_file(
         'INPUT_FILTER': doxy_filter.full_path(),  # Does not create a dependency on doxy_filter.
     })
 
-
-##########################################################################
+####################################################################################################################################
 # Generate documentation when the command  "ninja doxygen" is given.
-#############################################################################
+####################################################################################################################################
 run_target('doxygen', command: [doxy, doxy_file], depends: doxy_filter)

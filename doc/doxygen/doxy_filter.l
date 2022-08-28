@@ -1,16 +1,16 @@
- /*******************************************************************************************
+ /**********************************************************************************************************************************
  A Doxygen filter which annotates comments in a C file.
+     doxy_filter  <filename>
 
  The goal is to take an existing, non-doxygen comment style and turn it into doxygen comments.
- It is packaged as a filter. The commented code never gets changed, but doxygen converts
- the comments "on the fly".
+ It is packaged as a filter. Given the file name of a C file, it updates the comments and sends output to stdout.
 
  The idea is to identify all comments in the code while keeping track of a small amount of context from
  around the comment.  The context allows us to determine:
     - Is the comment at the beginning of the file?
     - Is the comment at the global level in the file?
     - Is the comment inside a struct/union/enum?
-    - Does the comment trail other statements? Or is it in front of other statements. (What about inside?)
+    - Does the comment trail other statements? Or is it in front of other statements.
 
  Basically, the filter does the following:
      - A comment at the start of a file gets the @FILE tag added.
@@ -28,8 +28,8 @@
      understanding of C syntax. For now, it is enough to get by.
 
  TODO? respect conditional compilation, add a File comment if none exists, be robust in not altering existing doxygen comments.
- ******************************************************************************************************************************/
-
+ **********************************************************************************************************************************/
+%option yylineno
 %{
 #include <stdbool.h>
 %}
@@ -49,7 +49,7 @@
 struct|union|enum                      ECHO; if (level == 0) complexData = true;
 ";"                                    ECHO; if (level == 0) complexData = false; trailing = true;
 
-  /* Other keywords or identifiers */  /* Eat them up so they don't confused with keywords */
+  /* Other keywords or identifiers */  /* Eat them up so they don't aren't confused with keywords */
 [a-zA-Z_$]+[a-zA-Z_$0-9]*              ECHO;
 
   /* Quoted string literals. */        /* Pass them through. */
@@ -61,17 +61,17 @@ struct|union|enum                      ECHO; if (level == 0) complexData = true;
    /* Single line comment. */          /* Echo a modified comment as needed. */
 "//".*                                 echoComment(yytext);
 
-   /* Multi line comment. */           /* echo a modified as needed. */
+   /* Multi line comment. */           /* echo a modified comment as needed. */
 [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]    echoComment(yytext);
 
   /* Multi line #define ... */         /* Skip over #defines since they may contain unbalanced braces. */
 ^#define(.*\\\n)*(.*)                  ECHO;
 
   /* New line. */                      /* Any subsequent comment is leading, and we are no longer at start of file. */
-"\n"                                   ECHO; lines++; trailing = false;  //printf("  lines=%d  level=%d  complex=%d   ", lines, level, complexData);
+"\n"                                   ECHO; lines++; trailing = false;
 
  /* Track nesting depth. */            /* Are we at the global level or not? Are we in arg list or not? */
-                                       /*   We assume well formed code, so a paranthesis will never match a brace. */
+                                       /*   We assume well formed code, so a parenthesis will never match a brace. */
 "{"|"("                                ECHO; level++;
 "}"|")"                                ECHO; level--; if (level == 0) complexData = false; trailing = true;
 
@@ -84,13 +84,13 @@ struct|union|enum                      ECHO; if (level == 0) complexData = true;
 #include <errno.h>
 
 // Custom banner character to be removed from comments.
-//    We'll hardcode it to suit postgreSQL, but it should be set through a command line arg.
+//    We'll temporarily hardcode it to suit postgreSQL, but it should be set through a command line arg.
 char customBanner = '-';
 
-/*************************************************************************************************
+/***********************************************************************************************************************************
 A program which reads a file, updates the comments, and writes to stdout.
 This is intended to be used as a doxygen filter, converting existing comments to doxygen comments.
-**********************************************************************************************/
+***********************************************************************************************************************************/
 int main(int argc, char**argv) {
 
     // Verify we have a single argument.
@@ -107,30 +107,28 @@ int main(int argc, char**argv) {
     }
 
     // Now, parse the file, sending output to stdout.
-    return yylex();
+    int ret = yylex();
+
 }
-
-
 
 // Does the string include the prefix?
 bool startsWith(const char *str, const char *prefix) {
    return strncmp(str, prefix, strlen(prefix)) == 0;
 }
 
-// Output a string.
+// Output a string. The comparable stdio routine adds a newline which we don't wont.
 void putstr(char *str) {
     fputs(str, stdout);
 }
 
-
-/*******************************************************************************************************
+/***********************************************************************************************************************************
 Remove a custom banner from the comment, where a banner is a sequence of two or more special characters.
-*********************************************************************************************************/
+***********************************************************************************************************************************/
 void removeCustomBanner(char* str, char c) {
     char *writePtr = str;
     bool twoInARow = false;
 
-    // Scan across the comment, moving non-banner characters forward.
+    // Scan across the comment, moving non-banner characters to the front.
     for (char *readPtr=str; *readPtr != '\0'; readPtr++) {
         twoInARow = (readPtr[0] == c) && (readPtr[1] == c || twoInARow);
         if (!twoInARow)
@@ -139,13 +137,11 @@ void removeCustomBanner(char* str, char c) {
     *writePtr = '\0';
 }
 
-
 // Helper to output the comment prefix, either '//' or '/*'
 void echoCommentBegin(char comment[]) {
     putchar(comment[0]);
     putchar(comment[1]);
 }
-
 
 // Helper to output the commend end, either '*/' or ''.
 void echoCommentEnd(char comment[]) {
@@ -164,13 +160,11 @@ void echoCommentBody(char comment[]) {
         putchar(comment[bodyIdx]);
 }
 
-
-/********************************************************************************************************
+/***********************************************************************************************************************************
 Process and output comments as they are encountered in the text.
 
-Uses context information gathered during scanning to decide if the comment should be
-converted to a doxygen comment.
-*********************************************************************************************************/
+Uses context information gathered during scanning to decide if the comment should be converted to a doxygen comment.
+***********************************************************************************************************************************/
 void echoComment(char comment[]) {
 
     // Echo the starting part of the comment, either // or /*.

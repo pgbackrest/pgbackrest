@@ -1,14 +1,14 @@
-/*---------------------------------------------------------------------------
+/*----------------------------------------------------------------------------------------------------------------------------------
 file doxygen comment. Block comment with custom banner consisting of dashes.
 Similar to what Postgres uses.
   - this single banner character should not be stripped,
   - but two-or-more in a row (eg."--") will be stripped.
------------------------------------------------------------------------------*/
+----------------------------------------------------------------------------------------------------------------------------------*/
 
-/********************************************************************************
+/***********************************************************************************************************************************
  * leading docgen comment. This is a more typical Javadoc banner style.
  * Does doxygen add it to the file comment or to the struct comment?
- *********************************************************************************/
+ **********************************************************************************************************************************/
 
 // leading doxygen comment. This comment will only apply to the first forward reference.
 // leading doxygen comment. Should we group adjacent statements together so this comment applies to both?
@@ -23,7 +23,7 @@ void proc(void); // trailing doxygen comment.
 
 // leading doxygen comment.  Multiline define.
 #define MultiLine  \
-     {{{{{{{{{((((((( This could really mess up the level of braces if it were parsed. \
+     {{{{{{{{{((((((( This could really mess up the level of braces if it were parsed.                                             \
      but of course we skip over it so we should be OK.
 
 int value = 0;  // trailing doxygen comment.
