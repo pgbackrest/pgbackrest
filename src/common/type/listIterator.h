@@ -17,8 +17,7 @@ When creating an iterator for a some type of container, the suggested names cons
 type being iterated. To ensure flexible use of memory, creating an iterator takes two steps.
 
    // Create an iterator to scan the list.
-   ListItr itr[1];          // Allocate memory for a local iterator.
-   ListItrNew(itr, list);   // Initialize the iterator to scan across the list.
+   ListItr itr[1] = ListItrNew(itr, list);
 
     // Here is a plausible way of iterating through a List.
     while (listItrMore(itr))
@@ -27,13 +26,16 @@ type being iterated. To ensure flexible use of memory, creating an iterator take
        doSomething(*item);
     }
 
+    // TODO: some iterators may need to release dynamic memory.
+    // listItrFree(itr)
+
 As experimental syntactic sugar, we have macros which resemble C++ or Java iteration.
    foreach(ItemType, item, List, list)
        doSomething(*item);
    endForeach
 
 = Abstract Container
-A Container represents any data type which iterates through items.
+A Container is a wrapper around any data type which iterates through items.
 Containers can consist of Lists, Arrays, and could even include generators which create items "on the fly".
 While each type of container has its own unique iterator, the Container type provides a single interface to scan through any
 type of container. It doesn't care what the underlying data structure is as long as it can be iterated.
@@ -43,6 +45,7 @@ To achieve polymorphism, the Container type includes pointers to the underlying 
 The following code shows how construct a Container from a List and iterate through it.
 
     // Define a static (compile time) table pointing to the underlying iteration functions.
+    // This table will probably be defined in a .h file.
     static const ContainerInterface containerIfaceList = { ... };
 
     // Construct a Container object which wraps a List and invokes the List iterator functions.
@@ -64,48 +67,49 @@ TODO: remove the duplicate titles in this block comment and make more readable.
 
 // Interface for initializing and accessing an iterator.
 typedef struct IteratorInterface {
-    bool (*itrMore)(void *this);                    // Function to query if there are more items to scan.
-    void *(*itrNext)(void *this);                   // Function to get a pointer to the next item.
-    void (*itrNew)(void *this, void *container);    // Function to initialize an iterator "in place" using preallocated memory.
-    int itrSize;                                    // Size in bytes of the container's iterator. Used to preallocate memory.
+    bool (*more)(void *this);                                    // Function to query if there are more items to scan.
+    void *(*next)(void *this);                                   // Function to get a pointer to the next item.
+    void (*new)(void *container);                                // Function to initialize an iterator "in place".
+    void (*free)(void *this)                                     // Free any resources when iterator no longer needed.
 } ContainerInterface;
 
 // Define a polymorphic Container which can wrap any iterable container.
 typedef struct Container {
-    void *container;             // The underlying container
-    IteratorInterface  iface;    // Interface to the container's iterator functions.
+    void *container;                                                // The underlying container
+    IteratorInterface  iface;                                       // Interface to the container's iterator functions.
 } Container;
 
 // Data structure for iterating through a Container.
 typedef struct ContainerItr {
-    void *container;          // The underlying container. (debug? not needed otherwise)
-    void *iterator;           // An iterator to the underlying container.
+    void *container;                                                // The underlying container. (debug? not needed otherwise)
+    void *iterator;                                                 // An iterator to the underlying container.
+    void *subIterator[1024];                                        // TODO: TEMPORARY: allocate aligned space to hold the underlyng iterator.
 } ContainerItr;
 
 /***********************************************************************************************************************************
 Create an iterator to scan through the abstract Container.
 ***********************************************************************************************************************************/
-INLINE void containerItrNewFunction(ContainerItr* this, Container *container)
+INLINE ContainerItr containerItrNew(Container *container)
 {
     // Allocate memory for the underlying iterator.
     // TODO: SERIOUSLY TEMPORARY!  How should we allocate memory for this? Which context?  Do we need to create a destructor as well?
     // TODO: This is where memory contexts come into play. This is a guarenteed memory leak. NOT FOR PRIME TIME!
     // TODO: Even worse, we could have nested iterators, so there is no limit to how much memory would be allocated.
-    // TODO:  If we're going to allocate, then we need to free.  Where?
-    void *itr = ALLOCATE_MEMORY()
+
+    // We dno't know the size of the underlying iterator, so we need to allocate memory dynamically.
+    // Consequently, we also need to free it. Skip this part for now, and use preallocated memory from he iterator.
+    //  void itr->subIterator = ALLOCATE_MEMORY()
 
     // Now that we have memory, initialize the underlying iterator.
-    container->iface.itrNew(itr, container);
+    itr->subIterator = container->iface.itrNew(container);
 
     // Now, initialize the abstract iterator.
-    *this = (ContainerItr){.container=container, .iterator=itr};
+    return (ContainerItr){
+        .container=container,
+        .iterator=itr,
+        .subIterator=container->iface.iterNew(container)
+    };
 }
-
-#define containerItrNewMacro(this, container)                                                                                      \
-    (ContainerItr){                                                                                                                \
-        .container = container,                                                                                                    \
-        .iterator = container->iface.iterNew(alloca(container->iface.size), container)                                             \
-    }
 
 // Does the Container have more items?
 INLINE bool containerItrMore(ContainerItr *this) {return this->container.iface.more(this->itr);}
@@ -142,8 +146,8 @@ INLINE Container containerNew(void *container, void *(*itrNew)(void*), int itrSi
 
 // Concrete iterator for iterating through a list.
 typedef struct ListIterator {
-    List *list;                      // pointer to the list being scanned.
-    int nextIdx;                     // index of the next item to process.
+    List *list;                                                     // pointer to the list being scanned.
+    int nextIdx;                                                    // index of the next item to process.
 } ListIterator;
 
 /***********************************************************************************************************************************
@@ -174,11 +178,13 @@ listItrNext(ListIterator *this)
     return lstGet(this->list, this->nextIdx++);
 }
 
-// Create a jump table with methods to implement the Iterator interface for ListIterator.
+// Defome a jump table with methods to implement the Iterator interface for ListIterator.
 static const
 IteratorInterface itrInterfaceForListItr = {
         .next = listItrNext,
         .hasNext = listItrHasNext,
+        .new = listItrnew,
+        .free = nop,
 };
 
 /***********************************************************************************************************************************
