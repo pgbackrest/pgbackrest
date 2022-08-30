@@ -2474,6 +2474,50 @@ testRun(void)
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000004, stop = 000000010000000000000008");
 
+        //--------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("add repo2 to ensure options are applied correctly");
+
+        argList = strLstDup(argListTime);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFullType, 2, "time");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "30");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        // Create backup.info and archive.info for repo2
+        HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, strZ(backupInfoContent));
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6625592122879095702\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}");
+
+        // Write backup.manifest for repo2 so infoBackup reconstruct produces same results as backup.info on disk
+        HRN_STORAGE_PUT_EMPTY(storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152800F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152800F_20181119-152152D/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152800F_20181119-152155I/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152600D/" BACKUP_MANIFEST_FILE);
+
+        // Generate archive for backups in backup.info in repo2
+        archiveGenerate(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE, 1, 11, "9.4-1", "0000000100000000");
+
+        TEST_RESULT_VOID(cmdExpire(), "expire all but newest");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired\n"
+            "P00   INFO: repo2: expire time-based backup 20181119-152138F\n"
+            "P00   INFO: repo2: remove expired backup 20181119-152138F\n"
+            "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"
+            "P00   INFO: repo2: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003");
+
         harnessLogLevelReset();
     }
 
