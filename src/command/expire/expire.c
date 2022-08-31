@@ -1044,7 +1044,8 @@ cmdExpire(void)
                         if (cfgOptionIdxTest(cfgOptRepoRetentionFull, repoIdx))
                         {
                             expireTimeBasedBackup(
-                                infoBackup, time(NULL) - (time_t)(cfgOptionUInt(cfgOptRepoRetentionFull) * SEC_PER_DAY), repoIdx);
+                                infoBackup, time(NULL) - (time_t)(cfgOptionIdxUInt(cfgOptRepoRetentionFull, repoIdx) * SEC_PER_DAY),
+                                repoIdx);
                         }
                     }
                     else
