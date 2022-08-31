@@ -16,6 +16,21 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.41dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1852"/>
+                        <github-pull-request id="1854"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adam.brusselback"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect time expiration being used for non-default repos.</p>
+                    </release-item>
+                </release-bug-list>
+
                 <release-feature-list>
                     <release-item>
                         <github-issue id="1709"/>
