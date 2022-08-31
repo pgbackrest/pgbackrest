@@ -2325,7 +2325,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE);
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152600D/" BACKUP_MANIFEST_FILE);
 
-        // Genreate archive for backups in backup.info
+        // Generate archive for backups in backup.info
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 11, "9.4-1", "0000000100000000");
 
         // Set the log level to detail so archive expiration messages are seen
@@ -2349,7 +2349,7 @@ testRun(void)
             "20181119-152138F\n20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n"
             "20181119-152900F\n20181119-152900F_20181119-152600D\n", "no backups expired");
 
-        // // Add a time period
+        // Add a time period
         StringList *argList = strLstDup(argListTime);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "35");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
