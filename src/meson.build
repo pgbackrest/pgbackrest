@@ -91,6 +91,7 @@ subdir('postgres')
 # pgBackRest target
 ####################################################################################################################################
 src_pgbackrest = [
+	'command/annotate/annotate.c',
 	'command/archive/common.c',
 	'command/archive/get/file.c',
 	'command/archive/get/get.c',

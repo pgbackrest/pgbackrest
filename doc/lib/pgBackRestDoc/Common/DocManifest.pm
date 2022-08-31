@@ -370,7 +370,8 @@ sub variableReplace
 
     foreach my $strName (sort(keys(%{$self->{oVariable}})))
     {
-        my $strValue = $self->{oVariable}{$strName};
+        # If the value is not defined then replace it as an empty string. This means the key *was* defined but no value given.
+        my $strValue = defined($self->{oVariable}{$strName}) ? $self->{oVariable}{$strName} : '';
 
         $strBuffer =~ s/\{\[$strName\]\}/$strValue/g;
     }
