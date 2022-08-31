@@ -15,6 +15,7 @@ typedef struct List List;
 #include "common/type/object.h"
 #include "common/type/param.h"
 #include "common/type/string.h"
+#include "common/type/iterator.h"
 
 /***********************************************************************************************************************************
 Sort orders
@@ -164,5 +165,39 @@ String *lstToLog(const List *this);
     List *
 #define FUNCTION_LOG_LIST_FORMAT(value, buffer, bufferSize)                                                                        \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
+
+/***********************************************************************************************************************************
+List Iteration.
+***********************************************************************************************************************************/
+
+// Structure for iterating through a list.
+typedef struct ListItr
+{
+    List *list;                                                     // The list we're iterating
+    unsigned int listIdx;                                            // Position of next item in the list
+} ListItr;
+
+// Construct a new list iterator.
+__attribute__((always_inline)) static inline void
+newListItr(ListItr *this, List *list)
+{
+    this->list = list;
+    this->listIdx = 0;
+}
+
+// Are there more items to scan?
+__attribute__((always_inline)) static inline bool
+moreListItr(ListItr *this)
+{
+    return this->listIdx < lstSize(this->list);
+}
+
+// Get a pointer to the next item from the list.
+__attribute__((always_inline)) static inline void *
+nextListItr(ListItr *this)
+{
+    ASSERT(moreListItr(this));
+    return lstGet(this->list, this->listIdx++);
+}
 
 #endif

@@ -225,5 +225,45 @@ testRun(void)
             ASSERT(*(int *)lstFind(list, &listIdx) == listIdx);
     }
 
+    /******************************************************************************************************************************/
+    if (testBegin("List Iteration")) {
+
+        List *list = lstNewP(sizeof(int), .comparator = testComparator);
+        foreach(int, value, List, list)
+            (void)*value;
+            ASSERT(false);  // We shouldn't be here with an empty list
+        endForeach
+        TEST_RESULT_VOID((void)0, "empty list");
+
+        Container container[1] = {newContainer(List, list)}; // Want pointer to Container.
+        foreach(int, value, List, list)
+            (void)*value;
+            ASSERT(false);  // We shouldn't be here with an empty list
+        endForeach
+        TEST_RESULT_VOID((void)0, "empty list inside Container");
+
+        int testMax = 100;
+        for (int listIdx = 0; listIdx < testMax; listIdx++)
+            lstAdd(list, &listIdx);
+        ASSERT(lstSize(list) == (unsigned int)testMax);
+
+        int count = 0;
+        foreach (int, value, List, list)
+            ASSERT(*value == count);
+            count++;
+        endForeach
+        TEST_RESULT_INT(count, testMax, "non-empty List");
+
+        count = 0;
+        foreach (int, value, Container, container)
+            ASSERT(*value == count);
+            count++;
+        endForeach
+        TEST_RESULT_INT(count, testMax, "non-empty list inside Container");
+
+        // Try to create a Container within a Container and confirm it doesn't have enough memory to hold itself.
+        TEST_ERROR(newContainer(Container, NULL), AssertError, "Pre-allocated space in ContainerITR is too small");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
