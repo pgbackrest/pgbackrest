@@ -63,9 +63,9 @@ The goals are as follows:
    }
 
 == Incorporating proposed "syntactic sugar".
-    foreach(ItemType, item, List, list)
+    FOREACH(ItemType, item, List, list)
         doSomething(*item);
-    endForeach
+    ENDFOREACH
 
 == Performance and memory.
 All three of the previous examples should have roughly the same performance and memory requirements.
@@ -81,12 +81,12 @@ data types.
 The following code shows how to construct an abstract Container and iterate through it using "syntactic sugar" macros.
 
     // Construct an abstract Container which wraps the List.
-    Container container = newContainer(List, list);
+    Container container = NEWCONTAINER(List, list);
 
     // Iterate through the abstract Container just like any other container.
-    foreach(ItemType, item, Container, container)
+    FOREACH(ItemType, item, Container, container)
         doSomething(*item)
-    endForeach
+    ENDFOREACH
 
 = Design Compromise
 Constructing an iterator for an abstract Container requires allocating memory to hold the underlying iterator.
@@ -96,8 +96,6 @@ is complete. Additionally, since we favor the caller allocating memory, the call
 
 As a compromise to avoid dynamic memory allocation, ContainerItr will include a pre-allocated chunk of
 memory. If the underlying iterator doesn't fit, the constructor will throw an assert error.
-Note this compromise is not "fixed in stone". In the longer term, it may be necessary to add free() and size() methods
-to the interface. The use of syntactic sugar would make it easy to update the iteration code to use these new methods.
 
 The signature of the newItr method was changed to support dynamic memory allocation.  Previously it was
        ListItr itr = newListItr(list);
@@ -106,7 +104,19 @@ With the updated signature,
        ListItr *itr =  ...
        newListItr(itr, list);
 
- Both versions generate equivalent code.
+Both versions generate equivalent code.
+
+UPDATE. Dynamic memory is required for scanning directories, so a "destruct()" method is being added to the interface.
+This method allows iterators to free memory which may have been allocated by the "new()" constructor.
+The Container type still allocates its own fixed memory, but that can be easily changed. As an optimization, it could
+switch to dynamic memory when the static memory is too small.
+
+Dynamic memory will be managed through the allocItr(this, size) and freeItr(this, ptr) methods.
+Currently, they are stubs, but they will be updated to invoke malloc() and free(), and eventually to
+integrate with memory contexts.
+
+One new goal is to support a "generator" object, where a program loop is transformed into an iterator. This object
+will allow scanning through diverse data structures, say XML documents, without creating intermediate Lists.
 
 ***********************************************************************************************************************************/
 #ifndef PGBACKREST_ITERATOR_H
@@ -119,16 +129,14 @@ With the updated signature,
 //       At any rate, it doesn't belong here and we should move it elsewhere if it turns out to be useful.
 #define INLINE __attribute__((always_inline)) static inline
 
-
-
 // Define the polymorphic Container wrapper, including the jump table of underlying iterator methods.
 typedef struct Container {
     void *subContainer;                                             // Pointer to the underlying container.
     bool (*more)(void *this);                                       // Method to query if there are more items to scan.
     void *(*next)(void *this);                                      // Method to get a pointer to the next item.
     void (*newItr)(void *this, void *container);                    // Method to construct a new iterator "in place".
+    void (*destruct)(void *this);                                   // Method to free resources allocated during "newItr()"
 } Container;
-
 
 // Data structure for iterating through a Container.
 typedef struct ContainerItr {
@@ -138,7 +146,7 @@ typedef struct ContainerItr {
 } ContainerItr;                                                     // Total size is 1KB, aligned 8.
 
 /***********************************************************************************************************************************
-Create an iterator to scan through the abstract Container.
+Construct an iterator to scan through the abstract Container.
 ***********************************************************************************************************************************/
 INLINE void
 newContainerItr(ContainerItr *this, Container *container)
@@ -154,46 +162,96 @@ newContainerItr(ContainerItr *this, Container *container)
     container->newItr(this->subIterator, container->subContainer);
 }
 
-// Does the Container have more items?
+/***********************************************************************************************************************************
+Does the Container have more items?
+***********************************************************************************************************************************/
 INLINE bool
-moreContainerItr(ContainerItr *this) {return this->container->more(this->subIterator);}
+moreContainerItr(ContainerItr *this)
+{
+    return this->container->more(this->subIterator);
+}
 
-// Point to the next item in the Container.
+/***********************************************************************************************************************************
+Point to the next item in the Container.
+***********************************************************************************************************************************/
 INLINE void *
-nextContainerItr(ContainerItr *this) {return this->container->next(this->subIterator);}
+nextContainerItr(ContainerItr *this)
+{
+    return this->container->next(this->subIterator);
+}
+
+/***********************************************************************************************************************************
+Destroy the iterator, freeing any resources which were allocated.
+***********************************************************************************************************************************/
+INLINE void
+destructContainerItr(ContainerItr *this)
+{
+    this->container->destruct(this->subIterator);
+}
 
 
 /***********************************************************************************************************************************
 Proposed syntactic sugar to make iteration look more like C++ or Python.
-Note foreach and endForeach are equivalent to a multi-line "braced" statement.
-Thought: replace ContainerType with "typeof(*container)".
+Note foreach and endForeach are equivalent to a multi-line block statement.
+With a smart optimizer, the invocation of _destructor could be inlined, but otherwise it is an indirect call.
 ***********************************************************************************************************************************/
-#define foreach(ItemType, item, ContainerType, container) {                                                                        \
-        ContainerType##Itr itr[1];                                                                                                 \
-        new##ContainerType##Itr((void*)itr, (void*)container);                                                                     \
-        while (more##ContainerType##Itr(itr))                                                                                      \
-        {                                                                                                                          \
-            ItemType *item = (ItemType*) next##ContainerType##Itr(itr);
-#define endForeach                                                                                                                 \
-        }                                                                                                                          \
+#define FOREACH(ItemType, item, ContainerType, container) {                                                                        \
+    ContainerType##Itr _itr[1];                                                                                                    \
+    new##ContainerType##Itr(_itr, container);                                                                                      \
+    void (*_destructor)(ContainerType##Itr*) = destruct##ContainerType##Itr;                                                       \
+    while (more##ContainerType##Itr(_itr))                                                                                         \
+    {                                                                                                                              \
+        ItemType *item = (ItemType*) next##ContainerType##Itr(_itr);
+#define ENDFOREACH                                                                                                                 \
+    }                                                                                                                              \
+    _destructor(_itr);                                                                                                             \
 }
 
 /***********************************************************************************************************************************
 Proposed syntactic sugar for creating an abstract Container from a regular container.
-Does a compile time check to ensure we don't overflow pre-allocated memory in ContainerItr.
-Thought: replace "SubType" with "typeof(*subContainer).
+Checks to ensure we won't overflow pre-allocated memory in ContainerItr.
 ***********************************************************************************************************************************/
-#define newContainer(SubType, subCntainer) (                                                                                       \
-    checkPreallocated(sizeof(SubType##Itr) <= sizeof(((ContainerItr*)0)->preallocatedMemory)),                                     \
+#define NEWCONTAINER(SubType, subCntainer) (                                                                                       \
+    checkItr(subCntainer != NULL, "Attempting to create NEWCONTAINER from NULL"),                                                  \
+    checkItr(                                                                                                                      \
+        sizeof(SubType##Itr) <= sizeof(((ContainerItr*)0)->preallocatedMemory),                                                    \
+        "Pre-allocated space in ContainerItr is too small"                                                                         \
+    ),                                                                                                                             \
     (Container) {                                                                                                                  \
         .subContainer = (void *)subCntainer,                                                                                       \
         .newItr = (void(*)(void*,void*))new##SubType##Itr,                                                                         \
         .more = (bool(*)(void*))more##SubType##Itr,                                                                                \
-        .next = (void*(*)(void*))next##SubType##Itr                                                                                \
+        .next = (void*(*)(void*))next##SubType##Itr,                                                                               \
+        .destruct = (void(*)(void*))destruct##SubType##Itr,                                                                        \
     }                                                                                                                              \
 )
 
-// use static_assert when becomes available in C11. For now, put a wrapper around "CHECK" so it can be used in an expression.
-INLINE void checkPreallocated(bool condition) { CHECK(AssertError, condition, "Pre-allocated space in ContainerITR is too small");}
+// Put a wrapper around "CHECK" so it can be used as an expression.
+INLINE void
+checkItr(bool condition, const char* message) {
+    CHECK(AssertError, condition, message);
+}
+
+// To be implemented later.
+INLINE void *
+allocItr(void *this, size_t size)
+{
+    (void)this;
+    (void)size;
+    checkItr(false, "Dyanamic memory allocation for iterators not implemented");
+    return NULL;
+}
+
+// To be implemented later.
+INLINE void
+freeItr(void *this, void *ptr)
+{
+    (void)this;
+    (void)ptr;
+    checkItr(false, "Dyanamic memory allocation for iterators not implemented");
+}
+
+// TODO: INLINE belongs elsewhere.
+#undef INLINE
 
 #endif //PGBACKREST_ITERATOR_H

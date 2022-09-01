@@ -174,10 +174,12 @@ List Iteration.
 typedef struct ListItr
 {
     List *list;                                                     // The list we're iterating
-    unsigned int listIdx;                                            // Position of next item in the list
+    unsigned int listIdx;                                           // Position of next item in the list
 } ListItr;
 
-// Construct a new list iterator.
+/***********************************************************************************************************************************
+Construct a new list iterator.
+***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void
 newListItr(ListItr *this, List *list)
 {
@@ -185,19 +187,32 @@ newListItr(ListItr *this, List *list)
     this->listIdx = 0;
 }
 
-// Are there more items to scan?
+/***********************************************************************************************************************************
+Are there more items to scan?
+***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline bool
 moreListItr(ListItr *this)
 {
     return this->listIdx < lstSize(this->list);
 }
 
-// Get a pointer to the next item from the list.
+/***********************************************************************************************************************************
+Get a pointer to the next item from the list.
+***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void *
 nextListItr(ListItr *this)
 {
-    ASSERT(moreListItr(this));
+    checkItr(moreListItr(this), "Attempting to iterate beyond end of List");
     return lstGet(this->list, this->listIdx++);
+}
+
+/***********************************************************************************************************************************
+Destroy a list iterator.  (no-op)
+***********************************************************************************************************************************/
+__attribute__((always_inline)) static inline void
+destructListItr(ListItr *this)
+{
+    (void)this;
 }
 
 #endif
