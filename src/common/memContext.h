@@ -299,6 +299,6 @@ Macros for function logging
 Internal functions
 ***********************************************************************************************************************************/
 // Clean up mem contexts after an error.  Should only be called from error handling routines.
-void memContextClean(unsigned int tryDepth);
+void memContextClean(unsigned int tryDepth, bool fatal);
 
 #endif

@@ -238,7 +238,7 @@ main(int argListSize, const char *argList[])
 
 #ifdef HRN_FEATURE_ERROR
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             // If a test was running then throw a detailed result exception
 #ifdef DEBUG
