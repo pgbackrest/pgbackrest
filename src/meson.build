@@ -27,6 +27,7 @@ src_common = files(
 	'common/type/blob.c',
 	'common/type/buffer.c',
 	'common/type/convert.c',
+	'common/type/iterator.c',
 	'common/type/keyValue.c',
 	'common/type/list.c',
 	'common/type/object.c',
