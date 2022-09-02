@@ -1655,6 +1655,7 @@ testRun(void)
 
         time_t timestamp = 1575401652;
         String *backupLabel = backupLabelFormat(backupTypeFull, NULL, timestamp);
+        const String *const olderBackupLabel = backupLabelFormat(backupTypeFull, NULL, timestamp - 3);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("assign label when no history");
@@ -1678,9 +1679,89 @@ testRun(void)
         TEST_TITLE("assign label when backup is older");
 
         HRN_STORAGE_PUT_EMPTY(
-            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2))));
+            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(olderBackupLabel)));
 
         TEST_RESULT_STR(backupLabelCreate(backupTypeFull, NULL, timestamp), backupLabel, "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("differential and incremental backups read history related to full backup they are created on (full only)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 1))));
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp),
+            "create label");
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeIncr, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp),
+            "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("differential and incremental backups read history related to full backup they are created on (diff exists)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp - 2))));
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp),
+            "create label");
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeIncr, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp),
+            "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("differential and incremental backups read history related to full backup they are created on (diff and incr)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp - 1))));
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp),
+            "create label");
+
+        TEST_RESULT_STR(
+            backupLabelCreate(backupTypeIncr, olderBackupLabel, timestamp),
+            backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp),
+            "create label");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("differential and incremental backups read history related to full backup they are created on (skew)");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(
+                STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
+                strZ(backupLabelFormat(backupTypeIncr, olderBackupLabel, timestamp + 3))));
+
+        TEST_ERROR(
+            backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp), ClockError,
+            "new backup label '20191203-193409F_20191203-193413D' is not later "
+            "than latest backup label '20191203-193409F_20191203-193415I'\n"
+            "HINT: has the timezone changed?\n"
+            "HINT: is there clock skew?");
+
+        TEST_ERROR(
+            backupLabelCreate(backupTypeIncr, olderBackupLabel, timestamp), ClockError,
+            "new backup label '20191203-193409F_20191203-193413I' is not later "
+            "than latest backup label '20191203-193409F_20191203-193415I'\n"
+            "HINT: has the timezone changed?\n"
+            "HINT: is there clock skew?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("advance time when backup is same");

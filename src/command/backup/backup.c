@@ -78,13 +78,19 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
 
         if (!strLstEmpty(historyYearList))
         {
+            // For full backup find all archives
+            // For other backup types find archives which name begins with the first date of backupLabelLatest and ends with D or I
+            const String *const fileNameRegExp = (type == backupTypeFull) ?
+                                                     backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true) :
+                                                     strNewFmt("^%.*sF\\_" DATE_TIME_REGEX "(D|I)", DATE_TIME_LEN, strZ(backupLabelLatest));
+
             const StringList *historyList = strLstSort(
                 storageListP(
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(strLstGet(historyYearList, 0))),
                     .expression = strNewFmt(
                         "%s\\.manifest\\.%s$",
-                        strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
+                        strZ(fileNameRegExp),
                         strZ(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
