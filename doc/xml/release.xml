@@ -61,6 +61,19 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1853"/>
+                        <github-pull-request id="1855"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="alex.richman"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Update archive.info timestamps after a successful backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1816"/>
                         <github-pull-request id="1819"/>
 
