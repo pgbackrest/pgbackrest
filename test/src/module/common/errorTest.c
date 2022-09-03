@@ -48,10 +48,12 @@ testTryRecurse(void)
 Test error handler
 ***********************************************************************************************************************************/
 static unsigned int testErrorHandlerTryDepth;
+static bool testErrorHandlerFatal;
 
 static void
-testErrorHandler(unsigned int tryDepth)
+testErrorHandler(unsigned int tryDepth, bool fatal)
 {
+    testErrorHandlerFatal = fatal;
     testErrorHandlerTryDepth = tryDepth;
 }
 
@@ -184,6 +186,7 @@ testRun(void)
                 CATCH_FATAL()
                 {
                     assert(testErrorHandlerTryDepth == 3);
+                    assert(testErrorHandlerFatal);
 
                     // Change to FormatError so error can be caught by normal catches
                     THROW(FormatError, errorMessage());
@@ -198,6 +201,7 @@ testRun(void)
             CATCH_ANY()
             {
                 assert(testErrorHandlerTryDepth == 2);
+                assert(!testErrorHandlerFatal);
 
                 RETHROW();
             }
@@ -210,6 +214,7 @@ testRun(void)
         CATCH(RuntimeError)
         {
             assert(testErrorHandlerTryDepth == 1);
+            assert(!testErrorHandlerFatal);
             assert(errorTryDepth() == 1);
             assert(errorContext.tryList[1].state == errorStateEnd);
             assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
