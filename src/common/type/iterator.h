@@ -5,7 +5,7 @@ implement the "Iterable" interface. For information on how to create an "Iterabl
 For example, to scan a list,
     FOREACH(ItemType, item, List, list)
         doSomething(*item);
-    ENDFOREACH
+    ENDFOREACH;
 
 This file also defines an abstract Container type, which is a wrapper around any other Iterable container.
 Once wrapped, the Container can be passed around and the users don't need to know the details of what type
@@ -17,7 +17,7 @@ of container is inside.
     // Iterate through the abstract Container just like any other container.
     FOREACH(ItemType, item, Container, container)
         doSomething(*item)
-    ENDFOREACH
+    ENDFOREACH;
 
 ***********************************************************************************************************************************/
 #ifndef PGBACKREST_ITERATOR_H
@@ -29,6 +29,10 @@ of container is inside.
 // TODO: Temporary. There must be a reason this hasn't been done. Perhaps test mocks need the "attribute()" syntax visible.
 //       At any rate, it doesn't belong here and we should move it elsewhere if it turns out to be useful.
 #define INLINE __attribute__((always_inline)) static inline
+
+// The basic "Block" macro. Also belongs in a different file.
+#define BEGIN do {
+#define END   } while (0)
 
 // Define the polymorphic Container wrapper, including the jump table of underlying iterator methods.
 typedef struct Container {
@@ -96,22 +100,23 @@ Proposed syntactic sugar to make iteration look more like C++ or Python.
 Note foreach and endForeach are equivalent to a multi-line block statement.
 With a smart optimizer, the invocation of _destructor could be inlined, but otherwise it is an indirect call.
 ***********************************************************************************************************************************/
-#define FOREACH(ItemType, item, ContainerType, container) {                                                                        \
-    ContainerType##Itr _itr[1];                                                                                                    \
-    new##ContainerType##Itr(_itr, container);                                                                                      \
-    void (*_destructor)(ContainerType##Itr*) = destruct##ContainerType##Itr;                                                       \
-    while (more##ContainerType##Itr(_itr))                                                                                         \
-    {                                                                                                                              \
-        ItemType *item = (ItemType*) next##ContainerType##Itr(_itr);
-#define ENDFOREACH                                                                                                                 \
-    }                                                                                                                              \
-    _destructor(_itr);                                                                                                             \
-}
+#define FOREACH(ItemType, item, ContainerType, container)                                                                           \
+    BEGIN                                                                                                                           \
+        ContainerType##Itr _itr[1];                                                                                                 \
+        new##ContainerType##Itr(_itr, container);                                                                                   \
+        void (*_destructor)(ContainerType##Itr*) = destruct##ContainerType##Itr;                                                    \
+        while (more##ContainerType##Itr(_itr))                                                                                      \
+        {                                                                                                                           \
+            ItemType *item = (ItemType*) next##ContainerType##Itr(_itr);
+#define ENDFOREACH                                                                                                                  \
+        }                                                                                                                           \
+        _destructor(_itr);                                                                                                          \
+    END
 
 /***********************************************************************************************************************************
 Proposed syntactic sugar for creating an abstract Container from a regular container.
 Checks to ensure we won't overflow pre-allocated memory in ContainerItr.
-This macro is actually an initialization list used to fill in an array of size 1.
+Unlike "block" macros, this macro is actually an expression used to initialize a Container.
 ***********************************************************************************************************************************/
 #define NEWCONTAINER(SubType, subCntainer) (                                                                                       \
     checkItr(subCntainer != NULL, "Attempting to create NEWCONTAINER from NULL"),                                                  \
@@ -155,5 +160,6 @@ freeItr(void *this, void *ptr)
 
 // TODO: INLINE belongs elsewhere.
 #undef INLINE
+
 
 #endif //PGBACKREST_ITERATOR_H

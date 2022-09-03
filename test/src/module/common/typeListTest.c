@@ -232,14 +232,14 @@ testRun(void)
         FOREACH(int, value, List, list)
             (void)*value;
             ASSERT(false);  // We shouldn't be here with an empty list
-        ENDFOREACH
+        ENDFOREACH;
         TEST_RESULT_VOID((void)0, "empty list");
 
         Container container[] = {NEWCONTAINER(List, list)}; // Want pointer to new Container.
         FOREACH(int, value, List, list)
             (void)*value;
             ASSERT(false);  // We shouldn't be here with an empty list
-        ENDFOREACH
+        ENDFOREACH;
         TEST_RESULT_VOID((void)0, "empty list inside Container");
 
         int testMax = 100;
@@ -251,14 +251,14 @@ testRun(void)
         FOREACH (int, value, List, list)
             ASSERT(*value == count);
             count++;
-        ENDFOREACH
+        ENDFOREACH;
         TEST_RESULT_INT(count, testMax, "non-empty List");
 
         count = 0;
         FOREACH (int, value, Container, container)
             ASSERT(*value == count);
             count++;
-        ENDFOREACH
+        ENDFOREACH;
         TEST_RESULT_INT(count, testMax, "non-empty list inside Container");
 
         // Try to get next() of an empty list.
@@ -275,11 +275,11 @@ testRun(void)
         TEST_ERROR(nextListItr(itr), AssertError, "Attempting to iterate beyond end of List");
 
         // Try to create a Container from NULL list.
-        TEST_ERROR(NEWCONTAINER(List, NULL), AssertError, "Attempting to create NEWCONTAINER from NULL");
+        TEST_ERROR((void)NEWCONTAINER(List, NULL), AssertError, "Attempting to create NEWCONTAINER from NULL");
 
         // Try to create a Container within a Container and confirm it doesn't have enough memory to hold itself.
         // Not really a List test, but it is convenient to test it here since List is the prototypical container.
-        TEST_ERROR(NEWCONTAINER(Container, container), AssertError, "Pre-allocated space in ContainerItr is too small");
+        TEST_ERROR((void)NEWCONTAINER(Container, container), AssertError, "Pre-allocated space in ContainerItr is too small");
 
     }
 
