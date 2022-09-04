@@ -24,8 +24,6 @@ typedef struct BlockIncr
     unsigned int reference;                                         // Current backup reference
     uint64_t bundleId;                                              // Bundle id
 
-    size_t inputOffset;                                             // Input offset
-
     unsigned int blockNo;                                           // Block number
     size_t blockOffset;                                             // Block offset
     size_t blockSize;                                               // Block size
@@ -38,6 +36,7 @@ typedef struct BlockIncr
     BlockMap *blockMapOut;                                          // Output block map
     uint64_t blockMapOutSize;                                       // Output block map size (if any)
 
+    size_t inputOffset;                                             // Input offset
     bool inputSame;                                                 // Input the same data
     bool done;                                                      // Is the filter done?
 } BlockIncr;
@@ -160,7 +159,7 @@ For manifest:
                         ioWriteVarIntU64(write, this->blockNo);
 
                         // Write checksum
-                        const Buffer *const checksum = cryptoHashOne(HASH_TYPE_SHA1_STR, this->block);
+                        const Buffer *const checksum = cryptoHashOne(hashTypeSha1, this->block);
 
                         ioWrite(write, checksum);
                         memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
