@@ -1816,8 +1816,8 @@ backupProcess(
             jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
         }
 
-        if (jobData.blockIncr)
-            jobData.blockIncrSize = (size_t)cfgOptionUInt64(cfgOptRepoBlockSize);
+        if (jobData.blockIncr)                                                                                  // {uncovered !!!}
+            jobData.blockIncrSize = (size_t)cfgOptionUInt64(cfgOptRepoBlockSize);                               // {uncovered !!!}
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
         // exist in to repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to

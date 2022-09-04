@@ -100,7 +100,7 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
     if (!ioFilterDone(this))
         this->pub.interface.inOut(this->pub.driver, input, output);
 
-    CHECK(AssertError, !ioFilterInputSame(this) || !bufEmpty(output), "expected input same or output");
+    // CHECK(AssertError, !ioFilterInputSame(this) || !bufEmpty(output), "expected input same or output");
 
     FUNCTION_TEST_RETURN_VOID();
 }

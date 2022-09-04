@@ -140,55 +140,52 @@ For manifest:
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    IoWrite *const write = ioBufferWriteNew(this->blockOut);
-                    ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
-                    // !!! ENCRYPT FILTER WOULD GO HERE
-                    ioWriteOpen(write);
+                    // Get block checksum
+                    const Buffer *const checksum = cryptoHashOne(hashTypeSha1, this->block);
 
-                    // Write block number and hash
-                    BlockMapItem blockMapItem =
+                    // Does the block exist in the input map?
+                    const BlockMapItem *const blockMapItemIn =
+                        map && this->blockMapIn != NULL && this->blockNo < blockMapSize(this->blockMapIn) ?
+                            blockMapGet(this->blockMapIn, this->blockNo) : NULL;
+
+                    // Write block
+                    if (blockMapItemIn == NULL || memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
                     {
-                        .reference = this->reference,
-                        .bundleId = this->bundleId,
-                        .offset = this->blockOffset,
-                    };
+                        IoWrite *const write = ioBufferWriteNew(this->blockOut);
+                        ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
+                        // !!! ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
+                        // !!! ENCRYPT FILTER GOES HERE
 
-                    if (map)
+                        ioWriteOpen(write);
+                        ioWrite(write, this->block);
+                        ioWriteClose(write);
+
+                        // Write to block map
+                        if (map)
+                        {
+                            ASSERT(this->blockNo == 0 || this->blockOffset > 0);
+
+                            BlockMapItem blockMapItem =
+                            {
+                                .reference = this->reference,
+                                .bundleId = this->bundleId,
+                                .offset = this->blockOffset,
+                                .size = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE)),
+                            };
+
+                            memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
+                            blockMapAdd(this->blockMapOut, &blockMapItem);
+
+                            this->blockOffset += blockMapItem.size;
+                        }
+                    }
+                    else
                     {
-                        // Write block number
-                        ioWriteVarIntU64(write, this->blockNo);
-
-                        // Write checksum
-                        const Buffer *const checksum = cryptoHashOne(hashTypeSha1, this->block);
-
-                        ioWrite(write, checksum);
-                        memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
+                        blockMapAdd(this->blockMapOut, blockMapItemIn);
+                        bufUsedZero(this->block);
                     }
 
-                    // Write data
-                    Buffer *const compressed = bufNew(0);
-                    IoWrite *const compressedWrite = ioBufferWriteNew(compressed);
-
-                    // ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
-                    ioWriteOpen(compressedWrite);
-                    ioWrite(compressedWrite, this->block);
-                    ioWriteClose(compressedWrite);
-
-                    if (map)
-                        ioWriteVarIntU64(write, bufUsed(compressed));
-
-                    // !!!
-                    ioWrite(write, compressed);
-                    ioWriteClose(write);
-
-                    if (map)
-                    {
-                        blockMapItem.size = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE));
-                        blockMapAdd(this->blockMapOut, &blockMapItem);
-
-                        this->blockOffset += blockMapItem.size;
-                        this->blockNo++;
-                    }
+                    this->blockNo++;
                 }
                 MEM_CONTEXT_TEMP_END();
             }

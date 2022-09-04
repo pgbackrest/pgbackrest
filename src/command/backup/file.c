@@ -227,9 +227,9 @@ backupFile(
                 }
 
                 // Add block incremental filter
-                if (blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize))
+                if (blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize)) // {uncovered !!!}
                 {
-                    ioFilterGroupAdd(
+                    ioFilterGroupAdd( // {uncovered !!!}
                         ioReadFilterGroup(
                             storageReadIo(read)), blockIncrNew(blockIncrSize, /* !!! FIX */0, /* !!! FIX */0, bundleOffset, /* !!! FIX */NULL));
                 }

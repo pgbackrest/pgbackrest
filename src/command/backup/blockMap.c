@@ -151,7 +151,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
             {
                 ASSERT(blockMapItem->reference == blockMapRef->reference);
                 ASSERT(blockMapItem->bundleId == blockMapRef->bundleId);
-                ASSERT(blockMapItem->offset > blockMapRef->offset);
+                ASSERT(blockMapItem->offset >= blockMapRef->offset);
 
                 // Add rolling offset delta
                 ioWriteVarIntU64(output, blockMapItem->offset - blockMapRef->offset);
