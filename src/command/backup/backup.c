@@ -2193,6 +2193,15 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         infoBackupSaveFile(
             infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
             cfgOptionStrNull(cfgOptRepoCipherPass));
+
+        // Save archive.info/copy so the timestamps will be updated to prevent lifecycle settings from removing the files early
+        // -------------------------------------------------------------------------------------------------------------------------
+        infoArchiveSaveFile(
+            infoArchiveLoadFile(
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+                cfgOptionStrNull(cfgOptRepoCipherPass)),
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+            cfgOptionStrNull(cfgOptRepoCipherPass));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -2292,7 +2301,8 @@ cmdBackup(void)
             backupStopResult.lsn, backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
             cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
-            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby));
+            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby),
+            cfgOptionTest(cfgOptAnnotation) ? cfgOptionKv(cfgOptAnnotation) : NULL);
 
         // The primary db object won't be used anymore so free it
         dbFree(backupData->dbPrimary);

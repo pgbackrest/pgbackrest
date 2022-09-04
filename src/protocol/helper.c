@@ -759,11 +759,23 @@ protocolRemoteExec(
             {
                 ASSERT(remoteType == CFGOPTVAL_REPO_HOST_TYPE_TLS);
 
-                // Pass parameters to server
-                ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
-                pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
-                protocolClientExecute(helper->client, command, false);
-                protocolCommandFree(command);
+                TRY_BEGIN()
+                {
+                    // Pass parameters to server
+                    ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
+                    pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
+                    protocolClientExecute(helper->client, command, false);
+                    protocolCommandFree(command);
+                }
+                CATCH_ANY()
+                {
+                    // Clear the callback so the client does not try to shut down the connection. Attempting to shut down the
+                    // connection will fail since the server has already disconnected and a new error will be thrown, masking the
+                    // original error.
+                    memContextCallbackClear(objMemContext(helper->client));
+                    RETHROW();
+                }
+                TRY_END();
 
                 break;
             }

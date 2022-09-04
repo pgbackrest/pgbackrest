@@ -1,4 +1,11 @@
 ####################################################################################################################################
+# Error on release builds since we do not want anyone using meson for production yet
+####################################################################################################################################
+if get_option('buildtype') != 'debug' and get_option('buildtype') != 'debugoptimized'
+    error('meson is currently not supported for release builds')
+endif
+
+####################################################################################################################################
 # Write configuration
 ####################################################################################################################################
 configure_file(output: 'build.auto.h', configuration: configuration)

@@ -159,7 +159,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">minio/minio:RELEASE.2022-01-28T02-28-16Z</variable>    <!-- Minio docker image -->
+        <variable key="s3-image">minio/minio:RELEASE.2022-07-30T05-21-40Z</variable>    <!-- Minio docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -176,6 +176,11 @@
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
 
         <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
+
+        <!-- Limit host memory to check for memory leaks. Some environments do not allow memory to be set so allow disabling. -->
+        <variable key="host-mem-limit">y</variable>
+        <variable key="host-mem" if="'{[host-mem-limit]}' eq 'y'">-m 512m</variable>
+        <variable key="host-mem" if="'{[host-mem-limit]}' eq 'n'"></variable>
 
         <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
         <variable key="host-mount">{[host-repo-path]}:{[pgbackrest-repo-path]}</variable>
@@ -396,8 +401,9 @@
         # Set locale
         RUN echo en_US.UTF-8 UTF-8 > /etc/locale.conf
 
-        # Add path to PostgreSQL
+        # Add path to PostgreSQL and package
         ENV PATH=/usr/pgsql-{[pg-version]}/bin:$PATH
+        ENV PKG_CONFIG_PATH=/usr/pgsql-{[pg-version]}/lib/pkgconfig:$PKG_CONFIG_PATH
 
         CMD ["/usr/sbin/init"]
     </host-define>
@@ -454,7 +460,7 @@
                     echo 'ExecStart=/usr/bin/pgbackrest server' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'ExecStartPost=/bin/sleep 3' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'ExecStartPost=/bin/bash -c "[ ! -z $MAINPID ]"' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
-                    echo 'ExecReload=kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'ExecReload=/bin/kill -HUP $MAINPID' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '[Install]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'WantedBy=multi-user.target' | tee -a /etc/systemd/system/pgbackrest.service
@@ -770,10 +776,10 @@
         <title>Introduction</title>
 
         <!-- Create Azure server first to allow it time to boot before being used -->
-        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="{[azure-image]}" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
+        <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="{[azure-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-m 128m -v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -868,7 +874,7 @@
 
         <p if="{[os-type-is-rhel]}">{[user-guide-os]} packages for <backrest/> are available from <link url="{[crunchy-url-base]}">Crunchy Data</link> or <link url="http://yum.postgresql.org">yum.postgresql.org</link>, but it is also easy to download the source and install manually.</p>
 
-        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="-m 256m {[host-option]}"/>
+        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
 
         <p>When building from source it is best to use a build host rather than building on production.  Many of the tools required for the build should generally not be installed in production.  <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
@@ -940,7 +946,7 @@
 
         <p>A new host named <host>{[host-pg1]}</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
-        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="-m 512m {[host-option]}"/>
+        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-mem]} {[host-option]}"/>
 
         <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
             <title>Create <user>{[br-user]}</user> user</title>
@@ -1559,6 +1565,53 @@
             <p>The <br-option>repo-bundle-size</br-option> and <br-option>repo-bundle-limit</br-option> options can be used for tuning, though the defaults should be optimal in most cases.</p>
 
             <p>While file bundling is generally more efficient, the downside is that it is more difficult to manually retrieve files from the repository. It may not be ideal for deduplicated storage since each full backup will arrange files in the bundles differently. Lastly, file bundles cannot be resumed, so be careful not to set <br-option>repo-bundle-size</br-option> too high.</p>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="annotate">
+            <title>Backup Annotations</title>
+
+            <p>Users can attach informative key/value pairs to the backup. This option may be used multiple times to attach multiple annotations.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Perform a full backup with annotations</title>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-annotation=source="demo backup"
+                        {[dash]}-annotation=key=value {[dash]}-type=full backup</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <p>Annotations are output by the <cmd>info</cmd> command text output when a backup is specified with <br-option>--set</br-option> and always appear in the JSON output.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Get info for the {[postgres-cluster-demo]} cluster</title>
+
+                <execute user="postgres" show="n" variable-key="backup-annotate-last">
+                    <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+                </execute>
+
+                <execute user="postgres" filter="n" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]} info</exe-cmd>
+                    <exe-highlight>annotation</exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>Annotations included with the <cmd>backup</cmd> command can be added, modified, or removed afterwards using the <cmd>annotate</cmd> command.</p>
+
+            <execute-list host="{[host-pg1]}">
+                <title>Change backup annotations</title>
+
+                <execute user="postgres">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]}
+                        {[dash]}-annotation=key= {[dash]}-annotation=new_key=new_value annotate</exe-cmd>
+                </execute>
+
+                <execute user="postgres" filter="n" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-set={[backup-annotate-last]} info</exe-cmd>
+                    <exe-highlight>annotation</exe-highlight>
+                </execute>
+            </execute-list>
         </section>
     </section>
 
@@ -2396,7 +2449,7 @@
 
             <admonition type="note">The <backrest/> version installed on the <host>repository</host> host must exactly match the version installed on the <postgres/> host.</admonition>
 
-            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="-m 512m {[host-option]}"/>
+            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-mem]} {[host-option]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository.  Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
@@ -2811,7 +2864,7 @@
 
             <p>A new host named <host>{[host-pg2]}</host> is created to run the standby.</p>
 
-            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="-m 512m {[host-option]}"/>
+            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-mem]} {[host-option]}"/>
 
             <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>

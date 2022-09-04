@@ -20,7 +20,8 @@ Constructors
 ***********************************************************************************************************************************/
 TestBuild *testBldNew(
     const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const TestDefModule *module,
-    unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone);
+    unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone, bool coverage, bool profile,
+    bool optimize);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -39,6 +40,9 @@ typedef struct TestBuildPub
     bool logTime;                                                   // Log times/timestamps
     uint64_t scale;                                                 // Scale performance test
     const String *timeZone;                                         // Test in timezone
+    bool coverage;                                                  // Generate coverage?
+    bool profile;                                                   // Generate profile report?
+    bool optimize;                                                  // Optimize code?
     TestDef tstDef;                                                 // Test definitions
 } TestBuildPub;
 
@@ -118,6 +122,27 @@ __attribute__((always_inline)) static inline const String *
 testBldTimeZone(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->timeZone;
+}
+
+// Generate coverage?
+__attribute__((always_inline)) static inline bool
+testBldCoverage(const TestBuild *const this)
+{
+    return THIS_PUB(TestBuild)->coverage;
+}
+
+// Generate profile repo?
+__attribute__((always_inline)) static inline bool
+testBldProfile(const TestBuild *const this)
+{
+    return THIS_PUB(TestBuild)->profile;
+}
+
+// Optimize code?
+__attribute__((always_inline)) static inline bool
+testBldOptimize(const TestBuild *const this)
+{
+    return THIS_PUB(TestBuild)->optimize;
 }
 
 // Scale

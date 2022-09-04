@@ -74,7 +74,7 @@ void
 cmdTest(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
     const StringList *moduleFilterList, const unsigned int test, const uint64_t scale, const LogLevel logLevel,
-    const bool logTime, const String *const timeZone, bool repoCopy)
+    const bool logTime, const String *const timeZone, const bool coverage, const bool profile, const bool optimize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -87,159 +87,108 @@ cmdTest(
         FUNCTION_LOG_PARAM(ENUM, logLevel);
         FUNCTION_LOG_PARAM(BOOL, logTime);
         FUNCTION_LOG_PARAM(STRING, timeZone);
-        FUNCTION_LOG_PARAM(BOOL, repoCopy);
+        FUNCTION_LOG_PARAM(BOOL, coverage);
+        FUNCTION_LOG_PARAM(BOOL, profile);
+        FUNCTION_LOG_PARAM(BOOL, optimize);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create the data path
-        const Storage *const storageHrnId = storagePosixNewP(strNewFmt("%s/data-%u", strZ(pathTest), vmId), .write = true);
-        cmdTestExecLog = storagePathP(storageHrnId, STRDEF("exec.log"));
+        // Log file name
+        cmdTestExecLog = strNewFmt("%s/exec-%u.log", strZ(pathTest), vmId);
 
-        cmdTestPathCreate(storageHrnId, NULL);
+        // Find test
+        ASSERT(!strLstEmpty(moduleFilterList));
 
-        // Copy the source repository if requested (otherwise defaults to source code repository)
-        const String *pathRepoCopy = pathRepo;
+        const TestDef testDef = testDefParse(storagePosixNewP(pathRepo));
+        const String *const moduleName = strLstGet(moduleFilterList, 0);
+        const TestDefModule *const module = lstFind(testDef.moduleList, &moduleName);
 
-        if (repoCopy)
+        if (module == NULL)
+            THROW_FMT(ParamInvalidError, "'%s' is not a valid test", strZ(moduleName));
+
+        // Build test
+        bool buildRetry = false;
+        const String *const pathUnit = strNewFmt("%s/unit-%u/%s", strZ(pathTest), vmId, strZ(vm));
+        const String *const pathUnitBuild = strNewFmt("%s/build", strZ(pathUnit));
+        const Storage *const storageUnitBuild = storagePosixNewP(pathUnitBuild, .write = true);
+
+        do
         {
-            pathRepoCopy = strNewFmt("%s/repo", strZ(pathTest));
-            const Storage *const storageRepoCopy = storagePosixNewP(pathRepoCopy, .write = true);
-
-            LOG_DETAIL_FMT("sync repo to %s", strZ(pathRepoCopy));
-            storagePathCreateP(storageRepoCopy, NULL, .mode = 0770);
-
-            cmdTestExec(
-                strNewFmt(
-                    "git -C %s ls-files -c --others --exclude-standard | rsync -LtW --files-from=- %s/ %s", strZ(pathRepo),
-                    strZ(pathRepo), strZ(pathRepoCopy)));
-        }
-
-        // Build code (??? better to do this only when it is needed)
-        cmdTestExec(strNewFmt("%s/build/none/src/build-code postgres %s/extra", strZ(pathTest), strZ(pathRepoCopy)));
-
-        // Build test list
-        const TestDef testDef = testDefParse(storagePosixNewP(pathRepoCopy));
-        StringList *const moduleList = strLstNew();
-        bool binRequired = false;
-
-        if (strLstEmpty(moduleFilterList))
-        {
-            StringList *const moduleFilterListEmpty = strLstNew();
-            strLstAddZ(moduleFilterListEmpty, "");
-
-            moduleFilterList = moduleFilterListEmpty;
-        }
-
-        for (unsigned int moduleFilterIdx = 0; moduleFilterIdx < strLstSize(moduleFilterList); moduleFilterIdx++)
-        {
-            const String *const moduleFilter = strLstGet(moduleFilterList, moduleFilterIdx);
-
-            if (strEmpty(moduleFilter) || strEndsWithZ(moduleFilter, "/"))
-            {
-                bool found = false;
-
-                for (unsigned int moduleIdx = 0; moduleIdx < lstSize(testDef.moduleList); moduleIdx++)
-                {
-                    const TestDefModule *const module = lstGet(testDef.moduleList, moduleIdx);
-
-                    // ??? These test types don't run yet
-                    if (module->flag != NULL || module->containerRequired)
-                        continue;
-
-                    if (strEmpty(moduleFilter) || strBeginsWith(module->name, moduleFilter))
-                    {
-                        strLstAddIfMissing(moduleList, module->name);
-                        found = true;
-
-                        if (module->binRequired)
-                            binRequired = true;
-                    }
-                }
-
-                if (!found)
-                    THROW_FMT(ParamInvalidError, "'%s' prefix does not match any tests", strZ(moduleFilter));
-            }
-            else
-            {
-                const TestDefModule *const module = lstFind(testDef.moduleList, &moduleFilter);
-
-                if (module == NULL)
-                    THROW_FMT(ParamInvalidError, "'%s' is not a valid test", strZ(moduleFilter));
-
-                strLstAddIfMissing(moduleList, module->name);
-            }
-        }
-
-        // Build pgbackrest exe
-        if (binRequired)
-        {
-            LOG_INFO("build pgbackrest");
-            cmdTestExec(strNewFmt("ninja -C %s/build/none src/pgbackrest", strZ(pathTest)));
-        }
-
-        // Process test list
-        unsigned int errorTotal = 0;
-
-        for (unsigned int moduleIdx = 0; moduleIdx < strLstSize(moduleList); moduleIdx++)
-        {
-            const String *const moduleName = strLstGet(moduleList, moduleIdx);
-            const TestDefModule *const module = lstFind(testDef.moduleList, &moduleName);
-            CHECK(AssertError, module != NULL, "unable to find module");
-
             TRY_BEGIN()
             {
-                // Build unit test
-                const TimeMSec buildTimeBegin = timeMSec();
+                // Build unit
                 TestBuild *const testBld = testBldNew(
-                    pathRepoCopy, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone);
+                    pathRepo, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone, coverage, profile, optimize);
                 testBldUnit(testBld);
 
-                // Create the test path
-                const Storage *const storageTestId = storagePosixNewP(
-                    strNewFmt("%s/test-%u", strZ(testBldPathTest(testBld)), testBldVmId(testBld)), .write = true);
-
-                cmdTestPathCreate(storageTestId, NULL);
-
                 // Meson setup
-                const String *const pathUnit = strNewFmt("%s/unit-%u", strZ(pathTest), vmId);
-                const String *const pathUnitBuild = strNewFmt("%s/build", strZ(pathUnit));
+                String *const mesonSetup = strCatZ(strNew(), "-Dbuildtype=");
+
+                if (module->flag != NULL || profile || module->type == testDefTypePerformance)
+                {
+                    ASSERT(module->flag == NULL || strEqZ(module->flag, "-DNDEBUG"));
+                    strCatZ(mesonSetup, "release");
+                }
+                else
+                    strCatZ(mesonSetup, "debug");
+
+                strCatFmt(mesonSetup, " -Db_coverage=%s", cvtBoolToConstZ(coverage));
 
                 if (!storageExistsP(testBldStorageTest(testBld), strNewFmt("%s/build.ninja", strZ(pathUnitBuild))))
                 {
                     LOG_DETAIL("meson setup");
+
                     cmdTestExec(
                         strNewFmt(
-                            "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug %s %s", strZ(pathUnitBuild),
+                            "meson setup -Dwerror=true -Dfatal-errors=true %s %s %s", strZ(mesonSetup), strZ(pathUnitBuild),
                             strZ(pathUnit)));
                 }
+                // Else reconfigure
+                else
+                {
+                    LOG_DETAIL("meson configure");
+
+                    cmdTestExec(strNewFmt("meson configure %s %s", strZ(mesonSetup), strZ(pathUnitBuild)));
+                }
+
+                // Remove old coverage data. Note that coverage can be in different paths depending on the meson version.
+                const String *const pathCoverage = storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
+                    STRDEF("test-unit.p") : STRDEF("test-unit@exe");
+
+                StorageIterator *const storageItr = storageNewItrP(
+                    storageUnitBuild, pathCoverage, .expression = STRDEF("\\.gcda$"));
+
+                while (storageItrMore(storageItr))
+                {
+                    storageRemoveP(
+                        storageUnitBuild, strNewFmt("%s/%s", strZ(pathCoverage), strZ(storageItrNext(storageItr).name)));
+                }
+
+                // Remove old profile data
+                storageRemoveP(storageUnitBuild, STRDEF("gmon.out"));
 
                 // Ninja build
                 cmdTestExec(strNewFmt("ninja -C %s", strZ(pathUnitBuild)));
-                const TimeMSec buildTimeEnd = timeMSec();
-
-                // Unit test
-                const TimeMSec runTimeBegin = timeMSec();
-                cmdTestExec(strNewFmt("%s/test-unit", strZ(pathUnitBuild)));
-                const TimeMSec runTimeEnd = timeMSec();
-
-                LOG_INFO_FMT(
-                    "test unit %s (bld=%.3fs, run=%.3fs)", strZ(moduleName),
-                    (double)(buildTimeEnd - buildTimeBegin) / (double)MSEC_PER_SEC,
-                    (double)(runTimeEnd - runTimeBegin) / (double)MSEC_PER_SEC);
+                buildRetry = false;
             }
             CATCH_ANY()
             {
-                LOG_INFO_FMT("test unit %s", strZ(moduleName));
-                LOG_ERROR(errorCode(), errorMessage());
-                errorTotal++;
+                // If this is the first build failure then clean the build path a retry
+                if (buildRetry == false)
+                {
+                    buildRetry = true;
+
+                    LOG_WARN_FMT("build failed for unit %s -- will retry: %s", strZ(moduleName), errorMessage());
+                    cmdTestPathCreate(storagePosixNewP(pathTest, .write = true), pathUnit);
+                }
+                // Else error
+                else
+                    THROWP_FMT(errorType(), "build failed for unit %s: %s", strZ(moduleName), errorMessage());
             }
             TRY_END();
         }
-
-        // Return error
-        if (errorTotal > 0)
-            THROW_FMT(CommandError, "%u test failure(s)", errorTotal);
+        while (buildRetry);
     }
     MEM_CONTEXT_TEMP_END();
 

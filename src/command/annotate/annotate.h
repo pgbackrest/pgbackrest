@@ -1,20 +1,13 @@
 /***********************************************************************************************************************************
-Test Command
-
-Perform a test.
+Annotate Command
 ***********************************************************************************************************************************/
-#ifndef TEST_COMMAND_TEST_TEST_H
-#define TEST_COMMAND_TEST_TEST_H
-
-#include "common/logLevel.h"
-#include "common/type/stringList.h"
+#ifndef COMMAND_ANNOTATE_ANNOTATE_H
+#define COMMAND_ANNOTATE_ANNOTATE_H
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cmdTest(
-    const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const StringList *moduleFilterList,
-    unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone, bool coverage, bool profile,
-    bool optimize);
+// Add or modify backup annotations
+void cmdAnnotate(void);
 
 #endif

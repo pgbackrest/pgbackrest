@@ -16,7 +16,78 @@
     <release-list>
         <release date="XXXX-XX-XX" version="2.41dev" title="UNDER DEVELOPMENT">
             <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1852"/>
+                        <github-pull-request id="1854"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adam.brusselback"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix incorrect time expiration being used for non-default repos.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1709"/>
+                        <github-pull-request id="1724"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="adam.berlin"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Backup key/value annotations.</p>
+                    </release-item>
+                </release-feature-list>
+
                 <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1484"/>
+                        <github-pull-request id="1501"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="anton.kurochkin"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Support <br-option>--set</br-option> in JSON output for <cmd>info</cmd> command.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1853"/>
+                        <github-pull-request id="1855"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="alex.richman"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Update archive.info timestamps after a successful backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1816"/>
+                        <github-pull-request id="1819"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="keith.fiske"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="keith.fiske"/>
+                        </release-item-contributor-list>
+
+                        <p>Move standby timeline check after checkpoint.</p>
+                    </release-item>
+
                     <release-item>
                         <release-item-contributor-list>
                             <release-item-ideator id="cynthia.shang"/>
@@ -26,7 +97,44 @@
                         <p>Improve warning message on backup resume.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <github-pull-request id="1842"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                        </release-item-contributor-list>
+
+                        <p>Skip mem context cleanup in <code>CATCH_FATAL()</code> block.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1838"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                        </release-item-contributor-list>
+
+                        <p>Do not allow <code>CATCH()</code> to catch a fatal error.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="don.seiler"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add absolute path for <id>kill</id> in <file>pgbackrest.service</file>.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2022-07-18" version="2.40" title="OpenSSL 3 Support">
@@ -11356,6 +11464,11 @@
         <contributor id="abubakar.mohammed">
             <contributor-name-display>Abubakar Mohammed</contributor-name-display>
             <contributor-id type="github">abubakarm94</contributor-id>
+        </contributor>
+
+        <contributor id="adam.berlin">
+            <contributor-name-display>Adam Berlin</contributor-name-display>
+            <contributor-id type="github">berlin-ab</contributor-id>
         </contributor>
 
         <contributor id="adam.brusselback">

@@ -45,15 +45,27 @@ option:
       - 512KiB
       - 1MiB
 
+  coverage:
+    type: boolean
+    default: true
+    negate: true
+    command:
+      test: {}
+
   neutral-umask:
     type: boolean
     internal: true
     default: true
 
-  repo-copy:
+  optimize:
     type: boolean
-    default: true
-    negate: true
+    default: false
+    command:
+      test: {}
+
+  profile:
+    type: boolean
+    default: false
     command:
       test: {}
 

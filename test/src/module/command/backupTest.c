@@ -2916,9 +2916,25 @@ testRun(void)
             // Remove halted backup so there's no resume
             HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191016-042640F", .recurse = true);
 
+            // Set archive.info/copy to an older timestamp so we can be sure it was updated as part of backup
+            time_t archiveInfoOldTimestamp = 967746268;
+            HRN_STORAGE_TIME(storageRepo(), INFO_ARCHIVE_PATH_FILE, archiveInfoOldTimestamp);
+            HRN_STORAGE_TIME(storageRepo(), INFO_ARCHIVE_PATH_FILE_COPY, archiveInfoOldTimestamp);
+
+            // Get a copy of archive.info
+            const String *archiveInfoContent = strNewBuf(storageGetP(storageNewReadP(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR)));
+
             // Run backup
             testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_RESULT_VOID(testCmdBackup(), "backup");
+
+            // Check archive.info/copy timestamp was updated but contents were not
+            TEST_RESULT_INT_NE(
+                storageInfoP(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR).timeModified, archiveInfoOldTimestamp, "time updated");
+            TEST_STORAGE_GET(storageRepo(), INFO_ARCHIVE_PATH_FILE, strZ(archiveInfoContent));
+            TEST_RESULT_INT_NE(
+                storageInfoP(storageRepo(), INFO_ARCHIVE_PATH_FILE_COPY_STR).timeModified, archiveInfoOldTimestamp, "time updated");
+            TEST_STORAGE_GET(storageRepo(), INFO_ARCHIVE_PATH_FILE_COPY, strZ(archiveInfoContent));
 
             // Set log level back to detail
             harnessLogLevelSet(logLevelDetail);
@@ -3337,7 +3353,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 11 full backup with tablespaces and bundles");
+        TEST_TITLE("online 11 full backup with tablespaces, bundles and annotations");
 
         backupTimeStart = BACKUP_EPOCH + 2400000;
 
@@ -3354,6 +3370,8 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16K");
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawBool(argList, cfgOptResume, false);
+            hrnCfgArgRawZ(argList, cfgOptAnnotation, "extra key=this is an annotation");
+            hrnCfgArgRawZ(argList, cfgOptAnnotation, "source=this is another annotation");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Set to a smaller values than the defaults allow
@@ -3430,6 +3448,9 @@ testRun(void)
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
                     ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                "\n"
+                "[metadata]\n"
+                "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"

@@ -33,6 +33,16 @@
                     <example>1MiB</example>
                 </option>
 
+                <option id="coverage">
+                    <summary>Generate code coverage.</summary>
+
+                    <text>
+                        <p>Coverage helps determine that tests adequately test the code.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
                 <option id="log-level">
                     <summary>Level for harness logging.</summary>
 
@@ -89,11 +99,21 @@
                     <example>n</example>
                 </option>
 
-                <option id="repo-copy">
-                    <summary>Make copy of code repository.</summary>
+                <option id="optimize">
+                    <summary>Optimize test.</summary>
 
                     <text>
-                        <p>Make a copy of the code repository for testing so changes to the code repository do not affect tests.</p>
+                        <p>Compile test with optimizations.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
+                <option id="profile">
+                    <summary>Generate profile report.</summary>
+
+                    <text>
+                        <p>Profiling helps identify bottlenecks in the code.</p>
                     </text>
 
                     <example>n</example>
