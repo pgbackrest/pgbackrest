@@ -1,0 +1,94 @@
+#!/bin/bash -x
+
+# Script globals.
+THIS_DIR=`dirname $0`
+INPUT=${1:-''}
+OUTPUT_DIRECTORY=${2:-''}
+INPUT_FILTER=${3:-''}
+
+####################################################################################################################################
+# Create doxygen documentation from non-annotated C files
+#    doxyCgen  <input directory>  <output directory>  <doxyCfilter optional>
+#    $PROJECT_NAME - environment variable
+#    $PROJECT_BRIEF - environment variable
+####################################################################################################################################
+main() # <args>
+{
+    # Build the C filter if need be.
+    INPUT_FILTER=`buildDoxyFilter "$INPUT_FILTER"`
+
+    # Create a doxygen configuration file.
+    createDoxyfile "$OUTPUT_DIRECTORY/Doxyfile"
+
+    # Generate the doxygen documentation
+    doxygen "$OUTPUT_DIRECTORY/Doxyfile"
+}
+
+####################################################################################################################################
+# Create a Doxyfile suitable processing C code.
+# Assumes the following variables are set:
+#   OUTPUT_DIRECTORY
+#   INPUT
+#   INPUT_FILTER
+#   PROJECT_NAME (optional, from environment_)
+#   PROJECT_BRIEF (optional, from environment)
+####################################################################################################################################
+createDoxyfile() # <doxyfile path>
+{
+    cat <<-EOF > $1
+        JAVADOC_AUTOBRIEF=YES
+        JAVADDOC_BANNER=YES
+        OPTIMIZE_OUTPUT_FOR_C=YES
+        DISTRIBUTE_GROUP_DOC=YES
+        INLINE_SIMPLE_STRUCTS=YES
+        HIDE_SCOPE_NAMES=YES
+        TYPEDEF_HIDES_STRUCT=YES
+        SHOW_INCLUDE_FILES=NO
+        SHOW_USED_FILES=NO
+        RECURSIVE=YES
+        EXCLUDE_SYMBOLS=__attribute__
+        FILTER_PATTERNS= .c .h
+        SOURCE_BROWSER=YES
+        STRIP_CODE_COMMENTS=NO
+        GENERATE_HTML=YES
+        GENERATE_TREE_VIEW=YES
+
+        PROJECT_NAME=${PROJECT_NAME:-''}
+        PROJECT_BRIEF=${PROJECT_BRIEF:-''}
+
+        OUTPUT_DIRECTORY=${OUTPUT_DIRECTORY}
+        INPUT=${INPUT}
+        INPUT_FILTER=${INPUT_FILTER}
+EOF
+}
+
+buildDoxyFilter() # <path to filter>
+{
+    let filter="$1"
+
+    # Figure out where the doxyCgen filter is or where it should go.
+    if [[ "$filter" == "" ]]; then
+      filter=`which doxyCfilter`
+    fi
+
+    if [[ "$filter" == "" && -x "$THIS_DIR/doxyCfilter" ]]; then
+      filter="$THIS_DIR/doxyCfilter"
+    fi
+    
+    if [[ "$filter" == "" ]]; then
+      filter="$OUTPUT_DIRECTORY/doxyCgen"
+    fi
+
+  # If the filter doesn't already exist,
+  if [ -x "$filter" ]; then
+
+    # Build the filter, placing it in the requested location.
+    flex -o "$OUTPUT_DIRECTORY/doxyCfilter.c" "$THIS_DIR/doxyCFilter.l"
+    cc "$OUTPUT_DIRECTORY/doxyCfilter.c" -lfl -o "$filter"
+  fi
+
+  echo $filter
+}
+
+
+main "$@"
