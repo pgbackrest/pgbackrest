@@ -2,6 +2,7 @@
 Test Lists
 ***********************************************************************************************************************************/
 #include "common/time.h"
+#include "common/type/collection.h"
 
 /***********************************************************************************************************************************
 Test sort comparator
@@ -235,7 +236,7 @@ testRun(void)
         ENDFOREACH;
         TEST_RESULT_VOID((void)0, "empty list");
 
-        Container container[] = {NEWCONTAINER(List, list)}; // Want pointer to new Container.
+        Collection *collection = NEWCOLLECTION(List, list);
         FOREACH(int, value, List, list)
             (void)*value;
             ASSERT(false);  // We shouldn't be here with an empty list
@@ -255,7 +256,7 @@ testRun(void)
         TEST_RESULT_INT(count, testMax, "non-empty List");
 
         count = 0;
-        FOREACH (int, value, Container, container)
+        FOREACH (int, value, Collection, collection)
             ASSERT(*value == count);
             count++;
         ENDFOREACH;
@@ -265,22 +266,23 @@ testRun(void)
         List *emptyList = lstNewP(sizeof(int), .comparator = testComparator);
         ListItr itr[1];
         newListItr(itr, emptyList);
-        TEST_ERROR(nextListItr(itr), AssertError, "Attempting to iterate beyond end of List");
+        ASSERT(nextListItr(itr) == NULL);
+        TEST_RESULT_PTR(nextListItr(itr), NULL, "iterate beyond end of empty List");
 
         // Similar, but this time add an item and iterate beyond it.
         List *singletonList = lstNewP(sizeof(int), .comparator = testComparator);
         int value = 42; lstAdd(singletonList, &value);
         newListItr(itr, singletonList);
         ASSERT(*(int *)nextListItr(itr) == 42);
-        TEST_ERROR(nextListItr(itr), AssertError, "Attempting to iterate beyond end of List");
+        ASSERT(nextListItr(itr) == NULL);
+        TEST_RESULT_PTR(nextListItr(itr), NULL, "iterate beyond end of List");
 
         // Try to create a Container from NULL list.
-        TEST_ERROR((void)NEWCONTAINER(List, NULL), AssertError, "Attempting to create NEWCONTAINER from NULL");
+        TEST_ERROR((void)NEWCOLLECTION(List, NULL), AssertError, "Attempting to create NEWCOLLECTION from NULL");
 
         // Try to create a Container within a Container and confirm it doesn't have enough memory to hold itself.
         // Not really a List test, but it is convenient to test it here since List is the prototypical container.
-        TEST_ERROR((void)NEWCONTAINER(Container, container), AssertError, "Pre-allocated space in ContainerItr is too small");
-
+        TEST_ERROR((void)NEWCOLLECTION(Collection, collection), AssertError, "Pre-allocated space in CollectionItr is too small");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

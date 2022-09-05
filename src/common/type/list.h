@@ -15,7 +15,7 @@ typedef struct List List;
 #include "common/type/object.h"
 #include "common/type/param.h"
 #include "common/type/string.h"
-#include "common/type/iterator.h"
+#include "common/type/collection.h"
 
 /***********************************************************************************************************************************
 Sort orders
@@ -188,22 +188,15 @@ newListItr(ListItr *this, List *list)
 }
 
 /***********************************************************************************************************************************
-Are there more items to scan?
-***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline bool
-moreListItr(ListItr *this)
-{
-    return this->listIdx < lstSize(this->list);
-}
-
-/***********************************************************************************************************************************
-Get a pointer to the next item from the list.
+Get a pointer to the next item from the list, or NULL if no more.
 ***********************************************************************************************************************************/
 __attribute__((always_inline)) static inline void *
 nextListItr(ListItr *this)
 {
-    checkItr(moreListItr(this), "Attempting to iterate beyond end of List");
-    return lstGet(this->list, this->listIdx++);
+    if (this->listIdx >= lstSize(this->list))
+        return NULL;
+    else
+        return lstGet(this->list, this->listIdx++);
 }
 
 /***********************************************************************************************************************************
