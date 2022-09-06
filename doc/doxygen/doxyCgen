@@ -1,14 +1,5 @@
-#!/bin/bash -x
+#!/bin/bash
 THIS_DIR=$(dirname $0)
-
-# Environment variables used for doxygen configuration.
-export INPUT=${1:-$THIS_DIR}
-export OUTPUT_DIRECTORY=${2:-$THIS_DIR}
-export C_FILTER=${3:-''}
-
-# set these before calling this script
-export PROJECT_NAME=${PROJECT_NAME:-''}
-export PROJECT_BRIEF=${PROJECT_BRIEF:-''}
 
 ####################################################################################################################################
 # Create doxygen documentation from non-annotated C files
@@ -16,23 +7,45 @@ export PROJECT_BRIEF=${PROJECT_BRIEF:-''}
 #      <input directory> - where the C source tree is located
 #      <output directory> - where doxygen documentation is created.
 #      <doxyCfilter> - (optional) path to where the doxyCfilter resides or should be created.
-#      $PROJECT_NAME - included in doxygen docs
-#      $PROJECT_BRIEF - brief description of project included in doxygen docs
+#      $PROJECT_NAME - environment variable passed on to doxygan
+#      $PROJECT_BRIEF - brief description passed on to doxygen
 ####################################################################################################################################
 main() # <args>
 {
-    # Build the C doxygen filter if need be. C_FILTER is the path to the binary, if we have one.
+    # Setup the global environment variables.
+    setupEnv "$@"
+
+    # Build the C doxygen filter if need be. C_FILTER is the path to the binary.
     C_FILTER=$(buildDoxyFilter "$C_FILTER")
 
-    # Generate the doxygen documentation using the Doxyfile in the current directory.
+    # Generate doxygen documentation using the Doxyfile in this script directory.
     doxygen "$THIS_DIR/Doxyfile"
+}
+
+####################################################################################################################################
+# Setup the environment variables passed to doxygen
+####################################################################################################################################
+setupEnv() # <args>
+{
+  # Environment variables used for doxygen configuration.
+  export INPUT=${1:-$THIS_DIR}
+  export OUTPUT_DIRECTORY=${2:-$THIS_DIR}
+  export C_FILTER=${3:-''}
+
+  # Set these before calling this script.
+  export PROJECT_NAME=${PROJECT_NAME:-''}
+  export PROJECT_BRIEF=${PROJECT_BRIEF:-''}
 }
 
 #######################################################################################################s#############################
 # Build the doxyCfilter for adding doxygen annotations to C code
 #      buildDoxyFilter  <path to filter>
 #            <path to filter> - where the filter exists, or where it should be built if it doesn't exist.
-#                               if not specified, will check PATH and try the source and output directories.
+#
+# if the path to the filter is not specified,
+# - see if it is on the PATH
+# - see if it is installed in the same directory as this script
+# - build it in the doxugen output directory alongside the html output.
 ####################################################################################################################################
 buildDoxyFilter() # <path to filter>
 {
@@ -59,6 +72,5 @@ buildDoxyFilter() # <path to filter>
 
   echo $filter
 }
-
 
 main "$@"

@@ -108,7 +108,6 @@ int main(int argc, char**argv) {
 
     // Now, parse the file, sending output to stdout.
     int ret = yylex();
-
 }
 
 // Does the string include the prefix?
