@@ -62,9 +62,3 @@ executable(
     ],
     build_by_default: false,
 )
-
-####################################################################################################################################
-# TEMPORARY. Define the "doc/doxygen" test target. This meson test will be removed when doxygen is integrated into
-# the pgbackrest unit test framework.
-####################################################################################################################################
-#subdir 'module/doc/doxygen'
