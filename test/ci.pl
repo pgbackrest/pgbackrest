@@ -168,6 +168,10 @@ eval
                 {bSuppressStdErr => true});
         }
 
+        processBegin('Doxygen install');
+        processExec('sudo DEBIAN_FRONTEND=noninteractive apt-get install -y doxygen flex', {bSuppressStdErr => true});
+        processEnd();
+
         processBegin('remove sudo');
         processExec("sudo rm /etc/sudoers.d/${strUser}");
         processEnd();
@@ -188,7 +192,7 @@ eval
     {
         # Build list of packages that need to be installed
         my $strPackage =
-            "make gcc ccache meson python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
+            "make gcc ccache meson python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config flex";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))
