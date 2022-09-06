@@ -1,19 +1,16 @@
 ####################################################################################################################################
-# This meson script generates doxygen output from the adjoining "../src" code directory.
+# This meson script generates doxygen output from the 'src' directory tree.
 #
 # Doxygen documentation is not built by default.
 # To create doxygen documentation, give the following command:
 #         ninja  doxygen
 #
-# This script works in several stages.
+# This script does the following:
 #    - Verify flex and doxygen are present.
-#    - Make flex known to meson.
-#    - Build a doxygen filter so doxygen recognizes the commenting style.
-#    - Update the doxygen configuration file to reflect the current paths.
-#    - Let doxygen generate documentation under "docs/doxygen" in the build directory.
+#    - Run "doxyCgen" script to generate C documentation under "docs/doxygen" in the build directory.
 #
-# The Doxyfile.template file is created and maintained through the doxywizard application.
-# Edits made directly to the file could be lost the next time doxywizard is run.
+# Note these build rules run the "doxyCgen' script rather than running doxygen directly.
+#   The script configures doxygen and builds the C filter if not already built.
 ####################################################################################################################################
 
 ####################################################################################################################################
@@ -27,62 +24,20 @@ doxy = find_program('doxygen', required:false)
 if not doxy.found() or not flex.found() or not flex_lib.found()
     message('Be sure to install flex and doxygen if you want to create doxygen documents.')
     run_target('doxygen', command: ['echo', 'You must install flex and doxygen before creating doxygen documents'])
-    doxy_filter = disabler()
     subdir_done()
 endif
 
 ####################################################################################################################################
-# Make Flex known to Meson. Flex is a parsing program used to make scanners.
-#   Flex takes a lexical analysis file (*.l) and generates a C file (*.c).
-####################################################################################################################################
-flex_gen = generator(flex,
-               output: '@PLAINNAME@.c',
-               arguments: ['-o', '@OUTPUT@', '@INPUT@'])
-
-####################################################################################################################################
-# Build the doxygen scanner. This scanner annotates comments in a C file so the comments become visible to doxygen.
-####################################################################################################################################
-
-# Step #1: Process flex code to generate C code.
-doxy_filter_l = files('doxy_filter.l')
-doxy_filter_c = flex_gen.process(doxy_filter_l)
-
-# Step #2. Compile C code and create doxy_filter executable.
-doxy_filter = executable('doxy_filter', doxy_filter_c,
-                  dependencies: flex_lib,
-                  c_args: ['-w'],  # TODO: disable specific warnings introduced by flex.
-                  )
-
-####################################################################################################################################
-# Update the Doxygen configuration file.  ("Doxyfile")
-#
-# The configuration template ("Doxyfile.template") is generated and maintained by the Doxygen Wizard application.
-# While it is possible to edit specific values by hand, the overall structure and comments are re-generated every
-# time the wizard is run. Any changes to the comments or overall layout will be lost.
-#
-# Some configuration values depend on paths created by meson. Those values are inserted into "Doxyfile.template"
-# to produce the final "Doxyfile". Ideally, doxygen would allow us to set those values on the command line, and we
-# wouldn't need a template file at all.
-#
-# Here are the configuration values we need to set:
-#      OUTPUT_DIRECTORY - directory where the documentation will be created.
-#      INPUT            - project directory containing the "src" subdirectory.
-#      INPUT_FILTER     - path to the doxy_filter executable.
-#
-# Note: when upgrading to meson 5.6 or greater,
-#     change build_root-->project_build_root and source_root-->project_source_root.
-####################################################################################################################################
-doxy_file_template = files('Doxyfile.template')
-doxy_file = configure_file(
-    input: doxy_file_template,
-    output: 'Doxyfile',
-    configuration: {
-        'OUTPUT_DIRECTORY': meson.build_root() / 'doc/doxygen' ,
-        'INPUT': meson.source_root() / 'src',
-        'INPUT_FILTER': doxy_filter.full_path(),  # Does not create a dependency on doxy_filter.
-    })
-
-####################################################################################################################################
 # Generate documentation when the command  "ninja doxygen" is given.
 ####################################################################################################################################
-run_target('doxygen', command: [doxy, doxy_file], depends: doxy_filter)
+doxyCgen=files('./doxyCgen')                                        # Script for generating doxygen docs
+Doxyfile=files('./Doxyfile')                                        # Configuration file for doxygen. Make sure it exists.
+c_src = meson.source_root() / 'src'                                 # Where the C source tree is located.
+doxy_out = meson.build_root() / 'doc/doxygen'                       # Where to create the documentation.
+c_filter = doxy_out / 'doxyCfilter'                                 # Where the doxyCfilter should be found or built.
+
+# Run the script to create doxygen docs.
+run_target('doxygen',
+    command: [doxyCgen, c_src, doxy_out, c_filter],
+    env: {'PROJECT_NAME':'pgbackrest', 'PROJECT_BRIEF':'BACKUP for PostgreSQL'},
+)
