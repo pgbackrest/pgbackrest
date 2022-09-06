@@ -9,7 +9,7 @@ project(
     meson_version: '>=0.49',
     default_options: [
         # Core options
-        'buildtype=debug',
+        'buildtype=release',
         'warning_level=2',
 
         # Base options
