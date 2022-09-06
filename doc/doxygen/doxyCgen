@@ -1,6 +1,6 @@
 #!/bin/bash
 THIS_DIR=$(dirname $0)
-
+set -o pipefail -e
 ####################################################################################################################################
 # Create doxygen documentation from non-annotated C files
 #    doxyCgen  <input directory>  <output directory>  <doxyCfilter optional>
@@ -22,7 +22,7 @@ main() # <args>
     C_FILTER=$(buildDoxyFilter "$C_FILTER")
 
     # Generate doxygen documentation using the Doxyfile in this script directory.
-    doxygen "$THIS_DIR/Doxyfile"
+    doxygen "$THIS_DIR/Doxyfile" || abort "Install doxygen and try again"
 }
 
 ####################################################################################################################################
@@ -72,12 +72,21 @@ buildDoxyFilter() # <path to filter>
 
   # If the filter doesn't already exist, build it.
   if [ ! -x "$filter" ]; then
-    flex -o "$OUTPUT_DIRECTORY/doxyCfilter.c" "$THIS_DIR/doxyCFilter.l"
-    cc "$OUTPUT_DIRECTORY/doxyCfilter.c" -lfl -o "$filter"
+    flex -o "$OUTPUT_DIRECTORY/doxyCfilter.c" "$THIS_DIR/doxyCFilter.l"  || abort "Install flex and try again"
+    cc "$OUTPUT_DIRECTORY/doxyCfilter.c" -lfl -o "$filter"               || abort "Unable to build doxyCfilter. Is 'cc' installed?"
   fi
 
   # Return the location of the filter.
   echo "$filter"
+}
+
+####################################################################################################################################
+# display a message and quit
+####################################################################################################################################
+abort() # <message>
+{
+  echo "$@" >&2
+  exit 1
 }
 
 main "$@"

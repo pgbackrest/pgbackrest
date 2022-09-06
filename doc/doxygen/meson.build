@@ -14,30 +14,33 @@
 ####################################################################################################################################
 
 ####################################################################################################################################
-# First, check for dependencies. If flex and doxygen are not installed, then display a message and quit.
-# Note: the original version depended on disabler propagation, which is inconsistent between various versions of meson,
-#       The current version does an explicit test and exit rather than relying on disablers.
+# First, check for dependencies. If flex and doxygen are not installed, ...
 ####################################################################################################################################
 flex = find_program('flex', required:false)
 flex_lib = cc.find_library('fl', required: false)
 doxy = find_program('doxygen', required:false)
 if not doxy.found() or not flex.found() or not flex_lib.found()
+
+    ################################################################################################################################
+    # ... then display a message and define a dummy 'doxygen' target.
+    ################################################################################################################################
     message('Be sure to install flex and doxygen if you want to create doxygen documents.')
     run_target('doxygen', command: ['echo', 'You must install flex and doxygen before creating doxygen documents'])
-    subdir_done()
+    #subdir_done()                                                  # not implemented in meson 0.45, rewritten as if else.
+
+else
+    ####################################################################################################################################
+    # ... otherwise, generate documentation when the command  "ninja doxygen" is given.
+    ####################################################################################################################################
+    doxyCgen=files('./doxyCgen')                                    # Script for generating doxygen docs
+    Doxyfile=files('./Doxyfile')                                    # Configuration file for doxygen. Make sure it exists.
+    c_src = join_paths(meson.source_root(), 'src')                  # Where the C source tree is located.
+    doxy_out = join_paths(meson.build_root(), 'doc/doxygen')        # Where to create the documentation.
+    c_filter = join_paths(doxy_out, 'doxyCfilter')                  # Where the doxyCfilter should be found or built.
+
+    # Run the script to create doxygen docs.
+    run_target('doxygen',
+        command: [doxyCgen, c_src, doxy_out, c_filter, 'pgbackrest', 'Fast, reliable backup for PostgreSQL'],
+        #env: {'PROJECT_NAME':'pgbackrest', 'PROJECT_BRIEF':'BACKUP for PostgreSQL'},  # not implemented in meson 0.45
+    )
 endif
-
-####################################################################################################################################
-# Generate documentation when the command  "ninja doxygen" is given.
-####################################################################################################################################
-doxyCgen=files('./doxyCgen')                                        # Script for generating doxygen docs
-Doxyfile=files('./Doxyfile')                                        # Configuration file for doxygen. Make sure it exists.
-c_src = join_paths(meson.source_root(), 'src')                      # Where the C source tree is located.
-doxy_out = join_paths(meson.build_root(), 'doc/doxygen')            # Where to create the documentation.
-c_filter = join_paths(doxy_out, 'doxyCfilter')                      # Where the doxyCfilter should be found or built.
-
-# Run the script to create doxygen docs.
-run_target('doxygen',
-    command: [doxyCgen, c_src, doxy_out, c_filter, 'pgbackrest', 'Fast, reliable backup for PostgreSQL'],
-    #env: {'PROJECT_NAME':'pgbackrest', 'PROJECT_BRIEF':'BACKUP for PostgreSQL'},
-)
