@@ -1,4 +1,4 @@
-# Provided through environment variables
+# Provided through environment variables.
 PROJECT_NAME=$(PROJECT_NAME)
 PROJECT_BRIEF=$(PROJECT_BRIEF)
 
@@ -6,8 +6,10 @@ PROJECT_BRIEF=$(PROJECT_BRIEF)
 OUTPUT_DIRECTORY=$(OUTPUT_DIRECTORY)
 INPUT=$(INPUT)
 INPUT_FILTER=$(C_FILTER)
-#FILTER_PATTERNS= .c=$(C_FILTER) .h=$(C_FILTER)                     # TODO: preferred way to specify filter,
-#FILTER_SOURCE_FILES=YES                                            #       if it works with FILTER_SOURCE_FILES for debugging.
+#FILTER_PATTERNS= .c=$(C_FILTER) .h=$(C_FILTER)                     # TODO: These don't seem to work. Use INPUT_FILTER instead.
+#FILTER_SOURCE_PATTERNS= .c=$(C_FILTER) .h=$(C_FILTER)
+
+FILTER_SOURCE_FILES=NO                                              # YES for debugging, NO for production.
 
 # Edit these to match the desired documentation style and doxygen version.
 GENERATE_LATEX=NO

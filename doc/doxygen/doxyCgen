@@ -15,6 +15,9 @@ main() # <args>
     # Setup the global environment variables.
     setupEnv "$@"
 
+    # Create the output directory if it doesn't already exist.
+    mkdir -p "$OUTPUT_DIRECTORY"
+
     # Build the C doxygen filter if need be. C_FILTER is the path to the binary.
     C_FILTER=$(buildDoxyFilter "$C_FILTER")
 
@@ -27,14 +30,15 @@ main() # <args>
 ####################################################################################################################################
 setupEnv() # <args>
 {
-  # Environment variables used for doxygen configuration.
-  export INPUT=${1:-$THIS_DIR}
-  export OUTPUT_DIRECTORY=${2:-$THIS_DIR}
-  export C_FILTER=${3:-''}
+  # Environment variables used for doxygen configuration. See Doxyfile for valid substitutions.
+  export INPUT=${1:-.}                                              # input directory defaults to CWD
+  export OUTPUT_DIRECTORY=${2:-.}                                   # output directory defaults to CWD
+  export C_FILTER=${3:-''}                                 l        # if empty, will be updated later.
 
-  # Set these before calling this script.
-  export PROJECT_NAME=${PROJECT_NAME:-''}
-  export PROJECT_BRIEF=${PROJECT_BRIEF:-''}
+  # Would prefer to pass PROJECT_NAME and PROJECT_BRIEF through environment variables, but will accept as arguments.
+  #   This is a workaround for earlier versions of meson which can't set environment variables.
+  export PROJECT_NAME=${PROJECT_NAME:-${4:-''}}
+  export PROJECT_BRIEF=${PROJECT_BRIEF:-${5:-''}}
 }
 
 #######################################################################################################s#############################
@@ -51,26 +55,29 @@ buildDoxyFilter() # <path to filter>
 {
     local filter="$1"
 
-    # Figure out where the doxyCgen filter is or where it should go.
+    # No filter specified, see if it is on the path.
     if [[ "$filter" == "" ]]; then
       filter=$(which doxyCfilter)
     fi
 
+    # Still no filter, see if it was installed in same directory as this script.
     if [[ "$filter" == "" && -x "$THIS_DIR/doxyCfilter" ]]; then
       filter="$THIS_DIR/doxyCfilter"
     fi
-    
+
+    # If still no filter, prepare to build it in the output directory.
     if [[ "$filter" == "" ]]; then
       filter="$OUTPUT_DIRECTORY/doxyCfilter"
     fi
 
-  # If the filter doesn't already exist, build it in the requested location  ($filter)
+  # If the filter doesn't already exist, build it.
   if [ ! -x "$filter" ]; then
     flex -o "$OUTPUT_DIRECTORY/doxyCfilter.c" "$THIS_DIR/doxyCFilter.l"
     cc "$OUTPUT_DIRECTORY/doxyCfilter.c" -lfl -o "$filter"
   fi
 
-  echo $filter
+  # Return the location of the filter.
+  echo "$filter"
 }
 
 main "$@"

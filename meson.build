@@ -6,7 +6,7 @@ project(
     ['c'],
     version: '2.41dev',
     license: 'MIT',
-    meson_version: '>=0.49',
+    meson_version: '>=0.45',
     default_options: [
         # Core options
         'buildtype=release',
@@ -119,7 +119,7 @@ file_prefix = run_command(
         meson.current_source_dir(),
         meson.current_build_dir(),
     ],
-    check: true,
+    # check: true, # This should be set when the minimum supported meson version is >= 0.47
 ).stdout().strip()
 
 add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/src/=' . format(file_prefix)), language: 'c')
