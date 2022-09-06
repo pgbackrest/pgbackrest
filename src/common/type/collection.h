@@ -88,9 +88,9 @@ destructCollectionItr(CollectionItr *this)
 
 
 /***********************************************************************************************************************************
-Proposed syntactic sugar to make iteration look more like C++ or Python.
-Note foreach and endForeach are equivalent to a multi-line block statement.
-With a smart optimizer, the invocation of _destructor could be inlined, but otherwise it is an indirect call.
+Syntactic sugar to make iteration look more like C++ or Python.
+Note foreach and endForeach are block macros, so the overall foreach/endForeach must be terminated with a semicolon.
+This version is a big slower because it catches and cleans up after exceptions.
 ***********************************************************************************************************************************/
 #define FOREACH(ItemType, item, CollectionType, collection)                                                                        \
     BEGIN                                                                                                                          \
@@ -98,17 +98,25 @@ With a smart optimizer, the invocation of _destructor could be inlined, but othe
         new##CollectionType##Itr(_itr, collection);                                                                                \
         void (*_destructor)(CollectionType##Itr*) = destruct##CollectionType##Itr;                                                 \
         ItemType *item;                                                                                                            \
-        while ( (item = next##CollectionType##Itr(_itr)) != NULL)                                                                               \
-        {
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            while ( (item = next##CollectionType##Itr(_itr)) != NULL)                                                              \
+            {
 #define ENDFOREACH                                                                                                                 \
+            }                                                                                                                      \
         }                                                                                                                          \
-        _destructor(_itr);                                                                                                         \
+        FINALLY()                                                                                                                  \
+        {                                                                                                                          \
+            _destructor(_itr);                                                                                                     \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
     END
 
 /***********************************************************************************************************************************
-Proposed syntactic sugar for creating an abstract Collection from a regular collection.
+Syntactic sugar for creating an abstract Collection from a regular collection.
 Checks to ensure we won't overflow pre-allocated memory in CollectionItr.
 Unlike "block" macros, this macro is actually an expression returning a pointer to a local (auto) Collection.
+   Collection *collection = NEWCOLLECTION(List, list)
 ***********************************************************************************************************************************/
 #define NEWCOLLECTION(SubType, subCntainer) (                                                                                      \
     checkItr(subCntainer != NULL, "Attempting to create NEWCOLLECTION from NULL"),                                                 \
@@ -116,7 +124,7 @@ Unlike "block" macros, this macro is actually an expression returning a pointer 
         sizeof(SubType##Itr) <= sizeof(((CollectionItr*)0)->preallocatedMemory),                                                   \
         "Pre-allocated space in CollectionItr is too small"                                                                        \
     ),                                                                                                                             \
-    &(Collection) {                                                                                                                 \
+    &(Collection) {                                                                                                                \
         .subCollection = (void *)subCntainer,                                                                                      \
         .newItr = (void(*)(void*,void*))new##SubType##Itr,                                                                         \
         .next = (void*(*)(void*))next##SubType##Itr,                                                                               \
@@ -129,6 +137,24 @@ INLINE void
 checkItr(bool condition, const char* message) {
     CHECK(AssertError, condition, message);
 }
+
+/***********************************************************************************************************************************
+Syntactic sugar for iteration. This is a proposed (future) version is optimized for the case when 1) no exceptions can occur or
+2) the destruct method does not need to be called after an exception (say dynamic memory is freed automatically).
+***********************************************************************************************************************************/
+#define FOREACH_NOEX(ItemType, item, CollectionType, collection)                                                                   \
+    BEGIN                                                                                                                          \
+        CollectionType##Itr _itr[1];                                                                                               \
+        new##CollectionType##Itr(_itr, collection);                                                                                \
+        void (*_destructor)(CollectionType##Itr*) = destruct##CollectionType##Itr;                                                 \
+        ItemType *item;                                                                                                            \
+        while ( (item = next##CollectionType##Itr(_itr)) != NULL)                                                                  \
+        {
+#define ENDFOREACH_NOEX                                                                                                            \
+        }                                                                                                                          \
+        _destructor(_itr);                                                                                                         \
+    END
+
 
 // TODO: INLINE belongs elsewhere.
 #undef INLINE
