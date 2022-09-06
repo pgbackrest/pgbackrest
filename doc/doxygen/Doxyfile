@@ -5,9 +5,12 @@ PROJECT_BRIEF=$(PROJECT_BRIEF)
 # Set by the doxyCgen script.
 OUTPUT_DIRECTORY=$(OUTPUT_DIRECTORY)
 INPUT=$(INPUT)
-FILTER_PATTERNS= .c=$(C_FILTER) .h=$(C_FILTER)
+INPUT_FILTER=$(C_FILTER)
+#FILTER_PATTERNS= .c=$(C_FILTER) .h=$(C_FILTER)                     # TODO: preferred way to specify filter,
+#FILTER_SOURCE_FILES=YES                                            #       if it works with FILTER_SOURCE_FILES for debugging.
 
 # Edit these to match the desired documentation style and doxygen version.
+GENERATE_LATEX=NO
 JAVADOC_AUTOBRIEF=YES
 JAVADOC_BANNER=YES
 OPTIMIZE_OUTPUT_FOR_C=YES

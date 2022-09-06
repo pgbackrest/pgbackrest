@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 THIS_DIR=$(dirname $0)
 
 # Environment variables used for doxygen configuration.
@@ -52,7 +52,7 @@ buildDoxyFilter() # <path to filter>
     fi
 
   # If the filter doesn't already exist, build it in the requested location  ($filter)
-  if [ -x "$filter" ]; then
+  if [ ! -x "$filter" ]; then
     flex -o "$OUTPUT_DIRECTORY/doxyCfilter.c" "$THIS_DIR/doxyCFilter.l"
     cc "$OUTPUT_DIRECTORY/doxyCfilter.c" -lfl -o "$filter"
   fi
