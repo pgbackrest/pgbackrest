@@ -41,7 +41,7 @@ const void *blbAdd(Blob *this, const void *data, size_t size);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 strBlbFree(Blob *const this)
 {
     objFree(this);

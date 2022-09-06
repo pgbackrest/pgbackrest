@@ -66,7 +66,7 @@ void protocolServerProcess(
     const unsigned int handlerListSize);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline ProtocolServer *
+FN_INLINE_ALWAYS ProtocolServer *
 protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -75,7 +75,7 @@ protocolServerMove(ProtocolServer *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolServerFree(ProtocolServer *const this)
 {
     objFree(this);

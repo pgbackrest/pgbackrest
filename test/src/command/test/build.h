@@ -47,42 +47,42 @@ typedef struct TestBuildPub
 } TestBuildPub;
 
 // Repository path
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 testBldPathRepo(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->pathRepo;
 }
 
 // Test path
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 testBldPathTest(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->pathTest;
 }
 
 // Repository storage
-__attribute__((always_inline)) static inline const Storage *
+FN_INLINE_ALWAYS const Storage *
 testBldStorageRepo(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->storageRepo;
 }
 
 // Test storage
-__attribute__((always_inline)) static inline const Storage *
+FN_INLINE_ALWAYS const Storage *
 testBldStorageTest(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->storageTest;
 }
 
 // Vm
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 testBldVm(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->vm;
 }
 
 // Vm id
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 testBldVmId(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->vmId;
@@ -90,63 +90,63 @@ testBldVmId(const TestBuild *const this)
 
 
 // Test Definition
-__attribute__((always_inline)) static inline const TestDefModule *
+FN_INLINE_ALWAYS const TestDefModule *
 testBldModule(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->module;
 }
 
 // Specific test to run
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 testBldTest(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->test;
 }
 
 // Log level
-__attribute__((always_inline)) static inline LogLevel
+FN_INLINE_ALWAYS LogLevel
 testBldLogLevel(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->logLevel;
 }
 
 // Log time/timestamps
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 testBldLogTime(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->logTime;
 }
 
 // Test in timezone
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 testBldTimeZone(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->timeZone;
 }
 
 // Generate coverage?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 testBldCoverage(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->coverage;
 }
 
 // Generate profile repo?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 testBldProfile(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->profile;
 }
 
 // Optimize code?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 testBldOptimize(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->optimize;
 }
 
 // Scale
-__attribute__((always_inline)) static inline uint64_t
+FN_INLINE_ALWAYS uint64_t
 testBldScale(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->scale;
@@ -160,7 +160,7 @@ void testBldUnit(TestBuild *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 testBuildFree(TestBuild *const this)
 {
     objFree(this);

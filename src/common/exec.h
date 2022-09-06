@@ -34,21 +34,21 @@ typedef struct ExecPub
 } ExecPub;
 
 // Read interface
-__attribute__((always_inline)) static inline IoRead *
+FN_INLINE_ALWAYS IoRead *
 execIoRead(Exec *const this)
 {
     return THIS_PUB(Exec)->ioReadExec;
 }
 
 // Write interface
-__attribute__((always_inline)) static inline IoWrite *
+FN_INLINE_ALWAYS IoWrite *
 execIoWrite(Exec *const this)
 {
     return THIS_PUB(Exec)->ioWriteExec;
 }
 
 // Exec MemContext
-__attribute__((always_inline)) static inline MemContext *
+FN_INLINE_ALWAYS MemContext *
 execMemContext(Exec *const this)
 {
     return objMemContext(this);
@@ -63,7 +63,7 @@ void execOpen(Exec *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 execFree(Exec *const this)
 {
     objFree(this);

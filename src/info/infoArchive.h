@@ -44,7 +44,7 @@ typedef struct InfoArchivePub
 } InfoArchivePub;
 
 // PostgreSQL info
-__attribute__((always_inline)) static inline InfoPg *
+FN_INLINE_ALWAYS InfoPg *
 infoArchivePg(const InfoArchive *const this)
 {
     return THIS_PUB(InfoArchive)->infoPg;
@@ -53,14 +53,14 @@ infoArchivePg(const InfoArchive *const this)
 InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 // Current archive id
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 infoArchiveId(const InfoArchive *const this)
 {
     return infoPgArchiveId(infoArchivePg(this), infoPgDataCurrentId(infoArchivePg(this)));
 }
 
 // Cipher passphrase
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 infoArchiveCipherPass(const InfoArchive *const this)
 {
     return infoPgCipherPass(infoArchivePg(this));
@@ -74,7 +74,7 @@ const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline InfoArchive *
+FN_INLINE_ALWAYS InfoArchive *
 infoArchiveMove(InfoArchive *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -83,7 +83,7 @@ infoArchiveMove(InfoArchive *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 infoArchiveFree(InfoArchive *const this)
 {
     objFree(this);
