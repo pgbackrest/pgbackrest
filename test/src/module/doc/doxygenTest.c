@@ -13,7 +13,7 @@ const char *diffFile = TEST_PATH "/sample.diff";                     // The diff
 
 // Where to build doxyCfilter.
 const char *doxyCfilter = TEST_PATH "/doxyCfilter";                 // Where doxyfilter should be built.
-const char *doxyCfilterL = HRN_PATH "/../../pgbackrest/doc/doxygen/doxyCfilter.l";  // Flex source code for the filter.
+const char *doxyCfilterL = HRN_PATH_REPO "/doc/doxygen/doxyCfilter.l";  // Flex source code for the filter.
 const char *doxyCfilterC = TEST_PATH "/doxyCfilter.c";              // The intermediate "C" file.
 
 /***********************************************************************************************************************************
