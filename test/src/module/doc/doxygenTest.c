@@ -118,7 +118,7 @@ buildFilter(void)
     snprintf(cmd, sizeof(cmd), "flex -o %s %s; cc %s -lfl -o %s", doxyCfilterC, doxyCfilterL, doxyCfilterC, doxyCfilter);
     system(cmd);
 
-    snprintf(cmd, sizeof(cmd), "echo /*/*/libfl.* >&2");  // where is the library on fedora 36?
+    snprintf(cmd, sizeof(cmd), "echo /*/libfl.* /*/*/libfl.* /*/*/*/libfl.* >&2");  // where is the library on fedora 36?
     system(cmd);
 }
 
