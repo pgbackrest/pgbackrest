@@ -87,14 +87,14 @@ typedef struct StringPub
 } StringPub;
 
 // String size minus null-terminator, i.e. the same value that strlen() would return
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 strSize(const String *this)
 {
     return THIS_PUB(String)->size;
 }
 
 // Pointer to zero-terminated string. strZNull() returns NULL when the String is NULL.
-__attribute__((always_inline)) static inline const char *
+FN_INLINE_ALWAYS const char *
 strZ(const String *this)
 {
     return THIS_PUB(String)->buffer;
@@ -134,7 +134,7 @@ String *strCatFmt(String *this, const char *format, ...) __attribute__((format(p
 // N is <= the end of the string being concatenated.
 String *strCatZN(String *this, const char *cat, size_t size);
 
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strCatN(String *this, const String *const cat, const size_t size)
 {
     ASSERT_INLINE(cat != NULL);
@@ -203,7 +203,7 @@ String *strTrim(String *this);
 String *strTruncIdx(String *this, int idx);
 
 // Truncate the string to zero size
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strTrunc(String *const this)
 {
     return strTruncIdx(this, 0);
@@ -212,7 +212,7 @@ strTrunc(String *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 strFree(String *const this)
 {
     objFree(this);

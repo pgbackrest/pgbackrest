@@ -59,7 +59,7 @@ Create a local "this" variable of the correct type from a THIS_VOID parameter
 Cast this private struct, e.g. List, to the associated public struct, e.g. ListPub. Note that the public struct must be the first
 member of the private struct. For example:
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 lstSize(const List *const this)
 {
     return THIS_PUB(List)->listSize;
@@ -69,7 +69,7 @@ The macro also ensures that this != NULL so there is no need to do that in the c
 ***********************************************************************************************************************************/
 #define THIS_PUB(type)                                              ((type##Pub *)thisNotNull(this))
 
-__attribute__((always_inline)) static inline const void *
+FN_INLINE_ALWAYS const void *
 thisNotNull(const void *const this)
 {
     ASSERT_INLINE(this != NULL);
@@ -87,14 +87,14 @@ Functions
 
 To ensure proper type checking, these functions are meant to be called from inline functions created specifically for each object:
 
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageFree(Storage *this)
 {
     objFree(this);
 }
 ***********************************************************************************************************************************/
 // Get the object mem context
-__attribute__((always_inline)) static inline MemContext *
+FN_INLINE_ALWAYS MemContext *
 objMemContext(void *const this)
 {
     return memContextFromAllocExtra(this);

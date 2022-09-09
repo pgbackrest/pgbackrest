@@ -67,7 +67,7 @@ unsigned int hrnPgCatalogVersion(unsigned int pgVersion);
 Buffer *hrnPgControlToBuffer(PgControl pgControl);
 
 // Get system id by version
-__attribute__((always_inline)) static inline uint64_t
+FN_INLINE_ALWAYS uint64_t
 hrnPgSystemId(const unsigned int pgVersion)
 {
     return 10000000000000000000ULL + (uint64_t)pgVersion;

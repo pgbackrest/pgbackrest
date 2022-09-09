@@ -49,7 +49,7 @@ String *regExpPrefix(const String *expression);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 regExpFree(RegExp *const this)
 {
     objFree(this);
