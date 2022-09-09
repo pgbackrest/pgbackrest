@@ -73,7 +73,7 @@ buildDoxyFilter() # <path to filter>
   # If the filter doesn't already exist, build it.
   if [ ! -x "$filter" ]; then
     flex -o "$OUTPUT_DIRECTORY/doxyCfilter.c" "$THIS_DIR/doxyCFilter.l"  || abort "Install flex and try again"
-    cc "$OUTPUT_DIRECTORY/doxyCfilter.c" -lfl -o "$filter"               || abort "Unable to build doxyCfilter. Is 'cc' installed?"
+    cc "$OUTPUT_DIRECTORY/doxyCfilter.c" -o "$filter"               || abort "Unable to build doxyCfilter. Is 'cc' installed?"
   fi
 
   # Return the location of the filter.

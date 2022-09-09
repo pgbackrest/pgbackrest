@@ -17,9 +17,8 @@
 # First, check for dependencies. If flex and doxygen are not installed, ...
 ####################################################################################################################################
 flex = find_program('flex', required:false)
-flex_lib = cc.find_library('fl', required: false)
 doxy = find_program('doxygen', required:false)
-if not doxy.found() or not flex.found() or not flex_lib.found()
+if not doxy.found() or not flex.found()
 
     ################################################################################################################################
     # ... then display a message and define a dummy 'doxygen' target.
