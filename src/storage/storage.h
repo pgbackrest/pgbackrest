@@ -245,14 +245,14 @@ void storageRemove(const Storage *this, const String *fileExp, StorageRemovePara
 Getters/Setters
 ***********************************************************************************************************************************/
 // Is the feature supported by this storage?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageFeature(const Storage *const this, const StorageFeature feature)
 {
     return THIS_PUB(Storage)->interface.feature >> feature & 1;
 }
 
 // Storage type (posix, cifs, etc.)
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 storageType(const Storage *const this)
 {
     return THIS_PUB(Storage)->type;

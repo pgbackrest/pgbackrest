@@ -27,28 +27,28 @@ typedef struct StorageListPub
 } StorageListPub;
 
 // Empty?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageLstEmpty(const StorageList *const this)
 {
     return lstEmpty(THIS_PUB(StorageList)->list);
 }
 
 // Storage info level
-__attribute__((always_inline)) static inline StorageInfoLevel
+FN_INLINE_ALWAYS StorageInfoLevel
 storageLstLevel(const StorageList *const this)
 {
     return THIS_PUB(StorageList)->level;
 }
 
 // List size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 storageLstSize(const StorageList *const this)
 {
     return lstSize(THIS_PUB(StorageList)->list);
 }
 
 // List size
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageLstSort(StorageList *const this, const SortOrder sortOrder)
 {
     lstSort(THIS_PUB(StorageList)->list, sortOrder);
@@ -61,7 +61,7 @@ Functions
 void storageLstInsert(StorageList *this, unsigned int idx, const StorageInfo *info);
 
 // Add info
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageLstAdd(StorageList *const this, const StorageInfo *const info)
 {
     storageLstInsert(this, storageLstSize(this), info);
@@ -71,7 +71,7 @@ storageLstAdd(StorageList *const this, const StorageInfo *const info)
 StorageInfo storageLstGet(StorageList *this, unsigned int idx);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline StorageList *
+FN_INLINE_ALWAYS StorageList *
 storageLstMove(StorageList *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -80,7 +80,7 @@ storageLstMove(StorageList *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageLstFree(StorageList *const this)
 {
     objFree(this);

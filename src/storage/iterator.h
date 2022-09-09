@@ -26,7 +26,7 @@ Functions
 bool storageItrMore(StorageIterator *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline StorageIterator *
+FN_INLINE_ALWAYS StorageIterator *
 storageItrMove(StorageIterator *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -39,7 +39,7 @@ StorageInfo storageItrNext(StorageIterator *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageItrFree(StorageIterator *const this)
 {
     objFree(this);

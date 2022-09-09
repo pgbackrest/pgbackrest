@@ -52,35 +52,35 @@ typedef struct HttpUrlPub
 } HttpUrlPub;
 
 // Protocol type
-__attribute__((always_inline)) static inline HttpProtocolType
+FN_INLINE_ALWAYS HttpProtocolType
 httpUrlProtocolType(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->type;
 }
 
 // Host
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 httpUrlHost(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->host;
 }
 
 // Path
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 httpUrlPath(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->path;
 }
 
 // Port
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 httpUrlPort(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->port;
 }
 
 // URL (exactly as originally passed)
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 httpUrl(const HttpUrl *const this)
 {
     return THIS_PUB(HttpUrl)->url;
@@ -89,7 +89,7 @@ httpUrl(const HttpUrl *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 httpUrlFree(HttpUrl *const this)
 {
     objFree(this);

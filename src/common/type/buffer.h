@@ -41,70 +41,70 @@ typedef struct BufferPub
 
 // Amount of the buffer actually used. This will be updated automatically when possible but if the buffer is modified by using
 // bufPtr() then the user is responsible for updating used.
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 bufUsed(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->used;
 }
 
 // Is the buffer empty?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 bufEmpty(const Buffer *const this)
 {
     return bufUsed(this) == 0;
 }
 
 // Buffer size
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 bufSize(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->size;
 }
 
 // Is the buffer full?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 bufFull(const Buffer *const this)
 {
     return bufUsed(this) == bufSize(this);
 }
 
 // Buffer pointer
-__attribute__((always_inline)) static inline unsigned char *
+FN_INLINE_ALWAYS unsigned char *
 bufPtr(Buffer *const this)
 {
     return THIS_PUB(Buffer)->buffer;
 }
 
 // Const buffer pointer
-__attribute__((always_inline)) static inline const unsigned char *
+FN_INLINE_ALWAYS const unsigned char *
 bufPtrConst(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->buffer;
 }
 
 // Remaining space in the buffer
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 bufRemains(const Buffer *const this)
 {
     return bufSize(this) - bufUsed(this);
 }
 
 // Pointer to remaining buffer space (after used space)
-__attribute__((always_inline)) static inline unsigned char *
+FN_INLINE_ALWAYS unsigned char *
 bufRemainsPtr(Buffer *const this)
 {
     return bufPtr(this) + bufUsed(this);
 }
 
 // Allocated buffer size. This may be different from bufSize() if a limit has been set.
-__attribute__((always_inline)) static inline size_t
+FN_INLINE_ALWAYS size_t
 bufSizeAlloc(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->sizeAlloc;
 }
 
 // Is the size limited to make the buffer appear smaller?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 bufSizeLimit(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->sizeLimit;
@@ -129,7 +129,7 @@ bool bufEq(const Buffer *this, const Buffer *compare);
 String *bufHex(const Buffer *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline Buffer *
+FN_INLINE_ALWAYS Buffer *
 bufMove(Buffer *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -149,7 +149,7 @@ void bufUsedZero(Buffer *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 bufFree(Buffer *const this)
 {
     objFree(this);

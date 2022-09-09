@@ -17,7 +17,7 @@ typedef struct StorageRead StorageRead;
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline StorageRead *
+FN_INLINE_ALWAYS StorageRead *
 storageReadMove(StorageRead *const this, MemContext *const parentNew)
 {
     return objMoveContext(this, parentNew);
@@ -34,42 +34,42 @@ typedef struct StorageReadPub
 } StorageReadPub;
 
 // Should a missing file be ignored?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageReadIgnoreMissing(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->ignoreMissing;
 }
 
 // Read interface
-__attribute__((always_inline)) static inline IoRead *
+FN_INLINE_ALWAYS IoRead *
 storageReadIo(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->io;
 }
 
 // Is there a read limit? NULL for no limit.
-__attribute__((always_inline)) static inline const Variant *
+FN_INLINE_ALWAYS const Variant *
 storageReadLimit(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->limit;
 }
 
 // File name
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 storageReadName(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->name;
 }
 
 // Is there a read limit? NULL for no limit.
-__attribute__((always_inline)) static inline uint64_t
+FN_INLINE_ALWAYS uint64_t
 storageReadOffset(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->offset;
 }
 
 // Get file type
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 storageReadType(const StorageRead *const this)
 {
     return THIS_PUB(StorageRead)->interface->type;
@@ -78,7 +78,7 @@ storageReadType(const StorageRead *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageReadFree(StorageRead *const this)
 {
     objFreeContext(this);

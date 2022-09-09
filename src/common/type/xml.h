@@ -41,7 +41,7 @@ typedef struct XmlDocumentPub
 Buffer *xmlDocumentBuf(const XmlDocument *this);
 
 // Root node
-__attribute__((always_inline)) static inline XmlNode *
+FN_INLINE_ALWAYS XmlNode *
 xmlDocumentRoot(const XmlDocument *const this)
 {
     return ((XmlDocumentPub *const)this)->root;
@@ -50,7 +50,7 @@ xmlDocumentRoot(const XmlDocument *const this)
 /***********************************************************************************************************************************
 Document Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 xmlDocumentFree(XmlDocument *const this)
 {
     objFree(this);
@@ -71,7 +71,7 @@ String *xmlNodeAttribute(const XmlNode *this, const String *name);
 // Node child (by name or index)
 XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
 
-__attribute__((always_inline)) static inline XmlNode *
+FN_INLINE_ALWAYS XmlNode *
 xmlNodeChild(const XmlNode *const this, const String *const name, const bool errorOnMissing)
 {
     return xmlNodeChildN(this, name, 0, errorOnMissing);
@@ -96,14 +96,14 @@ void xmlNodeFree(XmlNode *this);
 Node List Getters
 ***********************************************************************************************************************************/
 // Get a node from the list
-__attribute__((always_inline)) static inline XmlNode *
+FN_INLINE_ALWAYS XmlNode *
 xmlNodeLstGet(const XmlNodeList *const this, const unsigned int listIdx)
 {
     return *(XmlNode **)lstGet((List *const)this, listIdx);
 }
 
 // Node list size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 xmlNodeLstSize(const XmlNodeList *const this)
 {
     return lstSize((List *const)this);
@@ -112,7 +112,7 @@ xmlNodeLstSize(const XmlNodeList *const this)
 /***********************************************************************************************************************************
 Node List Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 xmlNodeLstFree(XmlNodeList *const this)
 {
     lstFree((List *const)this);

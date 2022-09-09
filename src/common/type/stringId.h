@@ -66,14 +66,14 @@ Functions
 StringId strIdFromZN(const char *buffer, size_t size, bool error);
 
 // Convert String to StringId using strIdFromZN()
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 strIdFromStr(const String *const str)
 {
     return strIdFromZN(strZ(str), strSize(str), true);
 }
 
 // Convert zero-terminated string to StringId using strIdFromZN()
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 strIdFromZ(const char *const str)
 {
     return strIdFromZN(str, strlen(str), true);

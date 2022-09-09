@@ -62,14 +62,14 @@ typedef struct InfoPgPub
 String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
 
 // Base info
-__attribute__((always_inline)) static inline Info *
+FN_INLINE_ALWAYS Info *
 infoPgInfo(const InfoPg *const this)
 {
     return THIS_PUB(InfoPg)->info;
 }
 
 // Return the cipher passphrase
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 infoPgCipherPass(const InfoPg *const this)
 {
     return infoCipherPass(infoPgInfo(this));
@@ -88,7 +88,7 @@ InfoPgData infoPgDataCurrent(const InfoPg *this);
 unsigned int infoPgDataCurrentId(const InfoPg *this);
 
 // Total PostgreSQL data in the history
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 infoPgDataTotal(const InfoPg *const this)
 {
     return lstSize(THIS_PUB(InfoPg)->history);

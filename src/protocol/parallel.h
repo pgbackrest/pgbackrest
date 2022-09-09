@@ -48,7 +48,7 @@ unsigned int protocolParallelProcess(ProtocolParallel *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolParallelFree(ProtocolParallel *const this)
 {
     objFree(this);

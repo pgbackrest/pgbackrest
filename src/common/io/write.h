@@ -28,7 +28,7 @@ typedef struct IoWritePub
 } IoWritePub;
 
 // Filter group. Filters must be set before open and cannot be reset
-__attribute__((always_inline)) static inline IoFilterGroup *
+FN_INLINE_ALWAYS IoFilterGroup *
 ioWriteFilterGroup(IoWrite *const this)
 {
     return THIS_PUB(IoWrite)->filterGroup;
@@ -76,7 +76,7 @@ void ioWriteClose(IoWrite *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioWriteFree(IoWrite *const this)
 {
     objFreeContext(this);
