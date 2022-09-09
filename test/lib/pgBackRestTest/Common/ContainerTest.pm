@@ -415,7 +415,7 @@ sub containerBuild
         # Fedora 36 doesn't have the flex library. Install it on all other platforms.
         if ($strOS ne VM_F36)
         {
-            strScript .= " libfl-dev";
+            $strScript .= " libfl-dev";
         }
 
         # Add zst command-line tool and development libs when available
