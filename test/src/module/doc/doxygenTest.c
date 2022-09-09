@@ -115,10 +115,7 @@ buildFilter(void)
     char cmd[32*1024];
 
     // Build the filter in the test directory. Assumes flex and cc are in the path.
-    snprintf(cmd, sizeof(cmd), "flex -o %s %s; cc %s -lfl -o %s", doxyCfilterC, doxyCfilterL, doxyCfilterC, doxyCfilter);
-    system(cmd);
-
-    snprintf(cmd, sizeof(cmd), "echo /*/libfl.* /*/*/libfl.* /*/*/*/libfl.* >&2");  // where is the library on fedora 36?
+    snprintf(cmd, sizeof(cmd), "flex -o %s %s; cc %s -o %s", doxyCfilterC, doxyCfilterL, doxyCfilterC, doxyCfilter);
     system(cmd);
 }
 

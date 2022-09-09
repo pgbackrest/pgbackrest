@@ -29,6 +29,7 @@
 
  TODO? respect conditional compilation, add a File comment if none exists, be robust in not altering existing doxygen comments.
  **********************************************************************************************************************************/
+%option noyywrap
 %option yylineno
 %{
 #include <stdbool.h>
