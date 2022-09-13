@@ -97,7 +97,7 @@ void jsonValidate(const String *json);
 /***********************************************************************************************************************************
 Read Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 jsonReadFree(JsonRead *const this)
 {
     objFree(this);
@@ -167,7 +167,7 @@ const String *jsonWriteResult(JsonWrite *this);
 /***********************************************************************************************************************************
 Write Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 jsonWriteFree(JsonWrite *const this)
 {
     objFree(this);

@@ -50,7 +50,7 @@ be added to the expected binary size to account for overhead.
 #define PROTOCOL_PACK_DEFAULT_SIZE                                  1024
 
 // Pack large enough for standard data. Note that the buffer will automatically resize when required.
-__attribute__((always_inline)) static inline PackWrite *
+FN_INLINE_ALWAYS PackWrite *
 protocolPackNew(void)
 {
     return pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE);
@@ -70,7 +70,7 @@ typedef struct ProtocolClientPub
 } ProtocolClientPub;
 
 // Read file descriptor
-__attribute__((always_inline)) static inline int
+FN_INLINE_ALWAYS int
 protocolClientIoReadFd(ProtocolClient *const this)
 {
     return ioReadFd(THIS_PUB(ProtocolClient)->read);
@@ -83,14 +83,14 @@ Functions
 PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline ProtocolClient *
+FN_INLINE_ALWAYS ProtocolClient *
 protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
 }
 
 // Do not send exit command to the server when the client is freed
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolClientNoExit(ProtocolClient *const this)
 {
     memContextCallbackClear(objMemContext(this));
@@ -112,7 +112,7 @@ void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolClientFree(ProtocolClient *const this)
 {
     objFree(this);

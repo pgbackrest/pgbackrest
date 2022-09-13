@@ -120,6 +120,18 @@
 
                         <p>Do not allow <code>CATCH()</code> to catch a fatal error.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1861"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="john.morris"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>FN_INLINE_ALWAYS</code> macro.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

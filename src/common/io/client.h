@@ -27,7 +27,7 @@ typedef struct IoClientPub
 } IoClientPub;
 
 // Name that identifies the client
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 ioClientName(const IoClient *const this)
 {
     return THIS_PUB(IoClient)->interface->name(THIS_PUB(IoClient)->driver);
@@ -37,14 +37,14 @@ ioClientName(const IoClient *const this)
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline IoClient *
+FN_INLINE_ALWAYS IoClient *
 ioClientMove(IoClient *const this, MemContext *const parentNew)
 {
     return objMoveContext(this, parentNew);
 }
 
 // Open session
-__attribute__((always_inline)) static inline IoSession *
+FN_INLINE_ALWAYS IoSession *
 ioClientOpen(IoClient *const this)
 {
     return THIS_PUB(IoClient)->interface->open(THIS_PUB(IoClient)->driver);
@@ -53,7 +53,7 @@ ioClientOpen(IoClient *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioClientFree(IoClient *const this)
 {
     objFreeContext(this);

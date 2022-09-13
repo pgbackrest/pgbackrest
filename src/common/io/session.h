@@ -41,7 +41,7 @@ typedef struct IoSessionPub
 } IoSessionPub;
 
 // Is the session authenticated? The exact meaning of "authenticated" will vary by driver type.
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioSessionAuthenticated(const IoSession *const this)
 {
     return THIS_PUB(IoSession)->authenticated;
@@ -60,14 +60,14 @@ typedef struct IoSessionIoReadParam
 #define ioSessionIoReadP(this, ...)                                                                                                \
     ioSessionIoRead(this, (IoSessionIoReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-__attribute__((always_inline)) static inline IoRead *
+FN_INLINE_ALWAYS IoRead *
 ioSessionIoRead(IoSession *const this, const IoSessionIoReadParam param)
 {
     return THIS_PUB(IoSession)->interface->ioRead(THIS_PUB(IoSession)->driver, param.ignoreUnexpectedEof);
 }
 
 // Write interface
-__attribute__((always_inline)) static inline IoWrite *
+FN_INLINE_ALWAYS IoWrite *
 ioSessionIoWrite(IoSession *const this)
 {
     return THIS_PUB(IoSession)->interface->ioWrite(THIS_PUB(IoSession)->driver);
@@ -75,14 +75,14 @@ ioSessionIoWrite(IoSession *const this)
 
 // The peer name, if any. The exact meaning will vary by driver type, for example the peer name will be the client CN for the
 // TlsSession driver.
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 ioSessionPeerName(const IoSession *const this)
 {
     return THIS_PUB(IoSession)->peerName;
 }
 
 // Session role
-__attribute__((always_inline)) static inline IoSessionRole
+FN_INLINE_ALWAYS IoSessionRole
 ioSessionRole(const IoSession *const this)
 {
     return THIS_PUB(IoSession)->interface->role(THIS_PUB(IoSession)->driver);
@@ -92,14 +92,14 @@ ioSessionRole(const IoSession *const this)
 Functions
 ***********************************************************************************************************************************/
 // Close the session
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioSessionClose(IoSession *const this)
 {
     return THIS_PUB(IoSession)->interface->close(THIS_PUB(IoSession)->driver);
 }
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline IoSession *
+FN_INLINE_ALWAYS IoSession *
 ioSessionMove(IoSession *const this, MemContext *const parentNew)
 {
     return objMoveContext(this, parentNew);
@@ -108,7 +108,7 @@ ioSessionMove(IoSession *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioSessionFree(IoSession *const this)
 {
     objFreeContext(this);

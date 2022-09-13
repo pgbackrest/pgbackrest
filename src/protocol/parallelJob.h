@@ -46,20 +46,20 @@ typedef struct ProtocolParallelJobPub
 } ProtocolParallelJobPub;
 
 // Job command
-__attribute__((always_inline)) static inline ProtocolCommand *
+FN_INLINE_ALWAYS ProtocolCommand *
 protocolParallelJobCommand(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->command;
 }
 
 // Job error
-__attribute__((always_inline)) static inline int
+FN_INLINE_ALWAYS int
 protocolParallelJobErrorCode(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->code;
 }
 
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 protocolParallelJobErrorMessage(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->message;
@@ -68,14 +68,14 @@ protocolParallelJobErrorMessage(const ProtocolParallelJob *const this)
 void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message);
 
 // Job key
-__attribute__((always_inline)) static inline const Variant *
+FN_INLINE_ALWAYS const Variant *
 protocolParallelJobKey(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->key;
 }
 
 // Process Id
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 protocolParallelJobProcessId(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->processId;
@@ -84,7 +84,7 @@ protocolParallelJobProcessId(const ProtocolParallelJob *const this)
 void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
 
 // Job result
-__attribute__((always_inline)) static inline PackRead *
+FN_INLINE_ALWAYS PackRead *
 protocolParallelJobResult(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->result;
@@ -93,7 +93,7 @@ protocolParallelJobResult(const ProtocolParallelJob *const this)
 void protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result);
 
 // Job state
-__attribute__((always_inline)) static inline ProtocolParallelJobState
+FN_INLINE_ALWAYS ProtocolParallelJobState
 protocolParallelJobState(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->state;
@@ -105,7 +105,7 @@ void protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobS
 Functions
 ***********************************************************************************************************************************/
 // Move to new parent mem context
-__attribute__((always_inline)) static inline ProtocolParallelJob *
+FN_INLINE_ALWAYS ProtocolParallelJob *
 protocolParallelJobMove(ProtocolParallelJob *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -114,7 +114,7 @@ protocolParallelJobMove(ProtocolParallelJob *const this, MemContext *const paren
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolParallelJobFree(ProtocolParallelJob *const this)
 {
     objFree(this);

@@ -50,7 +50,7 @@ typedef struct InfoPub
 } InfoPub;
 
 // Cipher passphrase if set
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 infoCipherPass(const Info *const this)
 {
     return THIS_PUB(Info)->cipherPass;
@@ -59,7 +59,7 @@ infoCipherPass(const Info *const this)
 void infoCipherPassSet(Info *this, const String *cipherPass);
 
 // pgBackRest version
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 infoBackrestVersion(const Info *const this)
 {
     return THIS_PUB(Info)->backrestVersion;
