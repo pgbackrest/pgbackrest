@@ -399,14 +399,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with only dot");
 
-        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
-
-        callbackData.content = strNew();
-
-        TEST_RESULT_VOID(
-            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
-            "directory with one dot file sorted");
-        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
         // jrt !!!
         // NOTE: in my tests with --vm=none the resultant file would have the incorrect permissions. The request was coming through
         // properly but the umask resulted in altered permissions.  Do we want to alter the test result check, or the sshd_config
@@ -424,6 +416,14 @@ testRun(void)
         // Updating sshd_config to
         // Subsystem	sftp	/usr/lib/openssh/sftp-server -u 000
         // would result in the file being created with 0766 permissions
+        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
+
+        callbackData.content = strNew();
+
+        TEST_RESULT_VOID(
+            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
+            "directory with one dot file sorted");
+        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with file, link, pipe");
@@ -1421,12 +1421,19 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        setenv("PGBACKREST_REPO1_SFTP_PASSWORD", TEST_USER, true);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageRepo() - cached/not cached");
+
+        // Set storage helper
+        static const StorageHelper storageHelperList[] = {STORAGE_SFTP_HELPER, STORAGE_END_HELPER};
+        storageHelperInit(storageHelperList);
 
         TEST_RESULT_PTR(storageHelper.storageRepo, NULL, "repo storage not cached");
         TEST_ASSIGN(storage, storageRepo(), "new storage");
@@ -1463,6 +1470,9 @@ testRun(void)
         // Change the stanza to NULL with the stanzaInit flag still true, make sure helper does not fail when stanza option not set
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        setenv("PGBACKREST_REPO1_SFTP_PASSWORD", TEST_USER, true);
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
