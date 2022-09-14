@@ -119,3 +119,54 @@ integrate with memory contexts.
 One new goal is to support a "generator" object, where a program loop is transformed into an iterator. This object
 will allow scanning through diverse data structures, say XML documents, without creating intermediate Lists.
 ***********************************************************************************************************************************/
+
+#include "common/type/collection.h"
+
+// A Private iterator where all fields are public.
+struct CollectionItr
+{
+    CollectionItrPub pub;
+};
+
+/***********************************************************************************************************************************
+Construct an iterator to scan through the abstract Collection.
+***********************************************************************************************************************************/
+Collection *
+collectionItrNew(Collection *collection, void *(*newItr)(void *), void *(*next)(void *), void (*free)(void *))
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(POINTER, collection);
+    FUNCTION_TEST_END();
+
+    CollectionItr *this = NULL;
+    OBJ_NEW_BEGIN(CollectionItr)
+    {
+        // Allocate memory for the Collection object.
+        this = OBJ_NEW_ALLOC();
+
+        // Fill in the fields including the jump table pointers and a new iterator to the subCollection.
+        *this = (CollectionItr) {
+            .next = = next,
+            .free = free,
+            .collection = collection,
+            .subIterator = newItr(collection->subCollection);
+        }
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_TEST_RETURN(POINTER, this);    // TODO: Create display types.
+}
+
+void
+collectionItrFree(CollectionItr *this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(POINTER, this);
+    FUNCTION_TEST_END();
+
+    // Free the underlying iterator, then free ourselves.
+    objFree(THIS_PUB(CollectionItr)->subIterator);
+    objFree(this);
+
+    FUNCTION_TEST_RETURN_VOID();
+}

@@ -21,82 +21,84 @@ of collection is inside.
     ENDFOREACH;
 
 ***********************************************************************************************************************************/
-#ifndef PGBACKREST_COLLECTION_H
-#define PGBACKREST_COLLECTION_H
+#ifndef COMMON_TYPE_COLLECTION_H
+#define COMMON_TYPE_COLLECTION_H
 
 #include <stdbool.h>
 #include "common/assert.h"
 
-// TODO: Temporary. There must be a reason this hasn't been done. Perhaps test mocks need the "attribute()" syntax visible.
-//       At any rate, it doesn't belong here and we should move it elsewhere if it turns out to be useful.
-#define INLINE __attribute__((always_inline)) static inline
-
-// The basic "Block" macros. Also belong in a different file.
-#define BEGIN do {
-#define END   } while (0)
-
 // Define the polymorphic Collection wrapper, including the jump table of underlying iterator methods.
-typedef struct Collection {
-    void *subCollection;                                             // Pointer to the underlying collection.
+// Since we are inlining the methods, there are no private fields.
+typedef struct Collection Collection;
+typedef struct CollectionPub {
+    void *subCollection;                                            // Pointer to the underlying collection.
     void *(*next)(void *this);                                      // Method to get a pointer to the next item. NULL if no more.
-    void (*newItr)(void *this, void *collection);                    // Method to construct a new iterator "in place".
-    void (*destruct)(void *this);                                   // Method to free resources allocated during "newItr()"
-} Collection;
+    void (*newItr)(void *this, void *collection);                   // Method to construct a new iterator "in place".
+    void (*free)(void *this);                                       // Method to free resources allocated during "newItr()"
+    int itrSize;                                                    // Size to allocate for the underlying iterator.
+} CollectionPub;
 
 // Data structure for iterating through a Collection.
-typedef struct CollectionItr {
-    Collection *collection;                                           // The polymorphic collection wrapping the underlying collection.
+// Again, to support inlining, there are no private fields.
+typedef struct CollectionItr CollectionItr;
+typedef struct CollectionItrPub
+{
+    Collection *collection;                                         // The abstract Collection object.
     void *subIterator;                                              // An iterator to the underlying collection.
-    void *preallocatedMemory[126];                                  // Preallocated space to hold the underlyng iterator.
-} CollectionItr;                                                     // Total size is 1KB, aligned 8.
+} CollectionItrPub;
+
 
 /***********************************************************************************************************************************
-Construct an iterator to scan through the abstract Collection.
+Construct an abstract Collection from a concrete collection (eg. List)
+Use a macro front end so we can support polymorphic collections.
 ***********************************************************************************************************************************/
-INLINE void
-newCollectionItr(CollectionItr *this, Collection *collection)
-{
-    // Remember the collection, mainly to pick up the jump table.
-    this->collection = collection;
+#define NEWCOLLECTION(SubType, subCollection)                                                                                      \
+    collectionNew(subCollection, newItr##SubType, next##SubType, free##SubType)
+Collection *collectionNew(void *subCollection, void *(*newItr)(void*), void *(*next)(void*), void (*free)(void*));
 
-    // Use preallocated memory to hold the inner collection's iterator.
-    //   (newCollection() already verified preallocated is big enough.)
-    this->subIterator = (void *)this->preallocatedMemory;
-
-    // Use the allocated memory to construct an inner iterator for the inner collection.
-    collection->newItr(this->subIterator, collection->subCollection);
-}
-
+// Construct an iterator to scan through the abstract Collection.
+Collection *collectionItrNew(Collection *collection);
 
 /***********************************************************************************************************************************
 Point to the next item in the Collection, returning NULL if there are no more.
 ***********************************************************************************************************************************/
-INLINE void *
-nextCollectionItr(CollectionItr *this)
+FN_INLINE_ALWAYS void *
+collectionItrNext(CollectionItr *this)
 {
-    return this->collection->next(this->subIterator);
+    // Point to the underlying collection's iterator.
+    void *subIterator = THIS_PUB(CollectionItr)->subIterator;
+
+    // Point to the "next" method of the iterator.
+    void *(*next)(void *) = THIS_PUB(CollectionItr)->collection->pub.next;
+
+    // Get the next item from the underlying collection, if any.
+    return next(subIterator);
 }
 
 /***********************************************************************************************************************************
 Destroy the iterator, freeing any resources which were allocated.
 ***********************************************************************************************************************************/
-INLINE void
-destructCollectionItr(CollectionItr *this)
+FN_INLINE_ALWAYS void
+collectionItrFree(CollectionItr *this)
 {
-    this->collection->destruct(this->subIterator);
+    objFree(THIS_PUB(CollectionItr)->subIterator);
+    objFree(this);
 }
 
+// Macros to enable a Collection object as an abstract collection
+#define newCollectionItr(collection) collectionItrNew(collection)
+#define nextCollectionItr(itr) collectionItrNext(itr)
+#define freeCollectionItr(itr) collectionItrFree(itr)
 
 /***********************************************************************************************************************************
-Syntactic sugar to make iteration look more like C++ or Python.
+Syntactic sugar to make iteration looks more like C++ or Python.
 Note foreach and endForeach are block macros, so the overall foreach/endForeach must be terminated with a semicolon.
 This version is a big slower because it catches and cleans up after exceptions.
 ***********************************************************************************************************************************/
 #define FOREACH(ItemType, item, CollectionType, collection)                                                                        \
-    BEGIN                                                                                                                          \
-        CollectionType##Itr _itr[1];                                                                                               \
-        new##CollectionType##Itr(_itr, collection);                                                                                \
-        void (*_destructor)(CollectionType##Itr*) = destruct##CollectionType##Itr;                                                 \
+    do {                                                                                                                        \
+        CollectionType##Itr *_itr = new##CollectionType##Itr(_itr, collection);                                                    \
+        void (*_free)(CollectionType##Itr*) = free##CollectionType##Itr;                                                 \
         ItemType *item;                                                                                                            \
         TRY_BEGIN()                                                                                                                \
         {                                                                                                                          \
@@ -107,57 +109,23 @@ This version is a big slower because it catches and cleans up after exceptions.
         }                                                                                                                          \
         FINALLY()                                                                                                                  \
         {                                                                                                                          \
-            _destructor(_itr);                                                                                                     \
+            _free(_itr);                                                                                                     \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
-    END
+    while (0)
 
-/***********************************************************************************************************************************
-Syntactic sugar for creating an abstract Collection from a regular collection.
-Checks to ensure we won't overflow pre-allocated memory in CollectionItr.
-Unlike "block" macros, this macro is actually an expression returning a pointer to a local (auto) Collection.
-   Collection *collection = NEWCOLLECTION(List, list)
-***********************************************************************************************************************************/
-#define NEWCOLLECTION(SubType, subCntainer) (                                                                                      \
-    checkItr(subCntainer != NULL, "Attempting to create NEWCOLLECTION from NULL"),                                                 \
-    checkItr(                                                                                                                      \
-        sizeof(SubType##Itr) <= sizeof(((CollectionItr*)0)->preallocatedMemory),                                                   \
-        "Pre-allocated space in CollectionItr is too small"                                                                        \
-    ),                                                                                                                             \
-    &(Collection) {                                                                                                                \
-        .subCollection = (void *)subCntainer,                                                                                      \
-        .newItr = (void(*)(void*,void*))new##SubType##Itr,                                                                         \
-        .next = (void*(*)(void*))next##SubType##Itr,                                                                               \
-        .destruct = (void(*)(void*))destruct##SubType##Itr,                                                                        \
-    }                                                                                                                              \
-)
 
-// Put a wrapper around "CHECK" so it can be used as an expression.
-INLINE void
-checkItr(bool condition, const char* message) {
-    CHECK(AssertError, condition, message);
-}
 
 /***********************************************************************************************************************************
 Syntactic sugar for iteration. This is a proposed (future) version is optimized for the case when 1) no exceptions can occur or
 2) the destruct method does not need to be called after an exception (say dynamic memory is freed automatically).
 ***********************************************************************************************************************************/
-#define FOREACH_NOEX(ItemType, item, CollectionType, collection)                                                                   \
-    BEGIN                                                                                                                          \
-        CollectionType##Itr _itr[1];                                                                                               \
-        new##CollectionType##Itr(_itr, collection);                                                                                \
-        void (*_destructor)(CollectionType##Itr*) = destruct##CollectionType##Itr;                                                 \
-        ItemType *item;                                                                                                            \
-        while ( (item = next##CollectionType##Itr(_itr)) != NULL)                                                                  \
-        {
-#define ENDFOREACH_NOEX                                                                                                            \
-        }                                                                                                                          \
-        _destructor(_itr);                                                                                                         \
-    END
-
-
-// TODO: INLINE belongs elsewhere.
-#undef INLINE
+#define FOREACH_SIMPLE(item, CollectionType, collection)                                                                           \
+    for (                                                                                                                          \
+        CollectionType##Itr *_itr = new##CollectionType##Itr(_itr, collection);                                                    \
+        (item = next##CollectionType##Itr(_itr)) != NULL) || (free##CollectionType##Itr(_itr), false))                             \
+        (void)0                                                                                                                    \
+    )
 
 
 #endif //PGBACKREST_COLLECTION_H

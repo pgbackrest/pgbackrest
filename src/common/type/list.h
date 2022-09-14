@@ -169,43 +169,40 @@ String *lstToLog(const List *this);
 /***********************************************************************************************************************************
 List Iteration.
 ***********************************************************************************************************************************/
-
-// Structure for iterating through a list.
-typedef struct ListItr
+typedef struct ListItr ListItr;                                     // Just a placeholder since all methods are inlined.
+typedef struct ListItrPub
 {
     List *list;                                                     // The list we're iterating
     unsigned int listIdx;                                           // Position of next item in the list
-} ListItr;
+} ListItrPub;
 
-/***********************************************************************************************************************************
-Construct a new list iterator.
-***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
-newListItr(ListItr *this, List *list)
-{
-    this->list = list;
-    this->listIdx = 0;
-}
+// Construct a list iterator to scan the given list.
+ListItr *listItrNew(List *list);
 
 /***********************************************************************************************************************************
 Get a pointer to the next item from the list, or NULL if no more.
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void *
-nextListItr(ListItr *this)
+FN_INLINE_ALWAYS void *
+listItrNext(ListItr *this)
 {
-    if (this->listIdx >= lstSize(this->list))
+    if (THIS_PUB(ListItr)->listIdx >= lstSize(THIS_PUB(ListItr)->list))
         return NULL;
     else
-        return lstGet(this->list, this->listIdx++);
+        return lstGet(THIS_PUB(ListItr)->list, THIS_PUB(ListItr)->listIdx++);
 }
 
 /***********************************************************************************************************************************
-Destroy a list iterator.  (no-op)
+Free the list object.
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
-destructListItr(ListItr *this)
+FN_INLINE_ALWAYS void
+listItrFree(ListItr *this)
 {
-    (void)this;
+    objFree(this);
 }
+
+// The following macros enable Lists as abstract Collections.
+#define newListItr(list) listItrNew(list)
+#define nextListItr(list) listItrNext(list)
+#define freeListItr(list) listItrFree(list)
 
 #endif

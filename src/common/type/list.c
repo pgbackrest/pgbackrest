@@ -435,3 +435,28 @@ lstToLog(const List *this)
 {
     return strNewFmt("{size: %u}", lstSize(this));
 }
+
+
+
+// Define the full list iterator. Most methods are inlined, so there are no private fields.
+struct ListItr
+{
+    ListItrPub pub;
+};
+
+/***********************************************************************************************************************************
+Construct a new list iterator. Returns an object which must be freed.
+***********************************************************************************************************************************/
+ListItr *
+listItrNew(List *list)
+{
+    ListItr *this = NULL;
+    OBJ_NEW_BEGIN(ListItr)
+        {
+            this = OBJ_NEW_ALLOC();
+            *this = (ListItr) {.pub = (ListItrPub){.list = list, .listIdx = 0}};
+        }
+    OBJ_NEW_END();
+
+    return this;
+}
