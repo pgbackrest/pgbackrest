@@ -26,7 +26,7 @@ typedef struct BlockMapItem
 Constructors
 ***********************************************************************************************************************************/
 // Create empty block map
-__attribute__((always_inline)) static inline BlockMap *
+FN_INLINE_ALWAYS BlockMap *
 blockMapNew(void)
 {
     return (BlockMap *)lstNewP(sizeof(BlockMapItem));
@@ -39,7 +39,7 @@ BlockMap *blockMapNewRead(IoRead *map);
 Functions
 ***********************************************************************************************************************************/
 // Add a block map item
-__attribute__((always_inline)) static inline const BlockMapItem *
+FN_INLINE_ALWAYS const BlockMapItem *
 blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
 {
     ASSERT_INLINE(item != NULL);
@@ -55,14 +55,14 @@ void blockMapWrite(const BlockMap *this, IoWrite *output);
 Getters/Setters
 ***********************************************************************************************************************************/
 // Get a block map item
-__attribute__((always_inline)) static inline const BlockMapItem *
+FN_INLINE_ALWAYS const BlockMapItem *
 blockMapGet(const BlockMap *const this, const unsigned int mapIdx)
 {
     return (BlockMapItem *)lstGet((List *const)this, mapIdx);
 }
 
 // Block map size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 blockMapSize(const BlockMap *const this)
 {
     return lstSize((List *const)this);
@@ -71,7 +71,7 @@ blockMapSize(const BlockMap *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 blockMapFree(BlockMap *const this)
 {
     objFree(this);

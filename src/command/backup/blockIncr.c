@@ -10,6 +10,7 @@ Block Incremental Filter
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/type/pack.h"
 #include "common/type/object.h"
