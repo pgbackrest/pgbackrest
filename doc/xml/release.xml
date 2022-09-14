@@ -100,7 +100,10 @@
 
                 <release-development-list>
                     <release-item>
-                        <github-pull-request id="1842"/>
+                        <commit subject="Skip mem context cleanup in CATCH_FATAL() block.">
+                            <github-pull-request id="1842"/>
+                        </commit>
+                        <commit subject="Add mem context test missing from 0f7b6a33."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
