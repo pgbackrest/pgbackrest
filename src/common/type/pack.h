@@ -135,28 +135,28 @@ typedef enum
 Pack Functions
 ***********************************************************************************************************************************/
 // Duplicate pack
-__attribute__((always_inline)) static inline Pack *
+FN_INLINE_ALWAYS Pack *
 pckDup(const Pack *const this)
 {
     return (Pack *)bufDup((const Buffer *)this);
 }
 
 // Cast Buffer to Pack
-__attribute__((always_inline)) static inline const Pack *
+FN_INLINE_ALWAYS const Pack *
 pckFromBuf(const Buffer *const buffer)
 {
     return (const Pack *)buffer;
 }
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline Pack *
+FN_INLINE_ALWAYS Pack *
 pckMove(Pack *const this, MemContext *const parentNew)
 {
     return (Pack *)bufMove((Buffer *)this, parentNew);
 }
 
 // Cast Pack to Buffer
-__attribute__((always_inline)) static inline const Buffer *
+FN_INLINE_ALWAYS const Buffer *
 pckToBuf(const Pack *const pack)
 {
     return (const Buffer *)pack;
@@ -283,7 +283,7 @@ typedef struct PckReadModeParam
 mode_t pckReadMode(PackRead *this, PckReadModeParam param);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline PackRead *
+FN_INLINE_ALWAYS PackRead *
 pckReadMove(PackRead *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -423,7 +423,7 @@ void pckReadEnd(PackRead *this);
 /***********************************************************************************************************************************
 Read Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 pckReadFree(PackRead *const this)
 {
     objFree(this);
@@ -528,7 +528,7 @@ typedef struct PckWriteModeParam
 PackWrite *pckWriteMode(PackWrite *this, mode_t value, PckWriteModeParam param);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline PackWrite *
+FN_INLINE_ALWAYS PackWrite *
 pckWriteMove(PackWrite *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -675,7 +675,7 @@ Pack *pckWriteResult(PackWrite *this);
 /***********************************************************************************************************************************
 Write Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 pckWriteFree(PackWrite *const this)
 {
     objFree(this);

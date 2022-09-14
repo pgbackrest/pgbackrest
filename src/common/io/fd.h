@@ -13,14 +13,14 @@ Functions
 bool fdReady(int fd, bool read, bool write, TimeMSec timeout);
 
 // Wait until the file descriptor is ready to read or timeout
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 fdReadyRead(const int fd, const TimeMSec timeout)
 {
     return fdReady(fd, true, false, timeout);
 }
 
 // Wait until the file descriptor is ready to write or timeout
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 fdReadyWrite(const int fd, const TimeMSec timeout)
 {
     return fdReady(fd, false, true, timeout);

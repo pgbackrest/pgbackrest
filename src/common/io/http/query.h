@@ -59,7 +59,7 @@ StringList *httpQueryList(const HttpQuery *this);
 HttpQuery *httpQueryMerge(HttpQuery *this, const HttpQuery *query);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline HttpQuery *
+FN_INLINE_ALWAYS HttpQuery *
 httpQueryMove(HttpQuery *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -86,7 +86,7 @@ String *httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 httpQueryFree(HttpQuery *const this)
 {
     objFree(this);

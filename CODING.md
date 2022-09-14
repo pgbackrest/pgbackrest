@@ -218,7 +218,7 @@ typedef struct ListPub
 } ListPub;
 
 // List size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 lstSize(const List *const this)
 {
     return THIS_PUB(List)->listSize;

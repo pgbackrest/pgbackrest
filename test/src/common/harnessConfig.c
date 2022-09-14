@@ -199,7 +199,7 @@ hrnCfgArgKeyRawReset(StringList *argList, ConfigOption optionId, unsigned option
 }
 
 /**********************************************************************************************************************************/
-__attribute__((always_inline)) static inline const char *
+FN_INLINE_ALWAYS const char *
 hrnCfgEnvName(const ConfigOption optionId, const unsigned optionKey)
 {
     return strZ(

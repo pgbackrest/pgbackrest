@@ -178,6 +178,12 @@ configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), descr
 # Set FN_NO_RETURN macro
 configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
 
+# Set FN_INLINE_ALWAYS macro
+configuration.set(
+    'FN_INLINE_ALWAYS', '__attribute__((always_inline)) static inline',
+    description: 'Indicate that a function should always be inlined'
+)
+
 ####################################################################################################################################
 # Include subdirs
 ####################################################################################################################################

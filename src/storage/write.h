@@ -20,7 +20,7 @@ typedef struct StorageWrite StorageWrite;
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline StorageWrite *
+FN_INLINE_ALWAYS StorageWrite *
 storageWriteMove(StorageWrite *const this, MemContext *const parentNew)
 {
     return objMoveContext(this, parentNew);
@@ -38,63 +38,63 @@ typedef struct StorageWritePub
 
 // Will the file be written atomically? Atomic writes means the file will be complete or be missing. Filesystems have different ways
 // to accomplish this.
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageWriteAtomic(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->atomic;
 }
 
 // Will the path be created if required?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageWriteCreatePath(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->createPath;
 }
 
 // Write interface
-__attribute__((always_inline)) static inline IoWrite *
+FN_INLINE_ALWAYS IoWrite *
 storageWriteIo(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->io;
 }
 
 // File mode
-__attribute__((always_inline)) static inline mode_t
+FN_INLINE_ALWAYS mode_t
 storageWriteModeFile(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->modeFile;
 }
 
 // Path mode (if the destination path needs to be create)
-__attribute__((always_inline)) static inline mode_t
+FN_INLINE_ALWAYS mode_t
 storageWriteModePath(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->modePath;
 }
 
 // File name
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 storageWriteName(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->name;
 }
 
 // Will the file be synced before it is closed?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageWriteSyncFile(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->syncFile;
 }
 
 // Will the path be synced after the file is closed?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageWriteSyncPath(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->syncPath;
 }
 
 // File type
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 storageWriteType(const StorageWrite *const this)
 {
     return THIS_PUB(StorageWrite)->interface->type;
@@ -103,7 +103,7 @@ storageWriteType(const StorageWrite *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 storageWriteFree(StorageWrite *const this)
 {
     objFreeContext(this);

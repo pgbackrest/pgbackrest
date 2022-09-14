@@ -72,7 +72,7 @@ typedef struct IoFilterPub
 bool ioFilterDone(const IoFilter *this);
 
 // Driver for the filter
-__attribute__((always_inline)) static inline void *
+FN_INLINE_ALWAYS void *
 ioFilterDriver(IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->driver;
@@ -83,21 +83,21 @@ ioFilterDriver(IoFilter *const this)
 bool ioFilterInputSame(const IoFilter *this);
 
 // Interface for the filter
-__attribute__((always_inline)) static inline const IoFilterInterface *
+FN_INLINE_ALWAYS const IoFilterInterface *
 ioFilterInterface(const IoFilter *const this)
 {
     return &THIS_PUB(IoFilter)->interface;
 }
 
 // Does filter produce output? All In filters produce output.
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioFilterOutput(const IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->interface.inOut != NULL;
 }
 
 // List of filter parameters
-__attribute__((always_inline)) static inline const Pack *
+FN_INLINE_ALWAYS const Pack *
 ioFilterParamList(const IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->paramList;
@@ -113,7 +113,7 @@ void ioFilterProcessIn(IoFilter *this, const Buffer *input);
 void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
 
 // Move filter to a new parent mem context
-__attribute__((always_inline)) static inline IoFilter *
+FN_INLINE_ALWAYS IoFilter *
 ioFilterMove(IoFilter *this, MemContext *parentNew)
 {
     return objMoveContext(this, parentNew);

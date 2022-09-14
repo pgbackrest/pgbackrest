@@ -23,14 +23,14 @@ typedef struct IoRead IoRead;
 Getters/Setters
 ***********************************************************************************************************************************/
 // Do reads block when more bytes are requested than are available to read?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioReadBlock(const IoRead *const this)
 {
     return THIS_PUB(IoRead)->interface.block;
 }
 
 // Is IO at EOF? All driver reads are complete and all data has been flushed from the filters (if any).
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioReadEof(const IoRead *const this)
 {
     ASSERT_INLINE(THIS_PUB(IoRead)->opened && !THIS_PUB(IoRead)->closed);
@@ -38,7 +38,7 @@ ioReadEof(const IoRead *const this)
 }
 
 // Get filter group if filters need to be added
-__attribute__((always_inline)) static inline IoFilterGroup *
+FN_INLINE_ALWAYS IoFilterGroup *
 ioReadFilterGroup(IoRead *const this)
 {
     return THIS_PUB(IoRead)->filterGroup;
@@ -63,7 +63,7 @@ size_t ioReadSmall(IoRead *this, Buffer *buffer);
 String *ioReadLineParam(IoRead *this, bool allowEof);
 
 // Read linefeed-terminated string
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 ioReadLine(IoRead *const this)
 {
     return ioReadLineParam(this, false);
@@ -91,7 +91,7 @@ void ioReadClose(IoRead *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioReadFree(IoRead *const this)
 {
     objFreeContext(this);

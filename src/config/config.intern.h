@@ -123,7 +123,7 @@ unsigned int cfgOptionIdxTotal(ConfigOption optionId);
 // Get config option as a Variant
 Variant *cfgOptionIdxVar(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline Variant *
+FN_INLINE_ALWAYS Variant *
 cfgOptionVar(const ConfigOption optionId)
 {
     return cfgOptionIdxVar(optionId, cfgOptionIdxDefault(optionId));

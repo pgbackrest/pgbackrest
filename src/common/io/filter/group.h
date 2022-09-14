@@ -42,7 +42,7 @@ typedef struct IoFilterGroupPub
 } IoFilterGroupPub;
 
 // Is the filter group done processing?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioFilterGroupDone(const IoFilterGroup *const this)
 {
     ASSERT_INLINE(THIS_PUB(IoFilterGroup)->opened && !THIS_PUB(IoFilterGroup)->closed);
@@ -51,7 +51,7 @@ ioFilterGroupDone(const IoFilterGroup *const this)
 
 // Should the same input be passed again? A buffer of input can produce multiple buffers of output, e.g. when a file containing all
 // zeroes is being decompressed.
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 ioFilterGroupInputSame(const IoFilterGroup *const this)
 {
     ASSERT_INLINE(THIS_PUB(IoFilterGroup)->opened && !THIS_PUB(IoFilterGroup)->closed);
@@ -83,7 +83,7 @@ Pack *ioFilterGroupResultAll(const IoFilterGroup *this);
 void ioFilterGroupResultAllSet(IoFilterGroup *this, const Pack *filterResult);
 
 // Return total number of filters
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 ioFilterGroupSize(const IoFilterGroup *const this)
 {
     return lstSize(THIS_PUB(IoFilterGroup)->filterList);
@@ -113,7 +113,7 @@ void ioFilterGroupClose(IoFilterGroup *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioFilterGroupFree(IoFilterGroup *const this)
 {
     objFree(this);

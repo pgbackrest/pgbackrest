@@ -40,56 +40,56 @@ typedef struct DbPub
 } DbPub;
 
 // Archive mode loaded from the archive_mode GUC
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 dbArchiveMode(const Db *const this)
 {
     return THIS_PUB(Db)->archiveMode;
 }
 
 // Archive command loaded from the archive_command GUC
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 dbArchiveCommand(const Db *const this)
 {
     return THIS_PUB(Db)->archiveCommand;
 }
 
 // Control data
-__attribute__((always_inline)) static inline PgControl
+FN_INLINE_ALWAYS PgControl
 dbPgControl(const Db *const this)
 {
     return THIS_PUB(Db)->pgControl;
 }
 
 // Data path loaded from the data_directory GUC
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 dbPgDataPath(const Db *const this)
 {
     return THIS_PUB(Db)->pgDataPath;
 }
 
 // Is the cluster a standby?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 dbIsStandby(const Db *const this)
 {
     return THIS_PUB(Db)->standby;
 }
 
 // Version loaded from the server_version_num GUC
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 dbPgVersion(const Db *const this)
 {
     return THIS_PUB(Db)->pgVersion;
 }
 
 // Checkpoint timeout loaded from the checkpoint_timeout GUC
-__attribute__((always_inline)) static inline TimeMSec
+FN_INLINE_ALWAYS TimeMSec
 dbCheckpointTimeout(const Db *const this)
 {
     return THIS_PUB(Db)->checkpointTimeout;
 }
 
 // Database timeout from main/remote process
-__attribute__((always_inline)) static inline TimeMSec
+FN_INLINE_ALWAYS TimeMSec
 dbDbTimeout(const Db *const this)
 {
     return THIS_PUB(Db)->dbTimeout;
@@ -142,7 +142,7 @@ String *dbWalSwitch(Db *this);
 void dbClose(Db *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline Db *
+FN_INLINE_ALWAYS Db *
 dbMove(Db *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -151,7 +151,7 @@ dbMove(Db *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 dbFree(Db *const this)
 {
     objFree(this);
