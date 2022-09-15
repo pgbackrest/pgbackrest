@@ -7,6 +7,7 @@ Sftp Storage Read
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 #include "common/debug.h"
 #include "common/io/fd.h"
@@ -106,6 +107,7 @@ storageReadSftpOpen(THIS_VOID)
 /***********************************************************************************************************************************
 Read from a file
 ***********************************************************************************************************************************/
+// jrt remove unused block parameter ???
 static size_t
 storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
 {
@@ -120,25 +122,55 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
     ASSERT(this != NULL && this->sftpHandle != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
-    // Read if EOF has not been reached
     ssize_t actualBytes = 0;
 
+    // Read if EOF has not been reached
     if (!this->eof)
     {
+        size_t bufferAvailable;
+
         // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
-        size_t expectedBytes = bufRemains(buffer);
+        size_t expectedBytes = bufferAvailable = bufRemains(buffer);
+
 
         if (this->current + expectedBytes > this->limit)
             expectedBytes = (size_t)(this->limit - this->current);
 
-        // Read from file
         this->wait = waitNew(this->timeoutConnect);
+        int rc = 0;
 
+        // Read until EOF or buffer is full
+        do
+        {
+            do
+            {
+                rc = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer) + actualBytes, bufferAvailable);
+
+                if (rc > 0)
+                    this->wait = waitNew(this->timeoutConnect);
+            }
+            while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+            // Account for bytes read
+            if (rc > 0)
+            {
+                actualBytes += rc;
+                bufferAvailable -= rc;
+            }
+
+            // Break on EOF or error
+            if (rc <= 0)
+                break;
+        }
+        while (bufferAvailable);
+
+        /* original
         do
         {
             actualBytes = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer), expectedBytes);
         }
         while (actualBytes == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+        */
 
         // Error occurred during read
         // jrt if remote file is removed, we still read two bytes, but the first byte is null

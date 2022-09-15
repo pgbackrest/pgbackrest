@@ -9,6 +9,7 @@ Sftp Storage File write
 #include <stdio.h>
 #include <unistd.h>
 #include <utime.h>
+#include <sys/select.h>
 
 #include "common/debug.h"
 #include "common/io/write.h"
@@ -173,26 +174,41 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
     ASSERT(buffer != NULL);
     ASSERT(this->sftpHandle != NULL);
 
-    // Write the data
-    // !!! verify this cast is valid
     ssize_t rc = 0;
-
+    size_t nwrite = bufUsed(buffer);                                // Amount to write
+    int shift = 0;
     this->wait = waitNew(this->timeoutConnect);
 
+    // Loop until all the data is written
     do
     {
-        rc = libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer), bufUsed(buffer));
+        do
+        {
+            rc = libssh2_sftp_write(this->sftpHandle, (const char *)bufPtrConst(buffer) + shift, nwrite);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+        // Break on error. Will be thrown below on rc < 0.
+        if (rc < 0)
+            break;
+
         if (rc > 0)
             this->wait = waitNew(this->timeoutConnect);
+
+        // Shift for next write start point
+        shift += rc;
+
+        // Update amount left to write
+        nwrite -= (size_t)rc;
     }
-    while (rc == LIBSSH2_ERROR_EAGAIN  && waitMore(this->wait));
+    while (nwrite);
 
     //if (rc != (ssize_t)bufUsed(buffer))
     if (rc < 0)
     {
         THROW_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
-        // jrt expand later ala
         /*
+        // jrt expand later ala
         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
             THROW_FMT(
