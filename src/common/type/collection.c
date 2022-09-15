@@ -119,23 +119,64 @@ integrate with memory contexts.
 One new goal is to support a "generator" object, where a program loop is transformed into an iterator. This object
 will allow scanning through diverse data structures, say XML documents, without creating intermediate Lists.
 ***********************************************************************************************************************************/
-
+#include "build.auto.h"  // First include in all C files
+#include "common/debug.h"
 #include "common/type/collection.h"
 
-// A Private iterator where all fields are public.
+// Abstract collection of items which can be iterated.
+// This is an opaque object with no public fields.
+struct Collection
+{
+    void *subCollection;                                            // Pointer to the underlying collection.
+    void *(*newItr)(void *collection);                              // Method to construct a new iterator.
+    void *(*next)(void *this);                                      // Method to get a pointer to the next item. NULL if no more.
+    void (*free)(void *this);                                       // Method to free resources allocated during "newItr()"
+    //int itrSize;                                                  // Size to allocate for the underlying iterator. (not now)
+};
+
+// An iterator though an abstract collection.
+//  This is a public object to facilitate inline iteration.
 struct CollectionItr
 {
     CollectionItrPub pub;
 };
 
+
+Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*next)(void *), void (*free)(void *))
+{
+        FUNCTION_TEST_BEGIN();
+            //FUNCTION_TEST_PARAM(POINTER, collection);
+        FUNCTION_TEST_END();
+
+        Collection *this = NULL;
+        OBJ_NEW_BEGIN(CollectionItr)
+        {
+            // Allocate memory for the Collection object.
+            this = OBJ_NEW_ALLOC();
+
+            // Fill in the fields including the jump table pointers and a new iterator to the subCollection.
+            *this = (Collection) {
+                .subCollection = subCollection,
+                .next = next,
+                .free = free,
+                .newItr = newItr,
+            };
+        }
+        OBJ_NEW_END();
+
+        //FUNCTION_TEST_RETURN(POINTER, this);    // TODO: Create display types.
+        return this;
+}
+
+
 /***********************************************************************************************************************************
 Construct an iterator to scan through the abstract Collection.
 ***********************************************************************************************************************************/
-Collection *
-collectionItrNew(Collection *collection, void *(*newItr)(void *), void *(*next)(void *), void (*free)(void *))
+CollectionItr *
+collectionItrNew(Collection *collection)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(POINTER, collection);
+        //FUNCTION_TEST_PARAM(POINTER, collection);
     FUNCTION_TEST_END();
 
     CollectionItr *this = NULL;
@@ -146,27 +187,15 @@ collectionItrNew(Collection *collection, void *(*newItr)(void *), void *(*next)(
 
         // Fill in the fields including the jump table pointers and a new iterator to the subCollection.
         *this = (CollectionItr) {
-            .next = = next,
-            .free = free,
-            .collection = collection,
-            .subIterator = newItr(collection->subCollection);
-        }
+            .pub = {
+                .next = collection->next,
+                .free = collection->free,
+                .subIterator = collection->newItr(collection->subCollection),
+            }
+        };
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(POINTER, this);    // TODO: Create display types.
-}
-
-void
-collectionItrFree(CollectionItr *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(POINTER, this);
-    FUNCTION_TEST_END();
-
-    // Free the underlying iterator, then free ourselves.
-    objFree(THIS_PUB(CollectionItr)->subIterator);
-    objFree(this);
-
-    FUNCTION_TEST_RETURN_VOID();
+    //FUNCTION_TEST_RETURN(POINTER, this);    // TODO: Create display types.
+    return this;
 }

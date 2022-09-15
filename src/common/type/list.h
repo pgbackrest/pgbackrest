@@ -166,6 +166,8 @@ String *lstToLog(const List *this);
 #define FUNCTION_LOG_LIST_FORMAT(value, buffer, bufferSize)                                                                        \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
 
+
+
 /***********************************************************************************************************************************
 List Iteration.
 ***********************************************************************************************************************************/
@@ -201,8 +203,8 @@ listItrFree(ListItr *this)
 }
 
 // The following macros enable Lists as abstract Collections.
-#define newListItr(list) listItrNew(list)
-#define nextListItr(list) listItrNext(list)
-#define freeListItr(list) listItrFree(list)
+#define newListItr listItrNew
+#define nextListItr listItrNext
+#define freeListItr listItrFree
 
-#endif
+#endif // COMMON_TYPE_LIST_H

@@ -5,6 +5,7 @@ Time Management
 
 #include <stdio.h>
 #include <sys/time.h>
+#include <sys/select.h>
 
 #include "common/debug.h"
 #include "common/time.h"

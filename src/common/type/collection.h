@@ -20,44 +20,48 @@ of collection is inside.
         doSomething(*item)
     ENDFOREACH;
 
+    // And remember to release it when done.
+    objFree(collection);
+
 ***********************************************************************************************************************************/
 #ifndef COMMON_TYPE_COLLECTION_H
 #define COMMON_TYPE_COLLECTION_H
 
 #include <stdbool.h>
-#include "common/assert.h"
+#include "common/assert.h"  // Fails to compile by itself.
+#include "common/type/object.h"
 
-// Define the polymorphic Collection wrapper, including the jump table of underlying iterator methods.
-// Since we are inlining the methods, there are no private fields.
+// A Polymorphic interface for Iterable collections.
 typedef struct Collection Collection;
-typedef struct CollectionPub {
-    void *subCollection;                                            // Pointer to the underlying collection.
-    void *(*next)(void *this);                                      // Method to get a pointer to the next item. NULL if no more.
-    void (*newItr)(void *this, void *collection);                   // Method to construct a new iterator "in place".
-    void (*free)(void *this);                                       // Method to free resources allocated during "newItr()"
-    int itrSize;                                                    // Size to allocate for the underlying iterator.
-} CollectionPub;
 
-// Data structure for iterating through a Collection.
-// Again, to support inlining, there are no private fields.
+// Data structure for iterating through an abstract Collection.
+// To support inlining, the fields are public.
 typedef struct CollectionItr CollectionItr;
 typedef struct CollectionItrPub
 {
-    Collection *collection;                                         // The abstract Collection object.
-    void *subIterator;                                              // An iterator to the underlying collection.
+    void *subIterator;                                               // An iterator to the underlying collection.
+    void *(*next)(void *this);                                       // subIterator's "next" method
+    void (*free)(void *this);                                        // subIterator's "free" method.
 } CollectionItrPub;
 
 
 /***********************************************************************************************************************************
 Construct an abstract Collection from a concrete collection (eg. List)
 Use a macro front end so we can support polymorphic collections.
+Note we depend on casting between compatible function pointers where return value and arguments must also be compatible.
+    (void *  and struct * are compatible)
 ***********************************************************************************************************************************/
 #define NEWCOLLECTION(SubType, subCollection)                                                                                      \
-    collectionNew(subCollection, newItr##SubType, next##SubType, free##SubType)
+    collectionNew(                                                                                                                 \
+        subCollection,                                              /* The collection we are wrapping */                           \
+        (void *(*)(void*))new##SubType##Itr,                        /* Get an iterator to the collection  */                       \
+        (void *(*)(void*))next##SubType##Itr,                       /* Get next item using the iterator  */                        \
+        (void (*)(void *))free##SubType##Itr                        /* Free the iterator */                                        \
+    )
 Collection *collectionNew(void *subCollection, void *(*newItr)(void*), void *(*next)(void*), void (*free)(void*));
 
 // Construct an iterator to scan through the abstract Collection.
-Collection *collectionItrNew(Collection *collection);
+CollectionItr *collectionItrNew(Collection *collection);
 
 /***********************************************************************************************************************************
 Point to the next item in the Collection, returning NULL if there are no more.
@@ -65,30 +69,24 @@ Point to the next item in the Collection, returning NULL if there are no more.
 FN_INLINE_ALWAYS void *
 collectionItrNext(CollectionItr *this)
 {
-    // Point to the underlying collection's iterator.
-    void *subIterator = THIS_PUB(CollectionItr)->subIterator;
-
-    // Point to the "next" method of the iterator.
-    void *(*next)(void *) = THIS_PUB(CollectionItr)->collection->pub.next;
-
-    // Get the next item from the underlying collection, if any.
-    return next(subIterator);
+    // Invoke next() on the subiterator.
+    return THIS_PUB(CollectionItr)->next(THIS_PUB(CollectionItr)->subIterator);
 }
 
 /***********************************************************************************************************************************
 Destroy the iterator, freeing any resources which were allocated.
 ***********************************************************************************************************************************/
-FN_INLINE_ALWAYS void
-collectionItrFree(CollectionItr *this)
+FN_INLINE_ALWAYS
+void collectionItrFree(CollectionItr *this)
 {
     objFree(THIS_PUB(CollectionItr)->subIterator);
     objFree(this);
 }
 
 // Macros to enable a Collection object as an abstract collection
-#define newCollectionItr(collection) collectionItrNew(collection)
-#define nextCollectionItr(itr) collectionItrNext(itr)
-#define freeCollectionItr(itr) collectionItrFree(itr)
+#define newCollectionItr collectionItrNew
+#define nextCollectionItr collectionItrNext
+#define freeCollectionItr collectionItrFree
 
 /***********************************************************************************************************************************
 Syntactic sugar to make iteration looks more like C++ or Python.
@@ -96,9 +94,9 @@ Note foreach and endForeach are block macros, so the overall foreach/endForeach 
 This version is a big slower because it catches and cleans up after exceptions.
 ***********************************************************************************************************************************/
 #define FOREACH(ItemType, item, CollectionType, collection)                                                                        \
-    do {                                                                                                                        \
-        CollectionType##Itr *_itr = new##CollectionType##Itr(_itr, collection);                                                    \
-        void (*_free)(CollectionType##Itr*) = free##CollectionType##Itr;                                                 \
+    do {                                                                                                                           \
+        CollectionType##Itr *_itr = new##CollectionType##Itr(collection);                                                          \
+        void (*_free)(CollectionType##Itr*) = free##CollectionType##Itr;                                                           \
         ItemType *item;                                                                                                            \
         TRY_BEGIN()                                                                                                                \
         {                                                                                                                          \
@@ -109,10 +107,10 @@ This version is a big slower because it catches and cleans up after exceptions.
         }                                                                                                                          \
         FINALLY()                                                                                                                  \
         {                                                                                                                          \
-            _free(_itr);                                                                                                     \
+            _free(_itr);                                                                                                           \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
-    while (0)
+    } while (0)
 
 
 
@@ -122,10 +120,15 @@ Syntactic sugar for iteration. This is a proposed (future) version is optimized 
 ***********************************************************************************************************************************/
 #define FOREACH_SIMPLE(item, CollectionType, collection)                                                                           \
     for (                                                                                                                          \
-        CollectionType##Itr *_itr = new##CollectionType##Itr(_itr, collection);                                                    \
+        CollectionType##Itr *_itr = new##CollectionType##Itr(collection);                                                          \
         (item = next##CollectionType##Itr(_itr)) != NULL) || (free##CollectionType##Itr(_itr), false))                             \
         (void)0                                                                                                                    \
     )
 
-
-#endif //PGBACKREST_COLLECTION_H
+#define foreach(item, list) \
+    for (                                                                                                                          \
+        int foreach_idx = 0;                                                                                                                 \
+        (item = foreach_idx<lstSize(list)?lstGet(list, foreach_idx):NULL);                                                                           \
+        foreach_idx++;                                                                                                                       \
+    )
+#endif //COMMON_TYPE_COLLECTION_H
