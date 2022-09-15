@@ -29,6 +29,19 @@
 
                         <p>Fix incorrect time expiration being used for non-default repos.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1870"/>
+                        <github-pull-request id="1871"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="efremov.egor"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue when listing directories recursively with a filter.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-feature-list>
