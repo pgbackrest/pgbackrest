@@ -127,56 +127,48 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
     // Read if EOF has not been reached
     if (!this->eof)
     {
-        size_t bufferAvailable;
-
         // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
-        size_t expectedBytes = bufferAvailable = bufRemains(buffer);
-
+        size_t expectedBytes = bufRemains(buffer);
 
         if (this->current + expectedBytes > this->limit)
             expectedBytes = (size_t)(this->limit - this->current);
 
         this->wait = waitNew(this->timeoutConnect);
-        int rc = 0;
+
+        ssize_t rc = 0;
 
         // Read until EOF or buffer is full
         do
         {
             do
             {
-                rc = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer) + actualBytes, bufferAvailable);
-
-                if (rc > 0)
-                    this->wait = waitNew(this->timeoutConnect);
+                rc = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer), bufRemains(buffer));
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-
-            // Account for bytes read
-            if (rc > 0)
-            {
-                actualBytes += rc;
-                bufferAvailable -= rc;
-            }
 
             // Break on EOF or error
             if (rc <= 0)
                 break;
-        }
-        while (bufferAvailable);
 
-        /* original
-        do
-        {
-            actualBytes = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer), expectedBytes);
+            if (rc > 0)
+            {
+                // Account/shift for bytes read
+                bufUsedInc(buffer, (size_t)rc);
+
+                // Reset timeout
+                this->wait = waitNew(this->timeoutConnect);
+            }
         }
-        while (actualBytes == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-        */
+        while (!bufFull(buffer));
+
+        // The total bytes read into the buffer
+        actualBytes = bufUsed(buffer);
 
         // Error occurred during read
         // jrt if remote file is removed, we still read two bytes, but the first byte is null
         // is it valid to error in this case - i.e. bufEmpty here is an error? can't use bufEmpty as error as empty buffer may be
         // valid?
-        if (actualBytes < 0)
+        if (rc < 0)
         {
             if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
@@ -194,8 +186,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
         }
 
         // Update amount of buffer used
-        bufUsedInc(buffer, (size_t)actualBytes);
-        this->current += (uint64_t)actualBytes;
+        this->current += actualBytes;
 
         // If less data than expected was read or the limit has been reached then EOF.  The file may not actually be EOF but we are
         // not concerned with files that are growing.  Just read up to the point where the file is being extended.
@@ -203,7 +194,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
             this->eof = true;
     }
 
-    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
+    FUNCTION_LOG_RETURN(SIZE, actualBytes);
 }
 
 /***********************************************************************************************************************************
