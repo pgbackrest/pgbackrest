@@ -237,7 +237,7 @@ testRun(void)
         List *longList = lstNewP(sizeof(int));
         for (int listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(longList, &listIdx);
-        ASSERT(lstSize(list) == (unsigned int) testMax);
+        ASSERT(lstSize(longList) == (unsigned int) testMax);
 
         // Scan the empty list.
         int *item;
