@@ -51,10 +51,10 @@ Note we depend on casting between compatible function pointers where return valu
 ***********************************************************************************************************************************/
 #define NEWCOLLECTION(SubType, subCollection)                                                                                      \
     collectionNew(                                                                                                                 \
-        subCollection,                                              /* The collection we are wrapping */                           \
-        (void *(*)(void*))METHOD(SubType, ItrNew),                        /* Get an iterator to the collection  */                       \
-        (void *(*)(void*))METHOD(SubType, ItrNext),                       /* Get next item using the iterator  */                        \
-        (void (*)(void *))METHOD(SubType, ItrFree)                        /* Free the iterator */                                        \
+        subCollection,                                               /* The collection we are wrapping */                          \
+        (void *(*)(void*))METHOD(SubType, ItrNew),                   /* Get an iterator to the collection  */                      \
+        (void *(*)(void*))METHOD(SubType, ItrNext),                  /* Get next item using the iterator  */                       \
+        (void (*)(void *))METHOD(SubType, ItrFree)                   /* Free the iterator */                                       \
     )
 Collection *collectionNew(void *subCollection, void *(*newItr)(void*), void *(*next)(void*), void (*free)(void*));
 
@@ -83,54 +83,56 @@ void collectionItrFree(CollectionItr *this)
 
 // Syntactic sugar to get the function name from the object type and the short method name.
 //    eg.   METHOD(List, Get) -->  listGet
-// Note it takes an (obscure) second level of indirection to convert to camel case before appending.
+// Note it takes an (obscure) second level of indirection and a "CAMEL_Type" macro to make this work.
 #define METHOD(type, method)  JOIN(CAMEL(type), method)
 #define JOIN(a,b) JOIN_AGAIN(a,b)
 #define JOIN_AGAIN(a, b) a ## b
 
 // We can't really convert to camel case, but we can invoke the symbol CAMEL_<type name> to get it.
 // Each of the collection types must provide a CAMEL_* macro to provide the type name in camelCase.
+// In the case of iterators, we append Itr to the collection type, so we don't have to create CAMEL_TypeItr.
 #define CAMEL(type) CAMEL_##type
 
 /***********************************************************************************************************************************
 Syntactic sugar to make iteration looks more like C++ or Python.
 Note foreach and endForeach are block macros, so the overall foreach/endForeach must be terminated with a semicolon.
-This version is a big slower because it catches and cleans up after exceptions.
+This version is slower because it catches and cleans up after exceptions.
 ***********************************************************************************************************************************/
 #define FOREACH(ItemType, item, CollectionType, collection)                                                                        \
     do {                                                                                                                           \
-        CollectionType##Itr *_itr = METHOD(CollectionType, ItrNew)(collection);                                                       \
-        void (*_free)(CollectionType##Itr*) = METHOD(CollectionType, ItrFree);                                                        \
+        CollectionType##Itr *FOREACH_itr = METHOD(CollectionType, ItrNew)(collection);                                             \
+        void (*FOREACH_free)(CollectionType##Itr*) = METHOD(CollectionType, ItrFree);                                              \
         ItemType *item;                                                                                                            \
         TRY_BEGIN()                                                                                                                \
         {                                                                                                                          \
-            while ( (item = METHOD(CollectionType,ItrNext)(_itr)) != NULL)                                                           \
+            while ( (item = METHOD(CollectionType,ItrNext)(FOREACH_itr)) != NULL)                                                  \
             {
 #define ENDFOREACH                                                                                                                 \
             }                                                                                                                      \
         }                                                                                                                          \
         FINALLY()                                                                                                                  \
         {                                                                                                                          \
-            _free(_itr);                                                                                                           \
+            FOREACH_free(FOREACH_itr);                                                                                             \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
     } while (0)
 
 /***********************************************************************************************************************************
-Syntactic sugar for iteration. This is a proposed (future) version is optimized for the case when 1) no exceptions can occur or
-2) the destruct method does not need to be called after an exception (say dynamic memory is freed automatically).
+Syntactic sugar for iteration. This is a proposed (future) version is optimized for the case when 1) no exceptions can occur, or
+2) no "break" statements, and 3) the destruct method does not need to be called after an exception
+(say dynamic memory is freed automatically).
 
 Not sure if we want to keep this, since most of the simple cases will be Lists and we can use the list specific "foreach()" macro.
 ***********************************************************************************************************************************/
 #define FOREACH_SIMPLE(item, CollectionType, collection)                                                                           \
     for (                                                                                                                          \
-        CollectionType##Itr *_itr = METHOD(CollectionType, ItrNew)(collection);                                                    \
-        (item = METHOD(CollectionType,ItrNext)(_itr)) != NULL || (METHOD(CollectionType,ItrFree)(_itr), false);                    \
+        CollectionType##Itr *FOREACH_itr = METHOD(CollectionType, ItrNew)(collection);                                             \
+        (item = METHOD(CollectionType,ItrNext)(FOREACH_itr)) != NULL || (METHOD(CollectionType,ItrFree)(_itr), false);             \
         (void)0                                                                                                                    \
     )
 
 /***********************************************************************************************************************************
-Macros for function logging
+Macros for function logging.
 ***********************************************************************************************************************************/
 
 #define FUNCTION_LOG_COLLECTION_TYPE                                                                                               \
@@ -141,8 +143,8 @@ String *collectionToLog(const Collection *this);
 
 #define FUNCTION_LOG_ITERATOR_TYPE                                                                                                 \
     void *
-#define FUNCTION_LOG_ITERATOR_FORMAT(vlue, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, collectionToLog, buffer, bufferSize)
+#define FUNCTION_LOG_ITERATOR_FORMAT(value, buffer, bufferSize)                                                                    \
+    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, iteratorToLog, buffer, bufferSize)
 String *iteratorToLog(const void *this);
 
 #endif //COMMON_TYPE_COLLECTION_H
