@@ -229,32 +229,40 @@ testRun(void)
     /******************************************************************************************************************************/
     if (testBegin("foreach List Iteration")) {
 
-        List * list = lstNewP(sizeof(int),.comparator = testComparator);
-        FOREACH(int, value, List, list)
-            (void)value;
-            ASSERT(false);  // We shouldn't be here with an empty list
-        ENDFOREACH;
-        TEST_RESULT_VOID((void)0, "empty list");
+        // Create an empty list
+        const List * emptyList = lstNewP(sizeof(int));
 
-        Collection *collection = NEWCOLLECTION(List, list);
-        FOREACH(int, value, List, list)
-            (void)value;
+        // Create a long list
+        const int testMax = 100;
+        List *longList = lstNewP(sizeof(int));
+        for (int listIdx = 0; listIdx < testMax; listIdx++)
+            lstAdd(longList, &listIdx);
+        ASSERT(lstSize(list) == (unsigned int) testMax);
+
+        // Scan the empty list.
+        int *item;
+        foreach(item, emptyList)
             ASSERT(false);  // We shouldn't be here with an empty list
+        TEST_RESULT_VOID((void)0, "scan empty list");
+
+        // Scan the bigger list.
+        int count = 0;
+        foreach(item, longList)
+        {
+            ASSERT(*value == count);
+            count++;
+        }
+        TEST_RESULT_INT(count, testMax, "non-empty List");
+
+        // Scan the empty list, inside a collection
+        Collection *emptyCollection = NEWCOLLECTION(List, emptyList);
+        FOREACH(int, value, Collection, emptyCollection)
+            ASSERT(*value != *value);  // We shouldn't be here with an empty list
         ENDFOREACH;
         TEST_RESULT_VOID((void) 0, "empty list inside Collection");
 
-        int testMax = 100;
-        for (int listIdx = 0; listIdx < testMax; listIdx++)
-            lstAdd(list, &listIdx);
-        ASSERT(lstSize(list) == (unsigned int) testMax);
-
-        int count = 0;
-        FOREACH(int, value, List, list)
-            ASSERT(*value == count);
-            count++;
-        ENDFOREACH;
-        TEST_RESULT_INT(count, testMax, "non-empty List");
-
+        // Scan the longer list, inside a collection.
+        Collection *longCollection = NEWCOLLECTION(List, longList);
         count = 0;
         FOREACH(int, value, Collection, collection)
             ASSERT(*value == count);
@@ -262,39 +270,37 @@ testRun(void)
         ENDFOREACH;
         TEST_RESULT_INT(count, testMax, "non-empty list inside Collection");
 
-        // Try to get next() of an empty list.
-        List * emptyList = lstNewP(sizeof(int),.comparator = testComparator);
+        // Try to get next() item of an empty list.
         ListItr *itr = listItrNew(emptyList);
         ASSERT(listItrNext(itr) == NULL);
+        ASSERT(ListItrNext(itr) == NULL);
         TEST_RESULT_PTR(listItrNext(itr), NULL, "iterate beyond end of empty List");
         listItrFree(itr);
 
-        // Similar, but this time add an item and iterate beyond it.
-        List *singletonList = lstNewP(sizeof(int),.comparator = testComparator);
-        int value = 42;
-        lstAdd(singletonList, &value);
-        itr = listItrNew(singletonList);
-        ASSERT(*(int *) nextListItr(itr) == 42);
-        ASSERT(listItrNext(itr) == NULL);
+        // Similar, but this time with items in the list.
+        itr = listItrNew(longList);  // A second iterator in parallel
+        foreach(item, longList)
+            ASSERT(*listItrNext(itr) = *item);
+        ASSERT(item == NULL);
         TEST_RESULT_PTR(listItrNext(itr), NULL, "iterate beyond end of List");
+        listItrFree(itr);
 
         // Try to create a Collection from NULL list.
-        TEST_ERROR((void) NEWCOLLECTION(List, NULL), AssertError, "Attempting to create NEWCOLLECTION from NULL");
+        TEST_ERROR((void) NEWCOLLECTION(List, NULL), AssertError, "assertion 'subCollection != NULL' failed");
 
-        // Create a List within a Collection within a Collection and verify we can still iterate through it.
-        Collection *superCollection = NEWCOLLECTION(Collection, collection);
+        // Create a Collection within a Collection and verify we can still iterate through it.
+        Collection *superCollection = NEWCOLLECTION(Collection, longCollection);
         count = 0;
         FOREACH(int, value, Collection, superCollection)
             ASSERT(*value == count);
             count++;
         ENDFOREACH;
-        TEST_RESULT_INT(count, testMax, "non-empty list inside Collection");
-
+        TEST_RESULT_INT(count, testMax, "Collection inside Collection");
 
         // Use a mock destructor. Since iteration loop is macro based, this is a quick way to mock.
-#define listItrFree destructMock
+#define listItrFree mockListItrFree
         extern int eventCount;
-        extern void destructMock(ListItr *this);
+        extern void mockListItrFree(ListItr *this);
 
         // Verify the destructor gets called on a list with no exceptions.
         eventCount = 0;
@@ -314,36 +320,19 @@ testRun(void)
             eventCount++; // An extra increment to verify we catch the error.
         TRY_END();
         TEST_RESULT_INT(eventCount, 2, "destructor invoked after exception");
-
-#ifdef XXXX
-        // Verify the destructor gets called and the iteration is correct on the specialized "No exceptions" version of iteration.
-        eventCount = 0;
-        count = 0;
-        int *item;
-        FOREACH_SIMPLE(item, superCollection)
-        {
-            ASSERT(*value == count);
-            count++;
-        }
-        ASSERT(eventCount == 1);
-        TEST_RESULT_INT(count, testMax, "iterate a list, using no-exception version");
-#endif //XXXX
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-
-
 /***********************************************************************************************************************************
 A Mocked destructor - to verify we are shutting down correctly. Used by the List iterator tests.
 ***********************************************************************************************************************************/
+#undef listItrFree
     int eventCount;  // Keep count of interesting test events.
     void
-    destructMock(ListItr *this)
+    mockListItrFree(ListItr *this)
     {
-        (void)this;
         eventCount++;
-        //freeMem(this);
-
+        listItrFree(this);
     }

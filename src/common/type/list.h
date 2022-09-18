@@ -166,10 +166,24 @@ String *lstToLog(const List *this);
 #define FUNCTION_LOG_LIST_FORMAT(value, buffer, bufferSize)                                                                        \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
 
+/***********************************************************************************************************************************
+A minimalistic control structure for iterating through lists, modeled after the one in PostgreSQL, but simplified.
+     ItemType *item;
+     foreach(item, list)
+     {
+         doSomething(*item)
+     }
+***********************************************************************************************************************************/
+#define foreach(item, list)                                                                                                        \
+    for (                                                                                                                          \
+        unsigned int foreach_idx = 0;                                                                                              \
+        (item = foreach_idx<lstSize(list)?lstGet(list, foreach_idx):NULL);                                                         \
+        foreach_idx++                                                                                                              \
+    )
 
 
 /***********************************************************************************************************************************
-List Iteration.
+List Iteration, conforming to the Collection interface.
 ***********************************************************************************************************************************/
 typedef struct ListItr ListItr;                                     // Just a placeholder since all methods are inlined.
 typedef struct ListItrPub
@@ -203,8 +217,6 @@ listItrFree(ListItr *this)
 }
 
 // The following macros enable Lists as abstract Collections.
-#define newListItr listItrNew
-#define nextListItr listItrNext
-#define freeListItr listItrFree
+#define CAMEL_List list
 
 #endif // COMMON_TYPE_LIST_H

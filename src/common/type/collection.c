@@ -121,6 +121,7 @@ will allow scanning through diverse data structures, say XML documents, without 
 ***********************************************************************************************************************************/
 #include "build.auto.h"  // First include in all C files
 #include "common/debug.h"
+#include "common/assert.h"
 #include "common/type/collection.h"
 
 // Abstract collection of items which can be iterated.
@@ -145,8 +146,12 @@ struct CollectionItr
 Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*next)(void *), void (*free)(void *))
 {
         FUNCTION_TEST_BEGIN();
-            //FUNCTION_TEST_PARAM(POINTER, collection);
+            FUNCTION_TEST_PARAM(COLLECTION, subCollection);
         FUNCTION_TEST_END();
+        ASSERT(subCollection != NULL);
+        ASSERT(newItr != NULL);
+        ASSERT(next != NULL);
+        ASSERT(free != NULL);
 
         Collection *this = NULL;
         OBJ_NEW_BEGIN(CollectionItr)
@@ -164,8 +169,7 @@ Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*
         }
         OBJ_NEW_END();
 
-        //FUNCTION_TEST_RETURN(POINTER, this);    // TODO: Create display types.
-        return this;
+        FUNCTION_TEST_RETURN(COLLECTION, this);
 }
 
 
@@ -176,8 +180,13 @@ CollectionItr *
 collectionItrNew(Collection *collection)
 {
     FUNCTION_TEST_BEGIN();
-        //FUNCTION_TEST_PARAM(POINTER, collection);
+        FUNCTION_TEST_PARAM(COLLECTION, collection);
     FUNCTION_TEST_END();
+
+    // Start by allocating an iterator to the sub-collection.
+    // It is an independent object and needs to be allocated outside the CollectionItr.
+    // TODO: we would really like it to be part of same context.
+    void *subIterator = collection->newItr(collection->subCollection);
 
     CollectionItr *this = NULL;
     OBJ_NEW_BEGIN(CollectionItr)
@@ -190,7 +199,7 @@ collectionItrNew(Collection *collection)
             .pub = {
                 .next = collection->next,
                 .free = collection->free,
-                .subIterator = collection->newItr(collection->subCollection),
+                .subIterator = subIterator,
             }
         };
     }
@@ -198,4 +207,10 @@ collectionItrNew(Collection *collection)
 
     //FUNCTION_TEST_RETURN(POINTER, this);    // TODO: Create display types.
     return this;
+}
+
+
+String *collectionToLog(const Collection *this)
+{
+    return this == NULL ? strDup(NULL_STR) : strNewFmt("Collection{.subCollection=%p}", this->subCollection);  // TODO: save subContainer's logger.
 }
