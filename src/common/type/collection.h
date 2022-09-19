@@ -98,11 +98,10 @@ Syntactic sugar to make iteration looks more like C++ or Python.
 Note foreach and endForeach are block macros, so the overall foreach/endForeach must be terminated with a semicolon.
 This version is slower because it catches and cleans up after exceptions.
 ***********************************************************************************************************************************/
-#define FOREACH(ItemType, item, CollectionType, collection)                                                                        \
+#define FOREACH(item, CollectionType, collection)                                                                        \
     do {                                                                                                                           \
         CollectionType##Itr *FOREACH_itr = METHOD(CollectionType, ItrNew)(collection);                                             \
         void (*FOREACH_free)(CollectionType##Itr*) = METHOD(CollectionType, ItrFree);                                              \
-        ItemType *item;                                                                                                            \
         TRY_BEGIN()                                                                                                                \
         {                                                                                                                          \
             while ( (item = METHOD(CollectionType,ItrNext)(FOREACH_itr)) != NULL)                                                  \
@@ -141,10 +140,7 @@ Macros for function logging.
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, collectionToLog, buffer, bufferSize)
 String *collectionToLog(const Collection *this);
 
-#define FUNCTION_LOG_ITERATOR_TYPE                                                                                                 \
-    void *
-#define FUNCTION_LOG_ITERATOR_FORMAT(value, buffer, bufferSize)                                                                    \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, iteratorToLog, buffer, bufferSize)
-String *iteratorToLog(const void *this);
+#define FUNCTION_LOG_COLLECTION_ITR_TYPE                                                                                           \
+    CollectionItr *
 
 #endif //COMMON_TYPE_COLLECTION_H

@@ -445,7 +445,8 @@ struct ListItr
 };
 
 /***********************************************************************************************************************************
-Construct a new list iterator. Returns an object which must be freed.
+Construct a new list iterator. Returns an object.
+  Possible optimizations:  1) inline, 2) allow use of pre-allocated memory.
 ***********************************************************************************************************************************/
 ListItr *
 listItrNew(List *list)

@@ -242,7 +242,8 @@ testRun(void)
         // Scan the empty list.
         int *item;
         foreach(item, emptyList)
-            ASSERT(false);  // We shouldn't be here with an empty list
+            ASSERT_MSG("iterating through an empty list");
+        ASSERT(item == NULL);
         TEST_RESULT_VOID((void)0, "scan empty list");
 
         // Scan the bigger list.
@@ -252,23 +253,26 @@ testRun(void)
             ASSERT(*item == count);
             count++;
         }
+        ASSERT(item == NULL);
         TEST_RESULT_INT(count, testMax, "non-empty List");
 
         // Scan the empty list, inside a collection
         Collection *emptyCollection = NEWCOLLECTION(List, emptyList);
         TEST_RESULT_VOID( (void)0, "Created collection");
-        FOREACH(int, item, Collection, emptyCollection)
-            ASSERT(*item != *item);  // We shouldn't be here with an empty list
+        FOREACH(item, Collection, emptyCollection)
+            ASSERT_MSG("iterating through an empty container");
         ENDFOREACH;
+        ASSERT(item == NULL);
         TEST_RESULT_VOID((void) 0, "empty list inside Collection");
 
         // Scan the longer list, inside a collection.
         Collection *longCollection = NEWCOLLECTION(List, longList);
         count = 0;
-        FOREACH(int, item, Collection, longCollection)
+        FOREACH(item, Collection, longCollection)
             ASSERT(*item == count);
             count++;
         ENDFOREACH;
+        ASSERT(item == NULL);
         TEST_RESULT_INT(count, testMax, "non-empty list inside Collection");
 
         // Try to get next() item of an empty list.
@@ -291,7 +295,7 @@ testRun(void)
         // Create a Collection within a Collection and verify we can still iterate through it.
         Collection *superCollection = NEWCOLLECTION(Collection, longCollection);
         count = 0;
-        FOREACH(int, item, Collection, superCollection)
+        FOREACH(item, Collection, superCollection)
             ASSERT(*item == count);
             count++;
         ENDFOREACH;
@@ -304,25 +308,27 @@ testRun(void)
 
         // Verify the destructor gets called on a list with no exceptions.
         eventCount = 0;
-        FOREACH(int, item, List, longList)
-            (void) item;
+        FOREACH(item, List, longList)
         ENDFOREACH;
         TEST_RESULT_INT(eventCount, 1, "destructor invoked after loop ends");
 
         // Throw an exception within a loop and verify the destructor gets called.
         eventCount = 0;
         TRY_BEGIN()
-            FOREACH(int, item, List, longList)
+            FOREACH(item, List, longList)
                 if (*item > testMax / 2)
                     THROW(FormatError, "");  // Any non-fatal error.
             ENDFOREACH;
         CATCH(FormatError)
             eventCount++; // An extra increment to verify we catch the error.
         TRY_END();
+        ASSERT(*item = testMax/2 + 1);
         TEST_RESULT_INT(eventCount, 2, "destructor invoked after exception");
+#undef listItrFree
 
-        // To ensure complete coverage, ...
-        TEST_RESULT_STR(collectionToLog(NULL), NULL_STR, "display NULL as collection");
+        // To ensure complete coverage, test the NULL cases which shouldn't occur in practice.
+        TEST_RESULT_STR(collectionToLog(NULL), NULL_STR, "display NULL as Collection");
+        TEST_RESULT_STR(collectionItrToLog(NULL), NULL_STR, "display NULL as CollectionItr");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
@@ -331,7 +337,6 @@ testRun(void)
 /***********************************************************************************************************************************
 A Mocked destructor - to verify we are shutting down correctly. Used by the List iterator tests.
 ***********************************************************************************************************************************/
-#undef listItrFree
 int eventCount;  // Keep count of interesting test events.
 void
 mockListItrFree(ListItr *this)

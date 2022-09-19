@@ -132,7 +132,10 @@ struct CollectionItr
 Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*next)(void *), void (*free)(void *))
 {
         FUNCTION_TEST_BEGIN();
-            FUNCTION_TEST_PARAM(COLLECTION, subCollection);
+            FUNCTION_TEST_PARAM_P(VOID, subCollection);
+            FUNCTION_TEST_PARAM(FUNCTIONP, newItr);
+            FUNCTION_TEST_PARAM(FUNCTIONP, next);
+            FUNCTION_TEST_PARAM(FUNCTIONP, free);
         FUNCTION_TEST_END();
         ASSERT(subCollection != NULL);
         ASSERT(newItr != NULL);
@@ -191,11 +194,10 @@ collectionItrNew(Collection *collection)
     }
     OBJ_NEW_END();
 
-    //FUNCTION_TEST_RETURN(POINTER, this);    // TODO: Create display types.
-    return this;
+    FUNCTION_TEST_RETURN(COLLECTION_ITR, this);
 }
 
-
+// Display an abstract Collection. For now, just the address of the sub-collection.
 String *collectionToLog(const Collection *this)
 {
     return this == NULL ? strDup(NULL_STR) : strNewFmt("Collection{.subCollection=%p}", this->subCollection);  // TODO: save subContainer's logger.
