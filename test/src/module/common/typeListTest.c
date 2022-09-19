@@ -256,6 +256,7 @@ testRun(void)
 
         // Scan the empty list, inside a collection
         Collection *emptyCollection = NEWCOLLECTION(List, emptyList);
+        TEST_RESULT_VOID( (void)0, "Created collection");
         FOREACH(int, item, Collection, emptyCollection)
             ASSERT(*item != *item);  // We shouldn't be here with an empty list
         ENDFOREACH;
