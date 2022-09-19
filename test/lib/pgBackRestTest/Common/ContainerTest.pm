@@ -203,6 +203,9 @@ sub sshSetup
         "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9I" .
              "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
              "user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
+        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9I" .
+             "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
+             "user\@pgbackrest-test' > ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
