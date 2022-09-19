@@ -107,20 +107,22 @@ List *restoreFile(
                             }
 
                             // Generate checksum for the file if size is not zero
-                            IoRead *read = NULL;
+                            StorageRead *pgFileRead = NULL; storageNewReadP(storagePgWrite(), file->name);
 
                             if (file->size != 0)
                             {
-                                read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
-                                ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
-                                ioReadDrain(read);
+                                pgFileRead = storageNewReadP(storagePgWrite(), file->name);
+                                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(pgFileRead)), cryptoHashNew(hashTypeSha1));
+                                ioReadDrain(storageReadIo(pgFileRead));
                             }
 
                             // If the checksum is the same (or file is zero size) then no need to copy the file
                             if (file->size == 0 ||
                                 strEq(
                                     file->checksum,
-                                    pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
+                                    pckReadStrP(
+                                        ioFilterGroupResultP(
+                                            ioReadFilterGroup(storageReadIo(pgFileRead)), CRYPTO_HASH_FILTER_TYPE))))
                             {
                                 // If the hash/size are now the same but the time is not, then set the time back to the backup time.
                                 // This helps with unit testing, but also presents a pristine version of the database after restore.
@@ -135,6 +137,8 @@ List *restoreFile(
 
                                 fileResult->result = restoreResultPreserve;
                             }
+
+                            storageReadFree(pgFileRead);
                         }
                     }
                 }
@@ -159,6 +163,7 @@ List *restoreFile(
                 }
 
                 ioWriteClose(storageWriteIo(pgFileWrite));
+                storageWriteFree(pgFileWrite);
 
                 // Report the file as zeroed or zero-length
                 fileResult->result = restoreResultZero;
