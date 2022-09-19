@@ -132,6 +132,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
 
         if (this->current + expectedBytes > this->limit)
             expectedBytes = (size_t)(this->limit - this->current);
+        bufLimitSet(buffer, expectedBytes);
 
         this->wait = waitNew(this->timeoutConnect);
 
@@ -162,7 +163,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
         while (!bufFull(buffer));
 
         // The total bytes read into the buffer
-        actualBytes = bufUsed(buffer);
+        actualBytes = (ssize_t)bufUsed(buffer);
 
         // Error occurred during read
         // jrt if remote file is removed, we still read two bytes, but the first byte is null
@@ -186,7 +187,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
         }
 
         // Update amount of buffer used
-        this->current += actualBytes;
+        this->current += (uint64_t)actualBytes;
 
         // If less data than expected was read or the limit has been reached then EOF.  The file may not actually be EOF but we are
         // not concerned with files that are growing.  Just read up to the point where the file is being extended.
@@ -194,7 +195,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
             this->eof = true;
     }
 
-    FUNCTION_LOG_RETURN(SIZE, actualBytes);
+    FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
 }
 
 /***********************************************************************************************************************************

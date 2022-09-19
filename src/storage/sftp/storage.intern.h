@@ -26,9 +26,9 @@ void storageSftpPathSync(THIS_VOID, const String *path, StorageInterfacePathSync
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_SFTP_TYPE                                                                                            \
+#define FUNCTION_LOG_STORAGE_SFTP_TYPE                                                                                             \
     StorageSftp *
-#define FUNCTION_LOG_STORAGE_SFTP_FORMAT(value, buffer, bufferSize)                                                               \
+#define FUNCTION_LOG_STORAGE_SFTP_FORMAT(value, buffer, bufferSize)                                                                \
     objToLog(value, "StorageSftp *", buffer, bufferSize)
 
 #endif

@@ -780,12 +780,11 @@ storageSftpNewInternal(
             THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2_sftp session");
 
         // Disable path sync when not supported
-        // !!! jrt libssh2 doesn't appear to support path sync -- test/verify and set appropriately
+        // libssh2 doesn't appear to support path sync. It returns LIBSSH2_FX_NO_SUCH_FILE.
         if (!pathSync)
             driver->interface.pathSync = NULL;
 
         // If this is a sftp driver then add link features
-        // jrt !!! verify if these are supported
         if (type == STORAGE_SFTP_TYPE)
             driver->interface.feature |=
                 1 << storageFeatureSymLink | 1 << storageFeatureInfoDetail;

@@ -196,7 +196,7 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
             this->wait = waitNew(this->timeoutConnect);
 
         // Shift for next write start point
-        shift += rc;
+        shift += (int)rc;
 
         // Update amount left to write
         nwrite -= (size_t)rc;

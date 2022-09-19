@@ -14,6 +14,6 @@ Storage *storageSftpHelper(unsigned int repoIdx, bool write, StoragePathExpressi
 /***********************************************************************************************************************************
 Storage helper for StorageHelper array passed to storageHelperInit()
 ***********************************************************************************************************************************/
-#define STORAGE_SFTP_HELPER                                        {.type = STORAGE_SFTP_TYPE, .helper = storageSftpHelper}
+#define STORAGE_SFTP_HELPER                                         {.type = STORAGE_SFTP_TYPE, .helper = storageSftpHelper}
 
 #endif
