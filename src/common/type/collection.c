@@ -154,7 +154,7 @@ Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*
         ASSERT(free != NULL);
 
         Collection *this = NULL;
-        OBJ_NEW_BEGIN(CollectionItr)
+        OBJ_NEW_BEGIN(Collection)
         {
             // Allocate memory for the Collection object.
             this = OBJ_NEW_ALLOC();
