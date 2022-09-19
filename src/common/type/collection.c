@@ -55,13 +55,19 @@ Here are some examples of how to iterate through a List.
 
 == Using the newly defined interface.
 This is admittedly awkward, especially for scanning a List.
-   ListItr itr[1];
-   newListItr(itr, list);
-   while (moreListItr(itr)) {
-       ItemType *item = (ItemType *)nextListItr(itr);
+   ItemType *item;
+   ListItr *itr = listItrNew(list);
+   while ( (item=listItrNext(itr) )
+   {
        doSomething(*item);
    }
-   destructListItr(itr);
+   listItrFree(itr);
+
+For the specific case of scanning a list, the following is both simple and efficient.
+(Modeled after a similar macro in Postgres)
+    Item *item;
+    foreach(item, list)
+        doSomething(*item)
 
 == Incorporating proposed "syntactic sugar".
     FOREACH(ItemType, item, List, list)
@@ -69,9 +75,16 @@ This is admittedly awkward, especially for scanning a List.
     ENDFOREACH
 
 == Performance and memory.
-All three of the previous examples should have roughly the same performance and memory requirements.
- - iteration variables are "auto" and reside in registers or on the call stack. There is no dynamic memory.
- - the iteration methods can be inlined, in which case the C optimizer will generate similar code.
+ - iterators are allocated dynamically, so there is some performance overhead
+ - the FOREACH macro catches exceptions to free the iterator, so exception handling has additional overhead
+ - iterators can be inlined, making the per-loop overhead very low.
+
+ == For Lists only
+For the specific case of scanning a list, the following syntactic sugar is both simple and efficient.
+(Modeled after a similar macro in Postgres)
+    Item *item;
+    foreach(item, list)
+        doSomething(*item)
 
 = Abstract Collection
 An abstracr "Collection" is a polymorphic wrapper around anything which iterates through items. Like abstract collections
@@ -88,33 +101,6 @@ The following code shows how to construct an abstract Collection and iterate thr
     FOREACH(ItemType, item, Collection, collection)
         doSomething(*item)
     ENDFOREACH
-
-= Design Compromise
-Constructing an iterator for an abstract Collection requires allocating memory to hold the underlying iterator.
-The Collection does not know ahead of time how much memory is needed, so a fully general solution will
-require dynamic memory allocation. Dynamic memory introduces a new requirement: the memory must be freed when iteration
-is complete. Additionally, since we favor the caller allocating memory, the caller must know how much memory to allocate.
-
-As a compromise to avoid dynamic memory allocation, CollectionItr will include a pre-allocated chunk of
-memory. If the underlying iterator doesn't fit, the constructor will throw an assert error.
-
-The signature of the newItr method was changed to support dynamic memory allocation.  Previously it was
-       ListItr itr = newListItr(list);
-
-With the updated signature,
-       ListItr *itr =  ...
-       newListItr(itr, list);
-
-Both versions generate equivalent code.
-
-UPDATE. Dynamic memory is required for scanning directories, so a "destruct()" method is being added to the interface.
-This method allows iterators to free memory which may have been allocated by the "new()" constructor.
-The Collection type still allocates its own fixed memory, but that can be easily changed. As an optimization, it could
-switch to dynamic memory when the static memory is too small.
-
-Dynamic memory will be managed through the allocItr(this, size) and freeItr(this, ptr) methods.
-Currently, they are stubs, but they will be updated to invoke malloc() and free(), and eventually to
-integrate with memory contexts.
 
 One new goal is to support a "generator" object, where a program loop is transformed into an iterator. This object
 will allow scanning through diverse data structures, say XML documents, without creating intermediate Lists.
@@ -194,7 +180,7 @@ collectionItrNew(Collection *collection)
         // Allocate memory for the Collection object.
         this = OBJ_NEW_ALLOC();
 
-        // Fill in the fields including the jump table pointers and a new iterator to the subCollection.
+        // Fill in the fields including the jump table pointers and the iterator to the subCollection.
         *this = (CollectionItr) {
             .pub = {
                 .next = collection->next,

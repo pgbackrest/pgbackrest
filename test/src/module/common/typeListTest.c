@@ -320,6 +320,9 @@ testRun(void)
             eventCount++; // An extra increment to verify we catch the error.
         TRY_END();
         TEST_RESULT_INT(eventCount, 2, "destructor invoked after exception");
+
+        // To ensure complete coverage, ...
+        TEST_RESULT_STR(collectionToLog(NULL), NULL_STR, "display NULL as collection");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
