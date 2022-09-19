@@ -1422,6 +1422,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
         setenv("PGBACKREST_REPO1_SFTP_PASSWORD", TEST_USER, true);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
@@ -1472,6 +1473,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         setenv("PGBACKREST_REPO1_SFTP_PASSWORD", TEST_USER, true);
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 

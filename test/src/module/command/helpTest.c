@@ -306,6 +306,8 @@ testRun(void)
             "  --repo-s3-token                  S3 repository security token\n"
             "  --repo-s3-uri-style              S3 URI Style [default=host]\n"
             "  --repo-sftp-account              SFTP repository account\n"
+            "  --repo-sftp-host                 SFTP repository host\n"
+            "  --repo-sftp-host-port            SFTP repository host port [default=22]\n"
             "  --repo-sftp-keyfile-passphrase   SFTP private keyfile passphrase\n"
             "  --repo-sftp-password             SFTP account password\n"
             "  --repo-sftp-private-keyfile      SFTP private keyfile\n"
