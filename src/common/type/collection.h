@@ -4,7 +4,8 @@ implement the "newIter()" method. For information on how to create an "Iterable"
 These interfaces are inspired by Rust's Collection and Iterable traits.
 
 Using "syntactic sugar" to scan a list,
-    FOREACH(ItemType, item, List, list)
+    ItemType *item;
+    FOREACH(item, List, list)
         doSomething(*item);
     ENDFOREACH;
 
@@ -16,7 +17,8 @@ of collection is inside.
     Collection *collection = NEWCOLLECTION(List, list);
 
     // Iterate through the abstract Collection just like any other collection.
-    FOREACH(ItemType, item, Collection, collection)
+    ItemType *item;
+    FOREACH(item, Collection, collection)
         doSomething(*item)
     ENDFOREACH;
 ***********************************************************************************************************************************/

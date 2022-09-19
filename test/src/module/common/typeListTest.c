@@ -328,7 +328,6 @@ testRun(void)
 
         // To ensure complete coverage, test the NULL cases which shouldn't occur in practice.
         TEST_RESULT_STR(collectionToLog(NULL), NULL_STR, "display NULL as Collection");
-        TEST_RESULT_STR(collectionItrToLog(NULL), NULL_STR, "display NULL as CollectionItr");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
