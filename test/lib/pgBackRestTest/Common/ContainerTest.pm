@@ -207,7 +207,7 @@ sub sshSetup
              "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
              "user\@pgbackrest-test' > ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
-        "    perl -p -e 's#Subsystem.*sftp.*/usr/lib/openssh/sftp-server#Subsystem    sftp    /usr/lib/openssh/sftp-server -l" .
+        "    perl -pi -e 's#Subsystem.*sftp.*/usr/lib/openssh/sftp-server#Subsystem    sftp    /usr/lib/openssh/sftp-server -l" .
              "VERBOSE#  ' /etc/ssh/sshd_config" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
