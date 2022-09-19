@@ -426,6 +426,31 @@ testRun(void)
 
         TEST_RESULT_BOOL(catch, true, "new context error was caught");
         TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
+
+        // ------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new context not freed on fatal error");
+
+        MemContext *volatile memContextFatal;
+        catch = false;
+
+        TRY_BEGIN()
+        {
+            MEM_CONTEXT_NEW_BEGIN(test-new-failed-fatal-block, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+            {
+                memContextFatal = MEM_CONTEXT_NEW();
+                THROW(AssertError, "create failed");
+            }
+            MEM_CONTEXT_NEW_END();
+        }
+        CATCH_FATAL()
+        {
+            catch = true;
+        }
+        TRY_END();
+
+        TEST_RESULT_VOID(memContextFree(memContextFatal), "free new context not freed by catch fatal");
+        TEST_RESULT_BOOL(catch, true, "new context error was caught");
+        TEST_RESULT_PTR(memContextCurrent(), memContextTop(), "context is now 'TOP'");
     }
 
     // *****************************************************************************************************************************

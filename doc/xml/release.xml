@@ -14,7 +14,10 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.41dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.42dev" title="UNDER DEVELOPMENT">
+        </release>
+
+        <release date="2022-09-19" version="2.41" title="Backup Annotations">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -27,7 +30,20 @@
                             <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
-                        <p>Fix incorrect time expiration being used for non-default repos.</p>
+                        <p>Fix incorrect time expiration being used for non-default repositories.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1870"/>
+                        <github-pull-request id="1871"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="efremov.egor"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue when listing directories recursively with a filter.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -100,7 +116,10 @@
 
                 <release-development-list>
                     <release-item>
-                        <github-pull-request id="1842"/>
+                        <commit subject="Skip mem context cleanup in CATCH_FATAL() block.">
+                            <github-pull-request id="1842"/>
+                        </commit>
+                        <commit subject="Add mem context test missing from 0f7b6a33."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

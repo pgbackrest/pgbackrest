@@ -444,6 +444,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path - recurse asc");
 
+        // Create a path with a subpath that will always be last to make sure lists are not freed too early in the iterator
+        storagePathCreateP(storageTest, STRDEF("pg/zzz/yyy"), .mode = 0700);
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -452,7 +454,9 @@ testRun(void)
             "link> {d=../file}\n"
             "path/\n"
             "path/file {s=8, t=1656434296}\n"
-            "pipe*\n",
+            "pipe*\n"
+            "zzz/\n"
+            "zzz/yyy/\n",
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -462,6 +466,8 @@ testRun(void)
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
+            "zzz/yyy/\n"
+            "zzz/\n"
             "pipe*\n"
             "path/file {s=8, t=1656434296}\n"
             "path/\n"

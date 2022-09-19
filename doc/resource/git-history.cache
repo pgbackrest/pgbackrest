@@ -1,5 +1,217 @@
 [
     {
+        "commit": "6b355806cc288e6f473254412337596287291798",
+        "date": "2022-09-19 10:08:10 -0700",
+        "subject": "v2.41: Backup Annotations"
+    },
+    {
+        "commit": "c39c9f220ed328b4175d912e109697b726e9ea9b",
+        "date": "2022-09-15 12:00:44 -0700",
+        "subject": "Fix issue when listing directories recursively with a filter.",
+        "body": "While recursing and filtering, if the last entry in a directory was another directory containing entries then the parent list would get freed too early, causing a double free error or segfault.\r\n\r\nFix by ensuring that the completed list is at the top of the stack before freeing it. This will defer freeing parent lists until the contents of paths have been processed."
+    },
+    {
+        "commit": "08a44be4c38e4bc72a20c19d764be8a673c9b909",
+        "date": "2022-09-14 16:22:48 -0700",
+        "subject": "Fix incorrect storage for rendering errors.",
+        "body": "Coverity complained of a copy/paste error here, but the actual error was what it took to be the correct \"copied from\" code.\n\nIn any case, the prior code would have blown up as soon as a new error type was added. Fix by updating to the writable build storage."
+    },
+    {
+        "commit": "240cd755d19ae2688d0deee65c00daf0651bb601",
+        "date": "2022-09-14 10:06:06 -0700",
+        "subject": "Add mem context test missing from 0f7b6a33.",
+        "body": "A coverage exception was added during development but was not removed before commit.\n\nRemove the exception and add a test for coverage."
+    },
+    {
+        "commit": "8fb61a809dc63936a78e5233a2e8bc8dc616c762",
+        "date": "2022-09-08 18:36:03 -0600",
+        "subject": "Add FN_INLINE_ALWAYS macro.",
+        "body": "Eliminate a lot of useless repetition for a commonly used pattern."
+    },
+    {
+        "commit": "2c9cbbcc4e72f5c1809e0001e40bfb3e7d8bbe01",
+        "date": "2022-09-08 18:16:38 -0600",
+        "subject": "Update Cirrus CI FreedBSD 13 image version."
+    },
+    {
+        "commit": "3b5df1e089234d425dd225f8c1976755dc947c8a",
+        "date": "2022-09-02 10:03:18 -0500",
+        "subject": "Update archive.info timestamps after a successful backup.",
+        "body": "Lifecycle policies can cause the archive.info file and its copy to be removed since they are only updated on a stanza-upgrade. Update the timestamps after a successful backup to prevent this.\r\n\r\nThis does not mean that lifecycle policies should be used as a replacement for expiration. However, in some cases there may be policies in place that are out of admin control. If the lifecycle expiration is less than pgbackrest expiration then corruption of the earliest backup will occur at the very least and there might be other corruption which would make the repo unrecoverable."
+    },
+    {
+        "commit": "0f7b6a3344b676d79afa7cd16ab54f67be870fdf",
+        "date": "2022-08-31 12:44:55 -0400",
+        "subject": "Skip mem context cleanup in CATCH_FATAL() block.",
+        "body": "An error that gets raised all the way to the top TRY block might need to free a lot of resources and any of these callbacks could throw an error and mask the original error. In fact this is pretty likely since we are already in an error state. For example, the Db object will try to close the remote db connection, but if the protocol is in a bad state it will not be able to do so.\r\n\r\nSolve this, for now, by not freeing memory or calling callbacks in the CATCH_FATAL() block. This gives us a better chance if being able to report the error without encountering another error first.\r\n\r\nFor the most part, we don't need to worry about freeing resources (file handles, TLS contexts, etc.) if the program is going to exit immediately. However, it is important to attempt to terminate all active protocol connections, which is done by protocolFree() in main() since the protocol objects live in the top context.\r\n\r\nAnother way to handle this would be to implement an error stack and that is probably something we will do in the future. But, in the case of a segfault the original error would still be lost. Yet another option would be to still do cleanup but defer it until after the CATCH_FATAL() block."
+    },
+    {
+        "commit": "eda7f81ee4fd6818ce458768144fc3fc1e1f0f21",
+        "date": "2022-08-31 10:01:12 -0400",
+        "subject": "Fix incorrect time expiration being used for non-default repositories.",
+        "body": "If a repo is not specified for the expire command then the lowest repo becomes the default. The repo-retention-full value for time was being retrieved from the default rather than a specific repo which led to an incorrect expiration being applied.\r\n\r\nGet the value from the specific repo and add a test.\r\n\r\nIt would be better if the default repo could not be queried in this case but it is not clear how to do that since the repo option is valid for expire (unlike, e.g., archive-push)."
+    },
+    {
+        "commit": "f1cb8485917bc07e00e77efe4593fb737f72136a",
+        "date": "2022-08-30 18:04:32 -0400",
+        "subject": "Fix comment typos in command/expire unit test."
+    },
+    {
+        "commit": "db75ffd27037d690a11eb02902f929250fe2bf5b",
+        "date": "2022-08-25 10:12:22 -0400",
+        "subject": "Support --set in JSON output for info command.",
+        "body": "Allow detailed information (e.g. error list, tablespace list) in JSON output that is already available in text output with the --set option."
+    },
+    {
+        "commit": "381fd0a5a4de61624615b150ba98beeafac31f7e",
+        "date": "2022-08-24 10:52:33 -0400",
+        "subject": "Backup key/value annotations.",
+        "body": "Allow key/value annotations to be added with the backup command and added/modified/removed with the new annotate command.\r\n\r\nAnnotations can be viewed with the info command in text mode when --set is specified and are always included in JSON output."
+    },
+    {
+        "commit": "b05d31f531b55b747175cf94c963f95574c54d2b",
+        "date": "2022-08-24 09:33:26 -0400",
+        "subject": "Allow upload chunk size to be configured for object stores.",
+        "body": "There are performance benefits to increasing the upload chunk size as long as the tradeoff with additional memory consumption is acceptable.\r\n\r\nMake the chunk size configurable for S3, GCS, and Azure, but don't attempt to do any validation of the chunk size beyond some sane limits. The defaults remain as is for each storage type to avoid any unintentional regressions."
+    },
+    {
+        "commit": "37b4592e522289a0523f03f8e9b144ff28fa21d3",
+        "date": "2022-08-24 08:45:44 -0400",
+        "subject": "Allow host memory limits in the user guide to be disabled.",
+        "body": "These limits can cause errors in some environments, e.g. Docker in Docker on Mac M1.\n\nEntirely remove limits from the build, s3, and azure hosts since memory usage on these hosts is out of our control and not useful for testing.\n\nAlso allow empty variables to be rendered as blank."
+    },
+    {
+        "commit": "ff1188f92dfc9e8f6d4aeca8b71a9886f24f58b4",
+        "date": "2022-08-22 13:51:05 -0400",
+        "subject": "Allow quote tag in command-line help.",
+        "body": "The quote tag will be used in an upcoming commit."
+    },
+    {
+        "commit": "2a99ac4324b52b8b42db639e645378840159af00",
+        "date": "2022-08-17 11:24:20 -0400",
+        "subject": "Clear ProtocolClient callback after connection error.",
+        "body": "Attempting to shut down the connection will fail since the server has already disconnected and a new error will be thrown, masking the original error."
+    },
+    {
+        "commit": "82786da1545c0bfe8185837a35d13a50b5e11ade",
+        "date": "2022-08-16 16:15:48 -0400",
+        "subject": "Do not allow CATCH() to catch a fatal error.",
+        "body": "Catching individual fatal errors was only used in testing so the tests have been updated to use other errors instead. CATCH_FATAL() is now the only way to catch fatal errors.\r\n\r\nThis simplifies the logic a bit for upcoming changes to error handling and cleanup.\r\n\r\nAlso fix an issue where passing errorMessage() directly to THROW*() would attempt to copy the message buffer instead of preserving it, which is undefined behavior. Since there were no instances of this behavior before this commit, this was not a live bug."
+    },
+    {
+        "commit": "02665a5894dc4b025172b32c7a1ce42c81d6c582",
+        "date": "2022-08-02 11:05:31 -0400",
+        "subject": "Update Minio test/documentation container version."
+    },
+    {
+        "commit": "eb287b18c882a16eecfb1445a513c4da4ccab1b7",
+        "date": "2022-07-29 10:31:36 -0400",
+        "subject": "Add profiling, performance, and optimization to C test harness.",
+        "body": "All unit and performance tests are now built by the C harness.\n\nRemove all unit/performance test build code from Perl.\n\nRemove code from C harness that is no longer used. This code was included so the C harness could be run separately, but that is no longer needed with this full integration."
+    },
+    {
+        "commit": "1e83f2a022b36191c2d12185ed57cf4d96462862",
+        "date": "2022-07-28 14:53:48 -0400",
+        "subject": "Add coverage to C test harness.",
+        "body": "Coverage reports are still generated in Perl, but all the settings have been added to the C harness to generate raw coverage data."
+    },
+    {
+        "commit": "c99ea54f17c1f26a5e996bb8cfd3df81684f813b",
+        "date": "2022-07-27 10:32:32 -0400",
+        "subject": "Integrate C test harness with Perl test harness.",
+        "body": "The C test harness is used for unit tests from the Perl harness where possible. Currently, unit tests can be run in the C harness when --no-coverage is specified and --profile is not specified.\n\nC harness tests work on meson 0.45.\n\nThe C harness runs with valgrind by default. Valgrind can be disabled with --no-valgrind.\n\nAlso rebuild containers to add meson and update the documentation so that meson builds will work (even though we don't do them yet)."
+    },
+    {
+        "commit": "2caef37fd55ea12959015f02a106774f6ad711b7",
+        "date": "2022-07-26 18:25:24 -0400",
+        "subject": "Add reviewer for c267ba51."
+    },
+    {
+        "commit": "e9ff5248039eedb25da2fee550ec64fcebbc51c7",
+        "date": "2022-07-26 15:15:12 -0400",
+        "subject": "Add absolute path for kill in pgbackrest.service."
+    },
+    {
+        "commit": "79d9884141f90a9e93fb2ec8faef15e460dd3442",
+        "date": "2022-07-25 09:39:54 -0400",
+        "subject": "Move release build check to src/meson.build.",
+        "body": "This allows the C harness to perform release builds which are required for some tests."
+    },
+    {
+        "commit": "c267ba51b1778b5872f4ee928a9614545d743f3f",
+        "date": "2022-07-22 16:24:55 -0400",
+        "subject": "Move standby timeline check after checkpoint.",
+        "body": "The standby timeline check was being performed using pg_control data loaded before the backup started. If the backup was started immediately after a promotion the standby might not have executed a checkpoint and written the new timeline to pg_control.\r\n\r\nInstead perform the timeline check after the checkpoint is executed. This should ensure that the new timeline is in pg_control."
+    },
+    {
+        "commit": "cbbe93f592d8097393c5ffe214f0a8c5fb0549c1",
+        "date": "2022-07-22 14:45:38 -0400",
+        "subject": "Improve warning message on backup resume.",
+        "body": "The prior warning made it sound as if some action was required on the part of the user.\n\nThe new message should make it clearer that this action will be performed by pgBackRest."
+    },
+    {
+        "commit": "4c47cc5d4786b88a06c38aefe628356342433f64",
+        "date": "2022-07-22 09:24:29 -0400",
+        "subject": "Remove Debian package patch now that it has been merged upstream."
+    },
+    {
+        "commit": "19d9941367f68d6effb516fbb1444877fea9a9ce",
+        "date": "2022-07-21 20:10:51 -0400",
+        "subject": "More C test harness improvements and CI.",
+        "body": "Build pgbackrest binary and auto-generated code automatically.\n\nRemove --module option and allow modules to run by parameter. This is less verbose and multiple modules can be run at a time.\n\nAllow filtering of modules. Multiple tests can be passed as parameters and if the module ends in / it will be used as a prefix filter. For example, common/ will run all the common modules.\n\nIf a test errors the remaining tests will still run but the test process will eventually exit with an error.\n\nCI tests are included but unit tests remain on the development branch.\n\nWith these changes all unit tests run except those that specify the define (e.g. common/assert-off) or containerReq (e.g. protocol/protocol) keywords.\n\nBuilding the C test harness has been simplified:\n\nmeson -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug test/build/none pgbackrest\nninja -C test/build/none test/src/test-pgbackrest\n\nTo run all modules:\n\ntest/build/none/test/src/test-pgbackrest test\n\nJust the common/error module:\n\ntest/build/none/test/src/test-pgbackrest test common/error\n\nAll info modules:\n\ntest/build/none/test/src/test-pgbackrest test info/"
+    },
+    {
+        "commit": "edfcf1652c6ab07fe5a147b97df0c563e09d3445",
+        "date": "2022-07-21 19:27:58 -0400",
+        "subject": "Test Dockerfile improvements.",
+        "body": "Add tzdata package so timezone tests in command/restore work correctly.\n\nMark default git path as safe. This is a security fix that is not applicable in this environment, but must be set.\n\nAlso remove package cleanup, which is inconvenient when new packages need to be installed. It makes sense for containers that will be downloaded from Dockerhub but not so much for a locally-maintained container."
+    },
+    {
+        "commit": "5e5b04be3741b4e903c9a7764dadfbe5bda121ae",
+        "date": "2022-07-21 18:19:47 -0400",
+        "subject": "Fix common/lock test creating \"750\" path.",
+        "body": "This was clearly an attempt to set the mode when creating a directory, but it never worked and instead created a \"750\" directory in the current working directory.\n\nDetected when running in an environment where the current working directory was read-only."
+    },
+    {
+        "commit": "f9bbafbf3fbd67fc289cf849900799b4718dace1",
+        "date": "2022-07-20 19:02:14 -0400",
+        "subject": "C test harness improvements.",
+        "body": "Add harness depends when present.\n\nInclude libyaml in all test builds.\n\nFix mode on paths before trying to remove and set test path with mode 770 to match the Perl test harness.\n\nWith these changes all unit tests run except those that specify the define (e.g. common/assert-off), binReq (e.g. command/archive-get), or containerReq (e.g. protocol/protocol) keywords.\n\nBuilds and code generation need to be done in advance. The following commands are required for setup:\n\nmeson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug build pgbackrest\nninja -C build test/src/test-pgbackrest\nbuild/src/build-code help pgbackrest\nbuild/src/build-code postgres pgbackrest\n\nNow tests can be run, e.g.:\n\nbuild/test/src/test-pgbackrest --module=postgres/interface"
+    },
+    {
+        "commit": "c625f05a13e0238bf06feb26d0d8757dd2bedffd",
+        "date": "2022-07-20 17:45:39 -0400",
+        "subject": "Unify code builder binaries into a single binary.",
+        "body": "Creating new binaries was convenient at first but has now become a maintenance issue.\n\nSolve this by combining that into a single binary that takes an additional parameter to indicate which code should be built.\n\nAlso clean up path handling to make it easier to build code from the command line."
+    },
+    {
+        "commit": "7eb5d679857999faebe78730c5a30e450ef80d5c",
+        "date": "2022-07-19 18:03:39 -0400",
+        "subject": "Add module harness and shim support to the C test harness.",
+        "body": "This allows running unit tests up to common/ini, excluding common/debug-off and common/assert-off."
+    },
+    {
+        "commit": "8fdeed780787a2c6df6672f5d9c75fb7b5b613bc",
+        "date": "2022-07-19 17:57:13 -0400",
+        "subject": "Copy repository links as files for testing.",
+        "body": "This makes the test code a bit simpler where we are listing a path but not following links.\n\nLinks in the repository can be used for testing but should never be committed to the main branch."
+    },
+    {
+        "commit": "eb775790087cd8594f6649893895c42a407302cd",
+        "date": "2022-07-19 17:25:07 -0400",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "f3a10b921bf3d87152d27347df23b487877abe94",
+        "date": "2022-07-18 10:52:57 -0400",
+        "subject": "Update config.guess to latest version."
+    },
+    {
+        "commit": "20f9f726478a4d1c8897cc31a5bf7df52275b84f",
+        "date": "2022-07-18 10:49:58 -0400",
+        "subject": "Begin v2.41 development."
+    },
+    {
         "commit": "1ff531090b9d1eccd9107592398148a51486c9f8",
         "date": "2022-07-18 09:32:30 -0400",
         "subject": "v2.40: OpenSSL 3 Support"
