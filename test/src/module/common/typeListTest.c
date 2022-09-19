@@ -242,7 +242,7 @@ testRun(void)
         // Scan the empty list.
         int *item;
         foreach(item, emptyList)
-            ASSERT_MSG("iterating through an empty list");
+            ASSERT_MSG("iterating through an empty list");          // {uncoverable - this statement should not be reached}
         ASSERT(item == NULL);
         TEST_RESULT_VOID((void)0, "scan empty list");
 
@@ -260,7 +260,7 @@ testRun(void)
         Collection *emptyCollection = NEWCOLLECTION(List, emptyList);
         TEST_RESULT_VOID( (void)0, "Created collection");
         FOREACH(item, Collection, emptyCollection)
-            ASSERT_MSG("iterating through an empty container");
+            ASSERT_MSG("iterating through an empty container");     // {uncoverable - this statement should not be reached}
         ENDFOREACH;
         ASSERT(item == NULL);
         TEST_RESULT_VOID((void) 0, "empty list inside Collection");
