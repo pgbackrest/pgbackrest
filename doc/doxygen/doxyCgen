@@ -7,8 +7,8 @@ set -o pipefail -e
 #      <input directory> - where the C source tree is located
 #      <output directory> - where doxygen documentation is created.
 #      <doxyCfilter> - (optional) path to where the doxyCfilter resides or should be created.
-#      $PROJECT_NAME - environment variable passed on to doxygan
-#      $PROJECT_BRIEF - brief description passed on to doxygen
+#      <$PROJECT_NAME> - (optional) environment variable (or arg4)
+#      <$PROJECT_BRIEF> - (optional) environment variable (or arg5) describing project.
 ####################################################################################################################################
 main() # <args>
 {
@@ -72,8 +72,8 @@ buildDoxyFilter() # <path to filter>
 
   # If the filter doesn't already exist, build it.
   if [ ! -x "$filter" ]; then
-    flex -o "$OUTPUT_DIRECTORY/doxyCfilter.c" "$THIS_DIR/doxyCFilter.l"  || abort "Install flex and try again"
-    cc "$OUTPUT_DIRECTORY/doxyCfilter.c" -o "$filter"               || abort "Unable to build doxyCfilter. Is 'cc' installed?"
+    flex -o "$OUTPUT_DIRECTORY/doxyCfilter.c" "$THIS_DIR/doxyCFilter.l" || abort "Install flex and try again"
+    cc -O "$OUTPUT_DIRECTORY/doxyCfilter.c" -o "$filter" || abort "Unable to build doxyCfilter. Is 'cc' installed?"
   fi
 
   # Return the location of the filter.
