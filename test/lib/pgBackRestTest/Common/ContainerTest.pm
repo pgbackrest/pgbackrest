@@ -203,12 +203,10 @@ sub sshSetup
         "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9I" .
              "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
              "user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
-        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9I" .
-             "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
-             "user\@pgbackrest-test' > ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
+        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQChlaQmRKBh31+KMvfd9rJ2NWzp5/kdQKiCQ7YlozvOYiWXznfTeewTXItehDDjkdYRkks6k9" .
+             "xqdWVhFx+qY/TviPTMpueAXmsi/pINQvPXHQCVpGrpVPrIAkdxK+IaPwWtK9R3/blhSNNE0/H7hEJqeyTk3Z/OxaD0X6q2S6JuZw== " .
+             "user\@pgbackrest-test' >> ${strUserPath}/.ssh/authorized_keys && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
-        "    perl -pi -e 's#Subsystem.*sftp.*/usr/lib/openssh/sftp-server#Subsystem    sftp    /usr/lib/openssh/sftp-server -l" .
-             "VERBOSE#  ' /etc/ssh/sshd_config" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
     if ($bControlMtr)
