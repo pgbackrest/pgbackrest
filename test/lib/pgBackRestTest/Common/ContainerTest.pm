@@ -401,7 +401,8 @@ sub containerBuild
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release libssh2-1 \\\n" .
-                "        libssh2-1-dev";
+                "        libssh2-1-dev rsyslog";
+                # !!! jrt remove rsyslog - added for development testing only
 
             # This package is required to build valgrind on 32-bit
             if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
