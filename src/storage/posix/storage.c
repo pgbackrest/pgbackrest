@@ -555,15 +555,15 @@ storagePosixLinkCreate(
             symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
             strZ(target));
     }
-    else if (linkType == storageHardLink)
+    else
     {
+        ASSERT(linkType == storageHardLink);
+
         // Create the hard link
         THROW_ON_SYS_ERROR_FMT(
             link(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create hardlink '%s' to '%s'", strZ(linkPath),
             strZ(target));
     }
-    else
-        THROW_FMT(ParamInvalidError, "unable to create link, invalid linkType requested");
 
     FUNCTION_LOG_RETURN_VOID();
 }

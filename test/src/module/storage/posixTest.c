@@ -893,8 +893,8 @@ testRun(void)
         TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
         TEST_RESULT_VOID(storagePathRemoveP(storageTest, backupLabel), "remove backup path");
         TEST_ERROR(
-            storageLinkCreateP(storageTest, backupLabel, latestLabel, invalidLinkType), ParamInvalidError,
-            "unable to create link, invalid linkType requested");
+            storageLinkCreateP(storageTest, backupLabel, latestLabel, invalidLinkType), AssertError,
+            "assertion 'linkType == storageHardLink' failed");
     }
 
     // *****************************************************************************************************************************
