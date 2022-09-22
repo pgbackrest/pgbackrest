@@ -548,7 +548,7 @@ storagePosixLinkCreate(
     ASSERT(target != NULL);
     ASSERT(linkPath != NULL);
 
-    if (linkType == storageSoftLink)
+    if (linkType == storageSymLink)
     {
         // Create the symlink
         THROW_ON_SYS_ERROR_FMT(

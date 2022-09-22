@@ -872,7 +872,7 @@ testRun(void)
         TEST_TITLE("create soft link to BACKUPLABEL");
 
         TEST_RESULT_VOID(storagePathCreateP(storageTest, backupLabel), "create path to link to");
-        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel, storageSoftLink), "create symlink");
+        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel, storageSymLink), "create symlink");
         TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
         TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
         TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");

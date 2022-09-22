@@ -137,7 +137,7 @@ backupLinkLatest(const String *backupLabel, unsigned int repoIdx)
         storageRemoveP(storageRepoIdxWrite(repoIdx), latestLink);
 
         if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeatureSymLink))
-            storageLinkCreateP(storageRepoIdxWrite(repoIdx), backupLabel, latestLink, storageSoftLink);
+            storageLinkCreateP(storageRepoIdxWrite(repoIdx), backupLabel, latestLink, storageSymLink);
 
         // Sync backup path if required
         if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeaturePathSync))

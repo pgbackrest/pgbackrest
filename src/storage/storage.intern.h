@@ -71,8 +71,8 @@ typedef enum
     // Signify creation of hard link
     storageHardLink,
 
-    // Signify creation of soft link
-    storageSoftLink,
+    // Signify creation of symbolic link
+    storageSymLink,
 } LinkType;
 
 /***********************************************************************************************************************************
@@ -256,7 +256,7 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
     STORAGE_COMMON_INTERFACE(thisVoid).pathSync(thisVoid, path, (StorageInterfacePathSyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Create a hard or soft link
+// Create a hard or symbolic link
 typedef struct StorageInterfaceLinkCreateParam
 {
     VAR_PARAM_HEADER;

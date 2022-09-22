@@ -241,7 +241,7 @@ typedef struct StorageRemoveParam
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
 
-// Create a hard or soft link
+// Create a hard or symbolic link
 #define storageLinkCreateP(this, target, linkPath, linkType)                                                                       \
     storageLinkCreate(this, target, linkPath, linkType)
 

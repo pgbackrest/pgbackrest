@@ -1842,7 +1842,7 @@ backupProcess(
                         const String *const linkDestination = strNewFmt(
                             "../../" MANIFEST_TARGET_PGTBLSPC "/%u", target->tablespaceId);
 
-                        storageLinkCreateP(storageRepoWrite(), linkDestination, link, storageSoftLink);
+                        storageLinkCreateP(storageRepoWrite(), linkDestination, link, storageSymLink);
                     }
                 }
             }
