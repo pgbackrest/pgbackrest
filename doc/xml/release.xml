@@ -77,6 +77,19 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1843"/>
+                        <github-pull-request id="1847"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="anton.glushakov"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow upload chunk size to be configured for object stores.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1853"/>
                         <github-pull-request id="1855"/>
 
@@ -11560,6 +11573,11 @@
         <contributor id="andrey.sokolov">
             <contributor-name-display>Andrey Sokolov</contributor-name-display>
             <contributor-id type="github">andr-sokolov</contributor-id>
+        </contributor>
+
+        <contributor id="anton.glushakov">
+            <contributor-name-display>Anton Glushakov</contributor-name-display>
+            <contributor-id type="github">glushakov</contributor-id>
         </contributor>
 
         <contributor id="anton.kurochkin">
