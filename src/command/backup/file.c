@@ -241,7 +241,8 @@ backupFile(
                     IoFilter *const encrypt = cipherType != cipherTypeNone ?
                         cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL) : NULL;
 
-                    // Add block incremental filter
+                    // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
+                    // compressed/encrypted separately
                     if (blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize)) // {uncovered !!!}
                     {
                         ioFilterGroupAdd( // {uncovered !!!}
@@ -249,7 +250,7 @@ backupFile(
                                 storageReadIo(read)),
                                 blockIncrNew(blockIncrSize, /* !!! FIX */0, /* !!! FIX */0, bundleOffset, /* !!! FIX */NULL));
                     }
-                    // Else add filters
+                    // Else apply compress/encrypt filters to the entire file
                     else
                     {
                         // Add compress filter
