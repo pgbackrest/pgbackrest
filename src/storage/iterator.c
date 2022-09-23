@@ -244,7 +244,11 @@ storageItrMore(StorageIterator *const this)
         }
 
         // If no more info then free the list. This check is required because we may break out of the above loop early.
-        if (listInfo->listIdx >= storageLstSize(listInfo->list))
+        //
+        // Only free when the list is at the top of the stack. It is possible that this is the last entry in the current list but
+        // it is a path that must be checked for entries. In that case the path entries will end up at the top of the stack so we'll
+        // need to wait to free the list containing the path until the path entries have been processed.
+        if (listInfo->listIdx >= storageLstSize(listInfo->list) && listInfo == *(StorageIteratorInfo **)lstGetLast(this->stack))
         {
             objFree(listInfo);
             lstRemoveLast(this->stack);

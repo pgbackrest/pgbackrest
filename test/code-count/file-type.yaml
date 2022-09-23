@@ -195,10 +195,6 @@ src/build/config/config.yaml:
   class: build
   type: yaml
 
-src/build/config/main.c:
-  class: build
-  type: c
-
 src/build/config/parse.c:
   class: build
   type: c
@@ -223,10 +219,6 @@ src/build/error/error.yaml:
   class: build
   type: yaml
 
-src/build/error/main.c:
-  class: build
-  type: c
-
 src/build/error/parse.c:
   class: build
   type: c
@@ -246,10 +238,6 @@ src/build/error/render.h:
 src/build/help/help.xml:
   class: build
   type: make
-
-src/build/help/main.c:
-  class: build
-  type: c
 
 src/build/help/parse.c:
   class: build
@@ -271,7 +259,7 @@ src/build/install-sh:
   class: build
   type: make
 
-src/build/postgres/main.c:
+src/build/main.c:
   class: build
   type: c
 
@@ -293,6 +281,14 @@ src/build/postgres/render.c:
 
 src/build/postgres/render.h:
   class: build
+  type: c/h
+
+src/command/annotate/annotate.c:
+  class: core
+  type: c
+
+src/command/annotate/annotate.h:
+  class: core
   type: c/h
 
 src/command/archive/common.c:
@@ -2228,6 +2224,10 @@ test/src/module/build/helpTest.c:
   type: c
 
 test/src/module/build/postgresTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/annotateTest.c:
   class: test/module
   type: c
 
