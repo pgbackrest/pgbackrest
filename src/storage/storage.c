@@ -716,6 +716,56 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /**********************************************************************************************************************************/
+void storageLinkCreate2(const Storage *this, const String *target, const String *linkPath, StorageLinkCreateParam2 param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, param.linkType);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->write);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+
+    //fprintf(stderr, "jrt storageLinkCreate2");
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+    //fprintf(stderr, "jrt storageLinkCreate2 param.linkType %u\n", param.linkType);
+        storageInterfaceLinkCreateP2(storageDriver(this), target, linkPath, .linkType = param.linkType);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void storageLinkCreate1(const Storage *this, const String *target, const String *linkPath, StorageLinkCreateParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(BOOL, param.hard);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->write);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        storageInterfaceLinkCreateP1(storageDriver(this), target, linkPath, .hard = param.hard);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 void storageLinkCreate(const Storage *this, const String *target, const String *linkPath, const LinkType linkType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

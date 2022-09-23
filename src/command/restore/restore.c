@@ -1265,7 +1265,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                 {
                     LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
 
-                    storageLinkCreateP(storagePgWrite(), link->destination, pgPath, storageSymLink);
+                    //storageLinkCreateP(storagePgWrite(), link->destination, pgPath, storageSymLink);
+                    storageLinkCreateP1(storagePgWrite(), link->destination, pgPath);
                     restoreCleanOwnership(
                         pgPath, link->user, rootReplaceUser, link->group, rootReplaceGroup, userId(), groupId(), true);
                 }
@@ -1303,7 +1304,9 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             {
                 LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
 
-                storageLinkCreateP(storagePgWrite(), link->destination, pgPath, storageSymLink);
+LOG_DEBUG_FMT("jrt create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
+                //storageLinkCreateP(storagePgWrite(), link->destination, pgPath, storageSymLink);
+                storageLinkCreateP1(storagePgWrite(), link->destination, pgPath);
                 restoreCleanOwnership(
                     pgPath, link->user, rootReplaceUser, link->group, rootReplaceGroup, userId(), groupId(), true);
             }

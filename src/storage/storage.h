@@ -247,6 +247,33 @@ void storageRemove(const Storage *this, const String *fileExp, StorageRemovePara
 
 void storageLinkCreate(const Storage *this, const String *target, const String *linkPath, const LinkType linkType);
 
+// Create a hard or symbolic link
+typedef struct StorageLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // True if the link should be a hard link
+    bool hard;
+} StorageLinkCreateParam;
+
+#define storageLinkCreateP1(this, target, linkPath, ...)                                                                           \
+    storageLinkCreate1(this, target, linkPath, (StorageLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void storageLinkCreate1(const Storage *this, const String *target, const String *linkPath, StorageLinkCreateParam param);
+
+// Create a hard or symbolic link
+typedef struct StorageLinkCreateParam2
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    LinkType linkType;
+} StorageLinkCreateParam2;
+
+#define storageLinkCreateP2(this, target, linkPath, ...)                                                                           \
+    storageLinkCreate2(this, target, linkPath, (StorageLinkCreateParam2){VAR_PARAM_INIT, __VA_ARGS__})
+
+void storageLinkCreate2(const Storage *this, const String *target, const String *linkPath, StorageLinkCreateParam2 param);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
