@@ -120,6 +120,7 @@ List *restoreFile(
                                 {
                                     read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
                                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+                                    // !!! Hash map filter
                                     ioReadDrain(read);
                                 }
 

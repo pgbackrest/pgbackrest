@@ -38,11 +38,14 @@ segmentNumber(const String *pgFile)
 /**********************************************************************************************************************************/
 List *
 backupFile(
-    const String *const repoFile, const CompressType repoFileCompressType, const int repoFileCompressLevel,
-    const bool delta, const CipherType cipherType, const String *const cipherPass, const List *const fileList)
+    const String *const repoFile, const bool blockIncr, const size_t blockIncrSize, const CompressType repoFileCompressType,
+    const int repoFileCompressLevel, const bool delta, const CipherType cipherType, const String *const cipherPass,
+    const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
+        FUNCTION_LOG_PARAM(BOOL, blockIncr);                        // Block incremental?
+        FUNCTION_LOG_PARAM(SIZE, blockIncrSize);                    // Block incremental size
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
@@ -230,19 +233,32 @@ backupFile(
                                 segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, storagePathP(storagePg(), file->pgFile)));
                     }
 
-                    // Add compression
-                    if (repoFileCompressType != compressTypeNone)
-                    {
-                        ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
-                    }
+                    // Compress filter
+                    IoFilter *const compress = repoFileCompressType != compressTypeNone ?
+                        compressFilter(repoFileCompressType, repoFileCompressLevel) : NULL;
 
-                    // If there is a cipher then add the encrypt filter
-                    if (cipherType != cipherTypeNone)
+                    // Encrypt filter
+                    IoFilter *const encrypt = cipherType != cipherTypeNone ?
+                        cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL) : NULL;
+
+                    // Add block incremental filter
+                    if (blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize)) // {uncovered !!!}
                     {
-                        ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)),
-                            cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
+                        ioFilterGroupAdd( // {uncovered !!!}
+                            ioReadFilterGroup(
+                                storageReadIo(read)),
+                                blockIncrNew(blockIncrSize, /* !!! FIX */0, /* !!! FIX */0, bundleOffset, /* !!! FIX */NULL));
+                    }
+                    // Else add filters
+                    else
+                    {
+                        // Add compress filter
+                        if (compress != NULL)
+                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), compress);
+
+                        // Add encrypt filter
+                        if (encrypt != NULL)
+                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), encrypt);
                     }
 
                     // Add size filter last to calculate repo size
