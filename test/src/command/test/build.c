@@ -349,7 +349,9 @@ testBldUnit(TestBuild *const this)
             MESON_COMMENT_BLOCK "\n"
             "configure_file(output: 'build.auto.h', configuration: configuration)\n"
             "\n"
-            "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
+            "# Use large buffer sizes to capture large error/log outputs\n"
+            "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=262144', language : 'c')\n"
+            "add_global_arguments('-DLOG_BUFFER_SIZE=262144', language : 'c')\n");
 
         // Configure features
         if (module->feature != NULL)

@@ -56,6 +56,11 @@ executable(
     test_help_auto_c_inc,
     test_parse_auto_c_inc,
     include_directories: include_directories('.', '../../src'),
+    c_args: [
+        # Use large buffer sizes to capture large error/log outputs
+        '-DERROR_MESSAGE_BUFFER_SIZE=262144',
+        '-DLOG_BUFFER_SIZE=262144',
+    ],
     dependencies: [
         lib_bz2,
         lib_yaml,
