@@ -2118,6 +2118,9 @@ sub restoreCompare
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL});
         $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, 'backup-reference', undef,
+            $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-reference'});
+        $oActualManifest->set(
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START});
         $oActualManifest->set(
