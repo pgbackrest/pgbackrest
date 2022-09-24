@@ -34,7 +34,6 @@ struct Manifest
 {
     ManifestPub pub;                                                // Publicly accessible variables
     StringList *ownerList;                                          // List of users/groups
-    StringList *referenceList;                                      // List of file references
 
     const String *fileUserDefault;                                  // Default file user name
     const String *fileGroupDefault;                                 // Default file group name
@@ -317,7 +316,7 @@ manifestFileAdd(Manifest *const this, ManifestFile *const file)
     file->group = manifestOwnerCache(this, file->group);
 
     if (file->reference != NULL)
-        file->reference = strLstAddIfMissing(this->referenceList, file->reference);
+        file->reference = strLstAddIfMissing(this->pub.referenceList, file->reference);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
@@ -465,9 +464,9 @@ manifestNewInternal(void)
             .linkList = lstNewP(sizeof(ManifestLink), .comparator = lstComparatorStr),
             .pathList = lstNewP(sizeof(ManifestPath), .comparator = lstComparatorStr),
             .targetList = lstNewP(sizeof(ManifestTarget), .comparator = lstComparatorStr),
+            .referenceList = strLstNew(),
         },
         .ownerList = strLstNew(),
-        .referenceList = strLstNew(),
     };
 
     FUNCTION_TEST_RETURN(MANIFEST, this);
@@ -1630,6 +1629,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
 #define MANIFEST_KEY_BACKUP_LSN_STOP                                "backup-lsn-stop"
 #define MANIFEST_KEY_BACKUP_PRIOR                                   "backup-prior"
+#define MANIFEST_KEY_BACKUP_REFERENCE                               "backup-reference"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START                    "backup-timestamp-copy-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_START                         "backup-timestamp-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
@@ -2024,6 +2024,8 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
                 manifest->pub.data.lsnStop = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_PRIOR))
                 manifest->pub.data.backupLabelPrior = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_REFERENCE))
+                manifest->pub.referenceList = strLstNewSplitZ(varStr(jsonToVar(value)), ",");
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START))
                 manifest->pub.data.backupTimestampCopyStart = (time_t)varUInt64(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START))
@@ -2270,6 +2272,9 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                 jsonFromVar(VARSTR(manifest->pub.data.backupLabelPrior)));
         }
 
+        infoSaveValue(
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_REFERENCE,
+            jsonFromVar(VARSTR(strLstJoin(strLstSort(manifest->pub.referenceList, sortOrderAsc), ","))));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START,
             jsonFromVar(VARINT64(manifest->pub.data.backupTimestampCopyStart)));
@@ -2787,7 +2792,7 @@ manifestFileUpdate(
         if (varStr(reference) == NULL)
             file.reference = NULL;
         else
-            file.reference = strLstAddIfMissing(this->referenceList, varStr(reference));
+            file.reference = strLstAddIfMissing(this->pub.referenceList, varStr(reference));
     }
 
     // Update checksum if set
@@ -3052,6 +3057,7 @@ manifestBackupLabelSet(Manifest *this, const String *backupLabel)
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         this->pub.data.backupLabel = strDup(backupLabel);
+        strLstAdd(this->pub.referenceList, backupLabel);
     }
     MEM_CONTEXT_END();
 

@@ -40,6 +40,7 @@ testRun(void)
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
             "backup-label=null\n"                                                                                                  \
+            "backup-reference=\"\"\n"                                                                                              \
             "backup-timestamp-copy-start=0\n"                                                                                      \
             "backup-timestamp-start=0\n"                                                                                           \
             "backup-timestamp-stop=0\n"                                                                                            \
@@ -993,7 +994,9 @@ testRun(void)
         #define TEST_MANIFEST_HEADER_PRE                                                                                           \
             "[backup]\n"                                                                                                           \
             "backup-label=null\n"                                                                                                  \
-            "backup-prior=\"20190101-010101F\"\n"                                                                                  \
+            "backup-prior=\"20190101-010101F\"\n"
+
+        #define TEST_MANIFEST_HEADER_MID                                                                                           \
             "backup-timestamp-copy-start=0\n"                                                                                      \
             "backup-timestamp-start=0\n"                                                                                           \
             "backup-timestamp-stop=0\n"                                                                                            \
@@ -1103,6 +1106,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=false\n"
                 TEST_MANIFEST_HEADER_POST
                 "\n"
@@ -1153,6 +1158,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
                 "\n"
@@ -1209,6 +1216,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
                 "\n"
@@ -1263,6 +1272,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
                 "\n"
@@ -1325,6 +1336,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=true\n"
                 "option-hardlink=false\n"
                 "option-online=true\n"
@@ -1342,6 +1355,7 @@ testRun(void)
             "check manifest");
 
         #undef TEST_MANIFEST_HEADER_PRE
+        #undef TEST_MANIFEST_HEADER_MID
         #undef TEST_MANIFEST_HEADER_POST
         #undef TEST_MANIFEST_FILE_DEFAULT
         #undef TEST_MANIFEST_PATH_DEFAULT
@@ -1357,6 +1371,7 @@ testRun(void)
         (
             "[backup]\n"
             "backup-label=\"20190808-163540F\"\n"
+            "backup-reference=\"20190808-163540F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
             "backup-timestamp-start=1565282140\n"
             "backup-timestamp-stop=1565282142\n"
@@ -1442,6 +1457,7 @@ testRun(void)
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
             "backup-prior=\"20190818-084502F\"\n"                                                                                  \
+            "backup-reference=\"20190818-084502F,20190818-084502F_20190819-084506D,20190818-084502F_20190820-084502D\"\n"          \
             "backup-timestamp-copy-start=1565282141\n"                                                                             \
             "backup-timestamp-start=1565282140\n"                                                                                  \
             "backup-timestamp-stop=1565282142\n"                                                                                   \
