@@ -1079,6 +1079,7 @@ testRun(void)
         {
             manifestPrior = manifestNewInternal();
             manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");
+            strLstAdd(manifestPrior->pub.referenceList, manifestPrior->pub.data.backupLabel);
 
             manifestFileAdd(
                 manifestPrior,
@@ -1131,6 +1132,7 @@ testRun(void)
         TEST_TITLE("delta enabled before validation");
 
         manifest->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
+        strLstAddZ(manifestPrior->pub.referenceList, "20190101-010101F_20190202-010101D");
         lstClear(manifest->pub.fileList);
         manifestFileAdd(
             manifest,

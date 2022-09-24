@@ -316,7 +316,10 @@ manifestFileAdd(Manifest *const this, ManifestFile *const file)
     file->group = manifestOwnerCache(this, file->group);
 
     if (file->reference != NULL)
-        file->reference = strLstAddIfMissing(this->pub.referenceList, file->reference);
+    {
+        file->reference = strLstFind(this->pub.referenceList, file->reference);
+        ASSERT(file->reference != NULL);
+    }
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
@@ -1401,6 +1404,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         // Set prior backup label
         this->pub.data.backupLabelPrior = strDup(manifestPrior->pub.data.backupLabel);
 
+        // Copy reference list
+        this->pub.referenceList = strLstDup(manifestPrior->pub.referenceList);
+
         // Set diff/incr backup type
         this->pub.data.backupType = type;
     }
@@ -1685,6 +1691,7 @@ typedef struct ManifestLoadData
 {
     MemContext *memContext;                                         // Mem context for data needed only during load
     Manifest *manifest;                                             // Manifest info
+    bool referenceListFound;                                        // Was a reference list found?
 
     List *linkFoundList;                                            // Values found in links
     const Variant *linkGroupDefault;                                // Link default group
@@ -1802,7 +1809,12 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         // Reference
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
+        {
             file.reference = jsonReadStr(json);
+
+            if (!loadData->referenceListFound)
+                file.reference = strLstAddIfMissing(manifest->pub.referenceList, file.reference);
+        }
 
         // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
         // the repo-size is only stored in the manifest file if it is different than size.
@@ -2025,7 +2037,10 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_PRIOR))
                 manifest->pub.data.backupLabelPrior = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_REFERENCE))
+            {
                 manifest->pub.referenceList = strLstNewSplitZ(varStr(jsonToVar(value)), ",");
+                loadData->referenceListFound = true;
+            }
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START))
                 manifest->pub.data.backupTimestampCopyStart = (time_t)varUInt64(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START))
@@ -2792,7 +2807,10 @@ manifestFileUpdate(
         if (varStr(reference) == NULL)
             file.reference = NULL;
         else
-            file.reference = strLstAddIfMissing(this->pub.referenceList, varStr(reference));
+        {
+            file.reference = strLstFind(this->pub.referenceList, varStr(reference));
+            ASSERT(file.reference != NULL);
+        }
     }
 
     // Update checksum if set
