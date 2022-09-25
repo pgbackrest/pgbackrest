@@ -276,6 +276,32 @@ strLstAddZSubN(StringList *const this, const char *const string, const size_t of
 
 /**********************************************************************************************************************************/
 String *
+strLstFind(const StringList *const this, const String *const string, const StrListFindParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(BOOL, param.required);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
+
+    void *const result = lstFind((List *)this, &string);
+
+    if (result == NULL)
+    {
+        if (param.required)
+            THROW_FMT(AssertError, "unable to find '%s' in string list", strZ(string));
+
+        FUNCTION_TEST_RETURN(STRING, NULL);
+    }
+
+    FUNCTION_TEST_RETURN(STRING, *(String **)result);
+}
+
+/**********************************************************************************************************************************/
+String *
 strLstInsert(StringList *this, unsigned int listIdx, const String *string)
 {
     FUNCTION_TEST_BEGIN();

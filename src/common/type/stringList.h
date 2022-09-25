@@ -96,12 +96,16 @@ strLstExists(const StringList *const this, const String *const string)
 }
 
 // Find a string in the list
-// !!! THIS NEEDS TO BE EXPORTED SO IT CAN RETURN NULL CORRECTLY
-FN_INLINE_ALWAYS String *
-strLstFind(const StringList *const this, const String *const string)
+typedef struct StrListFindParam
 {
-    return *(String **)lstFind((List *)this, &string);
-}
+    VAR_PARAM_HEADER;
+    bool required;
+} StrListFindParam;
+
+#define strLstFindP(this, string, ...)                                                                                            \
+    strLstFind(this, string, (StrListFindParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+String *strLstFind(const StringList *this, const String *string, StrListFindParam param);
 
 // Insert into the list
 String *strLstInsert(StringList *this, unsigned int listIdx, const String *string);

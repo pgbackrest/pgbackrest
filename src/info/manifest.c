@@ -316,10 +316,7 @@ manifestFileAdd(Manifest *const this, ManifestFile *const file)
     file->group = manifestOwnerCache(this, file->group);
 
     if (file->reference != NULL)
-    {
-        file->reference = strLstFind(this->pub.referenceList, file->reference);
-        ASSERT(file->reference != NULL);
-    }
+        file->reference = strLstFindP(this->pub.referenceList, file->reference, .required = true);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
@@ -1812,7 +1809,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         {
             file.reference = jsonReadStr(json);
 
-            if (!loadData->referenceListFound)
+            if (!loadData->referenceListFound) // {uncovered !!!}
                 file.reference = strLstAddIfMissing(manifest->pub.referenceList, file.reference);
         }
 
@@ -2807,10 +2804,7 @@ manifestFileUpdate(
         if (varStr(reference) == NULL)
             file.reference = NULL;
         else
-        {
-            file.reference = strLstFind(this->pub.referenceList, varStr(reference));
-            ASSERT(file.reference != NULL);
-        }
+            file.reference = strLstFindP(this->pub.referenceList, varStr(reference), .required = true);
     }
 
     // Update checksum if set
