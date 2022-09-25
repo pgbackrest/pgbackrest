@@ -447,7 +447,8 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
             if (manData->backupType != backupTypeFull)
             {
-                infoBackupData.backupReference = strLstDup(manifestReferenceList(manifest));
+                // This list may not be sorted for manifests that created before the reference list was added
+                infoBackupData.backupReference = strLstSort(strLstDup(manifestReferenceList(manifest)), sortOrderAsc);
                 infoBackupData.backupPrior = strDup(manData->backupLabelPrior);
             }
 

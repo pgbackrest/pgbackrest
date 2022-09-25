@@ -171,7 +171,10 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Reference
     if (file->reference != NULL)
-        cvtUInt64ToVarInt128((uintptr_t)file->reference, buffer, &bufferPos, sizeof(buffer));
+    {
+        cvtUInt64ToVarInt128(
+            strLstFindIdxP(manifest->pub.referenceList, file->reference, .required = true), buffer, &bufferPos, sizeof(buffer));
+    }
 
     // Mode
     if (flag & (1 << manifestFilePackFlagMode))
@@ -263,7 +266,10 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // Reference
     if (flag & (1 << manifestFilePackFlagReference))
-        result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    {
+        result.reference = strLstGet(
+            manifest->pub.referenceList, (unsigned int)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos));
+    }
 
     // Mode
     if (flag & (1 << manifestFilePackFlagMode))
@@ -314,9 +320,6 @@ manifestFileAdd(Manifest *const this, ManifestFile *const file)
 
     file->user = manifestOwnerCache(this, file->user);
     file->group = manifestOwnerCache(this, file->group);
-
-    if (file->reference != NULL)
-        file->reference = strLstFindP(this->pub.referenceList, file->reference, .required = true);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
@@ -2286,7 +2289,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_REFERENCE,
-            jsonFromVar(VARSTR(strLstJoin(strLstSort(manifest->pub.referenceList, sortOrderAsc), ","))));
+            jsonFromVar(VARSTR(strLstJoin(manifest->pub.referenceList, ","))));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START,
             jsonFromVar(VARINT64(manifest->pub.data.backupTimestampCopyStart)));
@@ -2804,7 +2807,7 @@ manifestFileUpdate(
         if (varStr(reference) == NULL)
             file.reference = NULL;
         else
-            file.reference = strLstFindP(this->pub.referenceList, varStr(reference), .required = true);
+            file.reference = varStr(reference);
     }
 
     // Update checksum if set

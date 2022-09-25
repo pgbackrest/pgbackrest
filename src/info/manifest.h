@@ -206,7 +206,7 @@ manifestData(const Manifest *const this)
 FN_INLINE_ALWAYS const StringList *
 manifestReferenceList(const Manifest *const this)
 {
-    return strLstSort(THIS_PUB(Manifest)->referenceList, sortOrderAsc);
+    return THIS_PUB(Manifest)->referenceList;
 }
 
 // Set backup label

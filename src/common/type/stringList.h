@@ -95,17 +95,17 @@ strLstExists(const StringList *const this, const String *const string)
     return lstExists((List *)this, &string);
 }
 
-// Find a string in the list
-typedef struct StrListFindParam
+// Find string index in the list
+typedef struct StrLstFindIdxParam
 {
     VAR_PARAM_HEADER;
     bool required;
-} StrListFindParam;
+} StrLstFindIdxParam;
 
-#define strLstFindP(this, string, ...)                                                                                            \
-    strLstFind(this, string, (StrListFindParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define strLstFindIdxP(this, string, ...)                                                                                            \
+    strLstFindIdx(this, string, (StrLstFindIdxParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-String *strLstFind(const StringList *this, const String *string, StrListFindParam param);
+unsigned int strLstFindIdx(const StringList *this, const String *string, StrLstFindIdxParam param);
 
 // Insert into the list
 String *strLstInsert(StringList *this, unsigned int listIdx, const String *string);

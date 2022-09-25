@@ -1459,7 +1459,7 @@ testRun(void)
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
             "backup-prior=\"20190818-084502F\"\n"                                                                                  \
-            "backup-reference=\"20190818-084502F,20190818-084502F_20190819-084506D,20190818-084502F_20190820-084502D\"\n"          \
+            "backup-reference=\"20190818-084502F_20190819-084506D,20190818-084502F,20190818-084502F_20190820-084502D\"\n"          \
             "backup-timestamp-copy-start=1565282141\n"                                                                             \
             "backup-timestamp-start=1565282140\n"                                                                                  \
             "backup-timestamp-stop=1565282142\n"                                                                                   \
