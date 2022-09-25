@@ -1812,7 +1812,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         {
             file.reference = jsonReadStr(json);
 
-            if (!loadData->referenceListFound) // {uncovered !!!}
+            if (!loadData->referenceListFound)
                 file.reference = strLstAddIfMissing(manifest->pub.referenceList, file.reference);
         }
 
