@@ -44,6 +44,7 @@ typedef struct BackupFileResult
     String *copyChecksum;
     uint64_t bundleOffset;                                          // Offset in bundle if any
     uint64_t repoSize;
+    uint64_t blockIncrMapSize;                                      // Size of block incremental map (0 if no map)
     Pack *pageChecksumResult;
 } BackupFileResult;
 

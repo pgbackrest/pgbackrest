@@ -106,26 +106,35 @@ testBackupValidateList(
 
                     // Calculate checksum/size and decompress if needed
                     // -------------------------------------------------------------------------------------------------------------
-                    StorageRead *read = storageNewReadP(
-                        storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
-                        .limit = VARUINT64(file.sizeRepo));
+                    uint64_t size = 0;
 
-                    if (manifestData->backupOptionCompressType != compressTypeNone)
+                    if (file.blockIncrMapSize != 0)
                     {
-                        ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)), decompressFilter(manifestData->backupOptionCompressType));
+                        size = file.size;
+                    }
+                    else
+                    {
+                        StorageRead *read = storageNewReadP(
+                            storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
+                            .limit = VARUINT64(file.sizeRepo));
+
+                        if (manifestData->backupOptionCompressType != compressTypeNone)
+                        {
+                            ioFilterGroupAdd(
+                                ioReadFilterGroup(storageReadIo(read)), decompressFilter(manifestData->backupOptionCompressType));
+                        }
+
+                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+
+                        size = bufUsed(storageGetP(read));
+                        const String *checksum = pckReadStrP(
+                            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+
+                        if (!strEqZ(checksum, file.checksumSha1))
+                            THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
                     }
 
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
-
-                    uint64_t size = bufUsed(storageGetP(read));
-                    const String *checksum = pckReadStrP(
-                        ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
-
                     strCatFmt(result, ", s=%" PRIu64, size);
-
-                    if (!strEqZ(checksum, file.checksumSha1))
-                        THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
 
                     // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even
                     // the same compression algorithm can give slightly different results based on the version so repo-size is not
@@ -141,7 +150,7 @@ testBackupValidateList(
                             THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
                     }
 
-                    if (manifestData->backupOptionCompressType != compressTypeNone)
+                    if (manifestData->backupOptionCompressType != compressTypeNone || file.blockIncrMapSize != 0)
                         file.sizeRepo = file.size;
 
                     // Bundle id/offset are too noisy so remove them. They are checked size/checksum and listed with the files.
@@ -3539,6 +3548,107 @@ testRun(void)
                 "pg_tblspc/32768={}\n"
                 "pg_tblspc/32768/PG_11_201809051={}\n"
                 "pg_tblspc/32768/PG_11_201809051/1={}\n",
+                "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 full backup with block incr");
+
+        backupTimeStart = BACKUP_EPOCH + 2800000;
+
+        {
+            // Remove old pg data
+            HRN_STORAGE_PATH_REMOVE(storageTest, "pg1-data", .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storageTest, "pg1-tblspc", .recurse = true);
+            HRN_STORAGE_REMOVE(storageTest, "pg1");
+
+            // Update pg_control
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 2 * 1024 * 1024);
+
+            // Update version
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
+
+            // Upgrade stanza
+            // StringList *argList = strLstNew();
+            // hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            // hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            // hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            // hrnCfgArgRawBool(argList, cfgOptOnline, false);
+            // HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+            // cmdStanzaUpgrade();
+            // TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
+
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "8KiB");
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Zeroed file which passes page checksums
+            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
+
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
+                "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
+                "P00   INFO: new backup label = 20191103-165320F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 5");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191103-165320F}\n"
+                "pg_data {path}\n"
+                "pg_data/PG_VERSION {file, s=2}\n"
+                "pg_data/backup_label {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/2 {file, s=24576}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control {file, s=8192}\n"
+                "pg_data/tablespace_map {file, s=19}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
+                    ",\"timestamp\":1572800000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1572800002}\n"
+                "pg_data/base/1/2={\"bims\":71,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"size\":24576"
+                    ",\"timestamp\":1572800000}\n"
+                "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1572800000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                    ",\"timestamp\":1572800002}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n",
                 "compare file list");
         }
     }

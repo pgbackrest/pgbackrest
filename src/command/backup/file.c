@@ -245,7 +245,9 @@ backupFile(
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
                     // compressed/encrypted separately
-                    if (blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize)) // {uncovered !!!}
+                    const bool blockIncrFilter = blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize);
+
+                    if (blockIncrFilter) // {uncovered !!!}
                     {
                         ioFilterGroupAdd( // {uncovered !!!}
                             ioReadFilterGroup(
@@ -308,6 +310,13 @@ backupFile(
                             {
                                 fileResult->pageChecksumResult = pckDup(
                                     ioFilterGroupResultPackP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE));
+                            }
+
+                            // Get results of block incremental
+                            if (blockIncrFilter)
+                            {
+                                fileResult->blockIncrMapSize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), BLOCK_INCR_FILTER_TYPE));
                             }
                         }
                         MEM_CONTEXT_END();
