@@ -257,54 +257,21 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Create a hard or symbolic link
-typedef struct StorageInterfaceLinkCreateParam
-{
-    VAR_PARAM_HEADER;
-
-    // True if the link should be a hard link
-    bool hard;
-} StorageInterfaceLinkCreateParam;
-
-typedef void StorageInterfaceLinkCreate(
-    void *thisVoid, const String *target, const String *linkPath, const LinkType linkType, StorageInterfaceLinkCreateParam param);
-
-#define storageInterfaceLinkCreateP(thisVoid, target, linkPath, linkType, ...)                                                     \
-    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate(thisVoid, target, linkPath, linkType,                                            \
-        (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-// ---------------------------------------------------------------------------------------------------------------------------------
-// Create a hard or symbolic link
-typedef struct StorageInterfaceLinkCreateParam1
-{
-    VAR_PARAM_HEADER;
-
-    // True if the link should be a hard link
-    bool hard;
-} StorageInterfaceLinkCreateParam1;
-
-typedef void StorageInterfaceLinkCreate1(
-    void *thisVoid, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam1 param);
-
-#define storageInterfaceLinkCreateP1(thisVoid, target, linkPath, ...)                                                              \
-    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate1(thisVoid, target, linkPath,                                                     \
-        (StorageInterfaceLinkCreateParam1){VAR_PARAM_INIT, __VA_ARGS__})
-
-// ---------------------------------------------------------------------------------------------------------------------------------
-// Create a hard or symbolic link
 typedef struct StorageInterfaceLinkCreateParam2
 {
     VAR_PARAM_HEADER;
 
     // Flag to create hard or symbolic link
     LinkType linkType;
-} StorageInterfaceLinkCreateParam2;
+} StorageInterfaceLinkCreateParam;
 
-typedef void StorageInterfaceLinkCreate2(
-    void *thisVoid, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam2 param);
+typedef void StorageInterfaceLinkCreate(
+    void *thisVoid, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam param);
 
-#define storageInterfaceLinkCreateP2(thisVoid, target, linkPath, ...)                                                              \
-    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate2(thisVoid, target, linkPath,                                                     \
-        (StorageInterfaceLinkCreateParam2){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInterfaceLinkCreateP(thisVoid, target, linkPath, ...)                                                               \
+    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate(thisVoid, target, linkPath,                                                      \
+        (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
 /***********************************************************************************************************************************
 Storage type and helper function struct
 
@@ -341,8 +308,6 @@ typedef struct StorageInterface
     StorageInterfacePathCreate *pathCreate;
     StorageInterfacePathSync *pathSync;
     StorageInterfaceLinkCreate *linkCreate;
-    StorageInterfaceLinkCreate1 *linkCreate1;
-    StorageInterfaceLinkCreate2 *linkCreate2;
 } StorageInterface;
 
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \

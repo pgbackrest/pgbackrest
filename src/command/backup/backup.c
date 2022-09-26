@@ -1842,8 +1842,7 @@ backupProcess(
                         const String *const linkDestination = strNewFmt(
                             "../../" MANIFEST_TARGET_PGTBLSPC "/%u", target->tablespaceId);
 
-                        //storageLinkCreateP(storageRepoWrite(), linkDestination, link, storageSymLink);
-                        storageLinkCreateP1(storageRepoWrite(), linkDestination, link);
+                        storageLinkCreateP(storageRepoWrite(), linkDestination, link);
                     }
                 }
             }
@@ -1954,9 +1953,7 @@ backupProcess(
                         storageRepo(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
 
-                    //storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, storageHardLink);
-                    //storageLinkCreateP1(storageRepoWrite(), linkDestination, linkName, .hard = true);
-                    storageLinkCreateP2(storageRepoWrite(), linkDestination, linkName, .linkType = storageHardLink);
+                    storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, .linkType = storageHardLink);
                 }
                 // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
                 // recopied.

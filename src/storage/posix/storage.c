@@ -531,89 +531,7 @@ storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
 /**********************************************************************************************************************************/
 void
 storagePosixLinkCreate(
-    THIS_VOID, const String *const target, const String *const linkPath, const LinkType linkType,
-    StorageInterfaceLinkCreateParam param)
-{
-    THIS(StoragePosix);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
-        FUNCTION_LOG_PARAM(STRING, target);
-        FUNCTION_LOG_PARAM(STRING, linkPath);
-        FUNCTION_LOG_PARAM(ENUM, linkType);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(target != NULL);
-    ASSERT(linkPath != NULL);
-LOG_DEBUG_FMT("jrt linkCreate");
-    if (linkType == storageSymLink)
-    {
-        // Create the symlink
-        THROW_ON_SYS_ERROR_FMT(
-            symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
-            strZ(target));
-    }
-    else
-    {
-        ASSERT(linkType == storageHardLink);
-
-        // Create the hard link
-        THROW_ON_SYS_ERROR_FMT(
-            link(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create hardlink '%s' to '%s'", strZ(linkPath),
-            strZ(target));
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-storagePosixLinkCreate1(
-    THIS_VOID, const String *const target, const String *const linkPath, StorageInterfaceLinkCreateParam1 param)
-{
-    THIS(StoragePosix);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
-        FUNCTION_LOG_PARAM(STRING, target);
-        FUNCTION_LOG_PARAM(STRING, linkPath);
-        FUNCTION_LOG_PARAM(BOOL, param.hard);
-        (void)param;                                                // No parameters are used
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(target != NULL);
-    ASSERT(linkPath != NULL);
-
-    LOG_DEBUG_FMT("jrt creating p1 link");
-    if (!param.hard)
-    {
-        // Create the symlink
-        LOG_DEBUG_FMT("jrt creating p1 symlink");
-        THROW_ON_SYS_ERROR_FMT(
-            symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
-            strZ(target));
-    }
-    else
-    {
-        ASSERT(param.hard == true);
-
-        LOG_DEBUG_FMT("jrt creating p1 hardlink");
-        // Create the hard link
-        THROW_ON_SYS_ERROR_FMT(
-            link(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create hardlink '%s' to '%s'", strZ(linkPath),
-            strZ(target));
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-storagePosixLinkCreate2(
-    THIS_VOID, const String *const target, const String *const linkPath, StorageInterfaceLinkCreateParam2 param)
+    THIS_VOID, const String *const target, const String *const linkPath, StorageInterfaceLinkCreateParam param)
 {
     THIS(StoragePosix);
 
@@ -629,10 +547,8 @@ storagePosixLinkCreate2(
     ASSERT(target != NULL);
     ASSERT(linkPath != NULL);
 
-    //fprintf(stderr, "jrt sym %d hard %d creating link linkType %d\n", storageSymLink, storageHardLink, (int)param.linkType);
     if (param.linkType == storageSymLink)
     {
-        //fprintf(stderr, "jrt creating symlink\n");
         // Create the symlink
         THROW_ON_SYS_ERROR_FMT(
             symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
@@ -640,7 +556,6 @@ storagePosixLinkCreate2(
     }
     else
     {
-        //fprintf(stderr, "jrt creating hardlink\n");
         ASSERT(param.linkType == storageHardLink);
 
         // Create the hard link
@@ -666,8 +581,6 @@ static const StorageInterface storageInterfacePosix =
     .pathSync = storagePosixPathSync,
     .remove = storagePosixRemove,
     .linkCreate = storagePosixLinkCreate,
-    .linkCreate1 = storagePosixLinkCreate1,
-    .linkCreate2 = storagePosixLinkCreate2,
 };
 
 Storage *
@@ -733,7 +646,6 @@ storagePosixNew(const String *path, StoragePosixNewParam param)
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
     FUNCTION_LOG_END();
 
-LOG_DEBUG_FMT("jrt posix new");
     FUNCTION_LOG_RETURN(
         STORAGE,
         storagePosixNewInternal(
