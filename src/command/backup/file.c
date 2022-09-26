@@ -38,14 +38,16 @@ segmentNumber(const String *pgFile)
 /**********************************************************************************************************************************/
 List *
 backupFile(
-    const String *const repoFile, const bool blockIncr, const size_t blockIncrSize, const CompressType repoFileCompressType,
-    const int repoFileCompressLevel, const bool delta, const CipherType cipherType, const String *const cipherPass,
-    const List *const fileList)
+    const String *const repoFile, const uint64_t bundleId, const bool blockIncr, const size_t blockIncrSize,
+    const unsigned int blockIncrReference, const CompressType repoFileCompressType, const int repoFileCompressLevel,
+    const bool delta, const CipherType cipherType, const String *const cipherPass, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
+        FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle id (0 if none)
         FUNCTION_LOG_PARAM(BOOL, blockIncr);                        // Block incremental?
         FUNCTION_LOG_PARAM(SIZE, blockIncrSize);                    // Block incremental size
+        FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(BOOL, delta);                            // Is the delta option on?
@@ -248,7 +250,7 @@ backupFile(
                         ioFilterGroupAdd( // {uncovered !!!}
                             ioReadFilterGroup(
                                 storageReadIo(read)),
-                                blockIncrNew(blockIncrSize, /* !!! FIX */0, /* !!! FIX */0, bundleOffset, /* !!! FIX */NULL));
+                                blockIncrNew(blockIncrSize, blockIncrReference, bundleId, bundleOffset, /* !!! FIX */NULL));
                     }
                     // Else apply compress/encrypt filters to the entire file
                     else

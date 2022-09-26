@@ -96,6 +96,7 @@ typedef enum
 {
     manifestFilePackFlagReference,
     manifestFilePackFlagBundle,
+    manifestFilePackFlagBlockIncr,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
     manifestFilePackFlagChecksumPageErrorList,
@@ -138,6 +139,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     if (file->bundleId != 0)
         flag |= 1 << manifestFilePackFlagBundle;
+
+    if (file->blockIncrMapSize != 0)
+        flag |= 1 << manifestFilePackFlagBlockIncr;
 
     if (file->mode != manifest->fileModeDefault)
         flag |= 1 << manifestFilePackFlagMode;
@@ -196,6 +200,10 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
         cvtUInt64ToVarInt128(file->bundleId, buffer, &bufferPos, sizeof(buffer));
         cvtUInt64ToVarInt128(file->bundleOffset, buffer, &bufferPos, sizeof(buffer));
     }
+
+    // Block incremental
+    if (flag & (1 << manifestFilePackFlagBlockIncr))
+        cvtUInt64ToVarInt128(file->blockIncrMapSize, buffer, &bufferPos, sizeof(buffer));
 
     // Allocate memory for the file pack
     const size_t nameSize = strSize(file->name) + 1;
@@ -297,6 +305,10 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
         result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
         result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
     }
+
+    // Block incremental
+    if (flag & (1 << manifestFilePackFlagBlockIncr))
+        result.blockIncrMapSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
 
     // Checksum page error
     result.checksumPageError = flag & (1 << manifestFilePackFlagChecksumPageError) ? true : false;
@@ -1102,7 +1114,8 @@ manifestBuildInfo(
 Manifest *
 manifestNewBuild(
     const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const bool online,
-    const bool checksumPage, const bool bundle, const StringList *const excludeList, const Pack *const tablespaceList)
+    const bool checksumPage, const bool bundle, const bool blockIncr, const StringList *const excludeList,
+    const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -1111,6 +1124,7 @@ manifestNewBuild(
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(BOOL, bundle);
+        FUNCTION_LOG_PARAM(BOOL, blockIncr);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(PACK, tablespaceList);
     FUNCTION_LOG_END();
@@ -1132,6 +1146,7 @@ manifestNewBuild(
         this->pub.data.backupOptionOnline = online;
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
         this->pub.data.bundle = bundle;
+        this->pub.data.blockIncr = blockIncr;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1495,7 +1510,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                         this, file.name, file.size, filePrior.sizeRepo, filePrior.checksumSha1,
                         VARSTR(filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel),
                         filePrior.checksumPage, filePrior.checksumPageError, filePrior.checksumPageErrorList,
-                        filePrior.bundleId, filePrior.bundleOffset);
+                        filePrior.bundleId, filePrior.bundleOffset, filePrior.blockIncrMapSize);
                 }
             }
         }
@@ -1630,6 +1645,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_ANNOTATION                                     "annotation"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
+#define MANIFEST_KEY_BACKUP_BLOCK_INCR                              "backup-block-incr"
 #define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
 #define MANIFEST_KEY_BACKUP_LABEL                                   "backup-label"
 #define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
@@ -1640,6 +1656,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_START                         "backup-timestamp-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
 #define MANIFEST_KEY_BACKUP_TYPE                                    "backup-type"
+#define MANIFEST_KEY_BLOCK_INCR_MAP_SIZE                            STRID5("bims", 0x9b5220)
 #define MANIFEST_KEY_BUNDLE_ID                                      STRID5("bni", 0x25c20)
 #define MANIFEST_KEY_BUNDLE_OFFSET                                  STRID5("bno", 0x3dc20)
 #define MANIFEST_KEY_CHECKSUM                                       STRID5("checksum", 0x6d66b195030)
@@ -1770,6 +1787,10 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
+
+        // Block incremental info
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP_SIZE))
+            file.blockIncrMapSize = jsonReadUInt64(json);
 
         // Bundle info
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_ID))
@@ -2026,6 +2047,8 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
                 manifest->pub.data.archiveStart = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_ARCHIVE_STOP))
                 manifest->pub.data.archiveStop = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_BLOCK_INCR))
+                manifest->pub.data.blockIncr = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
                 manifest->pub.data.bundle = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
@@ -2258,6 +2281,13 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                 jsonFromVar(VARSTR(manifest->pub.data.archiveStop)));
         }
 
+        if (manifest->pub.data.blockIncr)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BLOCK_INCR,
+                jsonFromVar(VARBOOL(manifest->pub.data.blockIncr)));
+        }
+
         if (manifest->pub.data.bundle)
         {
             infoSaveValue(
@@ -2475,6 +2505,10 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             {
                 const ManifestFile file = manifestFile(manifest, fileIdx);
                 JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+
+                // Block incremental info
+                if (file.blockIncrMapSize != 0)
+                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP_SIZE), file.blockIncrMapSize);
 
                 // Bundle info
                 if (file.bundleId != 0)
@@ -2776,7 +2810,7 @@ void
 manifestFileUpdate(
     Manifest *const this, const String *const name, const uint64_t size, const uint64_t sizeRepo, const char *const checksumSha1,
     const Variant *const reference, const bool checksumPage, const bool checksumPageError,
-    const String *const checksumPageErrorList, const uint64_t bundleId, const uint64_t bundleOffset)
+    const String *const checksumPageErrorList, const uint64_t bundleId, const uint64_t bundleOffset, uint64_t blockIncrMapSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -2790,6 +2824,7 @@ manifestFileUpdate(
         FUNCTION_TEST_PARAM(STRING, checksumPageErrorList);
         FUNCTION_TEST_PARAM(UINT64, bundleId);
         FUNCTION_TEST_PARAM(UINT64, bundleOffset);
+        FUNCTION_TEST_PARAM(UINT64, blockIncrMapSize);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -2829,6 +2864,9 @@ manifestFileUpdate(
     // Update bundle info
     file.bundleId = bundleId;
     file.bundleOffset = bundleOffset;
+
+    // Update block incremental info
+    file.blockIncrMapSize = blockIncrMapSize;
 
     manifestFilePackUpdate(this, filePack, &file);
 

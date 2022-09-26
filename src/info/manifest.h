@@ -54,6 +54,7 @@ typedef struct ManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
+    bool blockIncr;                                                 // Does the backup perform block incremental?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -109,6 +110,7 @@ typedef struct ManifestFile
     const String *reference;                                        // Reference to a prior backup
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
+    uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
@@ -161,7 +163,7 @@ Constructors
 // Build a new manifest for a PostgreSQL data directory
 Manifest *manifestNewBuild(
     const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
-    const StringList *excludeList, const Pack *tablespaceList);
+    bool blockIncr, const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);
@@ -335,7 +337,8 @@ manifestFileTotal(const Manifest *const this)
 // Update a file with new data
 void manifestFileUpdate(
     Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const String *checksumPageErrorList, uint64_t bundleId, uint64_t bundleOffset);
+    bool checksumPage, bool checksumPageError, const String *checksumPageErrorList, uint64_t bundleId, uint64_t bundleOffset,
+    uint64_t blockIncrMapSize);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters

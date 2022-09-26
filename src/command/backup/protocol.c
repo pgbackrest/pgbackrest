@@ -29,8 +29,10 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
     {
         // Backup options that apply to all files
         const String *const repoFile = pckReadStrP(param);
+        uint64_t bundleId = pckReadU64P(param);
         const bool blockIncr = pckReadBoolP(param);
-        const size_t blockIncrSize = (size_t)pckReadU64P(param);
+        const size_t blockIncrSize = blockIncr ? (size_t)pckReadU64P(param) : 0;
+        const unsigned int blockIncrReference = blockIncr ? (unsigned int)pckReadU64P(param) : 0;
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
         const bool delta = pckReadBoolP(param);
@@ -56,8 +58,8 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Backup file
         const List *const result = backupFile(
-            repoFile, blockIncr, blockIncrSize, repoFileCompressType, repoFileCompressLevel, delta, cipherType, cipherPass,
-            fileList);
+            repoFile, bundleId, blockIncr, blockIncrSize, blockIncrReference, repoFileCompressType, repoFileCompressLevel, delta,
+            cipherType, cipherPass, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();

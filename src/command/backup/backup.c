@@ -596,7 +596,8 @@ backupResumeClean(
                             {
                                 manifestFileUpdate(
                                     manifest, manifestName, file.size, fileResume.sizeRepo, fileResume.checksumSha1, NULL,
-                                    fileResume.checksumPage, fileResume.checksumPageError, fileResume.checksumPageErrorList, 0, 0);
+                                    fileResume.checksumPage, fileResume.checksumPageError, fileResume.checksumPageErrorList, 0, 0,
+                                    /*!!! */0);
                             }
                         }
                     }
@@ -1315,7 +1316,7 @@ backupJobResult(
                     manifestFileUpdate(
                         manifest, file.name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file.checksumPage,
                         checksumPageError, checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL,
-                        bundleId, bundleOffset);
+                        bundleId, bundleOffset, 0 /* !!! */);
                 }
             }
 
@@ -1547,7 +1548,8 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
                 LOG_DETAIL_FMT(
                     "store zero-length file %s", strZ(storagePathP(backupData->storagePrimary, manifestPathPg(file.name))));
                 manifestFileUpdate(
-                    manifest, file.name, 0, 0, strZ(HASH_TYPE_SHA1_ZERO_STR), VARSTR(NULL), file.checksumPage, false, NULL, 0, 0);
+                    manifest, file.name, 0, 0, strZ(HASH_TYPE_SHA1_ZERO_STR), VARSTR(NULL), file.checksumPage, false, NULL, 0, 0,
+                    0);
 
                 continue;
             }
@@ -1708,8 +1710,15 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                     }
 
                     pckWriteStrP(param, repoFile);
+                    pckWriteU64P(param, jobData->bundleId);
                     pckWriteBoolP(param, jobData->blockIncr);
-                    pckWriteU64P(param, jobData->blockIncrSize);
+
+                    if (jobData->blockIncr)
+                    {
+                        pckWriteU64P(param, jobData->blockIncrSize);
+                        pckWriteU64P(param, strLstSize(manifestReferenceList(jobData->manifest)) - 1);
+                    }
+
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
                     pckWriteBoolP(param, jobData->delta);
@@ -2251,8 +2260,8 @@ cmdBackup(void)
         // Build the manifest
         Manifest *manifest = manifestNewBuild(
             backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, cfgOptionBool(cfgOptOnline),
-            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
-            backupStartResult.tablespaceList);
+            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock),
+            strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
         manifestBuildValidate(
