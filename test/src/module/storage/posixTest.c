@@ -900,7 +900,8 @@ testRun(void)
         TEST_RESULT_VOID(storagePathRemoveP(storageTest, backupLabel), "remove backup path");
         TEST_ERROR(
             storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = invalidLinkType), AssertError,
-            "assertion 'param.linkType == storageHardLink' failed");
+            "assertion '(param.linkType == storageSymLink && storageFeature(this, storageFeatureSymLink)) ||"
+            " (param.linkType == storageHardLink && storageFeature(this, storageFeatureHardLink))' failed");
     }
 
     // *****************************************************************************************************************************

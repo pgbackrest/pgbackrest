@@ -729,6 +729,10 @@ void storageLinkCreate(const Storage *this, const String *target, const String *
     ASSERT(this->write);
     ASSERT(target != NULL);
     ASSERT(linkPath != NULL);
+    ASSERT(this->pub.interface.linkCreate != NULL);
+    ASSERT(
+        (param.linkType == storageSymLink && storageFeature(this, storageFeatureSymLink)) ||
+        (param.linkType == storageHardLink && storageFeature(this, storageFeatureHardLink)));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
