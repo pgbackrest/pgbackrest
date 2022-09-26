@@ -540,7 +540,6 @@ storagePosixLinkCreate(
         FUNCTION_LOG_PARAM(STRING, target);
         FUNCTION_LOG_PARAM(STRING, linkPath);
         FUNCTION_LOG_PARAM(ENUM, param.linkType);
-        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -566,6 +565,7 @@ storagePosixLinkCreate(
 
     FUNCTION_LOG_RETURN_VOID();
 }
+
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfacePosix =
 {

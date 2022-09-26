@@ -257,7 +257,7 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Create a hard or symbolic link
-typedef struct StorageInterfaceLinkCreateParam2
+typedef struct StorageInterfaceLinkCreateParam
 {
     VAR_PARAM_HEADER;
 

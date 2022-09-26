@@ -20,6 +20,7 @@ void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
 void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
 void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
 void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
+void storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
@@ -33,6 +34,7 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_STORAGE_REMOVE                             STRID5("s-r", 0x4b730)
 #define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        STRID5("s-pr", 0x943730)
 #define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          STRID5("s-ps", 0x9c3730)
+#define PROTOCOL_COMMAND_STORAGE_LINK_CREATE                        STRID5("s-lc", 0x1b3730)
 
 #define PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST                                                                                \
     {.command = PROTOCOL_COMMAND_STORAGE_FEATURE, .handler = storageRemoteFeatureProtocol},                                        \
@@ -43,6 +45,7 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_CREATE, .handler = storageRemotePathCreateProtocol},                                 \
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_REMOVE, .handler = storageRemotePathRemoveProtocol},                                 \
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_SYNC, .handler = storageRemotePathSyncProtocol},                                     \
-    {.command = PROTOCOL_COMMAND_STORAGE_REMOVE, .handler = storageRemoteRemoveProtocol},
+    {.command = PROTOCOL_COMMAND_STORAGE_REMOVE, .handler = storageRemoteRemoveProtocol},                                          \
+    {.command = PROTOCOL_COMMAND_STORAGE_LINK_CREATE, .handler = storageRemoteLinkCreateProtocol},
 
 #endif

@@ -589,3 +589,31 @@ storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server)
 
     FUNCTION_LOG_RETURN_VOID();
 }
+
+/**********************************************************************************************************************************/
+void
+storageRemoteLinkCreateProtocol(PackRead *const param, ProtocolServer *const server)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(server != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *target = pckReadStrP(param);
+        const String *linkPath = pckReadStrP(param);
+
+        LinkType linkType = pckReadBoolP(param);
+
+        storageInterfaceLinkCreateP(storageRemoteProtocolLocal.driver, target, linkPath, .linkType = linkType);
+        protocolServerDataEndPut(server);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}

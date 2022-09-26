@@ -489,6 +489,7 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("repo128"));
 
         const String *file = STRDEF("file.txt");
+        const String *linkPath = strNewFmt("%s/linkfile.txt", strZ(storagePathP(storageRepoWrite, NULL)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote remove path");
@@ -496,10 +497,16 @@ testRun(void)
         // Write the file to the repo via the remote so owner is pgbackrest
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite, file), BUFSTRDEF("TEST")), "new file");
 
+        // Write the link to the repo via the remote
+        TEST_RESULT_VOID(storageLinkCreateP(storageRepoWrite, file, linkPath), "create link");
+
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo128/%s", strZ(file))), true, "file exists");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, linkPath), true, "link exists");
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, file), "remote remove file");
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, linkPath), "remote remove link");
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo128/%s", strZ(file))), false, "file removed");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo128/%s", strZ(linkPath))), false, "link removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing file");

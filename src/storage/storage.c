@@ -89,6 +89,10 @@ storageNew(
         AssertError, !storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath),
         "path feature required");
 
+    CHECK(
+        AssertError, (!storageFeature(this, storageFeatureSymLink) &&  !storageFeature(this, storageFeatureHardLink)) ||
+        interface.linkCreate != NULL, "linkCreate required");
+
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
