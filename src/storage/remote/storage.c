@@ -426,7 +426,7 @@ storageRemoteLinkCreate(THIS_VOID, const String *const target, const String *con
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, target);
         FUNCTION_LOG_PARAM(STRING, linkPath);
-        FUNCTION_LOG_PARAM(BOOL, param.linkType);
+        FUNCTION_LOG_PARAM(ENUM, param.linkType);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -440,7 +440,7 @@ storageRemoteLinkCreate(THIS_VOID, const String *const target, const String *con
 
         pckWriteStrP(commandParam, target);
         pckWriteStrP(commandParam, linkPath);
-        pckWriteBoolP(commandParam, param.linkType);
+        pckWriteU32P(commandParam, param.linkType);
 
         protocolClientExecute(this->client, command, false);
     }

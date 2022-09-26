@@ -605,10 +605,10 @@ storageRemoteLinkCreateProtocol(PackRead *const param, ProtocolServer *const ser
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *target = pckReadStrP(param);
-        const String *linkPath = pckReadStrP(param);
+        const String *const target = pckReadStrP(param);
+        const String *const linkPath = pckReadStrP(param);
 
-        LinkType linkType = pckReadBoolP(param);
+        LinkType linkType = pckReadU32P(param);
 
         storageInterfaceLinkCreateP(storageRemoteProtocolLocal.driver, target, linkPath, .linkType = linkType);
         protocolServerDataEndPut(server);
