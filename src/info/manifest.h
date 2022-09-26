@@ -179,6 +179,7 @@ typedef struct ManifestPub
     List *linkList;                                                 // List of links
     List *pathList;                                                 // List of paths
     List *targetList;                                               // List of targets
+    StringList *referenceList;                                      // List of file references
 } ManifestPub;
 
 // Get/set the cipher subpassphrase
@@ -199,6 +200,13 @@ FN_INLINE_ALWAYS const ManifestData *
 manifestData(const Manifest *const this)
 {
     return &(THIS_PUB(Manifest)->data);
+}
+
+// Get reference list
+FN_INLINE_ALWAYS const StringList *
+manifestReferenceList(const Manifest *const this)
+{
+    return THIS_PUB(Manifest)->referenceList;
 }
 
 // Set backup label

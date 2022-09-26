@@ -34,7 +34,6 @@ struct Manifest
 {
     ManifestPub pub;                                                // Publicly accessible variables
     StringList *ownerList;                                          // List of users/groups
-    StringList *referenceList;                                      // List of file references
 
     const String *fileUserDefault;                                  // Default file user name
     const String *fileGroupDefault;                                 // Default file group name
@@ -172,7 +171,10 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Reference
     if (file->reference != NULL)
-        cvtUInt64ToVarInt128((uintptr_t)file->reference, buffer, &bufferPos, sizeof(buffer));
+    {
+        cvtUInt64ToVarInt128(
+            strLstFindIdxP(manifest->pub.referenceList, file->reference, .required = true), buffer, &bufferPos, sizeof(buffer));
+    }
 
     // Mode
     if (flag & (1 << manifestFilePackFlagMode))
@@ -264,7 +266,10 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // Reference
     if (flag & (1 << manifestFilePackFlagReference))
-        result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    {
+        result.reference = strLstGet(
+            manifest->pub.referenceList, (unsigned int)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos));
+    }
 
     // Mode
     if (flag & (1 << manifestFilePackFlagMode))
@@ -315,9 +320,6 @@ manifestFileAdd(Manifest *const this, ManifestFile *const file)
 
     file->user = manifestOwnerCache(this, file->user);
     file->group = manifestOwnerCache(this, file->group);
-
-    if (file->reference != NULL)
-        file->reference = strLstAddIfMissing(this->referenceList, file->reference);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
@@ -465,9 +467,9 @@ manifestNewInternal(void)
             .linkList = lstNewP(sizeof(ManifestLink), .comparator = lstComparatorStr),
             .pathList = lstNewP(sizeof(ManifestPath), .comparator = lstComparatorStr),
             .targetList = lstNewP(sizeof(ManifestTarget), .comparator = lstComparatorStr),
+            .referenceList = strLstNew(),
         },
         .ownerList = strLstNew(),
-        .referenceList = strLstNew(),
     };
 
     FUNCTION_TEST_RETURN(MANIFEST, this);
@@ -1402,6 +1404,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         // Set prior backup label
         this->pub.data.backupLabelPrior = strDup(manifestPrior->pub.data.backupLabel);
 
+        // Copy reference list
+        this->pub.referenceList = strLstDup(manifestPrior->pub.referenceList);
+
         // Set diff/incr backup type
         this->pub.data.backupType = type;
     }
@@ -1630,6 +1635,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
 #define MANIFEST_KEY_BACKUP_LSN_STOP                                "backup-lsn-stop"
 #define MANIFEST_KEY_BACKUP_PRIOR                                   "backup-prior"
+#define MANIFEST_KEY_BACKUP_REFERENCE                               "backup-reference"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START                    "backup-timestamp-copy-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_START                         "backup-timestamp-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
@@ -1685,6 +1691,7 @@ typedef struct ManifestLoadData
 {
     MemContext *memContext;                                         // Mem context for data needed only during load
     Manifest *manifest;                                             // Manifest info
+    bool referenceListFound;                                        // Was a reference list found?
 
     List *linkFoundList;                                            // Values found in links
     const Variant *linkGroupDefault;                                // Link default group
@@ -1802,7 +1809,12 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         // Reference
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
+        {
             file.reference = jsonReadStr(json);
+
+            if (!loadData->referenceListFound)
+                file.reference = strLstAddIfMissing(manifest->pub.referenceList, file.reference);
+        }
 
         // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
         // the repo-size is only stored in the manifest file if it is different than size.
@@ -2024,6 +2036,11 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
                 manifest->pub.data.lsnStop = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_PRIOR))
                 manifest->pub.data.backupLabelPrior = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_REFERENCE))
+            {
+                manifest->pub.referenceList = strLstNewSplitZ(varStr(jsonToVar(value)), ",");
+                loadData->referenceListFound = true;
+            }
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START))
                 manifest->pub.data.backupTimestampCopyStart = (time_t)varUInt64(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START))
@@ -2270,6 +2287,9 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                 jsonFromVar(VARSTR(manifest->pub.data.backupLabelPrior)));
         }
 
+        infoSaveValue(
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_REFERENCE,
+            jsonFromVar(VARSTR(strLstJoin(manifest->pub.referenceList, ","))));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START,
             jsonFromVar(VARINT64(manifest->pub.data.backupTimestampCopyStart)));
@@ -2787,7 +2807,7 @@ manifestFileUpdate(
         if (varStr(reference) == NULL)
             file.reference = NULL;
         else
-            file.reference = strLstAddIfMissing(this->referenceList, varStr(reference));
+            file.reference = varStr(reference);
     }
 
     // Update checksum if set
@@ -3052,6 +3072,7 @@ manifestBackupLabelSet(Manifest *this, const String *backupLabel)
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         this->pub.data.backupLabel = strDup(backupLabel);
+        strLstAdd(this->pub.referenceList, backupLabel);
     }
     MEM_CONTEXT_END();
 
