@@ -82,7 +82,13 @@ testBackupValidateList(
                 {
                     const String *manifestName = info.name;
 
-                    if (manifestData->backupOptionCompressType != compressTypeNone)
+                    // Remove block incremental extension
+                    if (manifestData->blockIncr)
+                    {
+                        manifestName = strSubN(info.name, 0, strSize(info.name) - (sizeof(BACKUP_BLOCK_INCR_EXT) - 1));
+                    }
+                    // Else remove compression extension
+                    else if (manifestData->backupOptionCompressType != compressTypeNone)
                     {
                         manifestName = strSubN(
                             info.name, 0, strSize(info.name) - strSize(compressExtStr(manifestData->backupOptionCompressType)));
@@ -107,10 +113,55 @@ testBackupValidateList(
                     // Calculate checksum/size and decompress if needed
                     // -------------------------------------------------------------------------------------------------------------
                     uint64_t size = 0;
+                    const String *checksum = NULL;
 
                     if (file.blockIncrMapSize != 0)
                     {
-                        size = file.size;
+                        StorageRead *read = storageNewReadP(
+                            storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)),
+                            .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
+                            .limit = VARUINT64(file.blockIncrMapSize));
+                        ioReadOpen(storageReadIo(read));
+                        const BlockMap *const blockMap = blockMapNewRead(storageReadIo(read));
+                        IoFilter *const checksumFilter = cryptoHashNew(hashTypeSha1);
+
+                        for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
+                        {
+                            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
+                            const String *const blockName = strNewFmt(
+                                "%s/%s/%s", strZ(strPath(path)),
+                                strZ(strLstGet(manifestReferenceList(manifest), blockMapItem->reference)),
+                                blockMapItem->bundleId == 0 ? zNewFmt("bundle/%" PRIu64, blockMapItem->bundleId) : strZ(info.name));
+                            const Buffer *const block = storageGetP(
+                                storageNewReadP(storage, blockName, .offset = blockMapItem->offset,
+                                .limit = VARUINT64(blockMapItem->size)));
+
+                            // Check block size
+                            if (bufUsed(block) != blockMapItem->size)
+                            {
+                                THROW_FMT(
+                                    AssertError, "'%s' block %u size (%" PRIu64 ") does not match block incr map (%" PRIu64 ")",
+                                    strZ(file.name), blockMapIdx, bufUsed(block), blockMapItem->size);
+                            }
+
+                            // Check block checksum
+                            const String *const blockChecksum = bufHex(cryptoHashOne(hashTypeSha1, block));
+                            const String *const mapChecksum = bufHex(BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE));
+
+                            if (!strEq(blockChecksum, mapChecksum))
+                            {
+                                THROW_FMT(
+                                    AssertError, "'%s' block %u checksum (%s) does not match block incr map (%s)",
+                                    strZ(file.name), blockMapIdx, strZ(blockChecksum), strZ(mapChecksum));
+                            }
+
+
+                            // Update size and checksum
+                            size += bufUsed(block);
+                            ioFilterProcessIn(checksumFilter, block);
+                        }
+
+                        checksum = pckReadStrP(pckReadNew(ioFilterResult(checksumFilter)));
                     }
                     else
                     {
@@ -127,12 +178,12 @@ testBackupValidateList(
                         ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
 
                         size = bufUsed(storageGetP(read));
-                        const String *checksum = pckReadStrP(
+                        checksum = pckReadStrP(
                             ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
-
-                        if (!strEqZ(checksum, file.checksumSha1))
-                            THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
                     }
+
+                    if (!strEqZ(checksum, file.checksumSha1))
+                        THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
 
                     strCatFmt(result, ", s=%" PRIu64, size);
 
@@ -3621,14 +3672,14 @@ testRun(void)
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191103-165320F}\n"
                 "pg_data {path}\n"
-                "pg_data/PG_VERSION {file, s=2}\n"
-                "pg_data/backup_label {file, s=17}\n"
+                "pg_data/PG_VERSION.pgbi {file, s=2}\n"
+                "pg_data/backup_label.pgbi {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2 {file, s=24576}\n"
+                "pg_data/base/1/2.pgbi {file, s=24576}\n"
                 "pg_data/global {path}\n"
-                "pg_data/global/pg_control {file, s=8192}\n"
-                "pg_data/tablespace_map {file, s=19}\n"
+                "pg_data/global/pg_control.pgbi {file, s=8192}\n"
+                "pg_data/tablespace_map.pgbi {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"

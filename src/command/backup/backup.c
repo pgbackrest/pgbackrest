@@ -935,7 +935,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 storageRepoWrite(),
                 strNewFmt(
                     STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                    strZ(compressExtStr(compressType))),
+                    manifestData(manifest)->blockIncr ? BACKUP_BLOCK_INCR_EXT : strZ(compressExtStr(compressType))),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -1705,7 +1705,9 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                     {
                         CHECK(AssertError, fileTotal == 0, "cannot bundle file");
 
-                        strCatFmt(repoFile, "%s%s", strZ(file.name), strZ(compressExtStr(jobData->compressType)));
+                        strCatFmt(
+                            repoFile, "%s%s", strZ(file.name),
+                            jobData->blockIncr ? BACKUP_BLOCK_INCR_EXT : strZ(compressExtStr(jobData->compressType)));
                         fileName = file.name;
                         bundle = false;
                     }

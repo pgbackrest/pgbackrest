@@ -14,6 +14,7 @@ Common Functions and Definitions for Backup and Expire Commands
 Backup constants
 ***********************************************************************************************************************************/
 #define BACKUP_PATH_HISTORY                                         "backup.history"
+#define BACKUP_BLOCK_INCR_EXT                                       ".pgbi"
 
 /***********************************************************************************************************************************
 Functions
