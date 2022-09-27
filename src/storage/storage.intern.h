@@ -99,6 +99,23 @@ typedef StorageInfo StorageInterfaceInfo(
     STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, level, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
+// Create a hard or symbolic link
+typedef struct StorageInterfaceLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    LinkType linkType;
+} StorageInterfaceLinkCreateParam;
+
+typedef void StorageInterfaceLinkCreate(
+    void *thisVoid, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam param);
+
+#define storageInterfaceLinkCreateP(thisVoid, target, linkPath, ...)                                                               \
+    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate(thisVoid, target, linkPath,                                                      \
+        (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+// ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file read object.  The file should not be opened immediately -- open() will be called on the IoRead interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewReadParam
@@ -255,23 +272,6 @@ typedef void StorageInterfacePathSync(void *thisVoid, const String *path, Storag
 #define storageInterfacePathSyncP(thisVoid, path, ...)                                                                             \
     STORAGE_COMMON_INTERFACE(thisVoid).pathSync(thisVoid, path, (StorageInterfacePathSyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-// ---------------------------------------------------------------------------------------------------------------------------------
-// Create a hard or symbolic link
-typedef struct StorageInterfaceLinkCreateParam
-{
-    VAR_PARAM_HEADER;
-
-    // Flag to create hard or symbolic link
-    LinkType linkType;
-} StorageInterfaceLinkCreateParam;
-
-typedef void StorageInterfaceLinkCreate(
-    void *thisVoid, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam param);
-
-#define storageInterfaceLinkCreateP(thisVoid, target, linkPath, ...)                                                               \
-    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate(thisVoid, target, linkPath,                                                      \
-        (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
-
 /***********************************************************************************************************************************
 Storage type and helper function struct
 
@@ -304,10 +304,10 @@ typedef struct StorageInterface
     StorageInterfaceRemove *remove;
 
     // Optional functions
+    StorageInterfaceLinkCreate *linkCreate;
     StorageInterfaceMove *move;
     StorageInterfacePathCreate *pathCreate;
     StorageInterfacePathSync *pathSync;
-    StorageInterfaceLinkCreate *linkCreate;
 } StorageInterface;
 
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \

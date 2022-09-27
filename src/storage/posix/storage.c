@@ -113,6 +113,44 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 }
 
 /**********************************************************************************************************************************/
+void
+storagePosixLinkCreate(
+    THIS_VOID, const String *const target, const String *const linkPath, const StorageInterfaceLinkCreateParam param)
+{
+    THIS(StoragePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, param.linkType);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+
+    if (param.linkType == storageSymLink)
+    {
+        // Create the symlink
+        THROW_ON_SYS_ERROR_FMT(
+            symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
+            strZ(target));
+    }
+    else
+    {
+        ASSERT(param.linkType == storageHardLink);
+
+        // Create the hard link
+        THROW_ON_SYS_ERROR_FMT(
+            link(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create hardlink '%s' to '%s'", strZ(linkPath),
+            strZ(target));
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 // Helper function to get info for a file if it exists. This logic can't live directly in storagePosixList() because there is a race
 // condition where a file might exist while listing the directory but it is gone before stat() can be called. In order to get
 // complete test coverage this function must be split out.
@@ -529,49 +567,12 @@ storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam pa
 }
 
 /**********************************************************************************************************************************/
-void
-storagePosixLinkCreate(
-    THIS_VOID, const String *const target, const String *const linkPath, StorageInterfaceLinkCreateParam param)
-{
-    THIS(StoragePosix);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
-        FUNCTION_LOG_PARAM(STRING, target);
-        FUNCTION_LOG_PARAM(STRING, linkPath);
-        FUNCTION_LOG_PARAM(ENUM, param.linkType);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(target != NULL);
-    ASSERT(linkPath != NULL);
-
-    if (param.linkType == storageSymLink)
-    {
-        // Create the symlink
-        THROW_ON_SYS_ERROR_FMT(
-            symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
-            strZ(target));
-    }
-    else
-    {
-        ASSERT(param.linkType == storageHardLink);
-
-        // Create the hard link
-        THROW_ON_SYS_ERROR_FMT(
-            link(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create hardlink '%s' to '%s'", strZ(linkPath),
-            strZ(target));
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 static const StorageInterface storageInterfacePosix =
 {
     .feature = 1 << storageFeaturePath,
 
     .info = storagePosixInfo,
+    .linkCreate = storagePosixLinkCreate,
     .list = storagePosixList,
     .move = storagePosixMove,
     .newRead = storagePosixNewRead,
@@ -580,7 +581,6 @@ static const StorageInterface storageInterfacePosix =
     .pathRemove = storagePosixPathRemove,
     .pathSync = storagePosixPathSync,
     .remove = storagePosixRemove,
-    .linkCreate = storagePosixLinkCreate,
 };
 
 Storage *
