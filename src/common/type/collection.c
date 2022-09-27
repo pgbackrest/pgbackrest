@@ -14,35 +14,36 @@ they have one property in common:
     newItr(collection) creates an iterator object for scanning through that particular collection.
 
 = Iterator Properties
-Once created, an iterator provides two methods:
+Once created, an iterator provides a single method:
     next(iterator) returns a pointer to the next item to be scanned, returning NULL if no more.
-    destruct(iterator) clean up and release any resources (eg.dynamkc memory) ownded by the iterator.
 
 Compared to similar traits in Rust, a collection implements the "Iterable" interface and and iterator implements the
 "Iterator" trait. The method names are slightly different, but the functionality is essentially the same.
 
 = Naming conventions for specific collections.  (eg "List")
-The method names just mentioned are "short" names. The full names of the methods consist of the
-short name prepended to the name of their data type. As an example, iterating through a List object.
-  - newListItr(listItr, list) initializes an iterator for scanning the list.
-  - nextListItr(listItr) points to the next item in the list, returning NULL if none.
-  - destructListItr(listItr) deconstructs the iterator
+By convention, Pgbackrest uses camelCase method names, where the "short" method name is appended to the full type name.
+For example, the "get" method on a List is called "listGet". (actually, it is "lstGet, but let's ignore that for now)
+The C preprocessor isn't able to generate camelCase names, so it requires a small "trick" when generating method names.
 
-Normally, pgbackrest appends the method name to the type name, so the next() method would be called listItrNext().
-By changing the order - placing the method first rather than last - the C preprocessor is able to generate long method
-names by concatenating the short method name with the type name. It is not able to generate long
-method names with the usual conventions.
+For each concrete "MyType" which is going to be abstracted, provide the following macro:
+    #define CAMEL_MyType myType
+
+Now the C preprocessor can generate full method names in camelCase.
+    METHOD(MyType,Get)   -->   myTypeGet
 
 = Goals
-The desired task is to create an interface for scanning through directories from different storage managers.
-However, this task is just one example of a more general issue - scanning through abstract sets of abjects.
-In this file, we address the more general issue.
+The immediate task is to create an interface for scanning through directories from different storage managers.
+However, this task is an example of two more general issues - 1) scanning through abstract sets of abjects,
+and even more generally 2) Implementing abstract interfaces automatically.
 
 The goals are as follows:
  - define a uniform set of methods for scanning through various types of collections.
- - maintain performance and memory comparable to scanning through the collections "by hand" (ie not using the interface)
+   These are "ItrNew()" to create an iterator, and "IterNext()" to advance to the next item.
  - create "syntactic sugar" to make it easy to use the new iterators.
+   This are the "FOREACH"/"ENDFOREACH" macros.
  - implement an abstract "Collection", wrapping an underlying collection, which iterates the underlying collection.
+   This is the NEWCOLLECTION() macro.
+ - maintain performance and memory comparable to scanning through the collections "by hand" (ie not using the interface)
 
 = Example: iterating through a List.
 Here are some examples of how to iterate through a List.
@@ -53,42 +54,21 @@ Here are some examples of how to iterate through a List.
        doSomething(*item)
    }
 
-== Using the newly defined interface.
-This is admittedly awkward, especially for scanning a List.
-   ItemType *item;
-   ListItr *itr = listItrNew(list);
-   while ( (item=listItrNext(itr) )
-   {
-       doSomething(*item);
-   }
-   listItrFree(itr);
-
-For the specific case of scanning a list, the following is both simple and efficient.
-(Modeled after a similar macro in Postgres)
-    Item *item;
-    foreach(item, list)
-        doSomething(*item)
-
 == Incorporating proposed "syntactic sugar".
-    FOREACH(ItemType, item, List, list)
+    ItemType *item;
+    FOREACH(item, List, list)
         doSomething(*item);
     ENDFOREACH
 
 == Performance and memory.
  - iterators are allocated dynamically, so there is some performance overhead
- - the FOREACH macro catches exceptions to free the iterator, so exception handling has additional overhead
  - iterators can be inlined, making the per-loop overhead very low.
-
- == For Lists only
-For the specific case of scanning a list, the following syntactic sugar is both simple and efficient.
-(Modeled after a similar macro in Postgres)
-    Item *item;
-    foreach(item, list)
-        doSomething(*item)
+ - memory allocated inside A FOREACH loop will be freed as the loop progresses.
+ - iterators can be configured with callbacks (eg close a file)
 
 = Abstract Collection
-An abstracr "Collection" is a polymorphic wrapper around anything which iterates through items. Like abstract collections
-in C++, a Collection (and its iterator) depend on a jump table pointing to the underlying methods.
+An abstract "Collection" is a polymorphic wrapper around anything which iterates through items. Like abstract collections
+in C++ or Rust, a Collection (and its iterator) depend on function pointers to the underlying methods.
 Adding a level of indirection has a performance penalty, but the penalty is comparable to any C++ program using abstract
 data types.
 
@@ -121,13 +101,19 @@ struct Collection
 };
 
 // An iterator though an abstract collection.
-//  This is a public object to facilitate inline iteration.
-struct CollectionItr
+typedef struct CollectionItr
 {
-    CollectionItrPub pub;
-};
+    void *subIterator;                                              // An iterator to the underlying collection.
+    void *(*next)(void *this);                                      // subIterator's "next" method
+} CollectionItrPub;
 
-
+/***********************************************************************************************************************************
+Create a new abstract Collection from a specific collection (such as List).
+ @param subCollection - the specific collection being presented as a Collection.
+ @param newItr - the collections function for creating an iterator.
+ @param next - the collection iterqtor method for selecting the next item.
+ @return - abstract Collection containing the original one.
+***********************************************************************************************************************************/
 Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*next)(void *))
 {
         FUNCTION_TEST_BEGIN();
@@ -180,10 +166,8 @@ collectionItrNew(Collection *collection)
 
         // Fill in the fields including the jump table pointers and the iterator to the subCollection.
         *this = (CollectionItr) {
-            .pub = {
-                .next = collection->next,
-                .subIterator = subIterator,
-            }
+            .next = collection->next,
+            .subIterator = subIterator,
         };
     }
     OBJ_NEW_END();
@@ -192,6 +176,16 @@ collectionItrNew(Collection *collection)
     objMove(subIterator, objMemContext(this));
 
     FUNCTION_TEST_RETURN(COLLECTION_ITR, this);
+}
+
+/***********************************************************************************************************************************
+Iterate to the next item in the Collection.
+  As a future optimization, consider inlining with the -flto compiler option.
+***********************************************************************************************************************************/
+void *
+collectionItrNext(CollectionItr *this)
+{
+    return this->next(this->subIterator);
 }
 
 // Display an abstract Collection. For now, just the address of the sub-collection.

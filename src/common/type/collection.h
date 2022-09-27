@@ -1,6 +1,6 @@
 /***********************************************************************************************************************************
 Define the interface for an abstract, iterable Collection and provide "syntactic sugar" for scanning across collections which
-implement the "newIter()" method. For information on how to create an "Iterable" collection, see the "Iterator.c" file.
+implement the "IterNew()" method. For information on how to create an "Iterable" collection, see the "Iterator.c" file.
 These interfaces are inspired by Rust's Collection and Iterable traits.
 
 Using "syntactic sugar" to scan a list,
@@ -33,18 +33,6 @@ of collection is inside.
 // A Polymorphic interface for Iterable collections.
 typedef struct Collection Collection;
 
-// Data structure for iterating through an abstract Collection.
-// To support inlining, the fields are public, otherwise this is an opaque object.
-typedef struct CollectionItr CollectionItr;
-typedef struct CollectionItrPub
-{
-    void *subIterator;                                               // An iterator to the underlying collection.
-    void *(*next)(void *this);                                       // subIterator's "next" method
-    void (*free)(void *this);                                        // subIterator's "free" method.
-} CollectionItrPub;
-
-#define CAMEL_Collection collection
-
 /***********************************************************************************************************************************
 Construct an abstract Collection from a concrete collection (eg. List)
 Use a macro front end so we can support polymorphic collections.
@@ -53,26 +41,40 @@ Note we depend on casting between compatible function pointers where return valu
 ***********************************************************************************************************************************/
 #define NEWCOLLECTION(SubType, subCollection)                                                                                      \
     collectionNew(                                                                                                                 \
-        subCollection,                                               /* The collection we are wrapping */                          \
-        (void *(*)(void*))METHOD(SubType, ItrNew),                   /* Get an iterator to the collection  */                      \
-        (void *(*)(void*))METHOD(SubType, ItrNext)                   /* Get next item using the iterator  */                       \
+        subCollection,                                              /* The collection we are wrapping */                           \
+        (void *(*)(void*))METHOD(SubType, ItrNew),                  /* Get an iterator to the collection  */                       \
+        (void *(*)(void*))METHOD(SubType, ItrNext)                  /* Get next item using the iterator  */                        \
     )
+
+// Helper to construct an abstract collection.
 Collection *collectionNew(void *subCollection, void *(*newItr)(void*), void *(*next)(void*));
 
-// Construct an iterator to scan through the abstract Collection.
+// Iterator to scan an abstract Collecton.
+typedef struct CollectionItr CollectionItr;
+#define CAMEL_Collection collection
 CollectionItr *collectionItrNew(Collection *collection);
+void *collectionItrNext(CollectionItr *this);
 
 /***********************************************************************************************************************************
-Point to the next item in the Collection, returning NULL if there are no more.
+Syntactic sugar to make iteration looks like C++ or Python.
+Note FOREACH and ENDFOREACH are block macros, so the overall pair must be terminated with a semicolon.
+The macro uses two nexted memory contexts. The outer context contains the iterator and is freed when the loop exits.
+The inner context periodically frees up memory allocated during loop execution to prevent runaway memory leaks.
 ***********************************************************************************************************************************/
-FN_INLINE_ALWAYS void *
-collectionItrNext(CollectionItr *this)
-{
-    // Invoke next() on the subiterator.
-    return THIS_PUB(CollectionItr)->next(THIS_PUB(CollectionItr)->subIterator);
-}
+#define FOREACH(item, CollectionType, collection)                                                                                  \
+    MEM_CONTEXT_TEMP_BEGIN()                                                                                                       \
+        CollectionType##Itr *FOREACH_itr = METHOD(CollectionType, ItrNew)(collection);                                             \
+        MEM_CONTEXT_TEMP_RESET_BEGIN()                                                                                             \
+            while ( (item = METHOD(CollectionType,ItrNext)(FOREACH_itr)) != NULL)                                                  \
+            {                                                                                                                      \
+                MEM_CONTEXT_TEMP_RESET(1000);
+#define ENDFOREACH                                                                                                                 \
+            }                                                                                                                      \
+        MEM_CONTEXT_TEMP_END();                                                                                                    \
+    MEM_CONTEXT_TEMP_END()
 
 // Syntactic sugar to get the function name from the object type and the short method name.
+// Used to generate method names for abstract interfaces.
 //    eg.   METHOD(List, Get) -->  listGet
 // Note it takes an (obscure) second level of indirection and a "CAMEL_Type" macro to make this work.
 #define METHOD(type, method)  JOIN(CAMEL(type), method)
@@ -85,27 +87,8 @@ collectionItrNext(CollectionItr *this)
 #define CAMEL(type) CAMEL_##type
 
 /***********************************************************************************************************************************
-Syntactic sugar to make iteration looks more like C++ or Python.
-Note foreach and endForeach are block macros, so the overall foreach/endForeach must be terminated with a semicolon.
-This version cleans up memory periodically during the loop.
-***********************************************************************************************************************************/
-#define FOREACH(item, CollectionType, collection)                                                                                  \
-    MEM_CONTEXT_TEMP_RESET_BEGIN();                                                                                                \
-        CollectionType##Itr *FOREACH_itr = METHOD(CollectionType, ItrNew)(collection);                                             \
-        while ( (item = METHOD(CollectionType,ItrNext)(FOREACH_itr)) != NULL)                                                      \
-        {                                                                                                                          \
-            MEM_CONTEXT_TEMP_RESET(1000);
-#define ENDFOREACH                                                                                                                 \
-        }                                                                                                                          \
-    MEM_CONTEXT_TEMP_END()
-
-
-
-
-/***********************************************************************************************************************************
 Macros for function logging.
 ***********************************************************************************************************************************/
-
 #define FUNCTION_LOG_COLLECTION_TYPE                                                                                               \
     Collection *
 #define FUNCTION_LOG_COLLECTION_FORMAT(value, buffer, bufferSize)                                                                  \
