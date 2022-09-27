@@ -452,6 +452,10 @@ Construct a new list iterator. Returns an object.
 ListItr *
 lstItrNew(List *list)
 {
+    FUNCTION_TEST_BEGIN();
+       FUNCTION_TEST_PARAM(LIST, list);
+    FUNCTION_TEST_END();
+
     ListItr *this = NULL;
     OBJ_NEW_BEGIN(ListItr)
         {
@@ -460,7 +464,7 @@ lstItrNew(List *list)
         }
     OBJ_NEW_END();
 
-    return this;
+    FUNCTION_TEST_RETURN(LIST_ITR, this);
 }
 
 
@@ -470,8 +474,19 @@ Point to the next item in the list, returning NULL if no more items.
 void *
 lstItrNext(ListItr *this)
 {
-    if (this->listIdx >= lstSize(this->list))
-        return NULL;
-    else
-        return lstGet(this->list, this->listIdx++);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST_ITR, this);
+    FUNCTION_TEST_END();
+
+    void *item = (this->listIdx >= lstSize(this->list))?
+        NULL:
+        lstGet(this->list, this->listIdx++);
+
+    FUNCTION_TEST_RETURN_P(VOID, item);
+}
+
+// Display a list iterator in the traceback logging,
+String *lstItrToLog(const ListItr *this)
+{
+    return this == NULL ? strDup(NULL_STR) : strNewFmt("ListItr{.listIdx=%d, .list=%p}", this->listIdx, this->list);
 }

@@ -2,29 +2,26 @@
 This file contains more detailed documentation on iterators. It is of interest when creating a new iterator, where
 the comments in the header file are geared to using existing iterators.
 
-This interface is inspired by the need to iterate through diverse types of storage directories. It addresses one
-part of that problem - a way of iterating through diverse types of collections in general. It takes two steps.
+This interface is inspired by the need to iterate through diverse types of storage directories.
+It consists of two pieces.
  1) It defines methods which can efficiently scan through specific collections.
  2) It defines an abstract Collection which can scan through an underlying collection without knowing the details
-    of the collection.
+    of the underlying collection.
 
 = Collection Properties
 Collections are iterable sets of items. While collections vary widely in their implementation, as far as wa are concerened,
-they have one property in common:
+they have two property in common:
     newItr(collection) creates an iterator object for scanning through that particular collection.
-
-= Iterator Properties
-Once created, an iterator provides a single method:
-    next(iterator) returns a pointer to the next item to be scanned, returning NULL if no more.
+    ItrNext(iterator)  finds the next item in the collection, returning NULL if no more.
 
 Compared to similar traits in Rust, a collection implements the "Iterable" interface and and iterator implements the
 "Iterator" trait. The method names are slightly different, but the functionality is essentially the same.
 
 = Naming conventions for specific collections.  (eg "List")
-By convention, Pgbackrest uses camelCase method names, where the "short" method name is appended to the full type name.
+By convention, Pgbackrest uses camelCase method names, where the type name is followed vy the "short" method name.
 For example, the "get" method on a List is called "listGet". (actually, it is "lstGet, but let's ignore that for now)
-The C preprocessor isn't able to generate camelCase names, so it requires a small "trick" when generating method names.
 
+The C preprocessor isn't able to generate camelCase names, so it requires a small "trick" when generating method names.
 For each concrete "MyType" which is going to be abstracted, provide the following macro:
     #define CAMEL_MyType myType
 
@@ -44,6 +41,9 @@ The goals are as follows:
  - implement an abstract "Collection", wrapping an underlying collection, which iterates the underlying collection.
    This is the NEWCOLLECTION() macro.
  - maintain performance and memory comparable to scanning through the collections "by hand" (ie not using the interface)
+   Partially met. The current implementation dynamically allocates iterators (which could be stack based),and they
+   create temporary memory contexts to prevent memory leaks. These steps can reduce efficency, but they avoid some
+   programming mistakes.
 
 = Example: iterating through a List.
 Here are some examples of how to iterate through a List.
@@ -54,17 +54,22 @@ Here are some examples of how to iterate through a List.
        doSomething(*item)
    }
 
-== Incorporating proposed "syntactic sugar".
+== A Lightweight iteration specific to lists.
+   ItemType *item;
+   foreach(item, list)
+       do_something(*item)
+
+== Using the more heavyweight interface, useful for all iterable collections and cleaning up after exceptions.
     ItemType *item;
     FOREACH(item, List, list)
         doSomething(*item);
     ENDFOREACH
 
 == Performance and memory.
- - iterators are allocated dynamically, so there is some performance overhead
- - iterators can be inlined, making the per-loop overhead very low.
- - memory allocated inside A FOREACH loop will be freed as the loop progresses.
- - iterators can be configured with callbacks (eg close a file)
+ - iterators are allocated dynamically, so there is some performance overhead.
+ - iterators can be inlined, making the per-loop overhead very low.  (consider optimizing with -flto)
+ - memory allocated inside A FOREACH loop will be freed as the loop progresses. (overhead creating temporary memory contexts)
+ - iterators can be configured with callbacks (eg close a file), so it is not necessary to explicitly catch exceptions.
 
 = Abstract Collection
 An abstract "Collection" is a polymorphic wrapper around anything which iterates through items. Like abstract collections
@@ -120,13 +125,12 @@ Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*
             FUNCTION_TEST_PARAM_P(VOID, subCollection);
             FUNCTION_TEST_PARAM(FUNCTIONP, newItr);
             FUNCTION_TEST_PARAM(FUNCTIONP, next);
-            FUNCTION_TEST_PARAM(FUNCTIONP, free);
         FUNCTION_TEST_END();
         ASSERT(subCollection != NULL);
         ASSERT(newItr != NULL);
         ASSERT(next != NULL);
 
-        Collection *this = NULL;
+        Collection *this;
         OBJ_NEW_BEGIN(Collection)
         {
             // Allocate memory for the Collection object.
@@ -155,25 +159,20 @@ collectionItrNew(Collection *collection)
         FUNCTION_TEST_PARAM(COLLECTION, collection);
     FUNCTION_TEST_END();
 
-    // Start by allocating an iterator to the sub-collection.
-    void *subIterator = collection->newItr(collection->subCollection);
-
-    CollectionItr *this = NULL;
-    OBJ_NEW_BEGIN(CollectionItr, .childQty=MEM_CONTEXT_QTY_MAX)
+    CollectionItr *this;
+    OBJ_NEW_BEGIN(CollectionItr, .childQty=1)
     {
         // Allocate memory for the Collection object.
         this = OBJ_NEW_ALLOC();
 
         // Fill in the fields including the jump table pointers and the iterator to the subCollection.
+        //  Note we allocate the subiterator inside our memory context, so it will be freed when the iterator is freed.
         *this = (CollectionItr) {
             .next = collection->next,
-            .subIterator = subIterator,
+            .subIterator = collection->newItr(collection->subCollection),
         };
     }
     OBJ_NEW_END();
-
-    // Be sure to free the subiterator whenever we free this iterator.
-    objMove(subIterator, objMemContext(this));
 
     FUNCTION_TEST_RETURN(COLLECTION_ITR, this);
 }
@@ -185,11 +184,23 @@ Iterate to the next item in the Collection.
 void *
 collectionItrNext(CollectionItr *this)
 {
-    return this->next(this->subIterator);
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(COLLECTION_ITR, this);
+    FUNCTION_TEST_END();
+
+    // Advance the sub iterator to get the next item.
+    void *item = this->next(this->subIterator);
+
+    FUNCTION_TEST_RETURN_P(VOID, item);
 }
 
 // Display an abstract Collection. For now, just the address of the sub-collection.
 String *collectionToLog(const Collection *this)
 {
-    return this == NULL ? strDup(NULL_STR) : strNewFmt("Collection{.subCollection=%p}", this->subCollection);  // TODO: save subContainer's logger.
+    return this == NULL ? strDup(NULL_STR) : strNewFmt("Collection{.subCollection=%p}", this->subCollection);
+}
+
+String *collectionItrToLog(const CollectionItr *this)
+{
+    return this == NULL ? strDup(NULL_STR) : strNewFmt("CollectionItr{.subIterator=%p}", this->subIterator);
 }

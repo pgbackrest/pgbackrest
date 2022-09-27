@@ -83,7 +83,7 @@ The inner context periodically frees up memory allocated during loop execution t
 
 // We can't really convert to camel case, but we can invoke the symbol CAMEL_<type name> to get it.
 // Each of the collection types must provide a CAMEL_* macro to provide the type name in camelCase.
-// In the case of iterators, we append Itr to the collection type, so we don't have to create CAMEL_TypeItr.
+// In the case of iterators, we append Itr to the collection type, so we don't have to create CAMEL_*Itr.
 #define CAMEL(type) CAMEL_##type
 
 /***********************************************************************************************************************************
@@ -97,5 +97,9 @@ String *collectionToLog(const Collection *this);
 
 #define FUNCTION_LOG_COLLECTION_ITR_TYPE                                                                                           \
     CollectionItr *
+#define FUNCTION_LOG_COLLECTION_ITR_FORMAT(value, buffer, bufferSize)                                                                  \
+   FUNCTION_LOG_STRING_OBJECT_FORMAT(value, collectionItrToLog, buffer, bufferSize)
+String *collectionItrToLog(const CollectionItr *this);
+
 
 #endif //COMMON_TYPE_COLLECTION_H

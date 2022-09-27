@@ -339,7 +339,7 @@ testRun(void)
 
 
 void
-mockListCallback(void *this)
+destructor(void *this)
 {
     eventCount++;
     (void)this;
@@ -354,7 +354,7 @@ MockListItr *mockListItrNew(List *list)
     OBJ_NEW_BEGIN(MockListItr, .callbackQty=1, .childQty=1)
     {
         this = (MockListItr*)lstItrNew(list);
-        memContextCallbackSet(memContextCurrent(), mockListCallback, this);
+        memContextCallbackSet(memContextCurrent(), destructor, this);
     }
     OBJ_NEW_END();
 
