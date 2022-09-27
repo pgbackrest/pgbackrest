@@ -55,10 +55,9 @@ Note we depend on casting between compatible function pointers where return valu
     collectionNew(                                                                                                                 \
         subCollection,                                               /* The collection we are wrapping */                          \
         (void *(*)(void*))METHOD(SubType, ItrNew),                   /* Get an iterator to the collection  */                      \
-        (void *(*)(void*))METHOD(SubType, ItrNext),                  /* Get next item using the iterator  */                       \
-        (void (*)(void *))METHOD(SubType, ItrFree)                   /* Free the iterator */                                       \
+        (void *(*)(void*))METHOD(SubType, ItrNext)                   /* Get next item using the iterator  */                       \
     )
-Collection *collectionNew(void *subCollection, void *(*newItr)(void*), void *(*next)(void*), void (*free)(void*));
+Collection *collectionNew(void *subCollection, void *(*newItr)(void*), void *(*next)(void*));
 
 // Construct an iterator to scan through the abstract Collection.
 CollectionItr *collectionItrNew(Collection *collection);
@@ -71,16 +70,6 @@ collectionItrNext(CollectionItr *this)
 {
     // Invoke next() on the subiterator.
     return THIS_PUB(CollectionItr)->next(THIS_PUB(CollectionItr)->subIterator);
-}
-
-/***********************************************************************************************************************************
-Destroy the iterator, freeing any resources which were allocated.
-***********************************************************************************************************************************/
-FN_INLINE_ALWAYS
-void collectionItrFree(CollectionItr *this)
-{
-    objFree(THIS_PUB(CollectionItr)->subIterator);
-    objFree(this);
 }
 
 // Syntactic sugar to get the function name from the object type and the short method name.
@@ -98,39 +87,20 @@ void collectionItrFree(CollectionItr *this)
 /***********************************************************************************************************************************
 Syntactic sugar to make iteration looks more like C++ or Python.
 Note foreach and endForeach are block macros, so the overall foreach/endForeach must be terminated with a semicolon.
-This version is slower because it catches and cleans up after exceptions.
+This version cleans up memory periodically during the loop.
 ***********************************************************************************************************************************/
-#define FOREACH(item, CollectionType, collection)                                                                        \
-    do {                                                                                                                           \
+#define FOREACH(item, CollectionType, collection)                                                                                  \
+    MEM_CONTEXT_TEMP_RESET_BEGIN();                                                                                                \
         CollectionType##Itr *FOREACH_itr = METHOD(CollectionType, ItrNew)(collection);                                             \
-        void (*FOREACH_free)(CollectionType##Itr*) = METHOD(CollectionType, ItrFree);                                              \
-        TRY_BEGIN()                                                                                                                \
+        while ( (item = METHOD(CollectionType,ItrNext)(FOREACH_itr)) != NULL)                                                      \
         {                                                                                                                          \
-            while ( (item = METHOD(CollectionType,ItrNext)(FOREACH_itr)) != NULL)                                                  \
-            {
+            MEM_CONTEXT_TEMP_RESET(1000);
 #define ENDFOREACH                                                                                                                 \
-            }                                                                                                                      \
         }                                                                                                                          \
-        FINALLY()                                                                                                                  \
-        {                                                                                                                          \
-            FOREACH_free(FOREACH_itr);                                                                                             \
-        }                                                                                                                          \
-        TRY_END();                                                                                                                 \
-    } while (0)
+    MEM_CONTEXT_TEMP_END()
 
-/***********************************************************************************************************************************
-Syntactic sugar for iteration. This is a proposed (future) version is optimized for the case when 1) no exceptions can occur, or
-2) no "break" statements, and 3) the destruct method does not need to be called after an exception
-(say dynamic memory is freed automatically).
 
-Not sure if we want to keep this, since most of the simple cases will be Lists and we can use the list specific "foreach()" macro.
-***********************************************************************************************************************************/
-#define FOREACH_SIMPLE(item, CollectionType, collection)                                                                           \
-    for (                                                                                                                          \
-        CollectionType##Itr *FOREACH_itr = METHOD(CollectionType, ItrNew)(collection);                                             \
-        (item = METHOD(CollectionType,ItrNext)(FOREACH_itr)) != NULL || (METHOD(CollectionType,ItrFree)(_itr), false);             \
-        (void)0                                                                                                                    \
-    )
+
 
 /***********************************************************************************************************************************
 Macros for function logging.

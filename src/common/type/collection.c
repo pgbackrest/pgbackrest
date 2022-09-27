@@ -117,7 +117,6 @@ struct Collection
     void *subCollection;                                            // Pointer to the underlying collection.
     void *(*newItr)(void *collection);                              // Method to construct a new iterator.
     void *(*next)(void *this);                                      // Method to get a pointer to the next item. NULL if no more.
-    void (*free)(void *this);                                       // Method to free resources allocated during "newItr()"
     //int itrSize;                                                  // Size to allocate for the underlying iterator. (not now)
 };
 
@@ -129,7 +128,7 @@ struct CollectionItr
 };
 
 
-Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*next)(void *), void (*free)(void *))
+Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*next)(void *))
 {
         FUNCTION_TEST_BEGIN();
             FUNCTION_TEST_PARAM_P(VOID, subCollection);
@@ -140,7 +139,6 @@ Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*
         ASSERT(subCollection != NULL);
         ASSERT(newItr != NULL);
         ASSERT(next != NULL);
-        ASSERT(free != NULL);
 
         Collection *this = NULL;
         OBJ_NEW_BEGIN(Collection)
@@ -152,7 +150,6 @@ Collection *collectionNew(void *subCollection, void *(*newItr)(void *), void *(*
             *this = (Collection) {
                 .subCollection = subCollection,
                 .next = next,
-                .free = free,
                 .newItr = newItr,
             };
         }
@@ -173,12 +170,10 @@ collectionItrNew(Collection *collection)
     FUNCTION_TEST_END();
 
     // Start by allocating an iterator to the sub-collection.
-    // It is an independent object and needs to be allocated outside the CollectionItr.
-    // TODO: we would really like it to be part of same context.
     void *subIterator = collection->newItr(collection->subCollection);
 
     CollectionItr *this = NULL;
-    OBJ_NEW_BEGIN(CollectionItr)
+    OBJ_NEW_BEGIN(CollectionItr, .childQty=MEM_CONTEXT_QTY_MAX)
     {
         // Allocate memory for the Collection object.
         this = OBJ_NEW_ALLOC();
@@ -187,12 +182,14 @@ collectionItrNew(Collection *collection)
         *this = (CollectionItr) {
             .pub = {
                 .next = collection->next,
-                .free = collection->free,
                 .subIterator = subIterator,
             }
         };
     }
     OBJ_NEW_END();
+
+    // Be sure to free the subiterator whenever we free this iterator.
+    objMove(subIterator, objMemContext(this));
 
     FUNCTION_TEST_RETURN(COLLECTION_ITR, this);
 }

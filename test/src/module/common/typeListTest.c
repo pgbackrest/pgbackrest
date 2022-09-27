@@ -2,7 +2,7 @@
 Test Lists
 ***********************************************************************************************************************************/
 #include "common/time.h"
-#include "common/type/collection.h"
+#include "common/type/list.h"
 
 /***********************************************************************************************************************************
 Test sort comparator
@@ -21,6 +21,17 @@ testComparator(const void *item1, const void *item2)
 
     return 0;
 }
+
+/***********************************************************************************************************************************
+Create a List type which is identical to a List, except the iterator object will have a callback.
+We'll call it "MockList", and it will be used to verify iterators can invoke callbacks when necessary.
+***********************************************************************************************************************************/
+typedef List MockList;                                              // Functionally, a MockList is just a List.
+typedef ListItr MockListItr;                                        // Likewise, a MockListItr is just a ListItr.
+#define mockListItrNext lstItrNext                                  // They share the same "Next" method.
+#define CAMEL_MockList mockList                                     // Enable MockList as a Collection type.
+MockListItr *mockListItrNew(List *list);                            // Creating a MockListItr is different - wraps in a callback.
+int eventCount;                                                     // Counter is incremented by the callback.
 
 /***********************************************************************************************************************************
 Test Run
@@ -258,12 +269,12 @@ testRun(void)
 
         // Scan the empty list, inside a collection
         Collection *emptyCollection = NEWCOLLECTION(List, emptyList);
-        TEST_RESULT_VOID( (void)0, "Created collection");
+        TEST_RESULT_VOID((void)0, "Created collection");
         FOREACH(item, Collection, emptyCollection)
             ASSERT_MSG("iterating through an empty container");     // {uncoverable - this statement should not be reached}
         ENDFOREACH;
         ASSERT(item == NULL);
-        TEST_RESULT_VOID((void) 0, "empty list inside Collection");
+        TEST_RESULT_VOID((void)0, "empty list inside Collection");
 
         // Scan the longer list, inside a collection.
         Collection *longCollection = NEWCOLLECTION(List, longList);
@@ -276,21 +287,21 @@ testRun(void)
         TEST_RESULT_INT(count, testMax, "non-empty list inside Collection");
 
         // Try to get next() item of an empty list.
-        ListItr *itr = listItrNew(emptyList);
-        ASSERT(listItrNext(itr) == NULL);
-        TEST_RESULT_PTR(listItrNext(itr), NULL, "iterate beyond end of empty List");
-        listItrFree(itr);
+        ListItr *itr = lstItrNew(emptyList);
+        ASSERT(lstItrNext(itr) == NULL);
+        TEST_RESULT_PTR(lstItrNext(itr), NULL, "iterate beyond end of empty List");
+        objFree(itr);
 
         // Similar, but this time with items in the list.
-        itr = listItrNew(longList);  // A second iterator in parallel
+        itr = lstItrNew(longList);  // A second iterator in parallel
         foreach(item, longList)
-            ASSERT(*(int *)listItrNext(itr) == *item);
+            ASSERT(*(int *)lstItrNext(itr) == *item);
         ASSERT(item == NULL);
-        TEST_RESULT_PTR(listItrNext(itr), NULL, "iterate beyond end of List");
-        listItrFree(itr);
+        TEST_RESULT_PTR(lstItrNext(itr), NULL, "iterate beyond end of List");
+        objFree(itr);
 
         // Try to create a Collection from NULL list.
-        TEST_ERROR((void) NEWCOLLECTION(List, NULL), AssertError, "assertion 'subCollection != NULL' failed");
+        TEST_ERROR((void)NEWCOLLECTION(List, NULL), AssertError, "assertion 'subCollection != NULL' failed");
 
         // Create a Collection within a Collection and verify we can still iterate through it.
         Collection *superCollection = NEWCOLLECTION(Collection, longCollection);
@@ -301,21 +312,16 @@ testRun(void)
         ENDFOREACH;
         TEST_RESULT_INT(count, testMax, "Collection inside Collection");
 
-        // Use a mock destructor. Since iteration loop is macro based, this is a quick way to mock.
-#define listItrFree mockListItrFree
-        extern int eventCount;
-        extern void mockListItrFree(ListItr *this);
-
         // Verify the destructor gets called on a list with no exceptions.
         eventCount = 0;
-        FOREACH(item, List, longList)
+        FOREACH(item, MockList, longList)
         ENDFOREACH;
         TEST_RESULT_INT(eventCount, 1, "destructor invoked after loop ends");
 
         // Throw an exception within a loop and verify the destructor gets called.
         eventCount = 0;
         TRY_BEGIN()
-            FOREACH(item, List, longList)
+            FOREACH(item, MockList, longList)
                 if (*item > testMax / 2)
                     THROW(FormatError, "");  // Any non-fatal error.
             ENDFOREACH;
@@ -324,22 +330,33 @@ testRun(void)
         TRY_END();
         ASSERT(*item = testMax/2 + 1);
         TEST_RESULT_INT(eventCount, 2, "destructor invoked after exception");
-#undef listItrFree
 
         // To ensure complete coverage, test the NULL cases which shouldn't occur in practice.
         TEST_RESULT_STR(collectionToLog(NULL), NULL_STR, "display NULL as Collection");
     }
-
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-A Mocked destructor - to verify we are shutting down correctly. Used by the List iterator tests.
-***********************************************************************************************************************************/
-int eventCount;  // Keep count of interesting test events.
+
 void
-mockListItrFree(ListItr *this)
+mockListCallback(void *this)
 {
     eventCount++;
-    listItrFree(this);
+    (void)this;
+}
+
+/***********************************************************************************************************************************
+Wrap a list iterator in a context which includes a callback destructor.
+***********************************************************************************************************************************/
+MockListItr *mockListItrNew(List *list)
+{
+    MockListItr *this = NULL;
+    OBJ_NEW_BEGIN(MockListItr, .callbackQty=1, .childQty=1)
+    {
+        this = (MockListItr*)lstItrNew(list);
+        memContextCallbackSet(memContextCurrent(), mockListCallback, this);
+    }
+    OBJ_NEW_END();
+
+    return this;
 }

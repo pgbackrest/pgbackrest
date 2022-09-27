@@ -438,26 +438,40 @@ lstToLog(const List *this)
 
 
 
-// Define the full list iterator. Most methods are inlined, so there are no private fields.
+// Iterator for scanning a list. It is an opaque object.
 struct ListItr
 {
-    ListItrPub pub;
+    List *list;                                                     // The list being scanned
+    unsigned int listIdx;                                           // Current position being scanned.
 };
 
 /***********************************************************************************************************************************
 Construct a new list iterator. Returns an object.
-  Possible optimizations:  1) inline, 2) allow use of pre-allocated memory.
+  Possible optimizations:  inline through the -flto compile option or by hand-coding.
 ***********************************************************************************************************************************/
 ListItr *
-listItrNew(List *list)
+lstItrNew(List *list)
 {
     ListItr *this = NULL;
     OBJ_NEW_BEGIN(ListItr)
         {
             this = OBJ_NEW_ALLOC();
-            *this = (ListItr) {.pub = (ListItrPub){.list = list, .listIdx = 0}};
+            *this = (ListItr) {.list = list, .listIdx = 0};
         }
     OBJ_NEW_END();
 
     return this;
+}
+
+
+/***********************************************************************************************************************************
+Point to the next item in the list, returning NULL if no more items.
+***********************************************************************************************************************************/
+void *
+lstItrNext(ListItr *this)
+{
+    if (this->listIdx >= lstSize(this->list))
+        return NULL;
+    else
+        return lstGet(this->list, this->listIdx++);
 }

@@ -185,38 +185,9 @@ A minimalistic control structure for iterating through lists, modeled after the 
 /***********************************************************************************************************************************
 List Iteration, conforming to the Collection interface.
 ***********************************************************************************************************************************/
-typedef struct ListItr ListItr;                                     // Just a placeholder since all methods are inlined.
-typedef struct ListItrPub
-{
-    List *list;                                                     // The list we're iterating
-    unsigned int listIdx;                                           // Position of next item in the list
-} ListItrPub;
-
-// Construct a list iterator to scan the given list.
-ListItr *listItrNew(List *list);
-
-/***********************************************************************************************************************************
-Get a pointer to the next item from the list, or NULL if no more.
-***********************************************************************************************************************************/
-FN_INLINE_ALWAYS void *
-listItrNext(ListItr *this)
-{
-    if (THIS_PUB(ListItr)->listIdx >= lstSize(THIS_PUB(ListItr)->list))
-        return NULL;
-    else
-        return lstGet(THIS_PUB(ListItr)->list, THIS_PUB(ListItr)->listIdx++);
-}
-
-/***********************************************************************************************************************************
-Free the list object.
-***********************************************************************************************************************************/
-FN_INLINE_ALWAYS void
-listItrFree(ListItr *this)
-{
-    objFree(this);
-}
-
-// The following macros enable Lists as abstract Collections.
-#define CAMEL_List list
+typedef struct ListItr ListItr;                                     //
+ListItr *lstItrNew(List *list);
+void *lstItrNext(ListItr *this);
+#define CAMEL_List lst
 
 #endif // COMMON_TYPE_LIST_H
