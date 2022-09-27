@@ -15,6 +15,24 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.42dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1877"/>
+                        <github-pull-request id="1878"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="MannerMan"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="MannerMan"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix memory leak in file bundle <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
         </release>
 
         <release date="2022-09-19" version="2.41" title="Backup Annotations">
@@ -74,6 +92,19 @@
                         </release-item-contributor-list>
 
                         <p>Support <br-option>--set</br-option> in JSON output for <cmd>info</cmd> command.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1843"/>
+                        <github-pull-request id="1847"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="anton.glushakov"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow upload chunk size to be configured for object stores.</p>
                     </release-item>
 
                     <release-item>
@@ -11560,6 +11591,11 @@
         <contributor id="andrey.sokolov">
             <contributor-name-display>Andrey Sokolov</contributor-name-display>
             <contributor-id type="github">andr-sokolov</contributor-id>
+        </contributor>
+
+        <contributor id="anton.glushakov">
+            <contributor-name-display>Anton Glushakov</contributor-name-display>
+            <contributor-id type="github">glushakov</contributor-id>
         </contributor>
 
         <contributor id="anton.kurochkin">

@@ -2522,7 +2522,7 @@ testRun(void)
                 manifestResume, &(ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
 
             // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled). Note
-            // also that the repo file is intenionally corrupt to generate a warning about corruption in the repository.
+            // also that the repo file is intentionally corrupt to generate a warning about corruption in the repository.
             HRN_STORAGE_PUT_Z(storagePgWrite(), "time-mismatch2", "TEST", .timeModified = backupTimeStart + 100);
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strZ(resumeLabel)));

@@ -770,6 +770,24 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "01234567890123456789012345678901012", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("request with zero-length chunked content");
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(
+                    http,
+                    "HTTP/1.1 200 OK\r\nTransfer-Encoding:chunked\r\n\r\n"
+                    "0\r\n\r\n");
+
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), "request");
+                TEST_RESULT_STR_Z(
+                    httpHeaderToLog(httpResponseHeader(response)), "{transfer-encoding: 'chunked'}", "check response headers");
+
+                buffer = bufNew(0);
+
+                TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "", "check response");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("close connection and end server process");
 
                 hrnServerScriptClose(http);
