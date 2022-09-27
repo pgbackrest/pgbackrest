@@ -341,8 +341,8 @@ void storageLinkCreate(
     ASSERT(linkPath != NULL);
     ASSERT(this->pub.interface.linkCreate != NULL);
     ASSERT(
-        (param.linkType == storageSymLink && storageFeature(this, storageFeatureSymLink)) ||
-        (param.linkType == storageHardLink && storageFeature(this, storageFeatureHardLink)));
+        (param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||
+        (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink)));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

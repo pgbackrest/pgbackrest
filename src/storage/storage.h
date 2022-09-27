@@ -7,6 +7,18 @@ Storage Interface
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
+Storage link type
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Symbolic link
+    storageLinkSym,
+
+    // Hard link
+    storageLinkHard,
+} StorageLinkType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
@@ -247,7 +259,7 @@ typedef struct StorageLinkCreateParam
     VAR_PARAM_HEADER;
 
     // Flag to create hard or symbolic link
-    LinkType linkType;
+    StorageLinkType linkType;
 } StorageLinkCreateParam;
 
 #define storageLinkCreateP(this, target, linkPath, ...)                                                                            \

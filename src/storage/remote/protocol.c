@@ -296,7 +296,7 @@ storageRemoteLinkCreateProtocol(PackRead *const param, ProtocolServer *const ser
     {
         const String *const target = pckReadStrP(param);
         const String *const linkPath = pckReadStrP(param);
-        const LinkType linkType = (LinkType)pckReadU32P(param);
+        const StorageLinkType linkType = (StorageLinkType)pckReadU32P(param);
 
         storageInterfaceLinkCreateP(storageRemoteProtocolLocal.driver, target, linkPath, .linkType = linkType);
         protocolServerDataEndPut(server);

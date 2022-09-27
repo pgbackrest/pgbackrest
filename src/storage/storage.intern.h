@@ -64,18 +64,6 @@ Storage info callback function type - used to return storage info
 typedef void (*StorageListCallback)(void *callbackData, const StorageInfo *info);
 
 /***********************************************************************************************************************************
-Link type
-***********************************************************************************************************************************/
-typedef enum
-{
-    // Signify creation of symbolic link
-    storageSymLink,
-
-    // Signify creation of hard link
-    storageHardLink,
-} LinkType;
-
-/***********************************************************************************************************************************
 Required interface functions
 ***********************************************************************************************************************************/
 // Get information about a file/link/path
@@ -105,7 +93,7 @@ typedef struct StorageInterfaceLinkCreateParam
     VAR_PARAM_HEADER;
 
     // Flag to create hard or symbolic link
-    LinkType linkType;
+    StorageLinkType linkType;
 } StorageInterfaceLinkCreateParam;
 
 typedef void StorageInterfaceLinkCreate(

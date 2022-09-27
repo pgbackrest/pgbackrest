@@ -130,7 +130,7 @@ storagePosixLinkCreate(
     ASSERT(target != NULL);
     ASSERT(linkPath != NULL);
 
-    if (param.linkType == storageSymLink)
+    if (param.linkType == storageLinkSym)
     {
         // Create the symlink
         THROW_ON_SYS_ERROR_FMT(
@@ -139,7 +139,7 @@ storagePosixLinkCreate(
     }
     else
     {
-        ASSERT(param.linkType == storageHardLink);
+        ASSERT(param.linkType == storageLinkHard);
 
         // Create the hard link
         THROW_ON_SYS_ERROR_FMT(

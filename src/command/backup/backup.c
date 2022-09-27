@@ -1953,7 +1953,7 @@ backupProcess(
                         storageRepo(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
 
-                    storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, .linkType = storageHardLink);
+                    storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, .linkType = storageLinkHard);
                 }
                 // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
                 // recopied.
