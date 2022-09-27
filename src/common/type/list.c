@@ -488,5 +488,5 @@ lstItrNext(ListItr *this)
 // Display a list iterator in the traceback logging,
 String *lstItrToLog(const ListItr *this)
 {
-    return this == NULL ? strDup(NULL_STR) : strNewFmt("ListItr{.listIdx=%d, .list=%p}", this->listIdx, this->list);
+    return this == NULL ? strDup(NULL_STR) : strNewFmt("ListItr{.listIdx=%u, .list=%p}", this->listIdx, this->list);
 }
