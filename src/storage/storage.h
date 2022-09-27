@@ -11,7 +11,7 @@ Storage link type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // Symbolic link
+    // Symbolic (or soft) link
     storageLinkSym,
 
     // Hard link
