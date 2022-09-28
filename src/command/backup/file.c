@@ -5,6 +5,7 @@ Backup File
 
 #include <string.h>
 
+#include "command/backup/blockIncr.h"
 #include "command/backup/file.h"
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"

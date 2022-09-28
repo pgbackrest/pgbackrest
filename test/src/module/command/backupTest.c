@@ -124,6 +124,7 @@ testBackupValidateList(
                         ioReadOpen(storageReadIo(read));
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(read));
                         IoFilter *const checksumFilter = cryptoHashNew(hashTypeSha1);
+                        String *const mapLog = strNew();
 
                         for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
                         {
@@ -135,6 +136,12 @@ testBackupValidateList(
                             const Buffer *const block = storageGetP(
                                 storageNewReadP(storage, blockName, .offset = blockMapItem->offset,
                                 .limit = VARUINT64(blockMapItem->size)));
+
+                            // Add reference to log
+                            if (!strEmpty(mapLog))
+                                strCatChr(mapLog, ',');
+
+                            strCatFmt(mapLog, "%u", blockMapItem->reference);
 
                             // Check block size
                             if (bufUsed(block) != blockMapItem->size)
@@ -155,11 +162,12 @@ testBackupValidateList(
                                     strZ(file.name), blockMapIdx, strZ(blockChecksum), strZ(mapChecksum));
                             }
 
-
                             // Update size and checksum
                             size += bufUsed(block);
                             ioFilterProcessIn(checksumFilter, block);
                         }
+
+                        strCatFmt(result, ", m={%s}", strZ(mapLog));
 
                         checksum = pckReadStrP(pckReadNew(ioFilterResult(checksumFilter)));
                     }
@@ -3614,12 +3622,12 @@ testRun(void)
             HRN_STORAGE_REMOVE(storageTest, "pg1");
 
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = true, .walSegmentSize = 2 * 1024 * 1024);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
 
-            // Upgrade stanza
+            // Upgrade stanza !!!
             // StringList *argList = strLstNew();
             // hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             // hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -3649,6 +3657,13 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
+            // Log file just larger than block size
+            Buffer *log = bufNew(PG_PAGE_SIZE_DEFAULT + 1);
+            memset(bufPtr(log), 55, bufSize(log));
+            bufUsedSet(log, bufSize(log));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "pg.log", log, .timeModified = backupTimeStart);
+
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
             TEST_RESULT_VOID(testCmdBackup(), "backup");
@@ -3658,6 +3673,7 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
@@ -3666,7 +3682,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 5");
+                "P00   INFO: full backup size = [SIZE], file total = 6");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3676,9 +3692,10 @@ testRun(void)
                 "pg_data/backup_label.pgbi {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, s=24576}\n"
+                "pg_data/base/1/2.pgbi {file, m={0,0,0}, s=24576}\n"
                 "pg_data/global {path}\n"
-                "pg_data/global/pg_control.pgbi {file, s=8192}\n"
+                "pg_data/global/pg_control.pgbi {file, m={0}, s=8192}\n"
+                "pg_data/pg.log.pgbi {file, m={0,0}, s=8193}\n"
                 "pg_data/tablespace_map.pgbi {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3689,9 +3706,11 @@ testRun(void)
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1572800002}\n"
-                "pg_data/base/1/2={\"bims\":71,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"size\":24576"
-                    ",\"timestamp\":1572800000}\n"
+                "pg_data/base/1/2={\"bims\":71,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"size\":24576,"
+                    "\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1572800000}\n"
+                "pg_data/pg.log={\"bims\":48,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\",\"size\":8193"
+                    ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1572800002}\n"
                 "\n"
@@ -3701,6 +3720,8 @@ testRun(void)
                 "pg_data/base/1={}\n"
                 "pg_data/global={}\n",
                 "compare file list");
+
+            HRN_STORAGE_REMOVE(storagePgWrite(), "pg.log"); // !!! NEED TO FIX THIS FOR DIFF
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3755,9 +3776,9 @@ testRun(void)
                 "pg_data/backup_label.pgbi {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, s=32768}\n"
+                "pg_data/base/1/2.pgbi {file, m={0,0,0,1}, s=32768}\n"
                 "pg_data/global {path}\n"
-                "pg_data/global/pg_control.pgbi {file, s=8192}\n"
+                "pg_data/global/pg_control.pgbi {file, m={1}, s=8192}\n"
                 "pg_data/tablespace_map.pgbi {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3768,8 +3789,8 @@ testRun(void)
                     ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573000002}\n"
-                "pg_data/base/1/2={\"bims\":97,\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"checksum-page\":true"
-                    ",\"size\":32768,\"timestamp\":1573000000}\n"
+                "pg_data/base/1/2={\"bims\":97,\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"size\":32768"
+                    ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1573000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573000002}\n"
