@@ -1606,8 +1606,14 @@ testRun(void)
         TEST_TITLE("manifest validation");
 
         // Munge files to produce errors
-        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL, 0, 0);
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL, 0, 0);
+        ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        file.checksumSha1[0] = '\0';
+        file.sizeRepo = 0;
+        manifestFileUpdate(manifest, &file);
+
+        file = manifestFileFind(manifest, STRDEF("pg_data/base/32768/33000.32767"));
+        file.size = 0;
+        manifestFileUpdate(manifest, &file);
 
         TEST_ERROR(
             manifestValidate(manifest, false), FormatError,
@@ -1622,10 +1628,14 @@ testRun(void)
             "repo size must be > 0 for file 'pg_data/postgresql.conf'");
 
         // Undo changes made to files
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL, 0, 0);
-        manifestFileUpdate(
-            manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
-            false, NULL, 0, 0);
+        file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        memcpy(file.checksumSha1, "184473f470864e067ee3a22e64b47b0a1c356f29", HASH_TYPE_SHA1_SIZE_HEX + 1);
+        file.sizeRepo = 4457;
+        manifestFileUpdate(manifest, &file);
+
+        file = manifestFileFind(manifest, STRDEF("pg_data/base/32768/33000.32767"));
+        file.size = 32768;
+        manifestFileUpdate(manifest, &file);
 
         TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
 
@@ -1776,7 +1786,6 @@ testRun(void)
         TEST_TITLE("manifest getters");
 
         // ManifestFile getters
-        ManifestFile file = {0};
         TEST_ERROR(manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
         TEST_ASSIGN(file, manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION")), "manifestFileFind()");
         TEST_RESULT_STR_Z(file.name, "pg_data/PG_VERSION", "find file");
@@ -1791,10 +1800,9 @@ testRun(void)
         fileMunge.checksumSha1[0] = '\0';
         manifestFilePackUpdate(manifest, fileMungePack, &fileMunge);
 
-        TEST_RESULT_VOID(
-            manifestFileUpdate(
-                manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL, 0, 0),
-            "update file");
+        file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        file.checksumSha1[0] = '\0';
+        manifestFileUpdate(manifest, &file);
 
         // ManifestDb getters
         const ManifestDb *db = NULL;
