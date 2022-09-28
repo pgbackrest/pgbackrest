@@ -3702,6 +3702,85 @@ testRun(void)
                 "pg_data/global={}\n",
                 "compare file list");
         }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 diff backup with block incr");
+
+        backupTimeStart = BACKUP_EPOCH + 3000000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
+            hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "8KiB");
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Zeroed file which passes page checksums
+            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
+
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: last backup label = 20191103-165320F, version = " PROJECT_VERSION "\n"
+                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DC213000000000, lsn = 5dc2130/0\n"
+                "P00   INFO: check archive for segment 0000000105DC213000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (32KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
+                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
+                "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
+                "P00   INFO: diff backup size = [SIZE], file total = 5");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191103-165320F_20191106-002640D}\n"
+                "pg_data {path}\n"
+                "pg_data/backup_label.pgbi {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/2.pgbi {file, s=32768}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control.pgbi {file, s=8192}\n"
+                "pg_data/tablespace_map.pgbi {file, s=19}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191103-165320F\""
+                    ",\"size\":2,\"timestamp\":1572800000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1573000002}\n"
+                "pg_data/base/1/2={\"bims\":97,\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"checksum-page\":true"
+                    ",\"size\":32768,\"timestamp\":1573000000}\n"
+                "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1573000000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                    ",\"timestamp\":1573000002}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n",
+                "compare file list");
+        }
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

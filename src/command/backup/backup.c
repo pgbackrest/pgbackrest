@@ -1540,7 +1540,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             const ManifestFile file = manifestFileUnpack(manifest, filePack);
 
             // If the file is a reference it should only be backed up if delta and not zero size
-            if (file.reference != NULL && (!jobData->delta || file.size == 0))
+            if (file.reference != NULL && file.blockIncrMapSize == 0 && (!jobData->delta || file.size == 0))
                 continue;
 
             // If bundling store zero-length files immediately in the manifest without copying them
@@ -1735,6 +1735,26 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
+
+                if (jobData->blockIncr)
+                {
+                    if (file.blockIncrMapSize != 0)
+                    {
+                        String *const blockIncrMapFile = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(file.reference));
+
+                        if (file.bundleId != 0)  // {uncovered - !!!}
+                            strCatFmt(blockIncrMapFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, file.bundleId);  // {uncovered - !!!}
+                        else
+                            strCatFmt(blockIncrMapFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file.name));
+
+                        pckWriteStrP(param, blockIncrMapFile);
+                        pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
+                        pckWriteU64P(param, file.blockIncrMapSize);
+                    }
+                    else
+                        pckWriteNullP(param);
+                }
+
                 pckWriteStrP(param, file.name);
                 pckWriteBoolP(param, file.reference != NULL);
 

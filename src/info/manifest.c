@@ -1512,6 +1512,14 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                         filePrior.checksumPage, filePrior.checksumPageError, filePrior.checksumPageErrorList,
                         filePrior.bundleId, filePrior.bundleOffset, filePrior.blockIncrMapSize);
                 }
+                else if (this->pub.data.blockIncr && filePrior.blockIncrMapSize) // {uncovered - !!!}
+                {
+                    manifestFileUpdate( // {uncovered - !!!}
+                        this, file.name, file.size, filePrior.sizeRepo, NULL, // {uncovered - !!!}
+                        VARSTR(filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel), // {uncovered - !!!}
+                        file.checksumPage, file.checksumPageError, file.checksumPageErrorList, // {uncovered - !!!}
+                        filePrior.bundleId, filePrior.bundleOffset, filePrior.blockIncrMapSize); // {uncovered - !!!}
+                }
             }
         }
     }

@@ -32,6 +32,9 @@ typedef struct BackupFile
     bool pgFileCopyExactSize;                                       // Copy only pg expected size
     const String *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
+    const String *blockIncrMapFile;                                 // File containing the block incremental map (NULL if none)
+    uint64_t blockIncrMapOffset;                                    // Offset of block incremental map
+    uint64_t blockIncrMapSize;                                      // Size of block incremental map
     const String *manifestFile;                                     // Repo file
     bool manifestFileHasReference;                                  // Reference to prior backup, if any
 } BackupFile;

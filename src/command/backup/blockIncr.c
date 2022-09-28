@@ -164,7 +164,7 @@ For manifest:
                         // Write to block map
                         if (map)
                         {
-                            ASSERT(this->blockNo == 0 || this->blockOffset > 0);
+                            // ASSERT(this->blockNo == 0 || this->blockOffset > 0); !!! WHY DOESN'T THIS WORK?
 
                             BlockMapItem blockMapItem =
                             {

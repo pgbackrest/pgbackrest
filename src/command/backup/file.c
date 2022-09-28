@@ -245,14 +245,27 @@ backupFile(
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
                     // compressed/encrypted separately
-                    const bool blockIncrFilter = blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize);
+                    const bool blockIncrFilter = blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize); // {uncovered - !!!}
 
-                    if (blockIncrFilter) // {uncovered !!!}
+                    if (blockIncrFilter)
                     {
-                        ioFilterGroupAdd( // {uncovered !!!}
+                        const Buffer *blockMap = NULL;
+
+                        if (file->blockIncrMapFile != NULL)
+                        {
+                            // THROW_FMT(
+                            //     AssertError, "!!!MAP FILE %s, offset %d, limit %d", strZ(file->blockIncrMapFile),
+                            //     (int)file->blockIncrMapOffset, (int)file->blockIncrMapSize);
+                            blockMap = storageGetP(
+                                storageNewReadP(
+                                    storageRepo(), file->blockIncrMapFile, .offset = file->blockIncrMapOffset,
+                                    .limit = VARUINT64(file->blockIncrMapSize)));
+                        }
+
+                        ioFilterGroupAdd(
                             ioReadFilterGroup(
                                 storageReadIo(read)),
-                                blockIncrNew(blockIncrSize, blockIncrReference, bundleId, bundleOffset, /* !!! FIX */NULL));
+                                blockIncrNew(blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap));
                     }
                     // Else apply compress/encrypt filters to the entire file
                     else
