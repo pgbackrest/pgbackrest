@@ -489,7 +489,6 @@ testRun(void)
         storagePathCreateP(storageTest, STRDEF("repo128"));
 
         const String *file = STRDEF("file.txt");
-        const String *linkPath = strNewFmt("%s/linkfile.txt", strZ(storagePathP(storageRepoWrite, NULL)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote remove path");
@@ -497,16 +496,10 @@ testRun(void)
         // Write the file to the repo via the remote so owner is pgbackrest
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite, file), BUFSTRDEF("TEST")), "new file");
 
-        // Write the link to the repo via the remote
-        TEST_RESULT_VOID(storageLinkCreateP(storageRepoWrite, file, linkPath), "create link");
-
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo128/%s", strZ(file))), true, "file exists");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, linkPath), true, "link exists");
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, file), "remote remove file");
-        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, linkPath), "remote remove link");
         TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo128/%s", strZ(file))), false, "file removed");
-        TEST_RESULT_BOOL(storageExistsP(storageTest, strNewFmt("repo128/%s", strZ(linkPath))), false, "link removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing file");
@@ -529,6 +522,131 @@ testRun(void)
         const String *path = STRDEF("testpath");
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "new path");
         TEST_RESULT_VOID(storagePathSyncP(storageRepoWrite, path), "sync path");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageLinkCreate()"))
+    {
+        StorageInfo info = {0};
+        const String *path = STRDEF("20181119-152138F");
+        const String *latestLabel = STRDEF("latest");
+        const String *testFile = strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), "test.file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create/remove symlink to path and to file");
+
+        // Create the path and symlink via the remote
+        TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "remote create path to link to");
+        TEST_RESULT_VOID(
+            storageLinkCreateP(
+                storageRepoWrite, path, strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel))),
+            "remote create path symlink");
+
+        // Check the repo via the local test storage to ensure the remote wrote to it, then remove via remote and confirm removed
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(path)), .ignoreMissing = true).exists, true, "path exists");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, true,
+            "symlink to path exists");
+
+        // Verify link mapping via the local test storage
+        TEST_ASSIGN(
+            info,
+            storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = false), "get symlink info");
+        TEST_RESULT_STR(info.linkDestination, path, "match link destination");
+        TEST_RESULT_INT(info.type, storageTypeLink, "check type is link");
+
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, latestLabel), "remote remove symlink");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, false,
+            "symlink to path removed");
+
+        // Create a file and sym link to it via the remote,
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite, testFile), BUFSTRDEF("TESTME")), "put test file");
+        TEST_RESULT_VOID(
+            storageLinkCreateP(
+                storageRepoWrite, testFile, strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel))),
+            "remote create file symlink");
+
+        // Check the repo via the local test storage to ensure the remote wrote to it, then remove via remote and confirm removed
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, strNewFmt("repo128/test.file"), .ignoreMissing = true).exists, true, "test file exists");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, true,
+            "symlink to file exists");
+
+        // Verify link mapping via the local test storage
+        TEST_ASSIGN(
+            info,
+            storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = false), "get symlink info");
+        TEST_RESULT_STR(info.linkDestination, testFile, "match link destination");
+        TEST_RESULT_INT(info.type, storageTypeLink, "check type is link");
+
+        // Verify file and link contents match
+        Buffer *testFileBuffer = storageGetP(storageNewReadP(storageTest, STRDEF("repo128/test.file")));
+        Buffer *symLinkBuffer = storageGetP(storageNewReadP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel))));
+        TEST_RESULT_BOOL(bufEq(testFileBuffer, BUFSTRDEF("TESTME")), true, "file contents match test buffer");
+        TEST_RESULT_BOOL(bufEq(testFileBuffer, symLinkBuffer), true, "symlink and file contents match each other");
+
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, testFile), "remote remove test file");
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, STRDEF("repo128/test.file"), .ignoreMissing = true).exists, false, "test file removed");
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, latestLabel), "remote remove symlink");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, false,
+            "symlink to file removed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("hardlink success/fail");
+
+        // Create a file and hard link to it via the remote,
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite, testFile), BUFSTRDEF("TESTME")), "put test file");
+        TEST_RESULT_VOID(
+            storageLinkCreateP(
+                storageRepoWrite, testFile, strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel)),
+                .linkType = storageLinkHard),
+            "hardlink to test file");
+
+        // Check the repo via the local test storage to ensure the remote wrote to it, check that files and link match, then remove
+        // via remote and confirm removed
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, STRDEF("repo128/test.file"), .ignoreMissing = true).exists, true, "test file exists");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, true, "hard link exists");
+        TEST_ASSIGN(
+            info,
+            storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = false), "get hard link info");
+        TEST_RESULT_INT(info.type, storageTypeFile, "check type is file");
+
+        // Verify file and link contents match
+        testFileBuffer = storageGetP(storageNewReadP(storageTest, STRDEF("repo128/test.file")));
+        Buffer *hardLinkBuffer = storageGetP(storageNewReadP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel))));
+        TEST_RESULT_BOOL(bufEq(testFileBuffer, BUFSTRDEF("TESTME")), true, "file contents match test buffer");
+        TEST_RESULT_BOOL(bufEq(testFileBuffer, hardLinkBuffer), true, "hard link and file contents match each other");
+
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, testFile), "remove test file");
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, latestLabel), "remove hard link");
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, STRDEF("repo128/test.file"), .ignoreMissing = true).exists, false, "test file removed");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, false, "hard link removed");
+
+        // Hard link to directory not permitted
+        TEST_ERROR(
+            storageLinkCreateP(
+                storageRepoWrite,
+                strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(path)),
+                strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel)), .linkType = storageLinkHard),
+            FileOpenError,
+            "raised from remote-0 shim protocol: unable to create hardlink '/home/vagrant/test/test-0/repo128/latest' to"
+                " '/home/vagrant/test/test-0/repo128/20181119-152138F': [1] Operation not permitted");
+
     }
 
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be
