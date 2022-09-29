@@ -599,6 +599,9 @@ backupResumeClean(
                                 file.checksumPage = fileResume.checksumPage;
                                 file.checksumPageError = fileResume.checksumPageError;
                                 file.checksumPageErrorList = fileResume.checksumPageErrorList;
+                                ASSERT(file.copy);
+                                ASSERT(file.bundleId == 0);
+                                file.resume = true;
 
                                 manifestFileUpdate(manifest, &file);
                             }
@@ -1546,20 +1549,15 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
             ManifestFile file = manifestFileUnpack(manifest, filePack);
 
-            // If the file is a reference it should only be backed up if delta and not zero size
-            if (file.reference != NULL && (!jobData->delta || file.size == 0))
-                continue;
-
-            // If bundling store zero-length files immediately in the manifest without copying them
-            if (jobData->bundle && file.size == 0)
+            // Only process files that need to be copied
+            if (!file.copy)
             {
-                LOG_DETAIL_FMT(
-                    "store zero-length file %s", strZ(storagePathP(backupData->storagePrimary, manifestPathPg(file.name))));
-
-                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
-                file.reference = NULL;
-
-                manifestFileUpdate(manifest, &file);
+                // If bundling log zero-length files as stored since they will never be copied
+                if (file.size == 0 && jobData->bundle)
+                {
+                    LOG_DETAIL_FMT(
+                        "store zero-length file %s", strZ(storagePathP(backupData->storagePrimary, manifestPathPg(file.name))));
+                }
 
                 continue;
             }
@@ -1722,12 +1720,13 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                     pckWriteStrP(param, repoFile);
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
-                    pckWriteBoolP(param, jobData->delta);
                     pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
                     pckWriteStrP(param, jobData->cipherSubPass);
                 }
 
                 pckWriteStrP(param, manifestPathPg(file.name));
+                pckWriteBoolP(param, file.delta);
+                pckWriteBoolP(param, file.resume);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
