@@ -645,7 +645,7 @@ testRun(void)
                 strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel)), .linkType = storageLinkHard),
             FileOpenError,
             "raised from remote-0 shim protocol: unable to create hardlink '/home/vagrant/test/test-0/repo128/latest' to"
-                " '/home/vagrant/test/test-0/repo128/20181119-152138F': [1] Operation not permitted");
+                " '" TEST_PATH "/repo128/20181119-152138F': [1] Operation not permitted");
 
     }
 
