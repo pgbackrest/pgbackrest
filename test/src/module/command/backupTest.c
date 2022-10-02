@@ -262,7 +262,6 @@ testBackupValidateList(
     }
 
     // Check all files in manifest. Since the scan above maps from files to the manifest, any referenced files will not be checked.
-    // This is also a good place to apply rules that affect both referenced and unreferenced files.
     // -----------------------------------------------------------------------------------------------------------------------------
     for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
     {
