@@ -46,6 +46,16 @@ testRun(void)
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
+        #define TEST_MANIFEST_HEADER_BUNDLE                                                                                        \
+            "[backup]\n"                                                                                                           \
+            "backup-bundle=true\n"                                                                                                 \
+            "backup-label=null\n"                                                                                                  \
+            "backup-reference=\"\"\n"                                                                                              \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"full\"\n"
+
         #define TEST_MANIFEST_DB_90                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
@@ -802,7 +812,7 @@ testRun(void)
         // pg_wal not ignored
         TEST_ASSIGN(
             manifest,
-            manifestNewBuild(storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), false, false, false, NULL, NULL),
+            manifestNewBuild(storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), false, false, true, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -810,7 +820,7 @@ testRun(void)
         TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_HEADER_BUNDLE
                 TEST_MANIFEST_DB_13
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
@@ -1053,23 +1063,23 @@ testRun(void)
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .copy = true, .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .copy = true, .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .copy = true, .size = 4, .sizeRepo = 4,
+                .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
         }
         OBJ_NEW_END();
 
@@ -1137,13 +1147,26 @@ testRun(void)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        // Zero-length file without the copy flag which will appear to come from a bundled backup
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-bundle"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+        // Zero-length file with the copy flag which will appear to come from a non-bundled backup (so will get a reference)
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-normal"), .copy = true, .size = 0, .sizeRepo = 0,
+               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
+               .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .copy = true, .size = 4, .sizeRepo = 4,
+               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifestFileAdd(
             manifestPrior,
@@ -1151,6 +1174,17 @@ testRun(void)
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-bundle"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-normal"), .size = 0, .sizeRepo = 0,
+               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
+               .checksumSha1 = HASH_TYPE_SHA1_ZERO});
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
@@ -1169,6 +1203,8 @@ testRun(void)
                 "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
+                "pg_data/FILE0-bundle={\"size\":0,\"timestamp\":1482182860}\n"
+                "pg_data/FILE0-normal={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
                 "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\","
                     "\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,\"timestamp\":1482182860}\n"
                 "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"reference\":\"20190101-010101F\","
@@ -1190,7 +1226,7 @@ testRun(void)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
@@ -1201,7 +1237,7 @@ testRun(void)
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", .checksumPage = true, .checksumPageError = true,
                .checksumPageErrorList = jsonFromVar(varNewVarLst(checksumPageErrorList))});
@@ -1245,18 +1281,18 @@ testRun(void)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
 
@@ -1317,7 +1353,7 @@ testRun(void)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifest->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
@@ -1625,8 +1661,15 @@ testRun(void)
         TEST_TITLE("manifest validation");
 
         // Munge files to produce errors
-        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL, 0, 0);
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL, 0, 0);
+        ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        file.checksumSha1[0] = '\0';
+        file.sizeRepo = 0;
+        file.resume = true;
+        manifestFileUpdate(manifest, &file);
+
+        file = manifestFileFind(manifest, STRDEF("pg_data/base/32768/33000.32767"));
+        file.size = 0;
+        manifestFileUpdate(manifest, &file);
 
         TEST_ERROR(
             manifestValidate(manifest, false), FormatError,
@@ -1641,10 +1684,15 @@ testRun(void)
             "repo size must be > 0 for file 'pg_data/postgresql.conf'");
 
         // Undo changes made to files
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL, 0, 0);
-        manifestFileUpdate(
-            manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
-            false, NULL, 0, 0);
+        file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        TEST_RESULT_BOOL(file.resume, true, "resume is set");
+        memcpy(file.checksumSha1, "184473f470864e067ee3a22e64b47b0a1c356f29", HASH_TYPE_SHA1_SIZE_HEX + 1);
+        file.sizeRepo = 4457;
+        manifestFileUpdate(manifest, &file);
+
+        file = manifestFileFind(manifest, STRDEF("pg_data/base/32768/33000.32767"));
+        file.size = 32768;
+        manifestFileUpdate(manifest, &file);
 
         TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
 
@@ -1795,7 +1843,6 @@ testRun(void)
         TEST_TITLE("manifest getters");
 
         // ManifestFile getters
-        ManifestFile file = {0};
         TEST_ERROR(manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
         TEST_ASSIGN(file, manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION")), "manifestFileFind()");
         TEST_RESULT_STR_Z(file.name, "pg_data/PG_VERSION", "find file");
@@ -1810,10 +1857,9 @@ testRun(void)
         fileMunge.checksumSha1[0] = '\0';
         manifestFilePackUpdate(manifest, fileMungePack, &fileMunge);
 
-        TEST_RESULT_VOID(
-            manifestFileUpdate(
-                manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL, 0, 0),
-            "update file");
+        file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        file.checksumSha1[0] = '\0';
+        manifestFileUpdate(manifest, &file);
 
         // ManifestDb getters
         const ManifestDb *db = NULL;
