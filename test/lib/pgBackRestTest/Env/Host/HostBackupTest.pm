@@ -1944,7 +1944,7 @@ sub restoreCompare
     foreach my $strName ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
         # When bundling zero-length files will not have a reference
-        if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_CHECKSUM_PAGE} &&
+        if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'} &&
             $oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_SIZE} == 0)
         {
             $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REFERENCE);
