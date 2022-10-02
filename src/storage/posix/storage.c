@@ -130,18 +130,18 @@ storagePosixLinkCreate(
     ASSERT(target != NULL);
     ASSERT(linkPath != NULL);
 
+    // Create symlink
     if (param.linkType == storageLinkSym)
     {
-        // Create the symlink
         THROW_ON_SYS_ERROR_FMT(
             symlink(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath),
             strZ(target));
     }
+    // Else create hardlink
     else
     {
         ASSERT(param.linkType == storageLinkHard);
 
-        // Create the hard link
         THROW_ON_SYS_ERROR_FMT(
             link(strZ(target), strZ(linkPath)) == -1, FileOpenError, "unable to create hardlink '%s' to '%s'", strZ(linkPath),
             strZ(target));
