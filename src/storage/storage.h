@@ -7,6 +7,18 @@ Storage Interface
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
+Storage link type
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Symbolic (or soft) link
+    storageLinkSym,
+
+    // Hard link
+    storageLinkHard,
+} StorageLinkType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
@@ -240,6 +252,20 @@ typedef struct StorageRemoveParam
     storageRemove(this, fileExp, (StorageRemoveParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
+
+// Create a hard or symbolic link
+typedef struct StorageLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    StorageLinkType linkType;
+} StorageLinkCreateParam;
+
+#define storageLinkCreateP(this, target, linkPath, ...)                                                                            \
+    storageLinkCreate(this, target, linkPath, (StorageLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void storageLinkCreate(const Storage *this, const String *target, const String *linkPath, StorageLinkCreateParam param);
 
 /***********************************************************************************************************************************
 Getters/Setters

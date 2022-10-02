@@ -89,6 +89,13 @@ storageNew(
         AssertError, !storageFeature(this, storageFeatureSymLink) || storageFeature(this, storageFeaturePath),
         "path feature required");
 
+    // If link features are enabled then linkCreate must be implemented
+    CHECK(
+        AssertError,
+        (!storageFeature(this, storageFeatureSymLink) && !storageFeature(this, storageFeatureHardLink)) ||
+            interface.linkCreate != NULL,
+        "linkCreate required");
+
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
@@ -315,6 +322,35 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STORAGE_ITERATOR, result);
+}
+
+/**********************************************************************************************************************************/
+void storageLinkCreate(
+    const Storage *const this, const String *const target, const String *const linkPath, const StorageLinkCreateParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, param.linkType);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->write);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+    ASSERT(this->pub.interface.linkCreate != NULL);
+    ASSERT(
+        (param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||
+        (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink)));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        storageInterfaceLinkCreateP(storageDriver(this), target, linkPath, .linkType = param.linkType);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
