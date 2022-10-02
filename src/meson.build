@@ -100,6 +100,8 @@ src_pgbackrest = [
 	'command/archive/push/protocol.c',
 	'command/archive/push/push.c',
 	'command/backup/backup.c',
+	'command/backup/blockIncr.c',
+	'command/backup/blockMap.c',
 	'command/backup/common.c',
 	'command/backup/pageChecksum.c',
 	'command/backup/protocol.c',
