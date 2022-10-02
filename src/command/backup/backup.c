@@ -1842,9 +1842,7 @@ backupProcess(
                         const String *const linkDestination = strNewFmt(
                             "../../" MANIFEST_TARGET_PGTBLSPC "/%u", target->tablespaceId);
 
-                        THROW_ON_SYS_ERROR_FMT(
-                            symlink(strZ(linkDestination), strZ(link)) == -1, FileOpenError,
-                            "unable to create symlink '%s' to '%s'", strZ(link), strZ(linkDestination));
+                        storageLinkCreateP(storageRepoWrite(), linkDestination, link);
                     }
                 }
             }
@@ -1955,9 +1953,7 @@ backupProcess(
                         storageRepo(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
 
-                    THROW_ON_SYS_ERROR_FMT(
-                        link(strZ(linkDestination), strZ(linkName)) == -1, FileOpenError,
-                        "unable to create hardlink '%s' to '%s'", strZ(linkName), strZ(linkDestination));
+                    storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, .linkType = storageLinkHard);
                 }
                 // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
                 // recopied.

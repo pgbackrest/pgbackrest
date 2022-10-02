@@ -168,6 +168,40 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
 }
 
 /**********************************************************************************************************************************/
+static void
+storageRemoteLinkCreate(
+    THIS_VOID, const String *const target, const String *const linkPath, const StorageInterfaceLinkCreateParam param)
+{
+    THIS(StorageRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
+        FUNCTION_LOG_PARAM(STRING, target);
+        FUNCTION_LOG_PARAM(STRING, linkPath);
+        FUNCTION_LOG_PARAM(ENUM, param.linkType);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(target != NULL);
+    ASSERT(linkPath != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_LINK_CREATE);
+        PackWrite *const commandParam = protocolCommandParam(command);
+
+        pckWriteStrP(commandParam, target);
+        pckWriteStrP(commandParam, linkPath);
+        pckWriteU32P(commandParam, param.linkType);
+
+        protocolClientExecute(this->client, command, false);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 static StorageList *
 storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
@@ -427,6 +461,7 @@ static const StorageInterface storageInterfaceRemote =
     .pathRemove = storageRemotePathRemove,
     .pathSync = storageRemotePathSync,
     .remove = storageRemoteRemove,
+    .linkCreate = storageRemoteLinkCreate,
 };
 
 Storage *

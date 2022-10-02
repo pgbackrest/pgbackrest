@@ -17,6 +17,7 @@ Storage *storagePosixNewInternal(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+void storagePosixLinkCreate(THIS_VOID, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam param);
 void storagePosixPathCreate(
     THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode, StorageInterfacePathCreateParam param);
 void storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param);
