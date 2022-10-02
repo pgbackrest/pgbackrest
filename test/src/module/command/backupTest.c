@@ -74,23 +74,9 @@ testBackupValidateList(
                         ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
                         ManifestFile file = manifestFileUnpack(manifest, *filePack);
 
-                        if (file.bundleId == bundleId)
-                        {
-                            // File is part of this backup
-                            if (file.reference == NULL)
-                            {
-                                lstAdd(fileList, &filePack);
-                            }
-                            // Else file is part of a previous backup so no need to verify
-                            else
-                            {
-                                file.sizeRepo = file.size;
-                                file.bundleId = 0;
-                                file.bundleOffset = 0;
-
-                                manifestFilePackUpdate(manifest, filePack, &file);
-                            }
-                        }
+                        // File bundle is part of this backup
+                        if (file.bundleId == bundleId && file.reference == NULL)
+                            lstAdd(fileList, &filePack);
                     }
                 }
                 else
@@ -214,6 +200,26 @@ testBackupValidateList(
             case storageTypeSpecial:
                 THROW_FMT(AssertError, "unexpected special file '%s'", strZ(info.name));
         }
+    }
+
+    // Check all files in manifest. Since the scan above maps from files to the manifest, any referenced files will not be checked.
+    // -----------------------------------------------------------------------------------------------------------------------------
+    for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+    {
+        ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
+        ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+        // If compressed then set the repo-size to size so it will not be in test output. Even the same compression algorithm can
+        // give slightly different results based on the version so repo-size is not deterministic for compression.
+        if (manifestData->backupOptionCompressType != compressTypeNone)
+            file.sizeRepo = file.size;
+
+        // Bundle id/offset are too noisy so remove them. They are verified against size/checksum and listed with the files.
+        file.bundleId = 0;
+        file.bundleOffset = 0;
+
+        // Update changes to manifest file
+        manifestFilePackUpdate(manifest, filePack, &file);
     }
 
     return result;
