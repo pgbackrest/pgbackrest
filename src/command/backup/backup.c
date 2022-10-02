@@ -602,6 +602,7 @@ backupResumeClean(
                                 ASSERT(file.copy);
                                 ASSERT(file.bundleId == 0);
                                 file.resume = true;
+                                file.delta = delta;
 
                                 manifestFileUpdate(manifest, &file);
                             }
