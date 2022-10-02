@@ -1188,7 +1188,7 @@ backupJobResult(
                 // Format log progress
                 String *const logProgress = strNew();
 
-                if (bundleId != 0)
+                if (bundleId != 0 && copyResult != backupCopyResultNoOp)
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
 
                 // Store percentComplete as an integer
