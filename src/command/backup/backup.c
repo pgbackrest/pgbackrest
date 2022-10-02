@@ -594,13 +594,14 @@ backupResumeClean(
                                 removeReason = "zero size";
                             else
                             {
+                                ASSERT(file.copy);
+                                ASSERT(file.bundleId == 0);
+
                                 file.sizeRepo = fileResume.sizeRepo;
                                 memcpy(file.checksumSha1, fileResume.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
                                 file.checksumPage = fileResume.checksumPage;
                                 file.checksumPageError = fileResume.checksumPageError;
                                 file.checksumPageErrorList = fileResume.checksumPageErrorList;
-                                ASSERT(file.copy);
-                                ASSERT(file.bundleId == 0);
                                 file.resume = true;
                                 file.delta = delta;
 
@@ -1727,13 +1728,13 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
                 pckWriteStrP(param, manifestPathPg(file.name));
                 pckWriteBoolP(param, file.delta);
-                pckWriteBoolP(param, file.resume);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
                 pckWriteStrP(param, file.name);
+                pckWriteBoolP(param, file.resume);
                 pckWriteBoolP(param, file.reference != NULL);
 
                 fileTotal++;

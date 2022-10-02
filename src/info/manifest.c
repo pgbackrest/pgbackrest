@@ -911,8 +911,7 @@ manifestBuildInfo(
             ManifestFile file =
             {
                 .name = manifestName,
-                // !!!
-                .copy = !buildData->manifest->pub.data.bundle || info->size != 0,
+                .copy = true,
                 .mode = info->mode,
                 .user = info->user,
                 .group = info->group,
@@ -921,9 +920,12 @@ manifestBuildInfo(
                 .timestamp = info->timeModified,
             };
 
-            // !!!
-            if (!file.copy)
+            // When bundling zero-length files do not need to be copied
+            if (info->size == 0 && buildData->manifest->pub.data.bundle)
+            {
+                file.copy = false;
                 memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+            }
 
             // Determine if this file should be page checksummed
             if (dbPath && buildData->checksumPage)

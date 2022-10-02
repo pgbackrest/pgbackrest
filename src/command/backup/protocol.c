@@ -40,14 +40,14 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         while (!pckReadNullP(param))
         {
             BackupFile file = {.pgFile = pckReadStrP(param)};
-            file.delta = pckReadBoolP(param);
-            file.resume = pckReadBoolP(param);
+            file.pgFileDelta = pckReadBoolP(param);
             file.pgFileIgnoreMissing = pckReadBoolP(param);
             file.pgFileSize = pckReadU64P(param);
             file.pgFileCopyExactSize = pckReadBoolP(param);
             file.pgFileChecksum = pckReadStrP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
             file.manifestFile = pckReadStrP(param);
+            file.manifestFileResume = pckReadBoolP(param);
             file.manifestFileHasReference = pckReadBoolP(param);
 
             lstAdd(fileList, &file);

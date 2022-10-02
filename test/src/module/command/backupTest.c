@@ -966,7 +966,7 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .delta = true,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
@@ -998,7 +998,7 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .delta = true,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
@@ -1030,7 +1030,7 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .delta = true,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9999999,
             .pgFileCopyExactSize = true,
@@ -1062,14 +1062,14 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .delta = true,
-            .resume = true,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = STRDEF(BOGUS_STR),
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1105,14 +1105,14 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .delta = true,
-            .resume = true,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1140,14 +1140,14 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = missingFile,
-            .delta = true,
-            .resume = true,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = true,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1206,13 +1206,13 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .resume = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1328,14 +1328,14 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .delta = true,
-            .resume = true,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 8,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1364,13 +1364,13 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .resume = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1398,13 +1398,13 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
-            .resume = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("1234567890123456789012345678901234567890"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 

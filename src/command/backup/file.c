@@ -70,7 +70,7 @@ backupFile(
                 const BackupFile *const file = lstGet(fileList, fileIdx);
                 ASSERT(file->pgFile != NULL);
                 ASSERT(file->manifestFile != NULL);
-                ASSERT((!file->delta && !file->resume) || file->pgFileChecksum != NULL);
+                ASSERT((!file->pgFileDelta && !file->manifestFileResume) || file->pgFileChecksum != NULL);
 
                 BackupFileResult *const fileResult = lstAdd(
                     result, &(BackupFileResult){.manifestFile = file->manifestFile, .backupCopyResult = backupCopyResultCopy});
@@ -79,7 +79,7 @@ backupFile(
                 bool pgFileMatch = false;
 
                 // If delta then check the pg checksum
-                if (file->delta)
+                if (file->pgFileDelta)
                 {
                     // Generate checksum/size for the pg file. Only read as many bytes as passed in pgFileSize. If the file has
                     // grown since the manifest was built we don't need to consider the extra bytes since they will be replayed from
@@ -121,10 +121,8 @@ backupFile(
                         fileResult->backupCopyResult = backupCopyResultSkip;
                 }
 
-                // !!! FIX COMMENT If this is not a delta backup or it is and the file exists and the checksum from the DB matches, then also
-                // test the checksum of the file in the repo (unless it is in a prior backup) and if the checksum doesn't match,
-                // then there may be corruption in the repo, so recopy
-                if (file->resume)
+                // On resume check the manifest file
+                if (file->manifestFileResume)
                 {
                     // Resumed files should never have a reference to a prior backup
                     ASSERT(!file->manifestFileHasReference);
@@ -136,7 +134,7 @@ backupFile(
                         storageRemoveP(storageRepoWrite(), repoFile);
                     }
                     // Else if the pg file matches or is unknown because delta was not performed then check the repo file
-                    else if (!file->delta || pgFileMatch)
+                    else if (!file->pgFileDelta || pgFileMatch)
                     {
                         // Check the repo file in a try block because on error (e.g. missing or corrupt file that can't be decrypted
                         // or decompressed) we should recopy rather than ending the backup.
