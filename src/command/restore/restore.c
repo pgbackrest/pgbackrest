@@ -1265,9 +1265,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
                 {
                     LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
 
-                    THROW_ON_SYS_ERROR_FMT(
-                        symlink(strZ(link->destination), strZ(pgPath)) == -1, FileOpenError,
-                        "unable to create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
+                    storageLinkCreateP(storagePgWrite(), link->destination, pgPath);
                     restoreCleanOwnership(
                         pgPath, link->user, rootReplaceUser, link->group, rootReplaceGroup, userId(), groupId(), true);
                 }
@@ -1305,9 +1303,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             {
                 LOG_DETAIL_FMT("create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
 
-                THROW_ON_SYS_ERROR_FMT(
-                    symlink(strZ(link->destination), strZ(pgPath)) == -1, FileOpenError,
-                    "unable to create symlink '%s' to '%s'", strZ(pgPath), strZ(link->destination));
+                storageLinkCreateP(storagePgWrite(), link->destination, pgPath);
                 restoreCleanOwnership(
                     pgPath, link->user, rootReplaceUser, link->group, rootReplaceGroup, userId(), groupId(), true);
             }

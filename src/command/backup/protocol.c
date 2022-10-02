@@ -35,7 +35,6 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         const unsigned int blockIncrReference = blockIncr ? (unsigned int)pckReadU64P(param) : 0;
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
-        const bool delta = pckReadBoolP(param);
         const CipherType cipherType = (CipherType)pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
 
@@ -45,6 +44,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         while (!pckReadNullP(param))
         {
             BackupFile file = {.pgFile = pckReadStrP(param)};
+            file.pgFileDelta = pckReadBoolP(param);
             file.pgFileIgnoreMissing = pckReadBoolP(param);
             file.pgFileSize = pckReadU64P(param);
             file.pgFileCopyExactSize = pckReadBoolP(param);
@@ -63,6 +63,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             }
 
             file.manifestFile = pckReadStrP(param);
+            file.manifestFileResume = pckReadBoolP(param);
             file.manifestFileHasReference = pckReadBoolP(param);
 
             lstAdd(fileList, &file);
@@ -70,7 +71,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Backup file
         const List *const result = backupFile(
-            repoFile, bundleId, blockIncr, blockIncrSize, blockIncrReference, repoFileCompressType, repoFileCompressLevel, delta,
+            repoFile, bundleId, blockIncr, blockIncrSize, blockIncrReference, repoFileCompressType, repoFileCompressLevel,
             cipherType, cipherPass, fileList);
 
         // Return result

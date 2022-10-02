@@ -861,6 +861,50 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("storageLinkCreate()"))
+    {
+        StorageInfo info = {0};
+        const String *backupLabel = STRDEF("20181119-152138F");
+        const String *latestLabel = STRDEF("latest");
+        int invalidLinkType = 9;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create soft link to BACKUPLABEL");
+
+        TEST_RESULT_VOID(storagePathCreateP(storageTest, backupLabel), "create path to link to");
+        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel), "create symlink");
+        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
+        TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
+
+        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = storageLinkSym), "create symlink");
+        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
+        TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("hardlink success/fail");
+
+        const String *emptyFile = STRDEF(TEST_PATH "/test.empty");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), "put empty file");
+        TEST_RESULT_VOID(
+            storageLinkCreateP(storageTest, emptyFile, latestLabel, .linkType = storageLinkHard), "hardlink to empty file");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, emptyFile), "remove empty file");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove latest label");
+
+        TEST_ERROR(
+            storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = storageLinkHard), FileOpenError,
+            "unable to create hardlink \'latest\' to \'20181119-152138F\': [1] Operation not permitted");
+        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = true), "get link info");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+        TEST_RESULT_VOID(storagePathRemoveP(storageTest, backupLabel), "remove backup path");
+        TEST_ERROR(
+            storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = invalidLinkType), AssertError,
+            "assertion '(param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||"
+            " (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink))' failed");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("storageNewRead()"))
     {
         StorageRead *file = NULL;

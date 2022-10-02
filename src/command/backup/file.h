@@ -27,6 +27,7 @@ Functions
 typedef struct BackupFile
 {
     const String *pgFile;                                           // Pg file to backup
+    bool pgFileDelta;                                               // Checksum pg file before copying
     bool pgFileIgnoreMissing;                                       // Ignore missing pg file
     uint64_t pgFileSize;                                            // Expected pg file size
     bool pgFileCopyExactSize;                                       // Copy only pg expected size
@@ -36,6 +37,7 @@ typedef struct BackupFile
     uint64_t blockIncrMapOffset;                                    // Offset of block incremental map
     uint64_t blockIncrMapSize;                                      // Size of block incremental map
     const String *manifestFile;                                     // Repo file
+    bool manifestFileResume;                                        // Checksum repo file before copying
     bool manifestFileHasReference;                                  // Reference to prior backup, if any
 } BackupFile;
 
@@ -53,7 +55,7 @@ typedef struct BackupFileResult
 
 List *backupFile(
     const String *repoFile, uint64_t bundleId, bool blockIncr, size_t blockIncrSize, unsigned int blockIncrReference,
-    CompressType repoFileCompressType, int repoFileCompressLevel, bool delta, CipherType cipherType, const String *cipherPass,
+    CompressType repoFileCompressType, int repoFileCompressLevel, CipherType cipherType, const String *cipherPass,
     const List *fileList);
 
 #endif

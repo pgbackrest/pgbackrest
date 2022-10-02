@@ -100,6 +100,9 @@ File type
 typedef struct ManifestFile
 {
     const String *name;                                             // File name (must be first member in struct)
+    bool copy;                                                      // Should the file be copied (backup only)?
+    bool delta;                                                     // Verify checksum in PGDATA before copying (backup only)?
+    bool resume;                                                    // Is the file being resumed (backup only)?
     bool checksumPage:1;                                            // Does this file have page checksums?
     bool checksumPageError:1;                                       // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
@@ -335,10 +338,7 @@ manifestFileTotal(const Manifest *const this)
 }
 
 // Update a file with new data
-void manifestFileUpdate(
-    Manifest *this, const String *name, uint64_t size, uint64_t sizeRepo, const char *checksumSha1, const Variant *reference,
-    bool checksumPage, bool checksumPageError, const String *checksumPageErrorList, uint64_t bundleId, uint64_t bundleOffset,
-    uint64_t blockIncrMapSize);
+void manifestFileUpdate(Manifest *const this, const ManifestFile *file);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters

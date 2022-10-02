@@ -97,6 +97,9 @@ typedef enum
     manifestFilePackFlagReference,
     manifestFilePackFlagBundle,
     manifestFilePackFlagBlockIncr,
+    manifestFilePackFlagCopy,
+    manifestFilePackFlagDelta,
+    manifestFilePackFlagResume,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
     manifestFilePackFlagChecksumPageErrorList,
@@ -124,6 +127,15 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Flags
     uint64_t flag = 0;
+
+    if (file->copy)
+        flag |= 1 << manifestFilePackFlagCopy;
+
+    if (file->delta)
+        flag |= 1 << manifestFilePackFlagDelta;
+
+    if (file->resume)
+        flag |= 1 << manifestFilePackFlagResume;
 
     if (file->checksumPage)
         flag |= 1 << manifestFilePackFlagChecksumPage;
@@ -257,6 +269,10 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // Flags
     const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+
+    result.copy = flag & (1 << manifestFilePackFlagCopy) ? true : false;
+    result.delta = flag & (1 << manifestFilePackFlagDelta) ? true : false;
+    result.resume = flag & (1 << manifestFilePackFlagResume) ? true : false;
 
     // Size
     result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
@@ -909,6 +925,7 @@ manifestBuildInfo(
             ManifestFile file =
             {
                 .name = manifestName,
+                .copy = true,
                 .mode = info->mode,
                 .user = info->user,
                 .group = info->group,
@@ -916,6 +933,13 @@ manifestBuildInfo(
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
+
+            // When bundling zero-length files do not need to be copied
+            if (info->size == 0 && buildData->manifest->pub.data.bundle)
+            {
+                file.copy = false;
+                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+            }
 
             // Determine if this file should be page checksummed
             if (dbPath && buildData->checksumPage)
@@ -1497,28 +1521,34 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->pub.fileList); fileIdx++)
         {
-            const ManifestFile file = manifestFile(this, fileIdx);
+            ManifestFile file = manifestFile(this, fileIdx);
 
             // Check if prior file can be used
             if (manifestFileExists(manifestPrior, file.name))
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                if (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
+                if (file.copy &&
+                    (filePrior.blockIncrMapSize > 0 || // {uncovered - !!!}
+                     (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))))
                 {
-                    manifestFileUpdate(
-                        this, file.name, file.size, filePrior.sizeRepo, filePrior.checksumSha1,
-                        VARSTR(filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel),
-                        filePrior.checksumPage, filePrior.checksumPageError, filePrior.checksumPageErrorList,
-                        filePrior.bundleId, filePrior.bundleOffset, filePrior.blockIncrMapSize);
-                }
-                else if (this->pub.data.blockIncr && filePrior.blockIncrMapSize) // {uncovered - !!!}
-                {
-                    manifestFileUpdate( // {uncovered - !!!}
-                        this, file.name, file.size, filePrior.sizeRepo, NULL, // {uncovered - !!!}
-                        VARSTR(filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel), // {uncovered - !!!}
-                        file.checksumPage, file.checksumPageError, file.checksumPageErrorList, // {uncovered - !!!}
-                        filePrior.bundleId, filePrior.bundleOffset, filePrior.blockIncrMapSize); // {uncovered - !!!}
+                    file.sizeRepo = filePrior.sizeRepo;
+                    memcpy(file.checksumSha1, filePrior.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                    file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
+                    file.checksumPage = filePrior.checksumPage;
+                    file.checksumPageError = filePrior.checksumPageError;
+                    file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                    file.bundleId = filePrior.bundleId;
+                    file.bundleOffset = filePrior.bundleOffset;
+                    file.blockIncrMapSize = filePrior.blockIncrMapSize;
+
+                    // Perform delta if the file size is not zero
+                    file.delta = delta && file.size != 0;
+
+                    // Copy if the file has changed or delta
+                    file.copy = (file.size != 0 && file.timestamp != filePrior.timestamp) || file.delta;
+
+                    manifestFileUpdate(this, &file);
                 }
             }
         }
@@ -2815,68 +2845,23 @@ manifestFileRemove(const Manifest *this, const String *name)
 }
 
 void
-manifestFileUpdate(
-    Manifest *const this, const String *const name, const uint64_t size, const uint64_t sizeRepo, const char *const checksumSha1,
-    const Variant *const reference, const bool checksumPage, const bool checksumPageError,
-    const String *const checksumPageErrorList, const uint64_t bundleId, const uint64_t bundleOffset, uint64_t blockIncrMapSize)
+manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(UINT64, size);
-        FUNCTION_TEST_PARAM(UINT64, sizeRepo);
-        FUNCTION_TEST_PARAM(STRINGZ, checksumSha1);
-        FUNCTION_TEST_PARAM(VARIANT, reference);
-        FUNCTION_TEST_PARAM(BOOL, checksumPage);
-        FUNCTION_TEST_PARAM(BOOL, checksumPageError);
-        FUNCTION_TEST_PARAM(STRING, checksumPageErrorList);
-        FUNCTION_TEST_PARAM(UINT64, bundleId);
-        FUNCTION_TEST_PARAM(UINT64, bundleOffset);
-        FUNCTION_TEST_PARAM(UINT64, blockIncrMapSize);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(name != NULL);
+    ASSERT(file != NULL);
     ASSERT(
-        (!checksumPage && !checksumPageError && checksumPageErrorList == NULL) ||
-        (checksumPage && !checksumPageError && checksumPageErrorList == NULL) || (checksumPage && checksumPageError));
+        (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && file->checksumPageError));
+    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
 
-    ManifestFilePack **const filePack = manifestFilePackFindInternal(this, name);
-    ManifestFile file = manifestFileUnpack(this, *filePack);
-
-    // Update reference if set
-    if (reference != NULL)
-    {
-        if (varStr(reference) == NULL)
-            file.reference = NULL;
-        else
-            file.reference = varStr(reference);
-    }
-
-    // Update checksum if set
-    if (checksumSha1 != NULL)
-    {
-        ASSERT(strlen(checksumSha1) == HASH_TYPE_SHA1_SIZE_HEX);
-        memcpy(file.checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
-    }
-
-    // Update repo size
-    file.size = size;
-    file.sizeRepo = sizeRepo;
-
-    // Update checksum page info
-    file.checksumPage = checksumPage;
-    file.checksumPageError = checksumPageError;
-    file.checksumPageErrorList = checksumPageErrorList;
-
-    // Update bundle info
-    file.bundleId = bundleId;
-    file.bundleOffset = bundleOffset;
-
-    // Update block incremental info
-    file.blockIncrMapSize = blockIncrMapSize;
-
-    manifestFilePackUpdate(this, filePack, &file);
+    ManifestFilePack **const filePack = manifestFilePackFindInternal(this, file->name);
+    manifestFilePackUpdate(this, filePack, file);
 
     FUNCTION_TEST_RETURN_VOID();
 }

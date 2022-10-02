@@ -73,8 +73,10 @@ testBackupValidateList(
                     for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
                     {
                         ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
+                        ManifestFile file = manifestFileUnpack(manifest, *filePack);
 
-                        if (manifestFileUnpack(manifest, *filePack).bundleId == bundleId)
+                        // File bundle is part of this backup
+                        if (file.bundleId == bundleId && file.reference == NULL)
                             lstAdd(fileList, &filePack);
                     }
                 }
@@ -195,9 +197,7 @@ testBackupValidateList(
 
                     strCatFmt(result, ", s=%" PRIu64, size);
 
-                    // Test size and repo-size. If compressed then set the repo-size to size so it will not be in test output. Even
-                    // the same compression algorithm can give slightly different results based on the version so repo-size is not
-                    // deterministic for compression.
+                    // Test size and repo-size
                     // -------------------------------------------------------------------------------------------------------------
                     if (size != file.size)
                         THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
@@ -208,14 +208,6 @@ testBackupValidateList(
                         if (info.size != file.sizeRepo)
                             THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
                     }
-
-                    if (manifestData->backupOptionCompressType != compressTypeNone || file.blockIncrMapSize != 0)
-                        file.sizeRepo = file.size;
-
-                    // Bundle id/offset are too noisy so remove them. They are checked size/checksum and listed with the files.
-                    // -------------------------------------------------------------------------------------------------------------
-                    file.bundleId = 0;
-                    file.bundleOffset = 0;
 
                     // pg_control and WAL headers have different checksums depending on cpu architecture so remove the checksum from
                     // the test output.
@@ -267,6 +259,28 @@ testBackupValidateList(
             case storageTypeSpecial:
                 THROW_FMT(AssertError, "unexpected special file '%s'", strZ(info.name));
         }
+    }
+
+    // Check all files in manifest. Since the scan above maps from files to the manifest, any referenced files will not be checked.
+    // This is also a good place to apply rules that affect both referenced and unreferenced files.
+    // -----------------------------------------------------------------------------------------------------------------------------
+    for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+    {
+        ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
+        ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+        // If compressed or block incremental then set the repo-size to size so it will not be in test output. Even the same
+        // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
+        // compression. Block incremental maps increase repo-size in a non-obvious way.
+        if (manifestData->backupOptionCompressType != compressTypeNone || file.blockIncrMapSize != 0)
+            file.sizeRepo = file.size;
+
+        // Bundle id/offset are too noisy so remove them. They are verified against size/checksum and listed with the files.
+        file.bundleId = 0;
+        file.bundleOffset = 0;
+
+        // Update changes to manifest file
+        manifestFilePackUpdate(manifest, filePack, &file);
     }
 
     return result;
@@ -1143,7 +1157,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, false, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "pg file missing, ignoreMissing=true, no delta");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy/repo size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
@@ -1168,7 +1182,7 @@ testRun(void)
         lstAdd(fileList, &file);
 
         TEST_ERROR(
-            backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, false, cipherTypeNone, NULL, fileList), FileMissingError,
+            backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), FileMissingError,
             "unable to open missing file '" TEST_PATH "/pg/missing' for read");
 
         // Create a pg file to backup
@@ -1205,7 +1219,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, false, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "file checksummed with pageChecksum enabled");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=pgFile size");
@@ -1236,7 +1250,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, false, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "backup file");
         TEST_RESULT_UINT(result.copySize, 12, "copy size");
         TEST_RESULT_UINT(result.repoSize, 12, "repo size");
@@ -1253,6 +1267,7 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
@@ -1268,7 +1283,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, true, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "file in db and repo, checksum equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 0, "repo size not set since already exists in repo");
@@ -1285,6 +1300,7 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
@@ -1300,7 +1316,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, true, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "file in db and repo, pg checksum not equal, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -1317,6 +1333,7 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9999999,
             .pgFileCopyExactSize = true,
@@ -1332,7 +1349,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, true, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "db & repo file, pg checksum same, pg size different, no ignoreMissing, no pageChecksum, delta, hasReference");
         TEST_RESULT_UINT(result.copySize, 12, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 12, "repo=pgFile size");
@@ -1349,12 +1366,14 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = STRDEF(BOGUS_STR),
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1367,7 +1386,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, true, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "backup 9 bytes of pgfile to file to resume in repo");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -1391,12 +1410,14 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1408,7 +1429,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, true, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
         TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
@@ -1425,12 +1446,14 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = missingFile,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = true,
             .pgFileSize = 9,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1439,7 +1462,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, true, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "file in repo only, checksum in repo equal, ignoreMissing=true, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=0 size");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultSkip, "skip file");
@@ -1472,7 +1495,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeGz, 3, false, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeGz, 3, cipherTypeNone, NULL, fileList), 0),
             "pg file exists, no checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 29, "repo compress size");
@@ -1497,6 +1520,7 @@ testRun(void)
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1505,7 +1529,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeGz, 3, false, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeGz, 3, cipherTypeNone, NULL, fileList), 0),
             "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
         TEST_RESULT_UINT(result.repoSize, 0, "repo size not calculated");
@@ -1543,7 +1567,7 @@ testRun(void)
         TEST_ASSIGN(
             result,
             *(BackupFileResult *)lstGet(
-                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, false, cipherTypeNone, NULL, fileList), 0),
+                backupFile(repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
             "zero-sized pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize + result.repoSize, 0, "copy=repo=pgFile size 0");
         TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
@@ -1596,8 +1620,7 @@ testRun(void)
             result,
             *(BackupFileResult *)lstGet(
                 backupFile(
-                    repoFile, 0, false, 0, 0, compressTypeNone, 1, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList),
-                0),
+                    repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg file exists, no repo file, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1616,12 +1639,14 @@ testRun(void)
         file = (BackupFile)
         {
             .pgFile = pgFile,
+            .pgFileDelta = true,
             .pgFileIgnoreMissing = false,
             .pgFileSize = 8,
             .pgFileCopyExactSize = true,
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1632,8 +1657,7 @@ testRun(void)
             result,
             *(BackupFileResult *)lstGet(
                 backupFile(
-                    repoFile, 0, false, 0, 0, compressTypeNone, 1, true, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList),
-                0),
+                    repoFile, 0, false, 0, 0, compressTypeNone, 1, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 8, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1658,6 +1682,7 @@ testRun(void)
             .pgFileChecksum = STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1667,8 +1692,7 @@ testRun(void)
             result,
             *(BackupFileResult *)lstGet(
                 backupFile(
-                    repoFile, 0, false, 0, 0, compressTypeNone, 0, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList),
-                0),
+                    repoFile, 0, false, 0, 0, compressTypeNone, 0, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "pg and repo file exists, checksum mismatch, no ignoreMissing, no pageChecksum, no delta, no hasReference");
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
         TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
@@ -1693,6 +1717,7 @@ testRun(void)
             .pgFileChecksum = STRDEF("1234567890123456789012345678901234567890"),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
 
@@ -1702,8 +1727,7 @@ testRun(void)
             result,
             *(BackupFileResult *)lstGet(
                 backupFile(
-                    repoFile, 0, false, 0, 0, compressTypeNone, 0, false, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList),
-                0),
+                    repoFile, 0, false, 0, 0, compressTypeNone, 0, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
             "backup file");
 
         TEST_RESULT_UINT(result.copySize, 9, "copy size set");
@@ -3495,6 +3519,9 @@ testRun(void)
             cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
             cfgOptionSet(cfgOptRepoBundleLimit, cfgSourceParam, VARINT64(PG_PAGE_SIZE_DEFAULT));
 
+            // Zero-length file to be stored
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero", .timeModified = backupTimeStart);
+
             // Zeroed file which passes page checksums
             Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
@@ -3521,6 +3548,7 @@ testRun(void)
                 "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   INFO: check archive for segment 0000000105DB8EB000000000\n"
+                "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/zero\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/stuff.conf (bundle 1/0, 12B, [PCT]) checksum [SHA1]\n"
@@ -3538,7 +3566,7 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB8EB000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
                 "P00   INFO: new backup label = 20191030-014640F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 13");
+                "P00   INFO: full backup size = [SIZE], file total = 14");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3591,6 +3619,7 @@ testRun(void)
                     ",\"timestamp\":1500000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1572400002}\n"
+                "pg_data/zero={\"size\":0,\"timestamp\":1572400000}\n"
                 "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"size\":0,\"timestamp\":1572200000}\n"
                 "\n"
                 "[target:link]\n"
@@ -3611,15 +3640,94 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 11 full backup with block incr");
+        TEST_TITLE("online 11 diff backup with bundles");
 
-        backupTimeStart = BACKUP_EPOCH + 2800000;
+        backupTimeStart = BACKUP_EPOCH + 2600000;
 
         {
             // Remove old pg data
             HRN_STORAGE_PATH_REMOVE(storageTest, "pg1-data", .recurse = true);
             HRN_STORAGE_PATH_REMOVE(storageTest, "pg1-tblspc", .recurse = true);
             HRN_STORAGE_REMOVE(storageTest, "pg1");
+
+            // Update pg_control
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
+
+            // Update version
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
+
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
+            hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+            hrnCfgArgRawBool(argList, cfgOptDelta, true);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Zero-length file to be stored
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero", .timeModified = backupTimeStart);
+
+            // Run backup
+            testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: last backup label = 20191030-014640F, version = 2.42dev\n"
+                "P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from 20191030-014640F\n"
+                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DBBF8000000000, lsn = 5dbbf80/0\n"
+                "P00   INFO: check archive for segment 0000000105DBBF8000000000\n"
+                "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/zero\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P00 DETAIL: reference pg_data/PG_VERSION to 20191030-014640F\n"
+                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DBBF8000000001, lsn = 5dbbf80/300000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00   INFO: check archive for segment(s) 0000000105DBBF8000000000:0000000105DBBF8000000001\n"
+                "P00   INFO: new backup label = 20191030-014640F_20191101-092000D\n"
+                "P00   INFO: diff backup size = [SIZE], file total = 5");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ". {link, d=20191030-014640F_20191101-092000D}\n"
+                "bundle {path}\n"
+                "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
+                "pg_data {path}\n"
+                "pg_data/backup_label.gz {file, s=17}\n"
+                "pg_data/tablespace_map.gz {file, s=19}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191030-014640F\""
+                    ",\"size\":2,\"timestamp\":1572600000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1572600002}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572600000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                    ",\"timestamp\":1572600002}\n"
+                "pg_data/zero={\"size\":0,\"timestamp\":1572600000}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/global={}\n",
+                "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 full backup with block incr");
+
+        backupTimeStart = BACKUP_EPOCH + 2800000;
+
+        {
+            // Remove old pg data
+            HRN_STORAGE_PATH_REMOVE(storageTest, "pg1", .recurse = true);
 
             // Update pg_control
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
@@ -3720,8 +3828,6 @@ testRun(void)
                 "pg_data/base/1={}\n"
                 "pg_data/global={}\n",
                 "compare file list");
-
-            HRN_STORAGE_REMOVE(storagePgWrite(), "pg.log"); // !!! NEED TO FIX THIS FOR DIFF
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3761,13 +3867,14 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (32KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
+                "P00 DETAIL: reference pg_data/pg.log to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
                 "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 5");
+                "P00   INFO: diff backup size = [SIZE], file total = 6");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3792,6 +3899,8 @@ testRun(void)
                 "pg_data/base/1/2={\"bims\":97,\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"size\":32768"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1573000000}\n"
+                "pg_data/pg.log={\"bims\":48,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\""
+                    ",\"reference\":\"20191103-165320F\",\"size\":8193,\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573000002}\n"
                 "\n"
