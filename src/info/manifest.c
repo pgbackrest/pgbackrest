@@ -262,9 +262,9 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     // Flags
     const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
-    result.copy = flag & (1 << manifestFilePackFlagCopy) ? true : false;
-    result.delta = flag & (1 << manifestFilePackFlagDelta) ? true : false;
-    result.resume = flag & (1 << manifestFilePackFlagResume) ? true : false;
+    result.copy = (flag >> manifestFilePackFlagCopy) & 1;
+    result.delta = (flag >> manifestFilePackFlagDelta) & 1;
+    result.resume = (flag >> manifestFilePackFlagResume) & 1;
 
     // Size
     result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
@@ -274,7 +274,7 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
         manifestPackBaseTime - (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX));
 
     // Checksum page
-    result.checksumPage = flag & (1 << manifestFilePackFlagChecksumPage) ? true : false;
+    result.checksumPage = (flag >> manifestFilePackFlagChecksumPage) & 1;
 
     // SHA1 checksum
     memcpy(result.checksumSha1, (const uint8_t *)filePack + bufferPos, HASH_TYPE_SHA1_SIZE_HEX + 1);
