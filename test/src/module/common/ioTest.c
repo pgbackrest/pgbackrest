@@ -625,7 +625,6 @@ testRun(void)
         read = ioBufferReadNewOpen(buffer);
 
         TEST_ERROR(ioReadVarIntU64(read), FormatError, "unterminated base-128 integer");
-
     }
 
     // *****************************************************************************************************************************
