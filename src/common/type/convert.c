@@ -603,30 +603,35 @@ cvtUInt64ToVarInt128(uint64_t value, uint8_t *const buffer, size_t *const buffer
 }
 
 uint64_t
-cvtUInt64FromVarInt128(const uint8_t *const value, size_t *const valuePos)
+cvtUInt64FromVarInt128(const uint8_t *const buffer, size_t *const bufferPos, const size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, value);
-        FUNCTION_TEST_PARAM_P(UINT64, valuePos);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM_P(SIZE, bufferPos);
+        FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
-    ASSERT(value != NULL);
-    ASSERT(valuePos != NULL);
+    ASSERT(buffer != NULL);
+    ASSERT(bufferPos != NULL);
 
     // Decode all bytes
     uint64_t result = 0;
     uint8_t byte;
 
-    for (unsigned int valueIdx = 0; valueIdx < CVT_VARINT128_BUFFER_SIZE; valueIdx++)
+    for (unsigned int bufferIdx = 0; bufferIdx < CVT_VARINT128_BUFFER_SIZE; bufferIdx++)
     {
+        // Error if the buffer position is beyond the buffer size
+        if (*bufferPos >= bufferSize)
+            THROW(FormatError, "buffer position is beyond buffer size");
+
         // Get the next encoded byte
-        byte = value[*valuePos];
+        byte = buffer[*bufferPos];
 
         // Shift the lower order 7 encoded bits into the uint64 in reverse order
-        result |= (uint64_t)(byte & 0x7f) << (7 * valueIdx);
+        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
 
-        // Increment value position to indicate that the byte has been processed
-        (*valuePos)++;
+        // Increment buffer position to indicate that the byte has been processed
+        (*bufferPos)++;
 
         // Done if the high order bit is not set to indicate more data
         if (byte < 0x80)
@@ -634,7 +639,7 @@ cvtUInt64FromVarInt128(const uint8_t *const value, size_t *const valuePos)
     }
 
     // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
-    // corrupton in the data stream.
+    // corruption in the data stream.
     if (byte >= 0x80)
         THROW(FormatError, "unterminated varint-128 integer");
 
