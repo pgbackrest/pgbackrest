@@ -102,136 +102,140 @@ For manifest:
     - Size of map to separate it from the block data (but map size will be included in repo-size)
         - This will indicate that a file was stored with block level incr.
 */
-
-    // If still accumulating data in the buffer
-    if (!this->done && bufUsed(this->block) < this->blockSize)
+    // Loop until the input is consumed or there is output
+    do
     {
-        // If all input can be copied
-        if (bufUsed(input) - this->inputOffset <= bufRemains(this->block))
+        // If still accumulating data in the buffer
+        if (!this->done && bufUsed(this->block) < this->blockSize)
         {
-            // fprintf(stdout, "!!!WRITE ALL %zu", bufUsed(input) - this->inputOffset);
-            bufCatSub(this->block, input, this->inputOffset, bufUsed(input) - this->inputOffset);
-            this->inputOffset = 0;
-
-            // Same input no longer required
-            this->inputSame = false;
-        }
-        // Else only part of the input can be copied
-        else
-        {
-            const size_t copySize = bufRemains(this->block);
-
-            bufCatSub(this->block, input, this->inputOffset, bufRemains(this->block));
-            this->inputOffset += copySize;
-
-            // The same input will be needed again to copy the rest
-            this->inputSame = true;
-        }
-    }
-
-    // If done or block is full
-    if (this->done || bufUsed(this->block) == this->blockSize)
-    {
-        if (bufUsed(this->blockOut) == 0)
-        {
-            // If the file is smaller than a single block there is no need to store as a block or create a map
-            const bool map = this->blockNo > 0 || bufUsed(this->block) == this->blockSize;
-
-            if (bufUsed(this->block) > 0)
+            // If all input can be copied
+            if (bufUsed(input) - this->inputOffset <= bufRemains(this->block))
             {
-                MEM_CONTEXT_TEMP_BEGIN()
-                {
-                    // Get block checksum
-                    const Buffer *const checksum = cryptoHashOne(hashTypeSha1, this->block);
+                bufCatSub(this->block, input, this->inputOffset, bufUsed(input) - this->inputOffset);
+                this->inputOffset = 0;
 
-                    // Does the block exist in the input map?
-                    const BlockMapItem *const blockMapItemIn =
-                        map && this->blockMapIn != NULL && this->blockNo < blockMapSize(this->blockMapIn) ?
-                            blockMapGet(this->blockMapIn, this->blockNo) : NULL;
-
-                    // Write block
-                    if (blockMapItemIn == NULL || memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
-                    {
-                        IoWrite *const write = ioBufferWriteNew(this->blockOut);
-                        ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
-                        // !!! ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
-                        // !!! ENCRYPT FILTER GOES HERE
-
-                        ioWriteOpen(write);
-                        ioWrite(write, this->block);
-                        ioWriteClose(write);
-
-                        // Write to block map
-                        if (map)
-                        {
-                            // ASSERT(this->blockNo == 0 || this->blockOffset > 0); !!! WHY DOESN'T THIS WORK?
-
-                            BlockMapItem blockMapItem =
-                            {
-                                .reference = this->reference,
-                                .bundleId = this->bundleId,
-                                .offset = this->blockOffset,
-                                .size = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE)),
-                            };
-
-                            memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
-                            blockMapAdd(this->blockMapOut, &blockMapItem);
-
-                            this->blockOffset += blockMapItem.size;
-                        }
-                    }
-                    else
-                    {
-                        blockMapAdd(this->blockMapOut, blockMapItemIn);
-                        bufUsedZero(this->block);
-                    }
-
-                    this->blockNo++;
-                }
-                MEM_CONTEXT_TEMP_END();
+                // Same input no longer required
+                this->inputSame = false;
             }
-
-            if (this->done && map)
-            {
-                // Size of block output before starting to write the map
-                const size_t blockOutBegin = bufUsed(this->blockOut);
-
-                IoWrite *const write = ioBufferWriteNew(this->blockOut);
-                // !!! ENCRYPT FILTER WOULD GO HERE
-                ioWriteOpen(write);
-
-                blockMapWrite(this->blockMapOut, write);
-
-                // Close the write and get total bytes written for the map
-                ioWriteClose(write);
-                this->blockMapOutSize = bufUsed(this->blockOut) - blockOutBegin;
-            }
-        }
-
-        // Copy to output buffer
-        const size_t blockOutSize = bufUsed(this->blockOut) - this->blockOutOffset;
-
-        if (blockOutSize > 0)
-        {
-            if (bufRemains(output) >= blockOutSize)
-            {
-                bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
-                bufUsedZero(this->blockOut);
-                bufUsedZero(this->block);
-
-                this->blockOutOffset = 0;
-                this->inputSame = this->inputOffset != 0;
-            }
+            // Else only part of the input can be copied
             else
             {
-                const size_t blockOutSize = bufRemains(output);
-                bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
+                const size_t copySize = bufRemains(this->block);
 
-                this->blockOutOffset += blockOutSize;
+                bufCatSub(this->block, input, this->inputOffset, bufRemains(this->block));
+                this->inputOffset += copySize;
+
+                // The same input will be needed again to copy the rest
                 this->inputSame = true;
             }
         }
+
+        // If done or block is full
+        if (this->done || bufUsed(this->block) == this->blockSize)
+        {
+            if (bufUsed(this->blockOut) == 0)
+            {
+                // If the file is smaller than a single block there is no need to store as a block or create a map
+                const bool map = this->blockNo > 0 || bufUsed(this->block) == this->blockSize;
+
+                if (bufUsed(this->block) > 0)
+                {
+                    MEM_CONTEXT_TEMP_BEGIN()
+                    {
+                        // Get block checksum
+                        const Buffer *const checksum = cryptoHashOne(hashTypeSha1, this->block);
+
+                        // Does the block exist in the input map?
+                        const BlockMapItem *const blockMapItemIn =
+                            map && this->blockMapIn != NULL && this->blockNo < blockMapSize(this->blockMapIn) ?
+                                blockMapGet(this->blockMapIn, this->blockNo) : NULL;
+
+                        // Write block
+                        if (blockMapItemIn == NULL ||
+                            memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
+                        {
+                            IoWrite *const write = ioBufferWriteNew(this->blockOut);
+                            ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
+                            // !!! ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
+                            // !!! ENCRYPT FILTER GOES HERE
+
+                            ioWriteOpen(write);
+                            ioWrite(write, this->block);
+                            ioWriteClose(write);
+
+                            // Write to block map
+                            if (map)
+                            {
+                                // ASSERT(this->blockNo == 0 || this->blockOffset > 0); !!! WHY DOESN'T THIS WORK?
+
+                                BlockMapItem blockMapItem =
+                                {
+                                    .reference = this->reference,
+                                    .bundleId = this->bundleId,
+                                    .offset = this->blockOffset,
+                                    .size = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE)),
+                                };
+
+                                memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
+                                blockMapAdd(this->blockMapOut, &blockMapItem);
+
+                                this->blockOffset += blockMapItem.size;
+                            }
+                        }
+                        else
+                        {
+                            blockMapAdd(this->blockMapOut, blockMapItemIn);
+                            bufUsedZero(this->block);
+                        }
+
+                        this->blockNo++;
+                    }
+                    MEM_CONTEXT_TEMP_END();
+                }
+
+                if (this->done && map)
+                {
+                    // Size of block output before starting to write the map
+                    const size_t blockOutBegin = bufUsed(this->blockOut);
+
+                    IoWrite *const write = ioBufferWriteNew(this->blockOut);
+                    // !!! ENCRYPT FILTER WOULD GO HERE
+                    ioWriteOpen(write);
+
+                    blockMapWrite(this->blockMapOut, write);
+
+                    // Close the write and get total bytes written for the map
+                    ioWriteClose(write);
+                    this->blockMapOutSize = bufUsed(this->blockOut) - blockOutBegin;
+                }
+            }
+
+            // Copy to output buffer
+            const size_t blockOutSize = bufUsed(this->blockOut) - this->blockOutOffset;
+
+            if (blockOutSize > 0)
+            {
+                if (bufRemains(output) >= blockOutSize)
+                {
+                    bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
+                    bufUsedZero(this->blockOut);
+                    bufUsedZero(this->block);
+
+                    this->blockOutOffset = 0;
+                    this->inputSame = this->inputOffset != 0;
+                }
+                else
+                {
+                    const size_t blockOutSize = bufRemains(output);
+                    bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
+
+                    this->blockOutOffset += blockOutSize;
+                    this->inputSame = true;
+                }
+            }
+        }
     }
+    while (this->inputSame && bufEmpty(output));
 
     FUNCTION_LOG_RETURN_VOID();
 }
