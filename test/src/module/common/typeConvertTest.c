@@ -224,7 +224,10 @@ testRun(void)
         TEST_RESULT_UINT(bufferPos, 10, "check buffer position");
 
         bufferPos = 0;
-        TEST_RESULT_UINT(cvtUInt64FromVarInt128(buffer, &bufferPos), 0xFFFFFFFFFFFFFFFF, "to uint64");
+        TEST_ERROR(cvtUInt64FromVarInt128(buffer, &bufferPos, 1), FormatError, "buffer position is beyond buffer size");
+
+        bufferPos = 0;
+        TEST_RESULT_UINT(cvtUInt64FromVarInt128(buffer, &bufferPos, sizeof(buffer)), 0xFFFFFFFFFFFFFFFF, "to uint64");
         TEST_RESULT_UINT(bufferPos, 10, "check buffer position");
 
         bufferPos = 0;
@@ -232,13 +235,13 @@ testRun(void)
         TEST_RESULT_UINT(bufferPos, 1, "check buffer position");
 
         bufferPos = 0;
-        TEST_RESULT_UINT(cvtUInt64FromVarInt128(buffer, &bufferPos), 0, "to uint64");
+        TEST_RESULT_UINT(cvtUInt64FromVarInt128(buffer, &bufferPos, sizeof(buffer)), 0, "to uint64");
         TEST_RESULT_UINT(bufferPos, 1, "check buffer position");
 
         uint8_t buffer2[CVT_VARINT128_BUFFER_SIZE + 1];
         memset(buffer2, 0xFF, sizeof(buffer2));
         bufferPos = 0;
-        TEST_ERROR(cvtUInt64FromVarInt128(buffer2, &bufferPos), FormatError, "unterminated varint-128 integer");
+        TEST_ERROR(cvtUInt64FromVarInt128(buffer2, &bufferPos, sizeof(buffer)), FormatError, "unterminated varint-128 integer");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
