@@ -26,7 +26,7 @@ typedef struct BlockIncr
     uint64_t bundleId;                                              // Bundle id
 
     unsigned int blockNo;                                           // Block number
-    size_t blockOffset;                                             // Block offset
+    uint64_t blockOffset;                                           // Block offset
     size_t blockSize;                                               // Block size
     Buffer *block;                                                  // Block buffer
 

@@ -513,7 +513,7 @@
                             <p>!!!</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>y</example>
                     </config-key>
 
                     <config-key id="repo-block-size" name="!!!">
@@ -523,7 +523,7 @@
                             <p>!!!</p>
                         </text>
 
-                        <example>!!!</example>
+                        <example>256KiB</example>
                     </config-key>
 
                     <config-key id="repo-bundle" name="Repository Bundles">
