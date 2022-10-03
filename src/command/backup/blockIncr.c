@@ -33,7 +33,7 @@ typedef struct BlockIncr
     Buffer *blockOut;                                               // Block output buffer
     size_t blockOutOffset;                                          // Block output offset (already copied to output buffer)
 
-    const BlockMap *blockMapIn;                                     // Input block map
+    const BlockMap *blockMapPrior;                                  // Prior block map
     BlockMap *blockMapOut;                                          // Output block map
     uint64_t blockMapOutSize;                                       // Output block map size (if any)
 
@@ -147,8 +147,8 @@ For manifest:
 
                         // Does the block exist in the input map?
                         const BlockMapItem *const blockMapItemIn =
-                            map && this->blockMapIn != NULL && this->blockNo < blockMapSize(this->blockMapIn) ?
-                                blockMapGet(this->blockMapIn, this->blockNo) : NULL;
+                            map && this->blockMapPrior != NULL && this->blockNo < blockMapSize(this->blockMapPrior) ?
+                                blockMapGet(this->blockMapPrior, this->blockNo) : NULL;
 
                         // Write block
                         if (blockMapItemIn == NULL ||
@@ -308,14 +308,14 @@ blockIncrInputSame(const THIS_VOID)
 IoFilter *
 blockIncrNew(
     const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset,
-    const Buffer *const blockMapIn)
+    const Buffer *const blockMapPrior)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(UINT, reference);
         FUNCTION_LOG_PARAM(UINT64, bundleId);
         FUNCTION_LOG_PARAM(UINT64, bundleOffset);
-        FUNCTION_LOG_PARAM(BUFFER, blockMapIn);
+        FUNCTION_LOG_PARAM(BUFFER, blockMapPrior);
     FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
@@ -333,7 +333,7 @@ blockIncrNew(
             .blockOffset = bundleOffset,
             .block = bufNew(blockSize),
             .blockOut = bufNew(0),
-            .blockMapIn = blockMapIn != NULL ? blockMapNewRead(ioBufferReadNewOpen(blockMapIn)) : NULL, // !!! FIX THIS LEAK
+            .blockMapPrior = blockMapPrior != NULL ? blockMapNewRead(ioBufferReadNewOpen(blockMapPrior)) : NULL, // !!! FIX THIS LEAK
             .blockMapOut = blockMapNew(),
         };
 
@@ -348,7 +348,7 @@ blockIncrNew(
             pckWriteU32P(packWrite, reference);
             pckWriteU64P(packWrite, bundleId);
             pckWriteU64P(packWrite, bundleOffset);
-            pckWriteBinP(packWrite, blockMapIn);
+            pckWriteBinP(packWrite, blockMapPrior);
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -376,9 +376,9 @@ blockIncrNewPack(const Pack *const paramList)
         const unsigned int reference = pckReadU32P(paramListPack);
         const uint64_t bundleId = (size_t)pckReadU64P(paramListPack);
         const uint64_t bundleOffset = (size_t)pckReadU64P(paramListPack);
-        const Buffer *blockMapIn = pckReadBinP(paramListPack);
+        const Buffer *blockMapPrior = pckReadBinP(paramListPack);
 
-        result = ioFilterMove(blockIncrNew(blockSize, reference, bundleId, bundleOffset, blockMapIn), memContextPrior());
+        result = ioFilterMove(blockIncrNew(blockSize, reference, bundleId, bundleOffset, blockMapPrior), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
