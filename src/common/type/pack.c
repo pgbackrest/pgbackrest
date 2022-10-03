@@ -487,7 +487,7 @@ pckReadU64Internal(PackRead *this)
     if (this->read != NULL)
     {
         // Internal buffer should be empty
-        ASSERT(this->bufferUsed - this->bufferPos == 0);
+        ASSERT(this->bufferUsed == this->bufferPos);
         FUNCTION_TEST_RETURN(UINT64, ioReadVarIntU64(this->read));
     }
 
