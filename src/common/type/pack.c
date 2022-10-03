@@ -491,7 +491,7 @@ pckReadU64Internal(PackRead *this)
         FUNCTION_TEST_RETURN(UINT64, ioReadVarIntU64(this->read));
     }
 
-    FUNCTION_TEST_RETURN(UINT64, cvtUInt64FromVarInt128(this->bufferPtr, &this->bufferPos));
+    FUNCTION_TEST_RETURN(UINT64, cvtUInt64FromVarInt128(this->bufferPtr, &this->bufferPos, this->bufferUsed));
 }
 
 /***********************************************************************************************************************************

@@ -324,7 +324,7 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // Block incremental
     if (flag & (1 << manifestFilePackFlagBlockIncr))
-        result.blockIncrMapSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.blockIncrMapSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     // Checksum page error
     result.checksumPageError = flag & (1 << manifestFilePackFlagChecksumPageError) ? true : false;
