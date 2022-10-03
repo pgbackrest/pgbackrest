@@ -246,14 +246,14 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     bufferPos += sizeof(StringPub) + strSize(result.name) + 1;
 
     // Flags
-    const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     // Size
-    result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     // Timestamp
     result.timestamp =
-        manifestPackBaseTime - (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos));
+        manifestPackBaseTime - (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX));
 
     // Checksum page
     result.checksumPage = flag & (1 << manifestFilePackFlagChecksumPage) ? true : false;
@@ -264,33 +264,33 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // Reference
     if (flag & (1 << manifestFilePackFlagReference))
-        result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     // Mode
     if (flag & (1 << manifestFilePackFlagMode))
-        result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else
         result.mode = manifest->fileModeDefault;
 
     // User/group
     if (flag & (1 << manifestFilePackFlagUser))
-        result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else if (!(flag & (1 << manifestFilePackFlagUserNull)))
         result.user = manifest->fileUserDefault;
 
     if (flag & (1 << manifestFilePackFlagGroup))
-        result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else if (!(flag & (1 << manifestFilePackFlagGroupNull)))
         result.group = manifest->fileGroupDefault;
 
     // Repo size
-    result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     // Bundle
     if (flag & (1 << manifestFilePackFlagBundle))
     {
-        result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
-        result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+        result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     }
 
     // Checksum page error
