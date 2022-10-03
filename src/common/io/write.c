@@ -197,6 +197,26 @@ ioWriteStrLine(IoWrite *this, const String *string)
 
 /**********************************************************************************************************************************/
 void
+ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(UINT64, value);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+    size_t bufferPos = 0;
+
+    cvtUInt64ToVarInt128(value, buffer, &bufferPos, sizeof(buffer));
+    ioWrite(this, BUF(buffer, bufferPos));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
 ioWriteFlush(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
