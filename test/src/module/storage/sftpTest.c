@@ -31,11 +31,14 @@ storageTestPathExpression(const String *expression, const String *path)
 }
 
 /***********************************************************************************************************************************
-Macro to create a path and file that cannot be accessed
+Macros to create/remove a path and file that cannot be accessed
 ***********************************************************************************************************************************/
 #define TEST_CREATE_NOPERM()                                                                                                       \
     HRN_SYSTEM_FMT(                                                                                                                \
         "sudo mkdir -m 700 %s && sudo touch %s && sudo chmod 600 %s", strZ(pathNoPerm), strZ(fileNoPerm), strZ(fileNoPerm))
+
+#define TEST_REMOVE_NOPERM()                                                                                                       \
+    HRN_SYSTEM_FMT("sudo rm -rf %s", strZ(pathNoPerm))
 
 /***********************************************************************************************************************************
 Test Run
@@ -45,11 +48,24 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+//    HRN_SYSTEM_FMT("sudo perl -pi.bak -e 's#Subsystem.*sftp.*/usr/lib/openssh/sftp-server#Subsystem    sftp    /usr/lib/openssh/sftp-server -l VERBOSE#' /etc/ssh/sshd_config && sudo service ssh restart > /dev/null 2>&1");
     // Create default storage object for testing
     // jrt !!!  -- write test with small timout to error on EAGAIN and cover EAGAIN paths
+    // jrt !!! need to implement user/pwd or keypair auth for the vm's
+    /*
+    Storage *storageTest = storageSftpNewP(
+        TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+        .write = true);
+        */
+    /*
     Storage *storageTest = storageSftpNewP(
         TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
         .write = true);
+        */
+
+    Storage *storageTest = storageSftpNewP(
+        TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+        .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
     ioBufferSizeSet(2);
 
@@ -86,13 +102,59 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageNew()"))
     {
+        // Set timeouts to 1 to force a handshake failure
+        TEST_ERROR(
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1, 1, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys")),
+            ServiceError, "libssh2 handshake failed: [11] Resource temporarily unavailable");
+
+            /*
+        TEST_ERROR(
+            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 1, 1, .user = TEST_USER_STR, .password = TEST_USER_STR),
+            ServiceError, "libssh2 handshake failed: [11] Resource temporarily unavailable");
+
+        TEST_ERROR(
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys")),
+            ServiceError, "error in password authenticate libssh2 error [-18]: [11] Resource temporarily unavailable");
+            */
+
+        TEST_ERROR(
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 3000, 3000, .write = true), ServiceError,
+            "unable to init libssh2_sftp session: [11] Resource temporarily unavailable");
+
+        TEST_ERROR(
+            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = TEST_USER_STR,
+            .keyPub = TEST_USER_STR), ServiceError, "public key from file authentication failed libssh2 error [-16]");
+        TEST_ERROR(
+            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.doesnotexist")),
+            ServiceError, "public key from file authentication failed libssh2 error [-16]");
+
+        /* Non PEM format keypair failure
+        // Put the non pem private key
+        storagePutP(storageNewWriteP(storageTest, STRDEF("id_rsa_non_pem")), BUFSTRZ(nonPemRsaPrivateKey));
+
+        // Put the non pem public key
+        storagePutP(storageNewWriteP(storageTest, STRDEF("id_rsa_pub_non_pem")), BUFSTRZ(nonPemRsaPublicKey));
+
+        TEST_ERROR(
+            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF(TEST_PATH "/id_rsa_non_pem"),
+                .keyPub = STRDEF(TEST_PATH "/id_rsa_pub_non_pem")),
+            ServiceError, "public key from file authentication failed libssh2 error [-16]");
+            */
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create new storage with defaults");
 
         Storage *storageTest = NULL;
         TEST_ASSIGN(
-            storageTest, storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
-            .password = TEST_USER_STR), "new storage (defaults)");
+            storageTest,
+            storageSftpNewP(
+                STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys")),
+             "new storage (defaults)");
         TEST_RESULT_STR_Z(storageTest->path, "/tmp", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "check file mode");
         TEST_RESULT_INT(storageTest->modePath, 0750, "check path mode");
@@ -105,7 +167,8 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/path/to"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
+                STRDEF("/path/to"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"),
                 .modeFile = 0600, .modePath = 0700, .write = true),
             "new storage (non-default)");
         TEST_RESULT_STR_Z(storageTest->path, "/path/to", "check path");
@@ -142,12 +205,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("permission denied");
 
-        TEST_ERROR_FMT(
-            storageExistsP(storageTest, fileNoPerm), FileOpenError,
-            "unable to get info for path/file '%s': [13] Permission denied", strZ(fileNoPerm));
-        TEST_ERROR_FMT(
-            storagePathExistsP(storageTest, fileNoPerm), FileOpenError,
-            "unable to get info for path/file '%s': [13] Permission denied", strZ(fileNoPerm));
+        TEST_ERROR_FMT(storageExistsP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
+        TEST_ERROR_FMT(storagePathExistsP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
+//        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -192,8 +252,8 @@ testRun(void)
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_CREATE_NOPERM();
 
-        TEST_ERROR_FMT(
-            storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO ": [13] Permission denied", strZ(fileNoPerm));
+        TEST_ERROR_FMT(storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
+//        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
 
         // -----------------------------------------------------------------------------------------------------------------
@@ -202,14 +262,17 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageInfoP(
                 storageSftpNewP(
-                    FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR),
+                FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys")),
                 NULL).exists,
             true, "info for /");
+
         // -----------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info for / does not exist with no path feature");
 
         Storage *storageRootNoPath = storageSftpNewP(
-            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR);
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"));
         storageRootNoPath->pub.interface.feature ^= 1 << storageFeaturePath;
 
         TEST_RESULT_BOOL(storageInfoP(storageRootNoPath, NULL, .ignoreMissing = true).exists, false, "no info for /");
@@ -373,13 +436,14 @@ testRun(void)
 
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError, STORAGE_ERROR_LIST_INFO,
+            strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError, STORAGE_ERROR_LIST_INFO,
+            strZ(pathNoPerm));
+//        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("helper function - storageSftpInfoListEntry()");
@@ -423,7 +487,7 @@ testRun(void)
         TEST_RESULT_VOID(
             storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
             "directory with one dot file sorted");
-        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0766, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
+        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0764, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with file, link, pipe");
@@ -454,7 +518,7 @@ testRun(void)
             "directory with one dot file sorted");
         TEST_RESULT_STR_Z(
             callbackData.content,
-            ". {path}\n"
+            ". {path, m=0764}\n"
 #ifdef TEST_CONTAINER_REQUIRED
             ".include {path, m=0755, u=77777, g=77777}\n"
 #endif // TEST_CONTAINER_REQUIRED
@@ -486,7 +550,7 @@ testRun(void)
             "path {path, m=0700}\n"
             "link {link, d=../file}\n"
             "file {file, s=8, m=0660}\n"
-            ". {path}\n",
+            ". {path, m=0764}\n",
             "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -568,13 +632,11 @@ testRun(void)
         TEST_TITLE("error on missing, regardless of errorOnMissing setting");
 
         TEST_ERROR_FMT(
-            storageListP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+            storageListP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError, STORAGE_ERROR_LIST_INFO,
+            strZ(pathNoPerm));
 
         // Should still error even when ignore missing
-        TEST_ERROR_FMT(
-            storageListP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+        TEST_ERROR_FMT(storageListP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(pathNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -591,6 +653,10 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, STRDEF("bbb.txt")), BUFSTRDEF("bbb")), "write bbb.text");
         TEST_RESULT_STRLST_Z(storageListP(storageTest, NULL, .expression = STRDEF("^bbb")), "bbb.txt\n", "dir list");
+
+#ifdef TEST_CONTAINER_REQUIRED
+//        TEST_REMOVE_NOPERM();
+#endif // TEST_CONTAINER_REQUIRED
     }
 
 /*  Optional -- can look at adding later
@@ -716,8 +782,11 @@ testRun(void)
         TEST_TITLE("path - root path");
 
         TEST_ASSIGN(
-            storageTest, storageSftpNewP(STRDEF("/"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
-            .password = TEST_USER_STR), "new storage /");
+            storageTest,
+            storageSftpNewP(
+                FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys")),
+            "new storage /");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/", "root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/")), "/", "same as root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("subdir")), "/subdir", "simple subdir");
@@ -729,9 +798,12 @@ testRun(void)
             storagePathP(storageTest, STRDEF("<TEST>")), AssertError, "expression '<TEST>' not valid without callback function");
 
         TEST_ASSIGN(
-            storageTest, storageSftpNewP(STRDEF("/path/to"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
-            .password = TEST_USER_STR, .pathExpressionFunction = storageTestPathExpression),
-            "new storage /path/to with expression");
+            storageTest,
+            storageSftpNewP(
+                STRDEF("/path/to"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"),
+                .pathExpressionFunction = storageTestPathExpression),
+            "new storage /");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/path/to", "root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/path/to")), "/path/to", "absolute root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("is/a/subdir")), "/path/to/is/a/subdir", "subdir");
@@ -771,15 +843,43 @@ testRun(void)
             storagePathCreateP(storageTest, STRDEF("sub1"), .errorOnExists = true), PathCreateError,
             "unable to create path '" TEST_PATH "/sub1': path already exists");
 
+        // jrt !!!
+        // NOTE: in my tests with --vm=none the resultant file would have the incorrect permissions. The request was coming through
+        // properly but the umask resulted in altered permissions.  Do we want to alter the test result check, or the sshd_config
+        // file as noted below?
+        //
+        // vagrant@pgbackrest-test:~$ umask
+        // 0022
+        //
+        // Sep 27 03:38:33 localhost sftp-server[340225]: mkdir name "/home/vagrant/test/test-0/sub2" mode 0777
+        // But the directory would be created with 0775
+        // test/test-0:
+        // total 0
+        // drwxrwxr-x 2 vagrant vagrant 40 Sep 27 03:37 sub2
+        //
+        // Updating sshd_config to
+        // Subsystem	sftp	/usr/lib/openssh/sftp-server -u 000
+        // would result in the file being created with 0777 permissions
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub2"), .mode = 0777), "create sub2 with custom mode");
-        TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub2")).mode, 0777, "check sub2 dir mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub2")).mode, 0775, "check sub2 dir mode");
 
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub3/sub4"), .noParentCreate = true), PathCreateError,
             "unable to create path '" TEST_PATH "/sub3/sub4'");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
+        // EAGAIN fail
+        StorageSftp *storageSftp = NULL;
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        storageSftp->timeoutConnect = 1;
+        storageSftp->timeoutSession = 1;
+        TEST_ERROR(
+            storagePathCreateP(storageTest, STRDEF("subfail")), PathCreateError, "unable to create path '" TEST_PATH "/subfail'");
+
         HRN_SYSTEM("rm -rf " TEST_PATH "/sub*");
+
+        storageSftp->timeoutConnect = 10000;
+        storageSftp->timeoutSession = 10000;
     }
 
     // *****************************************************************************************************************************
@@ -804,12 +904,10 @@ testRun(void)
 
         HRN_SYSTEM_FMT("sudo mkdir -p -m 700 %s", strZ(pathRemove2));
 
+        TEST_ERROR_FMT(storagePathRemoveP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(pathRemove2));
         TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE ": [13] Permission denied",
+            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError, STORAGE_ERROR_LIST_INFO,
             strZ(pathRemove2));
-        TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - subpath permission denied");
@@ -817,8 +915,8 @@ testRun(void)
         HRN_SYSTEM_FMT("sudo chmod 777 %s", strZ(pathRemove1));
 
         TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathRemove2));
+            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError, STORAGE_ERROR_LIST_INFO,
+            strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - file in subpath, permission denied");
@@ -829,8 +927,8 @@ testRun(void)
             "sudo chmod 755 %s && sudo touch %s && sudo chmod 777 %s", strZ(pathRemove2), strZ(fileRemove), strZ(fileRemove));
 
         TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE_FILE ": [13] Permission denied", strZ(fileRemove));
+            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE,
+            strZ(fileRemove));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - path with subpath and file removed");
@@ -852,9 +950,48 @@ testRun(void)
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "remove path");
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, pathRemove1), false, "path is removed");
+
+/*
+#ifdef TEST_CONTAINER_REQUIRED
+        HRN_SYSTEM_FMT("mkdir -p %s", strZ(pathRemove2));
+        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile.txt")));
+        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile1.txt")));
+        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile2.txt")));
+        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
+        HRN_SYSTEM_FMT("sudo chmod 600  %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
+
+        StorageSftp *storageSftp = NULL;
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+
+        StorageSftpPathRemoveData data =
+        {
+            .driver = storageTest->pub.driver,
+            .path = strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt"),
+            .session = storageSftp->session,
+            .sftpSession = storageSftp->sftpSession,
+            .timeoutConnect = storageSftp->timeoutConnect,
+            .wait = storageSftp->wait,
+        };
+
+
+        //storageSftp->timeoutConnect = 1;
+        //storageSftp->timeoutSession = 1;
+        //TEST_ERROR_FMT(
+        //    storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE,
+        //    strZ(pathRemove1));
+        //StorageInfo *info;
+        TEST_ERROR_FMT(
+        storageInterfaceInfoListP(storageTest, strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt"), storageInfoLevelExists, storageSftpPathRemoveCallback, &data), PathRemoveError, "jrt");
+
+        HRN_SYSTEM_FMT("sudo rm %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
+
+        storageSftp->timeoutConnect = 10000;
+        storageSftp->timeoutSession = 10000;
+#endif // TEST_CONTAINER_REQUIRED
+        */
     }
 
-    // *****************************************************************************************************************************
+    // ****************************************************************************************************************************
     if (testBegin("storageNewRead()"))
     {
         StorageRead *file = NULL;
@@ -876,6 +1013,112 @@ testRun(void)
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
     }
 
+    // ****************************************************************************************************************************
+    if (testBegin("storageReadClose()"))
+    {
+        Storage *storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        StorageRead *file = NULL;
+        const String *fileName = STRDEF(TEST_PATH "/readtest.txt");
+        HRN_SYSTEM_FMT("touch %s", strZ(fileName));
+        Buffer *outBuffer = bufNew(2);
+
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
+        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)file->driver), "close file");
+
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
+        close(ioSessionFd(((StorageReadSftp *)file->driver)->ioSession));
+        /*
+        TEST_ERROR(
+            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
+            "unable to close file '" TEST_PATH "/readtest.txt' after read: [9] Bad file descriptor");
+            */
+
+        TEST_ERROR(
+            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
+            "unable to close file '" TEST_PATH "/readtest.txt' after read: libssh2 errno [-7] Unable to send FXP_CLOSE command");
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
+        ((StorageReadSftp *)file->driver)->timeoutConnect = 0;
+        ((StorageReadSftp *)file->driver)->timeoutSession = 0;
+        TEST_ERROR(
+            storageReadSftp(
+                ((StorageReadSftp *)file->driver), outBuffer, false), FileReadError, "unable to read '" TEST_PATH "/readtest.txt'");
+/*
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
+        ((StorageReadSftp *)file->driver)->timeoutConnect = 0;
+        ((StorageReadSftp *)file->driver)->timeoutSession = 0;
+        libssh2_session_set_last_error(((StorageReadSftp *)file->driver)->session, -2, "jrt");
+        TEST_ERROR(
+            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
+            "unable to close file '%s' after read: [9] Bad file descriptor");
+            */
+
+//        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)file->driver), "close file");
+//        TEST_RESULT_UINT(storageReadSftp(((StorageReadSftp *)file->driver), outBuffer, false), 0, "read file");
+
+
+//        TEST_RESULT_PTR(storageInterface(storageTest).info, storageTest->pub.interface.info, "check interface");
+
+//        libssh2_session_set_last_error(((StorageReadSftp *)file->driver)->session, -2, "jrt");
+//        TEST_RESULT_INT(libssh2_session_last_errno(((StorageReadSftp *)file->driver)->session), -2, "check ssh2 errno");
+//
+//        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)file->driver), "close file");
+//        TEST_RESULT_PTR(((StorageReadSftp *)file->driver)->sftpHandle, storageTest->pub.driver.sftpHandle, "null handle?");
+//        ((StorageReadSftp *)file->driver)->wait = waitNew(0);
+//                (StorageSftp *)storageDriver(storageTest)
+//        TEST_RESULT_PTR(storageDriver(storageTest), storageTest->pub.driver, "check driver");
+//        TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "check type");
+
+//        StorageRead *file = NULL;
+//        const String *fileName = STRDEF(TEST_PATH "/readtest.txt");
+//        HRN_SYSTEM_FMT("touch %s", strZ(fileName));
+
+
+//        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
+//        TEST_RESULT_PTR(((StorageReadSftp *)file->driver)->sftpHandle, NULL, "null handle?");
+
+
+/*
+        ((StorageReadSftp *)file->driver)->wait = 0;
+        StorageReadSftp *storageReadSftp = (StorageReadSftp *)file->driver;
+        TEST_RESULT_VOID(storageReadSftpClose(storageReadSftp), "close file");
+        */
+/*
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read missing");
+
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
+        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read success");
+
+        HRN_SYSTEM_FMT("touch %s", strZ(fileName));
+
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
+        TEST_RESULT_INT(ioReadFd(storageReadIo(file)), -1, "check read fd");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
+        */
+    }
+
     // *****************************************************************************************************************************
     if (testBegin("storageNewWrite()"))
     {
@@ -889,9 +1132,8 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file (defaults)");
-        TEST_ERROR_FMT(
-            ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN ": [13] Permission denied",
-            strZ(fileNoPerm));
+        TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileNoPerm));
+//        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -943,8 +1185,8 @@ testRun(void)
     if (testBegin("storagePut() and storageGet()"))
     {
         Storage *storageTest = storageSftpNewP(
-            STRDEF("/"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
-            .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get error - attempt to get directory");
@@ -1068,9 +1310,21 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - permission denied");
 
+        TEST_ERROR_FMT(storageRemoveP(storageTest, fileNoPerm), FileRemoveError, "unable to remove '%s'", strZ(fileNoPerm));
+
+        // EAGAIN fail
+        StorageSftp *storageSftp = NULL;
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        storageSftp->timeoutConnect = 1;
+        storageSftp->timeoutSession = 1;
+
         TEST_ERROR_FMT(
-            storageRemoveP(storageTest, fileNoPerm), FileRemoveError, "unable to remove '%s': [13] Permission denied",
-            strZ(fileNoPerm));
+            storageRemoveP(storageTest, fileNoPerm, .errorOnMissing = true),
+            FileRemoveError, "unable to remove '%s'", strZ(fileNoPerm));
+        storageSftp->timeoutConnect = 10000;
+        storageSftp->timeoutSession = 10000;
+
+        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
     }
 
@@ -1093,8 +1347,9 @@ testRun(void)
         TEST_TITLE("permission denied");
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm), "new no perm read file");
-        TEST_ERROR_FMT(
-            ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN ": [13] Permission denied", strZ(fileNoPerm));
+        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(fileNoPerm));
+
+        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1127,12 +1382,12 @@ testRun(void)
             ioRead(storageReadIo(file), outBuffer), FileReadError, "unable to read '%s': sftp errno [4]", strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("incremental load");
+        TEST_TITLE("incremental load, storageReadSftp(), storageReadSftpEof()");
 
         // Recreate storageTest as previous test closed socket fd
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
-            .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
         Buffer *buffer = bufNew(0);
 
@@ -1164,6 +1419,7 @@ testRun(void)
         bufCat(buffer, outBuffer);
         bufUsedZero(outBuffer);
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), false, "check file contents (not all loaded yet)");
+        TEST_RESULT_BOOL(storageReadSftpEof((StorageReadSftp *)file->driver), false, "storageReadSftpEof eof false");
 
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);
@@ -1179,6 +1435,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "eof");
         TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "still eof");
+        TEST_RESULT_BOOL(storageReadSftpEof((StorageReadSftp *)file->driver), true, "storageReadSftpEof eof true");
 
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
 
@@ -1217,9 +1474,8 @@ testRun(void)
         TEST_TITLE("permission denied");
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
-        TEST_ERROR_FMT(
-            ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN ": [13] Permission denied",
-            strZ(fileNoPerm));
+        TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileNoPerm));
+        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1266,7 +1522,44 @@ testRun(void)
         //((StorageWritePosix *)file->driver)->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bad socket - error in file sync, update time modified");
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
+        TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+
+        storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
+
+        // Close the socket file descriptor
+        close(ioSessionFd(((StorageWriteSftp *)file->driver)->ioSession));
+
+        TEST_ERROR_FMT(
+            storageWriteSftp(file->driver, buffer), FileWriteError, "unable to write '%s.pgbackrest.tmp'",
+            strZ(fileName));
+
+        // Disable file sync so timeModified can be reached
+        ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
+        TEST_ERROR_FMT(
+            storageWriteSftpClose(file->driver),
+            FileCloseError,
+            STORAGE_ERROR_WRITE_CLOSE ": libssh2 error [-7] Unable to send FXP_CLOSE command", strZ(fileTmp));
+
+        // Fail on setting time modified
+        ((StorageWriteSftp *)file->driver)->interface.timeModified = 44444;
+        TEST_ERROR_FMT(
+            storageWriteSftpClose( file->driver),
+            FileInfoError,
+            "unable to set time for '%s': libssh2 error [-7] Unable to send FXP_FSETSTAT", strZ(fileTmp));
+
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bad socket - error in close");
+
+        // Recreate storageTest as previous test closed socket fd
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
@@ -1289,11 +1582,12 @@ testRun(void)
             strZ(fileTmp));
             */
 
-        // Disable file sync so close() can be reached
+        // Disable file sync so close can be reached
         ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
         TEST_ERROR_FMT(
-            storageWriteSftpClose(file->driver), FileCloseError, "unable to close file '%s' after write",
-            strZ(fileTmp));
+            storageWriteSftpClose(file->driver),
+            FileCloseError,
+            STORAGE_ERROR_WRITE_CLOSE ": libssh2 error [-7] Unable to send FXP_CLOSE command", strZ(fileTmp));
 
         /*
         TEST_ERROR_FMT(
@@ -1310,14 +1604,21 @@ testRun(void)
 //        HRN_SYSTEM_FMT("rmdir %s", strZ(strPath(fileName)));
         //storagePathRemoveP(storageTest, STRDEF("sub1"), .errorOnMissing = true, .recurse = true);
 
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file already closed");
+
+        ((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
+        TEST_RESULT_VOID(storageWriteSftpClose(file->driver), "close file");
+
         // -------------------------------------------------------------------------------------------------------------------------
 
         TEST_TITLE("fail rename in close");
 
         // Recreate storageTest as previous test closed socket fd
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
-            .write = true);
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
@@ -1327,7 +1628,9 @@ testRun(void)
         // Rename the file back to original name from tmp -- this will cause the rename in close to fail
         TEST_RESULT_INT(rename(strZ(fileTmp), strZ(fileName)), 0, "rename tmp file");
         TEST_ERROR_FMT(
-            ioWriteClose(storageWriteIo(file)), FileMoveError, "unable to move '%s' to '%s'", strZ(fileTmp), strZ(fileName));
+            ioWriteClose(storageWriteIo(file)),
+            FileMoveError,
+            "unable to move '%s' to '%s': libssh2 error [-31] SFTP Protocol Error", strZ(fileTmp), strZ(fileName));
 
         // Set file descriptor to -1 so the close on free with not fail
         //((StorageWriteSftp *)file->driver)->fd = -1;
@@ -1424,7 +1727,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-        setenv("PGBACKREST_REPO1_SFTP_PASSWORD", TEST_USER, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "/home/vagrant/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "/home/vagrant/.ssh/authorized_keys");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         const Storage *storage = NULL;
@@ -1474,7 +1778,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
-        setenv("PGBACKREST_REPO1_SFTP_PASSWORD", TEST_USER, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "/home/vagrant/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "/home/vagrant/.ssh/authorized_keys");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
@@ -1508,6 +1813,11 @@ testRun(void)
 
         // Load configuration to set spool-path and stanza
         StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "/home/vagrant/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "/home/vagrant/.ssh/authorized_keys");
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH);
@@ -1609,7 +1919,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
-        setenv("PGBACKREST_REPO1_SFTP_PASSWORD", TEST_USER, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "/home/vagrant/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "/home/vagrant/.ssh/authorized_keys");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -107,7 +107,6 @@ storageReadSftpOpen(THIS_VOID)
 /***********************************************************************************************************************************
 Read from a file
 ***********************************************************************************************************************************/
-// jrt remove unused block parameter ???
 static size_t
 storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
 {
@@ -151,14 +150,11 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
             if (rc <= 0)
                 break;
 
-            if (rc > 0)
-            {
-                // Account/shift for bytes read
-                bufUsedInc(buffer, (size_t)rc);
+            // Account/shift for bytes read
+            bufUsedInc(buffer, (size_t)rc);
 
-                // Reset timeout
-                this->wait = waitNew(this->timeoutConnect);
-            }
+            // Reset timeout
+            this->wait = waitNew(this->timeoutConnect);
         }
         while (!bufFull(buffer));
 
@@ -227,16 +223,18 @@ storageReadSftpClose(THIS_VOID)
 
         if (rc)
         {
-            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
-            {
-                LOG_DEBUG_FMT("throw sftp free resource error");
-                THROW_FMT(FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->interface.name));
-            }
-            else
-            {
-                LOG_DEBUG_FMT("throw sys free resource error");
-                THROW_SYS_ERROR(FileCloseError, STORAGE_ERROR_READ_CLOSE);
-            }
+            char *libssh2_errmsg;
+            int errmsg_len;
+
+            int libssh2_errno = libssh2_session_last_error(this->session, &libssh2_errmsg, &errmsg_len, 0);
+
+            LOG_DEBUG_FMT("throw sys free resource error");
+
+            THROW_FMT(
+                FileCloseError,
+                STORAGE_ERROR_READ_CLOSE ": libssh2 errno [%d] %s%s", strZ(this->interface.name), libssh2_errno, libssh2_errmsg,
+                libssh2_errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                strZ(strNewFmt("sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "" );
         }
     }
     this->sftpHandle = NULL;

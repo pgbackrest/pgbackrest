@@ -39,6 +39,8 @@ struct StorageSftp
 {
     STORAGE_COMMON_MEMBER;
 
+    int libssh2_initStatus;
+    int handshakeStatus;
     IoSession *ioSession;
     LIBSSH2_SESSION *session;
     LIBSSH2_SFTP *sftpSession;
@@ -48,6 +50,48 @@ struct StorageSftp
     TimeMSec timeoutSession;
     Wait *wait;
 };
+
+/***********************************************************************************************************************************
+Validate libssh2 startup
+***********************************************************************************************************************************/
+static void
+validateLibssh2Startup(StorageSftp *driver)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, driver);
+    FUNCTION_LOG_END();
+
+    ASSERT(driver != NULL);
+
+    if (driver->libssh2_initStatus != 0)
+        THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2");
+
+    if (driver->session == NULL)
+        THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2 session");
+
+    if (driver->handshakeStatus != 0)
+        THROW_SYS_ERROR_FMT(ServiceError, "libssh2 handshake failed");
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Validate libssh2 sftp session
+***********************************************************************************************************************************/
+static void
+validateLibssh2SftpSession(StorageSftp *driver)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, driver);
+    FUNCTION_LOG_END();
+
+    ASSERT(driver != NULL);
+
+    if (driver->sftpSession == NULL)
+        THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2_sftp session");
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Free connection
@@ -690,9 +734,6 @@ storageSftpNewInternal(
     {
         StorageSftp *driver = OBJ_NEW_ALLOC();
 
-        if (libssh2_init(0) != 0)
-            THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2");
-
         *driver = (StorageSftp)
         {
             .interface = storageInterfaceSftp,
@@ -701,54 +742,40 @@ storageSftpNewInternal(
             .timeoutSession = timeoutSession,
         };
 
+        driver->libssh2_initStatus = libssh2_init(0);
+
         driver->ioSession = ioClientOpen(sckClientNew(host, port, timeoutConnect, timeoutSession));
 
         driver->session = libssh2_session_init();
-        if (driver->session == NULL)
-            THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2 session");
 
         // Returns void
         libssh2_session_set_blocking(driver->session, 0);
 
-        int rc = 0;
         Wait *wait = waitNew(timeoutConnect);
 
         do
         {
-            rc = libssh2_session_handshake(driver->session, ioSessionFd(driver->ioSession));
+            driver->handshakeStatus = libssh2_session_handshake(driver->session, ioSessionFd(driver->ioSession));
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+        while (driver->handshakeStatus == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
-        if (rc != 0)
-            THROW_SYS_ERROR_FMT(ServiceError, "libssh2 handshake failed");
+        validateLibssh2Startup(driver);
 
         //!!! jrt allow for stronger hash sha - newer versions have sha256 i think
         // do we want to store the returned hash??? instead of voiding it
         (void)libssh2_hostkey_hash(driver->session, LIBSSH2_HOSTKEY_HASH_SHA1);
 
-        rc = 0;
+        int rc = 0;
         wait = waitNew(timeoutConnect);
 
-        if (strZNull(user) != NULL && strZNull(password) != NULL)
-        {
-            LOG_DEBUG_FMT("attempting password authentication");
-
-            do
-            {
-                rc = libssh2_userauth_password(driver->session, strZ(user), strZ(password));
-            } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
-
-            if (rc != 0)
-                THROW_SYS_ERROR_FMT(ServiceError, "error in password authenticate libssh2 error [%d]", rc);
-        }
-        else if (strZNull(user) != NULL && strZNull(keyPub) != NULL && strZNull(keyPriv) != NULL)
+        if (strZNull(user) != NULL && strZNull(keyPriv) != NULL)
         {
             LOG_DEBUG_FMT("attempting public key authentication");
 
             do
             {
                 rc = libssh2_userauth_publickey_fromfile(
-                        driver->session, strZ(user), strZ(keyPub), strZ(keyPriv),
+                        driver->session, strZ(user), strZNull(keyPub) == NULL ? NULL : strZ(keyPub), strZ(keyPriv),
                         strZNull(keyPassphrase) == NULL ? NULL : strZ(keyPassphrase));
             } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
@@ -776,8 +803,7 @@ storageSftpNewInternal(
         }
         while (driver->sftpSession == NULL && waitMore(wait));
 
-        if (driver->sftpSession == NULL)
-            THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2_sftp session");
+        validateLibssh2SftpSession(driver);
 
         // Disable path sync when not supported
         // libssh2 doesn't appear to support path sync. It returns LIBSSH2_FX_NO_SUCH_FILE.
