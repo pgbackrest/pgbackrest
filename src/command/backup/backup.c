@@ -1535,10 +1535,6 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
             const ManifestFile file = manifestFileUnpack(manifest, filePack);
 
-            // If the file is a reference it should only be backed up if delta and not zero size
-            if (file.reference != NULL && (!jobData->delta || file.size == 0))
-                continue;
-
             // If bundling store zero-length files immediately in the manifest without copying them
             if (jobData->bundle && file.size == 0)
             {
@@ -1549,6 +1545,10 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
 
                 continue;
             }
+
+            // If the file is a reference it should only be backed up if delta and not zero size
+            if (file.reference != NULL && (!jobData->delta || file.size == 0))
+                continue;
 
             // Is pg_control in the backup?
             if (strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
