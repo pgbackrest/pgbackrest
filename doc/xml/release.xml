@@ -33,7 +33,33 @@
                     </release-item>
                 </release-bug-list>
 
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1887"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Do not store references for zero-length files when bundling.</p>
+                    </release-item>
+                </release-improvement-list>
+
                 <release-development-list>
+                    <release-item>
+                        <commit subject="Improve manifest file updates.">
+                            <github-pull-request id="1888"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Block incremental backup.</p>
+                    </release-item>
+
                     <release-item>
                         <github-pull-request id="1879"/>
 
