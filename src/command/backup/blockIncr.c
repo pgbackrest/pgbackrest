@@ -322,7 +322,7 @@ blockIncrNew(
 
     OBJ_NEW_BEGIN(BlockIncr, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        BlockIncr *driver = OBJ_NEW_ALLOC();
+        BlockIncr *const driver = OBJ_NEW_ALLOC();
 
         *driver = (BlockIncr)
         {

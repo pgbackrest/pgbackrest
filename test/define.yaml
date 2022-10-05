@@ -797,9 +797,10 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 12
+        total: 13
 
         coverage:
+          - command/restore/deltaMap
           - command/restore/file
           - command/restore/protocol
           - command/restore/restore

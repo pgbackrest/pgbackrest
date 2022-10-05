@@ -115,7 +115,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
     List *const refList = lstNewP(sizeof(BlockMapRef), .comparator = lstComparatorBlockMapRef);
     BlockMapRef *blockMapRef = NULL;
 
-    // !!!
+    // Write all block items into a packed format
     unsigned int referenceLast = UINT_MAX;
 
     for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(this); blockMapIdx++)
@@ -129,8 +129,6 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
 
             // Add reference
             ioWriteVarIntU64(output, blockMapItem->reference + 1);
-
-            // !!! WRITE REFERENCE, BUNDLE ID, CHECKSUM
 
             // Check if the reference is already in the list
             blockMapRef = lstFind(refList, &(BlockMapRef){.reference = blockMapItem->reference});
@@ -163,7 +161,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
             referenceLast = blockMapItem->reference;
         }
 
-        // Add size !!! SHOULD THE SIZE BE DELTA AS WELL TO SAVE SOME MORE SPACE?
+        // Add size. This cannot be easily done as a delta since we are using zero as a stop byte.
         ioWriteVarIntU64(output, blockMapItem->size);
         blockMapRef->offset += blockMapItem->size;
 

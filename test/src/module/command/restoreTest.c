@@ -148,6 +148,52 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
+    if (testBegin("DeltaMap"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("too large for one buffer");
+
+        Buffer *output = bufNew(0);
+        IoWrite *write = ioBufferWriteNew(output);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), deltaMapNew(3));
+        ioWriteOpen(write);
+
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABCDEF")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABC")), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_RESULT_STR_Z(
+            bufHex(pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), DELTA_MAP_FILTER_TYPE))),
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
+            "6dae29c06c5f04601445c493156d10fe1be23b6d"
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8",
+            "delta map");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("buffer smaller than block and remainder");
+
+        output = bufNew(0);
+        write = ioBufferWriteNew(output);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), deltaMapNewPack(ioFilterParamList(deltaMapNew(3))));
+        ioWriteOpen(write);
+
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DE")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("FA")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("BC")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("AB")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("CX")), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_RESULT_STR_Z(
+            bufHex(pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), DELTA_MAP_FILTER_TYPE))),
+            "6dae29c06c5f04601445c493156d10fe1be23b6d"
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
+            "c032adc1ff629c9b66f22749ad667e6beadf144b",
+            "delta map");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("restoreFile()"))
     {
         const String *repoFileReferenceFull = STRDEF("20190509F");
