@@ -1554,7 +1554,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
-            ManifestFile file = manifestFileUnpack(manifest, filePack);
+            const ManifestFile file = manifestFileUnpack(manifest, filePack);
 
             // Only process files that need to be copied
             if (!file.copy)
