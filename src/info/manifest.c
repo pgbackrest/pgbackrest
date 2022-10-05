@@ -97,6 +97,9 @@ typedef enum
 {
     manifestFilePackFlagReference,
     manifestFilePackFlagBundle,
+    manifestFilePackFlagCopy,
+    manifestFilePackFlagDelta,
+    manifestFilePackFlagResume,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
     manifestFilePackFlagChecksumPageErrorList,
@@ -124,6 +127,15 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Flags
     uint64_t flag = 0;
+
+    if (file->copy)
+        flag |= 1 << manifestFilePackFlagCopy;
+
+    if (file->delta)
+        flag |= 1 << manifestFilePackFlagDelta;
+
+    if (file->resume)
+        flag |= 1 << manifestFilePackFlagResume;
 
     if (file->checksumPage)
         flag |= 1 << manifestFilePackFlagChecksumPage;
@@ -251,6 +263,10 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     // Flags
     const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
+    result.copy = (flag >> manifestFilePackFlagCopy) & 1;
+    result.delta = (flag >> manifestFilePackFlagDelta) & 1;
+    result.resume = (flag >> manifestFilePackFlagResume) & 1;
+
     // Size
     result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
@@ -259,7 +275,7 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
         manifestPackBaseTime - (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX));
 
     // Checksum page
-    result.checksumPage = flag & (1 << manifestFilePackFlagChecksumPage) ? true : false;
+    result.checksumPage = (flag >> manifestFilePackFlagChecksumPage) & 1;
 
     // SHA1 checksum
     memcpy(result.checksumSha1, (const uint8_t *)filePack + bufferPos, HASH_TYPE_SHA1_SIZE_HEX + 1);
@@ -895,6 +911,7 @@ manifestBuildInfo(
             ManifestFile file =
             {
                 .name = manifestName,
+                .copy = true,
                 .mode = info->mode,
                 .user = info->user,
                 .group = info->group,
@@ -902,6 +919,13 @@ manifestBuildInfo(
                 .sizeRepo = info->size,
                 .timestamp = info->timeModified,
             };
+
+            // When bundling zero-length files do not need to be copied
+            if (info->size == 0 && buildData->manifest->pub.data.bundle)
+            {
+                file.copy = false;
+                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+            }
 
             // Determine if this file should be page checksummed
             if (dbPath && buildData->checksumPage)
@@ -1484,7 +1508,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                if (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
+                if (file.copy && file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
                 {
                     file.sizeRepo = filePrior.sizeRepo;
                     memcpy(file.checksumSha1, filePrior.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
@@ -1494,6 +1518,12 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     file.checksumPageErrorList = filePrior.checksumPageErrorList;
                     file.bundleId = filePrior.bundleId;
                     file.bundleOffset = filePrior.bundleOffset;
+
+                    // Perform delta if the file size is not zero
+                    file.delta = delta && file.size != 0;
+
+                    // Copy if the file has changed or delta
+                    file.copy = (file.size != 0 && file.timestamp != filePrior.timestamp) || file.delta;
 
                     manifestFileUpdate(this, &file);
                 }
