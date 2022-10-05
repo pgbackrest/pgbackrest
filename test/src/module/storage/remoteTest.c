@@ -312,7 +312,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
-            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:str:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
+            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
                 " 5:strid:pg-chksum, 6:pack:<2:bool:false, 3:bool:false>, 7:strid:cipher-blk, 9:strid:cipher-blk, 11:strid:gz-cmp,"
                 " 13:strid:gz-dcmp, 15:strid:buffer",
             "filter results");
@@ -335,7 +335,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
-            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:str:bbbcf2c59433f68f22376cd2439d6cd309378df6>, 5:strid:sink,"
+            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>, 5:strid:sink,"
                 " 7:strid:buffer",
             "filter results");
 
