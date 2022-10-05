@@ -171,7 +171,7 @@ testBackupValidateList(
 
                         strCatFmt(result, ", m={%s}", strZ(mapLog));
 
-                        checksum = pckReadStrP(pckReadNew(ioFilterResult(checksumFilter)));
+                        checksum = bufHex(pckReadBinP(pckReadNew(ioFilterResult(checksumFilter))));
                     }
                     else
                     {
