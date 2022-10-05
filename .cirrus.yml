@@ -45,19 +45,19 @@ freebsd_12_task:
 
 # FreeBSD 13
 # ----------------------------------------------------------------------------------------------------------------------------------
-freebsd_13_task:
-  freebsd_instance:
-    image_family: freebsd-13-1
-    cpu: 4
-    memory: 4G
+# freebsd_13_task:
+#   freebsd_instance:
+#     image_family: freebsd-13-1
+#     cpu: 4
+#     memory: 4G
 
-  install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
+#   install_script: pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
 
-  script:
-    - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
+#   script:
+#     - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --min-gen --make-cmd=gmake --vm=none --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
-  debug_script:
-    - ls -lah ${CIRRUS_WORKING_DIR}
+#   debug_script:
+#     - ls -lah ${CIRRUS_WORKING_DIR}
 
 # MacOS Monterey
 # ----------------------------------------------------------------------------------------------------------------------------------
