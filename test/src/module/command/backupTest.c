@@ -188,8 +188,8 @@ testBackupValidateList(
                         ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
 
                         size = bufUsed(storageGetP(read));
-                        checksum = pckReadStrP(
-                            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+                        checksum = bufHex(
+                            pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
                     }
 
                     if (!strEqZ(checksum, file.checksumSha1))

@@ -128,7 +128,8 @@ List *restoreFile(
                                 if (file->size == 0 ||
                                     strEq(
                                         file->checksum,
-                                        pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
+                                        bufHex(
+                                            pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)))))
                                 {
                                     // If the hash/size are now the same but the time is not, then set the time back to the backup
                                     // time. This helps with unit testing, but also presents a pristine version of the database
@@ -274,12 +275,13 @@ List *restoreFile(
                         storageReadFree(repoFileRead);
 
                     // Validate checksum
-                    if (!strEq(file->checksum, pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))))
+                    if (!strEq(file->checksum, bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))))
                     {
                         THROW_FMT(
                             ChecksumError,
                             "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(file->name),
-                            strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))), strZ(file->checksum));
+                            strZ(bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))),
+                            strZ(file->checksum));
                     }
                 }
             }
