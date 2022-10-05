@@ -172,7 +172,10 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Reference
     if (file->reference != NULL)
-        cvtUInt64ToVarInt128((uintptr_t)file->reference, buffer, &bufferPos, sizeof(buffer));
+    {
+        cvtUInt64ToVarInt128(
+            (uintptr_t)strLstAddIfMissing(manifest->referenceList, file->reference), buffer, &bufferPos, sizeof(buffer));
+    }
 
     // Mode
     if (flag & (1 << manifestFilePackFlagMode))
@@ -315,9 +318,6 @@ manifestFileAdd(Manifest *const this, ManifestFile *const file)
 
     file->user = manifestOwnerCache(this, file->user);
     file->group = manifestOwnerCache(this, file->group);
-
-    if (file->reference != NULL)
-        file->reference = strLstAddIfMissing(this->referenceList, file->reference);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
@@ -1477,7 +1477,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->pub.fileList); fileIdx++)
         {
-            const ManifestFile file = manifestFile(this, fileIdx);
+            ManifestFile file = manifestFile(this, fileIdx);
 
             // Check if prior file can be used
             if (manifestFileExists(manifestPrior, file.name))
@@ -1486,11 +1486,16 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
                 if (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
                 {
-                    manifestFileUpdate(
-                        this, file.name, file.size, filePrior.sizeRepo, filePrior.checksumSha1,
-                        VARSTR(filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel),
-                        filePrior.checksumPage, filePrior.checksumPageError, filePrior.checksumPageErrorList,
-                        filePrior.bundleId, filePrior.bundleOffset);
+                    file.sizeRepo = filePrior.sizeRepo;
+                    memcpy(file.checksumSha1, filePrior.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                    file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
+                    file.checksumPage = filePrior.checksumPage;
+                    file.checksumPageError = filePrior.checksumPageError;
+                    file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                    file.bundleId = filePrior.bundleId;
+                    file.bundleOffset = filePrior.bundleOffset;
+
+                    manifestFileUpdate(this, &file);
                 }
             }
         }
@@ -2753,64 +2758,23 @@ manifestFileRemove(const Manifest *this, const String *name)
 }
 
 void
-manifestFileUpdate(
-    Manifest *const this, const String *const name, const uint64_t size, const uint64_t sizeRepo, const char *const checksumSha1,
-    const Variant *const reference, const bool checksumPage, const bool checksumPageError,
-    const String *const checksumPageErrorList, const uint64_t bundleId, const uint64_t bundleOffset)
+manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(UINT64, size);
-        FUNCTION_TEST_PARAM(UINT64, sizeRepo);
-        FUNCTION_TEST_PARAM(STRINGZ, checksumSha1);
-        FUNCTION_TEST_PARAM(VARIANT, reference);
-        FUNCTION_TEST_PARAM(BOOL, checksumPage);
-        FUNCTION_TEST_PARAM(BOOL, checksumPageError);
-        FUNCTION_TEST_PARAM(STRING, checksumPageErrorList);
-        FUNCTION_TEST_PARAM(UINT64, bundleId);
-        FUNCTION_TEST_PARAM(UINT64, bundleOffset);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(name != NULL);
+    ASSERT(file != NULL);
     ASSERT(
-        (!checksumPage && !checksumPageError && checksumPageErrorList == NULL) ||
-        (checksumPage && !checksumPageError && checksumPageErrorList == NULL) || (checksumPage && checksumPageError));
+        (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && file->checksumPageError));
+    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
 
-    ManifestFilePack **const filePack = manifestFilePackFindInternal(this, name);
-    ManifestFile file = manifestFileUnpack(this, *filePack);
-
-    // Update reference if set
-    if (reference != NULL)
-    {
-        if (varStr(reference) == NULL)
-            file.reference = NULL;
-        else
-            file.reference = strLstAddIfMissing(this->referenceList, varStr(reference));
-    }
-
-    // Update checksum if set
-    if (checksumSha1 != NULL)
-    {
-        ASSERT(strlen(checksumSha1) == HASH_TYPE_SHA1_SIZE_HEX);
-        memcpy(file.checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
-    }
-
-    // Update repo size
-    file.size = size;
-    file.sizeRepo = sizeRepo;
-
-    // Update checksum page info
-    file.checksumPage = checksumPage;
-    file.checksumPageError = checksumPageError;
-    file.checksumPageErrorList = checksumPageErrorList;
-
-    // Update bundle info
-    file.bundleId = bundleId;
-    file.bundleOffset = bundleOffset;
-
-    manifestFilePackUpdate(this, filePack, &file);
+    ManifestFilePack **const filePack = manifestFilePackFindInternal(this, file->name);
+    manifestFilePackUpdate(this, filePack, file);
 
     FUNCTION_TEST_RETURN_VOID();
 }
