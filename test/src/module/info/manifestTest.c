@@ -56,6 +56,15 @@ testRun(void)
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
+        #define TEST_MANIFEST_HEADER_BUNDLE                                                                                        \
+            "[backup]\n"                                                                                                           \
+            "backup-bundle=true\n"                                                                                                 \
+            "backup-label=null\n"                                                                                                  \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"full\"\n"
+
         #define TEST_MANIFEST_DB_90                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
