@@ -100,7 +100,7 @@ backupFile(
                     // If the pg file exists check the checksum/size
                     if (ioReadDrain(read))
                     {
-                        const String *pgTestChecksum = bufHex(
+                        const String *const pgTestChecksum = bufHex(
                             pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
                         uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
@@ -166,7 +166,7 @@ backupFile(
                             ioReadDrain(read);
 
                             // Test checksum/size
-                            const String *pgTestChecksum = bufHex(
+                            const String *const pgTestChecksum = bufHex(
                                 pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
                             uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
