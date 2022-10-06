@@ -51,10 +51,21 @@
                         <commit subject="Improve manifest file updates.">
                             <github-pull-request id="1888"/>
                         </commit>
+                        <commit subject="Add manifest flags for file processing during backup.">
+                            <github-pull-request id="1889"/>
+                        </commit>
+                        <commit subject="Add persistent reference list to manifest.">
+                            <github-pull-request id="1890"/>
+                        </commit>
+                        <commit subject="Add varint-128 encode/decode to IoRead/IoWrite.">
+                            <github-pull-request id="1891"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="john.morris"/>
                         </release-item-contributor-list>
 
                         <p>Block incremental backup.</p>

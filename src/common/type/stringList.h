@@ -102,7 +102,7 @@ typedef struct StrLstFindIdxParam
     bool required;
 } StrLstFindIdxParam;
 
-#define strLstFindIdxP(this, string, ...)                                                                                            \
+#define strLstFindIdxP(this, string, ...)                                                                                          \
     strLstFindIdx(this, string, (StrLstFindIdxParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 unsigned int strLstFindIdx(const StringList *this, const String *string, StrLstFindIdxParam param);
