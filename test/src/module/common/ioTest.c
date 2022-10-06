@@ -588,6 +588,46 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("ioReadVarIntU64() and ioWriteVarIntU64()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ioWriteVarIntU64()");
+
+        Buffer *buffer = bufNew(32);
+        IoWrite *write = ioBufferWriteNewOpen(buffer);
+
+        TEST_RESULT_VOID(ioWriteVarIntU64(write, 7777777), "write varint");
+        TEST_RESULT_VOID(ioWriteVarIntU64(write, 0), "write varint");
+        TEST_RESULT_VOID(ioWriteClose(write), "close write");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("ioReadVarIntU64()");
+
+        IoRead *read = ioBufferReadNewOpen(buffer);
+
+        TEST_RESULT_UINT(ioReadVarIntU64(read), 7777777, "read varint");
+        TEST_RESULT_UINT(ioReadVarIntU64(read), 0, "read varint");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on eof");
+
+        bufPtr(buffer)[0] = 0xFF;
+        bufUsedSet(buffer, 1);
+        read = ioBufferReadNewOpen(buffer);
+
+        TEST_ERROR(ioReadVarIntU64(read), FileReadError, "unexpected eof");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on too many bytes");
+
+        memset(bufPtr(buffer), 0xFF, bufSize(buffer));
+        bufUsedSet(buffer, bufSize(buffer));
+        read = ioBufferReadNewOpen(buffer);
+
+        TEST_ERROR(ioReadVarIntU64(read), FormatError, "unterminated base-128 integer");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("IoFdRead, IoFdWrite, and ioFdWriteOneStr()"))
     {
         ioBufferSizeSet(16);

@@ -67,6 +67,9 @@ void ioWriteStr(IoWrite *this, const String *string);
 // Write linefeed-terminated string
 void ioWriteStrLine(IoWrite *this, const String *string);
 
+// Write varint-128 encoding
+void ioWriteVarIntU64(IoWrite *this, uint64_t value);
+
 // Flush any data in the output buffer. This does not end writing and will not work if filters are present.
 void ioWriteFlush(IoWrite *this);
 

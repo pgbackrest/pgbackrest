@@ -77,6 +77,9 @@ typedef struct IoReadReadyParam
     bool error;                                                     // Error when read not ready
 } IoReadReadyParam;
 
+// Read varint-128 encoding
+uint64_t ioReadVarIntU64(IoRead *this);
+
 #define ioReadReadyP(this, ...)                                                                                                    \
     ioReadReady(this, (IoReadReadyParam){VAR_PARAM_INIT, __VA_ARGS__})
 
