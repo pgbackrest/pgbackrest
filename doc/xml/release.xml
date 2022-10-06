@@ -57,6 +57,9 @@
                         <commit subject="Add persistent reference list to manifest.">
                             <github-pull-request id="1890"/>
                         </commit>
+                        <commit subject="Add varint-128 encode/decode to IoRead/IoWrite.">
+                            <github-pull-request id="1891"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
