@@ -2547,6 +2547,7 @@ testRun(void)
             const String *resumeLabel = backupLabelCreate(
                 backupTypeDiff, manifestData(manifestPrior)->backupLabel, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
+            strLstAddZ(manifestResume->pub.referenceList, "BOGUS");
 
             // Reference in manifest
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/PG_VERSION.gz", strZ(resumeLabel)));

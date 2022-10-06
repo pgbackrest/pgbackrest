@@ -368,6 +368,13 @@ testRun(void)
 
         TEST_RESULT_UINT(strLstSize(list), 9, "list size");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strLstFindIdxP()");
+
+        TEST_RESULT_UINT(strLstFindIdxP(list, STRDEF("STR05")), 5, "find STR05");
+        TEST_RESULT_UINT(strLstFindIdxP(list, STRDEF("STR10")), LIST_NOT_FOUND, "find missing STR10");
+        TEST_ERROR(strLstFindIdxP(list, STRDEF("STR10"), .required = true), AssertError, "unable to find 'STR10' in string list");
+
         // Read them back and check values
         // -------------------------------------------------------------------------------------------------------------------------
         for (unsigned int listIdx = 0; listIdx < strLstSize(list); listIdx++)

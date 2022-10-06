@@ -2427,6 +2427,11 @@ testRun(void)
             manifest->pub.data.backupType = backupTypeIncr;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
+            manifest->pub.referenceList = strLstNew();
+            strLstAddZ(manifest->pub.referenceList, TEST_LABEL_FULL);
+            strLstAddZ(manifest->pub.referenceList, TEST_LABEL_DIFF);
+            strLstAddZ(manifest->pub.referenceList, TEST_LABEL_INCR);
+
             // Data directory
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath});
             manifestPathAdd(

@@ -575,6 +575,8 @@ sub backupCompare
     my $oActualManifest = new pgBackRestTest::Env::Manifest(
         $self->repoBackupPath("${strBackup}/" . FILE_MANIFEST), {strCipherPass => $self->cipherPassManifest()});
 
+    ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{'backup-reference'} =
+        $oActualManifest->get(MANIFEST_SECTION_BACKUP, 'backup-reference');
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_START} =
         $oActualManifest->get(MANIFEST_SECTION_BACKUP, &MANIFEST_KEY_TIMESTAMP_START);
     ${$oExpectedManifest}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_STOP} =
@@ -2122,6 +2124,9 @@ sub restoreCompare
         $oActualManifest->set(
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LABEL, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LABEL});
+        $oActualManifest->set(
+            MANIFEST_SECTION_BACKUP, 'backup-reference', undef,
+            $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-reference'});
         $oActualManifest->set(
             MANIFEST_SECTION_BACKUP, MANIFEST_KEY_TIMESTAMP_COPY_START, undef,
             $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_TIMESTAMP_COPY_START});
