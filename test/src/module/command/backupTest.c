@@ -120,8 +120,8 @@ testBackupValidateList(
                     ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
 
                     uint64_t size = bufUsed(storageGetP(read));
-                    const String *checksum = pckReadStrP(
-                        ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+                    const String *checksum = bufHex(
+                        pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
 
                     strCatFmt(result, ", s=%" PRIu64, size);
 

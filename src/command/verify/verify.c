@@ -224,11 +224,12 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
             else
                 ioReadDrain(infoRead);
 
-            PackRead *const filterResult = ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE);
+            const Buffer *const filterResult = pckReadBinP(
+                ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.checksum = pckReadStrP(filterResult);
+                result.checksum = bufHex(filterResult);
             }
             MEM_CONTEXT_PRIOR_END();
         }

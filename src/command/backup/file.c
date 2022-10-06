@@ -94,8 +94,8 @@ backupFile(
                     // If the pg file exists check the checksum/size
                     if (ioReadDrain(read))
                     {
-                        const String *pgTestChecksum = pckReadStrP(
-                            ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+                        const String *const pgTestChecksum = bufHex(
+                            pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
                         uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // Does the pg file match?
@@ -160,8 +160,8 @@ backupFile(
                             ioReadDrain(read);
 
                             // Test checksum/size
-                            const String *pgTestChecksum = pckReadStrP(
-                                ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+                            const String *const pgTestChecksum = bufHex(
+                                pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
                             uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                             // No need to recopy if checksum/size match
@@ -275,8 +275,8 @@ backupFile(
                             fileResult->copySize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 0));
                             fileResult->bundleOffset = bundleOffset;
-                            fileResult->copyChecksum = strDup(
-                                pckReadStrP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
+                            fileResult->copyChecksum = bufHex(
+                                pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
                             fileResult->repoSize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 1));
 
