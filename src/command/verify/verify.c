@@ -224,7 +224,8 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
             else
                 ioReadDrain(infoRead);
 
-            Buffer *const filterResult = pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE));
+            const Buffer *const filterResult = pckReadBinP(
+                ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {

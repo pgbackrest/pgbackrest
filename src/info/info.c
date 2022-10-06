@@ -287,7 +287,7 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
             INFO_CHECKSUM_END(data.checksumActual);
 
             // Verify the checksum
-            const String *checksumActual = bufHex(pckReadBinP(pckReadNew(ioFilterResult(data.checksumActual))));
+            const String *const checksumActual = bufHex(pckReadBinP(pckReadNew(ioFilterResult(data.checksumActual))));
 
             if (data.checksumExpected == NULL)
                 THROW_FMT(ChecksumError, "invalid checksum, actual '%s' but no checksum found", strZ(checksumActual));
