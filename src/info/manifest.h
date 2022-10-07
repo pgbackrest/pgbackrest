@@ -100,9 +100,9 @@ File type
 typedef struct ManifestFile
 {
     const String *name;                                             // File name (must be first member in struct)
-    bool copy;                                                      // Should the file be copied (backup only)?
-    bool delta;                                                     // Verify checksum in PGDATA before copying (backup only)?
-    bool resume;                                                    // Is the file being resumed (backup only)?
+    bool copy:1;                                                    // Should the file be copied (backup only)?
+    bool delta:1;                                                   // Verify checksum in PGDATA before copying (backup only)?
+    bool resume:1;                                                  // Is the file being resumed (backup only)?
     bool checksumPage:1;                                            // Does this file have page checksums?
     bool checksumPageError:1;                                       // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
