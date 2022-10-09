@@ -55,6 +55,7 @@ typedef struct ManifestData
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
     bool blockIncr;                                                 // Does the backup perform block incremental?
+    uint64_t blockIncrSize;                                         // Size of incremental blocks
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -166,7 +167,7 @@ Constructors
 // Build a new manifest for a PostgreSQL data directory
 Manifest *manifestNewBuild(
     const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
-    bool blockIncr, const StringList *excludeList, const Pack *tablespaceList);
+    bool blockIncr, uint64_t blockIncrSize, const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
 Manifest *manifestNewLoad(IoRead *read);

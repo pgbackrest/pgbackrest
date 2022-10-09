@@ -2726,7 +2726,7 @@ testRun(void)
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(),
+                    .mode = 0600, .group = groupName(), .user = userName(), .blockIncrMapSize = 87, // !!!
                     .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "pg_hba.conf", "PG_HBA.CONF");
 

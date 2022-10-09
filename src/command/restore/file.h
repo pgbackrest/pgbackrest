@@ -33,6 +33,8 @@ typedef struct RestoreFile
     const String *group;                                            // Original group
     uint64_t offset;                                                // Offset into repo file where pg file is located
     const Variant *limit;                                           // Limit for read in the repo file
+    uint64_t blockIncrMapSize;                                      // Block incremental map size (0 if not incremental)
+    uint64_t blockIncrSize;                                         // Block incremental size (when map size > 0)
     const String *manifestFile;                                     // Manifest file
 } RestoreFile;
 

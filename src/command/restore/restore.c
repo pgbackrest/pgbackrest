@@ -2353,6 +2353,12 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 else
                     pckWriteBoolP(param, false);
 
+                // Block incremental
+                pckWriteU64P(param, file.blockIncrMapSize);
+
+                if (file.blockIncrMapSize != 0)
+                    pckWriteU64P(param, manifestData(jobData->manifest)->blockIncrSize);
+
                 pckWriteStrP(param, file.name);
 
                 // Remove job from the queue

@@ -1138,8 +1138,8 @@ manifestBuildInfo(
 Manifest *
 manifestNewBuild(
     const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const bool online,
-    const bool checksumPage, const bool bundle, const bool blockIncr, const StringList *const excludeList,
-    const Pack *const tablespaceList)
+    const bool checksumPage, const bool bundle, const bool blockIncr, const uint64_t blockIncrSize,
+    const StringList *const excludeList, const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -1149,6 +1149,7 @@ manifestNewBuild(
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(BOOL, blockIncr);
+        FUNCTION_LOG_PARAM(UINT64, blockIncrSize);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(PACK, tablespaceList);
     FUNCTION_LOG_END();
@@ -1171,6 +1172,7 @@ manifestNewBuild(
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
         this->pub.data.bundle = bundle;
         this->pub.data.blockIncr = blockIncr;
+        this->pub.data.blockIncrSize = blockIncrSize;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1684,6 +1686,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
 #define MANIFEST_KEY_BACKUP_BLOCK_INCR                              "backup-block-incr"
+#define MANIFEST_KEY_BACKUP_BLOCK_INCR_SIZE                         "backup-block-incr-size"
 #define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
 #define MANIFEST_KEY_BACKUP_LABEL                                   "backup-label"
 #define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
@@ -2087,6 +2090,8 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
                 manifest->pub.data.archiveStop = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_BLOCK_INCR))
                 manifest->pub.data.blockIncr = varBool(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_BLOCK_INCR_SIZE))
+                manifest->pub.data.blockIncrSize = varUInt64(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
                 manifest->pub.data.bundle = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
@@ -2324,6 +2329,9 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BLOCK_INCR,
                 jsonFromVar(VARBOOL(manifest->pub.data.blockIncr)));
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BLOCK_INCR_SIZE,
+                jsonFromVar(VARUINT64(manifest->pub.data.blockIncrSize)));
         }
 
         if (manifest->pub.data.bundle)
