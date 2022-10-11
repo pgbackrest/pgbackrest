@@ -2321,7 +2321,9 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                             param,
                             strNewFmt(
                                 "%s%s%s", strZ(repoPath), strZ(file.name),
-                                strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
+                                file.blockIncrMapSize != 0 ?
+                                    BACKUP_BLOCK_INCR_EXT :
+                                    strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
                         fileName = file.name;
                     }
 
@@ -2331,6 +2333,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
                     pckWriteStrP(param, jobData->cipherSubPass);
+                    pckWriteStrLstP(param, manifestReferenceList(jobData->manifest));
 
                     fileAdded = true;
                 }
@@ -2344,7 +2347,16 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
 
-                if (file.bundleId != 0)
+                // !!!
+                if (file.blockIncrMapSize != 0)
+                {
+                    // THROW_FMT(AssertError, "!!!OFF %d LIM %d", (int)(file.bundleOffset + file.sizeRepo - file.blockIncrMapSize), (int)file.blockIncrMapSize);
+
+                    pckWriteBoolP(param, true);
+                    pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
+                    pckWriteU64P(param, file.blockIncrMapSize);
+                }
+                else if (file.bundleId != 0)
                 {
                     pckWriteBoolP(param, true);
                     pckWriteU64P(param, file.bundleOffset);

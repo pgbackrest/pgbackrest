@@ -796,21 +796,6 @@ unit:
           - command/remote/remote
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: restore
-        total: 13
-
-        coverage:
-          - command/restore/deltaMap
-          - command/restore/file
-          - command/restore/protocol
-          - command/restore/restore
-
-        include:
-          - common/user
-          - info/infoBackup
-          - info/manifest
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
         total: 13
 
@@ -827,6 +812,21 @@ unit:
           - info/info
           - info/manifest
           - storage/storage
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: restore
+        total: 13
+
+        coverage:
+          - command/restore/deltaMap
+          - command/restore/file
+          - command/restore/protocol
+          - command/restore/restore
+
+        include:
+          - common/user
+          - info/infoBackup
+          - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo

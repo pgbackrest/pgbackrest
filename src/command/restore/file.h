@@ -42,10 +42,11 @@ typedef struct RestoreFileResult
 {
     const String *manifestFile;                                     // Manifest file
     RestoreResult result;                                           // Restore result (e.g. preserve, copy)
+    const Buffer *deltaMap;                                         // Delta for block incremental restore (used internally)
 } RestoreFileResult;
 
 List *restoreFile(
     const String *repoFile, unsigned int repoIdx, CompressType repoFileCompressType, time_t copyTimeBegin, bool delta,
-    bool deltaForce, const String *cipherPass, const List *fileList);
+    bool deltaForce, const String *cipherPass, const StringList *referenceList, const List *fileList);
 
 #endif

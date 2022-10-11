@@ -7,6 +7,8 @@ Restore File
 #include <unistd.h>
 #include <utime.h>
 
+#include "command/backup/blockMap.h"
+#include "command/restore/deltaMap.h"
 #include "command/restore/file.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -22,7 +24,8 @@ Restore File
 /**********************************************************************************************************************************/
 List *restoreFile(
     const String *const repoFile, const unsigned int repoIdx, const CompressType repoFileCompressType, const time_t copyTimeBegin,
-    const bool delta, const bool deltaForce, const String *const cipherPass, const List *const fileList)
+    const bool delta, const bool deltaForce, const String *const cipherPass, const StringList *const referenceList,
+    const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);
@@ -32,6 +35,7 @@ List *restoreFile(
         FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(BOOL, deltaForce);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(STRING_LIST, referenceList);             // List of references (for block incremental)
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to restore
     FUNCTION_LOG_END();
 
@@ -120,7 +124,11 @@ List *restoreFile(
                                 {
                                     read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
                                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
-                                    // !!! Hash map filter
+
+                                    // Generate delta map if block incremental
+                                    if (file->blockIncrMapSize != 0)
+                                        ioFilterGroupAdd(ioReadFilterGroup(read), deltaMapNew(file->blockIncrSize));
+
                                     ioReadDrain(read);
                                 }
 
@@ -145,6 +153,19 @@ List *restoreFile(
                                     }
 
                                     fileResult->result = restoreResultPreserve;
+                                }
+
+                                // If block incremental and not preserving the file, store the delta map for later use
+                                if (file->blockIncrMapSize != 0 && fileResult->result != restoreResultPreserve)
+                                {
+                                    PackRead *const deltaMapResult = ioFilterGroupResultP(
+                                        ioReadFilterGroup(read), DELTA_MAP_FILTER_TYPE);
+
+                                    MEM_CONTEXT_OBJ_BEGIN(result)
+                                    {
+                                        fileResult->deltaMap = pckReadBinP(deltaMapResult);
+                                    }
+                                    MEM_CONTEXT_OBJ_END();
                                 }
                             }
                         }
@@ -237,34 +258,110 @@ List *restoreFile(
                         MEM_CONTEXT_PRIOR_END();
                     }
 
-                    // Create pg file
-                    StorageWrite *pgFileWrite = storageNewWriteP(
-                        storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
-                        .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
+                    // If block incremental file
+                    const String *checksum = NULL;
 
-                    IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
-
-                    // Add decryption filter
-                    if (cipherPass != NULL)
+                    if (file->blockIncrMapSize != 0)
                     {
-                        ioFilterGroupAdd(
-                            filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
+                        ASSERT(referenceList != NULL);
+
+                        // Read block map
+                        const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
+
+                        // Open the file for write
+                        const char *const fileName = strZ(storagePathP(storagePg(), file->name));
+                        int fd = open(fileName, O_CREAT | O_WRONLY, file->mode);
+                        THROW_ON_SYS_ERROR_FMT(fd == -1, FileReadError, STORAGE_ERROR_WRITE_OPEN, fileName);
+
+                        TRY_BEGIN()
+                        {
+                            for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
+                            {
+                                const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
+
+                                // Construct repo file
+                                String *const blockFile = strCatFmt(
+                                    strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(strLstGet(referenceList, blockMapItem->reference)));
+
+                                if (blockMapItem->bundleId != 0)
+                                    strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId);
+                                else
+                                    strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
+
+                                const Buffer *const block = storageGetP(
+                                    storageNewReadP(storageRepo(), blockFile, .offset = blockMapItem->offset,
+                                    .limit = VARUINT64(blockMapItem->size)));
+
+                                if (write(fd, bufPtrConst(block), bufUsed(block)) != (ssize_t)bufUsed(block))
+                                    THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", fileName);
+
+                                // THROW_FMT(AssertError, "!!!REF %s", strZ(strLstGet(referenceList, blockMapItem->reference)));
+                            }
+
+                            // // Truncate to original size
+                            // THROW_ON_SYS_ERROR_FMT(
+                            //     ftruncate(fd, (off_t)file->size) == -1, FileWriteError, "unable to truncate file '%s'",
+                            //     fileName);
+
+                            // Sync
+                            THROW_ON_SYS_ERROR_FMT(fsync(fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, fileName);
+                        }
+                        FINALLY()
+                        {
+                            THROW_ON_SYS_ERROR_FMT(
+                                close(fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, fileName);
+                        }
+                        TRY_END();
+
+                        THROW_ON_SYS_ERROR_FMT(
+                            utime(
+                                fileName,
+                                &((struct utimbuf){.actime = file->timeModified, .modtime = file->timeModified})) == -1,
+                            FileInfoError, "unable to set time for '%s'", fileName);
+
+                        // Calculate checksum
+                        IoRead *const read = storageReadIo(storageNewReadP(storagePg(), file->name));
+
+                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+                        ioReadDrain(read);
+
+                        checksum = bufHex(pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
                     }
+                    // Else normal file
+                    else
+                    {
+                        // Create pg file
+                        StorageWrite *pgFileWrite = storageNewWriteP(
+                            storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
+                            .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
 
-                    // Add decompression filter
-                    if (repoFileCompressType != compressTypeNone)
-                        ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
+                        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
 
-                    // Add sha1 filter
-                    ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
+                        // Add decryption filter
+                        if (cipherPass != NULL)
+                        {
+                            ioFilterGroupAdd(
+                                filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
+                        }
 
-                    // Add size filter
-                    ioFilterGroupAdd(filterGroup, ioSizeNew());
+                        // Add decompression filter
+                        if (repoFileCompressType != compressTypeNone)
+                            ioFilterGroupAdd(filterGroup, decompressFilter(repoFileCompressType));
 
-                    // Copy file
-                    ioWriteOpen(storageWriteIo(pgFileWrite));
-                    ioCopyP(storageReadIo(repoFileRead), storageWriteIo(pgFileWrite), .limit = file->limit);
-                    ioWriteClose(storageWriteIo(pgFileWrite));
+                        // Add sha1 filter
+                        ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
+
+                        // Add size filter
+                        ioFilterGroupAdd(filterGroup, ioSizeNew());
+
+                        // Copy file
+                        ioWriteOpen(storageWriteIo(pgFileWrite));
+                        ioCopyP(storageReadIo(repoFileRead), storageWriteIo(pgFileWrite), .limit = file->limit);
+                        ioWriteClose(storageWriteIo(pgFileWrite));
+
+                        // Get checksum result
+                        checksum = bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)));
+                    }
 
                     // If more than one file is being copied from a single read then decrement the limit
                     if (repoFileLimit != 0)
@@ -275,13 +372,12 @@ List *restoreFile(
                         storageReadFree(repoFileRead);
 
                     // Validate checksum
-                    if (!strEq(file->checksum, bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))))
+                    if (!strEq(file->checksum, checksum))
                     {
                         THROW_FMT(
                             ChecksumError,
                             "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(file->name),
-                            strZ(bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))),
-                            strZ(file->checksum));
+                            strZ(checksum), strZ(file->checksum));
                     }
                 }
             }

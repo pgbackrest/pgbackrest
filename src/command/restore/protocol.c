@@ -34,6 +34,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
         const bool delta = pckReadBoolP(param);
         const bool deltaForce = pckReadBoolP(param);
         const String *const cipherPass = pckReadStrP(param);
+        const StringList *const referenceList = pckReadStrLstP(param);
 
         // Build the file list
         List *fileList = lstNewP(sizeof(RestoreFile));
@@ -55,6 +56,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
                 file.limit = varNewUInt64(pckReadU64P(param));
             }
 
+            // Block incremental
             file.blockIncrMapSize = pckReadU64P(param);
 
             if (file.blockIncrMapSize != 0)
@@ -67,7 +69,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
 
         // Restore files
         const List *const result = restoreFile(
-            repoFile, repoIdx, repoFileCompressType, copyTimeBegin, delta, deltaForce, cipherPass, fileList);
+            repoFile, repoIdx, repoFileCompressType, copyTimeBegin, delta, deltaForce, cipherPass, referenceList, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();

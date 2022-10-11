@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Restore Command
 ***********************************************************************************************************************************/
+#include "command/backup/blockIncr.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "postgres/version.h"
@@ -237,7 +238,7 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, STRDEF("badpass"), fileList),
+                0, false, false, STRDEF("badpass"), NULL, fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -2471,12 +2472,15 @@ testRun(void)
             manifest->pub.data.pgVersion = PG_VERSION_10;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeIncr;
+            manifest->pub.data.blockIncr = true;
+            manifest->pub.data.blockIncrSize = 8192;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
             manifest->pub.referenceList = strLstNew();
             strLstAddZ(manifest->pub.referenceList, TEST_LABEL_FULL);
             strLstAddZ(manifest->pub.referenceList, TEST_LABEL_DIFF);
             strLstAddZ(manifest->pub.referenceList, TEST_LABEL_INCR);
+            strLstAddZ(manifest->pub.referenceList, TEST_LABEL);
 
             // Data directory
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath});
@@ -2726,9 +2730,35 @@ testRun(void)
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(), .blockIncrMapSize = 87, // !!!
+                    .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "pg_hba.conf", "PG_HBA.CONF");
+
+            // Block incremental with no references to a prior backup
+            fileBuffer = bufNew(8192 * 3);
+            memset(bufPtr(fileBuffer), 1, 8192);
+            memset(bufPtr(fileBuffer) + 8192, 2, 8192);
+            memset(bufPtr(fileBuffer) + 16384, 3, 8192);
+            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+            // THROW_FMT(AssertError, "!!!HASH %s", strZ(bufHex(cryptoHashOne(hashTypeSha1, fileBuffer))));
+
+            IoWrite *write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-no-ref.pgbi")));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 3, 0, 0, NULL));
+
+            ioWriteOpen(write);
+            ioWrite(write, fileBuffer);
+            ioWriteClose(write);
+
+            const uint64_t blockIncrMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/bi-no-ref"), .size = bufUsed(fileBuffer),
+                    .sizeRepo = bufUsed(fileBuffer) + blockIncrMapSize, .blockIncrMapSize = blockIncrMapSize,
+                    .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c"});
 
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
@@ -2830,6 +2860,8 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT]) checksum"
                 " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref (24KB, [PCT]) checksum"
+                " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, [PCT]) checksum"
                 " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
@@ -2879,7 +2911,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 21");
+            "P00   INFO: restore size = [SIZE], file total = 22");
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
@@ -2894,6 +2926,7 @@ testRun(void)
             "base/1/30 {s=1, t=1482182860}\n"
             "base/1/31 {s=1, t=1482182860}\n"
             "base/1/PG_VERSION {s=4, t=1482182860}\n"
+            "base/1/bi-no-ref {s=24576, t=1482182860}\n"
             "base/16384/\n"
             "base/16384/16385 {s=16384, t=1482182860}\n"
             "base/16384/PG_VERSION {s=4, t=1482182860}\n"
@@ -3018,6 +3051,8 @@ testRun(void)
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref - exists and matches backup (24KB, [PCT]) checksum"
+                " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, [PCT])"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
@@ -3067,7 +3102,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 21");
+            "P00   INFO: restore size = [SIZE], file total = 22");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);

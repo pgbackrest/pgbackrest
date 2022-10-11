@@ -250,9 +250,6 @@ backupFile(
 
                         if (file->blockIncrMapFile != NULL)
                         {
-                            // THROW_FMT(
-                            //     AssertError, "!!!MAP FILE %s, offset %d, limit %d", strZ(file->blockIncrMapFile),
-                            //     (int)file->blockIncrMapOffset, (int)file->blockIncrMapSize);
                             blockMap = storageGetP(
                                 storageNewReadP(
                                     storageRepo(), file->blockIncrMapFile, .offset = file->blockIncrMapOffset,
