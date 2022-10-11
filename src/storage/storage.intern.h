@@ -156,6 +156,10 @@ typedef struct StorageInterfaceNewWriteParam
     // (e.g. S3). Non-atomic writes are used in some places where there is a performance advantage and atomicity is not needed.
     bool atomic;
 
+    // Truncate file if it exists. Disable this only in cases where the file will be manipulated directly through the file handle,
+    // which should always be the exception and shows functionality that should be added to the storage interface.
+    bool truncate;
+
     // Is the file compressible?  This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
 } StorageInterfaceNewWriteParam;

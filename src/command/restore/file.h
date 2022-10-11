@@ -36,17 +36,17 @@ typedef struct RestoreFile
     uint64_t blockIncrMapSize;                                      // Block incremental map size (0 if not incremental)
     uint64_t blockIncrSize;                                         // Block incremental size (when map size > 0)
     const String *manifestFile;                                     // Manifest file
+    const Buffer *deltaMap;                                         // Delta for block incremental restore, set in restoreFile()
 } RestoreFile;
 
 typedef struct RestoreFileResult
 {
     const String *manifestFile;                                     // Manifest file
     RestoreResult result;                                           // Restore result (e.g. preserve, copy)
-    const Buffer *deltaMap;                                         // Delta for block incremental restore (used internally)
 } RestoreFileResult;
 
 List *restoreFile(
     const String *repoFile, unsigned int repoIdx, CompressType repoFileCompressType, time_t copyTimeBegin, bool delta,
-    bool deltaForce, const String *cipherPass, const StringList *referenceList, const List *fileList);
+    bool deltaForce, const String *cipherPass, const StringList *referenceList, List *fileList);
 
 #endif

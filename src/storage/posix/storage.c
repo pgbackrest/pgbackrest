@@ -374,6 +374,7 @@ storagePosixNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
         FUNCTION_LOG_PARAM(BOOL, param.syncFile);
         FUNCTION_LOG_PARAM(BOOL, param.syncPath);
         FUNCTION_LOG_PARAM(BOOL, param.atomic);
+        FUNCTION_LOG_PARAM(BOOL, param.truncate);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -383,7 +384,7 @@ storagePosixNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
         STORAGE_WRITE,
         storageWritePosixNew(
             this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
-            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic));
+            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));
 }
 
 /**********************************************************************************************************************************/

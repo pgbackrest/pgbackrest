@@ -25,7 +25,7 @@ Restore File
 List *restoreFile(
     const String *const repoFile, const unsigned int repoIdx, const CompressType repoFileCompressType, const time_t copyTimeBegin,
     const bool delta, const bool deltaForce, const String *const cipherPass, const StringList *const referenceList,
-    const List *const fileList)
+    List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);
@@ -54,7 +54,7 @@ List *restoreFile(
             // Use a per-file mem context to reduce memory usage
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                const RestoreFile *const file = lstGet(fileList, fileIdx);
+                RestoreFile *const file = lstGet(fileList, fileIdx);
                 ASSERT(file->name != NULL);
                 ASSERT(file->limit == NULL || varType(file->limit) == varTypeUInt64);
 
@@ -92,26 +92,18 @@ List *restoreFile(
                                 // this using the checksum below)
                                 if (info.size > file->size)
                                 {
-                                    // Open the file for write
-                                    int fd = open(fileName, O_WRONLY, 0);
-                                    THROW_ON_SYS_ERROR_FMT(fd == -1, FileReadError, STORAGE_ERROR_WRITE_OPEN, fileName);
+                                    IoWrite *const pgWriteTruncate = storageWriteIo(
+                                        storageNewWriteP(
+                                            storagePgWrite(), file->name, .noAtomic = true, .noCreatePath = true,
+                                            .noSyncPath = true, .noTruncate = true));
+                                    ioWriteOpen(pgWriteTruncate);
 
-                                    TRY_BEGIN()
-                                    {
-                                        // Truncate to original size
-                                        THROW_ON_SYS_ERROR_FMT(
-                                            ftruncate(fd, (off_t)file->size) == -1, FileWriteError, "unable to truncate file '%s'",
-                                            fileName);
+                                    // Truncate to original size
+                                    THROW_ON_SYS_ERROR_FMT(
+                                        ftruncate(ioWriteFd(pgWriteTruncate), (off_t)file->size) == -1, FileWriteError,
+                                        "unable to truncate file '%s'", fileName);
 
-                                        // Sync
-                                        THROW_ON_SYS_ERROR_FMT(fsync(fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, fileName);
-                                    }
-                                    FINALLY()
-                                    {
-                                        THROW_ON_SYS_ERROR_FMT(
-                                            close(fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, fileName);
-                                    }
-                                    TRY_END();
+                                    ioWriteClose(pgWriteTruncate);
 
                                     // Update info
                                     info = storageInfoP(storagePg(), file->name, .followLink = true);
@@ -161,9 +153,9 @@ List *restoreFile(
                                     PackRead *const deltaMapResult = ioFilterGroupResultP(
                                         ioReadFilterGroup(read), DELTA_MAP_FILTER_TYPE);
 
-                                    MEM_CONTEXT_OBJ_BEGIN(result)
+                                    MEM_CONTEXT_OBJ_BEGIN(fileList)
                                     {
-                                        fileResult->deltaMap = pckReadBinP(deltaMapResult);
+                                        file->deltaMap = pckReadBinP(deltaMapResult);
                                     }
                                     MEM_CONTEXT_OBJ_END();
                                 }
@@ -258,6 +250,12 @@ List *restoreFile(
                         MEM_CONTEXT_PRIOR_END();
                     }
 
+                    // Create pg file
+                    StorageWrite *pgFileWrite = storageNewWriteP(
+                        storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
+                        .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
+                        .noTruncate = file->deltaMap != NULL);
+
                     // If block incremental file
                     const String *checksum = NULL;
 
@@ -268,51 +266,35 @@ List *restoreFile(
                         // Read block map
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
 
-                        // Open the file for write
-                        const char *const fileName = strZ(storagePathP(storagePg(), file->name));
-                        int fd = open(fileName, O_CREAT | O_WRONLY, file->mode);
-                        THROW_ON_SYS_ERROR_FMT(fd == -1, FileReadError, STORAGE_ERROR_WRITE_OPEN, fileName);
+                        // Write changed blocks
+                        ioWriteOpen(storageWriteIo(pgFileWrite));
 
-                        TRY_BEGIN()
+                        for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
                         {
-                            for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
+                            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
+
+                            // Construct repo file
+                            String *const blockFile = strCatFmt(
+                                strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(strLstGet(referenceList, blockMapItem->reference)));
+
+                            if (blockMapItem->bundleId != 0)
+                                strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId);
+                            else
+                                strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
+
+                            const Buffer *const block = storageGetP(
+                                storageNewReadP(storageRepo(), blockFile, .offset = blockMapItem->offset,
+                                .limit = VARUINT64(blockMapItem->size)));
+
+                            if (write(ioWriteFd(storageWriteIo(pgFileWrite)), bufPtrConst(block), bufUsed(block)) !=
+                                (ssize_t)bufUsed(block))
                             {
-                                const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
-
-                                // Construct repo file
-                                String *const blockFile = strCatFmt(
-                                    strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(strLstGet(referenceList, blockMapItem->reference)));
-
-                                if (blockMapItem->bundleId != 0)
-                                    strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId);
-                                else
-                                    strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
-
-                                const Buffer *const block = storageGetP(
-                                    storageNewReadP(storageRepo(), blockFile, .offset = blockMapItem->offset,
-                                    .limit = VARUINT64(blockMapItem->size)));
-
-                                if (write(fd, bufPtrConst(block), bufUsed(block)) != (ssize_t)bufUsed(block))
-                                    THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", fileName);
+                                THROW_SYS_ERROR_FMT(
+                                    FileWriteError, "unable to write '%s'", strZ(storagePathP(storagePg(), file->name)));
                             }
-
-                            // Sync
-                            THROW_ON_SYS_ERROR_FMT(fsync(fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, fileName);
                         }
-                        FINALLY()
-                        {
-                            THROW_ON_SYS_ERROR_FMT(
-                                close(fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, fileName);
-                        }
-                        TRY_END();
 
-                        // !!! Set owner. Maybe add noTruncate option to storageNewReadP()?
-
-                        THROW_ON_SYS_ERROR_FMT(
-                            utime(
-                                fileName,
-                                &((struct utimbuf){.actime = file->timeModified, .modtime = file->timeModified})) == -1,
-                            FileInfoError, "unable to set time for '%s'", fileName);
+                        ioWriteClose(storageWriteIo(pgFileWrite));
 
                         // Calculate checksum
                         IoRead *const read = storageReadIo(storageNewReadP(storagePg(), file->name));
@@ -325,11 +307,6 @@ List *restoreFile(
                     // Else normal file
                     else
                     {
-                        // Create pg file
-                        StorageWrite *pgFileWrite = storageNewWriteP(
-                            storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
-                            .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
-
                         IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
 
                         // Add decryption filter

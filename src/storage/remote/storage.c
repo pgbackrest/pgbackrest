@@ -315,6 +315,7 @@ storageRemoteNewWrite(
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(param.truncate);
 
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE,
