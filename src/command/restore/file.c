@@ -122,7 +122,7 @@ List *restoreFile(
 
                                 if (file->size != 0)
                                 {
-                                    read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
+                                    read = storageReadIo(storageNewReadP(storagePg(), file->name));
                                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
                                     // Generate delta map if block incremental
@@ -294,14 +294,7 @@ List *restoreFile(
 
                                 if (write(fd, bufPtrConst(block), bufUsed(block)) != (ssize_t)bufUsed(block))
                                     THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", fileName);
-
-                                // THROW_FMT(AssertError, "!!!REF %s", strZ(strLstGet(referenceList, blockMapItem->reference)));
                             }
-
-                            // // Truncate to original size
-                            // THROW_ON_SYS_ERROR_FMT(
-                            //     ftruncate(fd, (off_t)file->size) == -1, FileWriteError, "unable to truncate file '%s'",
-                            //     fileName);
 
                             // Sync
                             THROW_ON_SYS_ERROR_FMT(fsync(fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, fileName);
@@ -312,6 +305,8 @@ List *restoreFile(
                                 close(fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, fileName);
                         }
                         TRY_END();
+
+                        // !!! Set owner. Maybe add noTruncate option to storageNewReadP()?
 
                         THROW_ON_SYS_ERROR_FMT(
                             utime(
