@@ -237,6 +237,7 @@ storageReadSftpClose(THIS_VOID)
                 strZ(strNewFmt("sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "" );
         }
     }
+
     this->sftpHandle = NULL;
 
     FUNCTION_LOG_RETURN_VOID();

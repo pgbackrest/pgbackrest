@@ -51,6 +51,28 @@ struct StorageSftp
     Wait *wait;
 };
 
+/**********************************************************************************************************************************/
+bool
+storageSftpLibssh2FxNoSuchFile(THIS_VOID, const int rc)
+{
+    THIS(StorageSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
+        FUNCTION_LOG_PARAM(INT, rc);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = false;
+
+    if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
+            result = true;
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
 /***********************************************************************************************************************************
 Validate libssh2 startup
 ***********************************************************************************************************************************/
@@ -64,37 +86,19 @@ validateLibssh2Startup(StorageSftp *driver)
     ASSERT(driver != NULL);
 
     if (driver->libssh2_initStatus != 0)
-        THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2");
+        THROW_FMT(ServiceError, "unable to init libssh2");
 
     if (driver->session == NULL)
-        THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2 session");
+        THROW_FMT(ServiceError, "unable to init libssh2 session");
 
     if (driver->handshakeStatus != 0)
-        THROW_SYS_ERROR_FMT(ServiceError, "libssh2 handshake failed");
+        THROW_FMT(ServiceError, "libssh2 handshake failed");
 
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Validate libssh2 sftp session
-***********************************************************************************************************************************/
-static void
-validateLibssh2SftpSession(StorageSftp *driver)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, driver);
-    FUNCTION_LOG_END();
-
-    ASSERT(driver != NULL);
-
-    if (driver->sftpSession == NULL)
-        THROW_SYS_ERROR_FMT(ServiceError, "unable to init libssh2_sftp session");
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Free connection
+Free libssh2 resources
 ***********************************************************************************************************************************/
 static void
 libssh2SessionFreeResource(THIS_VOID)
@@ -109,6 +113,13 @@ libssh2SessionFreeResource(THIS_VOID)
 
     libssh2_sftp_close(this->sftpHandle);
     libssh2_sftp_shutdown(this->sftpSession);
+
+    if (this->session != NULL)
+    {
+        libssh2_session_disconnect(this->session, "pgbackrest instance shutdown");
+        libssh2_session_free(this->session);
+    }
+
     libssh2_exit();
 
     FUNCTION_LOG_RETURN_VOID();
@@ -156,10 +167,9 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
 
     if (rc)
     {
-        // Mimics posix driver
-        if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
-            if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
-                THROW_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));
+        // Mimics posix driver - throw on libssh2 errors other than no such file
+        if (!storageSftpLibssh2FxNoSuchFile(this, rc))
+            THROW_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));
     }
     // On success the file exists
     else
@@ -303,11 +313,8 @@ storageSftpInfoList(
     {
         // If session indicates sftp error, can query for sftp error
         // !!! see also libssh2_session_last_error() - possible to return more detailed error
-        if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
-        {
-            if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
-                THROW_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));
-        }
+        if (!storageSftpLibssh2FxNoSuchFile(this, libssh2_session_last_errno(this->session)))
+            THROW_FMT(PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(path));
     }
     else
     {
@@ -471,6 +478,43 @@ storageSftpNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam
             this, file, this->ioSession, this->session, this->sftpSession, this->sftpHandle, this->timeoutConnect,
             this->timeoutSession, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
             param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic));
+}
+
+/**********************************************************************************************************************************/
+void
+storageSftpEvalLibssh2Error(
+    const int sessionErrno, const uint64_t sftpErrno, const int rc, const ErrorType *const errorType, const String *const msg,
+    const String *const hint)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INT, sessionErrno);
+        FUNCTION_LOG_PARAM(UINT64, sftpErrno);
+        FUNCTION_LOG_PARAM(INT, rc);
+        FUNCTION_LOG_PARAM(ERROR_TYPE, errorType);
+        FUNCTION_LOG_PARAM(STRING, msg);
+        FUNCTION_LOG_PARAM(STRING, hint);
+    FUNCTION_LOG_END();
+
+    ASSERT(errorType != NULL);
+
+    THROWP_FMT(
+        errorType,
+        "%slibssh2 error [%d]%s%s",
+        //"%slibssh2 error [%d] %s%s%s",
+        msg != NULL ? strZ(strNewFmt("%s: ",strZ(msg))) : "",
+        rc,
+        //"ssh2 errmsg",
+        //libssh2_errmsg,
+        sessionErrno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+            strZ(strNewFmt(": libssh2sftp error [%lu]", sftpErrno)) :
+            "",
+        /*
+        rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+            strZ(strNewFmt(" libssh2sftp error [%lu]", libssh2_sftp_last_error(sftpSession))) :
+            "",
+            */
+        hint != NULL ? strZ(strNewFmt("\n%s", strZ(hint))) : "");
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -766,6 +810,7 @@ storageSftpNewInternal(
         (void)libssh2_hostkey_hash(driver->session, LIBSSH2_HOSTKEY_HASH_SHA1);
 
         int rc = 0;
+
         wait = waitNew(timeoutConnect);
 
         if (strZNull(user) != NULL && strZNull(keyPriv) != NULL)
@@ -781,17 +826,15 @@ storageSftpNewInternal(
 
             if (rc != 0 )
             {
-                // Early versions of libssh2 expect PEM format private key
-                if ((rc == LIBSSH2_ERROR_PUBLICKEY_UNVERIFIED && strncmp(libssh2_version(0), "1.9.0", 5) < 0))
-                {
-                    THROW_SYS_ERROR_FMT(
-                        ServiceError,
-                        "public key from file authentication failed libssh2 error [%d]\n"
-                            "HINT: libssh2 ver: %s - versions before 1.9.0 expect a PEM format private key\n"
-                            "HINT: try ssh-keygen -m PEM -t rsa -P \"\" to generate the keypair", rc, libssh2_version(0));
-                }
-                else
-                    THROW_FMT(ServiceError, "public key from file authentication failed libssh2 error [%d]", rc);
+                storageSftpEvalLibssh2Error(
+                    libssh2_session_last_errno(driver->session), libssh2_sftp_last_error(driver->sftpSession), rc, &ServiceError,
+                    STRDEF("public key authentication failed"),
+                    STRDEF(
+                        "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
+                        " --repo-sftp-public-keyfile to be provided\n"
+                        "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
+                        " generate the keypair")
+                    );
             }
         }
 
@@ -803,7 +846,8 @@ storageSftpNewInternal(
         }
         while (driver->sftpSession == NULL && waitMore(wait));
 
-        validateLibssh2SftpSession(driver);
+        if (driver->sftpSession == NULL)
+            THROW_FMT(ServiceError, "unable to init libssh2_sftp session");
 
         // Disable path sync when not supported
         // libssh2 doesn't appear to support path sync. It returns LIBSSH2_FX_NO_SUCH_FILE.

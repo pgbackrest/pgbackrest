@@ -48,23 +48,12 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+// jrt !!! remove, for development logging/testing
 //    HRN_SYSTEM_FMT("sudo perl -pi.bak -e 's#Subsystem.*sftp.*/usr/lib/openssh/sftp-server#Subsystem    sftp    /usr/lib/openssh/sftp-server -l VERBOSE#' /etc/ssh/sshd_config && sudo service ssh restart > /dev/null 2>&1");
+//
     // Create default storage object for testing
-    // jrt !!!  -- write test with small timout to error on EAGAIN and cover EAGAIN paths
-    // jrt !!! need to implement user/pwd or keypair auth for the vm's
-    /*
     Storage *storageTest = storageSftpNewP(
-        TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
-        .write = true);
-        */
-    /*
-    Storage *storageTest = storageSftpNewP(
-        TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .password = TEST_USER_STR,
-        .write = true);
-        */
-
-    Storage *storageTest = storageSftpNewP(
-        TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+        TEST_PATH_STR, STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
         .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
     ioBufferSizeSet(2);
@@ -106,44 +95,28 @@ testRun(void)
         TEST_ERROR(
             storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1, 1, .user = TEST_USER_STR,
                 .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys")),
-            ServiceError, "libssh2 handshake failed: [11] Resource temporarily unavailable");
-
-            /*
+            ServiceError, "libssh2 handshake failed");
         TEST_ERROR(
-            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 1, 1, .user = TEST_USER_STR, .password = TEST_USER_STR),
-            ServiceError, "libssh2 handshake failed: [11] Resource temporarily unavailable");
-
-        TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys")),
-            ServiceError, "error in password authenticate libssh2 error [-18]: [11] Resource temporarily unavailable");
-            */
-
-        TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 3000, 3000, .write = true), ServiceError,
-            "unable to init libssh2_sftp session: [11] Resource temporarily unavailable");
-
+            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 3000, 3000, .write = true),
+            ServiceError,
+            "unable to init libssh2_sftp session");
         TEST_ERROR(
             storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = TEST_USER_STR,
-            .keyPub = TEST_USER_STR), ServiceError, "public key from file authentication failed libssh2 error [-16]");
+            .keyPub = TEST_USER_STR), ServiceError,
+            "public key authentication failed: libssh2 error [-16]\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
+                " --repo-sftp-public-keyfile to be provided\n"
+            "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
+                " keypair");
         TEST_ERROR(
             storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
                 .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.doesnotexist")),
-            ServiceError, "public key from file authentication failed libssh2 error [-16]");
-
-        /* Non PEM format keypair failure
-        // Put the non pem private key
-        storagePutP(storageNewWriteP(storageTest, STRDEF("id_rsa_non_pem")), BUFSTRZ(nonPemRsaPrivateKey));
-
-        // Put the non pem public key
-        storagePutP(storageNewWriteP(storageTest, STRDEF("id_rsa_pub_non_pem")), BUFSTRZ(nonPemRsaPublicKey));
-
-        TEST_ERROR(
-            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF(TEST_PATH "/id_rsa_non_pem"),
-                .keyPub = STRDEF(TEST_PATH "/id_rsa_pub_non_pem")),
-            ServiceError, "public key from file authentication failed libssh2 error [-16]");
-            */
+            ServiceError,
+            "public key authentication failed: libssh2 error [-16]\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
+                " --repo-sftp-public-keyfile to be provided\n"
+            "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
+                " keypair");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create new storage with defaults");
@@ -868,11 +841,11 @@ testRun(void)
             "unable to create path '" TEST_PATH "/sub3/sub4'");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
-        // EAGAIN fail
+        // LIBSSH2_ERROR_EAGAIN fail
         StorageSftp *storageSftp = NULL;
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
-        storageSftp->timeoutConnect = 1;
-        storageSftp->timeoutSession = 1;
+        storageSftp->timeoutConnect = 0;
+        storageSftp->timeoutSession = 0;
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail")), PathCreateError, "unable to create path '" TEST_PATH "/subfail'");
 
@@ -1017,7 +990,7 @@ testRun(void)
     if (testBegin("storageReadClose()"))
     {
         Storage *storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR,
+            TEST_PATH_STR, STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
             .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
         StorageRead *file = NULL;
@@ -1030,7 +1003,7 @@ testRun(void)
         TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)file->driver), "close file");
 
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR,
+            TEST_PATH_STR, STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
             .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
@@ -1046,7 +1019,7 @@ testRun(void)
             storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
             "unable to close file '" TEST_PATH "/readtest.txt' after read: libssh2 errno [-7] Unable to send FXP_CLOSE command");
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR,
+            TEST_PATH_STR, STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
             .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
@@ -1058,7 +1031,7 @@ testRun(void)
                 ((StorageReadSftp *)file->driver), outBuffer, false), FileReadError, "unable to read '" TEST_PATH "/readtest.txt'");
 /*
         storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 10000, 10000, .user = TEST_USER_STR,
+            TEST_PATH_STR, STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
             .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
@@ -1298,6 +1271,18 @@ testRun(void)
             storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
             "unable to remove '" TEST_PATH "/missing'");
 
+        // LIBSSH2_ERROR_EAGAIN fail
+        StorageSftp *storageSftp = NULL;
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        storageSftp->timeoutConnect = 0;
+        storageSftp->timeoutSession = 0;
+
+        TEST_RESULT_VOID(
+            storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = false), "no error on missing");
+
+        storageSftp->timeoutConnect = 10000;
+        storageSftp->timeoutSession = 10000;
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file exists");
 
@@ -1312,11 +1297,11 @@ testRun(void)
 
         TEST_ERROR_FMT(storageRemoveP(storageTest, fileNoPerm), FileRemoveError, "unable to remove '%s'", strZ(fileNoPerm));
 
-        // EAGAIN fail
-        StorageSftp *storageSftp = NULL;
+        // LIBSSH2_ERROR_EAGAIN fail
+        storageSftp = NULL;
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
-        storageSftp->timeoutConnect = 1;
-        storageSftp->timeoutSession = 1;
+        storageSftp->timeoutConnect = 0;
+        storageSftp->timeoutSession = 0;
 
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, fileNoPerm, .errorOnMissing = true),
@@ -1475,6 +1460,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileNoPerm));
+
         TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
 
@@ -1508,18 +1494,6 @@ testRun(void)
             strZ(fileName));
         TEST_ERROR_FMT(
             storageWriteSftpClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(fileTmp));
-/*
-        // Disable file sync so close() can be reached
-        ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
-        TEST_ERROR_FMT(
-            storageWriteSftpClose(file->driver), FileMoveError, "unable to move '%s' to '%s': [2] No such file or directory",
-            strZ(fileTmp), strZ(fileName));
-*/
-
-        // Set sftpHandle to NULL so the close on free with not fail
-        //((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
-        // Set file descriptor to -1 so the close on free with not fail
-        //((StorageWritePosix *)file->driver)->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bad socket - error in file sync, update time modified");
@@ -1551,7 +1525,6 @@ testRun(void)
             FileInfoError,
             "unable to set time for '%s': libssh2 error [-7] Unable to send FXP_FSETSTAT", strZ(fileTmp));
 
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bad socket - error in close");
 
@@ -1560,14 +1533,13 @@ testRun(void)
             FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
             .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
-
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
         // Close the sftp handle so operations will fail
-//        libssh2_sftp_close(((StorageWriteSftp *)file->driver)->sftpHandle);
-//        close(((StorageWritePosix *)file->driver)->fd);
+// jrt        libssh2_sftp_close(((StorageWriteSftp *)file->driver)->sftpHandle);
+// jrt       close(((StorageWritePosix *)file->driver)->fd);
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         // Close the socket file descriptor
@@ -1576,7 +1548,8 @@ testRun(void)
         TEST_ERROR_FMT(
             storageWriteSftp(file->driver, buffer), FileWriteError, "unable to write '%s.pgbackrest.tmp'",
             strZ(fileName));
-        /*
+
+        /* jrt
         TEST_ERROR_FMT(
             storageWriteSftpClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [2] No such file or directory",
             strZ(fileTmp));
@@ -1589,13 +1562,13 @@ testRun(void)
             FileCloseError,
             STORAGE_ERROR_WRITE_CLOSE ": libssh2 error [-7] Unable to send FXP_CLOSE command", strZ(fileTmp));
 
-        /*
+        /* jrt
         TEST_ERROR_FMT(
             storageWriteSftpClose(file->driver), FileMoveError, "unable to move '%s' to '%s': [2] No such file or directory",
             strZ(fileTmp), strZ(fileName));
             */
 
-        // Set sftpHandle to NULL so the close on free with not fail
+        //jrt  Set sftpHandle to NULL so the close on free with not fail
         //((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
         // Set file descriptor to -1 so the close on free with not fail
         //((StorageWritePosix *)file->driver)->fd = -1;
@@ -1604,16 +1577,15 @@ testRun(void)
 //        HRN_SYSTEM_FMT("rmdir %s", strZ(strPath(fileName)));
         //storagePathRemoveP(storageTest, STRDEF("sub1"), .errorOnMissing = true, .recurse = true);
 
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file already closed");
 
         ((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
         TEST_RESULT_VOID(storageWriteSftpClose(file->driver), "close file");
 
+        // jrt verify these test titles
         // -------------------------------------------------------------------------------------------------------------------------
-
-        TEST_TITLE("fail rename in close");
+        TEST_TITLE("storageWriteSftpRenameFileExistsFailure(), storageWriteSftpUnlink(), storageWriteSftpRename()");
 
         // Recreate storageTest as previous test closed socket fd
         storageTest = storageSftpNewP(
@@ -1625,17 +1597,50 @@ testRun(void)
         TEST_RESULT_UINT(storageWriteType(file), STORAGE_SFTP_TYPE, "check file type");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
-        // Rename the file back to original name from tmp -- this will cause the rename in close to fail
-        TEST_RESULT_INT(rename(strZ(fileTmp), strZ(fileName)), 0, "rename tmp file");
+        // Create a file with the original name, initial rename in close will fail and we will enter delete and rename code
+        HRN_SYSTEM_FMT("sudo touch %s", strZ(fileName));
+
+        // Close deletes existing file and succeeds on the rename retry
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unlink failure");
+
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
+        TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
+        TEST_RESULT_UINT(storageWriteType(file), STORAGE_SFTP_TYPE, "check file type");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+
+        // Overwrite to a non existent file
+        ((StorageWriteSftp *)file->driver)->interface.name = STRDEF("BOGUS");
+
+        // Attempt to unlink non existent file during the close
         TEST_ERROR_FMT(
             ioWriteClose(storageWriteIo(file)),
-            FileMoveError,
-            "unable to move '%s' to '%s': libssh2 error [-31] SFTP Protocol Error", strZ(fileTmp), strZ(fileName));
+            FileRemoveError, "unable to remove existing 'BOGUS': libssh2 error [-31]: libssh2sftp error [2]")
 
-        // Set file descriptor to -1 so the close on free with not fail
-        //((StorageWriteSftp *)file->driver)->fd = -1;
-        // Set sftpHandle to NULL so the close on free with not fail
-        //((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("rename failure");
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
+        TEST_RESULT_STR(storageWriteName(file), fileName, "check file name");
+        TEST_RESULT_UINT(storageWriteType(file), STORAGE_SFTP_TYPE, "check file type");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+
+        // Invalidate nameTmp
+        ((StorageWriteSftp *)file->driver)->nameTmp = STRDEF("BOGUS");
+
+        TEST_ERROR_FMT(
+            storageWriteSftpRename(((StorageWriteSftp *)file->driver)),
+            FileRemoveError,
+            "unable to move 'BOGUS' to '" TEST_PATH "/sub1/test.file': libssh2 error [-31]: libssh2sftp error [2]");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -1956,6 +1961,110 @@ testRun(void)
 
         // Test the path sync function -- pass a bogus path to ensure that this is a noop
         TEST_RESULT_VOID(storagePathSyncP(storage, STRDEF(BOGUS_STR)), "path sync is a noop");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("validateLibssh2Startup(), non PEM keypair"))
+    {
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("failed libssh2_init");
+
+        StorageSftp *storageSftp = NULL;
+
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        storageSftp->libssh2_initStatus = 1;
+        TEST_ERROR_FMT(
+            validateLibssh2Startup(storageSftp),
+            ServiceError, "unable to init libssh2");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("failed libssh2_session_init");
+
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        storageSftp->session = NULL;
+
+        TEST_ERROR_FMT(
+            validateLibssh2Startup(storageSftp),
+            ServiceError, "unable to init libssh2 session");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("failed libssh2 handshake");
+
+        storageTest = storageSftpNewP(
+            FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+            .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        storageSftp->handshakeStatus = 1;
+
+        TEST_ERROR_FMT(
+            validateLibssh2Startup(storageSftp),
+            ServiceError, "libssh2 handshake failed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("non PEM keypair");
+
+        TEST_ERROR(
+            storageSftpNewP(STRDEF("/tmp"), STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa_nopem"),
+                .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa_pub_nopem")),
+            ServiceError,
+            "public key authentication failed: libssh2 error [-19]\n"
+            "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
+                " --repo-sftp-public-keyfile to be provided\n"
+            "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
+                " keypair");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageWriteSftpRenameFileExistsFailure(), storageSftpEvalLibssh2Error()"))
+    {
+
+        int rc = -6;
+        int sessionErrno = LIBSSH2_ERROR_SFTP_PROTOCOL;
+        uint64_t sftpErrno = LIBSSH2_FX_FAILURE;
+
+        TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(rc, sessionErrno, sftpErrno), true, "failure");
+        TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(1, sessionErrno, 1), false, "no failure");
+        TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(0, 1, 0), false, "no failure");
+        TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(1, 0, 1), false, "no failure");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpEvalLibssh2Error()");
+
+        // !!! jrt update storageSftpEvalLibssh2Error remove rc param
+        TEST_ERROR_FMT(
+            storageSftpEvalLibssh2Error(
+                -11, 16, -11, &FileRemoveError, strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
+            FileRemoveError,
+            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-11]\n"
+            "HINT");
+        TEST_ERROR_FMT(
+            storageSftpEvalLibssh2Error(
+                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, LIBSSH2_ERROR_SFTP_PROTOCOL, &FileRemoveError,
+                strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
+            FileRemoveError,
+            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: libssh2sftp error [16]\n"
+            "HINT");
+        TEST_ERROR_FMT(
+            storageSftpEvalLibssh2Error(
+                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, LIBSSH2_ERROR_SFTP_PROTOCOL, &FileRemoveError,
+                strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), NULL),
+            FileRemoveError,
+            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: libssh2sftp error [16]");
+        TEST_ERROR_FMT(
+            storageSftpEvalLibssh2Error(
+                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, LIBSSH2_ERROR_SFTP_PROTOCOL, &FileRemoveError, NULL, NULL),
+            FileRemoveError,
+            "libssh2 error [-31]: libssh2sftp error [16]");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

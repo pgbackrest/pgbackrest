@@ -43,6 +43,6 @@ typedef struct StorageSftpNewParam
 
 Storage *storageSftpNew(
     const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
-        StorageSftpNewParam param);
+    StorageSftpNewParam param);
 
 #endif

@@ -198,7 +198,7 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
     {
         THROW_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
         /*
-        // jrt expand later ala
+        // jrt maybe expand later ala
         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
             THROW_FMT(
@@ -212,6 +212,92 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
                 libssh2_session_last_errno(this->session));
         }
         */
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Did rename fail due to file already existing
+***********************************************************************************************************************************/
+static bool
+storageWriteSftpRenameFileExistsFailure(const int rc, const int sessionErrno, const uint64_t sftpErrno)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, rc);
+        FUNCTION_LOG_PARAM(INT, sessionErrno);
+        FUNCTION_LOG_PARAM(UINT64, sftpErrno);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(BOOL, (rc && (sessionErrno == LIBSSH2_ERROR_SFTP_PROTOCOL) && (sftpErrno == LIBSSH2_FX_FAILURE) == true));
+}
+
+/***********************************************************************************************************************************
+Unlink already existing file and complete rename
+***********************************************************************************************************************************/
+static void
+storageWriteSftpUnlink(THIS_VOID)
+{
+    THIS(StorageWriteSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_SFTP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    int rc = 0;
+
+    this->wait = waitNew(this->timeoutConnect);
+
+    do
+    {
+        rc = libssh2_sftp_unlink_ex(
+                this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name));
+    } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+    if (rc)
+    {
+        storageSftpEvalLibssh2Error(
+            libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), rc, &FileRemoveError,
+            strNewFmt("unable to remove existing '%s'", strZ(this->interface.name)), NULL);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Rename a file
+***********************************************************************************************************************************/
+static void
+storageWriteSftpRename(THIS_VOID)
+{
+    THIS(StorageWriteSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_SFTP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    int rc = 0;
+
+    this->wait = waitNew(this->timeoutConnect);
+
+    do
+    {
+        rc = libssh2_sftp_rename_ex(
+                this->sftpSession, strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp),
+                strZ(this->interface.name), (unsigned int)strSize(this->interface.name),
+                LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
+    }
+    while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+    if (rc)
+    {
+        storageSftpEvalLibssh2Error(
+            libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), rc, &FileRemoveError,
+            strNewFmt("unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name)), NULL);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -299,11 +385,11 @@ storageWriteSftpClose(THIS_VOID)
 
         if (rc != 0)
         {
-                libssh2_errno = libssh2_session_last_error(this->session, &libssh2_errmsg, &errmsg_len, 0);
+            libssh2_errno = libssh2_session_last_error(this->session, &libssh2_errmsg, &errmsg_len, 0);
 
-                THROW_FMT(
-                    FileCloseError,
-                    STORAGE_ERROR_WRITE_CLOSE ": libssh2 error [%d] %s", strZ(this->nameTmp), libssh2_errno, libssh2_errmsg);;
+            THROW_FMT(
+                FileCloseError,
+                STORAGE_ERROR_WRITE_CLOSE ": libssh2 error [%d] %s", strZ(this->nameTmp), libssh2_errno, libssh2_errmsg);;
         }
 
         this->sftpHandle = NULL;
@@ -322,17 +408,13 @@ storageWriteSftpClose(THIS_VOID)
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
-            // Some versions of sftp do not support overwriting an existing file and will return LIBSSH2_FX_FAILURE
-            // need to find out if we can determine server version
-            // ??? Do we want to to just fail, or do we want to check if the file exists and rm it and try the rename again
-            if (rc)
+            // some/most sftp servers will not rename over an existing file
+            if (storageWriteSftpRenameFileExistsFailure(
+                rc, libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession)))
             {
-                libssh2_errno = libssh2_session_last_error(this->session, &libssh2_errmsg, &errmsg_len, 0);
-
-                THROW_FMT(
-                    FileMoveError,
-                    "unable to move '%s' to '%s': libssh2 error [%d] %s", strZ(this->nameTmp), strZ(this->interface.name),
-                    libssh2_errno, libssh2_errmsg);;
+                // remove the existing file and retry the rename
+                storageWriteSftpUnlink(this);
+                storageWriteSftpRename(this);
             }
         }
     }

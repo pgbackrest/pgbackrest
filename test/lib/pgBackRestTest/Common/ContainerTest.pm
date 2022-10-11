@@ -203,6 +203,27 @@ sub sshSetup
         "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9I" .
              "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
              "user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
+        "    echo '-----BEGIN RSA PRIVATE KEY-----' > ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'MIICXwIBAAKBgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ou' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'X3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo '/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazwIDAQAB' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'AoGBAJXa6xzrnFVmwgK5BKzYuX/YF5TPgk2j80ch0ct50buQXH/Cb0/rUH5i4jWS' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'T6Hy/DFUehnuzpvV6O9auTOhDs3BhEKFRuRLn1nBwTtZny5Hh+cw7azUCEHFCJlz' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'makCrVbgawtno6oU/pFgQm1FcxD0f+Me5ruNcLHqUZsPQwkRAkEA+8pG+ckOlz6R' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'AJLIHedmfcrEY9T7sfdo83bzMOz8H5soUUP4aOTLJYCla1LO7JdDnXMGo0KxaHBP' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'l8j5zDmVewJBANVVPDJr1w37m0FBi37QgUOAijVfLXgyPMxYp2uc9ddjncif0063' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo '0Wc0FQefoPszf3CDrHv/RHvhHq97jXDwTb0CQQDgH83NygoS1r57pCw9chzpG/R0' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'aMEiSPhCvz757fj+qT3aGIal2AJ7/2c/gRZvwrWNETZ3XIZOUKqIkXzJLPjBAkEA' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'wnP799W2Y8d4/+VX2pMBkF7lG7sSviHEq1sP2BZtPBRQKSQNvw3scM7XcGh/mxmY' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'yx0qpqfKa8SKbNgI1+4iXQJBAOlg8MJLwkUtrG+p8wf69oCuZsnyv0K6UMDxm6/8' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'cbvfmvODulYFaIahaqHWEZoRo5CLYZ7gN43WHPOrKxdDL78=' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo '-----END RSA PRIVATE KEY-----' >> ${strUserPath}/.ssh/id_rsa_nopem && \\\n" .
+        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQChlaQmRKBh31+KMvfd9rJ2NWzp5/kdQKiCQ7YlozvOYiWXznfTeewTXItehDDjkdYRkks6k9" .
+             "xqdWVhFx+qY/TviPTMpueAXmsi/pINQvPXHQCVpGrpVPrIAkdxK+IaPwWtK9R3/blhSNNE0/H7hEJqeyTk3Z/OxaD0X6q2S6JuZw== " .
+             "user\@pgbackrest-test' > ${strUserPath}/.ssh/id_rsa_pub_nopem && \\\n" .
+        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQChlaQmRKBh31+KMvfd9rJ2NWzp5/kdQKiCQ7YlozvOYiWXznfTeewTXItehDDjkdYRkks6k9" .
+             "xqdWVhFx+qY/TviPTMpueAXmsi/pINQvPXHQCVpGrpVPrIAkdxK+IaPwWtK9R3/blhSNNE0/H7hEJqeyTk3Z/OxaD0X6q2S6JuZw== " .
+             "user\@pgbackrest-test' >> ${strUserPath}/.ssh/authorized_keys && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
