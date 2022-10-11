@@ -118,7 +118,7 @@ List *restoreFile(
 
                                 if (file->size != 0)
                                 {
-                                    read = storageReadIo(storageNewReadP(storagePgWrite(), file->name));
+                                    read = storageReadIo(storageNewReadP(storagePg(), file->name));
                                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                                     ioReadDrain(read);
                                 }
