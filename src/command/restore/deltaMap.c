@@ -181,7 +181,7 @@ deltaMapNewPack(const Pack *const paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = ioFilterMove(deltaMapNew(pckReadU64P(pckReadNew(paramList))), memContextPrior());
+        result = ioFilterMove(deltaMapNew((size_t)pckReadU64P(pckReadNew(paramList))), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
