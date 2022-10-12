@@ -350,6 +350,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
                 .createPath = true,
                 .syncFile = true,
                 .syncPath = true,
+                .truncate = true,
 
                 .ioInterface = (IoWriteInterface)
                 {

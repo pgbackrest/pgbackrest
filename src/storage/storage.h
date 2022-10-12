@@ -171,6 +171,11 @@ typedef struct StorageNewWriteParam
     bool noSyncFile;
     bool noSyncPath;
     bool noAtomic;
+
+    // Do not truncate file if it exists. Use this only in cases where the file will be manipulated directly through the file
+    // handle, which should always be the exception and indicates functionality that should be added to the storage interface.
+    bool noTruncate;
+
     bool compressible;
     mode_t modeFile;
     mode_t modePath;

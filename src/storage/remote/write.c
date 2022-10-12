@@ -233,6 +233,7 @@ storageWriteRemoteNew(
                 .modePath = modePath,
                 .syncFile = syncFile,
                 .syncPath = syncPath,
+                .truncate = true,
                 .user = strDup(user),
                 .timeModified = timeModified,
 

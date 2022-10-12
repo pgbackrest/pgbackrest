@@ -295,6 +295,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
                 .createPath = true,
                 .syncFile = true,
                 .syncPath = true,
+                .truncate = true,
 
                 .ioInterface = (IoWriteInterface)
                 {

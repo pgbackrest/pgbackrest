@@ -455,7 +455,7 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
             storageInterfaceNewWriteP(
                 storageRemoteProtocolLocal.driver, file, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
                 .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath,
-                .atomic = atomic));
+                .atomic = atomic, .truncate = true));
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioWriteFilterGroup(fileWrite), filter);

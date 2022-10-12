@@ -371,6 +371,7 @@ testRun(void)
         TEST_RESULT_STR_Z(storageWriteName(write), TEST_PATH "/repo128/test.txt", "check file name");
         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
+        TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_UINT(((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf), "check write size");
