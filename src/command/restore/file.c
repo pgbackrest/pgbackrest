@@ -88,7 +88,7 @@ List *restoreFile(
                                 // this using the checksum below)
                                 if (info.size > file->size)
                                 {
-                                    // Open the file for write
+                                    // Open file for write
                                     IoWrite *const pgWriteTruncate = storageWriteIo(
                                         storageNewWriteP(
                                             storagePgWrite(), file->name, .noAtomic = true, .noCreatePath = true,
