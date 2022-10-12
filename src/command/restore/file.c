@@ -266,16 +266,19 @@ List *restoreFile(
                     {
                         ASSERT(referenceList != NULL);
 
-                        // fprintf(stdout, "!!!ABOUT TO READ BLOCK MAP\n"); fflush(stdout);
                         // Read block map
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
-                        // fprintf(stdout, "!!!DONE TO READ BLOCK MAP\n"); fflush(stdout);
 
                         // Size of delta map. If there is not delta map because the file did not exist, then set to zero.
                         const unsigned int deltaMapSize = file->deltaMap == NULL ?
                             0 : (unsigned int)(bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE);
 
                         // Write changed blocks
+                        bool deltaFound = false;
+                        unsigned int blockMapMinIdx = 0;
+                        unsigned int blockMapMaxIdx = 0;
+                        unsigned int reference = 0;
+
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 
                         for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
@@ -287,34 +290,63 @@ List *restoreFile(
                                     BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
                                     BUF(bufPtrConst(file->deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                             {
-                                // Construct repo file
-                                String *const blockFile = strCatFmt(
-                                    strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(strLstGet(referenceList, blockMapItem->reference)));
+                                if (!deltaFound)
+                                {
+                                    blockMapMinIdx = blockMapIdx;
+                                    blockMapMaxIdx = blockMapIdx;
+                                    deltaFound = true;
+                                    reference = blockMapItem->reference;
 
-                                if (blockMapItem->bundleId != 0) // {uncovered - !!!}
-                                    strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId); // {uncovered - !!!}
+                                    fprintf(stdout, "!!!DELTA START %u\n", blockMapIdx); fflush(stdout);
+                                }
                                 else
-                                    strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
+                                {
+                                    blockMapMaxIdx = blockMapIdx;
+                                    fprintf(stdout, "!!!DELTA ADD %u-%u\n", blockMapMinIdx, blockMapIdx); fflush(stdout);
+                                }
 
-                                // fprintf(stdout, "!!!READ %u from %s\n", blockMapIdx, strZ(blockFile)); fflush(stdout);
+                                if (blockMapIdx < blockMapSize(blockMap) - 1 && reference == blockMapItem->reference)
+                                    continue;
+                            }
 
-                                // Seek to the block position. It is possible we are already at the correct position but it seems
-                                // safer just to let lseek() figure this out. Presumably this is a noop if there is nothing to do.
-                                THROW_ON_SYS_ERROR_FMT(
-                                    lseek(
-                                        ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)(blockMapIdx * file->blockIncrSize),
-                                        SEEK_SET) == -1,
-                                    FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)(blockMapIdx * file->blockIncrSize),
-                                    strZ(storagePathP(storagePg(), file->name)));
+                            if (deltaFound)
+                            {
+                                for (unsigned int blockMapIdx = blockMapMinIdx; blockMapIdx <= blockMapMaxIdx; blockMapIdx++)
+                                {
+                                    const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-                                // Write block to the file
-                                StorageRead *const blockRead = storageNewReadP(
-                                    storageRepo(), blockFile, .offset = blockMapItem->offset,
-                                    .limit = VARUINT64(blockMapItem->size));
+                                    // Construct repo file
+                                    String *const blockFile = strCatFmt(
+                                        strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(strLstGet(referenceList, blockMapItem->reference)));
 
-                                ioReadOpen(storageReadIo(blockRead));
-                                ioCopyP(storageReadIo(blockRead), storageWriteIo(pgFileWrite));
-                                ioWriteFlush(storageWriteIo(pgFileWrite));
+                                    if (blockMapItem->bundleId != 0) // {uncovered - !!!}
+                                        strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId); // {uncovered - !!!}
+                                    else
+                                        strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
+
+                                    fprintf(stdout, "!!!READ %u from %s\n", blockMapIdx, strZ(blockFile)); fflush(stdout);
+
+                                    // Seek to the block position. It is possible we are already at the correct position but it seems
+                                    // safer just to let lseek() figure this out. Presumably this is a noop if there is nothing to do.
+                                    THROW_ON_SYS_ERROR_FMT(
+                                        lseek(
+                                            ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)(blockMapIdx * file->blockIncrSize),
+                                            SEEK_SET) == -1,
+                                        FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)(blockMapIdx * file->blockIncrSize),
+                                        strZ(storagePathP(storagePg(), file->name)));
+
+                                    // Write block to the file. The flush is required because we may seek to a new position on the next
+                                    // iteration so the write buffer must be flushed.
+                                    StorageRead *const blockRead = storageNewReadP(
+                                        storageRepo(), blockFile, .offset = blockMapItem->offset,
+                                        .limit = VARUINT64(blockMapItem->size));
+
+                                    ioReadOpen(storageReadIo(blockRead));
+                                    ioCopyP(storageReadIo(blockRead), storageWriteIo(pgFileWrite));
+                                    ioWriteFlush(storageWriteIo(pgFileWrite));
+                                }
+
+                                deltaFound = false;
                             }
                         }
 
