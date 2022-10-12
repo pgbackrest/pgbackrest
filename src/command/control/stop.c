@@ -35,14 +35,11 @@ cmdStop(void)
             // Create the lock path (ignore if already created)
             storagePathCreateP(storageLocalWrite(), strPath(stopFile), .mode = 0770);
 
-            // Create the stop file with Read/Write and Create only - do not use Truncate
-            int fd = -1;
-            THROW_ON_SYS_ERROR_FMT(
-                ((fd = open(strZ(stopFile), O_WRONLY | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1), FileOpenError,
-                "unable to open stop file '%s'", strZ(stopFile));
-
-            // Close the file
-            close(fd);
+            // Create the stop file with without truncating an existing file
+            IoWrite *const stopWrite = storageWriteIo(
+                storageNewWriteP(storageLocalWrite(), stopFile, .noAtomic = true, .noTruncate = true, .modePath = 0770));
+            ioWriteOpen(stopWrite);
+            ioWriteClose(stopWrite);
 
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))

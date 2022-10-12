@@ -93,6 +93,7 @@ List *restoreFile(
                                 // this using the checksum below)
                                 if (info.size > file->size)
                                 {
+                                    // Open file for write
                                     IoWrite *const pgWriteTruncate = storageWriteIo(
                                         storageNewWriteP(
                                             storagePgWrite(), file->name, .noAtomic = true, .noCreatePath = true,
@@ -104,6 +105,7 @@ List *restoreFile(
                                         ftruncate(ioWriteFd(pgWriteTruncate), (off_t)file->size) == -1, FileWriteError,
                                         "unable to truncate file '%s'", fileName);
 
+                                    // Close file
                                     ioWriteClose(pgWriteTruncate);
 
                                     // Update info
