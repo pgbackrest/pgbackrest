@@ -2741,8 +2741,6 @@ testRun(void)
             memset(bufPtr(fileBuffer) + 16384, 3, 8192);
             bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
-            // THROW_FMT(AssertError, "!!!HASH %s", strZ(bufHex(cryptoHashOne(hashTypeSha1, fileBuffer))));
-
             IoWrite *write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-no-ref.pgbi")));
             ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 3, 0, 0, NULL));
 
@@ -2750,7 +2748,7 @@ testRun(void)
             ioWrite(write, fileBuffer);
             ioWriteClose(write);
 
-            const uint64_t blockIncrMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+            uint64_t blockIncrMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
 
             manifestFileAdd(
                 manifest,
@@ -2759,6 +2757,50 @@ testRun(void)
                     .sizeRepo = bufUsed(fileBuffer) + blockIncrMapSize, .blockIncrMapSize = blockIncrMapSize,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
                     .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c"});
+
+            // Block incremental with a broken reference to show that unneeded references will not be used
+            Buffer *fileUnused = bufNew(8192 * 4);
+            memset(bufPtr(fileUnused), 1, 8192 * 4);
+            bufUsedSet(fileUnused, bufSize(fileUnused));
+
+            Buffer *fileUnusedMap = bufNew(0);
+            write = ioBufferWriteNew(fileUnusedMap);
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 0, 0, 0, NULL));
+
+            ioWriteOpen(write);
+            ioWrite(write, fileUnused);
+            ioWriteClose(write);
+
+            size_t fileUnusedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), "base/1", .mode = 0700);
+            HRN_STORAGE_PUT(storagePgWrite(), "base/1/bi-unused-ref", fileUnused, .modeFile = 0600);
+
+            Buffer *fileUsed = bufDup(fileUnused);
+            memset(bufPtr(fileUsed), 3, 8192);
+            memset(bufPtr(fileUsed) + 16384, 3, 16384);
+
+            // THROW_FMT(AssertError, "!!!HASH %s", strZ(bufHex(cryptoHashOne(hashTypeSha1, fileUsed))));
+
+            write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-unused-ref.pgbi")));
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(write),
+                blockIncrNew(
+                    8192, 3, 0, 0, BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize)));
+
+            ioWriteOpen(write);
+            ioWrite(write, fileUsed);
+            ioWriteClose(write);
+
+            uint64_t fileUsedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/bi-unused-ref"), .size = bufUsed(fileUsed),
+                    .sizeRepo = (3 * 8192) + fileUsedMapSize, .blockIncrMapSize = fileUsedMapSize,
+                    .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
+                    .checksumSha1 = "5e4f53628982e146209c48e465bb1e6323ac8a63"});
 
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
@@ -2851,8 +2893,6 @@ testRun(void)
             "P00 DETAIL: remove invalid path '" TEST_PATH "/pg/global/bogus3'\n"
             "P00 DETAIL: remove invalid link '" TEST_PATH "/pg/pg_wal2'\n"
             "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/tablespace_map'\n"
-            "P00 DETAIL: create path '" TEST_PATH "/pg/base'\n"
-            "P00 DETAIL: create path '" TEST_PATH "/pg/base/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/base/16384'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/base/32768'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_xact' to '../xact'\n"
@@ -2860,6 +2900,8 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT]) checksum"
                 " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref (32KB, [PCT]) checksum"
+                " 5e4f53628982e146209c48e465bb1e6323ac8a63\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref (24KB, [PCT]) checksum"
                 " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, [PCT]) checksum"
@@ -2911,7 +2953,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 22");
+            "P00   INFO: restore size = [SIZE], file total = 23");
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
@@ -2927,6 +2969,7 @@ testRun(void)
             "base/1/31 {s=1, t=1482182860}\n"
             "base/1/PG_VERSION {s=4, t=1482182860}\n"
             "base/1/bi-no-ref {s=24576, t=1482182860}\n"
+            "base/1/bi-unused-ref {s=32768, t=1482182860}\n"
             "base/16384/\n"
             "base/16384/16385 {s=16384, t=1482182860}\n"
             "base/16384/PG_VERSION {s=4, t=1482182860}\n"
@@ -3051,6 +3094,8 @@ testRun(void)
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref - exists and matches backup (32KB, [PCT]) checksum"
+                " 5e4f53628982e146209c48e465bb1e6323ac8a63\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref - exists and matches backup (24KB, [PCT]) checksum"
                 " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, [PCT])"
@@ -3102,7 +3147,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 22");
+            "P00   INFO: restore size = [SIZE], file total = 23");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);

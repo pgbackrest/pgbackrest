@@ -4,6 +4,7 @@ Restore File
 #include "build.auto.h"
 
 #include <fcntl.h>
+#include <stdio.h> // !!!
 #include <unistd.h>
 #include <utime.h>
 
@@ -263,8 +264,10 @@ List *restoreFile(
                     {
                         ASSERT(referenceList != NULL);
 
+                        // fprintf(stdout, "!!!ABOUT TO READ BLOCK MAP\n"); fflush(stdout);
                         // Read block map
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
+                        // fprintf(stdout, "!!!DONE TO READ BLOCK MAP\n"); fflush(stdout);
 
                         // Write changed blocks
                         ioWriteOpen(storageWriteIo(pgFileWrite));
@@ -273,24 +276,37 @@ List *restoreFile(
                         {
                             const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-                            // Construct repo file
-                            String *const blockFile = strCatFmt(
-                                strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(strLstGet(referenceList, blockMapItem->reference)));
-
-                            if (blockMapItem->bundleId != 0)
-                                strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId);
-                            else
-                                strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
-
-                            const Buffer *const block = storageGetP(
-                                storageNewReadP(storageRepo(), blockFile, .offset = blockMapItem->offset,
-                                .limit = VARUINT64(blockMapItem->size)));
-
-                            if (write(ioWriteFd(storageWriteIo(pgFileWrite)), bufPtrConst(block), bufUsed(block)) !=
-                                (ssize_t)bufUsed(block))
+                            if (file->deltaMap == NULL || blockMapIdx >= bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE ||
+                                !bufEq(BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE), BUF(bufPtrConst(file->deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                             {
-                                THROW_SYS_ERROR_FMT(
-                                    FileWriteError, "unable to write '%s'", strZ(storagePathP(storagePg(), file->name)));
+                                // Construct repo file
+                                String *const blockFile = strCatFmt(
+                                    strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(strLstGet(referenceList, blockMapItem->reference)));
+
+                                if (blockMapItem->bundleId != 0)
+                                    strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId);
+                                else
+                                    strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
+
+                                fprintf(stdout, "!!!READ %u from %s\n", blockMapIdx, strZ(blockFile)); fflush(stdout);
+
+                                const Buffer *const block = storageGetP(
+                                    storageNewReadP(storageRepo(), blockFile, .offset = blockMapItem->offset,
+                                    .limit = VARUINT64(blockMapItem->size)));
+
+                                THROW_ON_SYS_ERROR_FMT(
+                                    lseek(
+                                        ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)(blockMapIdx * file->blockIncrSize),
+                                        SEEK_SET) == -1,
+                                    FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)(blockMapIdx * file->blockIncrSize),
+                                    strZ(storagePathP(storagePg(), file->name)));
+
+                                if (write(ioWriteFd(storageWriteIo(pgFileWrite)), bufPtrConst(block), bufUsed(block)) !=
+                                    (ssize_t)bufUsed(block))
+                                {
+                                    THROW_SYS_ERROR_FMT(
+                                        FileWriteError, "unable to write '%s'", strZ(storagePathP(storagePg(), file->name)));
+                                }
                             }
                         }
 
