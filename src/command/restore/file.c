@@ -271,6 +271,10 @@ List *restoreFile(
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
                         // fprintf(stdout, "!!!DONE TO READ BLOCK MAP\n"); fflush(stdout);
 
+                        // Size of delta map. If there is not delta map because the file did not exist, then set to zero.
+                        const unsigned int deltaMapSize = file->deltaMap == NULL ?
+                            0 : (unsigned int)(bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE);
+
                         // Write changed blocks
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 
@@ -278,24 +282,24 @@ List *restoreFile(
                         {
                             const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-                            if (file->deltaMap == NULL || blockMapIdx >= bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE ||
-                                !bufEq(BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE), BUF(bufPtrConst(file->deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
+                            if (blockMapIdx >= deltaMapSize ||
+                                !bufEq(
+                                    BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
+                                    BUF(bufPtrConst(file->deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                             {
                                 // Construct repo file
                                 String *const blockFile = strCatFmt(
                                     strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(strLstGet(referenceList, blockMapItem->reference)));
 
-                                if (blockMapItem->bundleId != 0)
-                                    strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId);
+                                if (blockMapItem->bundleId != 0) // {uncovered - !!!}
+                                    strCatFmt(blockFile, "bundle/%" PRIu64, blockMapItem->bundleId); // {uncovered - !!!}
                                 else
                                     strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
 
-                                fprintf(stdout, "!!!READ %u from %s\n", blockMapIdx, strZ(blockFile)); fflush(stdout);
+                                // fprintf(stdout, "!!!READ %u from %s\n", blockMapIdx, strZ(blockFile)); fflush(stdout);
 
-                                const Buffer *const block = storageGetP(
-                                    storageNewReadP(storageRepo(), blockFile, .offset = blockMapItem->offset,
-                                    .limit = VARUINT64(blockMapItem->size)));
-
+                                // Seek to the block position. It is possible we are already at the correct position but it seems
+                                // safer just to let lseek() figure this out. Presumably this is a noop if there is nothing to do.
                                 THROW_ON_SYS_ERROR_FMT(
                                     lseek(
                                         ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)(blockMapIdx * file->blockIncrSize),
@@ -303,12 +307,14 @@ List *restoreFile(
                                     FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)(blockMapIdx * file->blockIncrSize),
                                     strZ(storagePathP(storagePg(), file->name)));
 
-                                if (write(ioWriteFd(storageWriteIo(pgFileWrite)), bufPtrConst(block), bufUsed(block)) !=
-                                    (ssize_t)bufUsed(block))
-                                {
-                                    THROW_SYS_ERROR_FMT(
-                                        FileWriteError, "unable to write '%s'", strZ(storagePathP(storagePg(), file->name)));
-                                }
+                                // Write block to the file
+                                StorageRead *const blockRead = storageNewReadP(
+                                    storageRepo(), blockFile, .offset = blockMapItem->offset,
+                                    .limit = VARUINT64(blockMapItem->size));
+
+                                ioReadOpen(storageReadIo(blockRead));
+                                ioCopyP(storageReadIo(blockRead), storageWriteIo(pgFileWrite));
+                                ioWriteFlush(storageWriteIo(pgFileWrite));
                             }
                         }
 
