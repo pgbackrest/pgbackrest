@@ -85,7 +85,7 @@ testBackupValidateList(
                     const String *manifestName = info.name;
 
                     // Remove block incremental extension
-                    if (manifestData->blockIncr)
+                    if (strEndsWithZ(info.name, BACKUP_BLOCK_INCR_EXT))
                     {
                         manifestName = strSubN(info.name, 0, strSize(info.name) - (sizeof(BACKUP_BLOCK_INCR_EXT) - 1));
                     }
@@ -134,7 +134,7 @@ testBackupValidateList(
                             const String *const blockName = strNewFmt(
                                 "%s/%s/%s", strZ(strPath(path)),
                                 strZ(strLstGet(manifestReferenceList(manifest), blockMapItem->reference)),
-                                blockMapItem->bundleId == 0 ? zNewFmt("bundle/%" PRIu64, blockMapItem->bundleId) : strZ(info.name));
+                                blockMapItem->bundleId != 0 ? zNewFmt("bundle/%" PRIu64, blockMapItem->bundleId) : strZ(info.name));
                             const Buffer *const block = storageGetP(
                                 storageNewReadP(storage, blockName, .offset = blockMapItem->offset,
                                 .limit = VARUINT64(blockMapItem->size)));
@@ -3796,14 +3796,14 @@ testRun(void)
                 ". {link, d=20191103-165320F}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION.pgbi {file, s=2}\n"
-                "pg_data/backup_label.pgbi {file, s=17}\n"
+                "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
                 "pg_data/base/1/2.pgbi {file, m={0,0,0}, s=24576}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control.pgbi {file, m={0}, s=8192}\n"
                 "pg_data/pg.log.pgbi {file, m={0,0}, s=8193}\n"
-                "pg_data/tablespace_map.pgbi {file, s=19}\n"
+                "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -3883,14 +3883,14 @@ testRun(void)
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191103-165320F_20191106-002640D}\n"
                 "pg_data {path}\n"
-                "pg_data/backup_label.pgbi {file, s=17}\n"
+                "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
                 "pg_data/base/1/2.pgbi {file, m={0,0,0,1}, s=32768}\n"
                 "pg_data/base/1/smaller-than-block-size.pgbi {file, s=3}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control.pgbi {file, m={1}, s=8192}\n"
-                "pg_data/tablespace_map.pgbi {file, s=19}\n"
+                "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
