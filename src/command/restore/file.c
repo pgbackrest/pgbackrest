@@ -220,24 +220,28 @@ List *restoreFile(
                             ASSERT(varUInt64(file->limit) != 0);
                             repoFileLimit = varUInt64(file->limit);
 
-                            // Determine how many files can be copied with one read
-                            for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
+                            // !!! WHY THIS EXCEPTION -- ONLY NEEDED FOR REMOTE
+                            if (file->blockIncrMapSize == 0)
                             {
-                                // Only files that are being copied are considered
-                                if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
+                                // Determine how many files can be copied with one read
+                                for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
                                 {
-                                    const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
-                                    ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
+                                    // Only files that are being copied are considered
+                                    if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
+                                    {
+                                        const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
+                                        ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
 
-                                    // Break if the offset is not the first file's offset + the limit of all additional files so far
-                                    if (fileNext->offset != file->offset + repoFileLimit)
+                                        // Break if the offset is not the first file's offset + limit of all additional files so far
+                                        if (fileNext->offset != file->offset + repoFileLimit)
+                                            break;
+
+                                        repoFileLimit += varUInt64(fileNext->limit);
+                                    }
+                                    // Else if the file was not copied then there is a gap so break
+                                    else
                                         break;
-
-                                    repoFileLimit += varUInt64(fileNext->limit);
                                 }
-                                // Else if the file was not copied then there is a gap so break
-                                else
-                                    break;
                             }
                         }
 
@@ -270,6 +274,8 @@ List *restoreFile(
                         // Read block map. This will be compared to the delta map already created to determine which blocks need to
                         // be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
+                        // !!! EXPLAIN WHY THIS IS NEEDED
+                        ioReadClose(storageReadIo(repoFileRead));
                         // !!! DECRYPT FILTER NEEDED HERE
 
                         // Size of delta map. If there is no delta map because the pg file does not exist then set to zero, which

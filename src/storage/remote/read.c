@@ -8,6 +8,7 @@ Remote Storage Read
 
 #include "common/compress/helper.h"
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/log.h"
 #include "common/type/convert.h"
@@ -44,65 +45,20 @@ Macros for function logging
     objToLog(value, "StorageReadRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Open the file
+Has file reached EOF?
 ***********************************************************************************************************************************/
 static bool
-storageReadRemoteOpen(THIS_VOID)
+storageReadRemoteEof(THIS_VOID)
 {
     THIS(StorageReadRemote);
 
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_READ_REMOTE, this);
+    FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // If the file is compressible add compression filter on the remote
-        if (this->interface.compressible)
-        {
-            ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, (int)this->interface.compressLevel));
-        }
-
-        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
-        PackWrite *const param = protocolCommandParam(command);
-
-        pckWriteStrP(param, this->interface.name);
-        pckWriteBoolP(param, this->interface.ignoreMissing);
-        pckWriteU64P(param, this->interface.offset);
-
-        if (this->interface.limit == NULL)
-            pckWriteNullP(param);
-        else
-            pckWriteU64P(param, varUInt64(this->interface.limit));
-
-        pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
-
-        protocolClientCommandPut(this->client, command, false);
-
-        // If the file exists
-        result = pckReadBoolP(protocolClientDataGet(this->client));
-
-        if (result)
-        {
-            // Clear filters since they will be run on the remote side
-            ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
-
-            // If the file is compressible add decompression filter locally
-            if (this->interface.compressible)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
-        }
-        // Else nothing to do
-        else
-            protocolClientDataEndGet(this->client);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, this->eof);
 }
 
 /***********************************************************************************************************************************
@@ -193,20 +149,117 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
 }
 
 /***********************************************************************************************************************************
-Has file reached EOF?
+Clear protocol on short read
 ***********************************************************************************************************************************/
-static bool
-storageReadRemoteEof(THIS_VOID)
+static void
+storageReadRemoteFreeResource(THIS_VOID)
 {
     THIS(StorageReadRemote);
 
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ_REMOTE, this);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
+    FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->eof);
+    if (!storageReadRemoteEof(this)) // {uncovered - !!!}
+    {
+        MEM_CONTEXT_TEMP_BEGIN() // {uncovered - !!!}
+        {
+            Buffer *const buffer = bufNew(ioBufferSize()); // {uncovered - !!!}
+
+            if (!storageReadRemoteEof(this)) // {uncovered - !!!}
+                storageReadRemote(this, buffer, false); // {uncovered - !!!}
+        }
+        MEM_CONTEXT_TEMP_END(); // {uncovered - !!!}
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadRemoteClose(THIS_VOID)
+{
+    THIS(StorageReadRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    memContextCallbackClear(objMemContext(this));
+    storageReadRemoteFreeResource(this);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Open the file
+***********************************************************************************************************************************/
+static bool
+storageReadRemoteOpen(THIS_VOID)
+{
+    THIS(StorageReadRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // If the file is compressible add compression filter on the remote
+        if (this->interface.compressible)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(storageReadIo(this->read)), compressFilter(compressTypeGz, (int)this->interface.compressLevel));
+        }
+
+        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_STORAGE_OPEN_READ);
+        PackWrite *const param = protocolCommandParam(command);
+
+        pckWriteStrP(param, this->interface.name);
+        pckWriteBoolP(param, this->interface.ignoreMissing);
+        pckWriteU64P(param, this->interface.offset);
+
+        if (this->interface.limit == NULL)
+            pckWriteNullP(param);
+        else
+            pckWriteU64P(param, varUInt64(this->interface.limit));
+
+        pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
+
+        protocolClientCommandPut(this->client, command, false);
+
+        // If the file exists
+        result = pckReadBoolP(protocolClientDataGet(this->client));
+
+        if (result)
+        {
+            // Clear filters since they will be run on the remote side
+            ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
+
+            // If the file is compressible add decompression filter locally
+            if (this->interface.compressible)
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilter(compressTypeGz));
+
+            // Set free callback to ensure the protocol is cleared on a short read
+            memContextCallbackSet(objMemContext(this), storageReadRemoteFreeResource, this);
+        }
+        // Else nothing to do
+        else
+            protocolClientDataEndGet(this->client);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
@@ -232,7 +285,7 @@ storageReadRemoteNew(
 
     StorageReadRemote *this = NULL;
 
-    OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         this = OBJ_NEW_ALLOC();
 
@@ -253,6 +306,7 @@ storageReadRemoteNew(
 
                 .ioInterface = (IoReadInterface)
                 {
+                    .close = storageReadRemoteClose,
                     .eof = storageReadRemoteEof,
                     .open = storageReadRemoteOpen,
                     .read = storageReadRemote,

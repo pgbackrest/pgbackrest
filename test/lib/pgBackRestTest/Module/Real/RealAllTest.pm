@@ -58,14 +58,13 @@ sub run
         {pg => '9.3', dst =>     HOST_BACKUP, tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 0, bi => 0},
         {pg => '9.4', dst => HOST_DB_STANDBY, tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 1, bnd => 1, bi => 0},
         {pg => '9.5', dst =>     HOST_BACKUP, tls => 1, stg =>    S3, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0, bi => 0},
-        {pg => '9.6', dst =>     HOST_BACKUP, tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 0},
+        {pg => '9.6', dst =>     HOST_BACKUP, tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
         {pg =>  '10', dst => HOST_DB_STANDBY, tls => 1, stg =>    S3, enc => 1, cmp =>   GZ, rt => 2, bnd => 0, bi => 0},
         {pg =>  '11', dst =>     HOST_BACKUP, tls => 1, stg => AZURE, enc => 0, cmp =>  ZST, rt => 2, bnd => 1, bi => 0},
         {pg =>  '12', dst =>     HOST_BACKUP, tls => 0, stg =>    S3, enc => 1, cmp =>  LZ4, rt => 1, bnd => 0, bi => 0},
         {pg =>  '13', dst => HOST_DB_STANDBY, tls => 1, stg =>   GCS, enc => 0, cmp =>  ZST, rt => 1, bnd => 1, bi => 0},
         {pg =>  '14', dst =>     HOST_BACKUP, tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 2, bnd => 0, bi => 0},
-        # !!! {pg =>  '15', dst => HOST_DB_STANDBY, tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 0},
-        {pg =>  '15', dst => HOST_DB_PRIMARY, tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 1, bnd => 0, bi => 1},
+        {pg =>  '15', dst => HOST_DB_STANDBY, tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
     )
     {
         # Only run tests for this pg version
@@ -73,8 +72,7 @@ sub run
 
         # Get run parameters
         my $bHostBackup = $rhRun->{dst} eq HOST_BACKUP ? true : false;
-        # !!! THIS IS A HACK UNTIL THE NEW FILTERS SUPPORT REMOTE
-        my $bHostStandby = $self->pgVersion() ne '15' && $self->pgVersion() >= PG_VERSION_HOT_STANDBY ? true : false;
+        my $bHostStandby = $self->pgVersion() >= PG_VERSION_HOT_STANDBY ? true : false;
         my $bTls = $rhRun->{tls};
         my $strBackupDestination = $rhRun->{dst};
         my $strStorage = $rhRun->{stg};

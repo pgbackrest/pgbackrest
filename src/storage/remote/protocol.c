@@ -3,6 +3,7 @@ Remote Storage Protocol Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/backup/blockIncr.h"
 #include "command/backup/pageChecksum.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
@@ -60,6 +61,10 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
             {
                 switch (filterKey)
                 {
+                    case BLOCK_INCR_FILTER_TYPE: // {uncovered - !!!}
+                        ioFilterGroupAdd(filterGroup, blockIncrNewPack(filterParam)); // {uncovered - !!!}
+                        break; // {uncovered - !!!}
+
                     case CIPHER_BLOCK_FILTER_TYPE:
                         ioFilterGroupAdd(filterGroup, cipherBlockNewPack(filterParam));
                         break;
