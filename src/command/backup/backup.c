@@ -1711,22 +1711,19 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 {
                     param = protocolCommandParam(command);
 
-                    String *const repoFile = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(jobData->backupLabel));
-
                     if (bundle && file.size <= jobData->bundleLimit)
-                        strCatFmt(repoFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, jobData->bundleId);
+                        pckWriteStrP(param, backupFilePath(jobData->backupLabel, NULL, jobData->bundleId, compressTypeNone, false));
                     else
                     {
                         CHECK(AssertError, fileTotal == 0, "cannot bundle file");
 
-                        strCatFmt(
-                            repoFile, "%s%s", strZ(file.name),
-                            jobData->blockIncr ? BACKUP_BLOCK_INCR_EXT : strZ(compressExtStr(jobData->compressType)));
+                        pckWriteStrP(
+                            param, backupFilePath(jobData->backupLabel, file.name, 0, jobData->compressType, jobData->blockIncr));
+
                         fileName = file.name;
                         bundle = false;
                     }
 
-                    pckWriteStrP(param, repoFile);
                     pckWriteU64P(param, jobData->bundleId);
                     pckWriteBoolP(param, jobData->blockIncr);
 
@@ -1754,14 +1751,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 {
                     if (file.blockIncrMapSize != 0)
                     {
-                        String *const blockIncrMapFile = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(file.reference));
-
-                        if (file.bundleId != 0)  // {uncovered - !!!}
-                            strCatFmt(blockIncrMapFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, file.bundleId);  // {uncovered - !!!}
-                        else
-                            strCatFmt(blockIncrMapFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file.name));
-
-                        pckWriteStrP(param, blockIncrMapFile);
+                        pckWriteStrP(param, backupFilePath(file.reference, file.name, file.bundleId, compressTypeNone, true));
                         pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
                         pckWriteU64P(param, file.blockIncrMapSize);
                     }
@@ -1863,8 +1853,8 @@ backupProcess(
             jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
         }
 
-        if (jobData.blockIncr)                                                                                  // {uncovered !!!}
-            jobData.blockIncrSize = (size_t)cfgOptionUInt64(cfgOptRepoBlockSize);                               // {uncovered !!!}
+        if (jobData.blockIncr)
+            jobData.blockIncrSize = (size_t)cfgOptionUInt64(cfgOptRepoBlockSize);
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
         // exist in to repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to

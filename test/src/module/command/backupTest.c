@@ -3854,6 +3854,9 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
+            // File smaller than block size
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_PATH_BASE "/1/smaller-than-block-size", "ABC", .timeModified = backupTimeStart);
+
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
             TEST_RESULT_VOID(testCmdBackup(), "backup");
@@ -3865,6 +3868,7 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DC213000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (32KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/smaller-than-block-size (3B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
                 "P00 DETAIL: reference pg_data/pg.log to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
@@ -3873,7 +3877,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 6");
+                "P00   INFO: diff backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
                 testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3883,6 +3887,7 @@ testRun(void)
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
                 "pg_data/base/1/2.pgbi {file, m={0,0,0,1}, s=32768}\n"
+                "pg_data/base/1/smaller-than-block-size.pgbi {file, s=3}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control.pgbi {file, m={1}, s=8192}\n"
                 "pg_data/tablespace_map.pgbi {file, s=19}\n"
@@ -3896,6 +3901,8 @@ testRun(void)
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573000002}\n"
                 "pg_data/base/1/2={\"bims\":97,\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"size\":32768"
+                    ",\"timestamp\":1573000000}\n"
+                "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1573000000}\n"
                 "pg_data/pg.log={\"bims\":48,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\""

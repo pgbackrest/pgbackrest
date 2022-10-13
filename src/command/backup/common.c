@@ -18,6 +18,31 @@ Constants
 
 /**********************************************************************************************************************************/
 String *
+backupFilePath(
+    const String *const backupLabel, const String *const manifestName, const uint64_t bundleId, const CompressType compressType,
+    const bool blockIncr)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, manifestName);
+        FUNCTION_TEST_PARAM(UINT64, bundleId);
+        FUNCTION_TEST_PARAM(ENUM, compressType);
+    FUNCTION_TEST_END();
+
+    ASSERT(backupLabel != NULL);
+    ASSERT(bundleId != 0 || manifestName != NULL);
+
+    String *const result = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(backupLabel));
+
+    if (bundleId != 0)
+        strCatFmt(result, MANIFEST_PATH_BUNDLE "/%" PRIu64, bundleId);
+    else
+        strCatFmt(result, "%s%s", strZ(manifestName), blockIncr ? BACKUP_BLOCK_INCR_EXT : strZ(compressExtStr(compressType)));
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
+String *
 backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

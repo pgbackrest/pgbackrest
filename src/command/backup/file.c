@@ -242,7 +242,7 @@ backupFile(
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
                     // compressed/encrypted separately
-                    const bool blockIncrFilter = blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize); // {uncovered - !!!}
+                    const bool blockIncrFilter = blockIncr && (!file->pgFileCopyExactSize || file->pgFileSize >= blockIncrSize);
 
                     if (blockIncrFilter)
                     {

@@ -158,6 +158,7 @@ For manifest:
                             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
                             // !!! ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
                             // !!! ENCRYPT FILTER GOES HERE
+                            // !!! WOULD IT BE WORTH TRYING TO DETECT ALL ZERO BLOCKS?
 
                             ioWriteOpen(write);
                             ioWrite(write, this->block);

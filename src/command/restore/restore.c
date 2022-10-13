@@ -2305,28 +2305,19 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 {
                     param = protocolCommandParam(command);
 
-                    const String *const repoPath = strNewFmt(
-                        STORAGE_REPO_BACKUP "/%s/",
-                        strZ(file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel));
-
                     if (file.bundleId != 0)
                     {
-                        pckWriteStrP(param, strNewFmt("%s" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(repoPath), file.bundleId));
                         bundleId = file.bundleId;
                         reference = file.reference;
                     }
                     else
-                    {
-                        pckWriteStrP(
-                            param,
-                            strNewFmt(
-                                "%s%s%s", strZ(repoPath), strZ(file.name),
-                                file.blockIncrMapSize != 0 ?
-                                    BACKUP_BLOCK_INCR_EXT :
-                                    strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
                         fileName = file.name;
-                    }
 
+                    pckWriteStrP(
+                        param,
+                        backupFilePath(
+                            file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel, file.name,
+                            file.bundleId, manifestData(jobData->manifest)->backupOptionCompressType, file.blockIncrMapSize != 0));
                     pckWriteU32P(param, jobData->repoIdx);
                     pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                     pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
@@ -2347,21 +2338,22 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
 
-                // !!!
+                // If block incremental then modified offset and size to where the map is stored, since we need to read that first.
+                // This essentially makes it look like a bundled file, which in essence it is.
                 if (file.blockIncrMapSize != 0)
                 {
-                    // THROW_FMT(AssertError, "!!!OFF %d LIM %d", (int)(file.bundleOffset + file.sizeRepo - file.blockIncrMapSize), (int)file.blockIncrMapSize);
-
                     pckWriteBoolP(param, true);
                     pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
                     pckWriteU64P(param, file.blockIncrMapSize);
                 }
+                // Else write bundle offset/size
                 else if (file.bundleId != 0)
                 {
                     pckWriteBoolP(param, true);
                     pckWriteU64P(param, file.bundleOffset);
                     pckWriteU64P(param, file.sizeRepo);
                 }
+                // Else restore as a whole file
                 else
                     pckWriteBoolP(param, false);
 

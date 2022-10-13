@@ -7,6 +7,7 @@ Common Functions and Definitions for Backup and Expire Commands
 #include <stdbool.h>
 #include <time.h>
 
+#include "common/compress/helper.h"
 #include "common/type/string.h"
 #include "info/infoBackup.h"
 
@@ -19,6 +20,10 @@ Backup constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Determine the path/file where the manifest file is backed up in the repo
+String *backupFilePath(
+    const String *backupLabel, const String *manifestName, uint64_t bundleId, CompressType compressType, bool blockIncr);
+
 // Format a backup label from a type and timestamp with an optional prior label
 String *backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp);
 
