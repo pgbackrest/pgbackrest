@@ -2759,8 +2759,8 @@ testRun(void)
                     .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c"});
 
             // Block incremental with a broken reference to show that unneeded references will not be used
-            Buffer *fileUnused = bufNew(8192 * 4);
-            memset(bufPtr(fileUnused), 1, 8192 * 4);
+            Buffer *fileUnused = bufNew(8192 * 6);
+            memset(bufPtr(fileUnused), 1, bufSize(fileUnused));
             bufUsedSet(fileUnused, bufSize(fileUnused));
 
             Buffer *fileUnusedMap = bufNew(0);
@@ -2773,12 +2773,9 @@ testRun(void)
 
             size_t fileUnusedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
 
-            HRN_STORAGE_PATH_CREATE(storagePgWrite(), "base/1", .mode = 0700);
-            HRN_STORAGE_PUT(storagePgWrite(), "base/1/bi-unused-ref", fileUnused, .modeFile = 0600);
-
             Buffer *fileUsed = bufDup(fileUnused);
             memset(bufPtr(fileUsed), 3, 8192);
-            memset(bufPtr(fileUsed) + 16384, 3, 16384);
+            memset(bufPtr(fileUsed) + (8192 * 2), 3, 24576);
 
             // THROW_FMT(AssertError, "!!!HASH %s", strZ(bufHex(cryptoHashOne(hashTypeSha1, fileUsed))));
 
@@ -2798,9 +2795,13 @@ testRun(void)
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/bi-unused-ref"), .size = bufUsed(fileUsed),
-                    .sizeRepo = (3 * 8192) + fileUsedMapSize, .blockIncrMapSize = fileUsedMapSize,
+                    .sizeRepo = (4 * 8192) + fileUsedMapSize, .blockIncrMapSize = fileUsedMapSize,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "5e4f53628982e146209c48e465bb1e6323ac8a63"});
+                    .checksumSha1 = "febd680181d4cd315dce942348862c25fbd731f3"});
+
+            memset(bufPtr(fileUnused) + (8192 * 4), 3, 8192);
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), "base/1", .mode = 0700);
+            HRN_STORAGE_PUT(storagePgWrite(), "base/1/bi-unused-ref", fileUnused, .modeFile = 0600);
 
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
@@ -2898,10 +2899,10 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_xact' to '../xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref (48KB, [PCT]) checksum"
+                " febd680181d4cd315dce942348862c25fbd731f3\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT]) checksum"
                 " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref (32KB, [PCT]) checksum"
-                " 5e4f53628982e146209c48e465bb1e6323ac8a63\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref (24KB, [PCT]) checksum"
                 " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, [PCT]) checksum"
@@ -2969,7 +2970,7 @@ testRun(void)
             "base/1/31 {s=1, t=1482182860}\n"
             "base/1/PG_VERSION {s=4, t=1482182860}\n"
             "base/1/bi-no-ref {s=24576, t=1482182860}\n"
-            "base/1/bi-unused-ref {s=32768, t=1482182860}\n"
+            "base/1/bi-unused-ref {s=49152, t=1482182860}\n"
             "base/16384/\n"
             "base/16384/16385 {s=16384, t=1482182860}\n"
             "base/16384/PG_VERSION {s=4, t=1482182860}\n"
@@ -3093,9 +3094,9 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_wal' to '../wal'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref - exists and matches backup (48KB, [PCT]) checksum"
+                " febd680181d4cd315dce942348862c25fbd731f3\n"
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT])\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref - exists and matches backup (32KB, [PCT]) checksum"
-                " 5e4f53628982e146209c48e465bb1e6323ac8a63\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref - exists and matches backup (24KB, [PCT]) checksum"
                 " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, [PCT])"

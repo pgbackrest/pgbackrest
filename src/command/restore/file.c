@@ -150,7 +150,8 @@ List *restoreFile(
                                     fileResult->result = restoreResultPreserve;
                                 }
 
-                                // If block incremental and not preserving the file, store the delta map for later use
+                                // If block incremental and not preserving the file, store the delta map for later use in
+                                // reconstructing the pg file
                                 if (file->blockIncrMapSize != 0 && fileResult->result != restoreResultPreserve)
                                 {
                                     PackRead *const deltaMapResult = ioFilterGroupResultP(
@@ -270,14 +271,15 @@ List *restoreFile(
                         // be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
 
-                        // Size of delta map. If there is no delta map because the pg file does not exist, then set to zero.
+                        // Size of delta map. If there is no delta map because the pg file does not exist then set to zero, which
+                        // will force all blocks to be updated.
                         const unsigned int deltaMapSize = file->deltaMap == NULL ?
                             0 : (unsigned int)(bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE);
 
-                        // Write changed blocks
-                        bool deltaFound = false;                    // Has a block delta been found?
-                        unsigned int blockMapMinIdx = 0;            // Min block in the delta
-                        unsigned int blockMapMaxIdx = 0;            // Max block in the delta
+                        // Find and write changed blocks
+                        bool updateFound = false;                   // Is there a block list to be updated?
+                        unsigned int blockMapMinIdx = 0;            // Min block in the list
+                        unsigned int blockMapMaxIdx = 0;            // Max block in the list
                         uint64_t blockListOffset = 0;               // Offset to start of block list
                         uint64_t blockListSize = 0;                 // Size of all blocks in list
 
@@ -287,38 +289,40 @@ List *restoreFile(
                         {
                             const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-                            // !!! If the block needs to be updated
+                            // The block must be updated if it beyond the blocks that exist in the delta map or when the checksum
+                            // stored in the repository is different from the delta map
                             if (blockMapIdx >= deltaMapSize ||
                                 !bufEq(
                                     BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
                                     BUF(bufPtrConst(file->deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                             {
-                                // !!! Collect a range of blocks
-                                if (!deltaFound)
+                                // If no block list is currently being build then start a new one
+                                if (!updateFound)
                                 {
-                                    deltaFound = true;
+                                    updateFound = true;
                                     blockMapMinIdx = blockMapIdx;
                                     blockMapMaxIdx = blockMapIdx;
                                     blockListOffset = blockMapItem->offset;
                                     blockListSize = blockMapItem->size;
-
-                                    // fprintf(stdout, "!!!DELTA START %u\n", blockMapIdx); fflush(stdout);
                                 }
+                                // Else add to the current block list
                                 else
                                 {
                                     blockMapMaxIdx = blockMapIdx;
                                     blockListSize += blockMapItem->size;
-                                    // fprintf(stdout, "!!!DELTA ADD %u-%u\n", blockMapMinIdx, blockMapIdx); fflush(stdout);
                                 }
 
-                                // !!! Look ahead
+                                // Look at the next block to see if should be part of this list. If so, continue so the block will
+                                // be added to the list on the next iteration. Otherwise, write out the current block list.
                                 if (blockMapIdx < blockMapSize(blockMap) - 1)
                                 {
                                     const BlockMapItem *const blockMapItemNext = blockMapGet(blockMap, blockMapIdx + 1);
 
+                                    // Similar to the check above, but also make sure the reference is the same. For blocks to be
+                                    // in a common list they must be contiguous and from the same reference.
                                     if (blockMapItem->reference == blockMapItemNext->reference &&
                                         (blockMapIdx + 1 >= deltaMapSize ||
-                                         !bufEq( // {uncovered - !!!}
+                                         !bufEq(
                                              BUF(blockMapItemNext->checksum, HASH_TYPE_SHA1_SIZE),
                                              BUF(
                                                 bufPtrConst(file->deltaMap) + (blockMapIdx + 1) * HASH_TYPE_SHA1_SIZE,
@@ -329,12 +333,14 @@ List *restoreFile(
                                 }
                             }
 
-                            // !!!
-                            if (deltaFound)
+                            // Update blocks in the list when found
+                            if (updateFound)
                             {
+                                // Use a per-block-list mem context to reduce memory usage
                                 MEM_CONTEXT_TEMP_BEGIN()
                                 {
-                                    // Construct repo file
+                                    // Construct repo file. It is OK to do this using the last block in the list since it must have
+                                    // the same reference and bundle id as all the other blocks in the list.
                                     String *const blockFile = strCatFmt(
                                         strNew(), STORAGE_REPO_BACKUP "/%s/",
                                         strZ(strLstGet(referenceList, blockMapItem->reference)));
@@ -344,10 +350,11 @@ List *restoreFile(
                                     else
                                         strCatFmt(blockFile, "%s" BACKUP_BLOCK_INCR_EXT, strZ(file->manifestFile));
 
-                                    fprintf(stdout, "!!!READ %u-%u from %s\n", blockMapMinIdx, blockMapMaxIdx, strZ(blockFile)); fflush(stdout);
+                                    fprintf(stdout, "!!!READ %u-%u from %s\n", blockMapMinIdx, blockMapMaxIdx, strZ(blockFile));
+                                    fflush(stdout);
 
                                     // Seek to the min block offset. It is possible we are already at the correct position but it
-                                    // seems easier and safer to let lseek() figure this out.
+                                    // is easier and safer to let lseek() figure this out.
                                     THROW_ON_SYS_ERROR_FMT(
                                         lseek(
                                             ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)(blockMapMinIdx * file->blockIncrSize),
@@ -374,13 +381,16 @@ List *restoreFile(
                                 MEM_CONTEXT_TEMP_END();
 
                                 // Flush out all the blocks written from the list. This is required because we may need to seek to a
-                                // non-contiguous on the next iteration.
+                                // non-contiguous offset on the next iteration. It might be possible to optimize this a bit more
+                                // since block lists may be contiguous but at least one block was written and the blocks should be
+                                // fairly large so the value of additional buffering is minimal.
                                 ioWriteFlush(storageWriteIo(pgFileWrite));
 
-                                deltaFound = false;
+                                updateFound = false;
                             }
                         }
 
+                        // Close the file to complete the update
                         ioWriteClose(storageWriteIo(pgFileWrite));
 
                         // Calculate checksum. In theory this is not needed because the file should always be reconstructed
