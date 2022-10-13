@@ -277,7 +277,6 @@ List *restoreFile(
                         bool deltaFound = false;
                         unsigned int blockMapMinIdx = 0;
                         unsigned int blockMapMaxIdx = 0;
-                        unsigned int reference = 0;
 
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 
@@ -285,17 +284,18 @@ List *restoreFile(
                         {
                             const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
+                            // !!! If the block needs to be updated
                             if (blockMapIdx >= deltaMapSize ||
                                 !bufEq(
                                     BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
                                     BUF(bufPtrConst(file->deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                             {
+                                // !!! Collect a range of blocks
                                 if (!deltaFound)
                                 {
                                     blockMapMinIdx = blockMapIdx;
                                     blockMapMaxIdx = blockMapIdx;
                                     deltaFound = true;
-                                    reference = blockMapItem->reference;
 
                                     fprintf(stdout, "!!!DELTA START %u\n", blockMapIdx); fflush(stdout);
                                 }
@@ -305,8 +305,22 @@ List *restoreFile(
                                     fprintf(stdout, "!!!DELTA ADD %u-%u\n", blockMapMinIdx, blockMapIdx); fflush(stdout);
                                 }
 
-                                if (blockMapIdx < blockMapSize(blockMap) - 1 && reference == blockMapItem->reference)
-                                    continue;
+                                // !!! Look ahead
+                                if (blockMapIdx < blockMapSize(blockMap) - 1)
+                                {
+                                    const BlockMapItem *const blockMapItemNext = blockMapGet(blockMap, blockMapIdx + 1);
+
+                                    if (blockMapItem->reference == blockMapItemNext->reference &&
+                                        (blockMapIdx + 1 >= deltaMapSize ||
+                                         !bufEq(
+                                             BUF(blockMapItemNext->checksum, HASH_TYPE_SHA1_SIZE),
+                                             BUF(
+                                                bufPtrConst(file->deltaMap) + (blockMapIdx + 1) * HASH_TYPE_SHA1_SIZE,
+                                                HASH_TYPE_SHA1_SIZE))))
+                                    {
+                                        continue;
+                                    }
+                                }
                             }
 
                             if (deltaFound)
