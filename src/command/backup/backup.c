@@ -944,7 +944,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 storageRepoWrite(),
                 backupFilePath(
                     manifestData(manifest)->backupLabel, manifestName, 0, compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
-                    false, 0),
+                    false),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -1706,6 +1706,9 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                     continue;
                 }
 
+                // Is this file a block incremental?
+                const bool blockIncr = jobData->blockIncr && file.size >= jobData->blockIncrSize;
+
                 // Add common parameters before first file
                 if (param == NULL)
                 {
@@ -1714,29 +1717,24 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                     if (bundle && file.size <= jobData->bundleLimit)
                     {
                         pckWriteStrP(
-                            param, backupFilePath(jobData->backupLabel, NULL, jobData->bundleId, compressTypeNone, false, 0));
+                            param, backupFilePath(jobData->backupLabel, NULL, jobData->bundleId, compressTypeNone, false));
                         pckWriteU64P(param, jobData->bundleId);
                     }
                     else
                     {
                         CHECK(AssertError, fileTotal == 0, "cannot bundle file");
 
-                        pckWriteStrP(
-                            param, backupFilePath(jobData->backupLabel, file.name, 0, jobData->compressType, jobData->blockIncr,
-                            file.size));
+                        pckWriteStrP(param, backupFilePath(jobData->backupLabel, file.name, 0, jobData->compressType, blockIncr));
                         pckWriteU64P(param, 0);
 
                         fileName = file.name;
                         bundle = false;
                     }
 
-                    pckWriteBoolP(param, jobData->blockIncr);
+                    pckWriteU64P(param, jobData->blockIncrSize);
 
-                    if (jobData->blockIncr)
-                    {
-                        pckWriteU64P(param, jobData->blockIncrSize);
+                    if (jobData->blockIncrSize > 0)
                         pckWriteU64P(param, strLstSize(manifestReferenceList(jobData->manifest)) - 1);
-                    }
 
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
@@ -1752,19 +1750,23 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
 
-                if (jobData->blockIncr)
+                // !!! Need a test for what happens when a file shrinks after it was a block incr
+                if (blockIncr)
                 {
+                    pckWriteBoolP(param, true);
+
                     if (file.blockIncrMapSize != 0)
                     {
                         pckWriteStrP(
-                            param, backupFilePath(file.reference, file.name, file.bundleId, compressTypeNone, true,
-                            jobData->blockIncrSize));
+                            param, backupFilePath(file.reference, file.name, file.bundleId, compressTypeNone, true));
                         pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
                         pckWriteU64P(param, file.blockIncrMapSize);
                     }
                     else
                         pckWriteNullP(param);
                 }
+                else
+                    pckWriteBoolP(param, false);
 
                 pckWriteStrP(param, file.name);
                 pckWriteBoolP(param, file.resume);

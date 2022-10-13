@@ -33,6 +33,7 @@ typedef struct BackupFile
     bool pgFileCopyExactSize;                                       // Copy only pg expected size
     const String *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
+    bool blockIncr;                                                 // Perform block incremental on this file?
     const String *blockIncrMapFile;                                 // File containing the block incremental map (NULL if none)
     uint64_t blockIncrMapOffset;                                    // Offset of block incremental map
     uint64_t blockIncrMapSize;                                      // Size of block incremental map
@@ -54,7 +55,7 @@ typedef struct BackupFileResult
 } BackupFileResult;
 
 List *backupFile(
-    const String *repoFile, uint64_t bundleId, bool blockIncr, size_t blockIncrSize, unsigned int blockIncrReference,
+    const String *repoFile, uint64_t bundleId, size_t blockIncrSize, unsigned int blockIncrReference,
     CompressType repoFileCompressType, int repoFileCompressLevel, CipherType cipherType, const String *cipherPass,
     const List *fileList);
 
