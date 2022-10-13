@@ -73,8 +73,8 @@ sub run
 
         # Get run parameters
         my $bHostBackup = $rhRun->{dst} eq HOST_BACKUP ? true : false;
-        # !!! my $bHostStandby = $self->pgVersion() >= PG_VERSION_HOT_STANDBY ? true : false;
-        my $bHostStandby = false;
+        # !!! THIS IS A HACK UNTIL THE NEW FILTERS SUPPORT REMOTE
+        my $bHostStandby = $self->pgVersion() ne '15' && $self->pgVersion() >= PG_VERSION_HOT_STANDBY ? true : false;
         my $bTls = $rhRun->{tls};
         my $strBackupDestination = $rhRun->{dst};
         my $strStorage = $rhRun->{stg};
