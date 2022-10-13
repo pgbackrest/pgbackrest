@@ -390,6 +390,8 @@ unit:
           - common/lock
 
         depend:
+          - command/backup/blockMap
+          - command/backup/blockIncr
           - command/backup/pageChecksum
           - common/lock
           - config/common
@@ -511,8 +513,6 @@ unit:
           - storage/storage
 
         include:
-          - command/backup/blockIncr
-          - command/backup/blockMap
           - storage/read
           - storage/write
 
