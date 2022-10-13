@@ -364,7 +364,7 @@ List *restoreFile(
                                     // Write out each block one at a time. This is required because each block is compressed and
                                     // encrypted individually. The special case where there is no compression or encryption does not
                                     // seem worth handling separately since there would be little or no performance improvement.
-                                    Buffer *const block = bufNew(file->blockIncrSize);
+                                    Buffer *const block = bufNew((size_t)file->blockIncrSize);
 
                                     for (unsigned int blockMapIdx = blockMapMinIdx; blockMapIdx <= blockMapMaxIdx; blockMapIdx++)
                                     {

@@ -136,6 +136,7 @@ For manifest:
             if (bufUsed(this->blockOut) == 0)
             {
                 // If the file is smaller than a single block there is no need to store as a block or create a map
+                // !!! REMOVE THIS BEHAVIOR -- ALWAYS CREATE A MAP FROM THIS FILTER
                 const bool map = this->blockNo > 0 || bufUsed(this->block) == this->blockSize;
 
                 if (bufUsed(this->block) > 0)
