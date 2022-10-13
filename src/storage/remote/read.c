@@ -45,23 +45,6 @@ Macros for function logging
     objToLog(value, "StorageReadRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Has file reached EOF?
-***********************************************************************************************************************************/
-static bool
-storageReadRemoteEof(THIS_VOID)
-{
-    THIS(StorageReadRemote);
-
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ_REMOTE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(BOOL, this->eof);
-}
-
-/***********************************************************************************************************************************
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
@@ -149,6 +132,23 @@ storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
 }
 
 /***********************************************************************************************************************************
+Has file reached EOF?
+***********************************************************************************************************************************/
+static bool
+storageReadRemoteEof(THIS_VOID)
+{
+    THIS(StorageReadRemote);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_READ_REMOTE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->eof);
+}
+
+/***********************************************************************************************************************************
 Clear protocol on short read
 ***********************************************************************************************************************************/
 static void
@@ -173,26 +173,6 @@ storageReadRemoteFreeResource(THIS_VOID)
         }
         MEM_CONTEXT_TEMP_END(); // {uncovered - !!!}
     }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Close the file
-***********************************************************************************************************************************/
-static void
-storageReadRemoteClose(THIS_VOID)
-{
-    THIS(StorageReadRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    memContextCallbackClear(objMemContext(this));
-    storageReadRemoteFreeResource(this);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -260,6 +240,26 @@ storageReadRemoteOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadRemoteClose(THIS_VOID)
+{
+    THIS(StorageReadRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    memContextCallbackClear(objMemContext(this));
+    storageReadRemoteFreeResource(this);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
