@@ -49,6 +49,7 @@
                         <github-pull-request id="1901"/>
 
                         <release-item-contributor-list>
+                            <release-item-ideator id="greg.sabino.mullane"/>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="greg.sabino.mullane"/>
                             <release-item-reviewer id="david.christensen"/>
