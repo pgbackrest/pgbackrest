@@ -940,28 +940,28 @@ testRun(void)
             "01"                                        // reference 0
             "38"                                        // bundle id 56
             "8084af5f"                                  // offset 200000000
-            "7f"                                        // size 127
+            "f901"                                      // delta size 127
             "ff000e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // reference end
 
             "8108"                                      // reference 1024
             "8008"                                      // bundle id 1024
             "8008"                                      // offset 1024
-            "8008"                                      // size 1024
+            "830e"                                      // delta size 1024
             "ff660e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // reference end
 
             "8101"                                      // reference 128
-            "7e"                                        // rolling offset 126
-            "09"                                        // size 9
+            "7e"                                        // delta offset 126
+            "ee0f"                                      // delta size 9
             "ff810e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // reference end
 
             "01"                                        // reference 0
-            "02"                                        // rolling offset 2
-            "0a"                                        // size 10
+            "02"                                        // delta offset 2
+            "03"                                        // delta size 10
             "ff010e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "0b"                                        // size 11
+            "03"                                        // size 11
             "ff020e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // reference end
 
@@ -1048,10 +1048,10 @@ testRun(void)
             "03"                                        // size
             "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"  // checksum
 
-            "03"                                        // size
+            "01"                                        // size
             "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
 
-            "03"                                        // size
+            "01"                                        // size
             "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
             "00"                                        // reference end
 
@@ -1095,16 +1095,16 @@ testRun(void)
             "03"                                        // reference
             "04"                                        // bundle id
             "08"                                        // offset
-            "03"                                        // size
+            "01"                                        // delta size
             "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
 
-            "03"                                        // size
+            "01"                                        // size
             "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
             "00"                                        // reference end
 
             "04"                                        // reference
             "00"                                        // offset delta
-            "01"                                        // size
+            "04"                                        // delta size
             "9a78211436f6d425ec38f5c4e02270801f3524f8"  // checksum
             "00"                                        // reference end
 
@@ -3809,10 +3809,10 @@ testRun(void)
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1572800002}\n"
-                "pg_data/base/1/2={\"bims\":71,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"size\":24576,"
+                "pg_data/base/1/2={\"bims\":69,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"size\":24576,"
                     "\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1572800000}\n"
-                "pg_data/pg.log={\"bims\":48,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\",\"size\":8193"
+                "pg_data/pg.log={\"bims\":49,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\",\"size\":8193"
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1572800002}\n"
@@ -3896,12 +3896,12 @@ testRun(void)
                     ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573000002}\n"
-                "pg_data/base/1/2={\"bims\":97,\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"size\":32768"
+                "pg_data/base/1/2={\"bims\":94,\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"size\":32768"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1573000000}\n"
-                "pg_data/pg.log={\"bims\":48,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\""
+                "pg_data/pg.log={\"bims\":49,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\""
                     ",\"reference\":\"20191103-165320F\",\"size\":8193,\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573000002}\n"

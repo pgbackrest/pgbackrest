@@ -44,6 +44,7 @@ blockMapNewRead(IoRead *const map)
     List *const refList = lstNewP(sizeof(BlockMapRef), .comparator = lstComparatorBlockMapRef);
     Buffer *const checksum = bufNew(HASH_TYPE_SHA1_SIZE);
     BlockMapRef *blockMapRef = NULL;
+    uint64_t sizeLast = 0;
 
     do
     {
@@ -84,6 +85,16 @@ blockMapNewRead(IoRead *const map)
         }
         else
         {
+            // The first size is read directly and then each subsequent size is a delta of the previous size. Subtract one from the
+            // delta which is required to distinguish it from the stop byte.
+            if (sizeLast == 0)
+                blockMapItem.size = blockMapItem.size;
+            else
+                blockMapItem.size = (uint64_t)(cvtInt64FromZigZag(blockMapItem.size - 1) + (int64_t)sizeLast);
+
+            sizeLast = blockMapItem.size;
+
+            // Add size to offset
             blockMapRef->offset += blockMapItem.size;
 
             bufUsedZero(checksum);
@@ -117,6 +128,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
 
     // Write all block items into a packed format
     unsigned int referenceLast = UINT_MAX;
+    uint64_t sizeLast = 0;
 
     for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(this); blockMapIdx++)
     {
@@ -151,7 +163,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
                 ASSERT(blockMapItem->bundleId == blockMapRef->bundleId);
                 ASSERT(blockMapItem->offset >= blockMapRef->offset);
 
-                // Add rolling offset delta
+                // Add offset delta
                 ioWriteVarIntU64(output, blockMapItem->offset - blockMapRef->offset);
 
                 // Update the offset
@@ -161,8 +173,16 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
             referenceLast = blockMapItem->reference;
         }
 
-        // Add size. This cannot be easily done as a delta since we are using zero as a stop byte.
-        ioWriteVarIntU64(output, blockMapItem->size);
+        // The first size is stored directly and then each subsequent size is a delta of the previous size. Add one to the delta
+        // so it can be distinguished from the stop byte.
+        if (sizeLast == 0)
+            ioWriteVarIntU64(output, blockMapItem->size);
+        else
+            ioWriteVarIntU64(output, cvtInt64ToZigZag((int64_t)blockMapItem->size - (int64_t)sizeLast) + 1);
+
+        sizeLast = blockMapItem->size;
+
+        // Add size to offset
         blockMapRef->offset += blockMapItem->size;
 
         // Add checksum
