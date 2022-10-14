@@ -989,7 +989,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             manifestFileAdd(manifest, &file);
 
-            LOG_DETAIL_FMT("wrote '%s' file returned from backup", strZ(name));
+            LOG_DETAIL_FMT("wrote '%s' file returned from backup stop function", strZ(name));
         }
         MEM_CONTEXT_TEMP_END();
     }
