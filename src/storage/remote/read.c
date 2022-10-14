@@ -149,7 +149,8 @@ storageReadRemoteEof(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Clear protocol on short read
+Clear protocol if the entire file is not read or an error occurs before the read is complete. This is required to clear the
+protocol state so a subsequent command can succeed.
 ***********************************************************************************************************************************/
 static void
 storageReadRemoteFreeResource(THIS_VOID)
@@ -243,7 +244,8 @@ storageReadRemoteOpen(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Close the file
+Close the file and read any remaining data. It is possible that all data has been read but if the amount of data is exactly
+divisible by the buffer size then the eof may not have been received.
 ***********************************************************************************************************************************/
 static void
 storageReadRemoteClose(THIS_VOID)

@@ -62,6 +62,7 @@
                         </commit>
                         <commit subject="Update ManifestFile booleans to bit fields."/>
                         <commit subject="Use read-only storage to calculate checksum in restoreFile()."/>
+                        <commit subject="Swap command/backup and command/restore unit tests."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
