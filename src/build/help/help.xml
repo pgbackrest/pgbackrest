@@ -1190,7 +1190,7 @@
                         <summary>Force a checkpoint to start backup quickly.</summary>
 
                         <text>
-                            <p>Forces a checkpoint (by passing <id>y</id> to the <id>fast</id> parameter of backup start function so the backup begins immediately. Otherwise the backup will start after the next regular checkpoint.</p>
+                            <p>Forces a checkpoint (by passing <id>y</id> to the <id>fast</id> parameter of the backup start function so the backup begins immediately. Otherwise the backup will start after the next regular checkpoint.</p>
                         </text>
 
                         <example>y</example>
