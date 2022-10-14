@@ -44,6 +44,18 @@
 
                         <p>Do not store references for zero-length files when bundling.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1901"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Use more generic descriptions for <code>pg_start_backup()</code>/<code>pg_stop_backup()</code>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
