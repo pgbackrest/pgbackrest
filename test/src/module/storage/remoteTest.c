@@ -277,6 +277,34 @@ testRun(void)
         TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "check read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read partial file then close");
+
+        size_t bufferOld = ioBufferSize();
+        ioBufferSizeSet(11);
+        Buffer *buffer = bufNew(11);
+
+        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
+        TEST_RESULT_UINT(ioRead(storageReadIo(fileRead), buffer), 11, "partial read");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "BABABABABAB", "check contents");
+        TEST_RESULT_BOOL(ioReadEof(storageReadIo(fileRead)), false, "no eof");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(fileRead)), "close");
+
+        ioBufferSizeSet(bufferOld);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read partial file then free");
+
+        buffer = bufNew(6);
+
+        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt")), "get file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
+        TEST_RESULT_UINT(ioRead(storageReadIo(fileRead), buffer), 6, "partial read");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "BABABA", "check contents");
+        TEST_RESULT_BOOL(ioReadEof(storageReadIo(fileRead)), false, "no eof");
+        TEST_RESULT_VOID(storageReadFree(fileRead), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file with compression");
 
         TEST_ASSIGN(
