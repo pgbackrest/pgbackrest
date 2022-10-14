@@ -45,6 +45,54 @@ Macros for function logging
     objToLog(value, "StorageReadRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
+Clear protocol if the entire file is not read or an error occurs before the read is complete. This is required to clear the
+protocol state so a subsequent command can succeed.
+***********************************************************************************************************************************/
+static void
+storageReadRemoteFreeResource(THIS_VOID)
+{
+    THIS(StorageReadRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // Read if eof has not been reached
+    if (!this->eof)
+    {
+        do
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                PackRead *const read = protocolClientDataGet(this->client);
+                pckReadNext(read);
+
+                // If binary then discard
+                if (pckReadType(read) == pckTypeBin)
+                {
+                    // Free the buffer immediately on read in case there are many buffers to read
+                    bufFree(pckReadBinP(read));
+                }
+                // Else read is complete so discard the filter list
+                else
+                {
+                    pckReadPackP(read);
+                    protocolClientDataEndGet(this->client);
+
+                    this->eof = true;
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+        while (!this->eof);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
@@ -146,36 +194,6 @@ storageReadRemoteEof(THIS_VOID)
     ASSERT(this != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, this->eof);
-}
-
-/***********************************************************************************************************************************
-Clear protocol if the entire file is not read or an error occurs before the read is complete. This is required to clear the
-protocol state so a subsequent command can succeed.
-***********************************************************************************************************************************/
-static void
-storageReadRemoteFreeResource(THIS_VOID)
-{
-    THIS(StorageReadRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    if (!storageReadRemoteEof(this)) // {uncovered - !!!}
-    {
-        MEM_CONTEXT_TEMP_BEGIN() // {uncovered - !!!}
-        {
-            Buffer *const buffer = bufNew(ioBufferSize()); // {uncovered - !!!}
-
-            if (!storageReadRemoteEof(this)) // {uncovered - !!!}
-                storageReadRemote(this, buffer, false); // {uncovered - !!!}
-        }
-        MEM_CONTEXT_TEMP_END(); // {uncovered - !!!}
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
