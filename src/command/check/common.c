@@ -72,7 +72,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
         // Check archive configuration if option is valid for the command and set
         if (!isStandby && cfgOptionValid(cfgOptArchiveCheck) && cfgOptionBool(cfgOptArchiveCheck))
         {
-            // Error if archive_mode = off since pg_start_backup () will fail
+            // Error if archive_mode = off since backup start will fail
             if (strCmpZ(dbArchiveMode(dbObject), "off") == 0)
             {
                 THROW(ArchiveDisabledError, "archive_mode must be enabled");
