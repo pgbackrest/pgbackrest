@@ -31,6 +31,17 @@
 
                         <p>Fix memory leak in file bundle <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1900"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix protocol error on short read of remote file.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
