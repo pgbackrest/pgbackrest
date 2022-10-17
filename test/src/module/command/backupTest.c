@@ -2291,14 +2291,14 @@ testRun(void)
             TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
                 "P00   WARN: resumable backup 20191002-070640F of same type exists -- invalid files will be removed then the backup"
                     " will resume\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-                "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
                 "P00   INFO: new backup label = 20191002-070640F\n"
                 "P00   INFO: full backup size = [SIZE], file total = 3");
@@ -2432,7 +2432,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePathSync;
 
             TEST_RESULT_LOG(
-                "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
                 "P00   INFO: check archive for prior segment 0000000105D95D2F000000FF\n"
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- invalid files will be removed then the backup"
@@ -2460,7 +2460,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/zero-size (0B, [PCT])\n"
-                "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
                 "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
                 "P00 DETAIL: copy segment 0000000105D95D3000000000 to backup\n"
@@ -2596,7 +2596,7 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
                 "P00   WARN: diff backup cannot alter compress-type option to 'none', reset to value in 20191003-105320F\n"
-                "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   INFO: check archive for prior segment 0000000105D9758F000000FF\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp (1570200100) in the future (relative to copy start 1570200000),"
@@ -2620,7 +2620,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/resume-ref (0B, [PCT])\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
-                "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
                     "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D\n"
@@ -2940,7 +2940,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureHardLink;
 
             TEST_RESULT_LOG(
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB5DE000000000, lsn = 5db5de0/0\n"
                 "P00   INFO: check archive for segment 0000000105DB5DE000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (40KB, [PCT]) checksum [SHA1]\n"
@@ -2955,10 +2955,10 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
-                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000002\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000001 to backup\n"
@@ -3070,7 +3070,7 @@ testRun(void)
             // Check log
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB764000000000, lsn = 5db7640/0\n"
                 "P00   INFO: check archive for prior segment 0000000105DB763F00000FFF");
 
@@ -3105,7 +3105,7 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   INFO: check archive for segment 0000002C05DB8EB000000000\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
@@ -3118,10 +3118,10 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_data/base/1/1 to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
-                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000002C05DB8EB000000001, lsn = 5db8eb0/180000\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000001\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I\n"
                 "P00   INFO: incr backup size = [SIZE], file total = 7");
@@ -3237,7 +3237,7 @@ testRun(void)
             TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   INFO: check archive for segment 0000000105DB8EB000000000\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/zero\n"
@@ -3250,10 +3250,10 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/bigish.dat (bundle 2/0, 8.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (bundle 3/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 4/0, 8KB, [PCT]) checksum [SHA1]\n"
-                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB8EB000000001, lsn = 5db8eb0/180000\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB8EB000000000:0000000105DB8EB000000001\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
@@ -3369,17 +3369,17 @@ testRun(void)
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191030-014640F, version = 2.42dev\n"
                 "P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from 20191030-014640F\n"
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBBF8000000000, lsn = 5dbbf80/0\n"
                 "P00   INFO: check archive for segment 0000000105DBBF8000000000\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/zero\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191030-014640F\n"
-                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBBF8000000001, lsn = 5dbbf80/300000\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBBF8000000000:0000000105DBBF8000000001\n"
                 "P00   INFO: new backup label = 20191030-014640F_20191101-092000D\n"
                 "P00   INFO: diff backup size = [SIZE], file total = 5");

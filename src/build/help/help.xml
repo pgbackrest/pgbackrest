@@ -250,7 +250,7 @@
                         <summary>Database query timeout.</summary>
 
                         <text>
-                            <p>Sets the timeout, in seconds, for queries against the database. This includes the <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> functions which can each take a substantial amount of time. Because of this the timeout should be kept high unless you know that these functions will return quickly (i.e. if you have set <setting>start-fast=y</setting> and you know that the database cluster will not generate many WAL segments during the backup).</p>
+                            <p>Sets the timeout, in seconds, for queries against the database. This includes the backup start/stop functions which can each take a substantial amount of time. Because of this the timeout should be kept high unless you know that these functions will return quickly (i.e. if you have set <setting>start-fast=y</setting> and you know that the database cluster will not generate many WAL segments during the backup).</p>
 
                             <admonition type="note">The <br-option>db-timeout</br-option> option must be less than the <br-option>protocol-timeout</br-option> option.</admonition>
                         </text>
@@ -1190,7 +1190,7 @@
                         <summary>Force a checkpoint to start backup quickly.</summary>
 
                         <text>
-                            <p>Forces a checkpoint (by passing <id>y</id> to the <id>fast</id> parameter of <code>pg_start_backup()</code>) so the backup begins immediately. Otherwise the backup will start after the next regular checkpoint.</p>
+                            <p>Forces a checkpoint (by passing <id>y</id> to the <id>fast</id> parameter of the backup start function so the backup begins immediately. Otherwise the backup will start after the next regular checkpoint.</p>
                         </text>
 
                         <example>y</example>
@@ -1870,7 +1870,7 @@
                         <summary>Perform an online backup.</summary>
 
                         <text>
-                            <p>Specifying --no-online prevents <backrest/> from running <code>pg_start_backup()</code> and <code>pg_stop_backup()</code> on the database cluster. In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.</p>
+                            <p>Specifying --no-online prevents <backrest/> from running the backup start/stop functions on the database cluster. In order for this to work <postgres/> should be shut down and <backrest/> will generate an error if it is not.</p>
 
                             <p>The purpose of this option is to allow offline backups. The <path>pg_xlog</path>/<path>pg_wal</path> directory is copied as-is and <setting>archive-check</setting> is automatically disabled for the backup.</p>
                         </text>
