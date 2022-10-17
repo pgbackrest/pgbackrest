@@ -193,22 +193,14 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageInfoList()"))
+    if (testBegin("storageNewItrP()"))
     {
         TEST_TITLE("path not found");
 
-        HarnessStorageInfoListCallbackData callbackData =
-        {
-            .content = strNew(),
-        };
-
-        TEST_RESULT_BOOL(
-            storageInfoListP(storageRepo, STRDEF(BOGUS_STR), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
-            false, "info list");
-        TEST_RESULT_STR_Z(callbackData.content, "", "check content");
+        TEST_RESULT_PTR(storageNewItrP(storageRepo, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "path missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("list path and file");
+        TEST_TITLE("list path and file (no user/group");
 
         storagePutP(storageNewWriteP(storagePgWrite, STRDEF("test"), .timeModified = 1555160001), BUFSTRDEF("TESTME"));
 
@@ -220,17 +212,32 @@ testRun(void)
         // Path timestamp must be set after file is created since file creation updates it
         HRN_STORAGE_TIME(storagePgWrite, NULL, 1555160000);
 
-        TEST_RESULT_BOOL(
-            storageInfoListP(storagePgWrite, NULL, hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc), true,
-            "info list");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            ". {path, m=0750, u=" TEST_USER ", g=" TEST_GROUP "}\n"
+        TEST_STORAGE_LIST(
+            storagePgWrite, NULL,
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
 #ifdef TEST_CONTAINER_REQUIRED
-            "noname {file, s=6, m=0640, t=1555160002, u=99999, g=99999}\n"
+            "noname {s=6, t=1555160002, u=99999, g=99999, m=0640}\n"
 #endif // TEST_CONTAINER_REQUIRED
-            "test {file, s=6, m=0640, t=1555160001, u=" TEST_USER ", g=" TEST_GROUP "}\n",
-            "check content");
+            "test {s=6, t=1555160001, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n",
+            .level = storageInfoLevelDetail, .includeDot = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list path and file");
+
+#ifdef TEST_CONTAINER_REQUIRED
+        HRN_SYSTEM_FMT("sudo chown " TEST_USER ":" TEST_GROUP " %s", strZ(storagePathP(storagePgWrite, STRDEF("noname"))));
+#endif // TEST_CONTAINER_REQUIRED
+
+        // Path timestamp must be set after file is updated
+        HRN_STORAGE_TIME(storagePgWrite, NULL, 1555160000);
+
+        TEST_STORAGE_LIST(
+            storagePgWrite, NULL,
+#ifdef TEST_CONTAINER_REQUIRED
+            "noname {s=6, t=1555160002, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
+#endif // TEST_CONTAINER_REQUIRED
+            "test {s=6, t=1555160001, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n",
+            .level = storageInfoLevelDetail);
     }
 
     // *****************************************************************************************************************************
@@ -305,7 +312,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
-            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:str:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
+            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
                 " 5:strid:pg-chksum, 6:pack:<2:bool:false, 3:bool:false>, 7:strid:cipher-blk, 9:strid:cipher-blk, 11:strid:gz-cmp,"
                 " 13:strid:gz-dcmp, 15:strid:buffer",
             "filter results");
@@ -328,7 +335,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
-            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:str:bbbcf2c59433f68f22376cd2439d6cd309378df6>, 5:strid:sink,"
+            "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>, 5:strid:sink,"
                 " 7:strid:buffer",
             "filter results");
 
@@ -443,18 +450,11 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, STRDEF("parent/testpath"), .mode = 0777), "path create");
 
-        HarnessStorageInfoListCallbackData callbackData = {.content = strNew(), .userOmit = true, .groupOmit = true};
-
-        TEST_RESULT_BOOL(
-            storageInfoListP(
-                storageRepo, STRDEF(TEST_PATH "/repo128/parent"), hrnStorageInfoListCallback, &callbackData,
-                .sortOrder = sortOrderAsc),
-            true, "info list");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            ". {path, m=0777}\n"
-            "testpath {path, m=0777}\n",
-            "check content");
+        TEST_STORAGE_LIST(
+            storageRepo, TEST_PATH "/repo128/parent",
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0777}\n"
+            "testpath/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0777}\n",
+            .level = storageInfoLevelDetail, .includeDot = true);
     }
 
     // *****************************************************************************************************************************
@@ -522,6 +522,131 @@ testRun(void)
         const String *path = STRDEF("testpath");
         TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "new path");
         TEST_RESULT_VOID(storagePathSyncP(storageRepoWrite, path), "sync path");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageLinkCreate()"))
+    {
+        StorageInfo info = {0};
+        const String *path = STRDEF("20181119-152138F");
+        const String *latestLabel = STRDEF("latest");
+        const String *testFile = strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), "test.file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create/remove symlink to path and to file");
+
+        // Create the path and symlink via the remote
+        TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "remote create path to link to");
+        TEST_RESULT_VOID(
+            storageLinkCreateP(
+                storageRepoWrite, path, strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel))),
+            "remote create path symlink");
+
+        // Check the repo via the local test storage to ensure the remote wrote to it, then remove via remote and confirm removed
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(path)), .ignoreMissing = true).exists, true, "path exists");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, true,
+            "symlink to path exists");
+
+        // Verify link mapping via the local test storage
+        TEST_ASSIGN(
+            info,
+            storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = false), "get symlink info");
+        TEST_RESULT_STR(info.linkDestination, path, "match link destination");
+        TEST_RESULT_INT(info.type, storageTypeLink, "check type is link");
+
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, latestLabel), "remote remove symlink");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, false,
+            "symlink to path removed");
+
+        // Create a file and sym link to it via the remote,
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite, testFile), BUFSTRDEF("TESTME")), "put test file");
+        TEST_RESULT_VOID(
+            storageLinkCreateP(
+                storageRepoWrite, testFile, strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel))),
+            "remote create file symlink");
+
+        // Check the repo via the local test storage to ensure the remote wrote to it, then remove via remote and confirm removed
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, strNewFmt("repo128/test.file"), .ignoreMissing = true).exists, true, "test file exists");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, true,
+            "symlink to file exists");
+
+        // Verify link mapping via the local test storage
+        TEST_ASSIGN(
+            info,
+            storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = false), "get symlink info");
+        TEST_RESULT_STR(info.linkDestination, testFile, "match link destination");
+        TEST_RESULT_INT(info.type, storageTypeLink, "check type is link");
+
+        // Verify file and link contents match
+        Buffer *testFileBuffer = storageGetP(storageNewReadP(storageTest, STRDEF("repo128/test.file")));
+        Buffer *symLinkBuffer = storageGetP(storageNewReadP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel))));
+        TEST_RESULT_BOOL(bufEq(testFileBuffer, BUFSTRDEF("TESTME")), true, "file contents match test buffer");
+        TEST_RESULT_BOOL(bufEq(testFileBuffer, symLinkBuffer), true, "symlink and file contents match each other");
+
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, testFile), "remote remove test file");
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, STRDEF("repo128/test.file"), .ignoreMissing = true).exists, false, "test file removed");
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, latestLabel), "remote remove symlink");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, false,
+            "symlink to file removed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("hardlink success/fail");
+
+        // Create a file and hard link to it via the remote,
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite, testFile), BUFSTRDEF("TESTME")), "put test file");
+        TEST_RESULT_VOID(
+            storageLinkCreateP(
+                storageRepoWrite, testFile, strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel)),
+                .linkType = storageLinkHard),
+            "hardlink to test file");
+
+        // Check the repo via the local test storage to ensure the remote wrote to it, check that files and link match, then remove
+        // via remote and confirm removed
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, STRDEF("repo128/test.file"), .ignoreMissing = true).exists, true, "test file exists");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, true, "hard link exists");
+        TEST_ASSIGN(
+            info,
+            storageInfoP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = false), "get hard link info");
+        TEST_RESULT_INT(info.type, storageTypeFile, "check type is file");
+
+        // Verify file and link contents match
+        testFileBuffer = storageGetP(storageNewReadP(storageTest, STRDEF("repo128/test.file")));
+        Buffer *hardLinkBuffer = storageGetP(storageNewReadP(storageTest, strNewFmt("repo128/%s", strZ(latestLabel))));
+        TEST_RESULT_BOOL(bufEq(testFileBuffer, BUFSTRDEF("TESTME")), true, "file contents match test buffer");
+        TEST_RESULT_BOOL(bufEq(testFileBuffer, hardLinkBuffer), true, "hard link and file contents match each other");
+
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, testFile), "remove test file");
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite, latestLabel), "remove hard link");
+        TEST_RESULT_BOOL(
+            storageInfoP(storageTest, STRDEF("repo128/test.file"), .ignoreMissing = true).exists, false, "test file removed");
+        TEST_RESULT_BOOL(
+            storageInfoP(
+                storageTest, strNewFmt("repo128/%s", strZ(latestLabel)), .ignoreMissing = true).exists, false, "hard link removed");
+
+        // Hard link to directory not permitted
+        TEST_ERROR(
+            storageLinkCreateP(
+                storageRepoWrite,
+                strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(path)),
+                strNewFmt("%s/%s", strZ(storagePathP(storageRepo, NULL)), strZ(latestLabel)), .linkType = storageLinkHard),
+            FileOpenError,
+            "raised from remote-0 shim protocol: unable to create hardlink '" TEST_PATH "/repo128/latest' to"
+                " '" TEST_PATH "/repo128/20181119-152138F': [1] Operation not permitted");
+
     }
 
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be

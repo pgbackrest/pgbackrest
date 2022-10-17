@@ -24,7 +24,7 @@ void storageSftpPathCreate(
 void storageSftpPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param);
 // jrt !!! remove rc param...
 void storageSftpEvalLibssh2Error(
-    const int sessionErrno, const uint64_t sftpErrno, const int rc, const ErrorType *const errorType, const String *const msg,
+    const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const msg,
     const String *const hint);
 
 /***********************************************************************************************************************************

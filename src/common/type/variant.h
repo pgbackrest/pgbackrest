@@ -136,7 +136,7 @@ uint64_t varUInt64Force(const Variant *this);
 VariantList *varVarLst(const Variant *this);
 
 // Variant type
-__attribute__((always_inline)) static inline VariantType
+FN_INLINE_ALWAYS VariantType
 varType(const Variant *const this)
 {
     return THIS_PUB(Variant)->type;
@@ -151,7 +151,7 @@ bool varEq(const Variant *this1, const Variant *this2);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 varFree(Variant *const this)
 {
     objFree(this);

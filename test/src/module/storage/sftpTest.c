@@ -87,7 +87,6 @@ testRun(void)
         TEST_ERROR(storageRepoIdxWrite(0), AssertError, WRITABLE_WHILE_DRYRUN);
         TEST_ERROR(storageSpoolWrite(), AssertError, WRITABLE_WHILE_DRYRUN);
     }
-
     // *****************************************************************************************************************************
     if (testBegin("storageNew()"))
     {
@@ -155,7 +154,6 @@ testRun(void)
         TEST_RESULT_UINT(storageType(storageTest), storageTest->pub.type, "check type");
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "check path feature");
     }
-
     // *****************************************************************************************************************************
     if (testBegin("storageExists() and storagePathExists()"))
     {
@@ -180,7 +178,7 @@ testRun(void)
 
         TEST_ERROR_FMT(storageExistsP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
         TEST_ERROR_FMT(storagePathExistsP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
-//        TEST_REMOVE_NOPERM();
+        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -226,7 +224,7 @@ testRun(void)
         TEST_CREATE_NOPERM();
 
         TEST_ERROR_FMT(storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
-//        TEST_REMOVE_NOPERM();
+        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
 
         // -----------------------------------------------------------------------------------------------------------------
@@ -391,7 +389,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageInfoList()"))
+    if (testBegin("storageNewItrP()"))
     {
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_CREATE_NOPERM();
@@ -401,40 +399,36 @@ testRun(void)
         TEST_TITLE("path missing");
 
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL, .errorOnMissing = true),
-            PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
+            storageNewItrP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError,
+            STORAGE_ERROR_LIST_INFO_MISSING, TEST_PATH "/BOGUS");
 
-        TEST_RESULT_BOOL(
-            storageInfoListP(storageTest, STRDEF(BOGUS_STR), (StorageInfoListCallback)1, NULL), false, "ignore missing dir");
+        TEST_RESULT_PTR(storageNewItrP(storageTest, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "ignore missing dir");
 
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError, STORAGE_ERROR_LIST_INFO,
-            strZ(pathNoPerm));
+            storageNewItrP(storageTest, pathNoPerm), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError, STORAGE_ERROR_LIST_INFO,
-            strZ(pathNoPerm));
-//        TEST_REMOVE_NOPERM();
+            storageNewItrP(storageTest, pathNoPerm), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
+/*
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("helper function - storageSftpInfoListEntry()");
-
-        HarnessStorageInfoListCallbackData callbackData =
-        {
-            .content = strNew(),
-        };
+        TEST_TITLE("helper function - storageSftpListEntry()");
 
         TEST_RESULT_VOID(
-            storageSftpInfoListEntry(
-                (StorageSftp *)storageDriver(storageTest), STRDEF("pg"), STRDEF("missing"), storageInfoLevelBasic,
-                hrnStorageInfoListCallback, &callbackData),
+            storageSftpListEntry(
+                (StorageSftp *)storageDriver(storageTest), storageLstNew(storageInfoLevelBasic), STRDEF("pg"), "missing",
+                storageInfoLevelBasic),
             "missing path");
-        TEST_RESULT_STR_Z(callbackData.content, "", "check content");
+            */
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with only dot");
+
+        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
 
         // jrt !!!
         // NOTE: in my tests with --vm=none the resultant file would have the incorrect permissions. The request was coming through
@@ -454,13 +448,10 @@ testRun(void)
         // Subsystem	sftp	/usr/lib/openssh/sftp-server -u 000
         // would result in the file being created with 0766 permissions
         storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
-
-        callbackData.content = strNew();
-
-        TEST_RESULT_VOID(
-            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
-            "directory with one dot file sorted");
-        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0764, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0764}\n",
+            .level = storageInfoLevelDetail, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with file, link, pipe");
@@ -470,117 +461,109 @@ testRun(void)
         HRN_SYSTEM("sudo chown 77777:77777 " TEST_PATH "/pg/.include");
 #endif // TEST_CONTAINER_REQUIRED
 
-        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("pg/file"), .modeFile = 0660, .timeModified = 1656433838), BUFSTRDEF("TESTDATA"));
 
         HRN_SYSTEM("ln -s ../file " TEST_PATH "/pg/link");
         HRN_SYSTEM("mkfifo -m 777 " TEST_PATH "/pg/pipe");
 
-        callbackData = (HarnessStorageInfoListCallbackData)
-        {
-            .content = strNew(),
-            .timestampOmit = true,
-            .modeOmit = true,
-            .modePath = 0766,
-            .modeFile = 0600,
-            .userOmit = true,
-            .groupOmit = true,
-        };
-
-        TEST_RESULT_VOID(
-            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
-            "directory with one dot file sorted");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            ". {path, m=0764}\n"
+        // jrt !!! see note above about permissions and sftp server mask setting
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0764}\n"
 #ifdef TEST_CONTAINER_REQUIRED
-            ".include {path, m=0755, u=77777, g=77777}\n"
+            ".include/ {u=77777, g=77777, m=0755}\n"
 #endif // TEST_CONTAINER_REQUIRED
-            "file {file, s=8, m=0660}\n"
-            "link {link, d=../file}\n"
-            "pipe {special}\n",
-            "check content");
+            "file {s=8, t=1656433838, u=" TEST_USER ", g=" TEST_GROUP ", m=0660}\n"
+            "link> {d=../file, u=" TEST_USER ", g=" TEST_GROUP "}\n"
+            "pipe*\n",
+            .level = storageInfoLevelDetail, .includeDot = true);
 
 #ifdef TEST_CONTAINER_REQUIRED
         HRN_SYSTEM("sudo rmdir " TEST_PATH "/pg/.include");
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path - recurse");
+        TEST_TITLE("storageItrMore() twice in a row");
+
+        StorageIterator *storageItr = NULL;
+
+        TEST_ASSIGN(storageItr, storageNewItrP(storageTest, STRDEF("pg")), "new iterator");
+        TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more");
+        TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more again");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path - recurse desc");
 
         storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
-        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+        storagePutP(
+            storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600, .timeModified = 1656434296),
+            BUFSTRDEF("TESTDATA"));
 
-        callbackData.content = strNew();
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "pipe*\n"
+            "path/file {s=8, t=1656434296}\n"
+            "path/\n"
+            "link> {d=../file}\n"
+            "file {s=8, t=1656433838}\n"
+            "./\n",
+            .level = storageInfoLevelBasic, .includeDot = true, .sortOrder = sortOrderDesc);
 
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
-            "recurse descending");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            "pipe {special}\n"
-            "path/file {file, s=8}\n"
-            "path {path, m=0700}\n"
-            "link {link, d=../file}\n"
-            "file {file, s=8, m=0660}\n"
-            ". {path, m=0764}\n",
-            "check content");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path - recurse asc");
+
+        // Create a path with a subpath that will always be last to make sure lists are not freed too early in the iterator
+        storagePathCreateP(storageTest, STRDEF("pg/zzz/yyy"), .mode = 0700);
+
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "./\n"
+            "file {s=8, t=1656433838}\n"
+            "link> {d=../file}\n"
+            "path/\n"
+            "path/file {s=8, t=1656434296}\n"
+            "pipe*\n"
+            "zzz/\n"
+            "zzz/yyy/\n",
+            .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path basic info - recurse");
 
-        // jrt !!! sftp will not overwrite file -- do we need to add additional param to force removal and write in these cases
-        storageRemoveP(storageTest, STRDEF("pg/path/file"), .errorOnMissing = true);
-
-        storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
-        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
-
-        callbackData.content = strNew();
-
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
-            "recurse descending");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            "pipe {special}\n"
-            "path/file {file, s=8}\n"
-            "path {path}\n"
-            "link {link}\n"
-            "file {file, s=8}\n"
-            ". {path}\n",
-            "check content");
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "zzz/yyy/\n"
+            "zzz/\n"
+            "pipe*\n"
+            "path/file {s=8, t=1656434296}\n"
+            "path/\n"
+            "link> {d=../file}\n"
+            "file {s=8, t=1656433838}\n"
+            "./\n",
+            .levelForce = true, .includeDot = true, .sortOrder = sortOrderDesc);
 
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("path - filter");
+        TEST_TITLE("empty path - filter");
 
-        callbackData.content = strNew();
+        storagePathCreateP(storageTest, STRDEF("pg/empty"), .mode = 0700);
 
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc,
-                .expression = STRDEF("^path")),
-            "filter");
-        TEST_RESULT_STR_Z(
-            callbackData.content,
-            "path {path, m=0700}\n",
-            "check content");
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "empty/\n",
+            .level = storageInfoLevelType, .expression = "^empty");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("filter in subpath during recursion");
 
-        callbackData.content = strNew();
-
-        TEST_RESULT_VOID(
-            storageInfoListP(
-                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc, .recurse = true,
-                .expression = STRDEF("\\/file$")),
-            "filter");
-        TEST_RESULT_STR_Z(callbackData.content, "path/file {file, s=8}\n", "check content");
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "path/file {s=8, t=1656434296}\n",
+            .level = storageInfoLevelBasic, .expression = "\\/file$");
     }
 
     // *****************************************************************************************************************************
@@ -605,11 +588,13 @@ testRun(void)
         TEST_TITLE("error on missing, regardless of errorOnMissing setting");
 
         TEST_ERROR_FMT(
-            storageListP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError, STORAGE_ERROR_LIST_INFO,
-            strZ(pathNoPerm));
+            storageListP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
 
         // Should still error even when ignore missing
-        TEST_ERROR_FMT(storageListP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO, strZ(pathNoPerm));
+        TEST_ERROR_FMT(
+            storageListP(storageTest, pathNoPerm), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -626,11 +611,206 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, STRDEF("bbb.txt")), BUFSTRDEF("bbb")), "write bbb.text");
         TEST_RESULT_STRLST_Z(storageListP(storageTest, NULL, .expression = STRDEF("^bbb")), "bbb.txt\n", "dir list");
-
 #ifdef TEST_CONTAINER_REQUIRED
-//        TEST_REMOVE_NOPERM();
+        TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED
     }
+
+// original sftp test
+//    // *****************************************************************************************************************************
+//    if (testBegin("storageList()"))
+//    {
+//        jrt rewrite this to match posix tests
+//#ifdef TEST_CONTAINER_REQUIRED
+//        TEST_CREATE_NOPERM();
+//#endif // TEST_CONTAINER_REQUIRED
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("path missing");
+//
+//        TEST_ERROR_FMT(
+//            storageListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING,
+//            TEST_PATH "/BOGUS");
+//
+//        TEST_RESULT_PTR(storageListP(storageTest, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "null for missing dir");
+//        TEST_RESULT_UINT(strLstSize(storageListP(storageTest, STRDEF(BOGUS_STR))), 0, "empty list for missing dir");
+//
+//#ifdef TEST_CONTAINER_REQUIRED
+//        TEST_ERROR_FMT(
+//            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError, STORAGE_ERROR_LIST_INFO,
+//            strZ(pathNoPerm));
+//
+//        // Should still error even when ignore missing
+//        TEST_ERROR_FMT(
+//            storageInfoListP(storageTest, pathNoPerm, (StorageInfoListCallback)1, NULL), PathOpenError, STORAGE_ERROR_LIST_INFO,
+//            strZ(pathNoPerm));
+////        TEST_REMOVE_NOPERM();
+//#endif // TEST_CONTAINER_REQUIRED
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("helper function - storageSftpInfoListEntry()");
+//
+//        HarnessStorageInfoListCallbackData callbackData =
+//        {
+//            .content = strNew(),
+//        };
+//
+//        TEST_RESULT_VOID(
+//            storageSftpInfoListEntry(
+//                (StorageSftp *)storageDriver(storageTest), STRDEF("pg"), STRDEF("missing"), storageInfoLevelBasic,
+//                hrnStorageInfoListCallback, &callbackData),
+//            "missing path");
+//        TEST_RESULT_STR_Z(callbackData.content, "", "check content");
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("path with only dot");
+//
+//        // jrt !!!
+//        // NOTE: in my tests with --vm=none the resultant file would have the incorrect permissions. The request was coming through
+//        // properly but the umask resulted in altered permissions.  Do we want to alter the test result check, or the sshd_config
+//        // file as noted below?
+//        //
+//        // vagrant@pgbackrest-test:~$ umask
+//        // 0002
+//        //
+//        // Jul 13 16:38:33 localhost sftp-server[340225]: mkdir name "/home/vagrant/test/test-0/pg" mode 0766
+//        // But the directory would be created with 0764
+//        // test/test-0:
+//        // total 0
+//        // drwxrw-r-- 2 vagrant vagrant 40 Jul 14 15:37 pg
+//        //
+//        // Updating sshd_config to
+//        // Subsystem	sftp	/usr/lib/openssh/sftp-server -u 000
+//        // would result in the file being created with 0766 permissions
+//        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
+//
+//        callbackData.content = strNew();
+//
+//        TEST_RESULT_VOID(
+//            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData),
+//            "directory with one dot file sorted");
+//        TEST_RESULT_STR_Z(callbackData.content, ". {path, m=0764, u=" TEST_USER ", g=" TEST_GROUP "}\n", "check content");
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("path with file, link, pipe");
+//
+//#ifdef TEST_CONTAINER_REQUIRED
+//        storagePathCreateP(storageTest, STRDEF("pg/.include"), .mode = 0755);
+//        HRN_SYSTEM("sudo chown 77777:77777 " TEST_PATH "/pg/.include");
+//#endif // TEST_CONTAINER_REQUIRED
+//
+//        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/file"), .modeFile = 0660), BUFSTRDEF("TESTDATA"));
+//
+//        HRN_SYSTEM("ln -s ../file " TEST_PATH "/pg/link");
+//        HRN_SYSTEM("mkfifo -m 777 " TEST_PATH "/pg/pipe");
+//
+//        callbackData = (HarnessStorageInfoListCallbackData)
+//        {
+//            .content = strNew(),
+//            .timestampOmit = true,
+//            .modeOmit = true,
+//            .modePath = 0766,
+//            .modeFile = 0600,
+//            .userOmit = true,
+//            .groupOmit = true,
+//        };
+//
+//        TEST_RESULT_VOID(
+//            storageInfoListP(storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc),
+//            "directory with one dot file sorted");
+//        TEST_RESULT_STR_Z(
+//            callbackData.content,
+//            ". {path, m=0764}\n"
+//#ifdef TEST_CONTAINER_REQUIRED
+//            ".include {path, m=0755, u=77777, g=77777}\n"
+//#endif // TEST_CONTAINER_REQUIRED
+//            "file {file, s=8, m=0660}\n"
+//            "link {link, d=../file}\n"
+//            "pipe {special}\n",
+//            "check content");
+//
+//#ifdef TEST_CONTAINER_REQUIRED
+//        HRN_SYSTEM("sudo rmdir " TEST_PATH "/pg/.include");
+//#endif // TEST_CONTAINER_REQUIRED
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("path - recurse");
+//
+//        storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
+//        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+//
+//        callbackData.content = strNew();
+//
+//        TEST_RESULT_VOID(
+//            storageInfoListP(
+//                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
+//            "recurse descending");
+//        TEST_RESULT_STR_Z(
+//            callbackData.content,
+//            "pipe {special}\n"
+//            "path/file {file, s=8}\n"
+//            "path {path, m=0700}\n"
+//            "link {link, d=../file}\n"
+//            "file {file, s=8, m=0660}\n"
+//            ". {path, m=0764}\n",
+//            "check content");
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("path basic info - recurse");
+//
+//        // jrt !!! sftp will not overwrite file -- do we need to add additional param to force removal and write in these cases
+//        storageRemoveP(storageTest, STRDEF("pg/path/file"), .errorOnMissing = true);
+//
+//        storagePathCreateP(storageTest, STRDEF("pg/path"), .mode = 0700);
+//        storagePutP(storageNewWriteP(storageTest, STRDEF("pg/path/file"), .modeFile = 0600), BUFSTRDEF("TESTDATA"));
+//
+//        callbackData.content = strNew();
+//
+//        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+//
+//        TEST_RESULT_VOID(
+//            storageInfoListP(
+//                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderDesc, .recurse = true),
+//            "recurse descending");
+//        TEST_RESULT_STR_Z(
+//            callbackData.content,
+//            "pipe {special}\n"
+//            "path/file {file, s=8}\n"
+//            "path {path}\n"
+//            "link {link}\n"
+//            "file {file, s=8}\n"
+//            ". {path}\n",
+//            "check content");
+//
+//        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("path - filter");
+//
+//        callbackData.content = strNew();
+//
+//        TEST_RESULT_VOID(
+//            storageInfoListP(
+//                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc,
+//                .expression = STRDEF("^path")),
+//            "filter");
+//        TEST_RESULT_STR_Z(
+//            callbackData.content,
+//            "path {path, m=0700}\n",
+//            "check content");
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("filter in subpath during recursion");
+//
+//        callbackData.content = strNew();
+//
+//        TEST_RESULT_VOID(
+//            storageInfoListP(
+//                storageTest, STRDEF("pg"), hrnStorageInfoListCallback, &callbackData, .sortOrder = sortOrderAsc, .recurse = true,
+//                .expression = STRDEF("\\/file$")),
+//            "filter");
+//        TEST_RESULT_STR_Z(callbackData.content, "path/file {file, s=8}\n", "check content");
+//    }
+//
 
 /*  Optional -- can look at adding later
     // *****************************************************************************************************************************
@@ -841,7 +1021,7 @@ testRun(void)
             "unable to create path '" TEST_PATH "/sub3/sub4'");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
-        // LIBSSH2_ERROR_EAGAIN fail
+        // LIBSSH2_ERROR_EAGAIN fail -- shim to ensure ??
         StorageSftp *storageSftp = NULL;
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         storageSftp->timeoutConnect = 0;
@@ -879,8 +1059,8 @@ testRun(void)
 
         TEST_ERROR_FMT(storagePathRemoveP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(pathRemove2));
         TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError, STORAGE_ERROR_LIST_INFO,
-            strZ(pathRemove2));
+            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - subpath permission denied");
@@ -888,8 +1068,8 @@ testRun(void)
         HRN_SYSTEM_FMT("sudo chmod 777 %s", strZ(pathRemove1));
 
         TEST_ERROR_FMT(
-            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError, STORAGE_ERROR_LIST_INFO,
-            strZ(pathRemove2));
+            storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - file in subpath, permission denied");
@@ -924,46 +1104,90 @@ testRun(void)
         TEST_RESULT_BOOL(
             storageExistsP(storageTest, pathRemove1), false, "path is removed");
 
-/*
-#ifdef TEST_CONTAINER_REQUIRED
-        HRN_SYSTEM_FMT("mkdir -p %s", strZ(pathRemove2));
-        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile.txt")));
-        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile1.txt")));
-        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile2.txt")));
-        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
-        HRN_SYSTEM_FMT("sudo chmod 600  %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
-
-        StorageSftp *storageSftp = NULL;
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
-
-        StorageSftpPathRemoveData data =
-        {
-            .driver = storageTest->pub.driver,
-            .path = strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt"),
-            .session = storageSftp->session,
-            .sftpSession = storageSftp->sftpSession,
-            .timeoutConnect = storageSftp->timeoutConnect,
-            .wait = storageSftp->wait,
-        };
-
-
-        //storageSftp->timeoutConnect = 1;
-        //storageSftp->timeoutSession = 1;
-        //TEST_ERROR_FMT(
-        //    storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE,
-        //    strZ(pathRemove1));
-        //StorageInfo *info;
-        TEST_ERROR_FMT(
-        storageInterfaceInfoListP(storageTest, strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt"), storageInfoLevelExists, storageSftpPathRemoveCallback, &data), PathRemoveError, "jrt");
-
-        HRN_SYSTEM_FMT("sudo rm %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
-
-        storageSftp->timeoutConnect = 10000;
-        storageSftp->timeoutSession = 10000;
-#endif // TEST_CONTAINER_REQUIRED
-        */
+// jrt remove
+//#ifdef TEST_CONTAINER_REQUIRED
+//        HRN_SYSTEM_FMT("mkdir -p %s", strZ(pathRemove2));
+//        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile.txt")));
+//        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile1.txt")));
+//        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile2.txt")));
+//        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
+//        HRN_SYSTEM_FMT("sudo chmod 600  %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
+//
+//        StorageSftp *storageSftp = NULL;
+//        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+//
+//        StorageSftpPathRemoveData data =
+//        {
+//            .driver = storageTest->pub.driver,
+//            .path = strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt"),
+//            .session = storageSftp->session,
+//            .sftpSession = storageSftp->sftpSession,
+//            .timeoutConnect = storageSftp->timeoutConnect,
+//            .wait = storageSftp->wait,
+//        };
+//
+//
+//        //storageSftp->timeoutConnect = 1;
+//        //storageSftp->timeoutSession = 1;
+//        //TEST_ERROR_FMT(
+//        //    storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE,
+//        //    strZ(pathRemove1));
+//        //StorageInfo *info;
+//        TEST_ERROR_FMT(
+//        storageInterfaceInfoListP(storageTest, strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt"), storageInfoLevelExists, storageSftpPathRemoveCallback, &data), PathRemoveError, "jrt");
+//
+//        HRN_SYSTEM_FMT("sudo rm %s", strZ(strNewFmt("%s%s", strZ(pathRemove2), "/afile3.txt")));
+//
+//        storageSftp->timeoutConnect = 10000;
+//        storageSftp->timeoutSession = 10000;
+//#endif // TEST_CONTAINER_REQUIRED
+//
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("storageLinkCreate()"))
+    {
+        StorageInfo info = {0};
+        const String *backupLabel = STRDEF("20181119-152138F");
+        const String *latestLabel = strNewFmt("%s%s",TEST_PATH, "/latest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create symbolic link to BACKUPLABEL");
+
+        TEST_RESULT_VOID(storagePathCreateP(storageTest, backupLabel), "create path to link to");
+        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel), "create symlink");
+        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
+        TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
+        TEST_ERROR(
+            storageLinkCreateP(storageTest, backupLabel, latestLabel),
+            FileOpenError,
+            "unable to create symlink '" TEST_PATH "/latest' to '20181119-152138F'");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
+
+        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = storageLinkSym), "create symlink");
+        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
+        TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("hardlink not supported");
+
+        const String *emptyFile = STRDEF(TEST_PATH "/test.empty");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), "put empty file");
+        TEST_ERROR(
+            storageLinkCreateP(storageTest, emptyFile, latestLabel, .linkType = storageLinkHard),
+            AssertError,
+            "assertion '(param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||"
+                " (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink))' failed");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, emptyFile), "remove empty file");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove latest label");
+
+        int invalidLinkType = 9;
+        TEST_ERROR(
+            storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = invalidLinkType), AssertError,
+            "assertion '(param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||"
+                " (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink))' failed");
+    }
     // ****************************************************************************************************************************
     if (testBegin("storageNewRead()"))
     {
@@ -1009,11 +1233,11 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         close(ioSessionFd(((StorageReadSftp *)file->driver)->ioSession));
-        /*
-        TEST_ERROR(
-            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
-            "unable to close file '" TEST_PATH "/readtest.txt' after read: [9] Bad file descriptor");
-            */
+//
+//        TEST_ERROR(
+//            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
+//            "unable to close file '" TEST_PATH "/readtest.txt' after read: [9] Bad file descriptor");
+//
 
         TEST_ERROR(
             storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
@@ -1029,20 +1253,20 @@ testRun(void)
         TEST_ERROR(
             storageReadSftp(
                 ((StorageReadSftp *)file->driver), outBuffer, false), FileReadError, "unable to read '" TEST_PATH "/readtest.txt'");
-/*
-        storageTest = storageSftpNewP(
-            TEST_PATH_STR, STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
 
-        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
-        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        ((StorageReadSftp *)file->driver)->timeoutConnect = 0;
-        ((StorageReadSftp *)file->driver)->timeoutSession = 0;
-        libssh2_session_set_last_error(((StorageReadSftp *)file->driver)->session, -2, "jrt");
-        TEST_ERROR(
-            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
-            "unable to close file '%s' after read: [9] Bad file descriptor");
-            */
+//        storageTest = storageSftpNewP(
+//            TEST_PATH_STR, STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
+//            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/authorized_keys"), .write = true);
+//
+//        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
+//        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
+//        ((StorageReadSftp *)file->driver)->timeoutConnect = 0;
+//        ((StorageReadSftp *)file->driver)->timeoutSession = 0;
+//        libssh2_session_set_last_error(((StorageReadSftp *)file->driver)->session, -2, "jrt");
+//        TEST_ERROR(
+//            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
+//            "unable to close file '%s' after read: [9] Bad file descriptor");
+//
 
 //        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)file->driver), "close file");
 //        TEST_RESULT_UINT(storageReadSftp(((StorageReadSftp *)file->driver), outBuffer, false), 0, "read file");
@@ -1069,27 +1293,27 @@ testRun(void)
 //        TEST_RESULT_PTR(((StorageReadSftp *)file->driver)->sftpHandle, NULL, "null handle?");
 
 
-/*
-        ((StorageReadSftp *)file->driver)->wait = 0;
-        StorageReadSftp *storageReadSftp = (StorageReadSftp *)file->driver;
-        TEST_RESULT_VOID(storageReadSftpClose(storageReadSftp), "close file");
-        */
-/*
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read missing");
-
-        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
-        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read success");
-
-        HRN_SYSTEM_FMT("touch %s", strZ(fileName));
-
-        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        TEST_RESULT_INT(ioReadFd(storageReadIo(file)), -1, "check read fd");
-        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
-        */
+//
+//        ((StorageReadSftp *)file->driver)->wait = 0;
+//        StorageReadSftp *storageReadSftp = (StorageReadSftp *)file->driver;
+//        TEST_RESULT_VOID(storageReadSftpClose(storageReadSftp), "close file");
+//
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("read missing");
+//
+//        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
+//        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
+//
+//        // -------------------------------------------------------------------------------------------------------------------------
+//        TEST_TITLE("read success");
+//
+//        HRN_SYSTEM_FMT("touch %s", strZ(fileName));
+//
+//        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
+//        TEST_RESULT_INT(ioReadFd(storageReadIo(file)), -1, "check read fd");
+//        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
+//
     }
 
     // *****************************************************************************************************************************
@@ -1269,9 +1493,9 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("missing")), "remove missing file");
         TEST_ERROR(
             storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
-            "unable to remove '" TEST_PATH "/missing'");
+            "unable to remove '" TEST_PATH "/missing': libssh2 error [-31]: libssh2sftp error [2]");
 
-        // LIBSSH2_ERROR_EAGAIN fail
+        // LIBSSH2_ERROR_EAGAIN fail -- shim to ensure ??
         StorageSftp *storageSftp = NULL;
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         storageSftp->timeoutConnect = 0;
@@ -1279,6 +1503,11 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = false), "no error on missing");
+        /* need EAGAIN failure -- shim???
+        TEST_ERROR(
+            storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
+            "unable to remove '" TEST_PATH "/missing': libssh2 error [-31]: libssh2sftp error [2]");
+            */
 
         storageSftp->timeoutConnect = 10000;
         storageSftp->timeoutSession = 10000;
@@ -1295,9 +1524,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - permission denied");
 
-        TEST_ERROR_FMT(storageRemoveP(storageTest, fileNoPerm), FileRemoveError, "unable to remove '%s'", strZ(fileNoPerm));
+        TEST_ERROR_FMT(
+            storageRemoveP(storageTest, fileNoPerm), FileRemoveError,
+            "unable to remove '%s': libssh2 error [-31]: libssh2sftp error [3]", strZ(fileNoPerm));
 
-        // LIBSSH2_ERROR_EAGAIN fail
+        // LIBSSH2_ERROR_EAGAIN fail -- shim to ensure ??
         storageSftp = NULL;
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         storageSftp->timeoutConnect = 0;
@@ -1549,11 +1780,11 @@ testRun(void)
             storageWriteSftp(file->driver, buffer), FileWriteError, "unable to write '%s.pgbackrest.tmp'",
             strZ(fileName));
 
-        /* jrt
-        TEST_ERROR_FMT(
-            storageWriteSftpClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [2] No such file or directory",
-            strZ(fileTmp));
-            */
+//
+//        TEST_ERROR_FMT(
+//            storageWriteSftpClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [2] No such file or directory",
+//            strZ(fileTmp));
+//
 
         // Disable file sync so close can be reached
         ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
@@ -1562,11 +1793,11 @@ testRun(void)
             FileCloseError,
             STORAGE_ERROR_WRITE_CLOSE ": libssh2 error [-7] Unable to send FXP_CLOSE command", strZ(fileTmp));
 
-        /* jrt
-        TEST_ERROR_FMT(
-            storageWriteSftpClose(file->driver), FileMoveError, "unable to move '%s' to '%s': [2] No such file or directory",
-            strZ(fileTmp), strZ(fileName));
-            */
+//
+//        TEST_ERROR_FMT(
+//            storageWriteSftpClose(file->driver), FileMoveError, "unable to move '%s' to '%s': [2] No such file or directory",
+//            strZ(fileTmp), strZ(fileName));
+//
 
         //jrt  Set sftpHandle to NULL so the close on free with not fail
         //((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
@@ -2029,11 +2260,11 @@ testRun(void)
     {
 
         int rc = -6;
-        int sessionErrno = LIBSSH2_ERROR_SFTP_PROTOCOL;
+        int ssh2Errno = LIBSSH2_ERROR_SFTP_PROTOCOL;
         uint64_t sftpErrno = LIBSSH2_FX_FAILURE;
 
-        TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(rc, sessionErrno, sftpErrno), true, "failure");
-        TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(1, sessionErrno, 1), false, "no failure");
+        TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(rc, ssh2Errno, sftpErrno), true, "failure");
+        TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(1, ssh2Errno, 1), false, "no failure");
         TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(0, 1, 0), false, "no failure");
         TEST_RESULT_BOOL(storageWriteSftpRenameFileExistsFailure(1, 0, 1), false, "no failure");
 
@@ -2043,26 +2274,26 @@ testRun(void)
         // !!! jrt update storageSftpEvalLibssh2Error remove rc param
         TEST_ERROR_FMT(
             storageSftpEvalLibssh2Error(
-                -11, 16, -11, &FileRemoveError, strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
+                -11, 16, &FileRemoveError, strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
             FileRemoveError,
             "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-11]\n"
             "HINT");
         TEST_ERROR_FMT(
             storageSftpEvalLibssh2Error(
-                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, LIBSSH2_ERROR_SFTP_PROTOCOL, &FileRemoveError,
+                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
             FileRemoveError,
             "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: libssh2sftp error [16]\n"
             "HINT");
         TEST_ERROR_FMT(
             storageSftpEvalLibssh2Error(
-                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, LIBSSH2_ERROR_SFTP_PROTOCOL, &FileRemoveError,
+                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), NULL),
             FileRemoveError,
             "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: libssh2sftp error [16]");
         TEST_ERROR_FMT(
             storageSftpEvalLibssh2Error(
-                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, LIBSSH2_ERROR_SFTP_PROTOCOL, &FileRemoveError, NULL, NULL),
+                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError, NULL, NULL),
             FileRemoveError,
             "libssh2 error [-31]: libssh2sftp error [16]");
     }

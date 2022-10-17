@@ -137,11 +137,7 @@ backupLinkLatest(const String *backupLabel, unsigned int repoIdx)
         storageRemoveP(storageRepoIdxWrite(repoIdx), latestLink);
 
         if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeatureSymLink))
-        {
-            THROW_ON_SYS_ERROR_FMT(
-                symlink(strZ(backupLabel), strZ(latestLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'",
-                strZ(latestLink), strZ(backupLabel));
-        }
+            storageLinkCreateP(storageRepoIdxWrite(repoIdx), backupLabel, latestLink);
 
         // Sync backup path if required
         if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeaturePathSync))

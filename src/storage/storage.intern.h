@@ -15,6 +15,7 @@ in the description of each function.
 
 #include "common/type/param.h"
 #include "storage/info.h"
+#include "storage/list.h"
 #include "storage/read.h"
 #include "storage/write.h"
 
@@ -58,6 +59,11 @@ Path expression callback function type - used to modify paths based on expressio
 typedef String *StoragePathExpressionCallback(const String *expression, const String *path);
 
 /***********************************************************************************************************************************
+Storage info callback function type - used to return storage info
+***********************************************************************************************************************************/
+typedef void (*StorageListCallback)(void *callbackData, const StorageInfo *info);
+
+/***********************************************************************************************************************************
 Required interface functions
 ***********************************************************************************************************************************/
 // Get information about a file/link/path
@@ -79,6 +85,23 @@ typedef StorageInfo StorageInterfaceInfo(
 
 #define storageInterfaceInfoP(thisVoid, file, level, ...)                                                                          \
     STORAGE_COMMON_INTERFACE(thisVoid).info(thisVoid, file, level, (StorageInterfaceInfoParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Create a hard or symbolic link
+typedef struct StorageInterfaceLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    StorageLinkType linkType;
+} StorageInterfaceLinkCreateParam;
+
+typedef void StorageInterfaceLinkCreate(
+    void *thisVoid, const String *target, const String *linkPath, StorageInterfaceLinkCreateParam param);
+
+#define storageInterfaceLinkCreateP(thisVoid, target, linkPath, ...)                                                               \
+    STORAGE_COMMON_INTERFACE(thisVoid).linkCreate(thisVoid, target, linkPath,                                                      \
+        (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file read object.  The file should not be opened immediately -- open() will be called on the IoRead interface when the
@@ -143,30 +166,29 @@ typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *fil
     STORAGE_COMMON_INTERFACE(thisVoid).newWrite(thisVoid, file, (StorageInterfaceNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Get info for a path and all paths/files in the path (does not recurse)
+// Get info for all files/links/paths in a path (does not recurse or return info about the path passed to the function)
 //
 // See storageInterfaceInfoP() for usage of the level parameter.
-typedef struct StorageInterfaceInfoListParam
+typedef struct StorageInterfaceListParam
 {
     VAR_PARAM_HEADER;
 
     // Regular expression used to filter the results. The expression is always checked in the callback passed to
-    // storageInterfaceInfoListP() so checking the expression in the driver is entirely optional. The driver should only use the
+    // storageInterfaceIterP() so checking the expression in the driver is entirely optional. The driver should only use the
     // expression if it can improve performance or limit network transfer.
     //
     // Partial matching of the expression is fine as long as nothing that should match is excluded, e.g. it is OK to prefix match
     // using the prefix returned from regExpPrefix(). This may cause extra results to be sent to the callback but won't exclude
     // anything that matches the expression exactly.
     const String *expression;
-} StorageInterfaceInfoListParam;
+} StorageInterfaceListParam;
 
-typedef bool StorageInterfaceInfoList(
-    void *thisVoid, const String *path, StorageInfoLevel level, void (*callback)(void *callbackData, const StorageInfo *info),
-    void *callbackData, StorageInterfaceInfoListParam param);
+typedef StorageList *StorageInterfaceList(
+    void *thisVoid, const String *path, StorageInfoLevel level, StorageInterfaceListParam param);
 
-#define storageInterfaceInfoListP(thisVoid, path, level, callback, callbackData, ...)                                              \
-    STORAGE_COMMON_INTERFACE(thisVoid).infoList(                                                                                   \
-        thisVoid, path, level, callback, callbackData, (StorageInterfaceInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInterfaceListP(thisVoid, path, level, ...)                                                                          \
+    STORAGE_COMMON_INTERFACE(thisVoid).list(                                                                                       \
+        thisVoid, path, level, (StorageInterfaceListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Remove a path (and optionally recurse)
@@ -263,13 +285,14 @@ typedef struct StorageInterface
 
     // Required functions
     StorageInterfaceInfo *info;
-    StorageInterfaceInfoList *infoList;
+    StorageInterfaceList *list;
     StorageInterfaceNewRead *newRead;
     StorageInterfaceNewWrite *newWrite;
     StorageInterfacePathRemove *pathRemove;
     StorageInterfaceRemove *remove;
 
     // Optional functions
+    StorageInterfaceLinkCreate *linkCreate;
     StorageInterfaceMove *move;
     StorageInterfacePathCreate *pathCreate;
     StorageInterfacePathSync *pathSync;
@@ -309,14 +332,14 @@ typedef struct StoragePub
 } StoragePub;
 
 // Storage driver
-__attribute__((always_inline)) static inline void *
+FN_INLINE_ALWAYS void *
 storageDriver(const Storage *const this)
 {
     return THIS_PUB(Storage)->driver;
 }
 
 // Storage interface
-__attribute__((always_inline)) static inline StorageInterface
+FN_INLINE_ALWAYS StorageInterface
 storageInterface(const Storage *const this)
 {
     return THIS_PUB(Storage)->interface;

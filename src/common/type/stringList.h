@@ -18,7 +18,7 @@ typedef struct StringList StringList;
 Constructors
 ***********************************************************************************************************************************/
 // Create empty StringList
-__attribute__((always_inline)) static inline StringList *
+FN_INLINE_ALWAYS StringList *
 strLstNew(void)
 {
     return (StringList *)lstNewP(sizeof(String *), .comparator = lstComparatorStr);
@@ -27,7 +27,7 @@ strLstNew(void)
 // Split a string into a string list based on a delimiter
 StringList *strLstNewSplitZ(const String *string, const char *delimiter);
 
-__attribute__((always_inline)) static inline StringList *
+FN_INLINE_ALWAYS StringList *
 strLstNewSplit(const String *const string, const String *const delimiter)
 {
     return strLstNewSplitZ(string, strZ(delimiter));
@@ -43,21 +43,21 @@ StringList *strLstDup(const StringList *sourceList);
 Getters/Setters
 ***********************************************************************************************************************************/
 // Set a new comparator
-__attribute__((always_inline)) static inline StringList *
+FN_INLINE_ALWAYS StringList *
 strLstComparatorSet(StringList *const this, ListComparator *const comparator)
 {
     return (StringList *)lstComparatorSet((List *)this, comparator);
 }
 
 // List size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 strLstSize(const StringList *const this)
 {
     return lstSize((List *)this);
 }
 
 // Is the list empty?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 strLstEmpty(const StringList *const this)
 {
     return strLstSize(this) == 0;
@@ -70,7 +70,7 @@ Functions
 String *strLstAdd(StringList *this, const String *string);
 String *strLstAddSubN(StringList *this, const String *string, size_t offset, size_t size);
 
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strLstAddSub(StringList *const this, const String *const string, const size_t size)
 {
     return strLstAddSubN(this, string, 0, size);
@@ -80,7 +80,7 @@ String *strLstAddFmt(StringList *this, const char *format, ...) __attribute__((f
 String *strLstAddZ(StringList *this, const char *string);
 String *strLstAddZSubN(StringList *this, const char *string, size_t offset, size_t size);
 
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strLstAddZSub(StringList *const this, const char *const string, const size_t size)
 {
     return strLstAddZSubN(this, string, 0, size);
@@ -89,17 +89,29 @@ strLstAddZSub(StringList *const this, const char *const string, const size_t siz
 String *strLstAddIfMissing(StringList *this, const String *string);
 
 // Does the specified string exist in the list?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 strLstExists(const StringList *const this, const String *const string)
 {
     return lstExists((List *)this, &string);
 }
 
+// Find string index in the list
+typedef struct StrLstFindIdxParam
+{
+    VAR_PARAM_HEADER;
+    bool required;
+} StrLstFindIdxParam;
+
+#define strLstFindIdxP(this, string, ...)                                                                                          \
+    strLstFindIdx(this, string, (StrLstFindIdxParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+unsigned int strLstFindIdx(const StringList *this, const String *string, StrLstFindIdxParam param);
+
 // Insert into the list
 String *strLstInsert(StringList *this, unsigned int listIdx, const String *string);
 
 // Get a string by index
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strLstGet(const StringList *const this, const unsigned int listIdx)
 {
     return *(String **)lstGet((List *)this, listIdx);
@@ -109,7 +121,7 @@ strLstGet(const StringList *const this, const unsigned int listIdx)
 String *strLstJoinQuote(const StringList *this, const char *separator, const char *quote);
 
 // Join a list of strings into a single string using the specified separator
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strLstJoin(const StringList *const this, const char *const separator)
 {
     return strLstJoinQuote(this, separator, "");
@@ -120,7 +132,7 @@ strLstJoin(const StringList *const this, const char *const separator)
 StringList *strLstMergeAnti(const StringList *this, const StringList *anti);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline StringList *
+FN_INLINE_ALWAYS StringList *
 strLstMove(StringList *const this, MemContext *const parentNew)
 {
     return (StringList *)lstMove((List *)this, parentNew);
@@ -131,20 +143,20 @@ strLstMove(StringList *const this, MemContext *const parentNew)
 const char **strLstPtr(const StringList *this);
 
 // Remove an item from the list
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 strLstRemove(StringList *const this, const String *const item)
 {
     return lstRemove((List *)this, &item);
 }
 
-__attribute__((always_inline)) static inline StringList *
+FN_INLINE_ALWAYS StringList *
 strLstRemoveIdx(StringList *const this, const unsigned int listIdx)
 {
     return (StringList *)lstRemoveIdx((List *)this, listIdx);
 }
 
 // List sort
-__attribute__((always_inline)) static inline StringList *
+FN_INLINE_ALWAYS StringList *
 strLstSort(StringList *const this, const SortOrder sortOrder)
 {
     return (StringList *)lstSort((List *)this, sortOrder);
@@ -153,7 +165,7 @@ strLstSort(StringList *const this, const SortOrder sortOrder)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 strLstFree(StringList *const this)
 {
     lstFree((List *)this);

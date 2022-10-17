@@ -53,10 +53,10 @@ Internal Functions
 LogLevel stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel);
 
 // Pop a function from the trace stack
-#ifdef NDEBUG
-    void stackTracePop(void);
-#else
+#ifdef DEBUG
     void stackTracePop(const char *fileName, const char *functionName, bool test);
+#else
+    void stackTracePop(void);
 #endif
 
 // Generate the stack trace
@@ -75,6 +75,6 @@ char *stackTraceParamBuffer(const char *param);
 void stackTraceParamAdd(size_t bufferSize);
 
 // Clean the stack at and below the try level. Called by the error to cleanup the stack when an exception occurs.
-void stackTraceClean(unsigned int tryDepth);
+void stackTraceClean(unsigned int tryDepth, bool fatal);
 
 #endif

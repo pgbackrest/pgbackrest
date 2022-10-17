@@ -5,8 +5,11 @@ This wrapper runs the C unit tests.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-// This must be before all includes except build.auto.h
-#ifdef HRN_FEATURE_MEMCONTEXT
+// Enable FUNCTION_TEST*() macros for enhanced debugging
+{[C_TEST_DEBUG_TEST_TRACE]}
+
+// Enable memory debugging
+#if defined(HRN_FEATURE_MEMCONTEXT) && defined(DEBUG)
     #define DEBUG_MEM
 #endif
 
@@ -192,13 +195,13 @@ main(int argListSize, const char *argList[])
     // Set globals
     hrnInit(
         argList[0],                 // Test exe
-        "{[C_TEST_PROJECT_EXE]}",   // Project exe
-        {[C_TEST_CONTAINER]},       // Is this test running in a container?
+        TEST_PROJECT_EXE,           // Project exe
+        TEST_IN_CONTAINER,          // Is this test running in a container?
         {[C_TEST_IDX]},             // The 0-based index of this test
         {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
-        "{[C_TEST_PATH]}",          // Path where tests write data
-        "{[C_HRN_PATH]}",           // Path where the harness stores temp files (expect, diff, etc.)
-        "{[C_HRN_PATH_REPO]}");     // Path with a copy of the repository
+        TEST_PATH,                  // Path where tests write data
+        HRN_PATH,                   // Path where the harness stores temp files (expect, diff, etc.)
+        HRN_PATH_REPO);             // Path with a copy of the repository
 
     // Set default test log level
 #ifdef HRN_FEATURE_LOG
@@ -212,7 +215,7 @@ main(int argListSize, const char *argList[])
 #endif
 
     // Initialize tests
-    //      run, selected
+    //     run, selected
     {[C_TEST_LIST]}
 
 #ifdef HRN_FEATURE_ERROR
@@ -235,7 +238,7 @@ main(int argListSize, const char *argList[])
 
 #ifdef HRN_FEATURE_ERROR
         }
-        CATCH_ANY()
+        CATCH_FATAL()
         {
             // If a test was running then throw a detailed result exception
 #ifdef DEBUG
@@ -283,6 +286,16 @@ main(int argListSize, const char *argList[])
     }
 #endif
     TRY_END();
+#endif
+
+    // Switch to build path when profiling so profile data gets written to a predictable location
+#if {[C_TEST_PROFILE]}
+    if (chdir("{[C_TEST_PATH_BUILD]}") != 0)
+    {
+        fprintf(stderr, "unable to chdir to '{[C_TEST_PATH_BUILD]}'");
+        fflush(stderr);
+        result = 25;
+    }
 #endif
 
     FUNCTION_HARNESS_RETURN(INT, result);

@@ -1048,10 +1048,11 @@ memContextSize(const MemContext *const this)
 
 /**********************************************************************************************************************************/
 void
-memContextClean(unsigned int tryDepth)
+memContextClean(const unsigned int tryDepth, const bool fatal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, tryDepth);
+        FUNCTION_TEST_PARAM(BOOL, false);
     FUNCTION_TEST_END();
 
     ASSERT(tryDepth > 0);
@@ -1059,10 +1060,12 @@ memContextClean(unsigned int tryDepth)
     // Iterate through everything pushed to the stack since the last try
     while (memContextStack[memContextMaxStackIdx].tryDepth >= tryDepth)
     {
-        // Free memory contexts that were not kept
+        // Free memory contexts that were not kept. Skip this for fatal errors to avoid calling destructors that could error and
+        // mask the original error.
         if (memContextStack[memContextMaxStackIdx].type == memContextStackTypeNew)
         {
-            memContextFree(memContextStack[memContextMaxStackIdx].memContext);
+            if (!fatal)
+                memContextFree(memContextStack[memContextMaxStackIdx].memContext);
         }
         // Else find the prior context and make it the current context
         else

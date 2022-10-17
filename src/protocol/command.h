@@ -22,7 +22,7 @@ Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline ProtocolCommand *
+FN_INLINE_ALWAYS ProtocolCommand *
 protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -37,7 +37,7 @@ void protocolCommandPut(ProtocolCommand *this, IoWrite *write);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 protocolCommandFree(ProtocolCommand *const this)
 {
     objFree(this);

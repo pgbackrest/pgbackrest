@@ -34,6 +34,7 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_ANNOTATION_VAR,                    "annotation");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_VAR,                         "error");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_LIST_VAR,                    "error-list");
@@ -404,7 +405,6 @@ backupListAdd(
 
     // Flags used to decide what data to add
     const bool outputJson = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
-    const bool backupLabelMatch = backupLabel != NULL && strEq(backupData->backupLabel, backupLabel);
 
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
@@ -462,15 +462,19 @@ backupListAdd(
         kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, backupData->backupError);
 
     // Add start/stop backup lsn info to json output or --set text
-    if ((outputJson || backupLabelMatch) && backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
+    if ((outputJson || backupLabel != NULL) && backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
     {
         KeyValue *const lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
         kvPut(lsnInfo, KEY_START_VAR, VARSTR(backupData->backupLsnStart));
         kvPut(lsnInfo, KEY_STOP_VAR, VARSTR(backupData->backupLsnStop));
     }
 
+    // Add annotations to json output or --set text
+    if ((outputJson || backupLabel != NULL) && backupData->backupAnnotation != NULL)
+        kvPut(varKv(backupInfo), BACKUP_KEY_ANNOTATION_VAR, backupData->backupAnnotation);
+
     // If a backup label was specified and this is that label, then get the data from the loaded manifest
-    if (backupLabelMatch)
+    if (backupLabel != NULL)
     {
         // Get the list of databases in this backup
         VariantList *databaseSection = varLstNew();
@@ -627,12 +631,15 @@ backupList(
         InfoRepoData *repoData = &stanzaData->repoList[backupNextRepoIdx];
         InfoBackupData backupData = infoBackupData(repoData->backupInfo, repoData->backupIdx);
         repoData->backupIdx++;
+        backupTotalProcessed++;
+
+        // Don't add the backup data to the backup section if a backup label was specified but this is not it
+        if (backupLabel != NULL && !strEq(backupData.backupLabel, backupLabel))
+            continue;
 
         // Add the backup data to the backup section
         if (!cfgOptionTest(cfgOptType) || cfgOptionStrId(cfgOptType) == backupData.backupType)
             backupListAdd(backupSection, &backupData, backupLabel, repoData);
-
-        backupTotalProcessed++;
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -955,6 +962,25 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
             else
                 strCatZ(resultStr, "            error(s) detected during backup\n");
         }
+
+        // Annotations metadata
+        if (kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR) != NULL)
+        {
+            const KeyValue *const annotationKv = varKv(kvGet(backupInfo, BACKUP_KEY_ANNOTATION_VAR));
+            const StringList *const annotationKeyList = strLstNewVarLst(kvKeyList(annotationKv));
+            String *const annotationStr = strNew();
+
+            for (unsigned int keyIdx = 0; keyIdx < strLstSize(annotationKeyList); keyIdx++)
+            {
+                const String *const key = strLstGet(annotationKeyList, keyIdx);
+                const String *const value = varStr(kvGet(annotationKv, VARSTR(key)));
+                ASSERT(value != NULL);
+
+                strCatFmt(annotationStr, "                %s: %s\n", strZ(key), strZ(value));
+            }
+
+            strCatFmt(resultStr, "            annotation(s)\n%s", strZ(annotationStr));
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -1055,11 +1081,6 @@ formatTextDb(
     for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
     {
         KeyValue *backupInfo = varKv(varLstGet(backupSection, backupIdx));
-
-        // If a backup label was specified but this is not it then continue
-        if (backupLabel != NULL && !strEq(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)), backupLabel))
-            continue;
-
         KeyValue *backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
         unsigned int backupDbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
         unsigned int backupRepoKey = varUInt(kvGet(backupDbInfo, KEY_REPO_KEY_VAR));
@@ -1254,11 +1275,6 @@ infoRender(void)
         // Get the backup label if specified
         const String *backupLabel = cfgOptionStrNull(cfgOptSet);
         bool backupFound = false;
-
-        // Since the --set option depends on the --stanza option, the parser will error before this if the backup label is
-        // specified but a stanza is not
-        if (backupLabel != NULL && cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_TEXT)
-            THROW(ConfigError, "option '" CFGOPT_SET "' is currently only valid for " CFGOPTVAL_OUTPUT_TEXT_Z " output");
 
         // Initialize the repo index
         unsigned int repoIdxMin = 0;

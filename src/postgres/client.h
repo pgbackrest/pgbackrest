@@ -48,35 +48,35 @@ typedef struct PgClientPub
 } PgClientPub;
 
 // Pg host
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 pgClientHost(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->host;
 }
 
 // Pg port
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 pgClientPort(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->port;
 }
 
 // Pg database
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 pgClientDatabase(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->database;
 }
 
 // Pg user
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 pgClientUser(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->user;
 }
 
 // Timeout for statements/queries
-__attribute__((always_inline)) static inline TimeMSec
+FN_INLINE_ALWAYS TimeMSec
 pgClientTimeout(const PgClient *const this)
 {
     return THIS_PUB(PgClient)->timeout;
@@ -89,7 +89,7 @@ Functions
 PgClient *pgClientOpen(PgClient *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline PgClient *
+FN_INLINE_ALWAYS PgClient *
 pgClientMove(PgClient *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -104,7 +104,7 @@ void pgClientClose(PgClient *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 pgClientFree(PgClient *const this)
 {
     objFree(this);

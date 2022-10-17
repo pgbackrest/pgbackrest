@@ -26,7 +26,7 @@ HttpSession *httpSessionNew(HttpClient *client, IoSession *session);
 Functions
 ***********************************************************************************************************************************/
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline HttpSession *
+FN_INLINE_ALWAYS HttpSession *
 httpSessionMove(HttpSession *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -56,7 +56,7 @@ IoWrite *httpSessionIoWrite(HttpSession *this);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 httpSessionFree(HttpSession *const this)
 {
     objFree(this);

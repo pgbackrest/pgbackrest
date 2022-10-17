@@ -7,6 +7,18 @@ Storage Interface
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
+Storage link type
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Symbolic (or soft) link
+    storageLinkSym,
+
+    // Hard link
+    storageLinkHard,
+} StorageLinkType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
@@ -17,6 +29,7 @@ typedef struct Storage Storage;
 #include "common/time.h"
 #include "common/type/param.h"
 #include "storage/info.h"
+#include "storage/iterator.h"
 #include "storage/read.h"
 #include "storage/storage.intern.h"
 #include "storage/write.h"
@@ -94,24 +107,22 @@ typedef struct StorageInfoParam
 
 StorageInfo storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param);
 
-// Info for all files/paths in a path
-typedef void (*StorageInfoListCallback)(void *callbackData, const StorageInfo *info);
-
-typedef struct StorageInfoListParam
+// Iterator for all files/links/paths in a path which returns different info based on the value of the level parameter
+typedef struct StorageNewItrParam
 {
     VAR_PARAM_HEADER;
     StorageInfoLevel level;
     bool errorOnMissing;
+    bool nullOnMissing;
     bool recurse;
     SortOrder sortOrder;
     const String *expression;
-} StorageInfoListParam;
+} StorageNewItrParam;
 
-#define storageInfoListP(this, fileExp, callback, callbackData, ...)                                                               \
-    storageInfoList(this, fileExp, callback, callbackData, (StorageInfoListParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageNewItrP(this, fileExp, ...)                                                                                         \
+    storageNewItr(this, fileExp, (StorageNewItrParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-bool storageInfoList(
-    const Storage *this, const String *pathExp, StorageInfoListCallback callback, void *callbackData, StorageInfoListParam param);
+StorageIterator *storageNewItr(const Storage *this, const String *pathExp, StorageNewItrParam param);
 
 // Get a list of files from a directory
 typedef struct StorageListParam
@@ -242,18 +253,32 @@ typedef struct StorageRemoveParam
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
 
+// Create a hard or symbolic link
+typedef struct StorageLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    StorageLinkType linkType;
+} StorageLinkCreateParam;
+
+#define storageLinkCreateP(this, target, linkPath, ...)                                                                            \
+    storageLinkCreate(this, target, linkPath, (StorageLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void storageLinkCreate(const Storage *this, const String *target, const String *linkPath, StorageLinkCreateParam param);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Is the feature supported by this storage?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageFeature(const Storage *const this, const StorageFeature feature)
 {
     return THIS_PUB(Storage)->interface.feature >> feature & 1;
 }
 
 // Storage type (posix, cifs, etc.)
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 storageType(const Storage *const this)
 {
     return THIS_PUB(Storage)->type;

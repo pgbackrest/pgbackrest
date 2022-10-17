@@ -32,7 +32,7 @@ typedef struct KeyValuePub
 } KeyValuePub;
 
 // List of keys
-__attribute__((always_inline)) static inline const VariantList *
+FN_INLINE_ALWAYS const VariantList *
 kvKeyList(const KeyValue *const this)
 {
     return THIS_PUB(KeyValue)->keyList;
@@ -48,7 +48,7 @@ Functions
 KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline KeyValue *
+FN_INLINE_ALWAYS KeyValue *
 kvMove(KeyValue *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -71,7 +71,7 @@ const Variant *kvGetDefault(const KeyValue *this, const Variant *key, const Vari
 unsigned int kvGetIdx(const KeyValue *this, const Variant *key);
 
 // Does the key exist (even if the value is NULL)
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 kvKeyExists(const KeyValue *const this, const Variant *const key)
 {
     return kvGetIdx(this, key) != KEY_NOT_FOUND;
@@ -80,10 +80,13 @@ kvKeyExists(const KeyValue *const this, const Variant *const key)
 // Get a value as a list (even if there is only one value) using the key
 VariantList *kvGetList(const KeyValue *this, const Variant *key);
 
+// Remove a key/value pair
+KeyValue *kvRemove(KeyValue *this, const Variant *key);
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 kvFree(KeyValue *const this)
 {
     objFree(this);

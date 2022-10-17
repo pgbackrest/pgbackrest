@@ -33,7 +33,7 @@ const String *httpHeaderGet(const HttpHeader *this, const String *key);
 StringList *httpHeaderList(const HttpHeader *this);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline HttpHeader *
+FN_INLINE_ALWAYS HttpHeader *
 httpHeaderMove(HttpHeader *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -51,7 +51,7 @@ bool httpHeaderRedact(const HttpHeader *this, const String *key);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 httpHeaderFree(HttpHeader *const this)
 {
     objFree(this);

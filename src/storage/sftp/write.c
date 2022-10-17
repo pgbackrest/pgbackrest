@@ -221,15 +221,15 @@ storageWriteSftp(THIS_VOID, const Buffer *buffer)
 Did rename fail due to file already existing
 ***********************************************************************************************************************************/
 static bool
-storageWriteSftpRenameFileExistsFailure(const int rc, const int sessionErrno, const uint64_t sftpErrno)
+storageWriteSftpRenameFileExistsFailure(const int rc, const int ssh2Errno, const uint64_t sftpErrno)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, rc);
-        FUNCTION_LOG_PARAM(INT, sessionErrno);
+        FUNCTION_LOG_PARAM(INT, ssh2Errno);
         FUNCTION_LOG_PARAM(UINT64, sftpErrno);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(BOOL, (rc && (sessionErrno == LIBSSH2_ERROR_SFTP_PROTOCOL) && (sftpErrno == LIBSSH2_FX_FAILURE) == true));
+    FUNCTION_LOG_RETURN(BOOL, (rc && (ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL) && (sftpErrno == LIBSSH2_FX_FAILURE) == true));
 }
 
 /***********************************************************************************************************************************
@@ -259,7 +259,7 @@ storageWriteSftpUnlink(THIS_VOID)
     if (rc)
     {
         storageSftpEvalLibssh2Error(
-            libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), rc, &FileRemoveError,
+            libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
             strNewFmt("unable to remove existing '%s'", strZ(this->interface.name)), NULL);
     }
 
@@ -296,7 +296,7 @@ storageWriteSftpRename(THIS_VOID)
     if (rc)
     {
         storageSftpEvalLibssh2Error(
-            libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), rc, &FileRemoveError,
+            libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
             strNewFmt("unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name)), NULL);
     }
 

@@ -40,6 +40,17 @@ testRun(void)
         #define TEST_MANIFEST_HEADER                                                                                               \
             "[backup]\n"                                                                                                           \
             "backup-label=null\n"                                                                                                  \
+            "backup-reference=\"\"\n"                                                                                              \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"full\"\n"
+
+        #define TEST_MANIFEST_HEADER_BUNDLE                                                                                        \
+            "[backup]\n"                                                                                                           \
+            "backup-bundle=true\n"                                                                                                 \
+            "backup-label=null\n"                                                                                                  \
+            "backup-reference=\"\"\n"                                                                                              \
             "backup-timestamp-copy-start=0\n"                                                                                      \
             "backup-timestamp-start=0\n"                                                                                           \
             "backup-timestamp-stop=0\n"                                                                                            \
@@ -801,7 +812,7 @@ testRun(void)
         // pg_wal not ignored
         TEST_ASSIGN(
             manifest,
-            manifestNewBuild(storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), false, false, false, NULL, NULL),
+            manifestNewBuild(storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), false, false, true, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -809,7 +820,7 @@ testRun(void)
         TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_HEADER_BUNDLE
                 TEST_MANIFEST_DB_13
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
@@ -993,7 +1004,9 @@ testRun(void)
         #define TEST_MANIFEST_HEADER_PRE                                                                                           \
             "[backup]\n"                                                                                                           \
             "backup-label=null\n"                                                                                                  \
-            "backup-prior=\"20190101-010101F\"\n"                                                                                  \
+            "backup-prior=\"20190101-010101F\"\n"
+
+        #define TEST_MANIFEST_HEADER_MID                                                                                           \
             "backup-timestamp-copy-start=0\n"                                                                                      \
             "backup-timestamp-start=0\n"                                                                                           \
             "backup-timestamp-stop=0\n"                                                                                            \
@@ -1050,23 +1063,23 @@ testRun(void)
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .copy = true, .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .copy = true, .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
                 .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .copy = true, .size = 4, .sizeRepo = 4,
+                .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
         }
         OBJ_NEW_END();
 
@@ -1076,6 +1089,7 @@ testRun(void)
         {
             manifestPrior = manifestNewInternal();
             manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");
+            strLstAdd(manifestPrior->pub.referenceList, manifestPrior->pub.data.backupLabel);
 
             manifestFileAdd(
                 manifestPrior,
@@ -1103,6 +1117,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=false\n"
                 TEST_MANIFEST_HEADER_POST
                 "\n"
@@ -1126,17 +1142,31 @@ testRun(void)
         TEST_TITLE("delta enabled before validation");
 
         manifest->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
+        strLstAddZ(manifestPrior->pub.referenceList, "20190101-010101F_20190202-010101D");
         lstClear(manifest->pub.fileList);
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        // Zero-length file without the copy flag which will appear to come from a bundled backup
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-bundle"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+        // Zero-length file with the copy flag which will appear to come from a non-bundled backup (so will get a reference)
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-normal"), .copy = true, .size = 0, .sizeRepo = 0,
+               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
+               .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .copy = true, .size = 4, .sizeRepo = 4,
+               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifestFileAdd(
             manifestPrior,
@@ -1144,6 +1174,17 @@ testRun(void)
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-bundle"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-normal"), .size = 0, .sizeRepo = 0,
+               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
+               .checksumSha1 = HASH_TYPE_SHA1_ZERO});
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
@@ -1153,6 +1194,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
                 "\n"
@@ -1160,6 +1203,8 @@ testRun(void)
                 "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                 "\n"
                 "[target:file]\n"
+                "pg_data/FILE0-bundle={\"size\":0,\"timestamp\":1482182860}\n"
+                "pg_data/FILE0-normal={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
                 "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\","
                     "\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,\"timestamp\":1482182860}\n"
                 "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"reference\":\"20190101-010101F\","
@@ -1181,7 +1226,7 @@ testRun(void)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
@@ -1192,7 +1237,7 @@ testRun(void)
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", .checksumPage = true, .checksumPageError = true,
                .checksumPageErrorList = jsonFromVar(varNewVarLst(checksumPageErrorList))});
@@ -1209,6 +1254,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
                 "\n"
@@ -1234,18 +1281,18 @@ testRun(void)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
                .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
 
@@ -1263,6 +1310,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=true\n"
                 TEST_MANIFEST_HEADER_POST
                 "\n"
@@ -1304,7 +1353,7 @@ testRun(void)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
 
         manifest->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
@@ -1325,6 +1374,8 @@ testRun(void)
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
                 TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
                 "option-delta=true\n"
                 "option-hardlink=false\n"
                 "option-online=true\n"
@@ -1342,6 +1393,7 @@ testRun(void)
             "check manifest");
 
         #undef TEST_MANIFEST_HEADER_PRE
+        #undef TEST_MANIFEST_HEADER_MID
         #undef TEST_MANIFEST_HEADER_POST
         #undef TEST_MANIFEST_FILE_DEFAULT
         #undef TEST_MANIFEST_PATH_DEFAULT
@@ -1357,6 +1409,7 @@ testRun(void)
         (
             "[backup]\n"
             "backup-label=\"20190808-163540F\"\n"
+            "backup-reference=\"20190808-163540F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
             "backup-timestamp-start=1565282140\n"
             "backup-timestamp-stop=1565282142\n"
@@ -1384,7 +1437,8 @@ testRun(void)
             "cipher-pass=\"somepass\"\n"
             "\n"
             "[target:file]\n"
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20190808-163540F\""
+                ",\"size\":4,\"timestamp\":1565282114}\n"
             "\n"
             "[target:file:default]\n"
             "group=\"group1\"\n"
@@ -1442,6 +1496,7 @@ testRun(void)
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
             "backup-prior=\"20190818-084502F\"\n"                                                                                  \
+            "backup-reference=\"20190818-084502F_20190819-084506D,20190818-084502F,20190818-084502F_20190820-084502D\"\n"          \
             "backup-timestamp-copy-start=1565282141\n"                                                                             \
             "backup-timestamp-start=1565282140\n"                                                                                  \
             "backup-timestamp-stop=1565282142\n"                                                                                   \
@@ -1491,6 +1546,11 @@ testRun(void)
             "template1={\"db-id\":1,\"db-last-system-id\":99999}\n"                                                                \
             SHRUG_EMOJI "={\"db-id\":18000,\"db-last-system-id\":99999}\n"
 
+        #define TEST_MANIFEST_METADATA                                                                                             \
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
+            "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"
+
         #define TEST_MANIFEST_FILE                                                                                                 \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \
@@ -1500,7 +1560,7 @@ testRun(void)
             "pg_data/base/16384/17000={\"bni\":1,\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"\
                 ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
             "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""         \
-                ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                                          \
+                ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                      \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
@@ -1601,8 +1661,15 @@ testRun(void)
         TEST_TITLE("manifest validation");
 
         // Munge files to produce errors
-        manifestFileUpdate(manifest, STRDEF("pg_data/postgresql.conf"), 4457, 0, NULL, NULL, false, false, NULL, 0, 0);
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 0, 0, NULL, NULL, true, false, NULL, 0, 0);
+        ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        file.checksumSha1[0] = '\0';
+        file.sizeRepo = 0;
+        file.resume = true;
+        manifestFileUpdate(manifest, &file);
+
+        file = manifestFileFind(manifest, STRDEF("pg_data/base/32768/33000.32767"));
+        file.size = 0;
+        manifestFileUpdate(manifest, &file);
 
         TEST_ERROR(
             manifestValidate(manifest, false), FormatError,
@@ -1617,10 +1684,15 @@ testRun(void)
             "repo size must be > 0 for file 'pg_data/postgresql.conf'");
 
         // Undo changes made to files
-        manifestFileUpdate(manifest, STRDEF("pg_data/base/32768/33000.32767"), 32768, 32768, NULL, NULL, true, false, NULL, 0, 0);
-        manifestFileUpdate(
-            manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, "184473f470864e067ee3a22e64b47b0a1c356f29", NULL, false,
-            false, NULL, 0, 0);
+        file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        TEST_RESULT_BOOL(file.resume, true, "resume is set");
+        memcpy(file.checksumSha1, "184473f470864e067ee3a22e64b47b0a1c356f29", HASH_TYPE_SHA1_SIZE_HEX + 1);
+        file.sizeRepo = 4457;
+        manifestFileUpdate(manifest, &file);
+
+        file = manifestFileFind(manifest, STRDEF("pg_data/base/32768/33000.32767"));
+        file.size = 32768;
+        manifestFileUpdate(manifest, &file);
 
         TEST_RESULT_VOID(manifestValidate(manifest, true), "successful validate");
 
@@ -1628,8 +1700,18 @@ testRun(void)
         TEST_TITLE("manifest complete");
 
         TEST_RESULT_VOID(
-            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false),
+            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, NULL),
             "manifest complete without db");
+
+        // Create empty annotations
+        KeyValue *annotationKV = kvNew();
+        kvPut(annotationKV, VARSTRDEF("empty key"), VARSTRDEF(""));
+        kvPut(annotationKV, VARSTRDEF("empty key2"), VARSTRDEF(""));
+
+        TEST_RESULT_VOID(
+            manifestBuildComplete(
+                manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, annotationKV),
+            "manifest complete without db and empty annotations");
 
         // Create db list
         PackWrite *dbList = pckWriteNewP();
@@ -1654,11 +1736,15 @@ testRun(void)
 
         pckWriteEndP(dbList);
 
+        // Add annotations
+        kvPut(annotationKV, VARSTRDEF("extra key"), VARSTRDEF("this is an annotation"));
+        kvPut(annotationKV, VARSTRDEF("source"), VARSTRDEF("this is another annotation"));
+
         TEST_RESULT_VOID(
             manifestBuildComplete(
                 manifest, 1565282140, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142,
                 STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, pckWriteResult(dbList),
-                true, true, 16384, 3, 6, true, 32, false),
+                true, true, 16384, 3, 6, true, 32, false, annotationKV),
             "manifest complete with db");
 
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data")), NULL, "check pg_data path");
@@ -1757,7 +1843,6 @@ testRun(void)
         TEST_TITLE("manifest getters");
 
         // ManifestFile getters
-        ManifestFile file = {0};
         TEST_ERROR(manifestFileFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest file list");
         TEST_ASSIGN(file, manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION")), "manifestFileFind()");
         TEST_RESULT_STR_Z(file.name, "pg_data/PG_VERSION", "find file");
@@ -1772,10 +1857,9 @@ testRun(void)
         fileMunge.checksumSha1[0] = '\0';
         manifestFilePackUpdate(manifest, fileMungePack, &fileMunge);
 
-        TEST_RESULT_VOID(
-            manifestFileUpdate(
-                manifest, STRDEF("pg_data/postgresql.conf"), 4457, 4457, NULL, varNewStr(NULL), false, false, NULL, 0, 0),
-            "update file");
+        file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
+        file.checksumSha1[0] = '\0';
+        manifestFileUpdate(manifest, &file);
 
         // ManifestDb getters
         const ManifestDb *db = NULL;
@@ -1841,6 +1925,7 @@ testRun(void)
             "[cipher]\n"
             "cipher-pass=\"supersecret\"\n"
             TEST_MANIFEST_DB
+            TEST_MANIFEST_METADATA
             TEST_MANIFEST_FILE
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
@@ -1919,6 +2004,10 @@ testRun(void)
             "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"                                                                  \
             "\n"                                                                                                                   \
             "[ignore-section]\n"                                                                                                   \
+            "ignore-key=\"ignore-value\"\n"                                                                                        \
+            "\n"                                                                                                                   \
+            "[metadata]\n"                                                                                                         \
+            "annotation={\"key\":\"value\"}\n"                                                                                     \
             "ignore-key=\"ignore-value\"\n"                                                                                        \
             "\n"                                                                                                                   \
             "[target:file]\n"                                                                                                      \

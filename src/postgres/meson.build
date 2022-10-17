@@ -8,7 +8,8 @@ interface_auto_c_inc = custom_target(
         '../build/postgres/postgres.yaml',
     ],
     command : [
-        build_postgres,
-        '@CURRENT_SOURCE_DIR@/../..'
+        build_code,
+        'postgres',
+        '@CURRENT_SOURCE_DIR@/../..',
     ],
 )

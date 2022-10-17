@@ -33,7 +33,7 @@ int cvtZToInt(const char *value);
 int cvtZToIntBase(const char *value, int base);
 int cvtZSubNToIntBase(const char *value, size_t offset, size_t size, int base);
 
-__attribute__((always_inline)) static inline int
+FN_INLINE_ALWAYS int
 cvtZSubNToInt(const char *const value, const size_t offset, const size_t size)
 {
     return cvtZSubNToIntBase(value, offset, size, 10);
@@ -45,7 +45,7 @@ int64_t cvtZToInt64(const char *value);
 int64_t cvtZToInt64Base(const char *value, int base);
 int64_t cvtZSubNToInt64Base(const char *value, size_t offset, size_t size, int base);
 
-__attribute__((always_inline)) static inline int64_t
+FN_INLINE_ALWAYS int64_t
 cvtZSubNToInt64(const char *const value, const size_t offset, const size_t size)
 {
     return cvtZSubNToInt64Base(value, offset, size, 10);
@@ -56,25 +56,25 @@ cvtZSubNToInt64(const char *const value, const size_t offset, const size_t size)
 // so that signed and unsigned values alternate, e.g. 0 = 0, -1 = 1, 1 = 2, -2 = 3, 2 = 4, -3 = 5, 3 = 6, etc. This moves as many
 // bits as possible into the low order bits which is good for other types of encoding, e.g. base-128. See
 // http://neurocline.github.io/dev/2015/09/17/zig-zag-encoding.html for details.
-__attribute__((always_inline)) static inline uint32_t
+FN_INLINE_ALWAYS uint32_t
 cvtInt32ToZigZag(const int32_t value)
 {
     return ((uint32_t)value << 1) ^ (uint32_t)(value >> 31);
 }
 
-__attribute__((always_inline)) static inline int32_t
+FN_INLINE_ALWAYS int32_t
 cvtInt32FromZigZag(const uint32_t value)
 {
     return (int32_t)((value >> 1) ^ (~(value & 1) + 1));
 }
 
-__attribute__((always_inline)) static inline uint64_t
+FN_INLINE_ALWAYS uint64_t
 cvtInt64ToZigZag(const int64_t value)
 {
     return ((uint64_t)value << 1) ^ (uint64_t)(value >> 63);
 }
 
-__attribute__((always_inline)) static inline int64_t
+FN_INLINE_ALWAYS int64_t
 cvtInt64FromZigZag(const uint64_t value)
 {
     return (int64_t)((value >> 1) ^ (~(value & 1) + 1));
@@ -97,7 +97,7 @@ unsigned int cvtZToUInt(const char *value);
 unsigned int cvtZToUIntBase(const char *value, int base);
 unsigned int cvtZSubNToUIntBase(const char *value, size_t offset, size_t size, int base);
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 cvtZSubNToUInt(const char *const value, const size_t offset, const size_t size)
 {
     return cvtZSubNToUIntBase(value, offset, size, 10);
@@ -109,7 +109,7 @@ uint64_t cvtZToUInt64(const char *value);
 uint64_t cvtZToUInt64Base(const char *value, int base);
 uint64_t cvtZSubNToUInt64Base(const char* value, size_t offset, size_t size, int base);
 
-__attribute__((always_inline)) static inline uint64_t
+FN_INLINE_ALWAYS uint64_t
 cvtZSubNToUInt64(const char *const value, const size_t offset, const size_t size)
 {
     return cvtZSubNToUInt64Base(value, offset, size, 10);
@@ -117,7 +117,7 @@ cvtZSubNToUInt64(const char *const value, const size_t offset, const size_t size
 
 // Convert uint64 to base-128 varint and vice versa
 void cvtUInt64ToVarInt128(uint64_t value, uint8_t *buffer, size_t *bufferPos, size_t bufferSize);
-uint64_t cvtUInt64FromVarInt128(const uint8_t *value, size_t *valuePos);
+uint64_t cvtUInt64FromVarInt128(const uint8_t *buffer, size_t *bufferPos, size_t bufferSize);
 
 // Convert boolean to zero-terminated string. Use cvtBoolToConstZ() whenever possible since it is more efficient.
 size_t cvtBoolToZ(bool value, char *buffer, size_t bufferSize);

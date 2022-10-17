@@ -46,6 +46,7 @@ typedef struct InfoBackupData
     const String *backupLabel;                                      // backupLabel must be first to allow for built-in list sorting
     unsigned int backrestFormat;
     const String *backrestVersion;
+    Variant *backupAnnotation;                                      // Backup annotations, if present
     const String *backupArchiveStart;
     const String *backupArchiveStop;
     uint64_t backupInfoRepoSize;
@@ -89,7 +90,7 @@ typedef struct InfoBackupPub
 } InfoBackupPub;
 
 // PostgreSQL info
-__attribute__((always_inline)) static inline InfoPg *
+FN_INLINE_ALWAYS InfoPg *
 infoBackupPg(const InfoBackup *const this)
 {
     return THIS_PUB(InfoBackup)->infoPg;
@@ -98,7 +99,7 @@ infoBackupPg(const InfoBackup *const this)
 InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
 
 // Cipher passphrase
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 infoBackupCipherPass(const InfoBackup *const this)
 {
     return infoPgCipherPass(infoBackupPg(this));
@@ -108,7 +109,7 @@ infoBackupCipherPass(const InfoBackup *const this)
 InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 
 // Does the specified backup label exist?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 infoBackupLabelExists(const InfoBackup *const this, const String *const backupLabel)
 {
     ASSERT_INLINE(backupLabel != NULL);
@@ -116,7 +117,7 @@ infoBackupLabelExists(const InfoBackup *const this, const String *const backupLa
 }
 
 // Return a pointer to a structure from the current backup data given a label, else NULL
-__attribute__((always_inline)) static inline InfoBackupData *
+FN_INLINE_ALWAYS InfoBackupData *
 infoBackupDataByLabel(const InfoBackup *const this, const String *const backupLabel)
 {
     ASSERT_INLINE(infoBackupLabelExists(this, backupLabel));
@@ -124,7 +125,7 @@ infoBackupDataByLabel(const InfoBackup *const this, const String *const backupLa
 }
 
 // Get total current backups
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 infoBackupDataTotal(const InfoBackup *const this)
 {
     return lstSize(THIS_PUB(InfoBackup)->backup);
@@ -136,6 +137,9 @@ Functions
 // Add backup to the current list
 void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
 
+// Set Annotation in the backup data for a specific backup label
+void infoBackupDataAnnotationSet(const InfoBackup *this, const String *const backupLabel, const KeyValue *annotationKv);
+
 // Delete backup from the current backup list
 void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
 
@@ -146,7 +150,7 @@ StringList *infoBackupDataDependentList(const InfoBackup *this, const String *ba
 StringList *infoBackupDataLabelList(const InfoBackup *this, const String *expression);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline InfoBackup *
+FN_INLINE_ALWAYS InfoBackup *
 infoBackupMove(InfoBackup *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -155,7 +159,7 @@ infoBackupMove(InfoBackup *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 infoBackupFree(InfoBackup *const this)
 {
     objFree(this);

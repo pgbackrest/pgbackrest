@@ -76,21 +76,21 @@ typedef struct ListPub
 List *lstComparatorSet(List *this, ListComparator *comparator);
 
 // Memory context for this list
-__attribute__((always_inline)) static inline MemContext *
+FN_INLINE_ALWAYS MemContext *
 lstMemContext(List *const this)
 {
     return objMemContext(this);
 }
 
 // List size
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 lstSize(const List *const this)
 {
     return THIS_PUB(List)->listSize;
 }
 
 // Is the list empty?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 lstEmpty(const List *const this)
 {
     return lstSize(this) == 0;
@@ -112,7 +112,7 @@ void *lstFindDefault(const List *this, const void *item, void *itemDefault);
 unsigned int lstFindIdx(const List *this, const void *item);
 
 // Does an item exist in the list?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 lstExists(const List *const this, const void *const item)
 {
     return lstFind(this, item) != NULL;
@@ -125,14 +125,14 @@ unsigned int lstIdx(const List *this, const void *item);
 void *lstInsert(List *this, unsigned int listIdx, const void *item);
 
 // Add an item to the end of the list
-__attribute__((always_inline)) static inline void *
+FN_INLINE_ALWAYS void *
 lstAdd(List *const this, const void *const item)
 {
     return lstInsert(this, lstSize(this), item);
 }
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline List *
+FN_INLINE_ALWAYS List *
 lstMove(List *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -149,7 +149,7 @@ List *lstSort(List *this, SortOrder sortOrder);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 lstFree(List *const this)
 {
     objFree(this);

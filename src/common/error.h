@@ -122,7 +122,7 @@ Try stack getters/setters
 unsigned int errorTryDepth(void);
 
 // Add a handler to be called when an error occurs
-typedef void (*const ErrorHandlerFunction)(unsigned int);
+typedef void (*const ErrorHandlerFunction)(unsigned int, bool);
 
 void errorHandlerSet(const ErrorHandlerFunction *list, unsigned int total);
 
@@ -141,11 +141,11 @@ Begin a block where errors can be thrown
         {
 
 /***********************************************************************************************************************************
-Catch a specific error thrown in the try block
+Catch a specific error thrown in the try block. Fatal errors cannot be caught with this block.
 ***********************************************************************************************************************************/
 #define CATCH(errorTypeCatch)                                                                                                      \
         }                                                                                                                          \
-        else if (errorInternalCatch(&errorTypeCatch, true))                                                                        \
+        else if (errorInternalCatch(&errorTypeCatch, false))                                                                       \
         {
 
 /***********************************************************************************************************************************
@@ -157,7 +157,9 @@ Catch any non-fatal error thrown in the try block
         {
 
 /***********************************************************************************************************************************
-Catch any error thrown in the try block
+Catch any error thrown in the try block including fatal errors. To maximize the chance of being able to report the error caught,
+memory contexts will not be freed and mem context callbacks will not be called. If the TRY block is enclosed in a mem context then
+child mem contexts will be freed and child mem context callbacks called when the enclosing mem context is freed.
 ***********************************************************************************************************************************/
 #define CATCH_FATAL()                                                                                                              \
         }                                                                                                                          \
@@ -314,28 +316,27 @@ jmp_buf *errorInternalJump(void);
 bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
 
 // Propagate the error up so it can be caught
-void errorInternalPropagate(void) __attribute__((__noreturn__));
+FN_NO_RETURN void errorInternalPropagate(void);
 
 // End the try block
 void errorInternalTryEnd(void);
 
 // Throw an error
-void errorInternalThrow(
+FN_NO_RETURN void errorInternalThrow(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message,
-    const char *stackTrace) __attribute__((__noreturn__));
-void errorInternalThrowFmt(
+    const char *stackTrace);
+FN_NO_RETURN void errorInternalThrowFmt(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
-    __attribute__((format(printf, 5, 6))) __attribute__((__noreturn__));
+    __attribute__((format(printf, 5, 6)));
 
 // Throw a system error
-void errorInternalThrowSys(
-    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
-    __attribute__((__noreturn__));
+FN_NO_RETURN void errorInternalThrowSys(
+    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message);
 
 // Throw a formatted system error
-void errorInternalThrowSysFmt(
+FN_NO_RETURN void errorInternalThrowSysFmt(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
-    __attribute__((format(printf, 6, 7))) __attribute__((__noreturn__));
+    __attribute__((format(printf, 6, 7)));
 
 // Versions of the above for coverage testing which checks the error condition inside the function
 #ifdef DEBUG_COVERAGE

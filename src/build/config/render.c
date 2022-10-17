@@ -3,8 +3,6 @@ Render Configuration Data
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <ctype.h>
-
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "config/common.h"
@@ -30,29 +28,6 @@ bldConst(const char *const prefix, const String *const value)
 /***********************************************************************************************************************************
 Build enum from a string
 ***********************************************************************************************************************************/
-static String *
-bldEnum(const char *const prefix, const String *const value)
-{
-    String *const result = strCatZ(strNew(), prefix);
-    const char *const valuePtr = strZ(value);
-
-    bool upper = true;
-
-    for (unsigned int valueIdx = 0; valueIdx < strSize(value); valueIdx++)
-    {
-        strCatChr(result, upper ? (char)toupper(valuePtr[valueIdx]) : valuePtr[valueIdx]);
-        upper = false;
-
-        if (valuePtr[valueIdx + 1] == '-')
-        {
-            upper = true;
-            valueIdx++;
-        }
-    }
-
-    return result;
-}
-
 // Build command enum from a string
 static String *
 bldEnumCmd(const String *const value)

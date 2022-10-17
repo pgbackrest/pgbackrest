@@ -195,10 +195,6 @@ src/build/config/config.yaml:
   class: build
   type: yaml
 
-src/build/config/main.c:
-  class: build
-  type: c
-
 src/build/config/parse.c:
   class: build
   type: c
@@ -223,10 +219,6 @@ src/build/error/error.yaml:
   class: build
   type: yaml
 
-src/build/error/main.c:
-  class: build
-  type: c
-
 src/build/error/parse.c:
   class: build
   type: c
@@ -246,10 +238,6 @@ src/build/error/render.h:
 src/build/help/help.xml:
   class: build
   type: make
-
-src/build/help/main.c:
-  class: build
-  type: c
 
 src/build/help/parse.c:
   class: build
@@ -271,7 +259,7 @@ src/build/install-sh:
   class: build
   type: make
 
-src/build/postgres/main.c:
+src/build/main.c:
   class: build
   type: c
 
@@ -293,6 +281,14 @@ src/build/postgres/render.c:
 
 src/build/postgres/render.h:
   class: build
+  type: c/h
+
+src/command/annotate/annotate.c:
+  class: core
+  type: c
+
+src/command/annotate/annotate.h:
+  class: core
   type: c/h
 
 src/command/archive/common.c:
@@ -436,6 +432,14 @@ src/command/control/stop.c:
   type: c
 
 src/command/control/stop.h:
+  class: core
+  type: c/h
+
+src/command/exit.c:
+  class: core
+  type: c
+
+src/command/exit.h:
   class: core
   type: c/h
 
@@ -807,14 +811,6 @@ src/common/exec.h:
   class: core
   type: c/h
 
-src/common/exit.c:
-  class: core
-  type: c
-
-src/common/exit.h:
-  class: core
-  type: c/h
-
 src/common/fork.c:
   class: core
   type: c
@@ -1172,6 +1168,14 @@ src/common/time.c:
   type: c
 
 src/common/time.h:
+  class: core
+  type: c/h
+
+src/common/type/blob.c:
+  class: core
+  type: c
+
+src/common/type/blob.h:
   class: core
   type: c/h
 
@@ -1635,6 +1639,22 @@ src/storage/info.h:
   class: core
   type: c/h
 
+src/storage/iterator.c:
+  class: core
+  type: c
+
+src/storage/iterator.h:
+  class: core
+  type: c/h
+
+src/storage/list.c:
+  class: core
+  type: c
+
+src/storage/list.h:
+  class: core
+  type: c/h
+
 src/storage/posix/read.c:
   class: core
   type: c
@@ -2003,6 +2023,42 @@ test/lib/pgBackRestTest/Module/Real/RealAllTest.pm:
   class: test/module
   type: perl
 
+test/src/build/config/config.yaml:
+  class: test/harness
+  type: yaml
+
+test/src/build/help/help.xml:
+  class: test/harness
+  type: xml
+
+test/src/command/help/meson.build:
+  class: build
+  type: meson
+
+test/src/command/test/build.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/build.h:
+  class: test/harness
+  type: c/h
+
+test/src/command/test/define.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/define.h:
+  class: test/harness
+  type: c/h
+
+test/src/command/test/test.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/test.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessConfig.c:
   class: test/harness
   type: c
@@ -2159,6 +2215,26 @@ test/src/common/harnessTest.intern.h:
   class: test/harness
   type: c/h
 
+test/src/config/load.c:
+  class: test/harness
+  type: c
+
+test/src/config/load.h:
+  class: test/harness
+  type: c/h
+
+test/src/config/meson.build:
+  class: build
+  type: meson
+
+test/src/main.c:
+  class: test/harness
+  type: c
+
+test/src/meson.build:
+  class: build
+  type: meson
+
 test/src/module/build/commonTest.c:
   class: test/module
   type: c
@@ -2176,6 +2252,10 @@ test/src/module/build/helpTest.c:
   type: c
 
 test/src/module/build/postgresTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/annotateTest.c:
   class: test/module
   type: c
 
@@ -2204,6 +2284,10 @@ test/src/module/command/commandTest.c:
   type: c
 
 test/src/module/command/controlTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/exitTest.c:
   class: test/module
   type: c
 
@@ -2283,10 +2367,6 @@ test/src/module/common/execTest.c:
   class: test/module
   type: c
 
-test/src/module/common/exitTest.c:
-  class: test/module
-  type: c
-
 test/src/module/common/forkTest.c:
   class: test/module
   type: c
@@ -2332,6 +2412,10 @@ test/src/module/common/statTest.c:
   type: c
 
 test/src/module/common/timeTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/typeBlobTest.c:
   class: test/module
   type: c
 

@@ -34,7 +34,6 @@ struct Manifest
 {
     ManifestPub pub;                                                // Publicly accessible variables
     StringList *ownerList;                                          // List of users/groups
-    StringList *referenceList;                                      // List of file references
 
     const String *fileUserDefault;                                  // Default file user name
     const String *fileGroupDefault;                                 // Default file group name
@@ -97,6 +96,9 @@ typedef enum
 {
     manifestFilePackFlagReference,
     manifestFilePackFlagBundle,
+    manifestFilePackFlagCopy,
+    manifestFilePackFlagDelta,
+    manifestFilePackFlagResume,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
     manifestFilePackFlagChecksumPageErrorList,
@@ -124,6 +126,15 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Flags
     uint64_t flag = 0;
+
+    if (file->copy)
+        flag |= 1 << manifestFilePackFlagCopy;
+
+    if (file->delta)
+        flag |= 1 << manifestFilePackFlagDelta;
+
+    if (file->resume)
+        flag |= 1 << manifestFilePackFlagResume;
 
     if (file->checksumPage)
         flag |= 1 << manifestFilePackFlagChecksumPage;
@@ -172,7 +183,10 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Reference
     if (file->reference != NULL)
-        cvtUInt64ToVarInt128((uintptr_t)file->reference, buffer, &bufferPos, sizeof(buffer));
+    {
+        cvtUInt64ToVarInt128(
+            strLstFindIdxP(manifest->pub.referenceList, file->reference, .required = true), buffer, &bufferPos, sizeof(buffer));
+    }
 
     // Mode
     if (flag & (1 << manifestFilePackFlagMode))
@@ -246,17 +260,21 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     bufferPos += sizeof(StringPub) + strSize(result.name) + 1;
 
     // Flags
-    const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    const uint64_t flag = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+
+    result.copy = (flag >> manifestFilePackFlagCopy) & 1;
+    result.delta = (flag >> manifestFilePackFlagDelta) & 1;
+    result.resume = (flag >> manifestFilePackFlagResume) & 1;
 
     // Size
-    result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    result.size = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     // Timestamp
     result.timestamp =
-        manifestPackBaseTime - (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos));
+        manifestPackBaseTime - (time_t)cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX));
 
     // Checksum page
-    result.checksumPage = flag & (1 << manifestFilePackFlagChecksumPage) ? true : false;
+    result.checksumPage = (flag >> manifestFilePackFlagChecksumPage) & 1;
 
     // SHA1 checksum
     memcpy(result.checksumSha1, (const uint8_t *)filePack + bufferPos, HASH_TYPE_SHA1_SIZE_HEX + 1);
@@ -264,33 +282,36 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // Reference
     if (flag & (1 << manifestFilePackFlagReference))
-        result.reference = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    {
+        result.reference = strLstGet(
+            manifest->pub.referenceList, (unsigned int)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX));
+    }
 
     // Mode
     if (flag & (1 << manifestFilePackFlagMode))
-        result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.mode = (mode_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else
         result.mode = manifest->fileModeDefault;
 
     // User/group
     if (flag & (1 << manifestFilePackFlagUser))
-        result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else if (!(flag & (1 << manifestFilePackFlagUserNull)))
         result.user = manifest->fileUserDefault;
 
     if (flag & (1 << manifestFilePackFlagGroup))
-        result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else if (!(flag & (1 << manifestFilePackFlagGroupNull)))
         result.group = manifest->fileGroupDefault;
 
     // Repo size
-    result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+    result.sizeRepo = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
 
     // Bundle
     if (flag & (1 << manifestFilePackFlagBundle))
     {
-        result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
-        result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos);
+        result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+        result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     }
 
     // Checksum page error
@@ -315,9 +336,6 @@ manifestFileAdd(Manifest *const this, ManifestFile *const file)
 
     file->user = manifestOwnerCache(this, file->user);
     file->group = manifestOwnerCache(this, file->group);
-
-    if (file->reference != NULL)
-        file->reference = strLstAddIfMissing(this->referenceList, file->reference);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
@@ -465,9 +483,9 @@ manifestNewInternal(void)
             .linkList = lstNewP(sizeof(ManifestLink), .comparator = lstComparatorStr),
             .pathList = lstNewP(sizeof(ManifestPath), .comparator = lstComparatorStr),
             .targetList = lstNewP(sizeof(ManifestTarget), .comparator = lstComparatorStr),
+            .referenceList = strLstNew(),
         },
         .ownerList = strLstNew(),
-        .referenceList = strLstNew(),
     };
 
     FUNCTION_TEST_RETURN(MANIFEST, this);
@@ -680,8 +698,8 @@ manifestLinkCheck(const Manifest *this)
 /**********************************************************************************************************************************/
 typedef struct ManifestBuildData
 {
-    Manifest *manifest;
-    const Storage *storagePg;
+    Manifest *manifest;                                             // Manifest being build
+    const Storage *storagePg;                                       // PostgreSQL storage
     const String *tablespaceId;                                     // Tablespace id if PostgreSQL version has one
     bool online;                                                    // Is this an online backup?
     bool checksumPage;                                              // Are page checksums being checked?
@@ -689,31 +707,29 @@ typedef struct ManifestBuildData
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
     const Pack *tablespaceList;                                     // List of tablespaces in the database
-    ManifestLinkCheck linkCheck;                                    // List of links found during build (used for prefix check)
+    ManifestLinkCheck *linkCheck;                                   // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
-
-    // These change with each level of recursion
-    const String *manifestParentName;                               // Manifest name of this file/link/path's parent
-    const String *pgPath;                                           // Current path in the PostgreSQL data directory
-    bool dbPath;                                                    // Does this path contain relations?
 } ManifestBuildData;
 
-// Callback to process files/links/paths and add them to the manifest
+// Process files/links/paths and add them to the manifest
 static void
-manifestBuildCallback(void *data, const StorageInfo *info)
+manifestBuildInfo(
+    ManifestBuildData *const buildData, const String *manifestParentName, const String *pgPath, const bool dbPath,
+    const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(STORAGE_INFO, *storageInfo);
+        FUNCTION_TEST_PARAM_P(VOID, buildData);
+        FUNCTION_TEST_PARAM(STRING, manifestParentName);
+        FUNCTION_TEST_PARAM(STRING, pgPath);
+        FUNCTION_TEST_PARAM(BOOL, dbPath);
+        FUNCTION_TEST_PARAM(STORAGE_INFO, *info);
     FUNCTION_TEST_END();
 
-    ASSERT(data != NULL);
+    ASSERT(buildData != NULL);
+    ASSERT(manifestParentName != NULL);
+    ASSERT(pgPath != NULL);
     ASSERT(info != NULL);
-
-    // Skip all . paths because they have already been recorded on the previous level of recursion
-    if (strEq(info->name, DOT_STR))
-        FUNCTION_TEST_RETURN_VOID();
 
     // Skip any path/file/link that begins with pgsql_tmp.  The files are removed when the server is restarted and the directories
     // are recreated.
@@ -721,17 +737,16 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         FUNCTION_TEST_RETURN_VOID();
 
     // Get build data
-    ManifestBuildData buildData = *(ManifestBuildData *)data;
-    unsigned int pgVersion = buildData.manifest->pub.data.pgVersion;
+    unsigned int pgVersion = buildData->manifest->pub.data.pgVersion;
 
     // Construct the name used to identify this file/link/path in the manifest
-    const String *manifestName = strNewFmt("%s/%s", strZ(buildData.manifestParentName), strZ(info->name));
+    const String *manifestName = strNewFmt("%s/%s", strZ(manifestParentName), strZ(info->name));
 
     // Skip excluded files/links/paths
-    if (buildData.excludeSingle != NULL && strLstExists(buildData.excludeSingle, manifestName))
+    if (buildData->excludeSingle != NULL && strLstExists(buildData->excludeSingle, manifestName))
     {
         LOG_INFO_FMT(
-            "exclude '%s/%s' from backup using '%s' exclusion", strZ(buildData.pgPath), strZ(info->name),
+            "exclude '%s/%s' from backup using '%s' exclusion", strZ(pgPath), strZ(info->name),
             strZ(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
         FUNCTION_TEST_RETURN_VOID();
@@ -745,7 +760,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         case storageTypePath:
         {
             // There should not be any paths in pg_tblspc
-            if (strEqZ(buildData.manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
+            if (strEqZ(manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
             {
                 THROW_FMT(
                     LinkExpectedError, "'%s' is not a symlink - " MANIFEST_TARGET_PGTBLSPC " should contain only symlinks",
@@ -761,20 +776,20 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 .group = info->group,
             };
 
-            manifestPathAdd(buildData.manifest, &path);
+            manifestPathAdd(buildData->manifest, &path);
 
             // Skip excluded path content
-            if (buildData.excludeContent != NULL && strLstExists(buildData.excludeContent, manifestName))
+            if (buildData->excludeContent != NULL && strLstExists(buildData->excludeContent, manifestName))
             {
                 LOG_INFO_FMT(
-                    "exclude contents of '%s/%s' from backup using '%s/' exclusion", strZ(buildData.pgPath), strZ(info->name),
+                    "exclude contents of '%s/%s' from backup using '%s/' exclusion", strZ(pgPath), strZ(info->name),
                     strZ(strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA))));
 
                 FUNCTION_TEST_RETURN_VOID();
             }
 
             // Skip the contents of these paths if they exist in the base path since they won't be reused after recovery
-            if (strEq(buildData.manifestParentName, MANIFEST_TARGET_PGDATA_STR))
+            if (strEq(manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
                 // Skip pg_dynshmem/* since these files cannot be reused on recovery
                 if (strEqZ(info->name, PG_PATH_PGDYNSHMEM) && pgVersion >= PG_VERSION_94)
@@ -808,20 +823,30 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Skip the contents of archive_status when online
-            if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName) &&
+            if (buildData->online && strEq(manifestParentName, buildData->manifestWalName) &&
                 strEqZ(info->name, PG_PATH_ARCHIVE_STATUS))
             {
                 FUNCTION_TEST_RETURN_VOID();
             }
 
             // Recurse into the path
-            ManifestBuildData buildDataSub = buildData;
-            buildDataSub.manifestParentName = manifestName;
-            buildDataSub.pgPath = strNewFmt("%s/%s", strZ(buildData.pgPath), strZ(info->name));
-            buildDataSub.dbPath = regExpMatch(buildData.dbPathExp, manifestName);
+            const String *const pgPathSub = strNewFmt("%s/%s", strZ(pgPath), strZ(info->name));
+            const bool dbPathSub = regExpMatch(buildData->dbPathExp, manifestName);
+            StorageIterator *const storageItr = storageNewItrP(buildData->storagePg, pgPathSub, .sortOrder = sortOrderAsc);
 
-            storageInfoListP(
-                buildDataSub.storagePg, buildDataSub.pgPath, manifestBuildCallback, &buildDataSub, .sortOrder = sortOrderAsc);
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
+            {
+                while (storageItrMore(storageItr))
+                {
+                    const StorageInfo info = storageItrNext(storageItr);
+
+                    manifestBuildInfo(buildData, manifestName, pgPathSub, dbPathSub, &info);
+
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
 
             break;
         }
@@ -831,7 +856,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         case storageTypeFile:
         {
             // There should not be any files in pg_tblspc
-            if (strEqZ(buildData.manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
+            if (strEqZ(manifestParentName, MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC))
             {
                 THROW_FMT(
                     LinkExpectedError, "'%s' is not a symlink - " MANIFEST_TARGET_PGTBLSPC " should contain only symlinks",
@@ -842,7 +867,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             // the creating process id as the extension can exist so skip that as well.  This seems to be a bug in PostgreSQL since
             // the temp file should be removed on startup.  Use regExpMatchOne() here instead of preparing a regexp in advance since
             // the likelihood of needing the regexp should be very small.
-            if (buildData.dbPath && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
+            if (dbPath && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
                 (strSize(info->name) == sizeof(PG_FILE_PGINTERNALINIT) - 1 ||
                     regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
             {
@@ -850,7 +875,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             }
 
             // Skip files in the root data path
-            if (strEq(buildData.manifestParentName, MANIFEST_TARGET_PGDATA_STR))
+            if (strEq(manifestParentName, MANIFEST_TARGET_PGDATA_STR))
             {
                 // Skip recovery files
                 if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_STANDBYSIGNAL)) &&
@@ -877,17 +902,18 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
             // Skip the contents of the wal path when online. WAL will be restored from the archive or stored in the wal directory
             // at the end of the backup if the archive-copy option is set.
-            if (buildData.online && strEq(buildData.manifestParentName, buildData.manifestWalName))
+            if (buildData->online && strEq(manifestParentName, buildData->manifestWalName))
                 FUNCTION_TEST_RETURN_VOID();
 
             // Skip temp relations in db paths
-            if (buildData.dbPath && regExpMatch(buildData.tempRelationExp, info->name))
+            if (dbPath && regExpMatch(buildData->tempRelationExp, info->name))
                 FUNCTION_TEST_RETURN_VOID();
 
             // Add file to manifest
             ManifestFile file =
             {
                 .name = manifestName,
+                .copy = true,
                 .mode = info->mode,
                 .user = info->user,
                 .group = info->group,
@@ -896,15 +922,22 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 .timestamp = info->timeModified,
             };
 
+            // When bundling zero-length files do not need to be copied
+            if (info->size == 0 && buildData->manifest->pub.data.bundle)
+            {
+                file.copy = false;
+                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+            }
+
             // Determine if this file should be page checksummed
-            if (buildData.dbPath && buildData.checksumPage)
+            if (dbPath && buildData->checksumPage)
             {
                 file.checksumPage =
                     !strEndsWithZ(manifestName, "/" PG_FILE_PGFILENODEMAP) && !strEndsWithZ(manifestName, "/" PG_FILE_PGVERSION) &&
                     !strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
             }
 
-            manifestFileAdd(buildData.manifest, &file);
+            manifestFileAdd(buildData->manifest, &file);
             break;
         }
 
@@ -915,16 +948,16 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             // If the destination is another link then error.  In the future we'll allow this by following the link chain to the
             // eventual destination but for now we are trying to maintain compatibility during the migration.  To do this check we
             // need to read outside of the data directory but it is a read-only operation so is considered safe.
-            const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, buildData.pgPath);
+            const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, pgPath);
 
             StorageInfo linkedCheck = storageInfoP(
-                buildData.storagePg, linkDestinationAbsolute, .ignoreMissing = true, .noPathEnforce = true);
+                buildData->storagePg, linkDestinationAbsolute, .ignoreMissing = true, .noPathEnforce = true);
 
             if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
             {
                 THROW_FMT(
-                    LinkDestinationError, "link '%s/%s' cannot reference another link '%s'", strZ(buildData.pgPath),
-                    strZ(info->name), strZ(linkDestinationAbsolute));
+                    LinkDestinationError, "link '%s/%s' cannot reference another link '%s'", strZ(pgPath), strZ(info->name),
+                    strZ(linkDestinationAbsolute));
             }
 
             // Initialize link and target
@@ -946,7 +979,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
             const String *linkName = info->name;
 
             // Is this a tablespace?
-            if (strEq(buildData.manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
+            if (strEq(manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC)))
             {
                 // Strip pg_data off the manifest name so it begins with pg_tblspc instead.  This reflects how the files are stored
                 // in the backup directory.
@@ -957,10 +990,10 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 target.tablespaceId = cvtZToUInt(strZ(info->name));
 
                 // Look for this tablespace in the provided list (list may be null for off-line backup)
-                if (buildData.tablespaceList != NULL)
+                if (buildData->tablespaceList != NULL)
                 {
                     // Search list
-                    PackRead *const read = pckReadNew(buildData.tablespaceList);
+                    PackRead *const read = pckReadNew(buildData->tablespaceList);
 
                     while (!pckReadNullP(read))
                     {
@@ -989,10 +1022,10 @@ manifestBuildCallback(void *data, const StorageInfo *info)
 
                 // Add a dummy pg_tblspc path entry if it does not already exist.  This entry will be ignored by restore but it is
                 // part of the original manifest format so we need to have it.
-                lstSort(buildData.manifest->pub.pathList, sortOrderAsc);
-                const ManifestPath *pathBase = manifestPathFind(buildData.manifest, MANIFEST_TARGET_PGDATA_STR);
+                lstSort(buildData->manifest->pub.pathList, sortOrderAsc);
+                const ManifestPath *pathBase = manifestPathFind(buildData->manifest, MANIFEST_TARGET_PGDATA_STR);
 
-                if (manifestPathFindDefault(buildData.manifest, MANIFEST_TARGET_PGTBLSPC_STR, NULL) == NULL)
+                if (manifestPathFindDefault(buildData->manifest, MANIFEST_TARGET_PGTBLSPC_STR, NULL) == NULL)
                 {
                     ManifestPath path =
                     {
@@ -1002,14 +1035,14 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                         .group = pathBase->group,
                     };
 
-                    manifestPathAdd(buildData.manifest, &path);
+                    manifestPathAdd(buildData->manifest, &path);
                 }
 
                 // The tablespace link destination path is not the path where data will be stored so we can just store it as a dummy
                 // path. This is because PostgreSQL creates a subpath with the version/catalog number so that multiple versions of
                 // PostgreSQL can share a tablespace, which makes upgrades easier.
                 const ManifestPath *pathTblSpc = manifestPathFind(
-                    buildData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
+                    buildData->manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
 
                 ManifestPath path =
                 {
@@ -1019,19 +1052,19 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                     .group = pathTblSpc->group,
                 };
 
-                manifestPathAdd(buildData.manifest, &path);
+                manifestPathAdd(buildData->manifest, &path);
 
                 // Update build structure to reflect the path added above and the tablespace id
-                buildData.manifestParentName = manifestName;
-                manifestName = strNewFmt("%s/%s", strZ(manifestName), strZ(buildData.tablespaceId));
-                buildData.pgPath = strNewFmt("%s/%s", strZ(buildData.pgPath), strZ(info->name));
-                linkName = buildData.tablespaceId;
+                manifestParentName = manifestName;
+                manifestName = strNewFmt("%s/%s", strZ(manifestName), strZ(buildData->tablespaceId));
+                pgPath = strNewFmt("%s/%s", strZ(pgPath), strZ(info->name));
+                linkName = buildData->tablespaceId;
             }
 
             // Add info about the linked file/path
-            const String *linkPgPath = strNewFmt("%s/%s", strZ(buildData.pgPath), strZ(linkName));
+            const String *linkPgPath = strNewFmt("%s/%s", strZ(pgPath), strZ(linkName));
             StorageInfo linkedInfo = storageInfoP(
-                buildData.storagePg, linkPgPath, .followLink = true, .ignoreMissing = true);
+                buildData->storagePg, linkPgPath, .followLink = true, .ignoreMissing = true);
             linkedInfo.name = linkName;
 
             // If the link destination exists then build the target
@@ -1059,18 +1092,18 @@ manifestBuildCallback(void *data, const StorageInfo *info)
                 target.path = info->linkDestination;
 
             // Add target and link
-            manifestTargetAdd(buildData.manifest, &target);
-            manifestLinkAdd(buildData.manifest, &link);
+            manifestTargetAdd(buildData->manifest, &target);
+            manifestLinkAdd(buildData->manifest, &link);
 
             // Make sure the link is valid
-            manifestLinkCheckOne(buildData.manifest, &buildData.linkCheck, manifestTargetTotal(buildData.manifest) - 1);
+            manifestLinkCheckOne(buildData->manifest, buildData->linkCheck, manifestTargetTotal(buildData->manifest) - 1);
 
             // If the link check was successful but the destination does not exist then check it again to generate an error
             if (!linkedInfo.exists)
-                storageInfoP(buildData.storagePg, linkPgPath, .followLink = true);
+                storageInfoP(buildData->storagePg, linkPgPath, .followLink = true);
 
             // Recurse into the link destination
-            manifestBuildCallback(&buildData, &linkedInfo);
+            manifestBuildInfo(buildData, manifestParentName, pgPath, dbPath, &linkedInfo);
 
             break;
         }
@@ -1078,7 +1111,7 @@ manifestBuildCallback(void *data, const StorageInfo *info)
         // Skip special files
         // -------------------------------------------------------------------------------------------------------------------------
         case storageTypeSpecial:
-            LOG_WARN_FMT("exclude special file '%s/%s' from backup", strZ(buildData.pgPath), strZ(info->name));
+            LOG_WARN_FMT("exclude special file '%s/%s' from backup", strZ(pgPath), strZ(info->name));
             break;
     }
 
@@ -1127,6 +1160,8 @@ manifestNewBuild(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Data needed to build the manifest
+            ManifestLinkCheck linkCheck = manifestLinkCheckInit();
+
             ManifestBuildData buildData =
             {
                 .manifest = this,
@@ -1135,10 +1170,8 @@ manifestNewBuild(
                 .online = online,
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
-                .linkCheck = manifestLinkCheckInit(),
-                .manifestParentName = MANIFEST_TARGET_PGDATA_STR,
+                .linkCheck = &linkCheck,
                 .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
-                .pgPath = storagePathP(storagePg, NULL),
             };
 
             // Build expressions to identify databases paths and temp relations
@@ -1180,7 +1213,8 @@ manifestNewBuild(
 
             // Build manifest
             // ---------------------------------------------------------------------------------------------------------------------
-            StorageInfo info = storageInfoP(storagePg, buildData.pgPath, .followLink = true);
+            const String *const pgPath = storagePathP(storagePg, NULL);
+            StorageInfo info = storageInfoP(storagePg, pgPath, .followLink = true);
 
             ManifestPath path =
             {
@@ -1204,15 +1238,29 @@ manifestNewBuild(
             ManifestTarget target =
             {
                 .name = MANIFEST_TARGET_PGDATA_STR,
-                .path = buildData.pgPath,
+                .path = pgPath,
                 .type = manifestTargetTypePath,
             };
 
             manifestTargetAdd(this, &target);
 
             // Gather info for the rest of the files/links/paths
-            storageInfoListP(
-                storagePg, buildData.pgPath, manifestBuildCallback, &buildData, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+            StorageIterator *const storageItr = storageNewItrP(
+                storagePg, pgPath, .errorOnMissing = true, .sortOrder = sortOrderAsc);
+
+            MEM_CONTEXT_TEMP_RESET_BEGIN()
+            {
+                while (storageItrMore(storageItr))
+                {
+                    const StorageInfo info = storageItrNext(storageItr);
+
+                    manifestBuildInfo(&buildData, MANIFEST_TARGET_PGDATA_STR, pgPath, false, &info);
+
+                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                    MEM_CONTEXT_TEMP_RESET(1000);
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
 
             // These may not be in order even if the incoming data was sorted
             lstSort(this->pub.fileList, sortOrderAsc);
@@ -1380,6 +1428,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         // Set prior backup label
         this->pub.data.backupLabelPrior = strDup(manifestPrior->pub.data.backupLabel);
 
+        // Copy reference list
+        this->pub.referenceList = strLstDup(manifestPrior->pub.referenceList);
+
         // Set diff/incr backup type
         this->pub.data.backupType = type;
     }
@@ -1455,20 +1506,31 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->pub.fileList); fileIdx++)
         {
-            const ManifestFile file = manifestFile(this, fileIdx);
+            ManifestFile file = manifestFile(this, fileIdx);
 
             // Check if prior file can be used
             if (manifestFileExists(manifestPrior, file.name))
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                if (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
+                if (file.copy && file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
                 {
-                    manifestFileUpdate(
-                        this, file.name, file.size, filePrior.sizeRepo, filePrior.checksumSha1,
-                        VARSTR(filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel),
-                        filePrior.checksumPage, filePrior.checksumPageError, filePrior.checksumPageErrorList,
-                        filePrior.bundleId, filePrior.bundleOffset);
+                    file.sizeRepo = filePrior.sizeRepo;
+                    memcpy(file.checksumSha1, filePrior.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                    file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
+                    file.checksumPage = filePrior.checksumPage;
+                    file.checksumPageError = filePrior.checksumPageError;
+                    file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                    file.bundleId = filePrior.bundleId;
+                    file.bundleOffset = filePrior.bundleOffset;
+
+                    // Perform delta if the file size is not zero
+                    file.delta = delta && file.size != 0;
+
+                    // Copy if the file has changed or delta
+                    file.copy = (file.size != 0 && file.timestamp != filePrior.timestamp) || file.delta;
+
+                    manifestFileUpdate(this, &file);
                 }
             }
         }
@@ -1485,7 +1547,7 @@ manifestBuildComplete(
     const time_t timestampStop, const String *const lsnStop, const String *const archiveStop, const unsigned int pgId,
     const uint64_t pgSystemId, const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy,
     const size_t optionBufferSize, const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork,
-    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby)
+    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby, const KeyValue *const annotation)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1506,6 +1568,7 @@ manifestBuildComplete(
         FUNCTION_LOG_PARAM(BOOL, optionHardLink);
         FUNCTION_LOG_PARAM(UINT, optionProcessMax);
         FUNCTION_LOG_PARAM(BOOL, optionStandby);
+        FUNCTION_LOG_PARAM(KEY_VALUE, annotation);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
@@ -1542,6 +1605,29 @@ manifestBuildComplete(
             lstSort(this->pub.dbList, sortOrderAsc);
         }
 
+        // Save annotations
+        if (annotation != NULL)
+        {
+            this->pub.data.annotation = varNewKv(kvNew());
+
+            KeyValue *const manifestAnnotationKv = varKv(this->pub.data.annotation);
+            const VariantList *const annotationKeyList = kvKeyList(annotation);
+
+            for (unsigned int keyIdx = 0; keyIdx < varLstSize(annotationKeyList); keyIdx++)
+            {
+                const Variant *const key = varLstGet(annotationKeyList, keyIdx);
+                const Variant *const value = kvGet(annotation, key);
+
+                // Skip empty values
+                if (!strEmpty(varStr(value)))
+                    kvPut(manifestAnnotationKv, key, value);
+            }
+
+            // Clean field if there are no annotations to save
+            if (varLstSize(kvKeyList(manifestAnnotationKv)) == 0)
+                this->pub.data.annotation = NULL;
+        }
+
         // Save options
         this->pub.data.backupOptionArchiveCheck = optionArchiveCheck;
         this->pub.data.backupOptionArchiveCopy = optionArchiveCopy;
@@ -1567,6 +1653,7 @@ manifestBuildComplete(
 #define MANIFEST_SECTION_BACKUP_TARGET                              "backup:target"
 
 #define MANIFEST_SECTION_DB                                         "db"
+#define MANIFEST_SECTION_METADATA                                   "metadata"
 
 #define MANIFEST_SECTION_TARGET_FILE                                "target:file"
 #define MANIFEST_SECTION_TARGET_FILE_DEFAULT                        "target:file:default"
@@ -1575,6 +1662,7 @@ manifestBuildComplete(
 #define MANIFEST_SECTION_TARGET_PATH                                "target:path"
 #define MANIFEST_SECTION_TARGET_PATH_DEFAULT                        "target:path:default"
 
+#define MANIFEST_KEY_ANNOTATION                                     "annotation"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
 #define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
@@ -1582,6 +1670,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
 #define MANIFEST_KEY_BACKUP_LSN_STOP                                "backup-lsn-stop"
 #define MANIFEST_KEY_BACKUP_PRIOR                                   "backup-prior"
+#define MANIFEST_KEY_BACKUP_REFERENCE                               "backup-reference"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START                    "backup-timestamp-copy-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_START                         "backup-timestamp-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
@@ -1637,6 +1726,7 @@ typedef struct ManifestLoadData
 {
     MemContext *memContext;                                         // Mem context for data needed only during load
     Manifest *manifest;                                             // Manifest info
+    bool referenceListFound;                                        // Was a reference list found?
 
     List *linkFoundList;                                            // Values found in links
     const Variant *linkGroupDefault;                                // Link default group
@@ -1754,7 +1844,12 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         // Reference
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
+        {
             file.reference = jsonReadStr(json);
+
+            if (!loadData->referenceListFound)
+                file.reference = strLstAddIfMissing(manifest->pub.referenceList, file.reference);
+        }
 
         // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
         // the repo-size is only stored in the manifest file if it is different than size.
@@ -1947,6 +2042,17 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEqZ(section, MANIFEST_SECTION_METADATA))
+    {
+        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+        {
+            if (strEqZ(key, MANIFEST_KEY_ANNOTATION))
+                manifest->pub.data.annotation = jsonToVar(value);
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_BACKUP))
     {
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
@@ -1965,6 +2071,11 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
                 manifest->pub.data.lsnStop = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_PRIOR))
                 manifest->pub.data.backupLabelPrior = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_REFERENCE))
+            {
+                manifest->pub.referenceList = strLstNewSplitZ(varStr(jsonToVar(value)), ",");
+                loadData->referenceListFound = true;
+            }
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START))
                 manifest->pub.data.backupTimestampCopyStart = (time_t)varUInt64(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START))
@@ -2212,6 +2323,9 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
         }
 
         infoSaveValue(
+            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_REFERENCE,
+            jsonFromVar(VARSTR(strLstJoin(manifest->pub.referenceList, ","))));
+        infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START,
             jsonFromVar(VARINT64(manifest->pub.data.backupTimestampCopyStart)));
         infoSaveValue(
@@ -2374,6 +2488,17 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             }
         }
         MEM_CONTEXT_TEMP_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_METADATA, sectionNext))
+    {
+        if (manifest->pub.data.annotation != NULL)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_METADATA, MANIFEST_KEY_ANNOTATION,
+                jsonFromVar(manifest->pub.data.annotation));
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -2683,64 +2808,23 @@ manifestFileRemove(const Manifest *this, const String *name)
 }
 
 void
-manifestFileUpdate(
-    Manifest *const this, const String *const name, const uint64_t size, const uint64_t sizeRepo, const char *const checksumSha1,
-    const Variant *const reference, const bool checksumPage, const bool checksumPageError,
-    const String *const checksumPageErrorList, const uint64_t bundleId, const uint64_t bundleOffset)
+manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-        FUNCTION_TEST_PARAM(UINT64, size);
-        FUNCTION_TEST_PARAM(UINT64, sizeRepo);
-        FUNCTION_TEST_PARAM(STRINGZ, checksumSha1);
-        FUNCTION_TEST_PARAM(VARIANT, reference);
-        FUNCTION_TEST_PARAM(BOOL, checksumPage);
-        FUNCTION_TEST_PARAM(BOOL, checksumPageError);
-        FUNCTION_TEST_PARAM(STRING, checksumPageErrorList);
-        FUNCTION_TEST_PARAM(UINT64, bundleId);
-        FUNCTION_TEST_PARAM(UINT64, bundleOffset);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(name != NULL);
+    ASSERT(file != NULL);
     ASSERT(
-        (!checksumPage && !checksumPageError && checksumPageErrorList == NULL) ||
-        (checksumPage && !checksumPageError && checksumPageErrorList == NULL) || (checksumPage && checksumPageError));
+        (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && file->checksumPageError));
+    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
 
-    ManifestFilePack **const filePack = manifestFilePackFindInternal(this, name);
-    ManifestFile file = manifestFileUnpack(this, *filePack);
-
-    // Update reference if set
-    if (reference != NULL)
-    {
-        if (varStr(reference) == NULL)
-            file.reference = NULL;
-        else
-            file.reference = strLstAddIfMissing(this->referenceList, varStr(reference));
-    }
-
-    // Update checksum if set
-    if (checksumSha1 != NULL)
-    {
-        ASSERT(strlen(checksumSha1) == HASH_TYPE_SHA1_SIZE_HEX);
-        memcpy(file.checksumSha1, checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
-    }
-
-    // Update repo size
-    file.size = size;
-    file.sizeRepo = sizeRepo;
-
-    // Update checksum page info
-    file.checksumPage = checksumPage;
-    file.checksumPageError = checksumPageError;
-    file.checksumPageErrorList = checksumPageErrorList;
-
-    // Update bundle info
-    file.bundleId = bundleId;
-    file.bundleOffset = bundleOffset;
-
-    manifestFilePackUpdate(this, filePack, &file);
+    ManifestFilePack **const filePack = manifestFilePackFindInternal(this, file->name);
+    manifestFilePackUpdate(this, filePack, file);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -2982,6 +3066,7 @@ manifestBackupLabelSet(Manifest *this, const String *backupLabel)
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         this->pub.data.backupLabel = strDup(backupLabel);
+        strLstAdd(this->pub.referenceList, backupLabel);
     }
     MEM_CONTEXT_END();
 

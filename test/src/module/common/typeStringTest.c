@@ -253,8 +253,15 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strReplaceChr()"))
+    if (testBegin("strReplace() and strReplaceChr()"))
     {
+        TEST_RESULT_STR_Z(strReplace(strNewZ(""), STRDEF("A"), STRDEF("B")), "", "replace none");
+        TEST_RESULT_STR_Z(strReplace(strCatZ(strNew(), "ABC"), STRDEF("ABC"), STRDEF("DEF")), "DEF", "replace all");
+        TEST_RESULT_STR_Z(strReplace(strCatZ(strNew(), "ABCXABC"), STRDEF("ABC"), STRDEF("DEF")), "DEFXDEF", "replace multiple");
+        TEST_RESULT_STR_Z(strReplace(strCatZ(strNew(), "XABCX"), STRDEF("ABC"), STRDEF("DEFGHI")), "XDEFGHIX", "replace larger");
+        TEST_RESULT_STR_Z(
+            strReplace(strCatZ(strNew(), "XABCXABCX"), STRDEF("ABC"), STRDEF("ABCD")), "XABCDXABCDX", "replace common substring");
+
         TEST_RESULT_STR_Z(strReplaceChr(strNewZ("ABCD"), 'B', 'R'), "ARCD", "replace chr");
     }
 
@@ -281,7 +288,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strChr() and strTrunc()"))
+    if (testBegin("strChr() and strTrunc*()"))
     {
         TEST_RESULT_INT(strChr(STRDEF("abcd"), 'c'), 2, "c found");
         TEST_RESULT_INT(strChr(STRDEF("abcd"), 'C'), -1, "capital C not found");
@@ -290,17 +297,17 @@ testRun(void)
 
         String *val = strCatZ(strNew(), "abcdef");
         TEST_ERROR(
-            strTrunc(val, (int)(strSize(val) + 1)), AssertError,
+            strTruncIdx(val, (int)(strSize(val) + 1)), AssertError,
             "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");
-        TEST_ERROR(strTrunc(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");
+        TEST_ERROR(strTruncIdx(val, -1), AssertError, "assertion 'idx >= 0 && (size_t)idx <= strSize(this)' failed");
 
-        TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'd')), "abc", "simple string truncated");
+        TEST_RESULT_STR_Z(strTruncIdx(val, strChr(val, 'd')), "abc", "simple string truncated");
         strCatZ(val, "\r\n to end");
-        TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'n')), "abc\r\n to e", "complex string truncated");
-        TEST_RESULT_STR_Z(strTrunc(val, strChr(val, 'a')), "", "complete string truncated - empty string");
+        TEST_RESULT_STR_Z(strTruncIdx(val, strChr(val, 'n')), "abc\r\n to e", "complex string truncated");
+        TEST_RESULT_STR_Z(strTruncIdx(val, strChr(val, 'a')), "", "complete string truncated - empty string");
 
         TEST_RESULT_UINT(strSize(val), 0, "0 size");
-        TEST_RESULT_STR_Z(strTrunc(val, 0), "", "test coverage of empty string - no error thrown for index 0");
+        TEST_RESULT_STR_Z(strTrunc(val), "", "test coverage of empty string - no error thrown for index 0");
     }
 
     // *****************************************************************************************************************************
@@ -360,6 +367,13 @@ testRun(void)
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_UINT(strLstSize(list), 9, "list size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("strLstFindIdxP()");
+
+        TEST_RESULT_UINT(strLstFindIdxP(list, STRDEF("STR05")), 5, "find STR05");
+        TEST_RESULT_UINT(strLstFindIdxP(list, STRDEF("STR10")), LIST_NOT_FOUND, "find missing STR10");
+        TEST_ERROR(strLstFindIdxP(list, STRDEF("STR10"), .required = true), AssertError, "unable to find 'STR10' in string list");
 
         // Read them back and check values
         // -------------------------------------------------------------------------------------------------------------------------

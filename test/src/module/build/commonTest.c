@@ -14,7 +14,13 @@ testRun(void)
     if (testBegin("render"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("bldStrid()");
+        TEST_TITLE("bldEnum()");
+
+        TEST_RESULT_STR_Z(bldEnum(NULL, STRDEF("test-id/group-name")), "testId/groupName", "enum");
+        TEST_RESULT_STR_Z(bldEnum("pre", STRDEF("option-name")), "preOptionName", "enum");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bldStrId()");
 
         TEST_RESULT_STR_Z(bldStrId("abc"), "STRID5(\"abc\", 0xc410)", "5-bit");
         TEST_RESULT_STR_Z(bldStrId("ABC"), "STRID6(\"ABC\", 0x289e61)", "6-bit");
@@ -34,7 +40,16 @@ testRun(void)
         Yaml *yaml = NULL;
         TEST_ASSIGN(yaml, yamlNew(buffer), "new yaml")
         TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeMapBegin), "map begin event");
-        TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeScalar), "scalar event");
+        TEST_ERROR(
+            yamlScalarCheck(yamlEventPeek(yaml), STRDEF("xxx")), FormatError,
+            "expected scalar 'xxx' but got 'test' at line 1, column 1");
+        TEST_ERROR(
+            yamlEventCheck(yamlEventPeek(yaml), yamlEventTypeMapBegin), FormatError,
+            "expected event type 'map-begin' but got scalar 'test' at line 1, column 1");
+        TEST_RESULT_VOID(yamlScalarNextCheck(yaml, STRDEF("test")), "scalar event");
+        TEST_ERROR(
+            yamlScalarCheck(yamlEventPeek(yaml), STRDEF("test")), FormatError,
+            "expected scalar 'test' but got event  type 'map-begin' at line 2, column 4");
         TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeMapBegin), "map begin event");
         TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeScalar), "scalar event");
         TEST_RESULT_VOID(yamlEventNextCheck(yaml, yamlEventTypeSeqBegin), "seq begin event");

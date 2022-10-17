@@ -290,6 +290,20 @@ cfgLoadUpdateOption(void)
         }
     }
 
+    // Set default upload chunk size if not set
+    if (cfgOptionValid(cfgOptRepoStorageUploadChunkSize))
+    {
+        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+        {
+            if (!cfgOptionIdxTest(cfgOptRepoStorageUploadChunkSize, repoIdx))
+            {
+                cfgOptionIdxSet(
+                    cfgOptRepoStorageUploadChunkSize, repoIdx, cfgSourceDefault,
+                    VARINT64((cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == CFGOPTVAL_REPO_TYPE_S3 ? 5 : 4) * 1024 * 1024));
+            }
+        }
+    }
+
     // Set pg-host-port/repo-host-port default when pg-host-type/repo-host-type is tls. ??? This should be handled in the parser but
     // it requires a default that depends on another option value and that is not currently possible.
     #define HOST_PORT_TLS                                           8432

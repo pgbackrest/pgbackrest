@@ -5,7 +5,7 @@
 ####################################################################################################################################
 # List of required source files.  main.c should always be listed last and the rest in alpha order.
 ####################################################################################################################################
-SRCS_BUILD = \
+SRCS_COMMON = \
 	common/compress/bz2/common.c \
 	common/compress/bz2/compress.c \
 	common/debug.c \
@@ -25,6 +25,7 @@ SRCS_BUILD = \
 	common/regExp.c \
 	common/stackTrace.c \
 	common/time.c \
+	common/type/blob.c \
 	common/type/buffer.c \
 	common/type/convert.c \
 	common/type/keyValue.c \
@@ -44,11 +45,14 @@ SRCS_BUILD = \
 	storage/posix/read.c \
 	storage/posix/storage.c \
 	storage/posix/write.c \
+	storage/iterator.c \
+	storage/list.c \
 	storage/read.c \
 	storage/storage.c \
 	storage/write.c
 
 SRCS = \
+	command/annotate/annotate.c \
 	command/archive/common.c \
 	command/archive/get/file.c \
 	command/archive/get/get.c \
@@ -64,6 +68,7 @@ SRCS = \
 	command/check/check.c \
 	command/check/common.c \
 	command/expire/expire.c \
+	command/exit.c \
 	command/help/help.c \
 	command/info/info.c \
 	command/command.c \
@@ -105,7 +110,6 @@ SRCS = \
 	common/crypto/common.c \
 	common/crypto/hash.c \
 	common/exec.c \
-	common/exit.c \
 	common/fork.c \
 	common/ini.c \
 	common/io/client.c \
@@ -202,79 +206,39 @@ BUILDDIR=.build
 ####################################################################################################################################
 # Compile and link pgbackrest
 ####################################################################################################################################
-OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_PGBACKREST) $(SRCS) main.c)
+OBJS_PGBACKREST = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_COMMON) $(SRCS) main.c)
 
 pgbackrest: $(OBJS_PGBACKREST)
 	$(CC) -o pgbackrest $(OBJS_PGBACKREST) $(LDFLAGS) $(LIBS)
 
 ####################################################################################################################################
-# Compile and link config generator
+# Compile and link code builder
 ####################################################################################################################################
-SRCS_BUILD_CONFIG = \
+SRCS_BUILD_CODE = \
 	build/common/render.c \
 	build/common/yaml.c \
-	build/config/main.c \
 	build/config/parse.c \
-	build/config/render.c
-
-OBJS_BUILD_CONFIG = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_CONFIG))
-
-build-config: $(OBJS_BUILD_CONFIG) build/config/config.yaml config/config.auto.h config/parse.auto.c.inc
-	$(CC) -o build-config $(OBJS_BUILD_CONFIG) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
-	./build-config $(VPATH)
-
-####################################################################################################################################
-# Compile and link error generator
-####################################################################################################################################
-SRCS_BUILD_ERROR = \
-	build/common/render.c \
-	build/common/yaml.c \
-	build/error/main.c \
+	build/config/render.c \
 	build/error/parse.c \
-	build/error/render.c
-
-OBJS_BUILD_ERROR = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_ERROR))
-
-build-error: $(OBJS_BUILD_ERROR) build/error/error.yaml
-	$(CC) -o build-error $(OBJS_BUILD_ERROR) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
-	./build-error $(VPATH)
-
-####################################################################################################################################
-# Compile and link help generator
-####################################################################################################################################
-SRCS_BUILD_HELP = \
-	build/common/render.c \
-	build/common/yaml.c \
-	build/config/parse.c \
+	build/error/render.c \
 	build/help/parse.c \
 	build/help/render.c \
-	build/help/main.c
-
-OBJS_BUILD_HELP = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_HELP))
-
-build-help: $(OBJS_BUILD_HELP) build/config/config.yaml build/help/help.xml
-	$(CC) -o build-help $(OBJS_BUILD_HELP) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
-
-command/help/help.auto.c.inc: build-help
-	./build-help $(VPATH)
-
-####################################################################################################################################
-# Compile and link postgres interface generator
-####################################################################################################################################
-SRCS_BUILD_POSTGRES = \
-	build/common/render.c \
-	build/common/yaml.c \
 	build/postgres/parse.c \
 	build/postgres/render.c \
-	build/postgres/main.c
+	build/main.c
 
-OBJS_BUILD_POSTGRES = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_BUILD) $(SRCS_BUILD_POSTGRES))
+OBJS_BUILD_CODE = $(patsubst %.c,$(BUILDDIR)/%.o,$(SRCS_COMMON) $(SRCS_BUILD_CODE))
 
-build-postgres: $(OBJS_BUILD_POSTGRES) build/postgres/postgres.yaml
-	$(CC) -o build-postgres $(OBJS_BUILD_POSTGRES) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
+build-code: $(OBJS_BUILD_CODE) build/postgres/postgres.yaml build/config/config.yaml build/help/help.xml
+	$(CC) -o build-code $(OBJS_BUILD_CODE) $(LDFLAGS) $(LIBS) $(LIBS_BUILD)
 
-postgres/interface.auto.c.inc: build-postgres
-	./build-postgres $(VPATH)
+# Build help.auto.c.inc
+command/help/help.auto.c.inc: build-code
+	./build-code help $(VPATH)
+
+# Build interface.auto.c.inc
+postgres/interface.auto.c.inc: build-code
+	./build-code postgres $(VPATH)
 
 ####################################################################################################################################
 # Installation.  DESTDIR can be used to modify the install location.
@@ -297,7 +261,7 @@ uninstall:
 # Clean build files and executable created by make
 clean:
 	rm -rf $(BUILDDIR)
-	rm -f pgbackrest build-config build-error build-help build-postgres command/help/help.auto.c.inc postgres/interface.auto.c.inc
+	rm -f pgbackrest build-code command/help/help.auto.c.inc postgres/interface.auto.c.inc
 
 .PHONY = clean-all
 

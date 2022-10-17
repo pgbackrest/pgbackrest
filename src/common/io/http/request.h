@@ -94,28 +94,28 @@ typedef struct HttpRequestPub
 } HttpRequestPub;
 
 // Request path
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 httpRequestPath(const HttpRequest *const this)
 {
     return THIS_PUB(HttpRequest)->path;
 }
 
 // Request query
-__attribute__((always_inline)) static inline const HttpQuery *
+FN_INLINE_ALWAYS const HttpQuery *
 httpRequestQuery(const HttpRequest *const this)
 {
     return THIS_PUB(HttpRequest)->query;
 }
 
 // Request headers
-__attribute__((always_inline)) static inline const HttpHeader *
+FN_INLINE_ALWAYS const HttpHeader *
 httpRequestHeader(const HttpRequest *const this)
 {
     return THIS_PUB(HttpRequest)->header;
 }
 
 // Request verb
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 httpRequestVerb(const HttpRequest *const this)
 {
     return THIS_PUB(HttpRequest)->verb;
@@ -128,10 +128,10 @@ Functions
 HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
 
 // Throw an error if the request failed
-void httpRequestError(const HttpRequest *this, HttpResponse *response) __attribute__((__noreturn__));
+FN_NO_RETURN void httpRequestError(const HttpRequest *this, HttpResponse *response);
 
 // Move to a new parent mem context
-__attribute__((always_inline)) static inline HttpRequest *
+FN_INLINE_ALWAYS HttpRequest *
 httpRequestMove(HttpRequest *const this, MemContext *const parentNew)
 {
     return objMove(this, parentNew);
@@ -140,7 +140,7 @@ httpRequestMove(HttpRequest *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 httpRequestFree(HttpRequest *const this)
 {
     objFree(this);

@@ -60,7 +60,34 @@ YamlEvent yamlEventNext(Yaml *this);
 YamlEvent yamlEventNextCheck(Yaml *this, YamlEventType type);
 
 // Check the event type
-void yamlEventCheck(YamlEvent event, YamlEventType type);
+YamlEvent yamlEventCheck(YamlEvent event, YamlEventType type);
+
+// Peek at the next event
+YamlEvent yamlEventPeek(Yaml *this);
+
+// Get next scalar
+FN_INLINE_ALWAYS YamlEvent
+yamlScalarNext(Yaml *const this)
+{
+    return yamlEventNextCheck(this, yamlEventTypeScalar);
+}
+
+// Check scalar
+void yamlScalarCheck(YamlEvent event, const String *value);
+
+FN_INLINE_ALWAYS void
+yamlScalarCheckZ(const YamlEvent event, const char *const value)
+{
+    yamlScalarCheck(event, STR(value));
+}
+
+void yamlScalarNextCheck(Yaml *this, const String *value);
+
+FN_INLINE_ALWAYS void
+yamlScalarNextCheckZ(Yaml *const this, const char *const value)
+{
+    yamlScalarNextCheck(this, STR(value));
+}
 
 // Convert an event to a boolean (or error)
 bool yamlBoolParse(YamlEvent event);
@@ -68,11 +95,43 @@ bool yamlBoolParse(YamlEvent event);
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 yamlFree(Yaml *const this)
 {
     objFree(this);
 }
+
+/***********************************************************************************************************************************
+Helper macros for iterating sequences and maps
+***********************************************************************************************************************************/
+#define YAML_ITER_BEGIN(yamlParam, eventBegin)                                                                                     \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        Yaml *const YAML_ITER_yaml = yaml;                                                                                         \
+        yamlEventNextCheck(YAML_ITER_yaml, eventBegin);                                                                            \
+                                                                                                                                   \
+        do                                                                                                                         \
+        {
+
+#define YAML_ITER_END(eventEnd)                                                                                                    \
+        }                                                                                                                          \
+        while (yamlEventPeek(YAML_ITER_yaml).type != eventEnd);                                                                    \
+                                                                                                                                   \
+        yamlEventNextCheck(YAML_ITER_yaml, eventEnd);                                                                              \
+    }                                                                                                                              \
+    while (0)
+
+#define YAML_SEQ_BEGIN(yaml)                                                                                                       \
+    YAML_ITER_BEGIN(yaml, yamlEventTypeSeqBegin)
+
+#define YAML_SEQ_END()                                                                                                             \
+    YAML_ITER_END(yamlEventTypeSeqEnd);
+
+#define YAML_MAP_BEGIN(yaml)                                                                                                       \
+    YAML_ITER_BEGIN(yaml, yamlEventTypeMapBegin)
+
+#define YAML_MAP_END()                                                                                                             \
+    YAML_ITER_END(yamlEventTypeMapEnd);
 
 /***********************************************************************************************************************************
 Macros for function logging
