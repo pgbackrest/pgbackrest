@@ -31,6 +31,17 @@
 
                         <p>Fix memory leak in file bundle <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1900"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix protocol error on short read of remote file.</p>
+                    </release-item>
                 </release-bug-list>
 
                 <release-improvement-list>
@@ -43,6 +54,19 @@
                         </release-item-contributor-list>
 
                         <p>Do not store references for zero-length files when bundling.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1901"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="greg.sabino.mullane"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Use more generic descriptions for <code>pg_start_backup()</code>/<code>pg_stop_backup()</code>.</p>
                     </release-item>
                 </release-improvement-list>
 
@@ -63,6 +87,9 @@
                         <commit subject="Update ManifestFile booleans to bit fields."/>
                         <commit subject="Use read-only storage to calculate checksum in restoreFile()."/>
                         <commit subject="Swap command/backup and command/restore unit tests."/>
+                        <commit subject="Add noTruncate flag to storageNewWriteP().">
+                            <github-pull-request id="1898"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

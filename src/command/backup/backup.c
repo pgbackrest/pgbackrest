@@ -868,7 +868,7 @@ backupStart(BackupData *backupData)
 
             // Start backup
             LOG_INFO_FMT(
-                "execute %sexclusive pg_start_backup(): backup begins after the %s checkpoint completes",
+                "execute %sexclusive backup start: backup begins after the %s checkpoint completes",
                 backupData->version >= PG_VERSION_96 ? "non-" : "",
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
@@ -990,7 +990,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             manifestFileAdd(manifest, &file);
 
-            LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strZ(name));
+            LOG_DETAIL_FMT("wrote '%s' file returned from backup stop function", strZ(name));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1022,7 +1022,7 @@ backupStop(BackupData *backupData, Manifest *manifest)
         {
             // Stop the backup
             LOG_INFO_FMT(
-                "execute %sexclusive pg_stop_backup() and wait for all WAL segments to archive",
+                "execute %sexclusive backup stop and wait for all WAL segments to archive",
                 backupData->version >= PG_VERSION_96 ? "non-" : "");
 
             DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);

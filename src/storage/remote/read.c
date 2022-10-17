@@ -72,8 +72,7 @@ storageReadRemoteFreeResource(THIS_VOID)
                 // If binary then discard
                 if (pckReadType(read) == pckTypeBin)
                 {
-                    // Free the buffer immediately on read in case there are many buffers to read
-                    bufFree(pckReadBinP(read));
+                    pckReadBinP(read);
                 }
                 // Else read is complete so discard the filter list
                 else
