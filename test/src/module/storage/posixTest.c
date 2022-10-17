@@ -1260,6 +1260,7 @@ testRun(void)
         TEST_RESULT_STR(storageWriteName(file), fileNoPerm, "check name");
         TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "check sync path");
         TEST_RESULT_BOOL(storageWriteSyncFile(file), false, "check sync file");
+        TEST_RESULT_BOOL(storageWriteTruncate(file), true, "file will be truncated");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("permission denied");
@@ -1374,6 +1375,22 @@ testRun(void)
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no truncate");
+
+        HRN_STORAGE_PUT_Z(storageTest, "no-truncate", "ABC", .modeFile = 0600);
+
+        TEST_ASSIGN(
+            file, storageNewWriteP(storageTest, STRDEF("no-truncate"), .modeFile = 0660, .timeModified = 77777, .noAtomic = true,
+            .noTruncate = true), "new write file");
+        TEST_RESULT_BOOL(storageWriteTruncate(file), false, "file will not be truncated");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+
+        TEST_STORAGE_GET(storageTest, "no-truncate", "ABC");
+        TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF("no-truncate")).mode, 0600, "check mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("no-truncate")).timeModified, 77777, "check time");
     }
 
     // *****************************************************************************************************************************

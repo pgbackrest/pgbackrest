@@ -88,26 +88,20 @@ List *restoreFile(
                                 // this using the checksum below)
                                 if (info.size > file->size)
                                 {
-                                    // Open the file for write
-                                    int fd = open(fileName, O_WRONLY, 0);
-                                    THROW_ON_SYS_ERROR_FMT(fd == -1, FileReadError, STORAGE_ERROR_WRITE_OPEN, fileName);
+                                    // Open file for write
+                                    IoWrite *const pgWriteTruncate = storageWriteIo(
+                                        storageNewWriteP(
+                                            storagePgWrite(), file->name, .noAtomic = true, .noCreatePath = true,
+                                            .noSyncPath = true, .noTruncate = true));
+                                    ioWriteOpen(pgWriteTruncate);
 
-                                    TRY_BEGIN()
-                                    {
-                                        // Truncate to original size
-                                        THROW_ON_SYS_ERROR_FMT(
-                                            ftruncate(fd, (off_t)file->size) == -1, FileWriteError, "unable to truncate file '%s'",
-                                            fileName);
+                                    // Truncate to original size
+                                    THROW_ON_SYS_ERROR_FMT(
+                                        ftruncate(ioWriteFd(pgWriteTruncate), (off_t)file->size) == -1, FileWriteError,
+                                        "unable to truncate file '%s'", fileName);
 
-                                        // Sync
-                                        THROW_ON_SYS_ERROR_FMT(fsync(fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, fileName);
-                                    }
-                                    FINALLY()
-                                    {
-                                        THROW_ON_SYS_ERROR_FMT(
-                                            close(fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, fileName);
-                                    }
-                                    TRY_END();
+                                    // Close file
+                                    ioWriteClose(pgWriteTruncate);
 
                                     // Update info
                                     info = storageInfoP(storagePg(), file->name, .followLink = true);

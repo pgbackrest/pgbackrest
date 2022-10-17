@@ -478,11 +478,14 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
         FUNCTION_LOG_PARAM(BOOL, param.noSyncFile);
         FUNCTION_LOG_PARAM(BOOL, param.noSyncPath);
         FUNCTION_LOG_PARAM(BOOL, param.noAtomic);
+        FUNCTION_LOG_PARAM(BOOL, param.noTruncate);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->write);
+    // noTruncate does not work with atomic writes because a new file is always created for atomic writes
+    ASSERT(!param.noTruncate || param.noAtomic);
 
     StorageWrite *result = NULL;
 
@@ -493,7 +496,8 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
                 storageDriver(this), storagePathP(this, fileExp), .modeFile = param.modeFile != 0 ? param.modeFile : this->modeFile,
                 .modePath = param.modePath != 0 ? param.modePath : this->modePath, .user = param.user, .group = param.group,
                 .timeModified = param.timeModified, .createPath = !param.noCreatePath, .syncFile = !param.noSyncFile,
-                .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .compressible = param.compressible),
+                .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .truncate = !param.noTruncate,
+                .compressible = param.compressible),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
