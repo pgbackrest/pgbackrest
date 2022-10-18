@@ -2305,26 +2305,20 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 {
                     param = protocolCommandParam(command);
 
-                    const String *const repoPath = strNewFmt(
-                        STORAGE_REPO_BACKUP "/%s/",
-                        strZ(file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel));
-
                     if (file.bundleId != 0)
                     {
-                        pckWriteStrP(param, strNewFmt("%s" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(repoPath), file.bundleId));
                         bundleId = file.bundleId;
                         reference = file.reference;
                     }
                     else
-                    {
-                        pckWriteStrP(
-                            param,
-                            strNewFmt(
-                                "%s%s%s", strZ(repoPath), strZ(file.name),
-                                strZ(compressExtStr(manifestData(jobData->manifest)->backupOptionCompressType))));
                         fileName = file.name;
-                    }
 
+                    pckWriteStrP(
+                        param,
+                        backupFileRepoPathP(
+                            file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel,
+                            .manifestName = file.name, .bundleId = file.bundleId,
+                            .compressType = manifestData(jobData->manifest)->backupOptionCompressType));
                     pckWriteU32P(param, jobData->repoIdx);
                     pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                     pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
