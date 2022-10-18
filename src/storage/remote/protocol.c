@@ -70,20 +70,27 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
             const StringId filterKey = pckReadStrIdP(filterList);
             const Pack *const filterParam = pckReadPackP(filterList);
 
+            // If a compression filter
             IoFilter *filter = compressFilterPack(filterKey, filterParam);
 
             if (filter != NULL)
+            {
                 ioFilterGroupAdd(filterGroup, filter);
+            }
+            // Else a filter handler
             else
             {
                 ASSERT(storageRemoteProtocolLocal.filterHandler != NULL);
 
+                // Search for a filter handler
                 unsigned int filterIdx = 0;
 
                 for (; filterIdx < storageRemoteProtocolLocal.filterHandlerSize; filterIdx++)
                 {
+                    // If a match create the filter
                     if (storageRemoteProtocolLocal.filterHandler[filterIdx].type == filterKey)
                     {
+                        // Create a filter with parameters
                         if (storageRemoteProtocolLocal.filterHandler[filterIdx].handlerParam != NULL)
                         {
                             ASSERT(filterParam != NULL);
@@ -91,6 +98,7 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
                             ioFilterGroupAdd(
                                 filterGroup, storageRemoteProtocolLocal.filterHandler[filterIdx].handlerParam(filterParam));
                         }
+                        // Else create a filter without parameters
                         else
                         {
                             ASSERT(storageRemoteProtocolLocal.filterHandler[filterIdx].handlerNoParam != NULL);
@@ -99,10 +107,12 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
                             ioFilterGroupAdd(filterGroup, storageRemoteProtocolLocal.filterHandler[filterIdx].handlerNoParam());
                         }
 
+                        // Break on filter match
                         break;
                     }
                 }
 
+                // Error when the filter was not found
                 if (filterIdx == storageRemoteProtocolLocal.filterHandlerSize)
                     THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
             }

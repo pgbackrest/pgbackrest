@@ -48,6 +48,7 @@ cmdRemote(ProtocolServer *const server)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
+    // Set filter handlers
     storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList, LENGTH_OF(storageRemoteFilterHandlerList));
 
     MEM_CONTEXT_TEMP_BEGIN()
