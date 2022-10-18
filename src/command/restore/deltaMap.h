@@ -20,5 +20,4 @@ Constructors
 IoFilter *deltaMapNew(size_t blockSize);
 IoFilter *deltaMapNewPack(const Pack *paramList);
 
-
 #endif

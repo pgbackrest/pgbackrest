@@ -361,9 +361,9 @@ List *restoreFile(
                                     // available and must have the same reference and bundle id as the other blocks.
                                     StorageRead *const blockRead = storageNewReadP(
                                         storageRepo(),
-                                        backupFilePath(
-                                            strLstGet(referenceList, blockMapItem->reference), file->manifestFile,
-                                            blockMapItem->bundleId, compressTypeNone, true),
+                                        backupFileRepoPathP(
+                                            strLstGet(referenceList, blockMapItem->reference), .manifestName = file->manifestFile,
+                                            .bundleId = blockMapItem->bundleId, .blockIncr = true),
                                         .offset = blockListOffset, .limit = VARUINT64(blockListSize));
                                     ioReadOpen(storageReadIo(blockRead));
 

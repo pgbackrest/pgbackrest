@@ -2315,9 +2315,11 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 
                     pckWriteStrP(
                         param,
-                        backupFilePath(
-                            file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel, file.name,
-                            file.bundleId, manifestData(jobData->manifest)->backupOptionCompressType, file.blockIncrMapSize != 0));
+                        backupFileRepoPathP(
+                            file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel,
+                            .manifestName = file.name, .bundleId = file.bundleId,
+                            .compressType = manifestData(jobData->manifest)->backupOptionCompressType,
+                            .blockIncr = file.blockIncrMapSize != 0));
                     pckWriteU32P(param, jobData->repoIdx);
                     pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                     pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);

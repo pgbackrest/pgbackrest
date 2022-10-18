@@ -942,9 +942,9 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             StorageWrite *write = storageNewWriteP(
                 storageRepoWrite(),
-                backupFilePath(
-                    manifestData(manifest)->backupLabel, manifestName, 0, compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
-                    false),
+                backupFileRepoPathP(
+                    manifestData(manifest)->backupLabel, .manifestName = manifestName,
+                    .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType))),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -1716,15 +1716,18 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
 
                     if (bundle && file.size <= jobData->bundleLimit)
                     {
-                        pckWriteStrP(
-                            param, backupFilePath(jobData->backupLabel, NULL, jobData->bundleId, compressTypeNone, false));
+                        pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = jobData->bundleId));
                         pckWriteU64P(param, jobData->bundleId);
                     }
                     else
                     {
                         CHECK(AssertError, fileTotal == 0, "cannot bundle file");
 
-                        pckWriteStrP(param, backupFilePath(jobData->backupLabel, file.name, 0, jobData->compressType, blockIncr));
+                        pckWriteStrP(
+                            param,
+                            backupFileRepoPathP(
+                                jobData->backupLabel, .manifestName = file.name, .compressType = jobData->compressType,
+                                .blockIncr = blockIncr));
                         pckWriteU64P(param, 0);
 
                         fileName = file.name;
@@ -1758,7 +1761,9 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                     if (file.blockIncrMapSize != 0)
                     {
                         pckWriteStrP(
-                            param, backupFilePath(file.reference, file.name, file.bundleId, compressTypeNone, true));
+                            param,
+                            backupFileRepoPathP(
+                                file.reference, .manifestName = file.name, .bundleId = file.bundleId, .blockIncr = true));
                         pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
                         pckWriteU64P(param, file.blockIncrMapSize);
                     }
@@ -2132,7 +2137,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                             read,
                             storageNewWriteP(
                                 storageRepoWrite(),
-                                backupFilePath(
+                                backupFileRepoPathP(
                                     manifestData(manifest)->backupLabel, manifestName, 0,
                                     compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), false)));
 

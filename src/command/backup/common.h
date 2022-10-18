@@ -20,9 +20,19 @@ Backup constants
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Determine the path/file where the manifest file is backed up in the repo
-String *backupFilePath(
-    const String *backupLabel, const String *manifestName, uint64_t bundleId, CompressType compressType, bool blockIncr);
+// Determine the path/file where the file is backed up in the repo
+typedef struct BackupFileRepoPathParam
+{
+    const String *manifestName;                                     // File name in manifest
+    uint64_t bundleId;                                              // Is the file bundled?
+    CompressType compressType;                                      // Is the file compressed?
+    bool blockIncr;                                                 // Is the file a block incremental?
+} BackupFileRepoPathParam;
+
+#define backupFileRepoPathP(backupLabel, ...)                                                                                          \
+    backupFileRepoPath(backupLabel, (BackupFileRepoPathParam){__VA_ARGS__})
+
+String *backupFileRepoPath(const String *backupLabel, BackupFileRepoPathParam param);
 
 // Format a backup label from a type and timestamp with an optional prior label
 String *backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp);
