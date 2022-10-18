@@ -3,8 +3,11 @@ Test Remote Storage
 ***********************************************************************************************************************************/
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
+#include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/filter/sink.h"
+#include "common/io/filter/size.h"
 #include "config/protocol.h"
 #include "postgres/interface.h"
 
@@ -29,6 +32,17 @@ testRun(void)
     };
 
     hrnProtocolRemoteShimInstall(testRemoteHandlerList, LENGTH_OF(testRemoteHandlerList));
+
+    // Set filter handlers
+    static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
+    {
+        {.type = CIPHER_BLOCK_FILTER_TYPE, .handlerParam = cipherBlockNewPack},
+        {.type = CRYPTO_HASH_FILTER_TYPE, .handlerParam = cryptoHashNewPack},
+        {.type = SINK_FILTER_TYPE, .handlerNoParam = ioSinkNew},
+        {.type = SIZE_FILTER_TYPE, .handlerNoParam = ioSizeNew},
+    };
+
+    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList, LENGTH_OF(storageRemoteFilterHandlerList));
 
     // Test storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
@@ -330,7 +344,6 @@ testRun(void)
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
-        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
         ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
@@ -341,8 +354,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
             "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
-                " 5:strid:pg-chksum, 6:pack:<2:bool:false, 3:bool:false>, 7:strid:cipher-blk, 9:strid:cipher-blk, 11:strid:gz-cmp,"
-                " 13:strid:gz-dcmp, 15:strid:buffer",
+                " 5:strid:cipher-blk, 7:strid:cipher-blk, 9:strid:gz-cmp, 11:strid:gz-dcmp, 13:strid:buffer",
             "filter results");
 
         // Check protocol function directly (file exists but all data goes to sink)

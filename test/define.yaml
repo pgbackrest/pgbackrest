@@ -390,9 +390,6 @@ unit:
           - common/lock
 
         depend:
-          - command/backup/blockMap
-          - command/backup/blockIncr
-          - command/backup/pageChecksum
           - common/lock
           - config/common
           - config/config
@@ -791,13 +788,6 @@ unit:
           - command/info/info
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: remote
-        total: 1
-
-        coverage:
-          - command/remote/remote
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
         total: 13
 
@@ -861,6 +851,13 @@ unit:
 
         coverage:
           - command/local/local
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: remote
+        total: 1
+
+        coverage:
+          - command/remote/remote
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exit

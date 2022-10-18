@@ -3,14 +3,8 @@ Remote Storage Protocol Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/backup/blockIncr.h"
-#include "command/backup/pageChecksum.h"
 #include "common/compress/helper.h"
-#include "common/crypto/cipherBlock.h"
-#include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/io/filter/sink.h"
-#include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/regExp.h"
@@ -28,7 +22,30 @@ static struct
 {
     MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Storage driver used for requests
+
+    const StorageRemoteFilterHandler *filterHandler;                // Filter handler list
+    unsigned int filterHandlerSize;                                 // Filter handler list size
 } storageRemoteProtocolLocal;
+
+/***********************************************************************************************************************************
+Set filter handlers
+***********************************************************************************************************************************/
+void
+storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *filterHandler, unsigned int filterHandlerSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, filterHandler);
+        FUNCTION_TEST_PARAM(UINT, filterHandlerSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(filterHandler != NULL);
+    ASSERT(filterHandlerSize > 0);
+
+    storageRemoteProtocolLocal.filterHandler = filterHandler;
+    storageRemoteProtocolLocal.filterHandlerSize = filterHandlerSize;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Set filter group based on passed filters
@@ -53,41 +70,51 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
             const StringId filterKey = pckReadStrIdP(filterList);
             const Pack *const filterParam = pckReadPackP(filterList);
 
+            // If a compression filter
             IoFilter *filter = compressFilterPack(filterKey, filterParam);
 
             if (filter != NULL)
+            {
                 ioFilterGroupAdd(filterGroup, filter);
+            }
+            // Else a filter handler
             else
             {
-                switch (filterKey)
+                ASSERT(storageRemoteProtocolLocal.filterHandler != NULL);
+
+                // Search for a filter handler
+                unsigned int filterIdx = 0;
+
+                for (; filterIdx < storageRemoteProtocolLocal.filterHandlerSize; filterIdx++)
                 {
-                    case BLOCK_INCR_FILTER_TYPE: // {uncovered - !!!}
-                        ioFilterGroupAdd(filterGroup, blockIncrNewPack(filterParam)); // {uncovered - !!!}
-                        break; // {uncovered - !!!}
+                    // If a match create the filter
+                    if (storageRemoteProtocolLocal.filterHandler[filterIdx].type == filterKey)
+                    {
+                        // Create a filter with parameters
+                        if (storageRemoteProtocolLocal.filterHandler[filterIdx].handlerParam != NULL)
+                        {
+                            ASSERT(filterParam != NULL);
 
-                    case CIPHER_BLOCK_FILTER_TYPE:
-                        ioFilterGroupAdd(filterGroup, cipherBlockNewPack(filterParam));
+                            ioFilterGroupAdd(
+                                filterGroup, storageRemoteProtocolLocal.filterHandler[filterIdx].handlerParam(filterParam));
+                        }
+                        // Else create a filter without parameters
+                        else
+                        {
+                            ASSERT(storageRemoteProtocolLocal.filterHandler[filterIdx].handlerNoParam != NULL);
+                            ASSERT(filterParam == NULL);
+
+                            ioFilterGroupAdd(filterGroup, storageRemoteProtocolLocal.filterHandler[filterIdx].handlerNoParam());
+                        }
+
+                        // Break on filter match
                         break;
-
-                    case CRYPTO_HASH_FILTER_TYPE:
-                        ioFilterGroupAdd(filterGroup, cryptoHashNewPack(filterParam));
-                        break;
-
-                    case PAGE_CHECKSUM_FILTER_TYPE:
-                        ioFilterGroupAdd(filterGroup, pageChecksumNewPack(filterParam));
-                        break;
-
-                    case SINK_FILTER_TYPE:
-                        ioFilterGroupAdd(filterGroup, ioSinkNew());
-                        break;
-
-                    case SIZE_FILTER_TYPE:
-                        ioFilterGroupAdd(filterGroup, ioSizeNew());
-                        break;
-
-                    default:
-                        THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
+                    }
                 }
+
+                // Error when the filter was not found
+                if (filterIdx == storageRemoteProtocolLocal.filterHandlerSize)
+                    THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
             }
         }
     }
