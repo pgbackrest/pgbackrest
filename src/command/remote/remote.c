@@ -5,8 +5,13 @@ Remote Command
 
 #include <string.h>
 
+#include "command/backup/pageChecksum.h"
 #include "command/control/common.h"
+#include "common/crypto/cipherBlock.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/filter/sink.h"
+#include "common/io/filter/size.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "config/protocol.h"
@@ -25,11 +30,26 @@ static const ProtocolServerHandler commandRemoteHandlerList[] =
     PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
 };
 
+/***********************************************************************************************************************************
+Filter handlers
+***********************************************************************************************************************************/
+static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
+{
+    {.type = CIPHER_BLOCK_FILTER_TYPE, .handlerParam = cipherBlockNewPack},
+    {.type = CRYPTO_HASH_FILTER_TYPE, .handlerParam = cryptoHashNewPack},
+    {.type = PAGE_CHECKSUM_FILTER_TYPE, .handlerParam = pageChecksumNewPack},
+    {.type = SINK_FILTER_TYPE, .handlerNoParam = ioSinkNew},
+    {.type = SIZE_FILTER_TYPE, .handlerNoParam = ioSizeNew},
+};
+
 /**********************************************************************************************************************************/
 void
 cmdRemote(ProtocolServer *const server)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
+
+    // Set filter handlers
+    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList, LENGTH_OF(storageRemoteFilterHandlerList));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

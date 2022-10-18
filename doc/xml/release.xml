@@ -90,6 +90,7 @@
                         <commit subject="Add noTruncate flag to storageNewWriteP().">
                             <github-pull-request id="1898"/>
                         </commit>
+                        <commit subject="Pass filters to remote storage as a handler array."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
