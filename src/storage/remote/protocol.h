@@ -48,4 +48,19 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_SYNC, .handler = storageRemotePathSyncProtocol},                                     \
     {.command = PROTOCOL_COMMAND_STORAGE_REMOVE, .handler = storageRemoteRemoveProtocol},
 
+/***********************************************************************************************************************************
+Filters that may be passed to a remote
+***********************************************************************************************************************************/
+typedef IoFilter *(*StorageRemoteFilterHandlerParam)(const Pack *paramList);
+typedef IoFilter *(*StorageRemoteFilterHandlerNoParam)(void);
+
+typedef struct StorageRemoteFilterHandler
+{
+    StringId type;                                                  // Filter type
+    StorageRemoteFilterHandlerParam handlerParam;                   // Handler for filter with parameters
+    StorageRemoteFilterHandlerNoParam handlerNoParam;               // Handler with no parameters
+} StorageRemoteFilterHandler;
+
+void storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *filterHandler, unsigned int filterHandlerSize);
+
 #endif
