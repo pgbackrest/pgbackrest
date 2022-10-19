@@ -2743,20 +2743,21 @@ testRun(void)
 
             IoWrite *write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-no-ref.pgbi")));
             ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 3, 0, 0, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
             ioWriteOpen(write);
             ioWrite(write, fileBuffer);
             ioWriteClose(write);
 
             uint64_t blockIncrMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+            uint64_t repoSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE));
 
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                    .name = STRDEF(TEST_PGDATA "base/1/bi-no-ref"), .size = bufUsed(fileBuffer),
-                    .sizeRepo = bufUsed(fileBuffer) + blockIncrMapSize, .blockIncrMapSize = blockIncrMapSize,
-                    .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c"});
+                    .name = STRDEF(TEST_PGDATA "base/1/bi-no-ref"), .size = bufUsed(fileBuffer), .sizeRepo = repoSize,
+                    .blockIncrMapSize = blockIncrMapSize, .timestamp = 1482182860, .mode = 0600, .group = groupName(),
+                    .user = userName(), .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c"});
 
             // Block incremental with a broken reference to show that unneeded references will not be used
             Buffer *fileUnused = bufNew(8192 * 6);
@@ -2779,25 +2780,31 @@ testRun(void)
 
             // THROW_FMT(AssertError, "!!!HASH %s", strZ(bufHex(cryptoHashOne(hashTypeSha1, fileUsed))));
 
+            size_t bufferSizeOld = ioBufferSize();
+            ioBufferSizeSet(777);
+
             write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-unused-ref.pgbi")));
             ioFilterGroupAdd(
                 ioWriteFilterGroup(write),
                 blockIncrNew(
                     8192, 3, 0, 0, BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize)));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
             ioWriteOpen(write);
             ioWrite(write, fileUsed);
             ioWriteClose(write);
 
+            ioBufferSizeSet(bufferSizeOld);
+
             uint64_t fileUsedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+            uint64_t fileUsedRepoSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE));
 
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
-                    .name = STRDEF(TEST_PGDATA "base/1/bi-unused-ref"), .size = bufUsed(fileUsed),
-                    .sizeRepo = (4 * 8192) + fileUsedMapSize, .blockIncrMapSize = fileUsedMapSize,
-                    .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "febd680181d4cd315dce942348862c25fbd731f3"});
+                    .name = STRDEF(TEST_PGDATA "base/1/bi-unused-ref"), .size = bufUsed(fileUsed), .sizeRepo = fileUsedRepoSize,
+                    .blockIncrMapSize = fileUsedMapSize, .timestamp = 1482182860, .mode = 0600, .group = groupName(),
+                    .user = userName(), .checksumSha1 = "febd680181d4cd315dce942348862c25fbd731f3"});
 
             memset(bufPtr(fileUnused) + (8192 * 4), 3, 8192);
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), "base/1", .mode = 0700);

@@ -135,9 +135,38 @@ testBackupValidateList(
                                 "%s/%s/%s", strZ(strPath(path)),
                                 strZ(strLstGet(manifestReferenceList(manifest), blockMapItem->reference)),
                                 blockMapItem->bundleId != 0 ? zNewFmt("bundle/%" PRIu64, blockMapItem->bundleId) : strZ(info.name));
-                            const Buffer *const block = storageGetP(
-                                storageNewReadP(storage, blockName, .offset = blockMapItem->offset,
-                                .limit = VARUINT64(blockMapItem->size)));
+
+                            IoRead *blockRead = storageReadIo(
+                                storageNewReadP(
+                                    storage, blockName, .offset = blockMapItem->offset, .limit = VARUINT64(blockMapItem->size)));
+                            ioReadOpen(blockRead);
+
+                            // Read block no delta (not used)
+                            ioReadVarIntU64(blockRead);
+
+                            // Read block parts
+                            size_t partSize = ioReadVarIntU64(blockRead);
+                            Buffer *const block = bufNew(partSize);
+
+                            while (true)
+                            {
+                                ASSERT(partSize != 0);
+
+                                // Copy part
+                                ioRead(blockRead, block);
+
+                                // Get next part delta
+                                const int64_t partSizeLast = (int64_t)partSize;
+                                const uint64_t partDelta = ioReadVarIntU64(blockRead);
+
+                                // Stop when part delta is zero, which indicates the end of the part list
+                                if (partDelta == 0)
+                                    break;
+
+                                // Calculate next part size from delta
+                                partSize = (uint64_t)(cvtInt64FromZigZag(partDelta - 1) + partSizeLast);
+                                bufResize(block, bufSize(block) + partSize);
+                            }
 
                             // Add reference to log
                             if (!strEmpty(mapLog))
@@ -146,12 +175,12 @@ testBackupValidateList(
                             strCatFmt(mapLog, "%u", blockMapItem->reference);
 
                             // Check block size
-                            if (bufUsed(block) != blockMapItem->size)
-                            {
-                                THROW_FMT(
-                                    AssertError, "'%s' block %u size (%" PRIu64 ") does not match block incr map (%" PRIu64 ")",
-                                    strZ(file.name), blockMapIdx, bufUsed(block), blockMapItem->size);
-                            }
+                            // if (bufUsed(block) != blockMapItem->size)
+                            // {
+                            //     THROW_FMT(
+                            //         AssertError, "'%s' block %u size (%" PRIu64 ") does not match block incr map (%" PRIu64 ")",
+                            //         strZ(file.name), blockMapIdx, bufUsed(block), blockMapItem->size);
+                            // }
 
                             // Check block checksum
                             const String *const blockChecksum = bufHex(cryptoHashOne(hashTypeSha1, block));
@@ -1010,8 +1039,28 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(write, source), "write");
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
-        TEST_RESULT_UINT(pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), 0, "compare");
-        TEST_RESULT_STR_Z(bufHex(destination), "3132", "compare");
+        uint64_t mapSize;
+        TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
+        TEST_RESULT_UINT(mapSize, 26, "map size");
+
+        TEST_RESULT_STR_Z(
+            bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
+            "0002313200",                               // block 0
+            "block list");
+
+        const Buffer *map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
+
+        TEST_RESULT_STR_Z(
+            bufHex(map),
+            "01"                                        // reference
+            "00"                                        // bundle id
+            "00"                                        // offset
+            "05"                                        // size
+            "7b52009b64fd0a2a49e6d8a939753077792b0554"  // checksum
+            "00"                                        // reference end
+
+            "00",                                       // map end
+            "block map");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup");
@@ -1027,25 +1076,24 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(write, source), "write");
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
-        uint64_t mapSize;
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
         TEST_RESULT_UINT(mapSize, 68, "map size");
 
         TEST_RESULT_STR_Z(
             bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "414243"                                    // block 0
-            "58595a"                                    // block 1
-            "313233",                                   // block 2
+            "00024142024300"                            // block 0
+            "01025859025a00"                            // block 1
+            "01023132023300",                           // block 2
             "block list");
 
-        const Buffer *map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
+        map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
             bufHex(map),
             "03"                                        // reference
             "04"                                        // bundle id
             "05"                                        // offset
-            "03"                                        // size
+            "07"                                        // size
             "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"  // checksum
 
             "01"                                        // size
@@ -1060,6 +1108,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("diff/incr backup");
+
+        ioBufferSizeSet(3);
 
         source = BUFSTRZ("ACCXYZ123@");
         destination = bufNew(256);
@@ -1077,8 +1127,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "414343"                                    // block 0
-            "40",                                       // block 3
+            "000341434300"                              // block 0
+            "03014000",                                 // block 3
             "block list");
 
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
@@ -1088,23 +1138,23 @@ testRun(void)
             "04"                                        // reference
             "00"                                        // bundle id
             "00"                                        // offset
-            "03"                                        // size
+            "06"                                        // size
             "7fd8c7d6fae707035347ded997e52837daa3aae2"  // checksum
             "00"                                        // reference end
 
             "03"                                        // reference
             "04"                                        // bundle id
-            "08"                                        // offset
-            "01"                                        // delta size
+            "0c"                                        // offset
+            "03"                                        // delta size
             "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
 
-            "01"                                        // size
+            "01"                                        // delta size
             "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
             "00"                                        // reference end
 
             "04"                                        // reference
             "00"                                        // offset delta
-            "04"                                        // delta size
+            "06"                                        // delta size
             "9a78211436f6d425ec38f5c4e02270801f3524f8"  // checksum
             "00"                                        // reference end
 
@@ -3750,18 +3800,18 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
-            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "8KiB");
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "24KiB");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
+            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 9);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
             // Log file just larger than block size
-            Buffer *log = bufNew(PG_PAGE_SIZE_DEFAULT + 1);
+            Buffer *log = bufNew(PG_PAGE_SIZE_DEFAULT * 3 + 1);
             memset(bufPtr(log), 55, bufSize(log));
             bufUsedSet(log, bufSize(log));
 
@@ -3775,8 +3825,8 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (72KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3795,10 +3845,10 @@ testRun(void)
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, m={0,0,0}, s=24576}\n"
+                "pg_data/base/1/2.pgbi {file, m={0,0,0}, s=73728}\n"
                 "pg_data/global {path}\n"
-                "pg_data/global/pg_control.pgbi {file, m={0}, s=8192}\n"
-                "pg_data/pg.log.pgbi {file, m={0,0}, s=8193}\n"
+                "pg_data/global/pg_control {file, s=8192}\n"
+                "pg_data/pg.log.pgbi {file, m={0,0}, s=24577}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3809,10 +3859,10 @@ testRun(void)
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1572800002}\n"
-                "pg_data/base/1/2={\"bims\":69,\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"size\":24576,"
+                "pg_data/base/1/2={\"bims\":70,\"checksum\":\"a6c4dc8ed089217b3fed2dfc7481ce20e0de5d67\",\"size\":73728,"
                     "\"timestamp\":1572800000}\n"
-                "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1572800000}\n"
-                "pg_data/pg.log={\"bims\":49,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\",\"size\":8193"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572800000}\n"
+                "pg_data/pg.log={\"bims\":51,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\",\"size\":24577"
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1572800002}\n"
@@ -3840,11 +3890,12 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
             hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
-            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "8KiB");
+            hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "24KiB");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 4);
+            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 12);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
@@ -3862,7 +3913,7 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC213000000000, lsn = 5dc2130/0\n"
                 "P00   INFO: check archive for segment 0000000105DC213000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (32KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (96KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/smaller-than-block-size (3B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
@@ -3882,10 +3933,10 @@ testRun(void)
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, m={0,0,0,1}, s=32768}\n"
+                "pg_data/base/1/2.pgbi {file, m={0,0,0,1}, s=98304}\n"
                 "pg_data/base/1/smaller-than-block-size {file, s=3}\n"
                 "pg_data/global {path}\n"
-                "pg_data/global/pg_control.pgbi {file, m={1}, s=8192}\n"
+                "pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3896,13 +3947,13 @@ testRun(void)
                     ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573000002}\n"
-                "pg_data/base/1/2={\"bims\":94,\"checksum\":\"5188431849b4613152fd7bdba6a3ff0a4fd6424b\",\"size\":32768"
+                "pg_data/base/1/2={\"bims\":95,\"checksum\":\"9f13a523321c66208e90d45f87fa0cd9b370e111\",\"size\":98304"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
                     ",\"timestamp\":1573000000}\n"
-                "pg_data/global/pg_control={\"bims\":27,\"size\":8192,\"timestamp\":1573000000}\n"
-                "pg_data/pg.log={\"bims\":49,\"checksum\":\"8965ca08a880d08e885c132e8f6fb5b5b1f8ab92\""
-                    ",\"reference\":\"20191103-165320F\",\"size\":8193,\"timestamp\":1572800000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"
+                "pg_data/pg.log={\"bims\":51,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\""
+                    ",\"reference\":\"20191103-165320F\",\"size\":24577,\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573000002}\n"
                 "\n"

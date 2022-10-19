@@ -13,7 +13,7 @@ Restore File
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/io/bufferWrite.h"
+#include "common/io/fdWrite.h"
 #include "common/io/filter/group.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
@@ -274,6 +274,7 @@ List *restoreFile(
                         // Read block map. This will be compared to the delta map already created to determine which blocks need to
                         // be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
+
                         // !!! EXPLAIN WHY THIS IS NEEDED
                         ioReadClose(storageReadIo(repoFileRead));
                         // !!! DECRYPT FILTER NEEDED HERE
@@ -367,45 +368,50 @@ List *restoreFile(
                                         .offset = blockListOffset, .limit = VARUINT64(blockListSize));
                                     ioReadOpen(storageReadIo(blockRead));
 
-                                    // Write out each block one at a time. This is required because each block is compressed and
-                                    // encrypted individually. The special case where there is no compression or encryption does not
-                                    // seem worth handling separately since there would be little or no performance improvement.
-                                    Buffer *const block = bufNew((size_t)file->blockIncrSize);
-
                                     for (unsigned int blockMapIdx = blockMapMinIdx; blockMapIdx <= blockMapMaxIdx; blockMapIdx++)
                                     {
                                         // Use a per-block mem context to reduce memory usage
                                         MEM_CONTEXT_TEMP_BEGIN()
                                         {
-                                            // Each block must be decompressed/decrypted into a buffer before writing out to the pg
-                                            // file. This is because multiple decompress/decrypt filters must be applied against a
-                                            // single IoRead object, which is not supported. Same for IoWrite, but additionally
-                                            // ioWriteFlush() cannot be used when filters are present. This is as efficient as
-                                            // attaching the filters directly to an IoRead/IoWrite object, just more complex.
-                                            IoWrite *const blockWrite = ioBufferWriteNew(block);
+                                            // Read block no (this is a delta and there is nothing to be done with it)
+                                            ioReadVarIntU64(storageReadIo(blockRead));
+
+                                            // Use a new IoWrite object to write each block. This is required because filters must
+                                            // be applied to each block rather than to the entire list of blocks so that any range
+                                            // of blocks can be read without needing to read blocks outside the range.
+                                            IoWrite *const blockWrite = ioFdWriteNew(
+                                                file->name, ioWriteFd(storageWriteIo(pgFileWrite)), ioTimeoutMs());
                                             // !!! DECOMP AND DECRYPT FILTERS NEEDED HERE
-
                                             ioWriteOpen(blockWrite);
-                                            ioCopyP(
-                                                storageReadIo(blockRead), blockWrite,
-                                                .limit = VARUINT64(
-                                                    ((const BlockMapItem *)blockMapGet(blockMap, blockMapIdx))->size));
-                                            ioWriteClose(blockWrite);
 
-                                            // Write block and clear buffer so it can be reused
-                                            ioWrite(storageWriteIo(pgFileWrite), block);
-                                            bufUsedZero(block);
+                                            // Read block parts
+                                            uint64_t partSize = ioReadVarIntU64(storageReadIo(blockRead));
+
+                                            while (true)
+                                            {
+                                                ASSERT(partSize != 0);
+
+                                                // Copy part
+                                                ioCopyP(storageReadIo(blockRead), blockWrite, .limit = VARUINT64(partSize));
+
+                                                // Get next part delta
+                                                const int64_t partSizeLast = (int64_t)partSize;
+                                                const uint64_t partDelta = ioReadVarIntU64(storageReadIo(blockRead));
+
+                                                // Stop when part delta is zero, which indicates the end of the part list
+                                                if (partDelta == 0)
+                                                    break;
+
+                                                // Calculate next part size from delta
+                                                partSize = (uint64_t)(cvtInt64FromZigZag(partDelta - 1) + partSizeLast);
+                                            }
+
+                                            ioWriteClose(blockWrite);
                                         }
                                         MEM_CONTEXT_TEMP_END();
                                     }
                                 }
                                 MEM_CONTEXT_TEMP_END();
-
-                                // Flush out all the blocks written from the list. This is required because we may need to seek to a
-                                // non-contiguous offset for the next block list. It might be possible to optimize this a bit more
-                                // since block lists may be contiguous but at least one block was written and the blocks should be
-                                // fairly large so the value of additional buffering seems minimal.
-                                ioWriteFlush(storageWriteIo(pgFileWrite));
 
                                 updateFound = false;
                             }

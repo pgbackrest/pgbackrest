@@ -26,6 +26,7 @@ typedef struct BlockIncr
     uint64_t bundleId;                                              // Bundle id
 
     unsigned int blockNo;                                           // Block number
+    unsigned int blockNoLast;                                       // Last block no
     uint64_t blockOffset;                                           // Block offset
     size_t blockSize;                                               // Block size
     Buffer *block;                                                  // Block buffer
@@ -135,10 +136,6 @@ For manifest:
         {
             if (bufUsed(this->blockOut) == 0)
             {
-                // If the file is smaller than a single block there is no need to store as a block or create a map
-                // !!! REMOVE THIS BEHAVIOR -- ALWAYS CREATE A MAP FROM THIS FILTER
-                const bool map = this->blockNo > 0 || bufUsed(this->block) == this->blockSize;
-
                 if (bufUsed(this->block) > 0)
                 {
                     MEM_CONTEXT_TEMP_BEGIN()
@@ -148,7 +145,7 @@ For manifest:
 
                         // Does the block exist in the input map?
                         const BlockMapItem *const blockMapItemIn =
-                            map && this->blockMapPrior != NULL && this->blockNo < blockMapSize(this->blockMapPrior) ?
+                            this->blockMapPrior != NULL && this->blockNo < blockMapSize(this->blockMapPrior) ?
                                 blockMapGet(this->blockMapPrior, this->blockNo) : NULL;
 
                         // Write block
@@ -158,32 +155,52 @@ For manifest:
                             IoWrite *const write = ioBufferWriteNew(this->blockOut);
                             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
                             // !!! ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
+                            // !!! COMPRESS FILTER SHOULD OMIT FILE HEADER
                             // !!! ENCRYPT FILTER GOES HERE
                             // !!! WOULD IT BE WORTH TRYING TO DETECT ALL ZERO BLOCKS?
-                            // STORE BLOCK NO AND SIZE TO ALLOW FOR MORE FEATURES IN THE FUTURE
 
                             ioWriteOpen(write);
-                            ioWrite(write, this->block);
+                            ioWriteVarIntU64(write, this->blockNo - this->blockNoLast);
+
+                            // Write out block parts
+                            size_t partOffset = 0;
+                            size_t partSizeLast = 0;
+
+                            while (partOffset < bufUsed(this->block))
+                            {
+                                size_t partSize = bufUsed(this->block) - partOffset > bufSize(output) ?
+                                    bufSize(output) : bufUsed(this->block) - partOffset;
+
+                                if (partSizeLast == 0)
+                                    ioWriteVarIntU64(write, partSize);
+                                else
+                                    ioWriteVarIntU64(write, cvtInt64ToZigZag((int64_t)partSize - (int64_t)partSizeLast) + 1);
+
+                                ioWrite(write, BUF(bufPtrConst(this->block) + partOffset, partSize));
+
+                                partSizeLast = partSize;
+                                partOffset += partSize;
+                            }
+
+                            ioWriteVarIntU64(write, 0);
                             ioWriteClose(write);
 
                             // Write to block map
-                            if (map)
+                            // ASSERT(this->blockNo == 0 || this->blockOffset > 0); !!! WHY DOESN'T THIS WORK?
+
+                            BlockMapItem blockMapItem =
                             {
-                                // ASSERT(this->blockNo == 0 || this->blockOffset > 0); !!! WHY DOESN'T THIS WORK?
+                                .reference = this->reference,
+                                .bundleId = this->bundleId,
+                                .offset = this->blockOffset,
+                                .size = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE)),
+                            };
 
-                                BlockMapItem blockMapItem =
-                                {
-                                    .reference = this->reference,
-                                    .bundleId = this->bundleId,
-                                    .offset = this->blockOffset,
-                                    .size = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE)),
-                                };
+                            memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
+                            blockMapAdd(this->blockMapOut, &blockMapItem);
 
-                                memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
-                                blockMapAdd(this->blockMapOut, &blockMapItem);
-
-                                this->blockOffset += blockMapItem.size;
-                            }
+                            this->blockOffset += blockMapItem.size;
+                            this->blockNoLast = this->blockNo;
                         }
                         else
                         {
@@ -196,7 +213,7 @@ For manifest:
                     MEM_CONTEXT_TEMP_END();
                 }
 
-                if (this->done && map)
+                if (this->done && this->blockNo > 0)
                 {
                     // Size of block output before starting to write the map
                     const size_t blockOutBegin = bufUsed(this->blockOut);
