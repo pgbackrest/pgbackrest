@@ -77,32 +77,6 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
     // Is the input done?
     this->done = input == NULL;
 
-/*
-Blocks are compressed and stored separately so they can be accessed randomly during restore.
-A map follows the stored blocks so future backups can work directly from the map.
-
-!!! DATA NEEDED
-
-For the stored blocks:
-    - block no (varint-128)
-    - sha1 (20 bytes)
-    - block data size (varint-128)
-    - block data (compressed if requested)
-
-For map:
-    - zero-based number that references a list of backup labels (varint-128)
-    - bundle id (if exists and if different than current) (varint-128)
-    - offset to block data (might be simpler if we could store the offset to the file somewhere as a base)
-        - maybe just store the file offset the first time a reference/bundle-id is found?
-    - sha1 (20 bytes)
-
-If a file that could shrink/grow is > block size but shrinks before getting copied, probably best to store it normally.
-
-For manifest:
-    - Global flag to indicate block incr
-    - Size of map to separate it from the block data (but map size will be included in repo-size)
-        - This will indicate that a file was stored with block level incr.
-*/
     // Loop until the input is consumed or there is output
     do
     {

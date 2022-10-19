@@ -1,5 +1,30 @@
 /***********************************************************************************************************************************
 Block Incremental Map
+
+The block map is stored as a series of block info that are abbreviated when sequential blocks are from the same reference:
+
+- Each block logically contains all fields in BlockMapItem but not all fields are encoded for each block and some are encoded as
+  deltas:
+
+  - Varint-128 encoded reference (which is an index into the reference list maintained in the manifest). If the prior block has the
+    same reference then this is omitted.
+
+  - If this is the first time the reference appears it will be followed by a bundle id (0 if no bundle). The bundle id is always the
+    same for a reference so it does not need to be encoded more than once.
+
+  - Offset where the block is located. For the first block after the reference, the offset is varint-128 encoded. After that it is a
+    delta of the prior offset for the reference. The offset is not encoded if the block is sequential to the prior block in the
+    reference. In this case the offset can be calculated by adding the prior size to the prior offset.
+
+  - Block size. For the first block this is the varint-128 encoded size. Afterwards it is a delta of the previous block using the
+    following formula: cvtInt64ToZigZag(blockSize - blockSizeLast) + 1. Adding one is required so the size delta is never zero,
+    which is used as the stop byte.
+
+  - SHA1 checksum of the block.
+
+  - If the next block is from a different reference then a varint-128 encoded zero stop byte is added.
+
+The block list is terminated by a varint-128 encoded zero stop byte.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
