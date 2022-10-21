@@ -7380,6 +7380,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-sftp-account
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-sftp-account
         (                                                                                                   // opt/repo-sftp-account
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                         // opt/repo-sftp-account
@@ -7415,6 +7416,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-sftp-account
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                    // opt/repo-sftp-account
         (                                                                                                   // opt/repo-sftp-account
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                       // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                     // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                    // opt/repo-sftp-account
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                          // opt/repo-sftp-account
@@ -7456,6 +7458,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-sftp-host
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/repo-sftp-host
         (                                                                                                      // opt/repo-sftp-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                            // opt/repo-sftp-host
@@ -7491,6 +7494,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                // opt/repo-sftp-host
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                       // opt/repo-sftp-host
         (                                                                                                      // opt/repo-sftp-host
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                          // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                        // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                             // opt/repo-sftp-host
@@ -7530,6 +7534,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-sftp-host-port
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-sftp-host-port
         (                                                                                                 // opt/repo-sftp-host-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/repo-sftp-host-port
@@ -7565,6 +7570,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-sftp-host-port
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                  // opt/repo-sftp-host-port
         (                                                                                                 // opt/repo-sftp-host-port
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                     // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                   // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                        // opt/repo-sftp-host-port
@@ -7619,6 +7625,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                  // opt/repo-sftp-keyfile-passphrase
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                           // opt/repo-sftp-keyfile-passphrase
         (                                                                                        // opt/repo-sftp-keyfile-passphrase
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                            // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                          // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                         // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                              // opt/repo-sftp-keyfile-passphrase
@@ -7654,6 +7661,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                  // opt/repo-sftp-keyfile-passphrase
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                         // opt/repo-sftp-keyfile-passphrase
         (                                                                                        // opt/repo-sftp-keyfile-passphrase
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                            // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                          // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                         // opt/repo-sftp-keyfile-passphrase
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                               // opt/repo-sftp-keyfile-passphrase
@@ -7696,6 +7704,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-sftp-password
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-sftp-password
         (                                                                                                  // opt/repo-sftp-password
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-sftp-password
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-sftp-password
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-sftp-password
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-sftp-password
@@ -7731,6 +7740,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/repo-sftp-password
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                   // opt/repo-sftp-password
         (                                                                                                  // opt/repo-sftp-password
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-sftp-password
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-sftp-password
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-sftp-password
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                         // opt/repo-sftp-password
@@ -7772,6 +7782,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                     // opt/repo-sftp-private-keyfile
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                              // opt/repo-sftp-private-keyfile
         (                                                                                           // opt/repo-sftp-private-keyfile
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                               // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                             // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                            // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                 // opt/repo-sftp-private-keyfile
@@ -7807,6 +7818,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                     // opt/repo-sftp-private-keyfile
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                            // opt/repo-sftp-private-keyfile
         (                                                                                           // opt/repo-sftp-private-keyfile
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                               // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                             // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                            // opt/repo-sftp-private-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                  // opt/repo-sftp-private-keyfile
@@ -7836,6 +7848,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                      // opt/repo-sftp-public-keyfile
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                               // opt/repo-sftp-public-keyfile
         (                                                                                            // opt/repo-sftp-public-keyfile
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                              // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                             // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                  // opt/repo-sftp-public-keyfile
@@ -7871,6 +7884,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                      // opt/repo-sftp-public-keyfile
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                             // opt/repo-sftp-public-keyfile
         (                                                                                            // opt/repo-sftp-public-keyfile
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                              // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                             // opt/repo-sftp-public-keyfile
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                   // opt/repo-sftp-public-keyfile

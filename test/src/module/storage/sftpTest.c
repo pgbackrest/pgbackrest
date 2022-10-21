@@ -414,7 +414,7 @@ testRun(void)
             storageNewItrP(storageTest, pathNoPerm), PathOpenError,
             STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
-/*
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("helper function - storageSftpListEntry()");
 
@@ -423,7 +423,6 @@ testRun(void)
                 (StorageSftp *)storageDriver(storageTest), storageLstNew(storageInfoLevelBasic), STRDEF("pg"), "missing",
                 storageInfoLevelBasic),
             "missing path");
-            */
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with only dot");
@@ -447,7 +446,6 @@ testRun(void)
         // Updating sshd_config to
         // Subsystem	sftp	/usr/lib/openssh/sftp-server -u 000
         // would result in the file being created with 0766 permissions
-        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
         TEST_STORAGE_LIST(
             storageTest, "pg",
             "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0764}\n",
@@ -1021,18 +1019,26 @@ testRun(void)
             "unable to create path '" TEST_PATH "/sub3/sub4'");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
-        // LIBSSH2_ERROR_EAGAIN fail -- shim to ensure ??
-        StorageSftp *storageSftp = NULL;
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        // jrt !!! LIBSSH2_ERROR_EAGAIN fail -- shim/harnessLibssh2 to ensure ??
+        //StorageSftp *storageSftp = NULL;
+        //TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        /*
         storageSftp->timeoutConnect = 0;
         storageSftp->timeoutSession = 0;
+        */
+        /*
+        hrnSftpPathCreateShimInstall();
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail")), PathCreateError, "unable to create path '" TEST_PATH "/subfail'");
 
+        hrnSftpPathCreateShimUninstall();
         HRN_SYSTEM("rm -rf " TEST_PATH "/sub*");
+*/
 
+        /*
         storageSftp->timeoutConnect = 10000;
         storageSftp->timeoutSession = 10000;
+        */
     }
 
     // *****************************************************************************************************************************
@@ -1496,21 +1502,19 @@ testRun(void)
             "unable to remove '" TEST_PATH "/missing': libssh2 error [-31]: libssh2sftp error [2]");
 
         // LIBSSH2_ERROR_EAGAIN fail -- shim to ensure ??
-        StorageSftp *storageSftp = NULL;
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
-        storageSftp->timeoutConnect = 0;
-        storageSftp->timeoutSession = 0;
+//        StorageSftp *storageSftp = NULL;
+//        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
         TEST_RESULT_VOID(
             storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = false), "no error on missing");
-        /* need EAGAIN failure -- shim???
-        TEST_ERROR(
-            storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
-            "unable to remove '" TEST_PATH "/missing': libssh2 error [-31]: libssh2sftp error [2]");
-            */
 
-        storageSftp->timeoutConnect = 10000;
-        storageSftp->timeoutSession = 10000;
+        // Non sftp errors
+        hrnSftpUnlinkShimInstall();
+        TEST_ERROR(
+            storageRemoveP(storageTest, STRDEF("errorOnMissing"), .errorOnMissing = true), FileRemoveError,
+            "unable to remove '" TEST_PATH "/errorOnMissing'");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("errorOnMissing"), .errorOnMissing = false), "no error on missing");
+        hrnSftpUnlinkShimUninstall();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file exists");
@@ -1529,16 +1533,23 @@ testRun(void)
             "unable to remove '%s': libssh2 error [-31]: libssh2sftp error [3]", strZ(fileNoPerm));
 
         // LIBSSH2_ERROR_EAGAIN fail -- shim to ensure ??
+        /*
         storageSftp = NULL;
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         storageSftp->timeoutConnect = 0;
         storageSftp->timeoutSession = 0;
+        */
 
-        TEST_ERROR_FMT(
-            storageRemoveP(storageTest, fileNoPerm, .errorOnMissing = true),
-            FileRemoveError, "unable to remove '%s'", strZ(fileNoPerm));
+//        hrnSftpUnlinkShimInstall();
+//        TEST_ERROR_FMT(
+//            storageRemoveP(storageTest, fileNoPerm, .errorOnMissing = true),
+//            FileRemoveError, "unable to remove '%s'", strZ(fileNoPerm));
+
+//        hrnSftpUnlinkShimUninstall();
+       /*
         storageSftp->timeoutConnect = 10000;
         storageSftp->timeoutSession = 10000;
+       */
 
         TEST_REMOVE_NOPERM();
 #endif // TEST_CONTAINER_REQUIRED

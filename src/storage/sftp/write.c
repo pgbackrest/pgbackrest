@@ -236,7 +236,7 @@ storageWriteSftpRenameFileExistsFailure(const int rc, const int ssh2Errno, const
 Unlink already existing file and complete rename
 ***********************************************************************************************************************************/
 static void
-storageWriteSftpUnlink(THIS_VOID)
+storageWriteSftpUnlinkExisting(THIS_VOID)
 {
     THIS(StorageWriteSftp);
 
@@ -413,7 +413,7 @@ storageWriteSftpClose(THIS_VOID)
                 rc, libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession)))
             {
                 // remove the existing file and retry the rename
-                storageWriteSftpUnlink(this);
+                storageWriteSftpUnlinkExisting(this);
                 storageWriteSftpRename(this);
             }
         }

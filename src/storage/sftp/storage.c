@@ -45,7 +45,6 @@ struct StorageSftp
     LIBSSH2_SESSION *session;
     LIBSSH2_SFTP *sftpSession;
     LIBSSH2_SFTP_HANDLE *sftpHandle;
-    LIBSSH2_SFTP_HANDLE *sftpInfoHandle;
     TimeMSec timeoutConnect;
     TimeMSec timeoutSession;
     Wait *wait;
@@ -293,7 +292,7 @@ storageSftpListEntry(
         FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
         FUNCTION_TEST_PARAM(STORAGE_LIST, list);
         FUNCTION_TEST_PARAM(STRING, path);
-        FUNCTION_TEST_PARAM(STRING, name);
+        FUNCTION_TEST_PARAM(STRINGZ, name);
         FUNCTION_TEST_PARAM(ENUM, level);
     FUNCTION_TEST_END();
 
@@ -408,6 +407,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
         FINALLY()
         {
             int rc = 0;
+
             this->wait = waitNew(this->timeoutConnect);
 
             do
@@ -427,6 +427,32 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
+// jrt !!! after harnessLibssh2 is complete, may revert this back into storageSftpRemove rather than breaking out for coverage
+/**********************************************************************************************************************************/
+static int
+storageSftpUnlink(THIS_VOID, const String *const file)
+{
+    THIS(StorageSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    int result = 0;
+
+    this->wait = waitNew(this->timeoutConnect);
+
+    do
+    {
+        result = libssh2_sftp_unlink_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file));
+    } while (result == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+
+    FUNCTION_LOG_RETURN(INT, result);
+}
+
 /**********************************************************************************************************************************/
 static void
 storageSftpRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
@@ -442,14 +468,10 @@ storageSftpRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam par
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    // Attempt to unlink the file
     int rc = 0;
-    this->wait = waitNew(this->timeoutConnect);
 
-    do
-    {
-        rc = libssh2_sftp_unlink_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file));
-    } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+    // Attempt to unlink the file
+    rc = storageSftpUnlink(this, file);
 
     if (rc)
     {
@@ -460,7 +482,6 @@ storageSftpRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam par
                     rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
                     strNewFmt("unable to remove '%s'", strZ(file)),
                     NULL);
-            //    THROW_FMT(FileRemoveError, "unable to remove '%s'", strZ(file));
         }
         else
         {
