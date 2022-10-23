@@ -794,6 +794,7 @@ unit:
         coverage:
           - command/backup/backup
           - command/backup/blockIncr
+          - command/backup/blockPartWrite
           - command/backup/blockMap
           - command/backup/common
           - command/backup/file

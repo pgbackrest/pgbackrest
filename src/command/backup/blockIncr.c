@@ -3,6 +3,7 @@ Block Incremental Filter
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/backup/blockPartWrite.h"
 #include "command/backup/blockIncr.h"
 #include "command/backup/blockMap.h"
 #include "common/compress/helper.h"
@@ -10,7 +11,9 @@ Block Incremental Filter
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/filter/buffer.h"
 #include "common/io/filter/size.h"
+#include "common/io/io.h"
 #include "common/log.h"
 #include "common/type/pack.h"
 #include "common/type/object.h"
@@ -127,6 +130,8 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
                         {
                             IoWrite *const write = ioBufferWriteNew(this->blockOut);
+                            ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew());
+                            ioFilterGroupAdd(ioWriteFilterGroup(write), blockPartWriteNew());
                             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
                             // !!! ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
                             // !!! COMPRESS FILTER SHOULD OMIT FILE HEADER
@@ -136,27 +141,8 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             ioWriteOpen(write);
                             ioWriteVarIntU64(write, this->blockNo - this->blockNoLast);
 
-                            // Write out block parts
-                            size_t partOffset = 0;
-                            size_t partSizeLast = 0;
+                            ioCopyP(ioBufferReadNewOpen(this->block), write);
 
-                            while (partOffset < bufUsed(this->block))
-                            {
-                                size_t partSize = bufUsed(this->block) - partOffset > bufSize(output) ?
-                                    bufSize(output) : bufUsed(this->block) - partOffset;
-
-                                if (partSizeLast == 0)
-                                    ioWriteVarIntU64(write, partSize);
-                                else
-                                    ioWriteVarIntU64(write, cvtInt64ToZigZag((int64_t)partSize - (int64_t)partSizeLast) + 1);
-
-                                ioWrite(write, BUF(bufPtrConst(this->block) + partOffset, partSize));
-
-                                partSizeLast = partSize;
-                                partOffset += partSize;
-                            }
-
-                            ioWriteVarIntU64(write, 0);
                             ioWriteClose(write);
 
                             // Write to block map

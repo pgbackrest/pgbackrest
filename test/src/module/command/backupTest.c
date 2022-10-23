@@ -141,22 +141,20 @@ testBackupValidateList(
                                     storage, blockName, .offset = blockMapItem->offset, .limit = VARUINT64(blockMapItem->size)));
                             ioReadOpen(blockRead);
 
-                            // Read block no delta (not used)
-                            ioReadVarIntU64(blockRead);
-
-                            // Read block parts
+                            // Read first part size and part
                             size_t partSize = ioReadVarIntU64(blockRead);
-                            Buffer *const block = bufNew(partSize);
+                            Buffer *block = bufNew(partSize);
+                            ioRead(blockRead, block);
+
+                            // Extract block no
+                            size_t bufferOffset = 0;
+
+                            cvtUInt64FromVarInt128(bufPtrConst(block), &bufferOffset, bufUsed(block));
+                            block = bufNewC(bufPtrConst(block) + bufferOffset, bufUsed(block) - bufferOffset);
 
                             while (true)
                             {
-                                ASSERT(partSize != 0);
-
-                                // Copy part
-                                ioRead(blockRead, block);
-
                                 // Get next part delta
-                                const int64_t partSizeLast = (int64_t)partSize;
                                 const uint64_t partDelta = ioReadVarIntU64(blockRead);
 
                                 // Stop when part delta is zero, which indicates the end of the part list
@@ -164,8 +162,11 @@ testBackupValidateList(
                                     break;
 
                                 // Calculate next part size from delta
-                                partSize = (uint64_t)(cvtInt64FromZigZag(partDelta - 1) + partSizeLast);
+                                partSize = (uint64_t)(cvtInt64FromZigZag(partDelta - 1) + (int64_t)partSize);
                                 bufResize(block, bufSize(block) + partSize);
+
+                                // Copy part
+                                ioRead(blockRead, block);
                             }
 
                             // Add reference to log
@@ -1045,7 +1046,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "0002313200",                               // block 0
+            "020031023200",                             // block 0
             "block list");
 
         const Buffer *map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
@@ -1055,7 +1056,7 @@ testRun(void)
             "01"                                        // reference
             "00"                                        // bundle id
             "00"                                        // offset
-            "05"                                        // size
+            "06"                                        // size
             "7b52009b64fd0a2a49e6d8a939753077792b0554"  // checksum
             "00"                                        // reference end
 
@@ -1081,9 +1082,9 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "00024142024300"                            // block 0
-            "01025859025a00"                            // block 1
-            "01023132023300",                           // block 2
+            "02004101424300"                            // block 0
+            "02015801595a00"                            // block 1
+            "02013101323300",                           // block 2
             "block list");
 
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
@@ -1127,8 +1128,8 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
-            "000341434300"                              // block 0
-            "03014000",                                 // block 3
+            "03004143044300"                            // block 0
+            "02034000",                                 // block 3
             "block list");
 
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
@@ -1138,14 +1139,14 @@ testRun(void)
             "04"                                        // reference
             "00"                                        // bundle id
             "00"                                        // offset
-            "06"                                        // size
+            "07"                                        // size
             "7fd8c7d6fae707035347ded997e52837daa3aae2"  // checksum
             "00"                                        // reference end
 
             "03"                                        // reference
             "04"                                        // bundle id
             "0c"                                        // offset
-            "03"                                        // delta size
+            "01"                                        // size
             "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
 
             "01"                                        // delta size

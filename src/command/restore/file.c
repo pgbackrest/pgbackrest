@@ -373,9 +373,6 @@ List *restoreFile(
                                         // Use a per-block mem context to reduce memory usage
                                         MEM_CONTEXT_TEMP_BEGIN()
                                         {
-                                            // Read block no (this is a delta and there is nothing to be done with it)
-                                            ioReadVarIntU64(storageReadIo(blockRead));
-
                                             // Use a new IoWrite object to write each block. This is required because filters must
                                             // be applied to each block rather than to the entire list of blocks so that any range
                                             // of blocks can be read without needing to read blocks outside the range.
@@ -386,16 +383,30 @@ List *restoreFile(
 
                                             // Read block parts
                                             uint64_t partSize = ioReadVarIntU64(storageReadIo(blockRead));
+                                            bool first = true;
 
                                             while (true)
                                             {
                                                 ASSERT(partSize != 0);
 
+                                                // Read block no (this is a delta and there is nothing to be done with it)
+                                                // !!! TEMPORARY HACK UNTIL COMPRESS/ENCRYPT ARE ADDED
+                                                size_t offset = 0;
+
+                                                if (first)
+                                                {
+                                                    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+                                                    cvtUInt64ToVarInt128(
+                                                        ioReadVarIntU64(storageReadIo(blockRead)), buffer, &offset, sizeof(buffer));
+
+                                                    first = false;
+                                                }
+
                                                 // Copy part
-                                                ioCopyP(storageReadIo(blockRead), blockWrite, .limit = VARUINT64(partSize));
+                                                ioCopyP(
+                                                    storageReadIo(blockRead), blockWrite, .limit = VARUINT64(partSize - offset));
 
                                                 // Get next part delta
-                                                const int64_t partSizeLast = (int64_t)partSize;
                                                 const uint64_t partDelta = ioReadVarIntU64(storageReadIo(blockRead));
 
                                                 // Stop when part delta is zero, which indicates the end of the part list
@@ -403,7 +414,7 @@ List *restoreFile(
                                                     break;
 
                                                 // Calculate next part size from delta
-                                                partSize = (uint64_t)(cvtInt64FromZigZag(partDelta - 1) + partSizeLast);
+                                                partSize = (uint64_t)(cvtInt64FromZigZag(partDelta - 1) + (int64_t)partSize);
                                             }
 
                                             ioWriteClose(blockWrite);
