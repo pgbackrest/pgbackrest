@@ -23,8 +23,18 @@ Get a list of all files in the backup and a redacted version of the manifest tha
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    String *const result)
+    const CipherType cipherType, const String *const cipherPass, String *const result)
 {
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRING, path);
+        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
+        FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
+        FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
+        FUNCTION_HARNESS_PARAM(STRING, cipherPass);
+        FUNCTION_HARNESS_PARAM(STRING, result);
+    FUNCTION_HARNESS_END();
+
     // Output root path if it is a link so we can verify the destination
     const StorageInfo dotInfo = storageInfoP(storage, path);
 
@@ -123,7 +133,10 @@ testBackupValidateList(
                             storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)),
                             .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
                             .limit = VARUINT64(file.blockIncrMapSize));
+                        cipherBlockFilterGroupAdd(
+                            ioReadFilterGroup(storageReadIo(read)), cipherType, cipherModeDecrypt, cipherPass);
                         ioReadOpen(storageReadIo(read));
+
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(read));
                         IoFilter *const checksumFilter = cryptoHashNew(hashTypeSha1);
                         String *const mapLog = strNew();
@@ -141,19 +154,29 @@ testBackupValidateList(
                                     storage, blockName, .offset = blockMapItem->offset, .limit = VARUINT64(blockMapItem->size)));
                             ioReadOpen(blockRead);
 
+                            Buffer *block = bufNew(file.size);
+                            IoWrite *blockWrite = ioBufferWriteNew(block);
+
+                            cipherBlockFilterGroupAdd(ioWriteFilterGroup(blockWrite), cipherType, cipherModeDecrypt, cipherPass);
+
+                            if (manifestData->backupOptionCompressType != compressTypeNone)
+                            {
+                                ioFilterGroupAdd(
+                                    ioWriteFilterGroup(blockWrite), decompressFilter(manifestData->backupOptionCompressType));
+                            }
+
+                            ioWriteOpen(blockWrite);
+
                             // Read first part size and part
                             size_t partSize = ioReadVarIntU64(blockRead);
-                            Buffer *block = bufNew(partSize);
-                            ioRead(blockRead, block);
-
-                            // Extract block no
-                            size_t bufferOffset = 0;
-
-                            cvtUInt64FromVarInt128(bufPtrConst(block), &bufferOffset, bufUsed(block));
-                            block = bufNewC(bufPtrConst(block) + bufferOffset, bufUsed(block) - bufferOffset);
+                            Buffer *const blockPart = bufNew(partSize);
 
                             while (true)
                             {
+                                ioRead(blockRead, blockPart);
+                                ioWrite(blockWrite, blockPart);
+                                bufUsedZero(blockPart);
+
                                 // Get next part delta
                                 const uint64_t partDelta = ioReadVarIntU64(blockRead);
 
@@ -163,11 +186,16 @@ testBackupValidateList(
 
                                 // Calculate next part size from delta
                                 partSize = (uint64_t)(cvtInt64FromZigZag(partDelta - 1) + (int64_t)partSize);
-                                bufResize(block, bufSize(block) + partSize);
-
-                                // Copy part
-                                ioRead(blockRead, block);
+                                bufResize(blockPart, partSize);
                             }
+
+                            ioWriteClose(blockWrite);
+
+                            // Extract block no
+                            size_t bufferOffset = 0;
+
+                            cvtUInt64FromVarInt128(bufPtrConst(block), &bufferOffset, bufUsed(block));
+                            block = bufNewC(bufPtrConst(block) + bufferOffset, bufUsed(block) - bufferOffset);
 
                             // Add reference to log
                             if (!strEmpty(mapLog))
@@ -208,6 +236,9 @@ testBackupValidateList(
                         StorageRead *read = storageNewReadP(
                             storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
                             .limit = VARUINT64(file.sizeRepo));
+
+                        cipherBlockFilterGroupAdd(
+                            ioReadFilterGroup(storageReadIo(read)), cipherType, cipherModeDecrypt, cipherPass);
 
                         if (manifestData->backupOptionCompressType != compressTypeNone)
                         {
@@ -312,15 +343,27 @@ testBackupValidateList(
         manifestFilePackUpdate(manifest, filePack, &file);
     }
 
-    return result;
+    FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
+typedef struct TestBackupValidateParam
+{
+    VAR_PARAM_HEADER;
+    CipherType cipherType;                                          // Cipher type
+    const char *cipherPass;                                         // Cipher pass
+} TestBackupValidateParam;
+
+#define testBackupValidateP(storage, path, ...)                                                                       \
+    testBackupValidate(storage, path, (TestBackupValidateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
 static String *
-testBackupValidate(const Storage *storage, const String *path)
+testBackupValidate(const Storage *const storage, const String *const path, TestBackupValidateParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
         FUNCTION_HARNESS_PARAM(STRING, path);
+        FUNCTION_HARNESS_PARAM(UINT64, param.cipherType);
+        FUNCTION_HARNESS_PARAM(STRINGZ, param.cipherPass);
     FUNCTION_HARNESS_END();
 
     ASSERT(storage != NULL);
@@ -332,8 +375,16 @@ testBackupValidate(const Storage *storage, const String *path)
     {
         // Build a list of files in the backup path and verify against the manifest
         // -------------------------------------------------------------------------------------------------------------------------
-        Manifest *manifest = manifestLoadFile(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), cipherTypeNone, NULL);
-        testBackupValidateList(storage, path, manifest, manifestData(manifest), result);
+        const InfoBackup *const infoBackup = infoBackupLoadFile(
+            storageRepo(), INFO_BACKUP_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
+            param.cipherPass == NULL ? NULL : STR(param.cipherPass));
+
+        Manifest *manifest = manifestLoadFile(
+            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
+            param.cipherPass == NULL ? NULL : infoBackupCipherPass(infoBackup));
+        testBackupValidateList(
+            storage, path, manifest, manifestData(manifest), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
+            param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest), result);
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
         if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path))))
@@ -362,6 +413,7 @@ testBackupValidate(const Storage *storage, const String *path)
                 const String *section = strSubN(line, 1, strSize(line) - 2);
 
                 if (strEqZ(section, INFO_SECTION_BACKREST) ||
+                    strEqZ(section, INFO_SECTION_CIPHER) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP_DB) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP_OPTION) ||
@@ -400,6 +452,8 @@ typedef struct TestBackupPqScriptParam
     bool noPriorWal;                                                // Don't write prior test WAL segments
     bool noArchiveCheck;                                            // Do not check archive
     CompressType walCompressType;                                   // Compress type for the archive files
+    CipherType cipherType;                                          // Cipher type
+    const char *cipherPass;                                         // Cipher pass
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
 } TestBackupPqScriptParam;
@@ -449,7 +503,9 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     // -----------------------------------------------------------------------------------------------------------------------------
     if (!param.noPriorWal)
     {
-        InfoArchive *infoArchive = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
+        InfoArchive *infoArchive = infoArchiveLoadFile(
+            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
+            param.cipherPass == NULL ? NULL : STR(param.cipherPass));
         const String *archiveId = infoArchiveId(infoArchive);
         StringList *walSegmentList = pgLsnRangeToWalSegmentList(
             pgControl.version, param.timeline, lsnStart - pgControl.walSegmentSize,
@@ -1020,7 +1076,7 @@ testRun(void)
         Buffer *destination = bufNew(256);
         IoWrite *write = ioBufferWriteNew(destination);
 
-        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 0, 0, 0, NULL)), "block incr");
+        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 0, 0, 0, NULL, NULL, NULL)), "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");
         TEST_RESULT_VOID(ioWriteClose(write), "close");
@@ -1035,7 +1091,7 @@ testRun(void)
         destination = bufNew(256);
         write = ioBufferWriteNew(destination);
 
-        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 0, 0, 0, NULL)), "block incr");
+        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 0, 0, 0, NULL, NULL, NULL)), "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");
         TEST_RESULT_VOID(ioWriteClose(write), "close");
@@ -1071,7 +1127,8 @@ testRun(void)
         write = ioBufferWriteNew(destination);
 
         TEST_RESULT_VOID(
-            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 2, 4, 5, NULL)))),
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 2, 4, 5, NULL, NULL, NULL)))),
             "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");
@@ -1117,7 +1174,8 @@ testRun(void)
         write = ioBufferWriteNew(destination);
 
         TEST_RESULT_VOID(
-            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 0, 0, map)))),
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 0, 0, map, NULL, NULL)))),
             "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");
@@ -2658,7 +2716,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 3");
 
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191002-070640F}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION {file, s=3}\n"
@@ -2822,7 +2880,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 8");
 
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191003-105320F}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION.gz {file, s=3}\n"
@@ -2982,7 +3040,7 @@ testRun(void)
 
             // Check repo directory
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191003-105320F_20191004-144000D}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION.gz {file, s=3}\n"
@@ -3130,7 +3188,7 @@ testRun(void)
                 "P00   WARN: no prior backup exists, incr backup has been changed to full");
 
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191016-042640F}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION {file, s=3}\n"
@@ -3321,7 +3379,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 13");
 
             TEST_RESULT_STR(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
                 strNewFmt(
                     "pg_data {path}\n"
                     "pg_data/PG_VERSION.gz {file, s=2}\n"
@@ -3481,7 +3539,7 @@ testRun(void)
                 "P00   INFO: incr backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191027-181320F_20191030-014640I}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION.gz {file, s=2}\n"
@@ -3615,7 +3673,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 14");
 
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191030-014640F}\n"
                 "bundle {path}\n"
                 "bundle/1/pg_data/PG_VERSION {file, s=2}\n"
@@ -3739,7 +3797,7 @@ testRun(void)
                 "P00   INFO: diff backup size = [SIZE], file total = 5");
 
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191030-014640F_20191101-092000D}\n"
                 "bundle {path}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
@@ -3839,7 +3897,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 6");
 
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191103-165320F}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION {file, s=2}\n"
@@ -3928,7 +3986,7 @@ testRun(void)
                 "P00   INFO: diff backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
-                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191103-165320F_20191106-002640D}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
@@ -3957,6 +4015,108 @@ testRun(void)
                     ",\"reference\":\"20191103-165320F\",\"size\":24577,\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573000002}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n",
+                "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 full backup with comp/enc");
+
+        backupTimeStart = BACKUP_EPOCH + 3200000;
+
+        {
+            // Create stanza encrypted stanza
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawBool(argList, cfgOptOnline, false);
+            hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+            hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+            HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+            HRN_STORAGE_PATH_REMOVE(storageRepoIdxWrite(0), NULL, .recurse = true);
+
+            cmdStanzaCreate();
+            TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
+
+            // Load options
+            argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawZ(argList, cfgOptCompressType, "lz4");
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "24KiB");
+            hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+            hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Run backup
+            testBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
+                "P00   INFO: check archive for segment 0000000105DC520000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (96KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/smaller-than-block-size (3B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DC520000000001, lsn = 5dc5200/300000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
+                "P00   INFO: check archive for segment(s) 0000000105DC520000000000:0000000105DC520000000001\n"
+                "P00   INFO: new backup label = 20191108-080000F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 7");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
+                    .cipherPass = TEST_CIPHER_PASS),
+                ". {link, d=20191108-080000F}\n"
+                "pg_data {path}\n"
+                "pg_data/PG_VERSION.lz4 {file, s=2}\n"
+                "pg_data/backup_label.lz4 {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/2.pgbi {file, m={0,0,0,0}, s=98304}\n"
+                "pg_data/base/1/smaller-than-block-size.lz4 {file, s=3}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control.lz4 {file, s=8192}\n"
+                "pg_data/pg.log.pgbi {file, m={0,0}, s=24577}\n"
+                "pg_data/tablespace_map.lz4 {file, s=19}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
+                    ",\"timestamp\":1572800000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1573200002}\n"
+                "pg_data/base/1/2={\"bims\":112,\"checksum\":\"9f13a523321c66208e90d45f87fa0cd9b370e111\",\"size\":98304,"
+                    "\"timestamp\":1573000000}\n"
+                "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
+                    ",\"timestamp\":1573000000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
+                "pg_data/pg.log={\"bims\":80,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\",\"size\":24577"
+                    ",\"timestamp\":1572800000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                    ",\"timestamp\":1573200002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"

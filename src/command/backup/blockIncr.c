@@ -7,6 +7,7 @@ Block Incremental Filter
 #include "command/backup/blockIncr.h"
 #include "command/backup/blockMap.h"
 #include "common/compress/helper.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
@@ -27,6 +28,10 @@ typedef struct BlockIncr
 
     unsigned int reference;                                         // Current backup reference
     uint64_t bundleId;                                              // Bundle id
+
+    StringId compressType;                                          // Compress filter type
+    const Pack *compressParam;                                      // Compress filter parameters
+    const Pack *encryptParam;                                       // Encrypt filter parameters
 
     unsigned int blockNo;                                           // Block number
     unsigned int blockNoLast;                                       // Last block no
@@ -126,17 +131,28 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                                 blockMapGet(this->blockMapPrior, this->blockNo) : NULL;
 
                         // Write block
+                        // !!! WOULD IT BE WORTH TRYING TO DETECT ALL ZERO BLOCKS?
                         if (blockMapItemIn == NULL ||
                             memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
                         {
                             IoWrite *const write = ioBufferWriteNew(this->blockOut);
-                            ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew());
+
+                            // !!! COMPRESS FILTER SHOULD OMIT FILE HEADER
+                            if (this->compressParam != NULL)
+                            {
+                                ioFilterGroupAdd(
+                                    ioWriteFilterGroup(write), compressFilterPack(this->compressType, this->compressParam));
+                            }
+
+                            // !!! ENCRYPT FILTER SHOULD OMIT HEADER
+                            if (this->encryptParam != NULL)
+                                ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewPack(this->encryptParam));
+
+                            if (this->compressParam == NULL && this->encryptParam == NULL) // {uncovered - !!!}
+                                ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew());
+
                             ioFilterGroupAdd(ioWriteFilterGroup(write), blockPartWriteNew());
                             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
-                            // !!! ioFilterGroupAdd(ioWriteFilterGroup(write), compressFilter(/* !!! */compressTypeGz, 1));
-                            // !!! COMPRESS FILTER SHOULD OMIT FILE HEADER
-                            // !!! ENCRYPT FILTER GOES HERE
-                            // !!! WOULD IT BE WORTH TRYING TO DETECT ALL ZERO BLOCKS?
 
                             ioWriteOpen(write);
                             ioWriteVarIntU64(write, this->blockNo - this->blockNoLast);
@@ -175,18 +191,26 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
                 if (this->done && this->blockNo > 0)
                 {
-                    // Size of block output before starting to write the map
-                    const size_t blockOutBegin = bufUsed(this->blockOut);
+                    MEM_CONTEXT_TEMP_BEGIN()
+                    {
+                        // Size of block output before starting to write the map
+                        const size_t blockOutBegin = bufUsed(this->blockOut);
 
-                    IoWrite *const write = ioBufferWriteNew(this->blockOut);
-                    // !!! ENCRYPT FILTER WOULD GO HERE
-                    ioWriteOpen(write);
+                        // Write the map
+                        IoWrite *const write = ioBufferWriteNew(this->blockOut);
 
-                    blockMapWrite(this->blockMapOut, write);
+                        if (this->encryptParam != NULL)
+                            ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewPack(this->encryptParam));
 
-                    // Close the write and get total bytes written for the map
-                    ioWriteClose(write);
-                    this->blockMapOutSize = bufUsed(this->blockOut) - blockOutBegin;
+                        // Write the map
+                        ioWriteOpen(write);
+                        blockMapWrite(this->blockMapOut, write);
+                        ioWriteClose(write);
+
+                        // Get total bytes written for the map
+                        this->blockMapOutSize = bufUsed(this->blockOut) - blockOutBegin;
+                    }
+                    MEM_CONTEXT_TEMP_END();
                 }
             }
 
@@ -288,7 +312,7 @@ blockIncrInputSame(const THIS_VOID)
 IoFilter *
 blockIncrNew(
     const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset,
-    const Buffer *const blockMapPrior)
+    const Buffer *const blockMapPrior, const IoFilter *const compress, const IoFilter *const encrypt)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
@@ -296,6 +320,8 @@ blockIncrNew(
         FUNCTION_LOG_PARAM(UINT64, bundleId);
         FUNCTION_LOG_PARAM(UINT64, bundleOffset);
         FUNCTION_LOG_PARAM(BUFFER, blockMapPrior);
+        FUNCTION_LOG_PARAM(IO_FILTER, compress);
+        FUNCTION_LOG_PARAM(IO_FILTER, encrypt);
     FUNCTION_LOG_END();
 
     IoFilter *this = NULL;
@@ -313,9 +339,34 @@ blockIncrNew(
             .blockOffset = bundleOffset,
             .block = bufNew(blockSize),
             .blockOut = bufNew(0),
-            .blockMapPrior = blockMapPrior != NULL ? blockMapNewRead(ioBufferReadNewOpen(blockMapPrior)) : NULL, // !!! FIX THIS LEAK
             .blockMapOut = blockMapNew(),
         };
+
+        // Duplicate compress filter
+        if (compress != NULL)
+        {
+            driver->compressType = ioFilterType(compress);
+            driver->compressParam = pckDup(ioFilterParamList(compress));
+        }
+
+        if (encrypt != NULL)
+            driver->encryptParam = pckDup(ioFilterParamList(encrypt));
+
+        // Load prior block map
+        if (blockMapPrior)
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                IoRead *const read = ioBufferReadNewOpen(blockMapPrior);
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    driver->blockMapPrior =  blockMapNewRead(read);
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
 
         // Create param list
         Pack *paramList = NULL;
@@ -329,6 +380,13 @@ blockIncrNew(
             pckWriteU64P(packWrite, bundleId);
             pckWriteU64P(packWrite, bundleOffset);
             pckWriteBinP(packWrite, blockMapPrior);
+            pckWritePackP(packWrite, driver->compressParam);
+
+            if (driver->compressParam != NULL)
+                pckWriteStrIdP(packWrite, driver->compressType);
+
+            pckWritePackP(packWrite, driver->encryptParam);
+
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -358,7 +416,22 @@ blockIncrNewPack(const Pack *const paramList)
         const uint64_t bundleOffset = (size_t)pckReadU64P(paramListPack);
         const Buffer *blockMapPrior = pckReadBinP(paramListPack);
 
-        result = ioFilterMove(blockIncrNew(blockSize, reference, bundleId, bundleOffset, blockMapPrior), memContextPrior());
+        // Create compress filter
+        const Pack *const compressParam = pckReadPackP(paramListPack);
+        const IoFilter *compress = NULL;
+
+        if (compressParam != NULL) // {uncovered - !!!}
+            compress = compressFilterPack(pckReadStrIdP(paramListPack), compressParam); // {uncovered - !!!}
+
+        // Create encrypt filter
+        const Pack *const encryptParam = pckReadPackP(paramListPack);
+        const IoFilter *encrypt = NULL;
+
+        if (encryptParam != NULL) // {uncovered - !!!}
+            encrypt = cipherBlockNewPack(encryptParam); // {uncovered - !!!}
+
+        result = ioFilterMove(
+            blockIncrNew(blockSize, reference, bundleId, bundleOffset, blockMapPrior, compress, encrypt), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
