@@ -561,14 +561,8 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
-        total: 23
-        harness:
-          name: sftp
-          shim:
-            storage/sftp/storage:
-              function:
-                - storageSftpUnlink
-        containerReq: true
+        total: 3
+        harness: libssh2
 
         coverage:
           - storage/sftp/helper

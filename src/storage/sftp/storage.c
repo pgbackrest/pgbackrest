@@ -73,30 +73,6 @@ storageSftpLibssh2FxNoSuchFile(THIS_VOID, const int rc)
 }
 
 /***********************************************************************************************************************************
-Validate libssh2 startup
-***********************************************************************************************************************************/
-static void
-validateLibssh2Startup(StorageSftp *driver)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, driver);
-    FUNCTION_LOG_END();
-
-    ASSERT(driver != NULL);
-
-    if (driver->libssh2_initStatus != 0)
-        THROW_FMT(ServiceError, "unable to init libssh2");
-
-    if (driver->session == NULL)
-        THROW_FMT(ServiceError, "unable to init libssh2 session");
-
-    if (driver->handshakeStatus != 0)
-        THROW_FMT(ServiceError, "libssh2 handshake failed");
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Free libssh2 resources
 ***********************************************************************************************************************************/
 static void
@@ -110,12 +86,16 @@ libssh2SessionFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    libssh2_sftp_close(this->sftpHandle);
-    libssh2_sftp_shutdown(this->sftpSession);
+    // jrt sftp_close may need to wrap these ssh2 funcs in  do/whiles
+    if (this->sftpHandle != NULL)
+        libssh2_sftp_close(this->sftpHandle);
+
+    if (this->sftpSession != NULL)
+        libssh2_sftp_shutdown(this->sftpSession);
 
     if (this->session != NULL)
     {
-        libssh2_session_disconnect(this->session, "pgbackrest instance shutdown");
+        libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgbackrest instance shutdown", "");
         libssh2_session_free(this->session);
     }
 
@@ -836,10 +816,14 @@ storageSftpNewInternal(
         };
 
         driver->libssh2_initStatus = libssh2_init(0);
+        if (driver->libssh2_initStatus != 0)
+            THROW_FMT(ServiceError, "unable to init libssh2");
 
         driver->ioSession = ioClientOpen(sckClientNew(host, port, timeoutConnect, timeoutSession));
 
         driver->session = libssh2_session_init();
+        if (driver->session == NULL)
+            THROW_FMT(ServiceError, "unable to init libssh2 session");
 
         // Returns void
         libssh2_session_set_blocking(driver->session, 0);
@@ -852,11 +836,15 @@ storageSftpNewInternal(
         }
         while (driver->handshakeStatus == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
-        validateLibssh2Startup(driver);
-
+        if (driver->handshakeStatus != 0)
+        {
+            THROW_FMT(ServiceError, "libssh2 handshake failed");
+}
         //!!! jrt allow for stronger hash sha - newer versions have sha256 i think
-        // do we want to store the returned hash??? instead of voiding it
-        (void)libssh2_hostkey_hash(driver->session, LIBSSH2_HOSTKEY_HASH_SHA1);
+        // do we want to store the returned hash or (void) it
+        const char *digest = libssh2_hostkey_hash(driver->session, LIBSSH2_HOSTKEY_HASH_SHA1);
+        if (digest == NULL)
+            THROW_FMT(ServiceError, "libssh2 hostkey hash failed");
 
         int rc = 0;
 
@@ -886,6 +874,8 @@ storageSftpNewInternal(
                     );
             }
         }
+        else
+            THROW_FMT(ParamRequiredError, "user and private key required");
 
         wait = waitNew(timeoutConnect);
 
@@ -911,7 +901,6 @@ storageSftpNewInternal(
         // jrt !!! is this valid
         // Ensure libssh2/libssh2_sftp resources freed
         memContextCallbackSet(objMemContext(driver), libssh2SessionFreeResource, driver);
-
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     OBJ_NEW_END();
