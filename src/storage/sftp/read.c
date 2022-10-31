@@ -78,8 +78,9 @@ storageReadSftpOpen(THIS_VOID)
     {
         // If session indicates sftp error, can query for sftp error
         // !!! see also libssh2_session_last_error() - possible to return more detailed error
-        if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL ||
-            libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN)
+        int rc = libssh2_session_last_errno(this->session);
+
+        if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL || rc == LIBSSH2_ERROR_EAGAIN)
         {
             if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
             {
@@ -167,16 +168,15 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
         // valid?
         if (rc < 0)
         {
-            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+            if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
-                // This is extremely hacky. libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
-                if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_BAD_MESSAGE && this->interface.offset > 0)
-                    THROW_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.offset, strZ(this->interface.name));
+                uint64_t sftpErr = 0;
 
-                // Otherwise
-                THROW_FMT(
-                    FileReadError, "unable to read '%s': sftp errno [%lu]", strZ(this->interface.name),
-                    libssh2_sftp_last_error(this->sftpSession));
+                // This is extremely hacky. libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
+                if ((sftpErr = libssh2_sftp_last_error(this->sftpSession)) == LIBSSH2_FX_BAD_MESSAGE && this->interface.offset > 0)
+                    THROW_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.offset, strZ(this->interface.name));
+                else
+                    THROW_FMT(FileReadError, "unable to read '%s': sftp errno [%lu]", strZ(this->interface.name), sftpErr);
             }
             else
                 THROW_FMT(FileReadError, "unable to read '%s'", strZ(this->interface.name));
@@ -207,7 +207,6 @@ storageReadSftpClose(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->sftpHandle != NULL);
 
     if (this->sftpHandle != NULL)
     {
@@ -223,18 +222,23 @@ storageReadSftpClose(THIS_VOID)
 
         if (rc)
         {
-            char *libssh2_errmsg;
-            int errmsg_len;
 
+
+            THROW_FMT(
+                FileCloseError,
+                STORAGE_ERROR_READ_CLOSE ": libssh2 errno [%d]%s", strZ(this->interface.name), rc,
+                rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                strZ(strNewFmt(" sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+
+            /* jrt ??? figure out how to shim libssh2_session_last_error to get this to work
             int libssh2_errno = libssh2_session_last_error(this->session, &libssh2_errmsg, &errmsg_len, 0);
-
-            LOG_DEBUG_FMT("throw sys free resource error");
 
             THROW_FMT(
                 FileCloseError,
                 STORAGE_ERROR_READ_CLOSE ": libssh2 errno [%d] %s%s", strZ(this->interface.name), libssh2_errno, libssh2_errmsg,
                 libssh2_errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                strZ(strNewFmt("sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "" );
+                strZ(strNewFmt("sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                */
         }
     }
 

@@ -244,13 +244,14 @@ storageSftpLinkCreate(
         do
         {
             rc = libssh2_sftp_symlink_ex(
-                    this->sftpSession, strZ(target), (unsigned int)strSize(target), (char *)strZ(linkPath),
-                    (unsigned int)strSize(linkPath), LIBSSH2_SFTP_SYMLINK);
+                this->sftpSession, strZ(target), (unsigned int)strSize(target), (char *)strZ(linkPath),
+                (unsigned int)strSize(linkPath), LIBSSH2_SFTP_SYMLINK);
         }
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
         if (rc != 0)
         {
+            // jrt add additional error info???? sftp error????
             THROW_FMT(FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath), strZ(target));
         }
     }
@@ -324,13 +325,13 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
     // If the directory could not be opened process errors and report missing directories
     if (sftpHandle == NULL)
     {
-        // If session indicates sftp error, can query for sftp error
-        // !!! see also libssh2_session_last_error() - possible to return more detailed error
+        // If sftpHandle == NULL is due to LIBSSH2_FX_NO_SUCH_FILE, do not throw error here, return NULL result
         if (!storageSftpLibssh2FxNoSuchFile(this, libssh2_session_last_errno(this->session)))
+        {
             storageSftpEvalLibssh2Error(
-                    libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), &PathOpenError,
-                    strNewFmt(STORAGE_ERROR_LIST_INFO, strZ(path)),
-                    NULL);
+                libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), &PathOpenError,
+                strNewFmt(STORAGE_ERROR_LIST_INFO, strZ(path)), NULL);
+        }
     }
     else
     {
@@ -397,7 +398,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
             if (rc != 0)
-                THROW_FMT(PathCloseError, "unable to close path %s after listing", strZ(path));
+                THROW_FMT(PathCloseError, "unable to close path '%s' after listing", strZ(path));
 
             sftpHandle = NULL;
         }
@@ -405,32 +406,6 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
     }
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
-}
-
-// jrt !!! after harnessLibssh2 is complete, may revert this back into storageSftpRemove rather than breaking out for coverage
-/**********************************************************************************************************************************/
-static int
-storageSftpUnlink(THIS_VOID, const String *const file)
-{
-    THIS(StorageSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    int result = 0;
-
-    this->wait = waitNew(this->timeoutConnect);
-
-    do
-    {
-        result = libssh2_sftp_unlink_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file));
-    } while (result == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
-
-    FUNCTION_LOG_RETURN(INT, result);
 }
 
 /**********************************************************************************************************************************/
@@ -448,10 +423,15 @@ storageSftpRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam par
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    int rc = 0;
-
     // Attempt to unlink the file
-    rc = storageSftpUnlink(this, file);
+    int rc = 0;
+    this->wait = waitNew(this->timeoutConnect);
+
+    do
+    {
+        rc = libssh2_sftp_unlink_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file));
+    }
+    while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
     if (rc)
     {
@@ -609,11 +589,13 @@ storageSftpPathCreate(
     {
          // If session indicates sftp error, can query for sftp error
          // !!! see also libssh2_session_last_error() - possible to return more detailed error
-         if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
          {
+             uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
+
             // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
             // need to find out if we can determine server version
-             if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
+             if (sftpErrno == LIBSSH2_FX_FAILURE)
              {
                  // Check if the directory already exists
                  LIBSSH2_SFTP_ATTRIBUTES attrs;
@@ -634,7 +616,7 @@ storageSftpPathCreate(
                  // jrt ??? Make an explicit call here to set the mode in case it's different from the existing directory's mode ???
              }
              // If the parent path does not exist then create it if allowed
-             else if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE && !noParentCreate)
+             else if (sftpErrno == LIBSSH2_FX_NO_SUCH_FILE && !noParentCreate)
              {
                  String *const pathParent = strPath(path);
 
@@ -643,7 +625,7 @@ storageSftpPathCreate(
 
                  strFree(pathParent);
              }
-             else if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
+             else if (sftpErrno != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
                 THROW_FMT(PathCreateError, "unable to create path '%s'", strZ(path));
          }
          else
@@ -693,12 +675,13 @@ storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterf
                         do
                         {
                             rc = libssh2_sftp_unlink_ex(this->sftpSession, strZ(file), (unsigned int)strSize(file));
-                        } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+                        }
+                        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
                         if (rc)
                         {
                             // Attempting to unlink a directory appears to return LIBSSH2_FX_FAILURE
-                            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL &&
+                            if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL &&
                                 libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
                             {
                                 storageInterfacePathRemoveP(this, file, true);
@@ -725,12 +708,12 @@ storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterf
         }
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
-        if (rc != 0)
+        if (rc)
         {
             // If session indicates sftp error, can query for sftp error
             // !!! see also libssh2_session_last_error() - possible to return more detailed error
             // jrt !!! ?? just replace this call with the returned rc everywhere - verify ??
-            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_SFTP_PROTOCOL)
+            if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
                 if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
                     THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(path));
@@ -844,7 +827,7 @@ storageSftpNewInternal(
         // do we want to store the returned hash or (void) it
         const char *digest = libssh2_hostkey_hash(driver->session, LIBSSH2_HOSTKEY_HASH_SHA1);
         if (digest == NULL)
-            THROW_FMT(ServiceError, "libssh2 hostkey hash failed");
+            THROW_FMT(ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(driver->session));
 
         int rc = 0;
 
@@ -859,9 +842,10 @@ storageSftpNewInternal(
                 rc = libssh2_userauth_publickey_fromfile(
                         driver->session, strZ(user), strZNull(keyPub) == NULL ? NULL : strZ(keyPub), strZ(keyPriv),
                         strZNull(keyPassphrase) == NULL ? NULL : strZ(keyPassphrase));
-            } while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+            }
+            while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
-            if (rc != 0 )
+            if (rc)
             {
                 storageSftpEvalLibssh2Error(
                     libssh2_session_last_errno(driver->session), libssh2_sftp_last_error(driver->sftpSession), &ServiceError,

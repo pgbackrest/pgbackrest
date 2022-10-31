@@ -194,7 +194,8 @@ LIBSSH2_SESSION *libssh2_session_init_ex(
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
-                        varLstAdd(varLstNew(), varNewStr(NULL)),
+                        varLstAdd(
+                            varLstNew(), varNewStr(NULL)),
                         varNewStr(NULL)),
                     varNewStr(NULL)),
                 varNewStr(NULL)),
@@ -259,7 +260,8 @@ int libssh2_userauth_publickey_fromfile_ex(
                 varLstAdd(
                     varLstAdd(
                         varLstAdd(
-                            varLstAdd(varLstNew(), varNewStrZ(username)),
+                            varLstAdd(
+                                varLstNew(), varNewStrZ(username)),
                             varNewUInt(ousername_len)),
                         varNewStrZ(publickey)),
                     varNewStrZ(privatekey)),
@@ -348,8 +350,16 @@ int libssh2_sftp_stat_ex(
     if (attrs == NULL)
         THROW(AssertError, "attrs is NULL");
 
+    attrs->flags = 0;
+    attrs->flags |= harnessLibssh2->flags;
+
     attrs->permissions = 0;
     attrs->permissions |= harnessLibssh2->attrPerms;
+
+    attrs->mtime = harnessLibssh2->mtime;
+    attrs->uid = harnessLibssh2->uid;
+    attrs->gid = harnessLibssh2->gid;
+    attrs->filesize = harnessLibssh2->filesize;
 
     return harnessLibssh2->resultInt;
 }
@@ -360,6 +370,343 @@ Shim for libssh2_sftp_last_error
 unsigned long libssh2_sftp_last_error(LIBSSH2_SFTP *sftp)
 {
     return harnessLibssh2ScriptRun(HRNLIBSSH2_SFTP_LAST_ERROR, NULL, (HarnessLibssh2 *)sftp)->resultUInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_symlink_ex
+    LIBSSH2_SFTP_SYMLINK
+        path is file to link to , target is symlink to create
+    LIBSSH2_SFTP_READLINK
+    LIBSSH2_SFTP_REALPATH
+        path is file to retrive data from, target is populated with the data
+***********************************************************************************************************************************/
+int libssh2_sftp_symlink_ex(
+    LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, char *target, unsigned int target_len, int link_type)
+{
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_SYMLINK_EX,
+        varLstAdd(
+            varLstAdd(
+                varLstAdd(
+                    varLstAdd(
+                        varLstAdd(
+                            varLstNew(), varNewStrZ(path)),
+                    varNewUInt(path_len)),
+                varNewStrZ(target)),
+            varNewUInt(target_len)),
+        varNewInt(link_type)),
+        (HarnessLibssh2 *)sftp);
+
+    int rc = 0;
+    /* from the doc page https://www.libssh2.org/libssh2_sftp_symlink_ex.html
+     * jrt !!! the driver is using LIBSSH2_SFTP_READLINK to resolve linkDestination, should it use LIBSSH2_SFTP_REALPATH, see below
+     *
+    target - a pointer to a buffer. The buffer has different uses depending what the link_type argument is set to.
+    LIBSSH2_SFTP_SYMLINK: Remote filesystem object to link to.
+    LIBSSH2_SFTP_READLINK: Pre-allocated buffer to resolve symlink target into.
+    LIBSSH2_SFTP_REALPATH: Pre-allocated buffer to resolve realpath target into.
+    ...snip...
+    libssh2_sftp_symlink(3) : Create a symbolic link between two filesystem objects.
+    libssh2_sftp_readlink(3) : Resolve a symbolic link filesystem object to its next target.
+    libssh2_sftp_realpath(3) : Resolve a complex, relative, or symlinked filepath to its effective target.
+
+    */
+    /*
+    LIBSSH2_SFTP_SYMLINK 0
+        path is file to link to, target is symlink to create
+    LIBSSH2_SFTP_READLINK 1
+    LIBSSH2_SFTP_REALPATH 2
+        path is file to retrive data from, target is populated with the data
+    */
+
+    switch (link_type)
+    {
+        case LIBSSH2_SFTP_READLINK:
+        case LIBSSH2_SFTP_REALPATH:
+            if (harnessLibssh2->symlinkExTarget != NULL)
+            {
+                strncpy(target, strZ(harnessLibssh2->symlinkExTarget), PATH_MAX);
+                target[strSize(harnessLibssh2->symlinkExTarget)] = '\0';
+            }
+
+            rc = harnessLibssh2->resultInt != 0 ? harnessLibssh2->resultInt : (int)strSize(harnessLibssh2->symlinkExTarget);
+            break;
+
+        case LIBSSH2_SFTP_SYMLINK:
+            if (harnessLibssh2->symlinkExTarget != NULL)
+            {
+                strncpy(target, strZ(harnessLibssh2->symlinkExTarget), strSize(harnessLibssh2->symlinkExTarget));
+                target[strSize(harnessLibssh2->symlinkExTarget)] = '\0';
+            }
+
+            rc = harnessLibssh2->resultInt;
+            break;
+
+        default:
+            printf("harnessLibssh2.c libssh2_sftp_symlink_ex ERROR: UNKNOWN link_type\n");
+            break;
+    }
+
+    return rc;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_open_ex
+***********************************************************************************************************************************/
+ LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
+    LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len, unsigned long flags, long mode, int open_type)
+{
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_OPEN_EX,
+        varLstAdd(
+            varLstAdd(
+                varLstAdd(
+                    varLstAdd(
+                        varLstAdd(
+                            varLstNew(), varNewStrZ(filename)),
+                    varNewUInt(filename_len)),
+                varNewUInt64(flags)),
+            varNewInt64(mode)),
+        varNewInt(open_type)),
+        (HarnessLibssh2 *)sftp);
+
+    return harnessLibssh2->resultNull ? NULL : (LIBSSH2_SFTP_HANDLE *)harnessLibssh2;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_readdir_ex
+***********************************************************************************************************************************/
+int libssh2_sftp_readdir_ex(
+    LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buffer_maxlen, char *longentry, size_t longentry_maxlen,
+    LIBSSH2_SFTP_ATTRIBUTES *attrs)
+{
+    if (attrs == NULL)
+        THROW_FMT(AssertError, "%s attrs is NULL", __FUNCTION__);
+
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_READDIR_EX,
+        varLstAdd(
+            varLstAdd(
+                varLstAdd(
+                    varLstAdd(
+                        varLstNew(), varNewStrZ(buffer)),
+                varNewUInt64(buffer_maxlen)),
+            varNewStrZ(longentry)),
+        varNewUInt64(longentry_maxlen)),
+        (HarnessLibssh2 *)handle);
+
+    if (harnessLibssh2->fileName != NULL)
+        strncpy(buffer, strZ(harnessLibssh2->fileName), buffer_maxlen);
+
+    return harnessLibssh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_session_last_errno
+***********************************************************************************************************************************/
+int libssh2_session_last_errno(LIBSSH2_SESSION *session)
+{
+    return harnessLibssh2ScriptRun(
+            HRNLIBSSH2_SESSION_LAST_ERRNO, NULL, (HarnessLibssh2 *)session)->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_session_last_error
+**********************************************************************************************************************************
+int libssh2_session_last_error(LIBSSH2_SESSION *session, char **errmsg, int *errmsg_len, int want_buf)
+{
+// jrt do like libssh2_sftp_read..  do not pass errmsg to script run???
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SESSION_LAST_ERROR,
+        varLstAdd(
+            varLstAdd(
+                varLstAdd(
+                    varLstNew(), varNewStrZ(*errmsg)),
+            varNewInt(*errmsg_len)),
+        varNewInt(want_buf)),
+        (HarnessLibssh2 *)session);
+
+    if (harnessLibssh2->errMsg != NULL)
+    {
+
+    }
+
+
+    return harnessLibssh2->resultInt;
+
+//    return harnessLibssh2ScriptRun(
+//            HRNLIBSSH2_SESSION_LAST_ERROR, NULL, (HarnessLibssh2 *)session)->resultInt;
+}
+*/
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_fstat_ex
+***********************************************************************************************************************************/
+int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *attrs, int setstat)
+{
+    if (attrs == NULL)
+        THROW_FMT(AssertError, "%s attrs is NULL", __FUNCTION__);
+
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_FSTAT_EX, varLstAdd(varLstNew(), varNewInt(setstat)), (HarnessLibssh2 *)handle);
+
+    // populate attrs
+    attrs->flags = 0;
+    attrs->flags |= harnessLibssh2->flags;
+
+    attrs->permissions = 0;
+    attrs->permissions |= harnessLibssh2->attrPerms;
+
+    attrs->mtime = harnessLibssh2->mtime;
+    attrs->uid = harnessLibssh2->uid;
+    attrs->gid = harnessLibssh2->gid;
+    attrs->filesize = harnessLibssh2->filesize;
+
+    return harnessLibssh2->resultInt;
+    //return harnessLibssh2ScriptRun(
+    //        HRNLIBSSH2_SFTP_FSTAT_EX, varLstAdd(varLstNew(), varNewInt(setstat)), (HarnessLibssh2 *)handle)->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_fsync
+***********************************************************************************************************************************/
+int libssh2_sftp_fsync(LIBSSH2_SFTP_HANDLE *handle)
+{
+    return harnessLibssh2ScriptRun(HRNLIBSSH2_SFTP_FSYNC, NULL, (HarnessLibssh2 *)handle)->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_mkdir_ex
+***********************************************************************************************************************************/
+int libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, long mode)
+{
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_MKDIR_EX,
+        varLstAdd(
+            varLstAdd(
+                varLstAdd(
+                    varLstNew(), varNewStrZ(path)),
+            varNewUInt(path_len)),
+        varNewInt64(mode)),
+        (HarnessLibssh2 *)sftp);
+
+    return harnessLibssh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_read
+***********************************************************************************************************************************/
+ssize_t libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buffer_maxlen)
+{
+    // We don't pass buffer to harnessLibssh2ScriptRun. The first call for each invocation passes buffer with random data, which is
+    // an issue for sftpTest.c.
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_READ,
+            varLstAdd(
+                varLstNew(), varNewUInt64(buffer_maxlen)),
+        (HarnessLibssh2 *)handle);
+
+    // copy read into buffer
+    if (harnessLibssh2->readBuffer != NULL)
+        strncpy(buffer, strZ(harnessLibssh2->readBuffer), strSize(harnessLibssh2->readBuffer));
+
+    // number of bytes populated
+    return harnessLibssh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_rename_ex
+***********************************************************************************************************************************/
+int libssh2_sftp_rename_ex(
+    LIBSSH2_SFTP *sftp, const char *source_filename, unsigned int source_filename_len, const char *dest_filename,
+    unsigned int dest_filename_len, long flags)
+{
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_RENAME_EX,
+        varLstAdd(
+            varLstAdd(
+                varLstAdd(
+                    varLstAdd(
+                        varLstAdd(
+                            varLstNew(), varNewStrZ(source_filename)),
+                    varNewUInt64(source_filename_len)),
+                varNewStrZ(dest_filename)),
+            varNewUInt64(dest_filename_len)),
+        varNewInt64(flags)),
+        (HarnessLibssh2 *)sftp);
+
+    return harnessLibssh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_rmdir_ex
+***********************************************************************************************************************************/
+int libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len)
+{
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_RMDIR_EX,
+        varLstAdd(
+            varLstAdd(
+                varLstNew(), varNewStrZ(path)),
+            varNewUInt64(path_len)),
+        (HarnessLibssh2 *)sftp);
+
+    return harnessLibssh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_seek64
+***********************************************************************************************************************************/
+void libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
+{
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_SEEK64,
+        varLstAdd(
+            varLstNew(), varNewUInt64(offset)),
+        (HarnessLibssh2 *)handle);
+
+    if (harnessLibssh2->offset <= 0)
+        // to avoid compiler complaining of unused harnessLibssh2
+
+    return;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_unlink_ex
+***********************************************************************************************************************************/
+int libssh2_sftp_unlink_ex(LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len)
+{
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_UNLINK_EX,
+        varLstAdd(
+            varLstAdd(
+                varLstNew(), varNewStrZ(filename)),
+            varNewUInt64(filename_len)),
+        (HarnessLibssh2 *)sftp);
+
+    return harnessLibssh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_sftp_write
+***********************************************************************************************************************************/
+ssize_t libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size_t count)
+{
+    // We don't pass buffer to harnessLibssh2ScriptRun. The first call for each invocation passes buffer with random data, which is
+    // an issue for sftpTest.c.
+    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
+        HRNLIBSSH2_SFTP_WRITE,
+        varLstAdd(
+            varLstNew(), varNewUInt64(count)),
+        (HarnessLibssh2 *)handle);
+
+    if (buffer)
+    {
+        // silence unused param warning/error
+    }
+
+    // return number of bytes written
+    return harnessLibssh2->resultInt;
 }
 
 /***********************************************************************************************************************************

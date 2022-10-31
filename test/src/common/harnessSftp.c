@@ -5,6 +5,8 @@ Harness for Protocol Testing
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <libssh2.h>
+#include <libssh2_sftp.h>
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
@@ -28,63 +30,105 @@ Shim install state
 static struct
 {
     // Local process shims
-    bool localShimUnlink;
+    bool localShimIoSessionFd;
 } hrnSftpStatic;
 
 /***********************************************************************************************************************************
-Shim storageSftpUnlink
+Shim ioSessionFd
 ***********************************************************************************************************************************/
-static int
-storageSftpUnlink(THIS_VOID, const String *const file)
+int ioSessionFd(IoSession *this)
 {
-    THIS(StorageSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-        FUNCTION_LOG_PARAM(STRING, file);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_SESSION, this);
+    FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(file != NULL);
 
-    int result = 0;
+    int fd = 0;
 
     // Call the shim when installed
-    if (hrnSftpStatic.localShimUnlink)
-    {
-        if (strEqZ(strBase(file), "errorOnMissing"))
-        {
-            result = LIBSSH2_ERROR_SOCKET_DISCONNECT;
-            libssh2_session_set_last_error(this->session, LIBSSH2_ERROR_SOCKET_DISCONNECT, NULL);
-        }
-    }
+    if (hrnSftpStatic.localShimIoSessionFd)
+        fd = 63581;
     else
-        result = storageSftpUnlink_SHIMMED(this, file);
+        fd = ioSessionFd_SHIMMED(this);
 
-    FUNCTION_LOG_RETURN(INT, result);
+    FUNCTION_TEST_RETURN(INT, fd);
 }
 
 /**********************************************************************************************************************************/
-void
-hrnSftpUnlinkShimInstall(void)
+void hrnSftpIoSessionFdShimInstall(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    hrnSftpStatic.localShimUnlink = true;
+    hrnSftpStatic.localShimIoSessionFd = true;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-void
-hrnSftpUnlinkShimUninstall(void)
+void hrnSftpIoSessionFdShimUninstall(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    hrnSftpStatic.localShimUnlink = false;
+    hrnSftpStatic.localShimIoSessionFd = false;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
+
+///***********************************************************************************************************************************
+//Shim storageSftpUnlink
+//***********************************************************************************************************************************/
+//static int
+//storageSftpUnlink(THIS_VOID, const String *const file)
+//{
+//    THIS(StorageSftp);
+//
+//    FUNCTION_LOG_BEGIN(logLevelTrace);
+//        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
+//        FUNCTION_LOG_PARAM(STRING, file);
+//    FUNCTION_LOG_END();
+//
+//    ASSERT(this != NULL);
+//    ASSERT(file != NULL);
+//
+//    int result = 0;
+//
+//    // Call the shim when installed
+//    if (hrnSftpStatic.localShimUnlink)
+//    {
+//        if (strEqZ(strBase(file), "errorOnMissing"))
+//        {
+//            result = LIBSSH2_ERROR_SOCKET_DISCONNECT;
+//            libssh2_session_set_last_error(this->session, LIBSSH2_ERROR_SOCKET_DISCONNECT, NULL);
+//        }
+//    }
+//    else
+//        result = storageSftpUnlink_SHIMMED(this, file);
+//
+//    FUNCTION_LOG_RETURN(INT, result);
+//}
+//
+///**********************************************************************************************************************************/
+//void
+//hrnSftpUnlinkShimInstall(void)
+//{
+//    FUNCTION_HARNESS_VOID();
+//
+//    hrnSftpStatic.localShimUnlink = true;
+//
+//    FUNCTION_HARNESS_RETURN_VOID();
+//}
+//
+///**********************************************************************************************************************************/
+//void
+//hrnSftpUnlinkShimUninstall(void)
+//{
+//    FUNCTION_HARNESS_VOID();
+//
+//    hrnSftpStatic.localShimUnlink = false;
+//
+//    FUNCTION_HARNESS_RETURN_VOID();
+//}
 
 ///***********************************************************************************************************************************
 //Shim storageSftpRemove

@@ -561,8 +561,14 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
-        total: 3
+        total: 19
         harness: libssh2
+        harness:
+          name: sftp
+          shim:
+            common/io/session:
+              function:
+                - ioSessionFd
 
         coverage:
           - storage/sftp/helper

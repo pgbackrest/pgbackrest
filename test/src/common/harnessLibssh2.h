@@ -49,6 +49,28 @@ Function constants
 #define HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX                   "libssh2_userauth_publickey_fromfile_ex"
 
 /***********************************************************************************************************************************
+Macros for defining groups of functions that implement commands
+***********************************************************************************************************************************/
+// Set of functions mimicking libssh2 inititialization and authorization
+#define HRNLIBSSH2_MACRO_STARTUP()                                                                                                 \
+    {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},                                                                 \
+    {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},                                                    \
+    {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},                                                \
+    {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},                                      \
+    {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,                                                                        \
+    .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",                               \
+    .resultInt = 0},                                                                                                               \
+    {.function = HRNLIBSSH2_SFTP_INIT}
+
+// Set of functions mimicking libssh2 shutdown and disconnect
+#define HRNLIBSSH2_MACRO_SHUTDOWN()                                                                                                \
+    {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},                                                                    \
+    {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgbackrest instance shutdown\",\"\"]", .resultInt = 0},          \
+    {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},                                                                    \
+    {.function = NULL}                                                                                                             \
+
+
+/***********************************************************************************************************************************
 Structure for scripting libssh2 responses
 ***********************************************************************************************************************************/
 typedef struct HarnessLibssh2
@@ -60,7 +82,16 @@ typedef struct HarnessLibssh2
     uint64_t resultUInt;                                            // UInt result value
     const char *resultZ;                                            // Zero-terminated result value
     bool resultNull;                                                // Return null from function that normally returns a struct ptr
+    uint64_t flags;                                                 // libssh2 flags
     uint64_t attrPerms;                                             // libssh2 attr perms
+    uint64_t atime, mtime;                                          // libssh2 timestamps
+    uint64_t uid, gid;                                              // libssh2 uid/gid
+    uint64_t filesize;                                              // libssh2 filesize
+    uint64_t offset;                                                // libssh2 seek offset
+    const String *symlinkExTarget;                                  // libssh2_sftp_symlink_ex target
+    const String *fileName;                                         // libssh2_readdir* libssh2_stat* filename
+    const String *errMsg;                                           // libssh2 error message to populate
+    const String *readBuffer;                                       // what to copy into read buffer
     TimeMSec sleep;                                                 // Sleep specified milliseconds before returning from function
 } HarnessLibssh2;
 
