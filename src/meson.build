@@ -157,6 +157,7 @@ src_pgbackrest = [
 	'common/exec.c',
 	'common/fork.c',
 	'common/ini.c',
+    'common/io/chunkedRead.c',
 	'common/io/client.c',
 	'common/io/fd.c',
 	'common/io/fdRead.c',
