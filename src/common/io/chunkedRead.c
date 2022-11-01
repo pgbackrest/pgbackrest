@@ -64,7 +64,7 @@ ioChunkedRead(THIS_VOID, Buffer *const buffer, const bool block)
             if (this->chunkLast == 0)
                 this->chunkRemains = (size_t)chunkDelta;
             else
-                this->chunkRemains = (uint64_t)(cvtInt64FromZigZag(chunkDelta - 1) + (int64_t)this->chunkLast);
+                this->chunkRemains = (size_t)(cvtInt64FromZigZag(chunkDelta - 1) + (int64_t)this->chunkLast);
 
             this->chunkLast = this->chunkRemains;
         }

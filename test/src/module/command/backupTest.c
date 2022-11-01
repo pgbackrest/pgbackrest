@@ -6,6 +6,7 @@ Test Backup Command
 #include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/chunkedRead.h"
 #include "postgres/interface/static.vendor.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
@@ -154,48 +155,24 @@ testBackupValidateList(
                                     storage, blockName, .offset = blockMapItem->offset, .limit = VARUINT64(blockMapItem->size)));
                             ioReadOpen(blockRead);
 
-                            Buffer *block = bufNew(file.size);
-                            IoWrite *blockWrite = ioBufferWriteNew(block);
+                            IoRead *chunkRead = ioChunkedReadNew(blockRead);
 
-                            cipherBlockFilterGroupAdd(ioWriteFilterGroup(blockWrite), cipherType, cipherModeDecrypt, cipherPass);
+                            cipherBlockFilterGroupAdd(ioReadFilterGroup(chunkRead), cipherType, cipherModeDecrypt, cipherPass);
 
                             if (manifestData->backupOptionCompressType != compressTypeNone)
                             {
                                 ioFilterGroupAdd(
-                                    ioWriteFilterGroup(blockWrite), decompressFilter(manifestData->backupOptionCompressType));
+                                    ioReadFilterGroup(chunkRead), decompressFilter(manifestData->backupOptionCompressType));
                             }
 
-                            ioWriteOpen(blockWrite);
+                            ioReadOpen(chunkRead);
+                            ioReadVarIntU64(chunkRead);
 
-                            // Read first part size and part
-                            size_t partSize = ioReadVarIntU64(blockRead);
-                            Buffer *const blockPart = bufNew(partSize);
+                            Buffer *block = bufNew(file.size);
+                            IoWrite *blockWrite = ioBufferWriteNewOpen(block);
 
-                            while (true)
-                            {
-                                ioRead(blockRead, blockPart);
-                                ioWrite(blockWrite, blockPart);
-                                bufUsedZero(blockPart);
-
-                                // Get next part delta
-                                const uint64_t partDelta = ioReadVarIntU64(blockRead);
-
-                                // Stop when part delta is zero, which indicates the end of the part list
-                                if (partDelta == 0)
-                                    break;
-
-                                // Calculate next part size from delta
-                                partSize = (uint64_t)(cvtInt64FromZigZag(partDelta - 1) + (int64_t)partSize);
-                                bufResize(blockPart, partSize);
-                            }
-
+                            ioCopyP(chunkRead, blockWrite);
                             ioWriteClose(blockWrite);
-
-                            // Extract block no
-                            size_t bufferOffset = 0;
-
-                            cvtUInt64FromVarInt128(bufPtrConst(block), &bufferOffset, bufUsed(block));
-                            block = bufNewC(bufPtrConst(block) + bufferOffset, bufUsed(block) - bufferOffset);
 
                             // Add reference to log
                             if (!strEmpty(mapLog))
