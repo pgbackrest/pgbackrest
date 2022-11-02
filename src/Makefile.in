@@ -62,7 +62,6 @@ SRCS = \
 	command/archive/push/push.c \
 	command/backup/backup.c \
 	command/backup/blockIncr.c \
-	command/backup/blockPartWrite.c \
 	command/backup/blockMap.c \
 	command/backup/common.c \
 	command/backup/pageChecksum.c \
@@ -121,6 +120,7 @@ SRCS = \
 	common/io/fd.c \
 	common/io/fdRead.c \
 	common/io/fdWrite.c \
+	common/io/filter/chunk.c \
 	common/io/filter/size.c \
 	common/io/http/client.c \
 	common/io/http/common.c \

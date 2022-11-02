@@ -1,52 +1,46 @@
 /***********************************************************************************************************************************
-Block Part Filter
+Chunk Filter
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/backup/blockPartWrite.h"
-// #include "common/compress/helper.h"
-// #include "common/crypto/hash.h"
 #include "common/debug.h"
-// #include "common/io/bufferRead.h"
-// #include "common/io/bufferWrite.h"
-// #include "common/io/filter/size.h"
+#include "common/io/filter/chunk.h"
 #include "common/log.h"
-// #include "common/type/pack.h"
 #include "common/type/object.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct BlockPartWrite
+typedef struct IoChunk
 {
     MemContext *memContext;                                         // Mem context of filter
 
     const uint8_t *buffer;                                          // Internal buffer
     size_t bufferSize;                                              // Buffer size
     size_t bufferOffset;                                            // Buffer offset
-    size_t sizeLast;                                                // Size of last part
+    size_t sizeLast;                                                // Size of last chunk
     bool done;                                                      // Is the filter done?
-    uint8_t header[CVT_VARINT128_BUFFER_SIZE];                      // Part header (block no, part size)
-} BlockPartWrite;
+    uint8_t header[CVT_VARINT128_BUFFER_SIZE];                      // Chunk header
+} IoChunk;
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_BLOCK_PART_WRITE_TYPE                                                                                               \
-    BlockPartWrite *
-#define FUNCTION_LOG_BLOCK_PART_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "BlockPartWrite", buffer, bufferSize)
+#define FUNCTION_LOG_IO_CHUNK_TYPE                                                                                                 \
+    IoChunk *
+#define FUNCTION_LOG_IO_CHUNK_FORMAT(value, buffer, bufferSize)                                                                    \
+    objToLog(value, "IoChunk", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Should the same input be provided again?
 ***********************************************************************************************************************************/
 static bool
-blockPartWriteInputSame(const THIS_VOID)
+ioChunkInputSame(const THIS_VOID)
 {
-    THIS(const BlockPartWrite);
+    THIS(const IoChunk);
 
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BLOCK_PART_WRITE, this);
+        FUNCTION_TEST_PARAM(IO_CHUNK, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -58,29 +52,29 @@ blockPartWriteInputSame(const THIS_VOID)
 Is filter done?
 ***********************************************************************************************************************************/
 static bool
-blockPartWriteDone(const THIS_VOID)
+ioChunkDone(const THIS_VOID)
 {
-    THIS(const BlockPartWrite);
+    THIS(const IoChunk);
 
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BLOCK_PART_WRITE, this);
+        FUNCTION_TEST_PARAM(IO_CHUNK, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->done && !blockPartWriteInputSame(this));
+    FUNCTION_TEST_RETURN(BOOL, this->done && !ioChunkInputSame(this));
 }
 
 /***********************************************************************************************************************************
 Count bytes in the input
 ***********************************************************************************************************************************/
 static void
-blockPartWriteProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
+ioChunkProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 {
-    THIS(BlockPartWrite);
+    THIS(IoChunk);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BLOCK_PART_WRITE, this);
+        FUNCTION_LOG_PARAM(IO_CHUNK, this);
         FUNCTION_LOG_PARAM(BUFFER, input);
         FUNCTION_LOG_PARAM(BUFFER, output);
     FUNCTION_LOG_END();
@@ -88,39 +82,44 @@ blockPartWriteProcess(THIS_VOID, const Buffer *const input, Buffer *const output
     ASSERT(this != NULL);
     ASSERT(output != NULL);
 
-    // Input to process
+    // If there is input to process
     if (input != NULL)
     {
-        // Write the part size
+        // Write the chunk size
         if (this->buffer == NULL)
         {
+            // Initialize the header with the chunk size
             this->buffer = this->header;
             this->bufferSize = 0;
             this->bufferOffset = 0;
 
-            // Write part size
             cvtUInt64ToVarInt128(
                 this->sizeLast == 0 ? bufUsed(input) : cvtInt64ToZigZag((int64_t)bufUsed(input) - (int64_t)this->sizeLast) + 1,
-                this->header, &this->bufferSize, SIZE_OF_STRUCT_MEMBER(BlockPartWrite, header));
+                this->header, &this->bufferSize, SIZE_OF_STRUCT_MEMBER(IoChunk, header));
 
             this->sizeLast = bufUsed(input);
         }
 
+        // Output the chunk
         do
         {
+            // Output the entire buffer if possible
             if (bufRemains(output) >= this->bufferSize - this->bufferOffset)
             {
                 bufCatC(output, this->buffer, this->bufferOffset, this->bufferSize - this->bufferOffset);
 
+                // If the header was written then switch to the chunk
                 if (this->buffer == this->header)
                 {
                     this->buffer = bufPtrConst(input);
                     this->bufferSize = bufUsed(input);
                     this->bufferOffset = 0;
                 }
+                // Else done writing the chunk
                 else
                     this->buffer = NULL;
             }
+            // Else output part of the buffer
             else
             {
                 const size_t outputSize = bufRemains(output);
@@ -129,13 +128,14 @@ blockPartWriteProcess(THIS_VOID, const Buffer *const input, Buffer *const output
                 this->bufferOffset += outputSize;
             }
         }
-        while (blockPartWriteInputSame(this) && !bufFull(output));
+        while (ioChunkInputSame(this) && !bufFull(output));
     }
-    // Processing complete
+    // Else processing is complete
     else
     {
         ASSERT(bufRemains(output) > 0);
 
+        // Write the terminating zero byte
         *(bufPtr(output) + bufUsed(output)) = '\0';
         bufUsedInc(output, 1);
 
@@ -147,24 +147,24 @@ blockPartWriteProcess(THIS_VOID, const Buffer *const input, Buffer *const output
 
 /**********************************************************************************************************************************/
 IoFilter *
-blockPartWriteNew(void)
+ioChunkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(BlockPartWrite, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(IoChunk, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        BlockPartWrite *const driver = OBJ_NEW_ALLOC();
+        IoChunk *const driver = OBJ_NEW_ALLOC();
 
-        *driver = (BlockPartWrite)
+        *driver = (IoChunk)
         {
             .memContext = memContextCurrent(),
         };
 
         this = ioFilterNewP(
-            BLOCK_PART_WRITE_FILTER_TYPE, driver, NULL, .done = blockPartWriteDone, .inOut = blockPartWriteProcess,
-            .inputSame = blockPartWriteInputSame);
+            CHUNK_FILTER_TYPE, driver, NULL, .done = ioChunkDone, .inOut = ioChunkProcess,
+            .inputSame = ioChunkInputSame);
     }
     OBJ_NEW_END();
 

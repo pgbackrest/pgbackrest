@@ -3,7 +3,6 @@ Block Incremental Filter
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/backup/blockPartWrite.h"
 #include "command/backup/blockIncr.h"
 #include "command/backup/blockMap.h"
 #include "common/compress/helper.h"
@@ -13,6 +12,7 @@ Block Incremental Filter
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/filter/buffer.h"
+#include "common/io/filter/chunk.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -151,7 +151,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             if (this->compressParam == NULL && this->encryptParam == NULL) // {uncovered - !!!}
                                 ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew());
 
-                            ioFilterGroupAdd(ioWriteFilterGroup(write), blockPartWriteNew());
+                            ioFilterGroupAdd(ioWriteFilterGroup(write), ioChunkNew());
                             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
                             ioWriteOpen(write);

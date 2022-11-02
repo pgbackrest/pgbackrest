@@ -272,7 +272,7 @@ unit:
           - common/io/fdRead
           - common/io/fdWrite
           - common/io/filter/buffer
-          - command/backup/blockPartWrite
+          - common/io/filter/chunk
           - common/io/filter/filter
           - common/io/filter/group
           - common/io/filter/sink

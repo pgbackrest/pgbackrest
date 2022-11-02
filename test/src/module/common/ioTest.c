@@ -780,7 +780,7 @@ testRun(void)
         ioBufferSizeSet(3);
         Buffer *destination = bufNew(256);
         IoWrite *write = ioBufferWriteNew(destination);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), blockPartWriteNew());
+        ioFilterGroupAdd(ioWriteFilterGroup(write), ioChunkNew());
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABC")), "write");

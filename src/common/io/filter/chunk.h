@@ -1,21 +1,21 @@
 /***********************************************************************************************************************************
-Block Part Write Filter
+Chunk Filter
 
-!!!
+Split data up into chunks so it can be written without knowing the eventual length of the data.
 ***********************************************************************************************************************************/
-#ifndef COMMAND_BACKUP_BLOCK_PART_WRITE_H
-#define COMMAND_BACKUP_BLOCK_PART_WRITE_H
+#ifndef COMMON_IO_FILTER_CHUNK_H
+#define COMMON_IO_FILTER_CHUNK_H
 
 #include "common/io/filter/filter.h"
 
 /***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
-#define BLOCK_PART_WRITE_FILTER_TYPE                                STRID5("!!!", 0x90dc9dad820)
+#define CHUNK_FILTER_TYPE                                           STRID5("chunk", 0xb755030)
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *blockPartWriteNew(void);
+IoFilter *ioChunkNew(void);
 
 #endif

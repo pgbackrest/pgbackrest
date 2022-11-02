@@ -69,6 +69,7 @@ ioChunkedRead(THIS_VOID, Buffer *const buffer, const bool block)
             this->chunkLast = this->chunkRemains;
         }
 
+        // If the entire chunk will fit in the output buffer
         if (this->chunkRemains < bufRemains(buffer))
         {
             bufLimitSet(buffer, bufUsed(buffer) + this->chunkRemains);
@@ -77,6 +78,7 @@ ioChunkedRead(THIS_VOID, Buffer *const buffer, const bool block)
             actualBytes += this->chunkRemains;
             this->chunkRemains = 0;
         }
+        // Else only part of the chunk will fit in the output
         else
         {
             actualBytes += bufRemains(buffer);
