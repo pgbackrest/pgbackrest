@@ -254,6 +254,16 @@ List *restoreFile(
                                 storageRepoIdx(repoIdx), repoFile,
                                 .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL,
                                 .offset = file->offset, .limit = repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL);
+
+                            // Add decryption filter for block incremental map
+                            if (cipherPass != NULL && file->blockIncrMapSize != 0) // {uncovered - !!!}
+                            {
+                                ioFilterGroupAdd( // {uncovered - !!!}
+                                    ioReadFilterGroup(storageReadIo(repoFileRead)),
+                                    cipherBlockNew(
+                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));  // {uncovered - !!!}
+                            }
+
                             ioReadOpen(storageReadIo(repoFileRead));
                         }
                         MEM_CONTEXT_PRIOR_END();
