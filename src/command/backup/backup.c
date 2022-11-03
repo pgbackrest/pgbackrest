@@ -1734,6 +1734,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                         bundle = false;
                     }
 
+                    // Provide block incremental size and the reference list
                     pckWriteU64P(param, jobData->blockIncrSize);
 
                     if (jobData->blockIncrSize > 0)
@@ -1753,7 +1754,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
 
-                // !!! Need a test for what happens when a file shrinks after it was a block incr
+                // If block incremental then provide the location of the prior map when available
                 if (blockIncr)
                 {
                     pckWriteBoolP(param, true);

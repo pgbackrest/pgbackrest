@@ -24,7 +24,7 @@ The block map is stored as a series of block info that are abbreviated when sequ
 
   - If the next block is from a different reference then a varint-128 encoded zero stop byte is added.
 
-The block list is terminated by a varint-128 encoded zero stop byte.
+The block map is terminated by a varint-128 encoded zero stop byte.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -73,8 +73,10 @@ blockMapNewRead(IoRead *const map)
 
     do
     {
+        // If no reference is currently being processed
         if (blockMapRef == NULL)
         {
+            // Get reference and subtract one
             unsigned int reference = (unsigned int)ioReadVarIntU64(map);
 
             if (reference == 0)
@@ -82,6 +84,7 @@ blockMapNewRead(IoRead *const map)
 
             reference--;
 
+            // If the reference is not found get bundle id and offset and add to the reference list
             blockMapRef = lstFind(refList, &(BlockMapRef){.reference = reference});
 
             if (blockMapRef == NULL)
@@ -92,10 +95,12 @@ blockMapNewRead(IoRead *const map)
                 // Add reference to list
                 blockMapRef = lstAdd(refList, &blockMapRefAdd);
             }
+            // Else increment the offset
             else
                 blockMapRef->offset += ioReadVarIntU64(map);
         }
 
+        // Construct block map item
         BlockMapItem blockMapItem =
         {
             .reference = blockMapRef->reference,
@@ -104,6 +109,7 @@ blockMapNewRead(IoRead *const map)
             .size = ioReadVarIntU64(map),
         };
 
+        // If size is zero then this is the last block in the reference so expect a new reference next
         if (blockMapItem.size == 0)
         {
             blockMapRef = NULL;

@@ -74,6 +74,7 @@ deltaMapProcess(THIS_VOID, const Buffer *const input)
         inputOffset += blockHash;
         this->blockCurrent += blockHash;
 
+        // If the block size has been reached then output the hash
         if (this->blockCurrent == this->blockSize)
         {
             MEM_CONTEXT_TEMP_BEGIN()
@@ -91,7 +92,7 @@ deltaMapProcess(THIS_VOID, const Buffer *const input)
 }
 
 /***********************************************************************************************************************************
-Get string representation of the hash as a filter result
+Get a binary representation of the hash list
 ***********************************************************************************************************************************/
 static Pack *
 deltaMapResult(THIS_VOID)

@@ -221,7 +221,9 @@ List *restoreFile(
                             ASSERT(varUInt64(file->limit) != 0);
                             repoFileLimit = varUInt64(file->limit);
 
-                            // !!! WHY THIS EXCEPTION -- ONLY NEEDED FOR REMOTE
+                            // !!! Multiple files cannot be read when the file to read is a block incremental. This is because the
+                            // remote protocol does not support multiple open files at once. Should we only do this for remote or
+                            // leave as is and try to fix remote in a future commit???
                             if (file->blockIncrMapSize == 0)
                             {
                                 // Determine how many files can be copied with one read
@@ -286,9 +288,8 @@ List *restoreFile(
                         // be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
 
-                        // !!! EXPLAIN WHY THIS IS NEEDED
+                        // !!! The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));
-                        // !!! DECRYPT FILTER NEEDED HERE
 
                         // Size of delta map. If there is no delta map because the pg file does not exist then set to zero, which
                         // will force all blocks to be updated.
@@ -384,7 +385,7 @@ List *restoreFile(
                                         // Use a per-block mem context to reduce memory usage
                                         MEM_CONTEXT_TEMP_BEGIN()
                                         {
-                                            // !!!
+                                            // Read the block in chunked format
                                             IoRead *const chunkedRead = ioChunkedReadNew(storageReadIo(blockRead));
 
                                             // Add decryption filter
@@ -403,7 +404,7 @@ List *restoreFile(
                                                     ioReadFilterGroup(chunkedRead), decompressFilter(repoFileCompressType));
                                             }
 
-                                            // !!!
+                                            // Open chunked read
                                             ioReadOpen(chunkedRead);
 
                                             // Read and discard the block no since we already know it
@@ -412,7 +413,7 @@ List *restoreFile(
                                             // Copy chunked block
                                             ioCopyP(chunkedRead, storageWriteIo(pgFileWrite));
 
-                                            // Flush writes since !!!
+                                            // Flush writes since we may seek to a new location for the next block list
                                             ioWriteFlush(storageWriteIo(pgFileWrite));
                                         }
                                         MEM_CONTEXT_TEMP_END();

@@ -1,7 +1,8 @@
 /***********************************************************************************************************************************
 Restore Delta Map
 
-Build a list
+Build a list of hashes based on a block size. This is used to compare the contents of a file to block map to determine what needs to
+be updated.
 ***********************************************************************************************************************************/
 #ifndef COMMAND_RESTORE_DELTA_MAP_H
 #define COMMAND_RESTORE_DELTA_MAP_H

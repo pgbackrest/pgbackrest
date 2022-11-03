@@ -130,7 +130,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             this->blockMapPrior != NULL && this->blockNo < blockMapSize(this->blockMapPrior) ?
                                 blockMapGet(this->blockMapPrior, this->blockNo) : NULL;
 
-                        // Write block
+                        // If the block is new or has changed then write it
                         // !!! WOULD IT BE WORTH TRYING TO DETECT ALL ZERO BLOCKS?
                         if (blockMapItemIn == NULL ||
                             memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
@@ -148,22 +148,23 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             if (this->encryptParam != NULL)
                                 ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewPack(this->encryptParam));
 
+                            // If no compress/encrypt then add a buffer so chunk sizes are as large as possible
                             if (this->compressParam == NULL && this->encryptParam == NULL) // {uncovered - !!!}
                                 ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew());
 
+                            // Add chunk and size filters
                             ioFilterGroupAdd(ioWriteFilterGroup(write), ioChunkNew());
                             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
-
                             ioWriteOpen(write);
+
+                            // Write the block no as a delta of the prior block no
                             ioWriteVarIntU64(write, this->blockNo - this->blockNoLast);
 
+                            // Copy block data through the filters a close
                             ioCopyP(ioBufferReadNewOpen(this->block), write);
-
                             ioWriteClose(write);
 
                             // Write to block map
-                            // ASSERT(this->blockNo == 0 || this->blockOffset > 0); !!! WHY DOESN'T THIS WORK?
-
                             BlockMapItem blockMapItem =
                             {
                                 .reference = this->reference,
@@ -175,9 +176,11 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
                             blockMapAdd(this->blockMapOut, &blockMapItem);
 
+                            // Increment block offset and last block no
                             this->blockOffset += blockMapItem.size;
                             this->blockNoLast = this->blockNo;
                         }
+                        // Else write a reference to the block in the prior backup
                         else
                         {
                             blockMapAdd(this->blockMapOut, blockMapItemIn);
@@ -189,6 +192,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                     MEM_CONTEXT_TEMP_END();
                 }
 
+                // Write the block map if done processing and at least one block was written
                 if (this->done && this->blockNo > 0)
                 {
                     MEM_CONTEXT_TEMP_BEGIN()
@@ -219,6 +223,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
             if (blockOutSize > 0)
             {
+                // Output the rest of the block if it will fit
                 if (bufRemains(output) >= blockOutSize)
                 {
                     bufCatSub(output, this->blockOut, this->blockOutOffset, blockOutSize);
@@ -228,6 +233,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                     this->blockOutOffset = 0;
                     this->inputSame = this->inputOffset != 0;
                 }
+                // Else output as much of the block as possible
                 else
                 {
                     const size_t blockOutSize = bufRemains(output);
@@ -245,7 +251,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 }
 
 /***********************************************************************************************************************************
-Return filter result
+The result is the size of the block map
 ***********************************************************************************************************************************/
 static Pack *
 blockIncrResult(THIS_VOID)
@@ -349,6 +355,7 @@ blockIncrNew(
             driver->compressParam = pckDup(ioFilterParamList(compress));
         }
 
+        // Duplicate encrypt filter
         if (encrypt != NULL)
             driver->encryptParam = pckDup(ioFilterParamList(encrypt));
 
