@@ -4029,7 +4029,6 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-            hrnCfgArgRawZ(argList, cfgOptCompressType, "lz4");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "24KiB");
@@ -4066,16 +4065,16 @@ testRun(void)
                     .cipherPass = TEST_CIPHER_PASS),
                 ". {link, d=20191108-080000F}\n"
                 "pg_data {path}\n"
-                "pg_data/PG_VERSION.lz4 {file, s=2}\n"
-                "pg_data/backup_label.lz4 {file, s=17}\n"
+                "pg_data/PG_VERSION.gz {file, s=2}\n"
+                "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
                 "pg_data/base/1/2.pgbi {file, m={0,0,0,0}, s=98304}\n"
-                "pg_data/base/1/smaller-than-block-size.lz4 {file, s=3}\n"
+                "pg_data/base/1/smaller-than-block-size.gz {file, s=3}\n"
                 "pg_data/global {path}\n"
-                "pg_data/global/pg_control.lz4 {file, s=8192}\n"
+                "pg_data/global/pg_control.gz {file, s=8192}\n"
                 "pg_data/pg.log.pgbi {file, m={0,0}, s=24577}\n"
-                "pg_data/tablespace_map.lz4 {file, s=19}\n"
+                "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
@@ -4090,7 +4089,7 @@ testRun(void)
                 "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
-                "pg_data/pg.log={\"bims\":80,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\",\"size\":24577"
+                "pg_data/pg.log={\"bims\":64,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\",\"size\":24577"
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573200002}\n"
