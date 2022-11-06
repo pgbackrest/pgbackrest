@@ -264,7 +264,7 @@ archivePushFile(
                     {
                         ioFilterGroupAdd(
                             ioWriteFilterGroup(storageWriteIo(destination[repoListIdx])),
-                            cipherBlockNew(cipherModeEncrypt, repoData->cipherType, BUFSTR(repoData->cipherPass), NULL));
+                            cipherBlockNewP(cipherModeEncrypt, repoData->cipherType, BUFSTR(repoData->cipherPass)));
                     }
                 }
             }

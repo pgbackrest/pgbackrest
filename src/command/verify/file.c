@@ -46,7 +46,7 @@ verifyFile(
 
         // Add decryption filter
         if (cipherPass != NULL)
-            ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
+            ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass)));
 
         // Add decompression filter
         if (compressType != compressTypeNone)
