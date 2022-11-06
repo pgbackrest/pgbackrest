@@ -19,6 +19,7 @@ typedef struct CipherBlockNewParam
 {
     VAR_PARAM_HEADER;
     const String *digest;                                           // Digest to use (defaults to SHA-1)
+    bool raw;                                                       // Omit header magic to save space
 } CipherBlockNewParam;
 
 #define cipherBlockNewP(mode, cipherType, pass, ...)                                                                               \
