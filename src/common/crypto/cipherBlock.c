@@ -382,13 +382,13 @@ cipherBlockInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 IoFilter *
-cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName)
+cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, CipherBlockNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, mode);
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(BUFFER, pass);                          // Use FUNCTION_TEST so passphrase is not logged
-        FUNCTION_LOG_PARAM(STRING, digestName);
+        FUNCTION_LOG_PARAM(STRING, param.digest);
     FUNCTION_LOG_END();
 
     ASSERT(pass != NULL);
@@ -410,13 +410,13 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
     // Lookup digest.  If not defined it will be set to sha1.
     const EVP_MD *digest = NULL;
 
-    if (digestName)
-        digest = EVP_get_digestbyname(strZ(digestName));
+    if (param.digest)
+        digest = EVP_get_digestbyname(strZ(param.digest));
     else
         digest = EVP_sha1();
 
     if (!digest)
-        THROW_FMT(AssertError, "unable to load digest '%s'", strZ(digestName));
+        THROW_FMT(AssertError, "unable to load digest '%s'", strZ(param.digest));
 
     // Allocate memory to hold process state
     IoFilter *this = NULL;
@@ -447,7 +447,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const
             pckWriteU64P(packWrite, mode);
             pckWriteU64P(packWrite, cipherType);
             pckWriteBinP(packWrite, pass);
-            pckWriteStrP(packWrite, digestName);
+            pckWriteStrP(packWrite, param.digest);
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -475,9 +475,9 @@ cipherBlockNewPack(const Pack *const paramList)
         const CipherMode cipherMode = (CipherMode)pckReadU64P(paramListPack);
         const CipherType cipherType = (CipherType)pckReadU64P(paramListPack);
         const Buffer *const pass = pckReadBinP(paramListPack);
-        const String *const digestName = pckReadStrP(paramListPack);
+        const String *const digest = pckReadStrP(paramListPack);
 
-        result = ioFilterMove(cipherBlockNew(cipherMode, cipherType, pass, digestName), memContextPrior());
+        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherType, pass, .digest = digest), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -499,7 +499,7 @@ cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMod
     ASSERT((type == cipherTypeNone && pass == NULL) || (type != cipherTypeNone && pass != NULL));
 
     if (type != cipherTypeNone)
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(mode, type, BUFSTR(pass), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(mode, type, BUFSTR(pass)));
 
     FUNCTION_LOG_RETURN(IO_FILTER_GROUP, filterGroup);
 }

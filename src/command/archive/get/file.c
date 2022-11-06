@@ -58,7 +58,7 @@ ArchiveGetFileResult archiveGetFile(
                 {
                     ioFilterGroupAdd(
                         ioWriteFilterGroup(storageWriteIo(destination)),
-                        cipherBlockNew(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive), NULL));
+                        cipherBlockNewP(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive)));
                     compressible = false;
                 }
 

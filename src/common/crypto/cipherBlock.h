@@ -15,7 +15,16 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, const String *digestName);
+typedef struct CipherBlockNewParam
+{
+    VAR_PARAM_HEADER;
+    const String *digest;                                           // Digest to use (defaults to SHA-1)
+} CipherBlockNewParam;
+
+#define cipherBlockNewP(mode, cipherType, pass, ...)                                                                               \
+    cipherBlockNew(mode, cipherType, pass, (CipherBlockNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, CipherBlockNewParam param);
 IoFilter *cipherBlockNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
