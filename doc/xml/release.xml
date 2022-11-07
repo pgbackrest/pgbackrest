@@ -93,6 +93,7 @@
                         <commit subject="Pass filters to remote storage as a handler array."/>
                         <commit subject="Add backupFileRepoPathP()."/>
                         <commit subject="Shorten names in real/all integration test matrix."/>
+                        <commit subject="Update cipherBlockNew() to allow optional parameters."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

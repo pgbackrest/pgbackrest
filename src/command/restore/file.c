@@ -262,8 +262,8 @@ List *restoreFile(
                             {
                                 ioFilterGroupAdd( // {uncovered - !!!}
                                     ioReadFilterGroup(storageReadIo(repoFileRead)),
-                                    cipherBlockNew(
-                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));  // {uncovered - !!!}
+                                    cipherBlockNewP( // {uncovered - !!!}
+                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));  // {uncovered - !!!}
                             }
 
                             ioReadOpen(storageReadIo(repoFileRead));
@@ -393,8 +393,8 @@ List *restoreFile(
                                             {
                                                 ioFilterGroupAdd( // {uncovered - !!!}
                                                     ioReadFilterGroup(chunkedRead),
-                                                    cipherBlockNew(
-                                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));  // {uncovered - !!!}
+                                                    cipherBlockNewP( // {uncovered - !!!}
+                                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));  // {uncovered - !!!}
                                             }
 
                                             // Add decompression filter
@@ -447,7 +447,7 @@ List *restoreFile(
                         if (cipherPass != NULL)
                         {
                             ioFilterGroupAdd(
-                                filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
+                                filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass)));
                         }
 
                         // Add decompression filter

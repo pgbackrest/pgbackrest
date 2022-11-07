@@ -150,9 +150,10 @@ backupFile(
 
                             if (cipherType != cipherTypeNone)
                             {
+                                // !!! Can this ever be raw?
+
                                 ioFilterGroupAdd(
-                                    ioReadFilterGroup(read),
-                                    cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
+                                    ioReadFilterGroup(read), cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass)));
                             }
 
                             // Decompress the file if compressed
@@ -237,7 +238,7 @@ backupFile(
 
                     // Encrypt filter
                     IoFilter *const encrypt = cipherType != cipherTypeNone ?
-                        cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL) : NULL;
+                        cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = file->blockIncr) : NULL;
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
                     // compressed/encrypted separately
@@ -255,7 +256,7 @@ backupFile(
                             {
                                 ioFilterGroupAdd( // {uncovered - !!!}
                                     ioReadFilterGroup(storageReadIo(blockMapRead)),
-                                    cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL)); // {uncovered - !!!}
+                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true)); // {uncovered - !!!}
                             }
 
                             blockMap = storageGetP(blockMapRead);

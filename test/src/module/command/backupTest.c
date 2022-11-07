@@ -134,8 +134,14 @@ testBackupValidateList(
                             storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)),
                             .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
                             .limit = VARUINT64(file.blockIncrMapSize));
-                        cipherBlockFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)), cipherType, cipherModeDecrypt, cipherPass);
+
+                        if (cipherType != cipherTypeNone)
+                        {
+                            ioFilterGroupAdd(
+                                ioReadFilterGroup(storageReadIo(read)),
+                                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                        }
+
                         ioReadOpen(storageReadIo(read));
 
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(read));
@@ -157,7 +163,12 @@ testBackupValidateList(
 
                             IoRead *chunkRead = ioChunkedReadNew(blockRead);
 
-                            cipherBlockFilterGroupAdd(ioReadFilterGroup(chunkRead), cipherType, cipherModeDecrypt, cipherPass);
+                            if (cipherType != cipherTypeNone)
+                            {
+                                ioFilterGroupAdd(
+                                    ioReadFilterGroup(chunkRead),
+                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                            }
 
                             if (manifestData->backupOptionCompressType != compressTypeNone)
                             {
@@ -4084,12 +4095,12 @@ testRun(void)
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573200002}\n"
-                "pg_data/base/1/2={\"bims\":112,\"checksum\":\"9f13a523321c66208e90d45f87fa0cd9b370e111\",\"size\":98304,"
+                "pg_data/base/1/2={\"bims\":104,\"checksum\":\"9f13a523321c66208e90d45f87fa0cd9b370e111\",\"size\":98304,"
                     "\"timestamp\":1573000000}\n"
                 "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
-                "pg_data/pg.log={\"bims\":64,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\",\"size\":24577"
+                "pg_data/pg.log={\"bims\":56,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\",\"size\":24577"
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573200002}\n"
