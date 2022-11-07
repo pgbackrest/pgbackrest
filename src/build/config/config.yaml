@@ -69,6 +69,9 @@ command:
   check:
     command-role:
       remote: {}
+    lock-remote-required: true
+    lock-required: true
+    lock-type: check
     log-file: false
 
   expire:
@@ -808,6 +811,7 @@ option:
       archive-get: {}
       archive-push: {}
       backup: {}
+      check: {}
       expire: {}
       info: {}
       restore: {}
@@ -2065,8 +2069,9 @@ option:
     group: repo
     type: integer
     required: false
-    allow-range: [1, 9999999]
+    allow-range: [0, 9999999]
     command:
+      archive-push: {}
       backup: {}
       expire: {}
     command-role:
@@ -2084,6 +2089,7 @@ option:
       - diff
       - incr
     command:
+      archive-push: {}
       backup: {}
       expire: {}
     command-role:
@@ -2114,6 +2120,7 @@ option:
       - count
       - time
     command:
+      archive-push: {}
       backup: {}
       expire: {}
     command-role:

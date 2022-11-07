@@ -149,6 +149,16 @@ archivePushFile(
         for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             destinationCopy[repoListIdx] = true;
 
+        // Check if the check or backup command is currently running
+        bool lockHeld = false;
+        bool backupLockHeld = lockRead(
+            cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup).status == lockReadStatusValid;
+        bool checkLockHeld = lockRead(
+            cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeCheck).status == lockReadStatusValid;
+
+        if (backupLockHeld || checkLockHeld)
+            lockHeld = true;
+
         // Get wal segment checksum and compare it to what exists in the repo, if any
         if (isSegment)
         {
@@ -167,6 +177,20 @@ archivePushFile(
             for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
                 const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
+
+                // Skip archiving if archive retention is set to 0 and the check or backup commands aren't currently running
+                if (!lockHeld && (cfgOptionIdxTest(cfgOptRepoRetentionArchive, repoData->repoIdx)
+                    && cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoData->repoIdx) == 0))
+                {
+                    // Add warning to the result that will be returned to the main process
+                    strLstAddFmt(
+                        result.warnList,
+                        "WAL file '%s' skipped for %s, because option '%s' is set to 0",
+                        strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx),
+                        cfgOptionIdxName(cfgOptRepoRetentionArchive, repoData->repoIdx));
+                    destinationCopy[repoListIdx] = false;
+                    continue;
+                }
 
                 // Check if the WAL segment already exists in the repo
                 const String *walSegmentFile = NULL;
