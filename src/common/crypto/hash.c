@@ -152,7 +152,7 @@ cryptoHashResult(THIS_VOID)
     {
         PackWrite *const packWrite = pckWriteNewP();
 
-        pckWriteStrP(packWrite, bufHex(cryptoHash(this)));
+        pckWriteBinP(packWrite, cryptoHash(this));
         pckWriteEndP(packWrite);
 
         result = pckMove(pckWriteResult(packWrite), memContextPrior());

@@ -14,7 +14,113 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.41dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.42dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1877"/>
+                        <github-pull-request id="1878"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="MannerMan"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                            <!-- Actually tester, but we don't have a tag for that yet -->
+                            <release-item-reviewer id="MannerMan"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix memory leak in file bundle <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1900"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix protocol error on short read of remote file.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1887"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Do not store references for zero-length files when bundling.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1901"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="greg.sabino.mullane"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="greg.sabino.mullane"/>
+                            <release-item-reviewer id="david.christensen"/>
+                        </release-item-contributor-list>
+
+                        <p>Use more generic descriptions for <code>pg_start_backup()</code>/<code>pg_stop_backup()</code>.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Improve manifest file updates.">
+                            <github-pull-request id="1888"/>
+                        </commit>
+                        <commit subject="Add manifest flags for file processing during backup.">
+                            <github-pull-request id="1889"/>
+                        </commit>
+                        <commit subject="Add persistent reference list to manifest.">
+                            <github-pull-request id="1890"/>
+                        </commit>
+                        <commit subject="Add varint-128 encode/decode to IoRead/IoWrite.">
+                            <github-pull-request id="1891"/>
+                        </commit>
+                        <commit subject="Update ManifestFile booleans to bit fields."/>
+                        <commit subject="Use read-only storage to calculate checksum in restoreFile()."/>
+                        <commit subject="Swap command/backup and command/restore unit tests."/>
+                        <commit subject="Add noTruncate flag to storageNewWriteP().">
+                            <github-pull-request id="1898"/>
+                        </commit>
+                        <commit subject="Pass filters to remote storage as a handler array."/>
+                        <commit subject="Add backupFileRepoPathP()."/>
+                        <commit subject="Shorten names in real/all integration test matrix."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="reid.thompson"/>
+                            <release-item-reviewer id="john.morris"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Block incremental backup.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1879"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="reid.thompson"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="john.morris"/>
+                        </release-item-contributor-list>
+
+                        <p>Move link creation to storage interface.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2022-09-19" version="2.41" title="Backup Annotations">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -27,7 +133,20 @@
                             <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
-                        <p>Fix incorrect time expiration being used for non-default repos.</p>
+                        <p>Fix incorrect time expiration being used for non-default repositories.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1870"/>
+                        <github-pull-request id="1871"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="efremov.egor"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix issue when listing directories recursively with a filter.</p>
                     </release-item>
                 </release-bug-list>
 
@@ -61,6 +180,32 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1843"/>
+                        <github-pull-request id="1847"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="anton.glushakov"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Allow upload chunk size to be configured for object stores.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1853"/>
+                        <github-pull-request id="1855"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="alex.richman"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Update archive.info timestamps after a successful backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1816"/>
                         <github-pull-request id="1819"/>
 
@@ -87,7 +232,10 @@
 
                 <release-development-list>
                     <release-item>
-                        <github-pull-request id="1842"/>
+                        <commit subject="Skip mem context cleanup in CATCH_FATAL() block.">
+                            <github-pull-request id="1842"/>
+                        </commit>
+                        <commit subject="Add mem context test missing from 0f7b6a33."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
@@ -106,6 +254,18 @@
                         </release-item-contributor-list>
 
                         <p>Do not allow <code>CATCH()</code> to catch a fatal error.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1861"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="john.morris"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <code>FN_INLINE_ALWAYS</code> macro.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>
@@ -11516,6 +11676,11 @@
         <contributor id="andrey.sokolov">
             <contributor-name-display>Andrey Sokolov</contributor-name-display>
             <contributor-id type="github">andr-sokolov</contributor-id>
+        </contributor>
+
+        <contributor id="anton.glushakov">
+            <contributor-name-display>Anton Glushakov</contributor-name-display>
+            <contributor-id type="github">glushakov</contributor-id>
         </contributor>
 
         <contributor id="anton.kurochkin">

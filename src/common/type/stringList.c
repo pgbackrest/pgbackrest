@@ -15,7 +15,7 @@ String List Handler
 /***********************************************************************************************************************************
 Internal add -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strLstAddInternal(StringList *const this, String *const string)
 {
     return *(String **)lstAdd((List *)this, &string);
@@ -24,7 +24,7 @@ strLstAddInternal(StringList *const this, String *const string)
 /***********************************************************************************************************************************
 Internal insert -- the string must have been created in the list's mem context before being passed
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline String *
+FN_INLINE_ALWAYS String *
 strLstInsertInternal(StringList *const this, const unsigned int listIdx, String *const string)
 {
     return *(String **)lstInsert((List *)this, listIdx, &string);
@@ -272,6 +272,27 @@ strLstAddZSubN(StringList *const this, const char *const string, const size_t of
     MEM_CONTEXT_END();
 
     FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+strLstFindIdx(const StringList *const this, const String *const string, const StrLstFindIdxParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(BOOL, param.required);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(string != NULL);
+
+    const unsigned int result = lstFindIdx((List *)this, &string);
+
+    if (result == LIST_NOT_FOUND && param.required)
+        THROW_FMT(AssertError, "unable to find '%s' in string list", strZ(string));
+
+    FUNCTION_TEST_RETURN(UINT, result);
 }
 
 /**********************************************************************************************************************************/

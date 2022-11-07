@@ -353,7 +353,7 @@ hrnLogReplace(void)
 
                     if (logReplace->version)
                     {
-                        unsigned int index = lstFindIdx((List *)logReplace->matchList, &match);
+                        unsigned int index = strLstFindIdxP(logReplace->matchList, match);
 
                         if (index == LIST_NOT_FOUND)
                         {

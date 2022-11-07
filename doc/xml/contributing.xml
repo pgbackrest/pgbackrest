@@ -197,14 +197,14 @@ typedef struct MyObjPub         // First letter upper case
 
 // Declare getters and setters inline for the publicly visible variables
 // Only setters require "Set" appended to the name
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 myObjMyData(const MyObj *const this)
 {
     return THIS_PUB(MyObj)->myData;    // Use the built-in THIS_PUB macro
 }
 
 // Destructor
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 myObjFree(MyObj *const this)
 {
     objFree(this);

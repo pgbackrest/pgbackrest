@@ -52,33 +52,33 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => '9.0', repoDest => HOST_DB_PRIMARY, tls => 0, storage =>   GCS, encrypt => 1, compress =>  BZ2, repo => 2, bnd => 1},
-        {pg => '9.1', repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>   GZ, repo => 1, bnd => 0},
-        {pg => '9.2', repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress => NONE, repo => 1, bnd => 1},
-        {pg => '9.3', repoDest =>     HOST_BACKUP, tls => 0, storage => AZURE, encrypt => 0, compress => NONE, repo => 2, bnd => 0},
-        {pg => '9.4', repoDest => HOST_DB_STANDBY, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 1, bnd => 1},
-        {pg => '9.5', repoDest =>     HOST_BACKUP, tls => 1, storage =>    S3, encrypt => 0, compress =>  BZ2, repo => 1, bnd => 0},
-        {pg => '9.6', repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 0, compress => NONE, repo => 2, bnd => 1},
-        {pg =>  '10', repoDest => HOST_DB_STANDBY, tls => 1, storage =>    S3, encrypt => 1, compress =>   GZ, repo => 2, bnd => 0},
-        {pg =>  '11', repoDest =>     HOST_BACKUP, tls => 1, storage => AZURE, encrypt => 0, compress =>  ZST, repo => 2, bnd => 1},
-        {pg =>  '12', repoDest =>     HOST_BACKUP, tls => 0, storage =>    S3, encrypt => 1, compress =>  LZ4, repo => 1, bnd => 0},
-        {pg =>  '13', repoDest => HOST_DB_STANDBY, tls => 1, storage =>   GCS, encrypt => 0, compress =>  ZST, repo => 1, bnd => 1},
-        {pg =>  '14', repoDest =>     HOST_BACKUP, tls => 0, storage => POSIX, encrypt => 1, compress =>  LZ4, repo => 2, bnd => 0},
-        {pg =>  '15', repoDest => HOST_DB_STANDBY, tls => 0, storage => AZURE, encrypt => 0, compress => NONE, repo => 2, bnd => 1},
+        {pg => '9.0', dst => 'db-primary', tls => 0, stg =>   GCS, enc => 1, cmp =>  BZ2, rt => 2, bnd => 1},
+        {pg => '9.1', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 0, cmp =>   GZ, rt => 1, bnd => 0},
+        {pg => '9.2', dst => 'db-standby', tls => 0, stg => POSIX, enc => 1, cmp => NONE, rt => 1, bnd => 1},
+        {pg => '9.3', dst =>     'backup', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 0},
+        {pg => '9.4', dst => 'db-standby', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 1, bnd => 1},
+        {pg => '9.5', dst =>     'backup', tls => 1, stg =>    S3, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0},
+        {pg => '9.6', dst =>     'backup', tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1},
+        {pg =>  '10', dst => 'db-standby', tls => 1, stg =>    S3, enc => 1, cmp =>   GZ, rt => 2, bnd => 0},
+        {pg =>  '11', dst =>     'backup', tls => 1, stg => AZURE, enc => 0, cmp =>  ZST, rt => 2, bnd => 1},
+        {pg =>  '12', dst =>     'backup', tls => 0, stg =>    S3, enc => 1, cmp =>  LZ4, rt => 1, bnd => 0},
+        {pg =>  '13', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 0, cmp =>  ZST, rt => 1, bnd => 1},
+        {pg =>  '14', dst =>     'backup', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 2, bnd => 0},
+        {pg =>  '15', dst => 'db-standby', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1},
     )
     {
         # Only run tests for this pg version
         next if ($rhRun->{pg} ne $self->pgVersion());
 
         # Get run parameters
-        my $bHostBackup = $rhRun->{repoDest} eq HOST_BACKUP ? true : false;
+        my $bHostBackup = $rhRun->{dst} eq HOST_BACKUP ? true : false;
         my $bHostStandby = $self->pgVersion() >= PG_VERSION_HOT_STANDBY ? true : false;
         my $bTls = $rhRun->{tls};
-        my $strBackupDestination = $rhRun->{repoDest};
-        my $strStorage = $rhRun->{storage};
-        my $bRepoEncrypt = $rhRun->{encrypt};
-        my $strCompressType = $rhRun->{compress};
-        my $iRepoTotal = $rhRun->{repo};
+        my $strBackupDestination = $rhRun->{dst};
+        my $strStorage = $rhRun->{stg};
+        my $bRepoEncrypt = $rhRun->{enc};
+        my $strCompressType = $rhRun->{cmp};
+        my $iRepoTotal = $rhRun->{rt};
         my $bBundle = $rhRun->{bnd};
 
         # Some tests are not version specific so only run them on a single version of PostgreSQL

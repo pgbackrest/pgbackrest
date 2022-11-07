@@ -260,7 +260,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io
-        total: 4
+        total: 5
         feature: IO
         harness: pack
 
@@ -390,7 +390,6 @@ unit:
           - common/lock
 
         depend:
-          - command/backup/pageChecksum
           - common/lock
           - config/common
           - config/config
@@ -483,7 +482,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
-        total: 22
+        total: 23
 
         coverage:
           - storage/cifs/helper
@@ -500,7 +499,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 9
+        total: 10
 
         coverage:
           - storage/remote/read
@@ -789,27 +788,6 @@ unit:
           - command/info/info
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: remote
-        total: 1
-
-        coverage:
-          - command/remote/remote
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: restore
-        total: 12
-
-        coverage:
-          - command/restore/file
-          - command/restore/protocol
-          - command/restore/restore
-
-        include:
-          - common/user
-          - info/infoBackup
-          - info/manifest
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
         total: 11
 
@@ -824,6 +802,20 @@ unit:
           - info/info
           - info/manifest
           - storage/storage
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: restore
+        total: 12
+
+        coverage:
+          - command/restore/file
+          - command/restore/protocol
+          - command/restore/restore
+
+        include:
+          - common/user
+          - info/infoBackup
+          - info/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
@@ -856,6 +848,13 @@ unit:
 
         coverage:
           - command/local/local
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: remote
+        total: 1
+
+        coverage:
+          - command/remote/remote
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exit

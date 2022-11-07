@@ -484,33 +484,14 @@ pckReadU64Internal(PackRead *this)
 
     ASSERT(this != NULL);
 
-    uint64_t result = 0;
-    uint8_t byte;
-
-    // Convert bytes from varint-128 encoding to a uint64
-    for (unsigned int bufferIdx = 0; bufferIdx < CVT_VARINT128_BUFFER_SIZE; bufferIdx++)
+    if (this->read != NULL)
     {
-        // Get the next encoded byte
-        pckReadBuffer(this, 1);
-        byte = this->bufferPtr[this->bufferPos];
-
-        // Shift the lower order 7 encoded bits into the uint64 in reverse order
-        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
-
-        // Increment buffer position to indicate that the byte has been processed
-        this->bufferPos++;
-
-        // Done if the high order bit is not set to indicate more data
-        if (byte < 0x80)
-            break;
+        // Internal buffer should be empty
+        ASSERT(this->bufferUsed == this->bufferPos);
+        FUNCTION_TEST_RETURN(UINT64, ioReadVarIntU64(this->read));
     }
 
-    // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
-    // corrupton in the data stream.
-    if (byte >= 0x80)
-        THROW(FormatError, "unterminated base-128 integer");
-
-    FUNCTION_TEST_RETURN(UINT64, result);
+    FUNCTION_TEST_RETURN(UINT64, cvtUInt64FromVarInt128(this->bufferPtr, &this->bufferPos, this->bufferUsed));
 }
 
 /***********************************************************************************************************************************

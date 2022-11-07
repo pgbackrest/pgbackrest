@@ -356,6 +356,64 @@ ioReadLineParam(IoRead *this, bool allowEof)
 }
 
 /**********************************************************************************************************************************/
+uint64_t
+ioReadVarIntU64(IoRead *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, this);
+    FUNCTION_LOG_END();
+
+    // Allocate the internal output buffer if it has not already been allocated
+    if (this->output == NULL)
+    {
+        MEM_CONTEXT_BEGIN(this->pub.memContext)
+        {
+            this->output = bufNew(ioBufferSize());
+        }
+        MEM_CONTEXT_END();
+    }
+
+    uint64_t result = 0;
+    uint8_t byte;
+
+    // Convert bytes from varint-128 encoding to a uint64
+    for (unsigned int bufferIdx = 0; bufferIdx < CVT_VARINT128_BUFFER_SIZE; bufferIdx++)
+    {
+        // Get more bytes if needed
+        if (bufUsed(this->output) - this->outputPos == 0)
+        {
+            // Clear the internal output buffer since all data was copied already
+            bufUsedZero(this->output);
+            this->outputPos = 0;
+
+            // Read into the internal output buffer
+            ioReadInternal(this, this->output, false);
+
+            // Error on eof
+            if (bufUsed(this->output) == 0)
+                THROW(FileReadError, "unexpected eof");
+        }
+
+        // Get the next encoded byte
+        byte = bufPtr(this->output)[this->outputPos++];
+
+        // Shift the lower order 7 encoded bits into the uint64 in reverse order
+        result |= (uint64_t)(byte & 0x7f) << (7 * bufferIdx);
+
+        // Done if the high order bit is not set to indicate more data
+        if (byte < 0x80)
+            break;
+    }
+
+    // By this point all bytes should have been read so error if this is not the case. This could be due to a coding error or
+    // corrupton in the data stream.
+    if (byte >= 0x80)
+        THROW(FormatError, "unterminated base-128 integer");
+
+    FUNCTION_LOG_RETURN(UINT64, result);
+}
+
+/**********************************************************************************************************************************/
 bool
 ioReadReady(IoRead *this, IoReadReadyParam param)
 {

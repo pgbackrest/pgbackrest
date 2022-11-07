@@ -1064,7 +1064,7 @@ memContextClean(const unsigned int tryDepth, const bool fatal)
         // mask the original error.
         if (memContextStack[memContextMaxStackIdx].type == memContextStackTypeNew)
         {
-            if (!fatal)                                                                                         // {uncovered !!!}
+            if (!fatal)
                 memContextFree(memContextStack[memContextMaxStackIdx].memContext);
         }
         // Else find the prior context and make it the current context

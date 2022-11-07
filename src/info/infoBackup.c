@@ -391,7 +391,6 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
         uint64_t backupSizeDelta = 0;
         uint64_t backupRepoSize = 0;
         uint64_t backupRepoSizeDelta = 0;
-        StringList *referenceList = strLstNew();
         bool backupError = false;
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
@@ -402,9 +401,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
             backupRepoSize += file.sizeRepo > 0 ? file.sizeRepo : file.size;
 
             // If a reference to a file exists, then it is in a previous backup and the delta calculation was already done
-            if (file.reference != NULL)
-                strLstAddIfMissing(referenceList, file.reference);
-            else
+            if (file.reference == NULL)
             {
                 backupSizeDelta += file.size;
                 backupRepoSizeDelta += file.sizeRepo > 0 ? file.sizeRepo : file.size;
@@ -450,8 +447,8 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
             if (manData->backupType != backupTypeFull)
             {
-                strLstSort(referenceList, sortOrderAsc);
-                infoBackupData.backupReference = strLstDup(referenceList);
+                // This list may not be sorted for manifests created before the reference list was added
+                infoBackupData.backupReference = strLstSort(strLstDup(manifestReferenceList(manifest)), sortOrderAsc);
                 infoBackupData.backupPrior = strDup(manData->backupLabelPrior);
             }
 

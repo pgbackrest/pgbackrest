@@ -17,5 +17,4 @@ version:
   - 12
   - 13
   - 14
-  - 15:
-      release: false
+  - 15

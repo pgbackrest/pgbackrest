@@ -7,6 +7,18 @@ Storage Interface
 #include <sys/types.h>
 
 /***********************************************************************************************************************************
+Storage link type
+***********************************************************************************************************************************/
+typedef enum
+{
+    // Symbolic (or soft) link
+    storageLinkSym,
+
+    // Hard link
+    storageLinkHard,
+} StorageLinkType;
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct Storage Storage;
@@ -159,6 +171,11 @@ typedef struct StorageNewWriteParam
     bool noSyncFile;
     bool noSyncPath;
     bool noAtomic;
+
+    // Do not truncate file if it exists. Use this only in cases where the file will be manipulated directly through the file
+    // handle, which should always be the exception and indicates functionality that should be added to the storage interface.
+    bool noTruncate;
+
     bool compressible;
     mode_t modeFile;
     mode_t modePath;
@@ -241,18 +258,32 @@ typedef struct StorageRemoveParam
 
 void storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param);
 
+// Create a hard or symbolic link
+typedef struct StorageLinkCreateParam
+{
+    VAR_PARAM_HEADER;
+
+    // Flag to create hard or symbolic link
+    StorageLinkType linkType;
+} StorageLinkCreateParam;
+
+#define storageLinkCreateP(this, target, linkPath, ...)                                                                            \
+    storageLinkCreate(this, target, linkPath, (StorageLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+void storageLinkCreate(const Storage *this, const String *target, const String *linkPath, StorageLinkCreateParam param);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Is the feature supported by this storage?
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 storageFeature(const Storage *const this, const StorageFeature feature)
 {
     return THIS_PUB(Storage)->interface.feature >> feature & 1;
 }
 
 // Storage type (posix, cifs, etc.)
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 storageType(const Storage *const this)
 {
     return THIS_PUB(Storage)->type;

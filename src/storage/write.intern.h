@@ -21,6 +21,7 @@ typedef struct StorageWriteInterface
     const String *name;
 
     bool atomic;
+    bool truncate;                                                  // Truncate file if it exists
     bool createPath;
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression

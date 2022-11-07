@@ -27,7 +27,7 @@ Getters/Setters
 Pack *ioFilterResult(const IoFilter *this);
 
 // Identifies the filter and is used when pulling results from the filter group
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 ioFilterType(const IoFilter *const this)
 {
     return THIS_PUB(IoFilter)->type;
@@ -36,7 +36,7 @@ ioFilterType(const IoFilter *const this)
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-__attribute__((always_inline)) static inline void
+FN_INLINE_ALWAYS void
 ioFilterFree(IoFilter *const this)
 {
     objFreeContext(this);

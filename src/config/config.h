@@ -109,7 +109,7 @@ unsigned int cfgOptionIdxDefault(ConfigOption optionId);
 // Get boolean config option
 bool cfgOptionIdxBool(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline bool
+FN_INLINE_ALWAYS bool
 cfgOptionBool(const ConfigOption optionId)
 {
     return cfgOptionIdxBool(optionId, cfgOptionIdxDefault(optionId));
@@ -118,7 +118,7 @@ cfgOptionBool(const ConfigOption optionId)
 // Get int config option
 int cfgOptionIdxInt(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline int
+FN_INLINE_ALWAYS int
 cfgOptionInt(const ConfigOption optionId)
 {
     return cfgOptionIdxInt(optionId, cfgOptionIdxDefault(optionId));
@@ -127,7 +127,7 @@ cfgOptionInt(const ConfigOption optionId)
 // Get int64 config option
 int64_t cfgOptionIdxInt64(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline int64_t
+FN_INLINE_ALWAYS int64_t
 cfgOptionInt64(const ConfigOption optionId)
 {
     return cfgOptionIdxInt64(optionId, cfgOptionIdxDefault(optionId));
@@ -136,7 +136,7 @@ cfgOptionInt64(const ConfigOption optionId)
 // Get kv config option
 const KeyValue *cfgOptionIdxKv(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline const KeyValue *
+FN_INLINE_ALWAYS const KeyValue *
 cfgOptionKv(const ConfigOption optionId)
 {
     return cfgOptionIdxKv(optionId, cfgOptionIdxDefault(optionId));
@@ -144,7 +144,7 @@ cfgOptionKv(const ConfigOption optionId)
 
 const KeyValue *cfgOptionIdxKvNull(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline const KeyValue *
+FN_INLINE_ALWAYS const KeyValue *
 cfgOptionKvNull(const ConfigOption optionId)
 {
     return cfgOptionIdxKvNull(optionId, cfgOptionIdxDefault(optionId));
@@ -153,7 +153,7 @@ cfgOptionKvNull(const ConfigOption optionId)
 // Get list config option
 const VariantList *cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline const VariantList *
+FN_INLINE_ALWAYS const VariantList *
 cfgOptionLst(const ConfigOption optionId)
 {
     return cfgOptionIdxLst(optionId, cfgOptionIdxDefault(optionId));
@@ -162,7 +162,7 @@ cfgOptionLst(const ConfigOption optionId)
 // Get String config option
 const String *cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 cfgOptionStr(const ConfigOption optionId)
 {
     return cfgOptionIdxStr(optionId, cfgOptionIdxDefault(optionId));
@@ -170,7 +170,7 @@ cfgOptionStr(const ConfigOption optionId)
 
 const String *cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline const String *
+FN_INLINE_ALWAYS const String *
 cfgOptionStrNull(const ConfigOption optionId)
 {
     return cfgOptionIdxStrNull(optionId, cfgOptionIdxDefault(optionId));
@@ -179,7 +179,7 @@ cfgOptionStrNull(const ConfigOption optionId)
 // Get StringId config option
 StringId cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline StringId
+FN_INLINE_ALWAYS StringId
 cfgOptionStrId(const ConfigOption optionId)
 {
     return cfgOptionIdxStrId(optionId, cfgOptionIdxDefault(optionId));
@@ -188,7 +188,7 @@ cfgOptionStrId(const ConfigOption optionId)
 // Get uint config option
 unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline unsigned int
+FN_INLINE_ALWAYS unsigned int
 cfgOptionUInt(const ConfigOption optionId)
 {
     return cfgOptionIdxUInt(optionId, cfgOptionIdxDefault(optionId));
@@ -197,7 +197,7 @@ cfgOptionUInt(const ConfigOption optionId)
 // Get uint64 config option
 uint64_t cfgOptionIdxUInt64(ConfigOption optionId, unsigned int optionIdx);
 
-__attribute__((always_inline)) static inline uint64_t
+FN_INLINE_ALWAYS uint64_t
 cfgOptionUInt64(const ConfigOption optionId)
 {
     return cfgOptionIdxUInt64(optionId, cfgOptionIdxDefault(optionId));

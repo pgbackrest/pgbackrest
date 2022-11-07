@@ -444,6 +444,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path - recurse asc");
 
+        // Create a path with a subpath that will always be last to make sure lists are not freed too early in the iterator
+        storagePathCreateP(storageTest, STRDEF("pg/zzz/yyy"), .mode = 0700);
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -452,7 +454,9 @@ testRun(void)
             "link> {d=../file}\n"
             "path/\n"
             "path/file {s=8, t=1656434296}\n"
-            "pipe*\n",
+            "pipe*\n"
+            "zzz/\n"
+            "zzz/yyy/\n",
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -462,6 +466,8 @@ testRun(void)
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
+            "zzz/yyy/\n"
+            "zzz/\n"
             "pipe*\n"
             "path/file {s=8, t=1656434296}\n"
             "path/\n"
@@ -855,6 +861,50 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("storageLinkCreate()"))
+    {
+        StorageInfo info = {0};
+        const String *backupLabel = STRDEF("20181119-152138F");
+        const String *latestLabel = STRDEF("latest");
+        int invalidLinkType = 9;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("create soft link to BACKUPLABEL");
+
+        TEST_RESULT_VOID(storagePathCreateP(storageTest, backupLabel), "create path to link to");
+        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel), "create symlink");
+        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
+        TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
+
+        TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = storageLinkSym), "create symlink");
+        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
+        TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("hardlink success/fail");
+
+        const String *emptyFile = STRDEF(TEST_PATH "/test.empty");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), "put empty file");
+        TEST_RESULT_VOID(
+            storageLinkCreateP(storageTest, emptyFile, latestLabel, .linkType = storageLinkHard), "hardlink to empty file");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, emptyFile), "remove empty file");
+        TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove latest label");
+
+        TEST_ERROR(
+            storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = storageLinkHard), FileOpenError,
+            "unable to create hardlink \'latest\' to \'20181119-152138F\': [1] Operation not permitted");
+        TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = true), "get link info");
+        TEST_RESULT_STR(info.linkDestination, NULL, "no link destination");
+        TEST_RESULT_VOID(storagePathRemoveP(storageTest, backupLabel), "remove backup path");
+        TEST_ERROR(
+            storageLinkCreateP(storageTest, backupLabel, latestLabel, .linkType = invalidLinkType), AssertError,
+            "assertion '(param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||"
+            " (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink))' failed");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("storageNewRead()"))
     {
         StorageRead *file = NULL;
@@ -1210,6 +1260,7 @@ testRun(void)
         TEST_RESULT_STR(storageWriteName(file), fileNoPerm, "check name");
         TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "check sync path");
         TEST_RESULT_BOOL(storageWriteSyncFile(file), false, "check sync file");
+        TEST_RESULT_BOOL(storageWriteTruncate(file), true, "file will be truncated");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("permission denied");
@@ -1324,6 +1375,22 @@ testRun(void)
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no truncate");
+
+        HRN_STORAGE_PUT_Z(storageTest, "no-truncate", "ABC", .modeFile = 0600);
+
+        TEST_ASSIGN(
+            file, storageNewWriteP(storageTest, STRDEF("no-truncate"), .modeFile = 0660, .timeModified = 77777, .noAtomic = true,
+            .noTruncate = true), "new write file");
+        TEST_RESULT_BOOL(storageWriteTruncate(file), false, "file will not be truncated");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+
+        TEST_STORAGE_GET(storageTest, "no-truncate", "ABC");
+        TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF("no-truncate")).mode, 0600, "check mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("no-truncate")).timeModified, 77777, "check time");
     }
 
     // *****************************************************************************************************************************

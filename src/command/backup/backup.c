@@ -571,7 +571,7 @@ backupResumeClean(
                         removeReason = "missing in manifest";
                     else
                     {
-                        const ManifestFile file = manifestFileFind(manifest, manifestName);
+                        ManifestFile file = manifestFileFind(manifest, manifestName);
 
                         if (file.reference != NULL)
                             removeReason = "reference in manifest";
@@ -594,9 +594,18 @@ backupResumeClean(
                                 removeReason = "zero size";
                             else
                             {
-                                manifestFileUpdate(
-                                    manifest, manifestName, file.size, fileResume.sizeRepo, fileResume.checksumSha1, NULL,
-                                    fileResume.checksumPage, fileResume.checksumPageError, fileResume.checksumPageErrorList, 0, 0);
+                                ASSERT(file.copy);
+                                ASSERT(file.bundleId == 0);
+
+                                file.sizeRepo = fileResume.sizeRepo;
+                                memcpy(file.checksumSha1, fileResume.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                                file.checksumPage = fileResume.checksumPage;
+                                file.checksumPageError = fileResume.checksumPageError;
+                                file.checksumPageErrorList = fileResume.checksumPageErrorList;
+                                file.resume = true;
+                                file.delta = delta;
+
+                                manifestFileUpdate(manifest, &file);
                             }
                         }
                     }
@@ -858,7 +867,7 @@ backupStart(BackupData *backupData)
 
             // Start backup
             LOG_INFO_FMT(
-                "execute %sexclusive pg_start_backup(): backup begins after the %s checkpoint completes",
+                "execute %sexclusive backup start: backup begins after the %s checkpoint completes",
                 backupData->version >= PG_VERSION_96 ? "non-" : "",
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
@@ -932,9 +941,9 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             StorageWrite *write = storageNewWriteP(
                 storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                    strZ(compressExtStr(compressType))),
+                backupFileRepoPathP(
+                    manifestData(manifest)->backupLabel, .manifestName = manifestName,
+                    .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType))),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -975,12 +984,12 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             };
 
             memcpy(
-                file.checksumSha1, strZ(pckReadStrP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))),
+                file.checksumSha1, strZ(bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))),
                 HASH_TYPE_SHA1_SIZE_HEX + 1);
 
             manifestFileAdd(manifest, &file);
 
-            LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strZ(name));
+            LOG_DETAIL_FMT("wrote '%s' file returned from backup stop function", strZ(name));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1012,7 +1021,7 @@ backupStop(BackupData *backupData, Manifest *manifest)
         {
             // Stop the backup
             LOG_INFO_FMT(
-                "execute %sexclusive pg_stop_backup() and wait for all WAL segments to archive",
+                "execute %sexclusive backup stop and wait for all WAL segments to archive",
                 backupData->version >= PG_VERSION_96 ? "non-" : "");
 
             DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
@@ -1170,7 +1179,7 @@ backupJobResult(
 
             while (!pckReadNullP(jobResult))
             {
-                const ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
+                ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
                 const BackupCopyResult copyResult = (BackupCopyResult)pckReadU32P(jobResult);
                 const uint64_t copySize = pckReadU64P(jobResult);
                 const uint64_t bundleOffset = pckReadU64P(jobResult);
@@ -1188,7 +1197,7 @@ backupJobResult(
                 // Format log progress
                 String *const logProgress = strNew();
 
-                if (bundleId != 0)
+                if (bundleId != 0 && copyResult != backupCopyResultNoOp)
                     strCatFmt(logProgress, "bundle %" PRIu64 "/%" PRIu64 ", ", bundleId, bundleOffset);
 
                 // Store percentComplete as an integer
@@ -1312,10 +1321,17 @@ backupJobResult(
                     }
 
                     // Update file info and remove any reference to the file's existence in a prior backup
-                    manifestFileUpdate(
-                        manifest, file.name, copySize, repoSize, strZ(copyChecksum), VARSTR(NULL), file.checksumPage,
-                        checksumPageError, checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL,
-                        bundleId, bundleOffset);
+                    file.size = copySize;
+                    file.sizeRepo = repoSize;
+                    memcpy(file.checksumSha1, strZ(copyChecksum), HASH_TYPE_SHA1_SIZE_HEX + 1);
+                    file.reference = NULL;
+                    file.checksumPageError = checksumPageError;
+                    file.checksumPageErrorList = checksumPageErrorList != NULL ?
+                        jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL;
+                    file.bundleId = bundleId;
+                    file.bundleOffset = bundleOffset;
+
+                    manifestFileUpdate(manifest, &file);
                 }
             }
 
@@ -1535,17 +1551,15 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
             const ManifestFile file = manifestFileUnpack(manifest, filePack);
 
-            // If the file is a reference it should only be backed up if delta and not zero size
-            if (file.reference != NULL && (!jobData->delta || file.size == 0))
-                continue;
-
-            // If bundling store zero-length files immediately in the manifest without copying them
-            if (jobData->bundle && file.size == 0)
+            // Only process files that need to be copied
+            if (!file.copy)
             {
-                LOG_DETAIL_FMT(
-                    "store zero-length file %s", strZ(storagePathP(backupData->storagePrimary, manifestPathPg(file.name))));
-                manifestFileUpdate(
-                    manifest, file.name, 0, 0, strZ(HASH_TYPE_SHA1_ZERO_STR), VARSTR(NULL), file.checksumPage, false, NULL, 0, 0);
+                // If bundling log zero-length files as stored since they will never be copied
+                if (file.size == 0 && jobData->bundle)
+                {
+                    LOG_DETAIL_FMT(
+                        "store zero-length file %s", strZ(storagePathP(backupData->storagePrimary, manifestPathPg(file.name))));
+                }
 
                 continue;
             }
@@ -1692,34 +1706,38 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 {
                     param = protocolCommandParam(command);
 
-                    String *const repoFile = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(jobData->backupLabel));
-
                     if (bundle && file.size <= jobData->bundleLimit)
-                        strCatFmt(repoFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, jobData->bundleId);
+                    {
+                        pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = jobData->bundleId));
+                    }
                     else
                     {
                         CHECK(AssertError, fileTotal == 0, "cannot bundle file");
 
-                        strCatFmt(repoFile, "%s%s", strZ(file.name), strZ(compressExtStr(jobData->compressType)));
+                        pckWriteStrP(
+                            param,
+                            backupFileRepoPathP(
+                                jobData->backupLabel, .manifestName = file.name, .compressType = jobData->compressType));
+
                         fileName = file.name;
                         bundle = false;
                     }
 
-                    pckWriteStrP(param, repoFile);
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
-                    pckWriteBoolP(param, jobData->delta);
                     pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
                     pckWriteStrP(param, jobData->cipherSubPass);
                 }
 
                 pckWriteStrP(param, manifestPathPg(file.name));
+                pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
                 pckWriteStrP(param, file.name);
+                pckWriteBoolP(param, file.resume);
                 pckWriteBoolP(param, file.reference != NULL);
 
                 fileTotal++;
@@ -1842,9 +1860,7 @@ backupProcess(
                         const String *const linkDestination = strNewFmt(
                             "../../" MANIFEST_TARGET_PGTBLSPC "/%u", target->tablespaceId);
 
-                        THROW_ON_SYS_ERROR_FMT(
-                            symlink(strZ(linkDestination), strZ(link)) == -1, FileOpenError,
-                            "unable to create symlink '%s' to '%s'", strZ(link), strZ(linkDestination));
+                        storageLinkCreateP(storageRepoWrite(), linkDestination, link);
                     }
                 }
             }
@@ -1955,9 +1971,7 @@ backupProcess(
                         storageRepo(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/%s%s", strZ(file.reference), strZ(file.name), compressExt));
 
-                    THROW_ON_SYS_ERROR_FMT(
-                        link(strZ(linkDestination), strZ(linkName)) == -1, FileOpenError,
-                        "unable to create hardlink '%s' to '%s'", strZ(linkName), strZ(linkDestination));
+                    storageLinkCreateP(storageRepoWrite(), linkDestination, linkName, .linkType = storageLinkHard);
                 }
                 // Else log the reference. With delta, it is possible that references may have been removed if a file needed to be
                 // recopied.
@@ -2082,9 +2096,9 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                             read,
                             storageNewWriteP(
                                 storageRepoWrite(),
-                                strNewFmt(
-                                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                                    strZ(compressExtStr(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))))));
+                                backupFileRepoPathP(
+                                    manifestData(manifest)->backupLabel, .manifestName = manifestName,
+                                    .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))));
 
                         // Add to manifest
                         ManifestFile file =
@@ -2184,6 +2198,15 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         infoBackupSaveFile(
             infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+            cfgOptionStrNull(cfgOptRepoCipherPass));
+
+        // Save archive.info/copy so the timestamps will be updated to prevent lifecycle settings from removing the files early
+        // -------------------------------------------------------------------------------------------------------------------------
+        infoArchiveSaveFile(
+            infoArchiveLoadFile(
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+                cfgOptionStrNull(cfgOptRepoCipherPass)),
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
             cfgOptionStrNull(cfgOptRepoCipherPass));
     }
     MEM_CONTEXT_TEMP_END();

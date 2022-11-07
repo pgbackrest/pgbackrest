@@ -18,6 +18,30 @@ Constants
 
 /**********************************************************************************************************************************/
 String *
+backupFileRepoPath(const String *const backupLabel, const BackupFileRepoPathParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
+        FUNCTION_TEST_PARAM(STRING, param.manifestName);
+        FUNCTION_TEST_PARAM(UINT64, param.bundleId);
+        FUNCTION_TEST_PARAM(ENUM, param.compressType);
+    FUNCTION_TEST_END();
+
+    ASSERT(backupLabel != NULL);
+    ASSERT(param.bundleId != 0 || param.manifestName != NULL);
+
+    String *const result = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(backupLabel));
+
+    if (param.bundleId != 0)
+        strCatFmt(result, MANIFEST_PATH_BUNDLE "/%" PRIu64, param.bundleId);
+    else
+        strCatFmt(result, "%s%s", strZ(param.manifestName), strZ(compressExtStr(param.compressType)));
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
+String *
 backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -137,11 +161,7 @@ backupLinkLatest(const String *backupLabel, unsigned int repoIdx)
         storageRemoveP(storageRepoIdxWrite(repoIdx), latestLink);
 
         if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeatureSymLink))
-        {
-            THROW_ON_SYS_ERROR_FMT(
-                symlink(strZ(backupLabel), strZ(latestLink)) == -1, FileOpenError, "unable to create symlink '%s' to '%s'",
-                strZ(latestLink), strZ(backupLabel));
-        }
+            storageLinkCreateP(storageRepoIdxWrite(repoIdx), backupLabel, latestLink);
 
         // Sync backup path if required
         if (storageFeature(storageRepoIdxWrite(repoIdx), storageFeaturePathSync))

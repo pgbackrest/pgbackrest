@@ -100,7 +100,8 @@ ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output)
     if (!ioFilterDone(this))
         this->pub.interface.inOut(this->pub.driver, input, output);
 
-    CHECK(AssertError, !ioFilterInputSame(this) || !bufEmpty(output), "expected input same or output");
+    // If input same is requested then there must be some output otherwise there is no point in requesting the same input
+    CHECK(AssertError, !ioFilterInputSame(this) || !bufEmpty(output), "expected input to be consumed or some output");
 
     FUNCTION_TEST_RETURN_VOID();
 }
