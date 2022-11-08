@@ -164,11 +164,11 @@ archivePushFile(
                 pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
 
             // Is the check command currently running?
-            bool checkLockHeld = lockRead(
+            const bool checkLockHeld = lockRead(
                 cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeCheck).status == lockReadStatusValid;
 
             // Is the backup command running for a specific repo?
-            Variant *runningBackupRepoIdx = lockRead(
+            const Variant *runningBackupRepoIdx = lockRead(
                 cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup).data.repoIdx;
 
             // Check each repo for the WAL segment

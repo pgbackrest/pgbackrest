@@ -1341,8 +1341,8 @@ backupJobResult(
                 *currentPercentComplete = percentComplete;
                 lockWriteDataP(
                     lockTypeBackup,
-                    .repoIdx = VARUINT(cfgOptionGroupIdxDefault(cfgOptGrpRepo)),
-                    .percentComplete = VARUINT(*currentPercentComplete));
+                    .percentComplete = VARUINT(*currentPercentComplete),
+                    .repoIdx = VARUINT(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1904,7 +1904,7 @@ backupProcess(
         unsigned int currentPercentComplete = 0;
         lockWriteDataP(
             lockTypeBackup,
-            .repoIdx = VARUINT(cfgOptionGroupIdxDefault(cfgOptGrpRepo)), .percentComplete = VARUINT(currentPercentComplete));
+            .percentComplete = VARUINT(currentPercentComplete), .repoIdx = VARUINT(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
