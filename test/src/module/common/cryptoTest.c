@@ -209,19 +209,29 @@ testRun(void)
 
         ioFilterFree(blockDecryptFilter);
 
-        // Encrypt zero byte file and decrypt it
         // -------------------------------------------------------------------------------------------------------------------------
-        blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, testPass);
+        TEST_TITLE("encrypt zero byte file with no magic");
+
+        blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, .raw = true);
         blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         bufUsedZero(encryptBuffer);
 
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
-        TEST_RESULT_UINT(bufUsed(encryptBuffer), 32, "check remaining size");
+        TEST_RESULT_UINT(bufUsed(encryptBuffer), 24, "check remaining size");
 
         ioFilterFree(blockEncryptFilter);
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on decrypt expecting magic");
+
         blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass);
+        TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, encryptBuffer, decryptBuffer), CryptoError, "cipher header invalid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("decrypt zero byte file with no magic");
+
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, testPass, .raw = true);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);

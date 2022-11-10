@@ -32,6 +32,7 @@ Object type
 typedef struct CipherBlock
 {
     CipherMode mode;                                                // Mode encrypt/decrypt
+    bool raw;                                                       // Omit header magic to save space
     bool saltDone;                                                  // Has the salt been read/generated?
     bool processDone;                                               // Has any data been processed?
     size_t passSize;                                                // Size of passphrase in bytes
@@ -133,9 +134,12 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
         if (this->mode == cipherModeEncrypt)
         {
             // Add magic to the destination buffer so openssl knows the file is salted
-            memcpy(destination, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE);
-            destination += CIPHER_BLOCK_MAGIC_SIZE;
-            destinationSize += CIPHER_BLOCK_MAGIC_SIZE;
+            if (!this->raw)
+            {
+                memcpy(destination, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE);
+                destination += CIPHER_BLOCK_MAGIC_SIZE;
+                destinationSize += CIPHER_BLOCK_MAGIC_SIZE;
+            }
 
             // Add salt to the destination buffer
             cryptoRandomBytes(destination, PKCS5_SALT_LEN);
@@ -147,19 +151,21 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
         else if (sourceSize > 0)
         {
             // Check if the entire header has been read
-            if (this->headerSize + sourceSize >= CIPHER_BLOCK_HEADER_SIZE)
+            const size_t headerExpected = this->raw ? PKCS5_SALT_LEN : CIPHER_BLOCK_HEADER_SIZE;
+
+            if (this->headerSize + sourceSize >= headerExpected)
             {
                 // Copy header (or remains of header) from source into the header buffer
-                memcpy(this->header + this->headerSize, source, CIPHER_BLOCK_HEADER_SIZE - this->headerSize);
-                salt = this->header + CIPHER_BLOCK_MAGIC_SIZE;
+                memcpy(this->header + this->headerSize, source, headerExpected - this->headerSize);
+                salt = this->header + (this->raw ? 0 : CIPHER_BLOCK_MAGIC_SIZE);
 
                 // Advance source and source size by the number of bytes read
-                source += CIPHER_BLOCK_HEADER_SIZE - this->headerSize;
-                sourceSize -= CIPHER_BLOCK_HEADER_SIZE - this->headerSize;
+                source += headerExpected - this->headerSize;
+                sourceSize -= headerExpected - this->headerSize;
 
                 // The first bytes of the file to decrypt should be equal to the magic.  If not then this is not an
                 // encrypted file, or at least not in a format we recognize.
-                if (memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
+                if (!this->raw && memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
                     THROW(CryptoError, "cipher header invalid");
             }
             // Else copy what was provided into the header buffer and return 0
@@ -389,6 +395,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(BUFFER, pass);                          // Use FUNCTION_TEST so passphrase is not logged
         FUNCTION_LOG_PARAM(STRING, param.digest);
+        FUNCTION_LOG_PARAM(BOOL, param.raw);
     FUNCTION_LOG_END();
 
     ASSERT(pass != NULL);
@@ -428,6 +435,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
         *driver = (CipherBlock)
         {
             .mode = mode,
+            .raw = param.raw,
             .cipher = cipher,
             .digest = digest,
             .passSize = bufUsed(pass),
@@ -448,6 +456,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
             pckWriteU64P(packWrite, cipherType);
             pckWriteBinP(packWrite, pass);
             pckWriteStrP(packWrite, param.digest);
+            pckWriteBoolP(packWrite, param.raw);
             pckWriteEndP(packWrite);
 
             paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -476,8 +485,9 @@ cipherBlockNewPack(const Pack *const paramList)
         const CipherType cipherType = (CipherType)pckReadU64P(paramListPack);
         const Buffer *const pass = pckReadBinP(paramListPack);
         const String *const digest = pckReadStrP(paramListPack);
+        const bool raw = pckReadBoolP(paramListPack);
 
-        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherType, pass, .digest = digest), memContextPrior());
+        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherType, pass, .digest = digest, .raw = raw), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
