@@ -2473,7 +2473,6 @@ testRun(void)
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeIncr;
             manifest->pub.data.blockIncr = true;
-            manifest->pub.data.blockIncrSize = 8192;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
             manifest->pub.referenceList = strLstNew();
@@ -2756,8 +2755,8 @@ testRun(void)
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/bi-no-ref"), .size = bufUsed(fileBuffer), .sizeRepo = repoSize,
-                    .blockIncrMapSize = blockIncrMapSize, .timestamp = 1482182860, .mode = 0600, .group = groupName(),
-                    .user = userName(), .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c"});
+                    .blockIncrSize = 8192, .blockIncrMapSize = blockIncrMapSize, .timestamp = 1482182860, .mode = 0600,
+                    .group = groupName(), .user = userName(), .checksumSha1 = "953cdcc904c5d4135d96fc0833f121bf3033c74c"});
 
             // Block incremental with a broken reference to show that unneeded references will not be used
             Buffer *fileUnused = bufNew(8192 * 6);
@@ -2804,8 +2803,8 @@ testRun(void)
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/bi-unused-ref"), .size = bufUsed(fileUsed), .sizeRepo = fileUsedRepoSize,
-                    .blockIncrMapSize = fileUsedMapSize, .timestamp = 1482182860, .mode = 0600, .group = groupName(),
-                    .user = userName(), .checksumSha1 = "febd680181d4cd315dce942348862c25fbd731f3"});
+                    .blockIncrSize = 8192, .blockIncrMapSize = fileUsedMapSize, .timestamp = 1482182860, .mode = 0600,
+                    .group = groupName(), .user = userName(), .checksumSha1 = "febd680181d4cd315dce942348862c25fbd731f3"});
 
             memset(bufPtr(fileUnused) + (8192 * 4), 3, 8192);
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), "base/1", .mode = 0700);

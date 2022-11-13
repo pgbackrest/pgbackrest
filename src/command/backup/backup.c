@@ -1439,7 +1439,6 @@ typedef struct BackupJobData
     uint64_t bundleLimit;                                           // Limit on files to bundle
     uint64_t bundleId;                                              // Bundle id
     const bool blockIncr;                                           // Block incremental?
-    size_t blockIncrSize;                                           // Block incremental size
 
     List *queueList;                                                // List of processing queues
 } BackupJobData;
@@ -1707,7 +1706,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 }
 
                 // Is this file a block incremental?
-                const bool blockIncr = jobData->blockIncr && file.size >= jobData->blockIncrSize;
+                const bool blockIncr = jobData->blockIncr && file.blockIncrSize > 0;
 
                 // Add common parameters before first file
                 if (param == NULL)
@@ -1734,11 +1733,8 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                         bundle = false;
                     }
 
-                    // Provide block incremental size and the reference list
-                    pckWriteU64P(param, jobData->blockIncrSize);
-
-                    if (jobData->blockIncrSize > 0)
-                        pckWriteU64P(param, strLstSize(manifestReferenceList(jobData->manifest)) - 1);
+                    // Provide the backup reference
+                    pckWriteU64P(param, strLstSize(manifestReferenceList(jobData->manifest)) - 1);
 
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
@@ -1757,7 +1753,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 // If block incremental then provide the location of the prior map when available
                 if (blockIncr)
                 {
-                    pckWriteBoolP(param, true);
+                    pckWriteU64P(param, file.blockIncrSize);
 
                     if (file.blockIncrMapSize != 0)
                     {
@@ -1772,7 +1768,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                         pckWriteNullP(param);
                 }
                 else
-                    pckWriteBoolP(param, false);
+                    pckWriteU64P(param, 0);
 
                 pckWriteStrP(param, file.name);
                 pckWriteBoolP(param, file.resume);
@@ -1867,9 +1863,6 @@ backupProcess(
             jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
             jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
         }
-
-        if (jobData.blockIncr)
-            jobData.blockIncrSize = (size_t)cfgOptionUInt64(cfgOptRepoBlockSize);
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will
         // exist in to repo. Also create tablespace symlinks when symlinks are available. This makes it possible for the user to

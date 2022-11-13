@@ -39,14 +39,13 @@ segmentNumber(const String *pgFile)
 /**********************************************************************************************************************************/
 List *
 backupFile(
-    const String *const repoFile, const uint64_t bundleId, const size_t blockIncrSize, const unsigned int blockIncrReference,
+    const String *const repoFile, const uint64_t bundleId, const unsigned int blockIncrReference,
     const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,
     const String *const cipherPass, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
         FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle id (0 if none)
-        FUNCTION_LOG_PARAM(SIZE, blockIncrSize);                    // Block incremental size
         FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
@@ -238,11 +237,11 @@ backupFile(
 
                     // Encrypt filter
                     IoFilter *const encrypt = cipherType != cipherTypeNone ?
-                        cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = file->blockIncr) : NULL;
+                        cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = file->blockIncrSize != 0) : NULL;
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
                     // compressed/encrypted separately
-                    if (file->blockIncr)
+                    if (file->blockIncrSize != 0)
                     {
                         const Buffer *blockMap = NULL;
 
@@ -266,7 +265,7 @@ backupFile(
                             ioReadFilterGroup(
                                 storageReadIo(read)),
                                 blockIncrNew(
-                                    blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap, compress, encrypt));
+                                    file->blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap, compress, encrypt));
                     }
                     // Else apply compress/encrypt filters to the entire file
                     else
@@ -327,7 +326,7 @@ backupFile(
                             }
 
                             // Get results of block incremental
-                            if (file->blockIncr)
+                            if (file->blockIncrSize != 0)
                             {
                                 fileResult->blockIncrMapSize = pckReadU64P(
                                     ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), BLOCK_INCR_FILTER_TYPE));

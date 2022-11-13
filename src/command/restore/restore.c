@@ -2363,7 +2363,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteU64P(param, file.blockIncrMapSize);
 
                 if (file.blockIncrMapSize != 0)
-                    pckWriteU64P(param, manifestData(jobData->manifest)->blockIncrSize);
+                    pckWriteU64P(param, file.blockIncrSize);
 
                 pckWriteStrP(param, file.name);
 

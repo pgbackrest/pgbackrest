@@ -31,7 +31,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(sizeof(ManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of ManifestLoadFound");
         TEST_RESULT_UINT(sizeof(ManifestPath), TEST_64BIT() ? 32 : 16, "check size of ManifestPath");
-        TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 144 : 116, "check size of ManifestFile");
+        TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 152 : 124, "check size of ManifestFile");
     }
 
     // *****************************************************************************************************************************
@@ -1504,7 +1504,6 @@ testRun(void)
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
             "backup-archive-stop=\"000000030000028500000089\"\n"                                                                   \
             "backup-block-incr=true\n"                                                                                             \
-            "backup-block-incr-size=8192\n"                                                                                        \
             "backup-bundle=true\n"                                                                                                 \
             "backup-label=\"20190818-084502F_20190820-084502D\"\n"                                                                 \
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
@@ -1577,8 +1576,8 @@ testRun(void)
                 ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                      \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
-            "pg_data/base/32768/33000.32767={\"bims\":96,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
-                ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                   \
+            "pg_data/base/32768/33000.32767={\"bims\":96,\"bis\":3,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\","     \
+                "\"checksum-page\":true,\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"             \
             "pg_data/postgresql.conf={\"size\":4457,\"timestamp\":1565282114}\n"                                                   \
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
@@ -1624,7 +1623,6 @@ testRun(void)
                 "backup-archive-start=\"000000040000028500000089\"\n"
                 "backup-archive-stop=\"000000040000028500000089\"\n"
                 "backup-block-incr=true\n"
-                "backup-block-incr-size=8192\n"
                 "backup-bundle=true\n"
                 "backup-label=\"20190818-084502F\"\n"
                 "backup-lsn-start=\"300/89000028\"\n"

@@ -55,7 +55,6 @@ typedef struct ManifestData
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
     bool blockIncr;                                                 // Does the backup perform block incremental?
-    uint64_t blockIncrSize;                                         // Size of incremental blocks
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -114,6 +113,7 @@ typedef struct ManifestFile
     const String *reference;                                        // Reference to a prior backup
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
+    uint64_t blockIncrSize;                                         // Size of incremental blocks
     uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
