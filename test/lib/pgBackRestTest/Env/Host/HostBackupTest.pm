@@ -1108,7 +1108,6 @@ sub configCreate
     if ($oParam->{bBlockIncr})
     {
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-block'} = 'y';
-        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-block-size'} = '32KiB';
     }
 
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
