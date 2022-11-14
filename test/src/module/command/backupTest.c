@@ -3847,7 +3847,6 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
-            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "24KiB");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
@@ -3938,7 +3937,6 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
-            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "24KiB");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
@@ -4042,7 +4040,6 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
-            hrnCfgArgRawZ(argList, cfgOptRepoBlockSize, "24KiB");
             hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
             hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
             HRN_CFG_LOAD(cfgCmdBackup, argList);

@@ -516,16 +516,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <config-key id="repo-block-size" name="!!!">
-                        <summary>!!!</summary>
-
-                        <text>
-                            <p>!!!</p>
-                        </text>
-
-                        <example>256KiB</example>
-                    </config-key>
-
                     <config-key id="repo-bundle" name="Repository Bundles">
                         <summary>Bundle files in repository.</summary>
 

@@ -264,7 +264,6 @@ static const int64_t parseRuleValueInt[] =
     16777216,                                                                                                             // val/int
     20971520,                                                                                                             // val/int
     86400000,                                                                                                             // val/int
-    104857600,                                                                                                            // val/int
     134217728,                                                                                                            // val/int
     604800000,                                                                                                            // val/int
     1073741824,                                                                                                           // val/int
@@ -314,7 +313,6 @@ typedef enum
     parseRuleValInt16777216,                                                                                         // val/int/enum
     parseRuleValInt20971520,                                                                                         // val/int/enum
     parseRuleValInt86400000,                                                                                         // val/int/enum
-    parseRuleValInt104857600,                                                                                        // val/int/enum
     parseRuleValInt134217728,                                                                                        // val/int/enum
     parseRuleValInt604800000,                                                                                        // val/int/enum
     parseRuleValInt1073741824,                                                                                       // val/int/enum
@@ -4895,46 +4893,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                         // opt/repo-block
     ),                                                                                                             // opt/repo-block
     // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                         // opt/repo-block-size
-    (                                                                                                         // opt/repo-block-size
-        PARSE_RULE_OPTION_NAME("repo-block-size"),                                                            // opt/repo-block-size
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeSize),                                                               // opt/repo-block-size
-        PARSE_RULE_OPTION_RESET(true),                                                                        // opt/repo-block-size
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                     // opt/repo-block-size
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                          // opt/repo-block-size
-        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                                 // opt/repo-block-size
-        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                            // opt/repo-block-size
-                                                                                                              // opt/repo-block-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                        // opt/repo-block-size
-        (                                                                                                     // opt/repo-block-size
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                           // opt/repo-block-size
-        ),                                                                                                    // opt/repo-block-size
-                                                                                                              // opt/repo-block-size
-        PARSE_RULE_OPTIONAL                                                                                   // opt/repo-block-size
-        (                                                                                                     // opt/repo-block-size
-            PARSE_RULE_OPTIONAL_GROUP                                                                         // opt/repo-block-size
-            (                                                                                                 // opt/repo-block-size
-                PARSE_RULE_OPTIONAL_DEPEND                                                                    // opt/repo-block-size
-                (                                                                                             // opt/repo-block-size
-                    PARSE_RULE_VAL_OPT(cfgOptRepoBlock),                                                      // opt/repo-block-size
-                    PARSE_RULE_VAL_BOOL_TRUE,                                                                 // opt/repo-block-size
-                ),                                                                                            // opt/repo-block-size
-                                                                                                              // opt/repo-block-size
-                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                               // opt/repo-block-size
-                (                                                                                             // opt/repo-block-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt8192),                                                  // opt/repo-block-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt104857600),                                             // opt/repo-block-size
-                ),                                                                                            // opt/repo-block-size
-                                                                                                              // opt/repo-block-size
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                   // opt/repo-block-size
-                (                                                                                             // opt/repo-block-size
-                    PARSE_RULE_VAL_INT(parseRuleValInt1048576),                                               // opt/repo-block-size
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_1MiB_QT),                                            // opt/repo-block-size
-                ),                                                                                            // opt/repo-block-size
-            ),                                                                                                // opt/repo-block-size
-        ),                                                                                                    // opt/repo-block-size
-    ),                                                                                                        // opt/repo-block-size
-    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                             // opt/repo-bundle
     (                                                                                                             // opt/repo-bundle
         PARSE_RULE_OPTION_NAME("repo-bundle"),                                                                    // opt/repo-bundle
@@ -9455,7 +9413,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRemoteType,                                                                                           // opt-resolve-order
     cfgOptRepo,                                                                                                 // opt-resolve-order
     cfgOptRepoBlock,                                                                                            // opt-resolve-order
-    cfgOptRepoBlockSize,                                                                                        // opt-resolve-order
     cfgOptRepoBundle,                                                                                           // opt-resolve-order
     cfgOptRepoBundleLimit,                                                                                      // opt-resolve-order
     cfgOptRepoBundleSize,                                                                                       // opt-resolve-order

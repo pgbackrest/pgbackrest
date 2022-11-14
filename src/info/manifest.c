@@ -719,8 +719,14 @@ manifestLinkCheck(const Manifest *this)
 }
 
 /***********************************************************************************************************************************
-Calculate block incremental size for a file !!! MORE COMMENTS
+Calculate block incremental size for a file. The block size is based on the size and age of the file. Larger files get larger block
+sizes to reduce the cost of the map and individual block compression. Older files also get larger block sizes under the assumption
+that they are unlikely to be modified if they have not been modified in a while. Very old and very small files skip block
+incremental entirely.
+
+The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
 ***********************************************************************************************************************************/
+// File size to block size map
 static struct ManifestBuildBlockIncrSizeMap
 {
     uint32_t fileSize;
@@ -734,20 +740,34 @@ static struct ManifestBuildBlockIncrSizeMap
     {.fileSize =    4 * 1024 * 1024, .blockSize =  256 * 1024},
     {.fileSize =    2 * 1024 * 1024, .blockSize =  192 * 1024},
     {.fileSize =         128 * 1024, .blockSize =  128 * 1024},
-    {.fileSize =          24 * 1024, .blockSize =   24 * 1024}, // !!! Just here to make backup test work until format is decided
+
+    // !!! Just here to make backup tests work until custom maps are created (or the tests are modified)
+    {.fileSize =          24 * 1024, .blockSize =   24 * 1024},
+};
+
+// File age to block multiplier map
+static struct ManifestBuildBlockIncrTimeMap
+{
+    uint32_t fileAge;
+    uint32_t blockMultiplier;
+} manifestBuildBlockIncrTimeMap[] =
+{
+    {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
+    {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
+    {.fileAge =     7 * 86400, .blockMultiplier = 2},
 };
 
 static uint64_t
-manifestBuildBlockIncrSize(const time_t backupTimestampCopyStart, const ManifestFile *const file)
+manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TIME, backupTimestampCopyStart);
+        FUNCTION_TEST_PARAM(TIME, timeStart);
         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
-    (void)backupTimestampCopyStart; // !!!
     uint64_t result = 0;
 
+    // Search size map for the appropriate block size
     for (unsigned int sizeIdx = 0; sizeIdx < LENGTH_OF(manifestBuildBlockIncrSizeMap); sizeIdx++)
     {
         if (file->size >= manifestBuildBlockIncrSizeMap[sizeIdx].fileSize)
@@ -757,7 +777,20 @@ manifestBuildBlockIncrSize(const time_t backupTimestampCopyStart, const Manifest
         }
     }
 
-    // !!! Multipliers for time
+    // If block size > 0 then search age map for a multiplier
+    if (result != 0)
+    {
+        const time_t fileAge = timeStart - file->timestamp;
+
+        for (unsigned int timeIdx = 0; timeIdx < LENGTH_OF(manifestBuildBlockIncrTimeMap); timeIdx++)
+        {
+            if (fileAge >= manifestBuildBlockIncrTimeMap[timeIdx].fileAge)
+            {
+                result *= manifestBuildBlockIncrTimeMap[timeIdx].blockMultiplier;
+                break;
+            }
+        }
+    }
 
     FUNCTION_TEST_RETURN(UINT64, result);
 }
@@ -996,9 +1029,9 @@ manifestBuildInfo(
                 memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
             }
 
-            // !!!
+            // Get block incremental size
             if (info->size != 0 && buildData->manifest->pub.data.blockIncr)
-                file.blockIncrSize = manifestBuildBlockIncrSize(buildData->manifest->pub.data.backupTimestampCopyStart, &file);
+                file.blockIncrSize = manifestBuildBlockIncrSize(buildData->manifest->pub.data.backupTimestampStart, &file);
 
             // Determine if this file should be page checksummed
             if (dbPath && buildData->checksumPage)
@@ -1196,19 +1229,19 @@ manifestBuildInfo(
 
 Manifest *
 manifestNewBuild(
-    const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const bool online,
-    const bool checksumPage, const bool bundle, const bool blockIncr, const uint64_t blockIncrSize,
-    const StringList *const excludeList, const Pack *const tablespaceList)
+    const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const time_t timestampStart,
+    const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const StringList *const excludeList,
+    const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
+        FUNCTION_LOG_PARAM(TIME, timestampStart);
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(BOOL, blockIncr);
-        FUNCTION_LOG_PARAM(UINT64, blockIncrSize);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(PACK, tablespaceList);
     FUNCTION_LOG_END();
@@ -1226,6 +1259,7 @@ manifestNewBuild(
         this->pub.data.backrestVersion = strNewZ(PROJECT_VERSION);
         this->pub.data.pgVersion = pgVersion;
         this->pub.data.pgCatalogVersion = pgCatalogVersion;
+        this->pub.data.backupTimestampStart = timestampStart;
         this->pub.data.backupType = backupTypeFull;
         this->pub.data.backupOptionOnline = online;
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
@@ -1600,6 +1634,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     file.checksumPageErrorList = filePrior.checksumPageErrorList;
                     file.bundleId = filePrior.bundleId;
                     file.bundleOffset = filePrior.bundleOffset;
+                    file.blockIncrSize = filePrior.blockIncrSize;
                     file.blockIncrMapSize = filePrior.blockIncrMapSize;
 
                     // Perform delta if the file size is not zero
@@ -1621,15 +1656,14 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 /**********************************************************************************************************************************/
 void
 manifestBuildComplete(
-    Manifest *const this, const time_t timestampStart, const String *const lsnStart, const String *const archiveStart,
-    const time_t timestampStop, const String *const lsnStop, const String *const archiveStop, const unsigned int pgId,
-    const uint64_t pgSystemId, const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy,
-    const size_t optionBufferSize, const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork,
-    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby, const KeyValue *const annotation)
+    Manifest *const this, const String *const lsnStart, const String *const archiveStart, const time_t timestampStop,
+    const String *const lsnStop, const String *const archiveStop, const unsigned int pgId, const uint64_t pgSystemId,
+    const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy, const size_t optionBufferSize,
+    const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork, const bool optionHardLink,
+    const unsigned int optionProcessMax, const bool optionStandby, const KeyValue *const annotation)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(TIME, timestampStart);
         FUNCTION_LOG_PARAM(STRING, lsnStart);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
         FUNCTION_LOG_PARAM(TIME, timestampStop);
@@ -1652,7 +1686,6 @@ manifestBuildComplete(
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         // Save info
-        this->pub.data.backupTimestampStart = timestampStart;
         this->pub.data.lsnStart = strDup(lsnStart);
         this->pub.data.archiveStart = strDup(archiveStart);
         this->pub.data.backupTimestampStop = timestampStop;
