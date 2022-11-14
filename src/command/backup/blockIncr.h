@@ -21,9 +21,6 @@ consists of the following, compressed and encrypted as required:
 The block list is followed by the block map, which is encrypted separately when required but not compressed. The return value of the
 filter is the stored block size. Combined with the repo size this allows the block map to be read separately.
 
-??? What about an adaptive system where block sizes are based on the size *and last modification* of the file. So files that were
-last modified more than a week ago (assuming full backups are about a week apart, maybe check this) will be stored whole or with
-large block sizes. Block size would also be dependent on the size of the file.
 ??? Allow files in the full backup to be stored without blocks. This would be closer to the original optimistic method I had thought
 of that would apply the blocks in the incrementals and if there was still no checksum match then go fetch the blocks out of the
 full.
