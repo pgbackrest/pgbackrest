@@ -120,6 +120,21 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-test-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1920"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="koshi.shibagaki"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Update <file>test.pl</file> <setting>--psql-bin</setting> option to match command-line help.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-test-list>
         </release>
 
         <release date="2022-09-19" version="2.41" title="Backup Annotations">
@@ -12113,6 +12128,11 @@
         <contributor id="jungle-boogie">
             <contributor-name-display>jungle-boogie</contributor-name-display>
             <contributor-id type="github">jungle-boogie</contributor-id>
+        </contributor>
+
+        <contributor id="koshi.shibagaki">
+            <contributor-name-display>Koshi Shibagaki</contributor-name-display>
+            <contributor-id type="github">k-zshiba</contributor-id>
         </contributor>
 
         <contributor id="huseyin.sonmez">
