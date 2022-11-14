@@ -290,7 +290,7 @@ sub run
                     ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
                     ($self->{strLogLevelTestFile} ne lc(TRACE) ? " --log-level-test-file=$self->{strLogLevelTestFile}" : '') .
                     ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
-                    ' --pgsql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
+                    ' --psql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                     ($self->{bDryRun} ? ' --dry-run' : '') .
                     ($self->{bDryRun} ? ' --vm-out' : '') .
