@@ -265,7 +265,8 @@ backupFile(
                             ioReadFilterGroup(
                                 storageReadIo(read)),
                                 blockIncrNew(
-                                    file->blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap, compress, encrypt));
+                                    (size_t)file->blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap, compress,
+                                    encrypt));
                     }
                     // Else apply compress/encrypt filters to the entire file
                     else

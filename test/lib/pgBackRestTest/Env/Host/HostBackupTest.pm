@@ -2014,6 +2014,8 @@ sub restoreCompare
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bims");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bims"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bis");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bis"});
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
