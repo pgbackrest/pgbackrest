@@ -784,7 +784,7 @@ manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const fil
 
         for (unsigned int timeIdx = 0; timeIdx < LENGTH_OF(manifestBuildBlockIncrTimeMap); timeIdx++)
         {
-            if (fileAge >= manifestBuildBlockIncrTimeMap[timeIdx].fileAge)
+            if (fileAge >= (time_t)manifestBuildBlockIncrTimeMap[timeIdx].fileAge)
             {
                 result *= manifestBuildBlockIncrTimeMap[timeIdx].blockMultiplier;
                 break;
