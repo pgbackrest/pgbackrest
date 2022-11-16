@@ -34,7 +34,7 @@ use constant TEST_NAME                                              => 'test';
     push @EXPORT, qw(TEST_NAME);
 use constant TEST_BIN_REQ                                           => 'bin-req';
     push @EXPORT, qw(TEST_BIN_REQ);
-use constant TEST_PGSQL_BIN                                         => 'pgsql-bin';
+use constant TEST_PGSQL_BIN                                         => 'psql-bin';
     push @EXPORT, qw(TEST_PGSQL_BIN);
 use constant TEST_INTEGRATION                                       => 'integration';
     push @EXPORT, qw(TEST_INTEGRATION);

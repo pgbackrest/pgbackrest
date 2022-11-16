@@ -241,7 +241,7 @@ List *restoreFile(
                     if (cipherPass != NULL)
                     {
                         ioFilterGroupAdd(
-                            filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), NULL));
+                            filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass)));
                     }
 
                     // Add decompression filter
