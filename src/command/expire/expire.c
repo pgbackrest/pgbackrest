@@ -609,8 +609,9 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                     };
 
                                     // If this is not the retention backup, then set the stop, otherwise set the expire max to
-                                    // the archive start of the archive to retain
-                                    if (strCmp(backupData->backupLabel, archiveRetentionBackup.backupLabel) != 0)
+                                    // the archive start of the archive to retain, unless archive retention has been set to 0.
+                                    if (strCmp(backupData->backupLabel, archiveRetentionBackup.backupLabel) != 0 ||
+                                        archiveRetention == 0)
                                         archiveRange.stop = strDup(backupData->backupArchiveStop);
                                     else
                                         archiveExpireMax = strDup(archiveRange.start);
@@ -669,9 +670,9 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                     archiveExpire.stop = strDup(walPath);
                                 }
                                 // Else delete individual files instead if the major path is less than or equal to the most recent
-                                // retention backup.  This optimization prevents scanning though major paths that could not possibly
-                                // have anything to expire.
-                                else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
+                                // retention backup. This optimization prevents scanning though major paths that could not possibly
+                                // have anything to expire, unless archive retention has been set to 0.
+                                else if (archiveRetention == 0 || strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
                                 {
                                     // Look for files in the archive directory
                                     StringList *walSubPathList =
