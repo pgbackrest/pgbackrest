@@ -620,7 +620,14 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
 
                 // Error if the option is unindexed but the deprecation is not
                 if (!indexed && !deprecate->unindexed && !param.ignoreMissingIndex)
-                    THROW_FMT(OptionInvalidError, "deprecated option '%s' must have an index", strZ(optionCandidate));
+                {
+                    THROW_FMT(
+                        OptionInvalidError, "deprecated option '%s' requires an index\n"
+                        "HINT: add the required index, e.g. %.*s1%s.\n"
+                        "HINT: consider using the non-deprecated name, e.g. %s.",
+                        strZ(optionCandidate), (int)(dashPtr - optionName), optionName, dashPtr,
+                        cfgOptionIdxName(deprecate->id, 0));
+                }
 
                 result.deprecated = true;
                 optionFound = &parseRuleOption[deprecate->id];
@@ -656,9 +663,15 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
             if (indexed && !optionFound->group)
                 THROW_FMT(OptionInvalidError, "option '%s' cannot have an index", strZ(optionCandidate));
 
-            // Error if the option is unindexed but the deprecation is not
+            // Error if the option is unindexed but an index is required
             if (!indexed && optionFound->group && !param.ignoreMissingIndex)
-                THROW_FMT(OptionInvalidError, "option '%s' must have an index", strZ(optionCandidate));
+            {
+                THROW_FMT(
+                    OptionInvalidError,
+                    "option '%s' requires an index\n"
+                    "HINT: add the required index, e.g. %s.",
+                    strZ(optionCandidate), cfgOptionIdxName(result.id, 0));
+            }
         }
 
         FUNCTION_TEST_RETURN_TYPE(CfgParseOptionResult, result);
@@ -1430,7 +1443,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     optionName = strNewZ(arg);
 
                 // Lookup the option name
-                CfgParseOptionResult option = cfgParseOptionP(optionName, true);
+                CfgParseOptionResult option = cfgParseOptionP(optionName, .prefixMatch = true);
 
                 if (!option.found)
                     THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
