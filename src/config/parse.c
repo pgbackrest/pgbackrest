@@ -621,12 +621,16 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
                 // Error if the option is unindexed but the deprecation is not
                 if (!indexed && !deprecate->unindexed && !param.ignoreMissingIndex)
                 {
+                    ASSERT(dashPtr != NULL);
+
+                    const char *const groupName = parseRuleOptionGroup[parseRuleOption[deprecate->id].groupId].name;
+
                     THROW_FMT(
                         OptionInvalidError, "deprecated option '%s' requires an index\n"
                         "HINT: add the required index, e.g. %.*s1%s.\n"
-                        "HINT: consider using the non-deprecated name, e.g. %s.",
-                        strZ(optionCandidate), (int)(dashPtr - optionName), optionName, dashPtr,
-                        cfgOptionIdxName(deprecate->id, 0));
+                        "HINT: consider using the non-deprecated name, e.g. %s1%s.",
+                        strZ(optionCandidate), (int)(dashPtr - optionName), optionName, dashPtr, groupName,
+                        parseRuleOption[deprecate->id].name + strlen(groupName));
                 }
 
                 result.deprecated = true;
@@ -666,11 +670,13 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
             // Error if the option is unindexed but an index is required
             if (!indexed && optionFound->group && !param.ignoreMissingIndex)
             {
+                const char *const groupName = parseRuleOptionGroup[optionFound->groupId].name;
+
                 THROW_FMT(
                     OptionInvalidError,
                     "option '%s' requires an index\n"
-                    "HINT: add the required index, e.g. %s.",
-                    strZ(optionCandidate), cfgOptionIdxName(result.id, 0));
+                    "HINT: add the required index, e.g. %s1%s.",
+                    strZ(optionCandidate), groupName, optionFound->name + strlen(groupName));
             }
         }
 
