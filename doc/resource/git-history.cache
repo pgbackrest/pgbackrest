@@ -1,5 +1,208 @@
 [
     {
+        "commit": "3ad588443b452e04f3abcc107e825dc47e078103",
+        "date": "2022-11-14 12:47:27 +0800",
+        "subject": "Update test.pl --psql-bin option to match command-line help.",
+        "body": "The option to specify the path to psql was shown in the command-line help as --psql-bin but the option was actually named --pgsql-bin.\r\n\r\nRename to match the help so they are consistent."
+    },
+    {
+        "commit": "58b3c91babc6af9e003e5ef09bf99becf8a6f827",
+        "date": "2022-11-10 10:28:49 +0930",
+        "subject": "Add raw mode to CipherBlock to save space.",
+        "body": "The magic in the header is only required so that command-line openssl will recognize the file as being encrypted. In cases where the encrypted data cannot be read with the command-line tool it makes sense to omit the header magic to save some space.\n\nUnfortunately this cannot be enabled for file bundling because it would break backward compatibility. However, it should be possible to enable it for the combination of bundling and block incremental."
+    },
+    {
+        "commit": "c9db7bc274211820030c4ab6ab8c70c1b1896254",
+        "date": "2022-11-06 16:12:23 +0930",
+        "subject": "Update cipherBlockNew() to allow optional parameters.",
+        "body": "This simplifies calls a bit since digest is never passed and allows for new optional parameters."
+    },
+    {
+        "commit": "221db610d2a054ed00ad27377663941abfb9fb98",
+        "date": "2022-10-18 18:02:17 +1300",
+        "subject": "Shorten names in real/all integration test matrix.",
+        "body": "This should allow one or two more parameters to be added without going to a new line, which keeps the matrix easier to read."
+    },
+    {
+        "commit": "5fceee88a9439460bf24082f275ec2e695cc6bf6",
+        "date": "2022-10-18 17:39:59 +1300",
+        "subject": "Add backupFileRepoPathP().",
+        "body": "The path for a backup file in the repository was being generated in four different places, so move the logic to a function."
+    },
+    {
+        "commit": "fee38c2c7cc3ae318bf0d3b50fe23c22900c2311",
+        "date": "2022-10-18 16:11:35 +1300",
+        "subject": "Pass filters to remote storage as a handler array.",
+        "body": "The prior code required coverage in the storage/remote module for all filters that could be used remotely.\n\nNow the filter handlers are set at runtime so any filter list can be used with a remote. This is more flexible and makes coverage testing easier. It also resolves a test dependency.\n\nMove the command/remote unit test near the end so it will have access to all filters without using depends."
+    },
+    {
+        "commit": "1730ef4ac3d88137bd218e6128b0107a8bf2c121",
+        "date": "2022-10-18 11:33:19 +1300",
+        "subject": "Add noTruncate flag to storageNewWriteP().",
+        "body": "This flag skips truncation when opening a file for write on drivers that support it, currently Posix and CIFS. This is convenient for cases where the file needs to be manipulated directly using the file descriptor. Using the file descriptor is not ideal and additional functionality should be added to the storage interface, but for now at least this avoids code duplication, especially on close which updates owners, the timestamp, syncs, etc.\r\n\r\nThe remote driver forbids no truncate because a file descriptor is never available for a remote storage write object.\r\n\r\nUpdate two instances in the current code which benefit from this new functionality, but the primary reason for the change is to support more complex restore deltas in the upcoming block incremental feature."
+    },
+    {
+        "commit": "7967c750d83466d030081e9deb1d70a1ba240271",
+        "date": "2022-10-18 11:09:00 +1300",
+        "subject": "Fix protocol error on short read of remote file.",
+        "body": "If a remote file read was stopped before the read was complete or if an error occurred in the middle of the read then the protocol would end up in a bad state and produce this error:\r\n\r\nProtocolError: client state is 'data-get' but expected 'idle'\r\n\r\nPrevent this by reading the rest of the file on close() or free() to leave the protocol in an idle state for the next command.\r\n\r\nThis was a possible issue for bundling because the amount to read is known in advance and therefore eof may not be reached. However, I was only able to reproduce this issue with unreleased code.\r\n\r\nOn error this issue would cause the original error to be lost. The process may still fail with this fix (if the error comes from another source) but hopefully we'll get better information about the original error."
+    },
+    {
+        "commit": "ddd966cadc30440a81100144204d4084a0f2ac3a",
+        "date": "2022-10-18 09:59:15 +1300",
+        "subject": "Use more generic descriptions for pg_start_backup()/pg_stop_backup().",
+        "body": "The names were changed in PostgreSQL 15, so update the code and docs to make the naming more generic where needed to avoid using a version-specific name in the logs and documentation."
+    },
+    {
+        "commit": "65be4c64a984d51306db4c6febe3a124c3230f51",
+        "date": "2022-10-16 09:58:35 +1300",
+        "subject": "Finalize catalog number for PostgreSQL 15 release."
+    },
+    {
+        "commit": "ea162e821634919b7c839e866b99bf82010dbacc",
+        "date": "2022-10-14 12:54:43 +1300",
+        "subject": "Move storageReadRemoteOpen() in storage/remote/read module.",
+        "body": "This will make an upcoming important fix easier to review."
+    },
+    {
+        "commit": "909be412f8ad0d87f23ce2a2dbca94c3e0732f9f",
+        "date": "2022-10-14 12:08:40 +1300",
+        "subject": "Swap command/backup and command/restore unit tests.",
+        "body": "Logically restore belongs after backup and in a future commit restore will have a dependency on some backup objects."
+    },
+    {
+        "commit": "8f67fb6db2645c2dae24429555ead66147ba176f",
+        "date": "2022-10-14 10:59:07 +1300",
+        "subject": "Enable FreeBSD 12/13 builds on Cirrus CI.",
+        "body": "The builds were disabled in bb11539a and 164548f2 due to an error that seems to have been caused by a bad package dependency for rsync. In any case adding this fixed it:\n\npkg update && pkg upgrade -y libiconv"
+    },
+    {
+        "commit": "e7e106f781be01027d4829b258902549eb36eb7b",
+        "date": "2022-10-11 10:52:34 -1100",
+        "subject": "Use read-only storage to calculate checksum in restoreFile().",
+        "body": "Writable storage is not required here so use read-only storage instead."
+    },
+    {
+        "commit": "164548f2b744db5e6c7a3089176f6df2a638d105",
+        "date": "2022-10-11 10:20:44 -1100",
+        "subject": "Disable FreeBSD 12 builds on Cirrus CI.",
+        "body": "Build have begin failing with this error:\n\nld-elf.so.1: /usr/local/bin/rsync: Undefined symbol \"locale_charset\"\n\nThere does not appear to be a new version so hopefully this is a transient error (hoping the same for FreeBSD 13, see bb11539a). Disable for now to free the build pipeline."
+    },
+    {
+        "commit": "352cbf1d5738a720292b5067051a05efc2b9a8ac",
+        "date": "2022-10-06 10:15:38 -1000",
+        "subject": "Update ManifestFile booleans to bit fields."
+    },
+    {
+        "commit": "46a0af353139f3238dbe96671e99ea0456028940",
+        "date": "2022-10-05 18:05:56 -1000",
+        "subject": "Return binary as result from CryptoHash filter.",
+        "body": "The prior result was hex-encoded, which is not optimal. This was legacy from the interface with Perl and then the JSON protocol. The new binary protocol natively supports binary so it makes sense to use it and convert to hex where needed.\n\nA number of these hex conversions can now be removed but that will need to be handled in another commit."
+    },
+    {
+        "commit": "5602f179a177a8513b96c762590829c012c28175",
+        "date": "2022-10-05 17:01:35 -1000",
+        "subject": "Add varint-128 encode/decode to IoRead/IoWrite.",
+        "body": "This makes it more efficient to read/write (especially read) varint-128 to/from IO.\r\n\r\nUpdate the Pack type to take advantage of the more efficient read and remove some duplicate code."
+    },
+    {
+        "commit": "102ce5dee47e8d9a8d2eeaf2b2cc2bac105914ef",
+        "date": "2022-10-05 16:28:31 -1000",
+        "subject": "Add persistent reference list to manifest.",
+        "body": "The reference list was previously built at load time from whichever references existed in the file list. This was sufficient since the list was for informational purposes only.\r\n\r\nThe block incremental feature will require a reference list that contains all prior backups, even those that are not explicitly referenced from the manifest. Therefore it makes sense to build and persist a manifest list rather than building it at load time.\r\n\r\nThis list can still be used for informational purposes, though it needs to be sorted since the list it sill built for older manifest versions and may not be in sorted order.\r\n\r\nAdd strLstFindIdx() to find references in the list."
+    },
+    {
+        "commit": "c647bcb50954f623d29104cdb8a1457ed8e94579",
+        "date": "2022-10-05 13:14:15 -1000",
+        "subject": "Add manifest flags for file processing during backup.",
+        "body": "The prior method was to check a combination of fields to determine if a file needed to be copied, delta'd, or resumed. This was complicated and ultimately imposed a limitation on the number of operations that could be performed.\r\n\r\nIntroduce copy, delta, and resume flags in the manifest to make it clearer which operations need to be performed and to reduce complex and duplicated logic.\r\n\r\nThis also allows zero-length bundled files to be completed during manifest build rather than later on during backup processing."
+    },
+    {
+        "commit": "bb11539a37e830ed2a836633218b7184a7a57f2d",
+        "date": "2022-10-05 12:20:02 -1000",
+        "subject": "Disable FreeBSD 13 builds on Cirrus CI.",
+        "body": "Build have begin failing with this error:\n\nld-elf.so.1: /usr/local/bin/rsync: Undefined symbol \"locale_charset\"\n\nThere does not appear to be a new version so hopefully this is a transient error. Disable for now to free the build pipeline."
+    },
+    {
+        "commit": "1ea6a4142e47e2e0b56911ad1f028dfcddc5fd64",
+        "date": "2022-10-04 14:19:12 -1000",
+        "subject": "Improve manifest file updates.",
+        "body": "The prior manifestFileUpdate() function was pretty difficult to use since all the parameters had to specified. Instead, pass a ManifestFile struct that has all members set as needed.\r\n\r\nWhen new struct members are added the manifestFileUpdate() call sites will still need to be reviewed, but this should make the process of adding members a bit simpler."
+    },
+    {
+        "commit": "f981fb45d9931e597afec764e13b1a53d8365d25",
+        "date": "2022-10-04 13:22:31 -1000",
+        "subject": "Do not store references for zero-length files when bundling.",
+        "body": "This appears to have been an oversight in 34d6495. Storing the reference is not really correct since the file is not stored in a prior backup. It also uses more space.\r\n\r\nThere is no real harm in storing the reference, since it is always ignored on restore, but the code is simpler if the zero-length files can be dealt with during the manifest and don't need additional handling later on. This is also an important part of some upcoming optimizations."
+    },
+    {
+        "commit": "f0acc195c0527495857f1afa8b24bdf2a4f477b5",
+        "date": "2022-10-03 10:02:44 -1000",
+        "subject": "Fix assert message and add a clarifying comment."
+    },
+    {
+        "commit": "6e26860c2648f6e23ad99bb4d38ecb1bfc45dd0c",
+        "date": "2022-10-02 17:48:43 -1000",
+        "subject": "Do not log bundle info when a file is delta matched from a prior backup.",
+        "body": "It is possible to log the bundle info correctly but the information is useless with the backup reference, which does not appear until later. For now just omit the bundle info so we are not logging something incorrect."
+    },
+    {
+        "commit": "4722ad87a78f1085ef8d823b7460d191477e768e",
+        "date": "2022-10-02 17:41:31 -1000",
+        "subject": "Add test for differential file bundles to the command/backup unit.",
+        "body": "This test exposes a small logging issue. The bundle information for the matched delta on PG_VERSION is not correct. This issue will be fixed in the next commit.\n\nThe information stored in the manifest *is* correct so this bug is essentially cosmetic."
+    },
+    {
+        "commit": "ac99201c0ebde616279214e600e49fdf506f7469",
+        "date": "2022-10-02 17:32:48 -1000",
+        "subject": "Add bufferSize to cvtUInt64FromVarInt128() to further limit reads.",
+        "body": "The current call site, manifestFileUnpack(), does not know the total buffer size but the buffer has always been maintained in memory so there should be no corruption. However, there are upcoming use cases where the buffer will be read from IO, the buffer size will be known, and additional sanity checking on buffer overruns will be valuable.\n\nAlso rename params to align better with cvtUInt64ToVarInt128()."
+    },
+    {
+        "commit": "01b81f9d374701eb489dd1888bcba25fb5d6df84",
+        "date": "2022-10-01 15:26:44 -1000",
+        "subject": "Move link creation to storage interface.",
+        "body": "Direct link creation via Posix functions has been moved to the Posix driver.\r\n\r\nThis change allows adding SFTP softlink creation in the SFTP driver using the standard interface."
+    },
+    {
+        "commit": "2a4137ed2eeaa769508301056226d6f86a67fd06",
+        "date": "2022-09-25 16:15:23 -0800",
+        "subject": "Add zero-length chunked content test to common/ioHttp unit.",
+        "body": "It seems wasteful to chunk content when there is nothing to send but make sure we handle it gracefully just in case a server decides to do it."
+    },
+    {
+        "commit": "64b64b614c8272d2a87ffcde2fa7f27cf7eee365",
+        "date": "2022-09-25 12:30:30 -0800",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "f1e8e49fa933dd0f5dfab446f511ac010eb4d236",
+        "date": "2022-09-23 14:00:58 -0700",
+        "subject": "Use large error/log buffers in test harness.",
+        "body": "Ninja produces quite a bit of output so error messages are often truncated by the default error/log buffers. Use large buffers in the test harness to capture the error even when there is a lot of output.\n\nNinja has introduced a --quiet option, but it is currently too new to be in any of our test distributions."
+    },
+    {
+        "commit": "cd8db7d9e53e041ad6fb31f2f015541c1d24abc2",
+        "date": "2022-09-22 22:42:01 -0700",
+        "subject": "Fix memory leak in file bundle backup/restore.",
+        "body": "When converting restoreFile() to support file bundling in 34d64957 there were some I/O objects that were only freed at the end of the function that should have been freed at the end of each loop. Wrap the loops in temp mem contexts to fix this.\r\n\r\nDo the same to backupFile() since it would have a similar leak when resuming a backup. Since file bundles cannot be resumed the leak would not be as severe, but still seems worth doing to protect against future leaks."
+    },
+    {
+        "commit": "d50a4442e45efa8d1a16c9bf68f2337367c42835",
+        "date": "2022-09-22 10:35:41 -0700",
+        "subject": "Add missed release note for b05d31f5."
+    },
+    {
+        "commit": "9483844f7fc9a5eac64a87d3c80cfea3fd592e4e",
+        "date": "2022-09-19 10:25:38 -0700",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "ab4209ebcbe23b5c3b759ba67f0e9bdc6cb66280",
+        "date": "2022-09-19 10:17:25 -0700",
+        "subject": "Begin v2.42 development."
+    },
+    {
         "commit": "6b355806cc288e6f473254412337596287291798",
         "date": "2022-09-19 10:08:10 -0700",
         "subject": "v2.41: Backup Annotations"
