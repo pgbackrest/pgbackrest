@@ -3767,7 +3767,7 @@ testRun(void)
             TEST_RESULT_VOID(testCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: last backup label = 20191030-014640F, version = 2.42dev\n"
+                "P00   INFO: last backup label = 20191030-014640F, version = " PROJECT_VERSION "\n"
                 "P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from 20191030-014640F\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBBF8000000000, lsn = 5dbbf80/0\n"

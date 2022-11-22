@@ -855,14 +855,17 @@ testRun(void)
         strLstAddZ(argList, "--repo-storage-ca-file");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "option 'repo-storage-ca-file' must have an index");
+            "option 'repo-storage-ca-file' requires an index\n"
+            "HINT: add the required index, e.g. repo1-storage-ca-file.");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAddZ(argList, "--repo-azure-ca-path");
         TEST_ERROR(
             configParse(storageTest, strLstSize(argList), strLstPtr(argList), false), OptionInvalidError,
-            "deprecated option 'repo-azure-ca-path' must have an index");
+            "deprecated option 'repo-azure-ca-path' requires an index\n"
+            "HINT: add the required index, e.g. repo1-azure-ca-path.\n"
+            "HINT: consider using the non-deprecated name, e.g. repo1-storage-ca-path.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("allow option parse without an index");
