@@ -1,5 +1,10 @@
 [
     {
+        "commit": "70b75532bf20a025323b2a3138497ef01eb1774f",
+        "date": "2022-11-22 10:20:59 +0800",
+        "subject": "v2.42: Bug Fixes"
+    },
+    {
         "commit": "3ad588443b452e04f3abcc107e825dc47e078103",
         "date": "2022-11-14 12:47:27 +0800",
         "subject": "Update test.pl --psql-bin option to match command-line help.",
