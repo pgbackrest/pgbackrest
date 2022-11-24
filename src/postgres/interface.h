@@ -158,8 +158,7 @@ uint64_t pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSi
 uint32_t pgTimelineFromWalSegment(const String *walSegment);
 
 // Convert a timeline and lsn range to a list of wal segments
-StringList *pgLsnRangeToWalSegmentList(
-    unsigned int pgVersion, uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize);
+StringList *pgLsnRangeToWalSegmentList(uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize);
 
 // Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
 const String *pgLsnName(unsigned int pgVersion);

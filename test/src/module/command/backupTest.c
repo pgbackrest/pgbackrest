@@ -362,8 +362,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         InfoArchive *infoArchive = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
         const String *archiveId = infoArchiveId(infoArchive);
         StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-            pgControl.version, param.timeline, lsnStart - pgControl.walSegmentSize,
-            param.noWal ? lsnStart - pgControl.walSegmentSize : lsnStop,
+            param.timeline, lsnStart - pgControl.walSegmentSize, param.noWal ? lsnStart - pgControl.walSegmentSize : lsnStop,
             pgControl.walSegmentSize);
 
         Buffer *walBuffer = bufNew((size_t)pgControl.walSegmentSize);

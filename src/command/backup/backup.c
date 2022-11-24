@@ -2019,7 +2019,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
             // Loop through all the segments in the lsn range
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-                manifestData(manifest)->pgVersion, backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
+                backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {

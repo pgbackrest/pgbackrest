@@ -442,18 +442,15 @@ pgTimelineFromWalSegment(const String *const walSegment)
 /**********************************************************************************************************************************/
 StringList *
 pgLsnRangeToWalSegmentList(
-    const unsigned int pgVersion, const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop,
-    const unsigned int walSegmentSize)
+    const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop, const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT, timeline);
         FUNCTION_TEST_PARAM(UINT64, lsnStart);
         FUNCTION_TEST_PARAM(UINT64, lsnStop);
         FUNCTION_TEST_PARAM(UINT, walSegmentSize);
     FUNCTION_TEST_END();
 
-    ASSERT(pgVersion != 0);
     ASSERT(timeline != 0);
     ASSERT(lsnStart <= lsnStop);
     ASSERT(walSegmentSize != 0);
