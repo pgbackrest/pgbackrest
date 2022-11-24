@@ -508,8 +508,8 @@ A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Be
 // Set up two standbys but no primary
 harnessPqScriptSet((HarnessPq [])
 {
-    HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
-    HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+    HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+    HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
 
     // Close the "inner" session first (8) then the outer (1)
     HRNPQ_MACRO_CLOSE(8),

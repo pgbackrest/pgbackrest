@@ -804,11 +804,11 @@ manifestBuildInfo(
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_serial/* since these files are reset
-                if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
+                if (strEqZ(info->name, PG_PATH_PGSERIAL))
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_snapshots/* since these files cannot be reused on recovery
-                if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
+                if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS))
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
@@ -1141,7 +1141,6 @@ manifestNewBuild(
 
     ASSERT(storagePg != NULL);
     ASSERT(pgVersion != 0);
-    ASSERT(!checksumPage || pgVersion >= PG_VERSION_93);
 
     Manifest *this = NULL;
 
@@ -1272,75 +1271,72 @@ manifestNewBuild(
             // to check for _init files which will sort after the vast majority of the relation files.  We could check storage for
             // each _init file but that would be expensive.
             // -------------------------------------------------------------------------------------------------------------------------
-            if (pgVersion >= PG_VERSION_91)
-            {
-                RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strZ(buildData.tablespaceId)));
-                unsigned int fileIdx = 0;
-                char lastRelationFileId[21] = "";                   // Large enough for a 64-bit unsigned integer
-                bool lastRelationFileIdUnlogged = false;
+            RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strZ(buildData.tablespaceId)));
+            unsigned int fileIdx = 0;
+            char lastRelationFileId[21] = "";                   // Large enough for a 64-bit unsigned integer
+            bool lastRelationFileIdUnlogged = false;
 
 #ifdef DEBUG_MEM
-                // Record the temp context size before the loop begins
-                size_t sizeBegin = memContextSize(memContextCurrent());
+            // Record the temp context size before the loop begins
+            size_t sizeBegin = memContextSize(memContextCurrent());
 #endif
 
-                while (fileIdx < manifestFileTotal(this))
+            while (fileIdx < manifestFileTotal(this))
+            {
+                // If this file looks like a relation.  Note that this never matches on _init forks.
+                const String *const filePathName = manifestFileNameGet(this, fileIdx);
+
+                if (regExpMatch(relationExp, filePathName))
                 {
-                    // If this file looks like a relation.  Note that this never matches on _init forks.
-                    const String *const filePathName = manifestFileNameGet(this, fileIdx);
+                    // Get the filename (without path)
+                    const char *fileName = strBaseZ(filePathName);
+                    size_t fileNameSize = strlen(fileName);
 
-                    if (regExpMatch(relationExp, filePathName))
+                    // Strip off the numeric part of the relation
+                    char relationFileId[sizeof(lastRelationFileId)];
+                    unsigned int nameIdx = 0;
+
+                    for (; nameIdx < fileNameSize; nameIdx++)
                     {
-                        // Get the filename (without path)
-                        const char *fileName = strBaseZ(filePathName);
-                        size_t fileNameSize = strlen(fileName);
+                        if (!isdigit(fileName[nameIdx]))
+                            break;
 
-                        // Strip off the numeric part of the relation
-                        char relationFileId[sizeof(lastRelationFileId)];
-                        unsigned int nameIdx = 0;
-
-                        for (; nameIdx < fileNameSize; nameIdx++)
-                        {
-                            if (!isdigit(fileName[nameIdx]))
-                                break;
-
-                            relationFileId[nameIdx] = fileName[nameIdx];
-                        }
-
-                        relationFileId[nameIdx] = '\0';
-
-                        // The filename must have characters
-                        ASSERT(relationFileId[0] != '\0');
-
-                        // Store the last relation so it does not need to be found everytime
-                        if (strcmp(lastRelationFileId, relationFileId) != 0)
-                        {
-                            // Determine if the relation is unlogged
-                            String *relationInit = strNewFmt(
-                                "%.*s%s_init", (int)(strSize(filePathName) - fileNameSize), strZ(filePathName), relationFileId);
-                            lastRelationFileIdUnlogged = manifestFileExists(this, relationInit);
-                            strFree(relationInit);
-
-                            // Save the file id so we don't need to do the lookup next time if it doesn't change
-                            strcpy(lastRelationFileId, relationFileId);
-                        }
-
-                        // If relation is unlogged then remove it
-                        if (lastRelationFileIdUnlogged)
-                        {
-                            manifestFileRemove(this, filePathName);
-                            continue;
-                        }
+                        relationFileId[nameIdx] = fileName[nameIdx];
                     }
 
-                    fileIdx++;
+                    relationFileId[nameIdx] = '\0';
+
+                    // The filename must have characters
+                    ASSERT(relationFileId[0] != '\0');
+
+                    // Store the last relation so it does not need to be found everytime
+                    if (strcmp(lastRelationFileId, relationFileId) != 0)
+                    {
+                        // Determine if the relation is unlogged
+                        String *relationInit = strNewFmt(
+                            "%.*s%s_init", (int)(strSize(filePathName) - fileNameSize), strZ(filePathName), relationFileId);
+                        lastRelationFileIdUnlogged = manifestFileExists(this, relationInit);
+                        strFree(relationInit);
+
+                        // Save the file id so we don't need to do the lookup next time if it doesn't change
+                        strcpy(lastRelationFileId, relationFileId);
+                    }
+
+                    // If relation is unlogged then remove it
+                    if (lastRelationFileIdUnlogged)
+                    {
+                        manifestFileRemove(this, filePathName);
+                        continue;
+                    }
                 }
 
-#ifdef DEBUG_MEM
-                // Make sure that the temp context did not grow too much during the loop
-                ASSERT(memContextSize(memContextCurrent()) - sizeBegin < 256);
-#endif
+                fileIdx++;
             }
+
+#ifdef DEBUG_MEM
+            // Make sure that the temp context did not grow too much during the loop
+            ASSERT(memContextSize(memContextCurrent()) - sizeBegin < 256);
+#endif
         }
         MEM_CONTEXT_TEMP_END();
     }

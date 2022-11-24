@@ -50,7 +50,7 @@ testRun(void)
     if (testBegin("pgControlVersion()"))
     {
         TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");
-        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_90), 903, "9.0 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_93), 937, "9.0 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
     }
 
@@ -103,13 +103,13 @@ testRun(void)
 
         //--------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_90, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_90),
+            storageTest, PG_VERSION_93, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_93),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_90, "   check version");
-        TEST_RESULT_UINT(info.catalogVersion, 201008051, "   check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_93, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201306121, "   check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
     }
@@ -141,15 +141,6 @@ testRun(void)
 
         TEST_RESULT_STRLST_Z(
             pgLsnRangeToWalSegmentList(
-                PG_VERSION_92, 1, pgLsnFromStr(STRDEF("1/60")), pgLsnFromStr(STRDEF("1/60")), 16 * 1024 * 1024),
-            "000000010000000100000000\n", "get single");
-        TEST_RESULT_STRLST_Z(
-            pgLsnRangeToWalSegmentList(
-                PG_VERSION_92, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/1000000")), 16 * 1024 * 1024),
-            "0000000200000001000000FD\n0000000200000001000000FE\n000000020000000200000000\n000000020000000200000001\n",
-            "get range <= 9.2");
-        TEST_RESULT_STRLST_Z(
-            pgLsnRangeToWalSegmentList(
                 PG_VERSION_93, 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/60")), 16 * 1024 * 1024),
             "0000000200000001000000FD\n0000000200000001000000FE\n0000000200000001000000FF\n000000020000000200000000\n",
             "get range > 9.2");
@@ -172,7 +163,7 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
 
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_90, 201008051), "PG_9.0_201008051", "check 9.0 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_93, 201008051), "PG_9.3_201008051", "check 9.3 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_94, 999999999), "PG_9.4_999999999", "check 9.4 tablespace id");
 
         TEST_RESULT_STR_Z(pgWalName(PG_VERSION_96), "xlog", "check xlog name");
@@ -234,18 +225,18 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         hrnPgWalToBuffer(
-            (PgWal){.version = PG_VERSION_90, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
+            (PgWal){.version = PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
 
         TEST_ERROR(pgWalFromBuffer(result), FormatError, "wal segment size is 33554432 but must be 16777216 for PostgreSQL <= 10");
 
         //--------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_90, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_93, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v9.0");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_90, "   check version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_93, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
     }
 

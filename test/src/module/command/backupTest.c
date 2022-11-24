@@ -1514,27 +1514,12 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when backup from standby is not supported");
-
-        StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-        TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_91, HRN_PG_SYSTEMID_91, hrnPgCatalogVersion(PG_VERSION_91), NULL)),
-            ConfigError, "option 'backup-standby' not valid for PostgreSQL < 9.2");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn and reset when backup from standby used in offline mode");
 
         // Create pg_control
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
 
-        argList = strLstNew();
+        StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");

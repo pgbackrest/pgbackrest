@@ -565,19 +565,6 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
     {
         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
 
-        // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist and
-        // PostgreSQL will ignore it
-        if (archiveIdResult->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
-        {
-            LOG_INFO_FMT("invalid WAL '%s' for '%s' exists, skipping", strZ(walSegment), strZ(archiveIdResult->archiveId));
-
-            (*jobErrorTotal)++;
-
-            // Remove the file from the original list so no attempt is made to verify it
-            strLstRemoveIdx(walFileList, walFileIdx);
-            continue;
-        }
-
         // The lists are sorted so look ahead to see if this is a duplicate of the next one in the list
         if (walFileIdx + 1 < strLstSize(walFileList))
         {
