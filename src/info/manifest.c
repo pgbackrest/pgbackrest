@@ -2064,7 +2064,12 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
                 manifest->pub.data.bundle = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
+            {
                 manifest->pub.data.backupLabel = varStr(jsonToVar(value));
+
+                // !!!
+                strLstAddIfMissing(manifest->pub.referenceList, manifest->pub.data.backupLabel);
+            }
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_START))
                 manifest->pub.data.lsnStart = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_STOP))
