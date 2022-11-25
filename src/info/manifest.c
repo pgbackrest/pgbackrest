@@ -2067,7 +2067,9 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             {
                 manifest->pub.data.backupLabel = varStr(jsonToVar(value));
 
-                // !!!
+                // Add the label to the reference list in case the manifest was created before 2.42 when the explicit reference list
+                // was added. Most references are added when the file list is loaded but the current backup will never be referenced
+                // from a file so it must be added here.
                 strLstAddIfMissing(manifest->pub.referenceList, manifest->pub.data.backupLabel);
             }
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_START))
