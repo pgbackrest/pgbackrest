@@ -447,8 +447,12 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
             if (manData->backupType != backupTypeFull)
             {
-                // This list may not be sorted for manifests created before the reference list was added
+                // This list may not be sorted for manifests created before the reference list was added. Remove the last reference
+                // since it will always be the current backup. Technically the current backup is always referenced but this is not
+                // useful information for the user.
                 infoBackupData.backupReference = strLstSort(strLstDup(manifestReferenceList(manifest)), sortOrderAsc);
+                strLstRemoveIdx(infoBackupData.backupReference, strLstSize(infoBackupData.backupReference) - 1);
+
                 infoBackupData.backupPrior = strDup(manData->backupLabelPrior);
             }
 

@@ -442,8 +442,7 @@ testRun(void)
         TEST_RESULT_STR_Z(backupData.backupPrior, "20190818-084502F", "backup prior set");
         TEST_RESULT_STRLST_Z(
             backupData.backupReference,
-            "20190818-084502F\n20190818-084502F_20190819-084506D\n20190818-084502F_20190819-084506I\n"
-                "20190818-084502F_20190820-084502I\n",
+            "20190818-084502F\n20190818-084502F_20190819-084506D\n20190818-084502F_20190819-084506I\n",
             "backup reference set and ordered");
         TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "option archive check");
         TEST_RESULT_BOOL(backupData.optionArchiveCopy, true, "option archive copy");

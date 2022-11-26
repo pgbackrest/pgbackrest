@@ -46,6 +46,15 @@ testRun(void)
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
+        #define TEST_MANIFEST_HEADER_LABEL                                                                                         \
+            "[backup]\n"                                                                                                           \
+            "backup-label=\"20190818-084502F\"\n"                                                                                  \
+            "backup-reference=\"20190818-084502F\"\n"                                                                              \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"full\"\n"
+
         #define TEST_MANIFEST_HEADER_BUNDLE                                                                                        \
             "[backup]\n"                                                                                                           \
             "backup-bundle=true\n"                                                                                                 \
@@ -332,6 +341,7 @@ testRun(void)
                 storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), false, false, false, NULL,
                 pckWriteResult(tablespaceList)),
             "build manifest");
+        TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F")), "backup label set");
 
         Buffer *contentSave = bufNew(0);
 
@@ -339,7 +349,7 @@ testRun(void)
         TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_HEADER_LABEL
                 TEST_MANIFEST_DB_90
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
@@ -1496,7 +1506,7 @@ testRun(void)
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
             "backup-prior=\"20190818-084502F\"\n"                                                                                  \
-            "backup-reference=\"20190818-084502F,20190818-084502F_20190819-084506D,20190818-084502F_20190820-084502D\"\n"          \
+            "backup-reference=\"20190818-084502F_20190819-084506D,20190818-084502F,20190818-084502F_20190820-084502D\"\n"          \
             "backup-timestamp-copy-start=1565282141\n"                                                                             \
             "backup-timestamp-start=1565282140\n"                                                                                  \
             "backup-timestamp-stop=1565282142\n"                                                                                   \
@@ -1610,7 +1620,7 @@ testRun(void)
                 "backup-archive-start=\"000000040000028500000089\"\n"
                 "backup-archive-stop=\"000000040000028500000089\"\n"
                 "backup-bundle=true\n"
-                "backup-label=\"20190818-084502F\"\n"
+                "backup-label=\"20190818-084502F_20190820-084502D\"\n"
                 "backup-lsn-start=\"300/89000028\"\n"
                 "backup-lsn-stop=\"300/89001F88\"\n"
                 "backup-prior=\"20190818-084502F\"\n"
@@ -1654,8 +1664,6 @@ testRun(void)
                 TEST_MANIFEST_PATH
                 TEST_MANIFEST_PATH_DEFAULT))),
             "load manifest");
-
-        TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest validation");

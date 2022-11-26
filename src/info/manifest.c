@@ -2064,14 +2064,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
                 manifest->pub.data.bundle = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
-            {
                 manifest->pub.data.backupLabel = varStr(jsonToVar(value));
-
-                // Add the label to the reference list in case the manifest was created before 2.42 when the explicit reference list
-                // was added. Most references are added when the file list is loaded but the current backup will never be referenced
-                // from a file so it must be added here.
-                strLstAddIfMissing(manifest->pub.referenceList, manifest->pub.data.backupLabel);
-            }
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_START))
                 manifest->pub.data.lsnStart = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_STOP))
@@ -2194,6 +2187,12 @@ manifestNewLoad(IoRead *read)
 
         this->pub.info = infoNewLoad(read, manifestLoadCallback, &loadData);
         this->pub.data.backrestVersion = infoBackrestVersion(this->pub.info);
+
+        // Add the label to the reference list in case the manifest was created before 2.42 when the explicit reference list was
+        // added. Most references are added when the file list is loaded but the current backup will never be referenced from a file
+        // (the reference is assumed) so it must be added here.
+        if (!loadData.referenceListFound)
+            strLstAddIfMissing(this->pub.referenceList, this->pub.data.backupLabel);
 
         // Process link defaults
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(this); linkIdx++)
