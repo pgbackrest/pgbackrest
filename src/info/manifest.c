@@ -3062,6 +3062,7 @@ manifestBackupLabelSet(Manifest *this, const String *backupLabel)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->pub.data.backupLabel == NULL);
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
