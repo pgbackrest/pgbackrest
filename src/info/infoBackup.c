@@ -451,6 +451,11 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 // since it will always be the current backup. Technically the current backup is always referenced but this is not
                 // useful information for the user.
                 infoBackupData.backupReference = strLstSort(strLstDup(manifestReferenceList(manifest)), sortOrderAsc);
+
+                ASSERT(
+                    strEq(
+                        strLstGet(infoBackupData.backupReference, strLstSize(infoBackupData.backupReference) - 1),
+                        infoBackupData.backupLabel));
                 strLstRemoveIdx(infoBackupData.backupReference, strLstSize(infoBackupData.backupReference) - 1);
 
                 infoBackupData.backupPrior = strDup(manData->backupLabelPrior);
