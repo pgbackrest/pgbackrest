@@ -1,5 +1,10 @@
 [
     {
+        "commit": "cc2ffd8264bb4e10e6b289ce3978452018f725e8",
+        "date": "2022-11-28 17:47:48 +0800",
+        "subject": "v2.43: Bug Fix"
+    },
+    {
         "commit": "c4bf775099c85e3cd081f9c1ce35efd4c71d9161",
         "date": "2022-11-28 16:42:35 +0800",
         "subject": "Fix missing reference in diff/incr backup.",
