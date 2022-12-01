@@ -316,9 +316,6 @@ testRun(void)
             walSegmentNext(STRDEF("0000009900000001000000FF"), 16 * 1024 * 1024, PG_VERSION_93), "000000990000000200000000",
             "get next overflow >= 9.3");
         TEST_RESULT_STR_Z(
-            walSegmentNext(STRDEF("0000000100000001000000FE"), 16 * 1024 * 1024, PG_VERSION_92), "000000010000000200000000",
-            "get next overflow < 9.3");
-        TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("000000010000000100000003"), 1024 * 1024 * 1024, PG_VERSION_11), "000000010000000200000000",
             "get next overflow >= 11/1GB");
         TEST_RESULT_STR_Z(
@@ -333,16 +330,12 @@ testRun(void)
         TEST_TITLE("single segment");
 
         TEST_RESULT_STRLST_Z(
-            walSegmentRange(STRDEF("000000010000000100000000"), 16 * 1024 * 1024, PG_VERSION_92, 1), "000000010000000100000000\n",
+            walSegmentRange(STRDEF("000000010000000100000000"), 16 * 1024 * 1024, PG_VERSION_93, 1), "000000010000000100000000\n",
             "get single");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check range by version");
 
-        TEST_RESULT_STRLST_Z(
-            walSegmentRange(STRDEF("0000000100000001000000FD"), 16 * 1024 * 1024, PG_VERSION_92, 4),
-            "0000000100000001000000FD\n0000000100000001000000FE\n000000010000000200000000\n000000010000000200000001\n",
-            "get range < 9.3");
         TEST_RESULT_STRLST_Z(
             walSegmentRange(STRDEF("0000000100000001000000FD"), 16 * 1024 * 1024, PG_VERSION_93, 4),
             "0000000100000001000000FD\n0000000100000001000000FE\n0000000100000001000000FF\n000000010000000200000000\n",

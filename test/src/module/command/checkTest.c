@@ -56,11 +56,11 @@ testRun(void)
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby only, repo local - fail to find primary database");
 
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", true, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -80,13 +80,13 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
 
         // Two standbys found but no primary
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, "/pgdata", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_93, "/pgdata", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -109,7 +109,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -117,7 +117,7 @@ testRun(void)
         // Only confirming we get passed the check for repoIsLocal || more than one pg-path configured
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
-            "version '9.2' and path '/pgdata' queried from cluster do not match version '9.2' and '" TEST_PATH "/pg' read from"
+            "version '9.6' and path '/pgdata' queried from cluster do not match version '9.6' and '" TEST_PATH "/pg' read from"
                 " '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
@@ -135,7 +135,7 @@ testRun(void)
         // Primary database connection ok
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -167,13 +167,13 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Create pg_control for standby
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15);
 
         // Standby database path doesn't match pg_control
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH, true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, TEST_PATH "/pg8", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH, true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -183,7 +183,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
-            "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "' queried from cluster do not match version '" PG_VERSION_92_STR
+            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "' queried from cluster do not match version '" PG_VERSION_15_STR
                 "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
@@ -191,36 +191,36 @@ testRun(void)
         TEST_TITLE("standby and primary database - error on primary but standby check ok");
 
         // Create pg_control for primary
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_15);
 
         // Create info files
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
-            "db-version=\"9.2\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_92_Z ",\"db-version\":\"9.2\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=920\n"
+            "db-catalog-version=202209061\n"
+            "db-control-version=1300\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
-            "db-version=\"9.2\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":" HRN_PG_SYSTEMID_92_Z ","
-                "\"db-version\":\"9.2\"}\n");
+            "1={\"db-catalog-version\":202209061,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z ","
+                "\"db-version\":\"15\"}\n");
 
         // Single repo config - error when checking archive mode setting on database
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, TEST_PATH "/pg8", false, "off", NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, "off", NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),
@@ -244,8 +244,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, TEST_PATH "/pg8", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(8),
             HRNPQ_MACRO_CLOSE(1),
@@ -285,30 +285,30 @@ testRun(void)
             storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
-            "db-version=\"9.2\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_92_Z ",\"db-version\":\"9.2\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=920\n"
+            "db-catalog-version=202209061\n"
+            "db-control-version=1300\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_92_Z "\n"
-            "db-version=\"9.2\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":920,\"db-system-id\":" HRN_PG_SYSTEMID_92_Z ","
-                "\"db-version\":\"9.2\"}\n");
+            "1={\"db-catalog-version\":202209061,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z ","
+                "\"db-version\":\"15\"}\n");
 
         // Error when WAL segment not found
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
-            HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
+            HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -335,18 +335,18 @@ testRun(void)
         // WAL segment switch is performed once for all repos
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_CREATE_RESTORE_POINT(1, "1/1"),
-            HRNPQ_MACRO_WAL_SWITCH(1, "xlog", "000000010000000100000001"),
+            HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000010000000100000001"),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 
         HRN_STORAGE_PUT(
-            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/15-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             buffer);
         HRN_STORAGE_PUT(
-            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/9.2-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE "/15-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             buffer);
 
         TEST_RESULT_VOID(cmdCheck(), "check primary, WAL archived");
@@ -354,10 +354,10 @@ testRun(void)
             "P00   INFO: check repo1 configuration (primary)\n"
             "P00   INFO: check repo2 configuration (primary)\n"
             "P00   INFO: check repo1 archive for WAL (primary)\n"
-            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/9.2-1/"
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/15-1/"
                 "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
             "P00   INFO: check repo2 archive for WAL (primary)\n"
-            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/9.2-1/"
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/15-1/"
                 "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -397,15 +397,15 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_92);
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_11);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_11);
 
         DbGetResult db = {0};
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/badpath", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_11, "/badpath", true, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),
@@ -414,14 +414,14 @@ testRun(void)
 
         TEST_ASSIGN(db, dbGet(false, false, false), "get primary and standby");
 
-        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config");
+        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_11, db.primaryIdx, db.primary, false), "valid db config");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkDbConfig() version mismatch");
 
         TEST_ERROR(
             checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
-            "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
+            "version '" PG_VERSION_11_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
             PG_VERSION_94_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
@@ -429,8 +429,8 @@ testRun(void)
         TEST_TITLE("checkDbConfig() path mismatch");
 
         TEST_ERROR_FMT(
-            checkDbConfig(PG_VERSION_92, db.standbyIdx, db.standby, true), DbMismatchError,
-            "version '" PG_VERSION_92_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_92_STR "' and"
+            checkDbConfig(PG_VERSION_11, db.standbyIdx, db.standby, true), DbMismatchError,
+            "version '" PG_VERSION_11_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_11_STR "' and"
                 " '" TEST_PATH "/pg8' read from '" TEST_PATH "/pg8/global/pg_control'\n"
             "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
             strZ(dbPgDataPath(db.standby)));
@@ -441,7 +441,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptArchiveCheck, false);
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config --no-archive-check");
+        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_11, db.primaryIdx, db.primary, false), "valid db config --no-archive-check");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkDbConfig() archive-check not valid for command");
@@ -455,7 +455,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         TEST_RESULT_VOID(
-            checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "valid db config, archive-check not valid for command");
+            checkDbConfig(PG_VERSION_11, db.primaryIdx, db.primary, false), "valid db config, archive-check not valid for command");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
         TEST_RESULT_VOID(dbFree(db.standby), "free standby");
@@ -471,14 +471,14 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, "always", NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, "always", NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
 
         TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
         TEST_ERROR(
-            checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), FeatureNotSupportedError,
+            checkDbConfig(PG_VERSION_11, db.primaryIdx, db.primary, false), FeatureNotSupportedError,
             "archive_mode=always not supported");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -486,7 +486,7 @@ testRun(void)
 
         hrnCfgArgRawBool(argList, cfgOptArchiveModeCheck, false);
         HRN_CFG_LOAD(cfgCmdCheck, argList);
-        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_92, db.primaryIdx, db.primary, false), "check");
+        TEST_RESULT_VOID(checkDbConfig(PG_VERSION_11, db.primaryIdx, db.primary, false), "check");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
     }

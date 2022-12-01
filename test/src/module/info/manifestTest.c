@@ -854,9 +854,6 @@ testRun(void)
             LinkDestinationError, "link '" TEST_PATH "/pg/linktolink' cannot reference another link '" TEST_PATH "/linktest'");
 
         #undef TEST_MANIFEST_HEADER
-        #undef TEST_MANIFEST_DB_90
-        #undef TEST_MANIFEST_DB_91
-        #undef TEST_MANIFEST_DB_92
         #undef TEST_MANIFEST_DB_94
         #undef TEST_MANIFEST_DB_12
         #undef TEST_MANIFEST_OPTION_ALL

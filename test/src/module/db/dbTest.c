@@ -272,7 +272,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Get start time
             HRNPQ_MACRO_TIME_QUERY(1, 1000),
@@ -331,7 +331,7 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Start backup when backup is in progress
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -437,10 +437,10 @@ testRun(void)
         harnessPqScriptSet((HarnessPq [])
         {
             // Connect to primary
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
 
             // Connect to standby
-            HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL),
 
             // Start backup
             HRNPQ_MACRO_ADVISORY_LOCK(1, true),
@@ -778,7 +778,7 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_93, TEST_PATH "/pg1", false, NULL, NULL),
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_DONE()
         });
@@ -810,8 +810,8 @@ testRun(void)
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg8", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRNPQ_MACRO_CLOSE(1),
             HRNPQ_MACRO_CLOSE(8),

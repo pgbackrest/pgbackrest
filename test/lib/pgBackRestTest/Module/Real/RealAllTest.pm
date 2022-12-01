@@ -253,10 +253,7 @@ sub run
         my %oRemapHash;
         $oRemapHash{&MANIFEST_TARGET_PGDATA} = $oHostDbStandby->dbBasePath();
 
-        if ($oHostDbStandby->pgVersion() >= PG_VERSION_92)
-        {
-            $oHostDbStandby->linkRemap($oManifest->walPath(), $oHostDbStandby->dbPath() . '/' . $oManifest->walPath());
-        }
+        $oHostDbStandby->linkRemap($oManifest->walPath(), $oHostDbStandby->dbPath() . '/' . $oManifest->walPath());
 
         $oHostDbStandby->restore(
             'restore backup on replica', 'latest',

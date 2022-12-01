@@ -436,7 +436,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: duplicate WAL '000000020000000200000000' for '9.4-1' exists, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("FF Wal not skipped > 9.2, duplicates at beginning and end of list are removed");
+        TEST_TITLE("duplicates at beginning and end of list are removed");
 
         errTotal = 0;
         strLstAddZ(walFileList, "000000020000000100000000-daa497dba64008db824607940609ba1cd7c6c501.gz");
@@ -462,96 +462,6 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping\n"
             "P00   INFO: duplicate WAL '000000020000000200000001' for '9.4-1' exists, skipping");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("FF Wal skipped <= 9.2, duplicates in middle of list removed");
-
-        // Clear the range lists and rerun the test with PG_VERSION_92 to ensure FF is reported as an error
-        lstClear(archiveIdResult->walRangeList);
-        errTotal = 0;
-        archiveIdResult->archiveId = strNewZ("9.2-1");
-        archiveIdResult->pgWalInfo.version = PG_VERSION_92;
-
-        strLstAddZ(walFileList, "000000020000000200000001");
-        strLstAddZ(walFileList, "000000020000000200000001");
-        strLstAddZ(walFileList, "000000020000000200000002");
-
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
-        TEST_RESULT_UINT(errTotal, 2, "error reported");
-        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
-            "get range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
-            "get second range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
-
-        TEST_RESULT_LOG(
-            "P00   INFO: invalid WAL '0000000200000001000000FF' for '9.2-1' exists, skipping\n"
-            "P00   INFO: duplicate WAL '000000020000000200000001' for '9.2-1' exists, skipping");
-
-        TEST_RESULT_STRLST_Z(
-            walFileList,
-            "0000000200000001000000FD-daa497dba64008db824607940609ba1cd7c6c501.gz\n"
-            "0000000200000001000000FE-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
-            "000000020000000200000000\n000000020000000200000002\n",
-            "skipped files removed");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("Rerun <= 9.2, missing FF not a gap");
-
-        // Clear the range lists, rerun the PG_VERSION_92 test to ensure the missing FF is not considered a gap
-        lstClear(archiveIdResult->walRangeList);
-        errTotal = 0;
-
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
-        TEST_RESULT_UINT(errTotal, 0, "error reported");
-        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
-            "get range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
-            "get second range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("version > 9.2, missing FF is a gap");
-
-        // Clear the range lists and update the version > 9.2 so missing FF is considered a gap in the WAL ranges
-        lstClear(archiveIdResult->walRangeList);
-        errTotal = 0;
-        archiveIdResult->archiveId = strNewZ("9.6-1");
-        archiveIdResult->pgWalInfo.version = PG_VERSION_96;
-
-        strLstAddZ(walFileList, "000000020000000200000003-123456");
-        strLstAddZ(walFileList, "000000020000000200000004-123456");
-
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
-        TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 3, "multiple ranges");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
-            "get first range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "0000000200000001000000FE", "stop range");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
-            "get second range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 2),
-            "get third range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000004", "stop range");
     }
 
     // *****************************************************************************************************************************
