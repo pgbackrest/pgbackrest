@@ -86,9 +86,9 @@ pgBackRest repositories can be located in S3, Azure, and GCS compatible object s
 
 pgBackRest can encrypt the repository to secure backups wherever they are stored.
 
-### Compatibility with PostgreSQL >= 9.0
+### Compatibility with ten versions of PostgreSQL
 
-pgBackRest includes support for versions down to 9.0, since older versions of PostgreSQL are still regularly utilized.
+pgBackRest includes support for ten versions of PostgreSQL, the five supported versions and the last five EOL versions. This allows ample time to upgrade to a supported version.
 
 ## Getting Started
 
