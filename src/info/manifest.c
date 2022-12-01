@@ -2311,6 +2311,12 @@ manifestNewLoad(IoRead *read)
         this->pub.info = infoNewLoad(read, manifestLoadCallback, &loadData);
         this->pub.data.backrestVersion = infoBackrestVersion(this->pub.info);
 
+        // Add the label to the reference list in case the manifest was created before 2.42 when the explicit reference list was
+        // added. Most references are added when the file list is loaded but the current backup will never be referenced from a file
+        // (the reference is assumed) so it must be added here.
+        if (!loadData.referenceListFound)
+            strLstAddIfMissing(this->pub.referenceList, this->pub.data.backupLabel);
+
         // Process link defaults
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(this); linkIdx++)
         {
@@ -3202,6 +3208,7 @@ manifestBackupLabelSet(Manifest *this, const String *backupLabel)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->pub.data.backupLabel == NULL);
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {

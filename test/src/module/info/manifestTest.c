@@ -46,6 +46,15 @@ testRun(void)
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
+        #define TEST_MANIFEST_HEADER_LABEL                                                                                         \
+            "[backup]\n"                                                                                                           \
+            "backup-label=\"20190818-084502F\"\n"                                                                                  \
+            "backup-reference=\"20190818-084502F\"\n"                                                                              \
+            "backup-timestamp-copy-start=0\n"                                                                                      \
+            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-stop=0\n"                                                                                            \
+            "backup-type=\"full\"\n"
+
         #define TEST_MANIFEST_HEADER_BUNDLE_BLOCK                                                                                  \
             "[backup]\n"                                                                                                           \
             "backup-block-incr=true\n"                                                                                             \
@@ -333,6 +342,7 @@ testRun(void)
                 storagePg, PG_VERSION_90, hrnPgCatalogVersion(PG_VERSION_90), 0, false, false, false, false, NULL,
                 pckWriteResult(tablespaceList)),
             "build manifest");
+        TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F")), "backup label set");
 
         Buffer *contentSave = bufNew(0);
 
@@ -340,7 +350,7 @@ testRun(void)
         TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER
+                TEST_MANIFEST_HEADER_LABEL
                 TEST_MANIFEST_DB_90
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
@@ -1641,7 +1651,7 @@ testRun(void)
                 "backup-archive-stop=\"000000040000028500000089\"\n"
                 "backup-block-incr=true\n"
                 "backup-bundle=true\n"
-                "backup-label=\"20190818-084502F\"\n"
+                "backup-label=\"20190818-084502F_20190820-084502D\"\n"
                 "backup-lsn-start=\"300/89000028\"\n"
                 "backup-lsn-stop=\"300/89001F88\"\n"
                 "backup-prior=\"20190818-084502F\"\n"
@@ -1685,8 +1695,6 @@ testRun(void)
                 TEST_MANIFEST_PATH
                 TEST_MANIFEST_PATH_DEFAULT))),
             "load manifest");
-
-        TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F_20190820-084502D")), "backup label set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest validation");
