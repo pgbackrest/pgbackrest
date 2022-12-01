@@ -143,7 +143,7 @@ String *pgVersionToStr(unsigned int version);
 PgWal pgWalFromFile(const String *walFile, const Storage *storage);
 PgWal pgWalFromBuffer(const Buffer *walBuffer);
 
-// Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_9.0_201008051
+// Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_15_202209061
 String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
 
 // Convert a string to an lsn and vice versa

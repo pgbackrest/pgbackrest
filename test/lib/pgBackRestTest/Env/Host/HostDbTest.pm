@@ -350,7 +350,6 @@ sub clusterCreate
     # Set defaults
     my $strWalPath = defined($$hParam{strWalPath}) ? $$hParam{strWalPath} : $self->dbPath() . '/pg_' . $self->walId();
 
-    # Don't link WAL directory for versions < 9.2 because some recovery scenarios won't work
     $self->executeSimple(
         $self->pgBinPath() . '/initdb ' .
         ($self->pgVersion() >= PG_VERSION_93 ? ' -k' : '') .

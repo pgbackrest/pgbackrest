@@ -50,7 +50,7 @@ testRun(void)
     if (testBegin("pgControlVersion()"))
     {
         TEST_ERROR(pgControlVersion(70300), AssertError, "invalid PostgreSQL version 70300");
-        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_93), 937, "9.0 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_93), 937, "9.3 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
     }
 
@@ -143,7 +143,7 @@ testRun(void)
             pgLsnRangeToWalSegmentList(
                 2, pgLsnFromStr(STRDEF("1/FD000000")), pgLsnFromStr(STRDEF("2/60")), 16 * 1024 * 1024),
             "0000000200000001000000FD\n0000000200000001000000FE\n0000000200000001000000FF\n000000020000000200000000\n",
-            "get range > 9.2");
+            "get range");
         TEST_RESULT_STRLST_Z(
             pgLsnRangeToWalSegmentList(
                 2, pgLsnFromStr(STRDEF("A/800")), pgLsnFromStr(STRDEF("B/C0000000")), 1024 * 1024 * 1024),
@@ -234,7 +234,7 @@ testRun(void)
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_93, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
-        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v9.0");
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest), "get wal info v9.3");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_93, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");

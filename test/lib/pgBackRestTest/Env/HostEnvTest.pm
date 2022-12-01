@@ -330,9 +330,6 @@ sub controlGenerateContent
     {
         32 =>
         {
-            '9.0' => 140 - length($tControlContent),
-            '9.1' => 140 - length($tControlContent),
-            '9.2' => 156 - length($tControlContent),
             '9.3' => 180 - length($tControlContent),
             '9.4' => 188 - length($tControlContent),
             '9.5' => 200 - length($tControlContent),
@@ -345,9 +342,6 @@ sub controlGenerateContent
 
         64 =>
         {
-            '9.0' => 152 - length($tControlContent),
-            '9.1' => 152 - length($tControlContent),
-            '9.2' => 168 - length($tControlContent),
             '9.3' => 192 - length($tControlContent),
             '9.4' => 200 - length($tControlContent),
             '9.5' => 216 - length($tControlContent),

@@ -185,7 +185,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(
             storagePgWrite, PG_PATH_BASE "/1/t8888888_8888888_vm.999999", .modeFile = 0600, .timeModified = 1565282113);
 
-        // Unlogged relations (pgVersion > 9.1)
+        // Unlogged relations
         HRN_STORAGE_PUT_EMPTY(
             storagePgWrite, PG_PATH_BASE "/1/555", .modeFile = 0600, .timeModified = 1565282114,
             .comment = "skip file because there is an _init");
