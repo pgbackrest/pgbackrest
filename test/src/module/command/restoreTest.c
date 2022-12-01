@@ -2777,8 +2777,6 @@ testRun(void)
             memset(bufPtr(fileUsed), 3, 8192);
             memset(bufPtr(fileUsed) + (8192 * 2), 3, 24576);
 
-            // THROW_FMT(AssertError, "!!!HASH %s", strZ(bufHex(cryptoHashOne(hashTypeSha1, fileUsed))));
-
             size_t bufferSizeOld = ioBufferSize();
             ioBufferSizeSet(777);
 

@@ -191,14 +191,6 @@ testBackupValidateList(
 
                             strCatFmt(mapLog, "%u", blockMapItem->reference);
 
-                            // Check block size
-                            // if (bufUsed(block) != blockMapItem->size)
-                            // {
-                            //     THROW_FMT(
-                            //         AssertError, "'%s' block %u size (%" PRIu64 ") does not match block incr map (%" PRIu64 ")",
-                            //         strZ(file.name), blockMapIdx, bufUsed(block), blockMapItem->size);
-                            // }
-
                             // Check block checksum
                             const String *const blockChecksum = bufHex(cryptoHashOne(hashTypeSha1, block));
                             const String *const mapChecksum = bufHex(BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE));
@@ -2607,7 +2599,7 @@ testRun(void)
 
         // Replace percent complete and backup size since they can cause a lot of churn when files are added/removed
         hrnLogReplaceAdd(", [0-9]{1,3}.[0-9]{1,2}%\\)", "[0-9].+%", "PCT", false);
-        hrnLogReplaceAdd(" backup size = [0-9]+[A-Z]+", "[^ ]+$", "SIZE", false);
+        hrnLogReplaceAdd(" backup size = [0-9.]+[A-Z]+", "[^ ]+$", "SIZE", false);
 
         // Replace checksums since they can differ between architectures (e.g. 32/64 bit)
         hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
@@ -3827,17 +3819,6 @@ testRun(void)
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
 
-            // Upgrade stanza !!!
-            // StringList *argList = strLstNew();
-            // hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-            // hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-            // hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
-            // hrnCfgArgRawBool(argList, cfgOptOnline, false);
-            // HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
-
-            // cmdStanzaUpgrade();
-            // TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
-
             // Load options
             StringList *argList = strLstNew();
             hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -3850,14 +3831,14 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 9);
+            Buffer *relation = bufNew(128 * 1024 * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
             // Log file just larger than block size
-            Buffer *log = bufNew(PG_PAGE_SIZE_DEFAULT * 3 + 1);
+            Buffer *log = bufNew(128 * 1024 + 1);
             memset(bufPtr(log), 55, bufSize(log));
             bufUsedSet(log, bufSize(log));
 
@@ -3871,8 +3852,8 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (72KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (384KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (128KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3891,10 +3872,10 @@ testRun(void)
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, m={0,0,0}, s=73728}\n"
+                "pg_data/base/1/2.pgbi {file, m={0,0,0}, s=393216}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
-                "pg_data/pg.log.pgbi {file, m={0,0}, s=24577}\n"
+                "pg_data/pg.log.pgbi {file, m={0,0}, s=131073}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3905,10 +3886,10 @@ testRun(void)
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1572800002}\n"
-                "pg_data/base/1/2={\"bims\":70,\"bis\":3,\"checksum\":\"a6c4dc8ed089217b3fed2dfc7481ce20e0de5d67\",\"size\":73728,"
-                    "\"timestamp\":1572800000}\n"
+                "pg_data/base/1/2={\"bims\":70,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
+                    ",\"size\":393216,\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572800000}\n"
-                "pg_data/pg.log={\"bims\":51,\"bis\":3,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\",\"size\":24577"
+                "pg_data/pg.log={\"bims\":51,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\",\"size\":131073"
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1572800002}\n"
@@ -3936,11 +3917,10 @@ testRun(void)
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
             hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
-            hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(PG_PAGE_SIZE_DEFAULT * 12);
+            Buffer *relation = bufNew(128 * 1024 * 4);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
@@ -3958,7 +3938,7 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC213000000000, lsn = 5dc2130/0\n"
                 "P00   INFO: check archive for segment 0000000105DC213000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (96KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (512KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/smaller-than-block-size (3B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
@@ -3978,7 +3958,7 @@ testRun(void)
                 "pg_data/backup_label {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, m={0,0,0,1}, s=98304}\n"
+                "pg_data/base/1/2.pgbi {file, m={0,0,0,1}, s=524288}\n"
                 "pg_data/base/1/smaller-than-block-size {file, s=3}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
@@ -3992,13 +3972,13 @@ testRun(void)
                     ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573000002}\n"
-                "pg_data/base/1/2={\"bims\":95,\"bis\":3,\"checksum\":\"9f13a523321c66208e90d45f87fa0cd9b370e111\",\"size\":98304"
-                    ",\"timestamp\":1573000000}\n"
+                "pg_data/base/1/2={\"bims\":95,\"bis\":16,\"checksum\":\"6a521e1d2a632c26e53b83d2cc4b0edecfc1e68c\""
+                    ",\"size\":524288,\"timestamp\":1573000000}\n"
                 "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"
-                "pg_data/pg.log={\"bims\":51,\"bis\":3,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\""
-                    ",\"reference\":\"20191103-165320F\",\"size\":24577,\"timestamp\":1572800000}\n"
+                "pg_data/pg.log={\"bims\":51,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
+                    ",\"reference\":\"20191103-165320F\",\"size\":131073,\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573000002}\n"
                 "\n"
@@ -4054,8 +4034,8 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
                 "P00   INFO: check archive for segment 0000000105DC520000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (96KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (512KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (128KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/smaller-than-block-size (3B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
@@ -4077,11 +4057,11 @@ testRun(void)
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, m={0,0,0,0}, s=98304}\n"
+                "pg_data/base/1/2.pgbi {file, m={0,0,0,0}, s=524288}\n"
                 "pg_data/base/1/smaller-than-block-size.gz {file, s=3}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control.gz {file, s=8192}\n"
-                "pg_data/pg.log.pgbi {file, m={0,0}, s=24577}\n"
+                "pg_data/pg.log.pgbi {file, m={0,0}, s=131073}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4092,12 +4072,12 @@ testRun(void)
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573200002}\n"
-                "pg_data/base/1/2={\"bims\":104,\"bis\":3,\"checksum\":\"9f13a523321c66208e90d45f87fa0cd9b370e111\",\"size\":98304,"
-                    "\"timestamp\":1573000000}\n"
+                "pg_data/base/1/2={\"bims\":104,\"bis\":16,\"checksum\":\"6a521e1d2a632c26e53b83d2cc4b0edecfc1e68c\""
+                    ",\"size\":524288,\"timestamp\":1573000000}\n"
                 "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
-                "pg_data/pg.log={\"bims\":56,\"bis\":3,\"checksum\":\"f51065a66ccbbab718230debb63f288626ded262\",\"size\":24577"
+                "pg_data/pg.log={\"bims\":72,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\",\"size\":131073"
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573200002}\n"

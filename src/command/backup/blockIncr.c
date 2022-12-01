@@ -131,25 +131,29 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                                 blockMapGet(this->blockMapPrior, this->blockNo) : NULL;
 
                         // If the block is new or has changed then write it
-                        // !!! WOULD IT BE WORTH TRYING TO DETECT ALL ZERO BLOCKS?
                         if (blockMapItemIn == NULL ||
                             memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
                         {
                             IoWrite *const write = ioBufferWriteNew(this->blockOut);
+                            bool bufferRequired = true;
 
                             // !!! COMPRESS FILTER SHOULD OMIT FILE HEADER
                             if (this->compressParam != NULL)
                             {
                                 ioFilterGroupAdd(
                                     ioWriteFilterGroup(write), compressFilterPack(this->compressType, this->compressParam));
+                                bufferRequired = false;
                             }
 
                             // !!! ENCRYPT FILTER SHOULD OMIT HEADER
                             if (this->encryptParam != NULL)
+                            {
                                 ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewPack(this->encryptParam));
+                                bufferRequired = false;
+                            }
 
                             // If no compress/encrypt then add a buffer so chunk sizes are as large as possible
-                            if (this->compressParam == NULL && this->encryptParam == NULL) // {uncovered - !!!}
+                            if (bufferRequired)
                                 ioFilterGroupAdd(ioWriteFilterGroup(write), ioBufferNew());
 
                             // Add chunk and size filters
@@ -160,7 +164,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             // Write the block no as a delta of the prior block no
                             ioWriteVarIntU64(write, this->blockNo - this->blockNoLast);
 
-                            // Copy block data through the filters a close
+                            // Copy block data through the filters and close
                             ioCopyP(ioBufferReadNewOpen(this->block), write);
                             ioWriteClose(write);
 

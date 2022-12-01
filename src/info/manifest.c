@@ -740,9 +740,6 @@ static struct ManifestBuildBlockIncrSizeMap
     {.fileSize =    4 * 1024 * 1024, .blockSize =  256 * 1024},
     {.fileSize =    2 * 1024 * 1024, .blockSize =  192 * 1024},
     {.fileSize =         128 * 1024, .blockSize =  128 * 1024},
-
-    // !!! Just here to make backup tests work until custom maps are created (or the tests are modified)
-    {.fileSize =          24 * 1024, .blockSize =   24 * 1024},
 };
 
 // File age to block multiplier map
