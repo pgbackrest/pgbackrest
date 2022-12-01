@@ -2476,7 +2476,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
-                    .reference = NULL, .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .reference = NULL, .checksumSha1 = "2fafe15172578a19dbc196723bca6a4a8ad70da8"});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
@@ -2504,7 +2504,7 @@ testRun(void)
                     .reference = NULL, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7"});
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
-                PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\nyyyxxxxxAzzA");
+                PG_VERSION_96_STR "\n" PG_VERSION_96_STR "\nyyyxxxxxAzzA");
 
             // base directory
             manifestPathAdd(
@@ -2524,7 +2524,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 4,
-                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .checksumSha1 = "2fafe15172578a19dbc196723bca6a4a8ad70da8"});
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -2794,9 +2794,9 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (bundle 20161219-212741F/1/1, 8KB, [PCT])"
                 " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (bundle 1/0, 4B, [PCT]) checksum"
-                " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 4B, [PCT]) checksum"
-                " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
                 " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx (bundle 1/11, 5B, [PCT]) checksum"
@@ -2982,9 +2982,9 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (bundle 20161219-212741F/1/1, 8KB,"
                 " [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (bundle 1/0, 4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
                 " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx - exists and matches backup (bundle 1/11, 5B, [PCT]) checksum"
