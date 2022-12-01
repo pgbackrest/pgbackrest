@@ -52,7 +52,7 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => '9.3', dst =>     'backup', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 0},
+        {pg => '9.3', dst =>     'backup', tls => 0, stg =>   GCS, enc => 0, cmp => NONE, rt => 2, bnd => 0},
         {pg => '9.4', dst => 'db-standby', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 1, bnd => 1},
         {pg => '9.5', dst =>     'backup', tls => 1, stg =>    S3, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0},
         {pg => '9.6', dst =>     'backup', tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1},
