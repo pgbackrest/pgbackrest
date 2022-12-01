@@ -250,10 +250,14 @@ infoPgSet(
 
             // This is different in archive.info due to a typo that can't be fixed without a format version bump
             .systemId = pgSystemId,
-
-            // Catalog version is only required for backup info to preserve the repo format
-            .catalogVersion = this->type == infoPgBackup ? pgCatalogVersion : 0,
         };
+
+        // Catalog/control version required for backup info to preserve the repo format
+        if (this->type == infoPgBackup)
+        {
+            infoPgData.catalogVersion = pgCatalogVersion;
+            infoPgData.controlVersion = pgControlVersion(pgVersion);
+        }
 
         // Add the pg data to the history list
         infoPgAdd(this, &infoPgData);
