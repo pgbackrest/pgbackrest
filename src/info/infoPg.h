@@ -31,7 +31,7 @@ typedef struct InfoPgData
     unsigned int catalogVersion;
     unsigned int version;
 
-    // Control version is required to maintain the file format for older versions of PostgreSQL but should not be used elsewhere
+    // Control version is required to maintain the file format for older versions of pgBackRest but should not be used elsewhere
     unsigned int controlVersion;
 } InfoPgData;
 
