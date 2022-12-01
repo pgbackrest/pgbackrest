@@ -1,5 +1,38 @@
 [
     {
+        "commit": "cc2ffd8264bb4e10e6b289ce3978452018f725e8",
+        "date": "2022-11-28 17:47:48 +0800",
+        "subject": "v2.43: Bug Fix"
+    },
+    {
+        "commit": "c4bf775099c85e3cd081f9c1ce35efd4c71d9161",
+        "date": "2022-11-28 16:42:35 +0800",
+        "subject": "Fix missing reference in diff/incr backup.",
+        "body": "When loading prior manifests without the new reference list, the code failed to add the current backup to the reference list. Since the current backup is never explicitly referenced, building references from the file list was not sufficient to generate a complete list.\r\n\r\nThe main problem here was a bad test, fixed in 28f6604. This masked the issue and prevented it from being found. Now it is clear in the test that the current label is missing from the reference list.\r\n\r\nFix by adding the current label to the reference list if a reference list is not stored in the manifest."
+    },
+    {
+        "commit": "28f660482aa5abb97850a9d7c89c2e5e9f23a4c9",
+        "date": "2022-11-26 10:48:02 +0800",
+        "subject": "Move manifestBackupLabelSet() test in info/manifest unit.",
+        "body": "Changing the label of a manifest that already had a label was not a good test and it ended up masking a bug where the current backup label was not being added to the reference list on manifest load, since manifestBackupLabelSet() added the label to the reference list. In fact, manifestBackupLabelSet() should never be called after a manifest load or even after the label has been set.\n\nAdd an assertion to prevent manifestBackupLabelSet() being called when the label is already set.\n\nThe bug exposed here will be fixed in a subsequent commit."
+    },
+    {
+        "commit": "3f363cb3aed1a7c6836ee6c32eae600129a6f6b8",
+        "date": "2022-11-22 15:04:13 +0800",
+        "subject": "Add hint when an option is specified without an index.",
+        "body": "Hopefully this will make it a little clearer to the user what is wrong when they specify an indexed option without an index.\r\n\r\nAlso fix an ambiguous use of cfgParseOptionP(). The prior code worked in that it set prefixMatch = true but it was not very readable."
+    },
+    {
+        "commit": "27460862e77b7fba327c92448b2ec8ad41f2016c",
+        "date": "2022-11-22 10:29:32 +0800",
+        "subject": "Update config.guess and config.sub to latest versions."
+    },
+    {
+        "commit": "092e254794c6d9eba9fc3175357bc91257f2eedf",
+        "date": "2022-11-22 10:27:20 +0800",
+        "subject": "Begin v2.43 development."
+    },
+    {
         "commit": "70b75532bf20a025323b2a3138497ef01eb1774f",
         "date": "2022-11-22 10:20:59 +0800",
         "subject": "v2.42: Bug Fixes"
