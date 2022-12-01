@@ -150,7 +150,6 @@ backupFile(
                             if (cipherType != cipherTypeNone)
                             {
                                 // !!! Can this ever be raw?
-
                                 ioFilterGroupAdd(
                                     ioReadFilterGroup(read), cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass)));
                             }

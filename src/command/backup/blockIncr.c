@@ -137,6 +137,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             IoWrite *const write = ioBufferWriteNew(this->blockOut);
                             bool bufferRequired = true;
 
+                            // Add compress filter
                             // !!! COMPRESS FILTER SHOULD OMIT FILE HEADER
                             if (this->compressParam != NULL)
                             {
@@ -145,7 +146,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                                 bufferRequired = false;
                             }
 
-                            // !!! ENCRYPT FILTER SHOULD OMIT HEADER
+                            // Add encrypt filter
                             if (this->encryptParam != NULL)
                             {
                                 ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewPack(this->encryptParam));
@@ -431,15 +432,15 @@ blockIncrNewPack(const Pack *const paramList)
         const Pack *const compressParam = pckReadPackP(paramListPack);
         const IoFilter *compress = NULL;
 
-        if (compressParam != NULL) // {uncovered - !!!}
-            compress = compressFilterPack(pckReadStrIdP(paramListPack), compressParam); // {uncovered - !!!}
+        if (compressParam != NULL)
+            compress = compressFilterPack(pckReadStrIdP(paramListPack), compressParam);
 
         // Create encrypt filter
         const Pack *const encryptParam = pckReadPackP(paramListPack);
         const IoFilter *encrypt = NULL;
 
-        if (encryptParam != NULL) // {uncovered - !!!}
-            encrypt = cipherBlockNewPack(encryptParam); // {uncovered - !!!}
+        if (encryptParam != NULL)
+            encrypt = cipherBlockNewPack(encryptParam);
 
         result = ioFilterMove(
             blockIncrNew(blockSize, reference, bundleId, bundleOffset, blockMapPrior, compress, encrypt), memContextPrior());

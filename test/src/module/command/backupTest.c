@@ -1199,6 +1199,17 @@ testRun(void)
 
             "00",                                       // map end
             "block map");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new filter from pack");
+
+        TEST_RESULT_VOID(
+            blockIncrNewPack(
+                ioFilterParamList(
+                    blockIncrNew(
+                        3, 2, 4, 5, NULL, compressFilter(compressTypeGz, 1),
+                        cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), .raw = true)))),
+            "block incr pack");
     }
 
     // *****************************************************************************************************************************
