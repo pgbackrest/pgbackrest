@@ -129,7 +129,10 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
 
         // Catalog version
         if (loadData->infoPg->type == infoPgBackup)
+        {
             infoPgData.catalogVersion = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_CATALOG_VERSION));
+            infoPgData.controlVersion = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_CONTROL_VERSION));
+        }
 
         // System id
         infoPgData.systemId = jsonReadUInt64(
@@ -318,7 +321,7 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
             if (saveData->infoPg->type == infoPgBackup)
             {
                 jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CATALOG_VERSION), pgData.catalogVersion);
-                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION), pgControlVersion(pgData.version));
+                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION), pgData.controlVersion);
             }
 
             if (saveData->infoPg->type == infoPgArchive)
