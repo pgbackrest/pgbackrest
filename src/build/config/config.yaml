@@ -2241,6 +2241,20 @@ option:
       list:
         - sftp
 
+  repo-sftp-hostkey-hash:
+    section: global
+    group: repo
+    type: string-id
+    allow-list:
+      - md5-ssh2-hostkey-hash
+      - sha1-ssh2-hostkey-hash
+      - sha256-ssh2-hostkey-hash
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
   repo-sftp-host-port:
     section: global
     type: integer
@@ -2253,18 +2267,6 @@ option:
         - sftp
 
   repo-sftp-keyfile-passphrase:
-    section: global
-    type: string
-    required: false
-    group: repo
-    secure: true
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
-
-  repo-sftp-password:
     section: global
     type: string
     required: false

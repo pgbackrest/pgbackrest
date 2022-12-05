@@ -265,6 +265,13 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH                            STRID5("path", 0x450300)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_Z                          "path"
 
+#define CFGOPTVAL_REPO_SFTP_HOSTKEY_HASH_MD5_SSH2_HOSTKEY_HASH      STRID5("md5-ssh2-hostkey-hash", 0x9bd1be2273df48d4)
+#define CFGOPTVAL_REPO_SFTP_HOSTKEY_HASH_MD5_SSH2_HOSTKEY_HASH_Z    "md5-ssh2-hostkey-hash"
+#define CFGOPTVAL_REPO_SFTP_HOSTKEY_HASH_SHA1_SSH2_HOSTKEY_HASH     STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)
+#define CFGOPTVAL_REPO_SFTP_HOSTKEY_HASH_SHA1_SSH2_HOSTKEY_HASH_Z   "sha1-ssh2-hostkey-hash"
+#define CFGOPTVAL_REPO_SFTP_HOSTKEY_HASH_SHA256_SSH2_HOSTKEY_HASH   STRID5("sha256-ssh2-hostkey-hash", 0xdf1139efdde05134)
+#define CFGOPTVAL_REPO_SFTP_HOSTKEY_HASH_SHA256_SSH2_HOSTKEY_HASH_Z "sha256-ssh2-hostkey-hash"
+
 #define CFGOPTVAL_REPO_TYPE_AZURE                                   STRID5("azure", 0x5957410)
 #define CFGOPTVAL_REPO_TYPE_AZURE_Z                                 "azure"
 #define CFGOPTVAL_REPO_TYPE_CIFS                                    STRID5("cifs", 0x999230)
@@ -489,8 +496,8 @@ typedef enum
     cfgOptRepoSftpAccount,
     cfgOptRepoSftpHost,
     cfgOptRepoSftpHostPort,
+    cfgOptRepoSftpHostkeyHash,
     cfgOptRepoSftpKeyfilePassphrase,
-    cfgOptRepoSftpPassword,
     cfgOptRepoSftpPrivateKeyfile,
     cfgOptRepoSftpPublicKeyfile,
     cfgOptRepoStorageCaFile,

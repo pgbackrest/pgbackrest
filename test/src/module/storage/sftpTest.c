@@ -5,15 +5,15 @@ Test SFTP Storage
 #include "common/io/session.h"
 #include "common/io/socket/client.h"
 #include "common/time.h"
-#include "storage/read.h"
 #include "storage/cifs/storage.h"
+#include "storage/read.h"
 #include "storage/sftp/storage.h"
 #include "storage/write.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
+#include "common/harnessIo.h"
 #include "common/harnessLibssh2.h"
-#include "common/harnessSftp.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
@@ -40,13 +40,17 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    hrnSftpIoSessionFdShimInstall();
+    // install shim to return defined fd
+    hrnIoIoSessionFdShimInstall();
 
     ioBufferSizeSet(2);
 
     // Directory and file that cannot be accessed to test permissions errors
     const String *fileNoPerm = STRDEF(TEST_PATH "/noperm/noperm");
     String *pathNoPerm = strPath(fileNoPerm);
+
+    // Write file for testing if storage is read-only
+    const String *writeFile = STRDEF(TEST_PATH "/writefile");
 
     // This test should always be first so the storage helper is uninitialized
     // *****************************************************************************************************************************
@@ -83,7 +87,8 @@ testRun(void)
 
         TEST_ERROR(
             storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 5, 5, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError, "unable to init libssh2");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -91,14 +96,16 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]", .resultNull = true},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 5, 5, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 5, 5, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+                .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError, "unable to init libssh2 session");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -106,7 +113,7 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = -1},
@@ -114,8 +121,10 @@ testRun(void)
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError, "libssh2 handshake failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -123,7 +132,7 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 1000},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -131,8 +140,10 @@ testRun(void)
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError, "libssh2 handshake failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -140,17 +151,19 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_PROTO},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError, "libssh2 hostkey hash failed: libssh2 errno [-14]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -158,21 +171,22 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "adummyhash12345"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
-                .resultInt = -16},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = 0},
+                .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]", .resultInt = -16},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = -16},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
@@ -185,20 +199,22 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "adummyhash12345"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
                 .param = "[\"vagrant\",7,null,\"/home/vagrant/.ssh/id_rsa\",null]", .resultInt = -16},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = 0},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = -16},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
@@ -211,22 +227,23 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "adummyhash12345"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
                 .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",\"keyPassphrase\"]",
                 .resultInt = -16},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = 0},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = -16},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
                 .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
-                .keyPassphrase = STRDEF("keyPassphrase")),
+                .keyPassphrase = STRDEF("keyPassphrase"), .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError,
             "public key authentication failed: libssh2 error [-16]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
@@ -239,16 +256,18 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "adummyhash12345"},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+                .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ParamRequiredError, "user and private key required");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -256,16 +275,17 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "adummyhash12345"},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000,
-                .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ParamRequiredError, "user and private key required");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -273,9 +293,9 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
                 .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
@@ -283,14 +303,16 @@ testRun(void)
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
                 .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = 0},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError,
             "public key authentication failed: libssh2 error [0]\n"
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
@@ -303,20 +325,22 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
                 .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1, 1, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1, 1, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError, "unable to init libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -324,21 +348,23 @@ testRun(void)
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
                 .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true, .sleep = 1000},
             {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true, .sleep = 200},
             {.function = NULL}
         });
 
         TEST_ERROR(
-            storageSftpNewP(TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             ServiceError, "unable to init libssh2_sftp session");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -351,15 +377,17 @@ testRun(void)
         });
 
         Storage *storageTest = NULL;
+
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
                 STRDEF("/tmp"), STRDEF("localhost"), 22, 5, 5, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
              "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 
-        // Free context, otherwise callbacks to libssh2SessionFreeResource() accumulate
+        // Free context, otherwise callbacks to storageSftpLibssh2SessionFreeResource() accumulate
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -368,23 +396,23 @@ testRun(void)
         // shim sets FD for tests.
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
-            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
-            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
                 .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
-                .resultInt = 0},
-            {.function = HRNLIBSSH2_SFTP_INIT, .resultInt = 0, .sleep = 1000},
+                .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_INIT, .resultInt = LIBSSH2_ERROR_NONE, .sleep = 1000},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
-        storageTest = NULL;
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
                 STRDEF("/tmp"), STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
              "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 
@@ -399,14 +427,13 @@ testRun(void)
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
-        storageTest = NULL;
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
                 STRDEF("/tmp"), STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
              "new storage (defaults)");
-
         TEST_RESULT_STR_Z(storageTest->path, "/tmp", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0640, "check file mode");
         TEST_RESULT_INT(storageTest->modePath, 0750, "check path mode");
@@ -429,7 +456,8 @@ testRun(void)
             storageSftpNewP(
                 STRDEF("/path/to"), STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
                 .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
-                .modeFile = 0600, .modePath = 0700, .write = true),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135), .modeFile = 0600, .modePath = 0700,
+                .write = true),
             "new storage (non-default)");
         TEST_RESULT_STR_Z(storageTest->path, "/path/to", "check path");
         TEST_RESULT_INT(storageTest->modeFile, 0600, "check file mode");
@@ -456,9 +484,9 @@ testRun(void)
         TEST_ASSIGN(
             storageTest,
             storageSftpNewInternal(
-                STORAGE_POSIX_TYPE, STRDEF("/path/to"), STRDEF("localhost"), 22, 1000, 1000, TEST_USER_STR, NULL,
-                STRDEF("/home/vagrant/.ssh/id_rsa.pub"), STRDEF("/home/vagrant/.ssh/id_rsa"), NULL, 0600, 0700, true, NULL,
-                true),
+                STORAGE_POSIX_TYPE, STRDEF("/path/to"), STRDEF("localhost"), 22, 1000, 1000, TEST_USER_STR,
+                STRDEF("/home/vagrant/.ssh/id_rsa.pub"), STRDEF("/home/vagrant/.ssh/id_rsa"), NULL,
+                STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135),  0600, 0700, true, NULL, true),
             "new storage override pathSync)");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -468,9 +496,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageExists() and storagePathExists()"))
     {
-        hrnSftpIoSessionFdShimInstall();
-
-        // imic existance of /noperm/noperm for permission denied
+        // mimic creation of /noperm/noperm for permission denied
         // drwx------ 2 root root 3 Dec  5 15:30 noperm
         // noperm/:
         // total 1
@@ -531,7 +557,8 @@ testRun(void)
 
         Storage *storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 2000, 2000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file");
@@ -603,7 +630,8 @@ testRun(void)
         // Create storage object for testing
         Storage *storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR_FMT(storageInfoP(storageTest, fileNoPerm), FileOpenError, STORAGE_ERROR_INFO, strZ(fileNoPerm));
 
@@ -622,7 +650,8 @@ testRun(void)
         // Create storage object for testing
         storageTest = storageSftpNewP(
            FSLASH_STR , STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_RESULT_BOOL(storageInfoP( storageTest, NULL).exists, true, "info for /");
 
@@ -639,7 +668,7 @@ testRun(void)
 
         Storage *storageRootNoPath = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
         storageRootNoPath->pub.interface.feature ^= 1 << storageFeaturePath;
 
         TEST_RESULT_BOOL(storageInfoP(storageRootNoPath, NULL, .ignoreMissing = true).exists, false, "no info for /");
@@ -692,7 +721,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/testlink\",34,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/testlink\",34,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("/tmp")},
             // info - link .followLink = true
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/testlink\",34,0]",
@@ -718,9 +747,9 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/testlink\",34,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/testlink\",34,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/testlink\",34,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/testlink\",34,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
             // info - pipe
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/testpipe\",34,1]",
@@ -735,7 +764,8 @@ testRun(void)
         // Create storage object for testing
         storageTest = storageSftpNewP(
            TEST_PATH_STR , STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR_FMT(
             storageInfoP(
@@ -847,6 +877,7 @@ testRun(void)
         TEST_RESULT_STR_Z(info.user, "root", "check user");
         TEST_RESULT_STR_Z(info.group, strEqZ(info.group, "wheel") ? "wheel" : "root", "check group");
 
+        // exercise paths/branches
         // libssh2_sftp_stat_ex timeout EAGAIN followLink true
         TEST_ERROR_FMT(
                 storageInfoP(storageTest, linkName, .followLink = true), FileOpenError,
@@ -884,7 +915,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageNewItrP()"))
     {
-        // mimic existance of /noperm/noperm
+        // mimic creation of /noperm/noperm
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
@@ -893,12 +924,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/BOGUS\",31,0,0,1]", .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/BOGUS\",31,0,0,1]", .resultNull = true},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             // ignore missing dir
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/BOGUS\",31,0,0,1]", .resultNull = true},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             // path no perm
@@ -920,39 +951,39 @@ testRun(void)
             // path with only dot
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP |
-                    LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
+                    LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP |
-                    LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
+                    LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             // path with file, link, pipe, dot dotdot
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP |
-                    LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
+                    LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0,0,1]"},
             // readdir returns .
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             // readdir returns ..
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4096,null,0]", .fileName = STRDEF(".."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF(".."),
                 .resultInt = 8, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             // readdir returns .include
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"..\",4096,null,0]", .fileName = STRDEF(".include"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"..\",4095,null,0]", .fileName = STRDEF(".include"),
                 .resultInt = 8, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
@@ -963,7 +994,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".include\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".include\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -971,11 +1002,11 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns link
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF("link"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -984,10 +1015,10 @@ testRun(void)
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4096,null,0]", .fileName = STRDEF("pipe"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -997,22 +1028,22 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/.include\",37,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP |
                     LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IXOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP |
-                    LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
+                    LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,1]",
@@ -1020,7 +1051,7 @@ testRun(void)
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             // helper function - storageSftpListEntry() info doesn't exist
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"pg/missing\",10,1]", .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -1032,7 +1063,8 @@ testRun(void)
         // Create storage object for testing
         Storage *storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path missing");
@@ -1045,12 +1077,12 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storageNewItrP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3]", strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageNewItrP(storageTest, pathNoPerm, .errorOnMissing = false  ), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
+            storageNewItrP(storageTest, pathNoPerm), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3]", strZ(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("helper function - storageSftpListEntry()");
@@ -1064,42 +1096,26 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with only dot");
 
-//        storagePathCreateP(storageTest, STRDEF("pg"), .mode = 0766);
+        // mimic creation of TEST_PATH "/pg" mode 0766
 
-        // jrt !!!
-        // NOTE: in my tests with --vm=none the resultant file would have the incorrect permissions. The request was coming through
-        // properly but the umask resulted in altered permissions.  Do we want to alter the test result check, or the sshd_config
-        // file as noted below? Do we need to note this in the documentation somehow?
-        //
-        // vagrant@pgbackrest-test:~$ umask
-        // 0002
-        //
-        // Jul 13 16:38:33 localhost sftp-server[340225]: mkdir name "/home/vagrant/test/test-0/pg" mode 0766
-        // But the directory would be created with 0764
-        // test/test-0:
-        // total 0
-        // drwxrw-r-- 2 vagrant vagrant 40 Jul 14 15:37 pg
-        //
-        // Updating sshd_config to
-        // Subsystem	sftp	/usr/lib/openssh/sftp-server -u 000
-        // would result in the file being created with 0766 permissions
+        // NOTE: if operating against an actual sftp server, a neutral umask is required to get the proper permissions.
+        // Without the neutral umask, permissions were 0764.
         TEST_STORAGE_LIST(
             storageTest, "pg",
-            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0764}\n",
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n",
             .level = storageInfoLevelDetail, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path with file, link, pipe");
 
-        // mimic existance of TEST_PATH "/pg/.include" mode 0755 chown'd 77777:77777
-        // mimic existance of TEST_PATH "pg/file" mode 0660 timemodified 1656433838 containing "TESTDATA"
-        // mimic existance of TEST_PATH "/pg/link" linked to "../file"
-        // mimic existance of TEST_PATH "/pg/pipe" mode 777
+        // mimic creation of TEST_PATH "/pg/.include" mode 0755 chown'd 77777:77777
+        // mimic creation of TEST_PATH "pg/file" mode 0660 timemodified 1656433838 containing "TESTDATA"
+        // mimic creation of TEST_PATH "/pg/link" linked to "../file"
+        // mimic creation of TEST_PATH "/pg/pipe" mode 777
 
-        // jrt !!! see note above about permissions and sftp server mask setting
         TEST_STORAGE_LIST(
             storageTest, "pg",
-            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0764}\n"
+            "./ {u=" TEST_USER ", g=" TEST_GROUP ", m=0766}\n"
             ".include/ {u=77777, g=77777, m=0755}\n"
             "file {s=8, t=1656433838, u=" TEST_USER ", g=" TEST_GROUP ", m=0660}\n"
             "link> {d=../file, u=" TEST_USER ", g=" TEST_GROUP "}\n"
@@ -1126,11 +1142,11 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4096,null,0]", .fileName = STRDEF(".include"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF(".include"),
                 .resultInt = 8, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
@@ -1141,7 +1157,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".include\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".include\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1149,11 +1165,11 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns link
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF("link"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1162,10 +1178,10 @@ testRun(void)
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4096,null,0]", .fileName = STRDEF("pipe"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1175,18 +1191,19 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(storageItr, storageNewItrP(storageTest, STRDEF("pg")), "new iterator");
         TEST_RESULT_BOOL(storageItrMore(storageItr), true, "check more");
@@ -1197,8 +1214,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path - recurse desc");
 
-        // mimic existance of "pg/path" mode 0700
-        // mimic existance of "pg/path/file" mode 0600 timemodified 1656434296 containing "TESTDATA"
+        // mimic creation of "pg/path" mode 0700
+        // mimic creation of "pg/path/file" mode 0600 timemodified 1656434296 containing "TESTDATA"
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
@@ -1209,11 +1226,11 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4096,null,0]", .fileName = STRDEF("path"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
@@ -1224,7 +1241,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1232,11 +1249,11 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns link
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF("link"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1246,7 +1263,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4096,null,0]", .fileName = STRDEF("pipe"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1256,15 +1273,15 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse readdir path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/path\",33,0,0,1]"},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1272,15 +1289,15 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
@@ -1291,7 +1308,7 @@ testRun(void)
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -1299,7 +1316,8 @@ testRun(void)
         // Create storage object for testing
         storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -1317,7 +1335,7 @@ testRun(void)
         TEST_TITLE("path - recurse asc");
 
         // Create a path with a subpath that will always be last to make sure lists are not freed too early in the iterator
-        // mimic existance of "pg/zzz/yyy" mode 0700
+        // mimic creation of "pg/zzz/yyy" mode 0700
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
@@ -1329,12 +1347,12 @@ testRun(void)
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0,0,1]"},
             // readdir returns dot
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             // readdir returns path
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4096,null,0]", .fileName = STRDEF("path"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
@@ -1345,7 +1363,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1353,11 +1371,11 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns link
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF("link"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1367,7 +1385,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4096,null,0]", .fileName = STRDEF("pipe"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1377,7 +1395,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns zzz
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4096,null,0]", .fileName = STRDEF("zzz"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF("zzz"),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1387,15 +1405,15 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir return empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse readdir path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/path\",33,0,0,1]"},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1403,19 +1421,19 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/zzz\",32,0,0,1]"},
             // readdir returns yyy
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("yyy"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1425,19 +1443,19 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/zzz/yyy\",36,0,0,1]"},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
@@ -1448,7 +1466,7 @@ testRun(void)
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -1456,7 +1474,8 @@ testRun(void)
         // Create storage object for testing
         storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -1485,12 +1504,12 @@ testRun(void)
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0,0,1]"},
             // readdir returns dot
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             // readdir returns path
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4096,null,0]", .fileName = STRDEF("path"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
@@ -1501,7 +1520,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1509,11 +1528,11 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns link
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF("link"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1523,7 +1542,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4096,null,0]", .fileName = STRDEF("pipe"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1533,7 +1552,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns zzz
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4096,null,0]", .fileName = STRDEF("zzz"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF("zzz"),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1543,15 +1562,15 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir return empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/zzz\",32,0,0,1]"},
             // readdir returns yyy
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("yyy"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1561,23 +1580,23 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/zzz/yyy\",36,0,0,1]"},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/path\",33,0,0,1]"},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1585,15 +1604,15 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
@@ -1604,7 +1623,7 @@ testRun(void)
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
-            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4096,1]",
+            {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"/home/vagrant/test/test-0/pg/link\",33,\"\",4095,1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -1612,7 +1631,8 @@ testRun(void)
         // Create storage object for testing
         storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 
@@ -1647,12 +1667,12 @@ testRun(void)
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0,0,1]"},
             // readdir returns dot
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4096,null,0]", .fileName = STRDEF("empty"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("empty"),
                 .resultInt = 5, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
@@ -1663,7 +1683,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
             // readdir returns path
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"empty\",4096,null,0]", .fileName = STRDEF("path"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"empty\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
@@ -1674,7 +1694,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1682,11 +1702,11 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns link
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF("link"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1696,7 +1716,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4096,null,0]", .fileName = STRDEF("pipe"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1706,7 +1726,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns zzz
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4096,null,0]", .fileName = STRDEF("zzz"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF("zzz"),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1716,22 +1736,22 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir return empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse empty
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/empty\",34,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/path\",33,0,0,1]"},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1739,19 +1759,19 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/zzz\",32,0,0,1]"},
             // readdir returns yyy
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("yyy"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1761,26 +1781,27 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/zzz/yyy\",36,0,0,1]"},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_STORAGE_LIST( storageTest, "pg",
             "empty/\n",
@@ -1801,12 +1822,12 @@ testRun(void)
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg\",28,0,0,1]"},
             // readdir returns dot
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
             // readdir returns path
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4096,null,0]", .fileName = STRDEF("path"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
@@ -1817,7 +1838,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 77777, .gid = 77777},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1825,11 +1846,11 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns link
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF("link"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1839,7 +1860,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4096,null,0]", .fileName = STRDEF("pipe"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1849,7 +1870,7 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns zzz
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4096,null,0]", .fileName = STRDEF("zzz"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF("zzz"),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
@@ -1859,15 +1880,15 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir return empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/path\",33,0,0,1]"},
             // readdir returns file
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("file"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1875,19 +1896,19 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/zzz\",32,0,0,1]"},
             // readdir returns yyy
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("yyy"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
@@ -1897,26 +1918,27 @@ testRun(void)
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656433838, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/pg/zzz/yyy\",36,0,0,1]"},
             // readdir returns empty
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         // Create storage object for testing
         storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 4000, 4000, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_STORAGE_LIST(
             storageTest, "pg",
@@ -1929,7 +1951,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageList()"))
     {
-        // mimic existance of /noperm/noperm
+        // mimic creation of /noperm/noperm
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path missing");
@@ -1938,16 +1960,16 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/BOGUS\",31,0,0,1]", .resultNull = true},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/BOGUS\",31,0,0,1]", .resultNull = true},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             // empty list
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/BOGUS\",31,0,0,1]", .resultNull = true},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             // timeout on sftp_open_ex
@@ -1980,7 +2002,8 @@ testRun(void)
         // Create storage object for testing
         Storage *storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"));
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR_FMT(
             storageListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathMissingError, STORAGE_ERROR_LIST_INFO_MISSING,
@@ -1992,20 +2015,19 @@ testRun(void)
         // timeout on sftp_open_ex
         TEST_ERROR_FMT(
             storageListP(storageTest, STRDEF(BOGUS_STR), .errorOnMissing = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-37]",
-            TEST_PATH "/BOGUS");
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-37]", TEST_PATH "/BOGUS");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing, regardless of errorOnMissing setting");
 
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3]", strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3]", strZ(pathNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -2020,8 +2042,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/.aaa.txt.pgbackrest.tmp\",49,26,416,0]"},
             {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[14]", .resultInt = 14},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param = "[\"/home/vagrant/test/test-0/.aaa.txt.pgbackrest.tmp\",49,\"/home/vagrant/test/test-0/.aaa.txt\",34,7]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -2029,62 +2051,63 @@ testRun(void)
                 .param = "[\"/home/vagrant/test/test-0/.aaa.txt.pgbackrest.tmp\",49,\"/home/vagrant/test/test-0/.aaa.txt\",34,7]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/.aaa.txt\",34]", .resultUInt = 0},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/.aaa.txt\",34]",
+                .resultUInt = LIBSSH2_FX_OK},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param = "[\"/home/vagrant/test/test-0/.aaa.txt.pgbackrest.tmp\",49,\"/home/vagrant/test/test-0/.aaa.txt\",34,7]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             // strListSort(storageListP())
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0\",25,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF(".aaa.txt"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(".aaa.txt"),
                 .resultInt = 8, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/.aaa.txt\",34,1]",
-                .fileName = STRDEF(".aaa.txt"), .resultInt = 0,
+                .fileName = STRDEF(".aaa.txt"), .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".aaa.txt\",4096,null,0]", .fileName = STRDEF("noperm"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".aaa.txt\",4095,null,0]", .fileName = STRDEF("noperm"),
                 .resultInt = 6, .uid = 0, .gid = 0},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/noperm\",32,1]",
-                .fileName = STRDEF("noperm"), .resultInt = 0, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"noperm\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+                .fileName = STRDEF("noperm"), .resultInt = LIBSSH2_ERROR_NONE, .uid = 0, .gid = 0},
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"noperm\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .uid = 0, .gid = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // bbb.txt
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/bbb.txt.pgbackrest.tmp\",48,26,416,0]"},
             {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[7]", .resultInt = 7},
-            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param = "[\"/home/vagrant/test/test-0/bbb.txt.pgbackrest.tmp\",48,\"/home/vagrant/test/test-0/bbb.txt\",33,7]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0\",25,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("bbb.txt"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("bbb.txt"),
                 .resultInt = 7, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/bbb.txt\",33,1]",
-                .fileName = STRDEF("bbb.txt"), .resultInt = 0,
+                .fileName = STRDEF("bbb.txt"), .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"bbb.txt\",4096,null,0]", .fileName = STRDEF("noperm"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"bbb.txt\",4095,null,0]", .fileName = STRDEF("noperm"),
                 .resultInt = 6, .uid = 0, .gid = 0},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/noperm\",32,1]",
-                .fileName = STRDEF("noperm"), .resultInt = 0, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"noperm\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0, .uid = 0, .gid = 0},
+                .fileName = STRDEF("noperm"), .resultInt = LIBSSH2_ERROR_NONE, .uid = 0, .gid = 0},
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"noperm\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE, .uid = 0, .gid = 0},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // path with only dot, readdir timeout EAGAIN
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0\",25,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .resultInt = LIBSSH2_ERROR_EAGAIN, .param = "[\"\",4096,null,0]", .sleep = 18},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .resultInt = LIBSSH2_ERROR_EAGAIN, .param = "[\"\",4096,null,0]", .sleep = 6},
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .resultInt = LIBSSH2_ERROR_EAGAIN, .param = "[\"\",4095,null,0]", .sleep = 18},
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .resultInt = LIBSSH2_ERROR_EAGAIN, .param = "[\"\",4095,null,0]", .sleep = 6},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             //  fail to close path after listing
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0\",25,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("."),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1555160000, .uid = 1000, .gid = 1000},
@@ -2096,7 +2119,8 @@ testRun(void)
         // Create storage object for testing
         storageTest = storageSftpNewP(
             TEST_PATH_STR , STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, STRDEF(".aaa.txt")), BUFSTRDEF("aaaaaaaaaaaaaa")), "write aaa.text");
@@ -2140,7 +2164,8 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 FSLASH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/", "root dir");
         TEST_RESULT_STR_Z(storagePathP(storageTest, STRDEF("/")), "/", "same as root dir");
@@ -2165,6 +2190,7 @@ testRun(void)
             storageSftpNewP(
                 STRDEF("/path/to"), STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR,
                 .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135),
                 .pathExpressionFunction = storageTestPathExpression),
             "new storage /path/to");
         TEST_RESULT_STR_Z(storagePathP(storageTest, NULL), "/path/to", "root dir");
@@ -2209,12 +2235,13 @@ testRun(void)
             // create /sub1
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN},
-            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]",
+                .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,1]",
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
             // create again
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]",
@@ -2225,8 +2252,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,0]",
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
             // errorOnExists
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]",
@@ -2235,18 +2262,17 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,0]",
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
             // sub2 custom mode
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub2\",30,511]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/sub2\",30,1]",
                 .resultInt = LIBSSH2_ERROR_NONE,
-                .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IROTH |
-                    LIBSSH2_SFTP_S_IXOTH,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
             // sub3/sub4 .noParentCreate fail
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub3/sub4\",35,488]",
@@ -2257,9 +2283,9 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub3\",30,488]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub3/sub4\",35,488]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             // subfail EAGAIN timeout
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/subfail\",33,488]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 50},
@@ -2272,9 +2298,9 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
-
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub1")), "create sub1");
         TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub1")).mode, 0750, "check sub1 dir mode");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub1")), "create sub1 again");
@@ -2282,25 +2308,10 @@ testRun(void)
             storagePathCreateP(storageTest, STRDEF("sub1"), .errorOnExists = true), PathCreateError,
             "unable to create path '" TEST_PATH "/sub1': path already exists");
 
-        // jrt !!!
-        // NOTE: in my tests with --vm=none the resultant file would have the incorrect permissions. The request was coming through
-        // properly but the umask resulted in altered permissions.  Do we want to alter the test result check, or the sshd_config
-        // file as noted below? Do we need to note in documentation?
-        //
-        // vagrant@pgbackrest-test:~$ umask
-        // 0022
-        //
-        // Sep 27 03:38:33 localhost sftp-server[340225]: mkdir name "/home/vagrant/test/test-0/sub2" mode 0777
-        // But the directory would be created with 0775
-        // test/test-0:
-        // total 0
-        // drwxrwxr-x 2 vagrant vagrant 40 Sep 27 03:37 sub2
-        //
-        // Updating sshd_config to
-        // Subsystem	sftp	/usr/lib/openssh/sftp-server -u 000
-        // would result in the file being created with 0777 permissions
+        // NOTE: if operating against an actual sftp server, a neutral umask is required to get the proper permissions.
+        // Without the neutral umask, permissions were 0775.
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub2"), .mode = 0777), "create sub2 with custom mode");
-        TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub2")).mode, 0775, "check sub2 dir mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("sub2")).mode, 0777, "check sub2 dir mode");
 
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub3/sub4"), .noParentCreate = true), PathCreateError,
@@ -2327,7 +2338,7 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 30},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/subfail\",33,0]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN},
-            // !=no such file && parent create LIBSSH2_FX_PERMISSION_DENIED}
+            // error other than no such file && no parent create LIBSSH2_FX_PERMISSION_DENIED}
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/subfail\",33,488]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
@@ -2346,9 +2357,9 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
-
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "timeout success");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail"), .noParentCreate = true), PathCreateError,
@@ -2404,84 +2415,84 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             // path remove - file in subpath, permission denied
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/remove1\",33,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("remove2"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove2"),
                 .resultInt = 7, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4096,null,0]", .fileName = STRDEF("remove.txt"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4095,null,0]", .fileName = STRDEF("remove.txt"),
                 .resultInt = 10,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove.txt\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove.txt\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("remove.txt"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove.txt"),
                 .resultInt = 10,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove.txt\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove.txt\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2/remove.txt\",52]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
             // path remove - path with subpath and file removed
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/remove1\",33,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("remove2"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove2"),
                 .resultInt = 7,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG| LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("remove.txt"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove.txt"),
                 .resultInt = 10,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove.txt\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove.txt\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2/remove.txt\",52]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"/home/vagrant/test/test-0/remove1\",33]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"/home/vagrant/test/test-0/remove1\",33]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
@@ -2489,7 +2500,8 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 250, 250, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2503,17 +2515,15 @@ testRun(void)
         TEST_RESULT_VOID(storagePathRemoveP(storageTest, pathRemove1, .recurse = true), "ignore missing path");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        String *pathRemove2 = strNewFmt("%s/remove2", strZ(pathRemove1));
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - parent/subpath permission denied");
 
-        // mimic existance of pathRemove2 mode 700
+        String *pathRemove2 = strNewFmt("%s/remove2", strZ(pathRemove1));
+        // mimic creation of pathRemove2 mode 700
 
         TEST_ERROR_FMT(storagePathRemoveP(storageTest, pathRemove2), PathRemoveError, STORAGE_ERROR_PATH_REMOVE, strZ(pathRemove2));
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathRemove2));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3]", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - subpath permission denied");
@@ -2522,7 +2532,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: libssh2sftp error [3]", strZ(pathRemove2));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3]", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - file in subpath, permission denied");
@@ -2550,34 +2560,34 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/remove1\",33,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("remove2"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove2"),
                 .resultInt = 7,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG| LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2\",41,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF("remove.txt"),
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove.txt"),
                 .resultInt = 10,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove.txt\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0,
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove.txt\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
                 .mtime = 1656434296, .uid = 0, .gid = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2/remove.txt\",52]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 30},
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/remove1/remove2/remove.txt\",52]",
@@ -2589,9 +2599,9 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
-
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE,
             strZ(fileRemove));
@@ -2604,9 +2614,9 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/remove1\",33,0,0,1]"},
-            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4096,null,0]", .fileName = STRDEF(""),
-                .resultInt = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
+                .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"/home/vagrant/test/test-0/remove1\",33]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 30},
             {.function = HRNLIBSSH2_SFTP_RMDIR_EX, .param = "[\"/home/vagrant/test/test-0/remove1\",33]",
@@ -2618,9 +2628,9 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
-
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, STORAGE_ERROR_PATH_REMOVE,
             strZ(pathRemove1));
@@ -2652,11 +2662,11 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/latest\",32,1]",
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
-                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID
-                    | LIBSSH2_SFTP_ATTR_SIZE,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
                 .mtime = 1656434296, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("20181119-152138F")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX,
-                .param = "[\"/home/vagrant/test/test-0/latest\",32,\"\",4096,1]",
+                .param = "[\"/home/vagrant/test/test-0/latest\",32,\"\",4095,1]",
                 .symlinkExTarget = STRDEF("20181119-152138F")},
             // assert failure - asserts before libssh2 call
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -2666,7 +2676,8 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2703,9 +2714,9 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
-
         TEST_ERROR_FMT(
             storageLinkCreateP(storageTest, backupLabel, latestLabel), FileOpenError,
             "unable to create symlink '" TEST_PATH "/latest' to '20181119-152138F'");
@@ -2762,23 +2773,25 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
-
         TEST_ERROR(
             storageLinkCreateP(storageTest, backupLabel, latestLabel),
             FileOpenError,
             "unable to create symlink '" TEST_PATH "/latest' to '20181119-152138F'");
         TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
         TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink - no error on missing");
+
+        // exercise paths/branches
         // error on missing
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, latestLabel, .errorOnMissing = true), FileRemoveError,
-            "unable to remove '" TEST_PATH "/latest': libssh2 error [-31]: libssh2sftp error [2]");
+            "unable to remove '" TEST_PATH "/latest': libssh2 error [-31]: sftp error [2]");
         // no error on missing, not no such file
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, latestLabel, .errorOnMissing = false), FileRemoveError,
-            "unable to remove '" TEST_PATH "/latest': libssh2 error [-31]: libssh2sftp error [3]");
+            "unable to remove '" TEST_PATH "/latest': libssh2 error [-31]: sftp error [3]");
         // error on missing, not an sftp error
         TEST_ERROR_FMT(
             storageRemoveP(storageTest, latestLabel, .errorOnMissing = true), FileRemoveError,
@@ -2834,7 +2847,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_METHOD_NOT_SUPPORTED},
             // read success
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/readtest.txt\",38,1,0,0]"},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
@@ -2842,7 +2855,8 @@ testRun(void)
             storageTest,
             storageSftpNewP(
                 TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR, .write = true,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
             "new storage /");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2882,14 +2896,15 @@ testRun(void)
             HRNLIBSSH2_MACRO_STARTUP(),
             // storageReadSftpClose
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/readtest.txt\",38,1,0,0]"},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // close(ioSessionFd()...)
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         Storage *storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         StorageRead *file = NULL;
         const String *fileName = STRDEF(TEST_PATH "/readtest.txt");
@@ -2916,7 +2931,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -2937,7 +2953,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -2962,7 +2979,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -2988,13 +3006,14 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 25, 25, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
             storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
-            "unable to close file '" TEST_PATH "/readtest.txt' after read: libssh2 errno [-31] sftp errno [4]");
+            "unable to close file '" TEST_PATH "/readtest.txt' after read: libssh2 errno [-31]: sftp errno [4]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -3013,7 +3032,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
@@ -3034,7 +3054,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("permission denied");
 
-        // mimic existance of /noperm/noperm
+        // mimic creation of /noperm/noperm
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
@@ -3053,11 +3073,15 @@ testRun(void)
 
         Storage *storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = true), "new write file (defaults)");
-        TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileNoPerm));
+            file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = true), "new write file");
+        TEST_ERROR_FMT(
+            ioWriteOpen( storageWriteIo(file)),
+            FileOpenError,
+            STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3]", strZ(fileNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -3080,12 +3104,12 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
-            storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = true),
-            "new write file (defaults)");
+            storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = true), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -3107,12 +3131,12 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
-            storageNewWriteP(storageTest, STRDEF("missing"), .noAtomic = true, .noCreatePath = true),
-            "new write file (defaults)");
+            storageNewWriteP(storageTest, STRDEF("missing"), .noAtomic = true, .noCreatePath = true), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, TEST_PATH "/missing");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -3148,13 +3172,14 @@ testRun(void)
                 .param =
                     "[\"/home/vagrant/test/test-0/sub1/testfile.pgbackrest.tmp\",54,\"/home/vagrant/test/test-0/sub1/testfile\","
                         "39,7]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
@@ -3191,7 +3216,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         const String *fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
 
@@ -3247,7 +3273,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
@@ -3289,8 +3316,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param =
-                    "[\"/home/vagrant/test/test-0/sub1/testfile.pgbackrest.tmp\",54,\"/home/vagrant/test/test-0/sub1/testfile\","
-                        "39,7]",
+                    "[\"/home/vagrant/test/test-0/sub1/testfile.pgbackrest.tmp\",54,\"/home/vagrant/test/test-0/sub1/testfile\",39,"
+                        "7]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_CONNECTION_LOST},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_CONNECTION_LOST},
@@ -3299,7 +3326,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
@@ -3309,7 +3337,7 @@ testRun(void)
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_ERROR_FMT(
                 ioWriteClose( storageWriteIo(file)),
-                FileCloseError, "unable to move '%s' to '%s': libssh2 error [-31]: libssh2sftp error [7]", strZ(fileNameTmp),
+                FileCloseError, "unable to move '%s' to '%s': libssh2 error [-31]: sftp error [7]", strZ(fileNameTmp),
                 strZ(fileName));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -3326,15 +3354,15 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]"},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX,
                 .param = "[\"/home/vagrant/test/test-0/sub1/testfile.pgbackrest.tmp\",54,26,416,0]"},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]",
-                .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 23},
+            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 23},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 4},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
 
@@ -3342,7 +3370,7 @@ testRun(void)
             file,
             storageNewWriteP(
                 storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1, .noSyncFile = true),
-            "new write file (defaults)");
+            "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOwnerError, "unable to set ownership for '%s'", strZ(fileNameTmp));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -3365,7 +3393,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
 
@@ -3373,7 +3402,7 @@ testRun(void)
             file,
             storageNewWriteP(
                 storageTest, fileName, .user = TEST_USER_STR, .group = NULL, .timeModified = 1, .noSyncFile = true),
-            "new write file (defaults)");
+            "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -3396,14 +3425,15 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         fileNameTmp = STRDEF(TEST_PATH "/sub1/testfile.pgbackrest.tmp");
 
         TEST_ASSIGN(
             file,
             storageNewWriteP(storageTest, fileName, .user = NULL, .group = TEST_GROUP_STR, .timeModified = 1, .noSyncFile = true),
-            "new write file (defaults)");
+            "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -3428,17 +3458,15 @@ testRun(void)
                 .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
-
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]",
-                .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
-            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]",
-                .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
+            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
+            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
@@ -3485,7 +3513,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
@@ -3530,12 +3559,13 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR,
-                .timeModified = 1),
+            storageNewWriteP(
+                storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR, .timeModified = 1),
             "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
@@ -3553,8 +3583,7 @@ testRun(void)
                 .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
-                .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]",
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
@@ -3574,7 +3603,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         // make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
@@ -3602,8 +3632,7 @@ testRun(void)
                 .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
-                .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]",
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
@@ -3623,16 +3652,18 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         // make interface.pathSync != NULL
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
         TEST_ASSIGN(
             file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR,
-                .timeModified = 1, .noSyncPath = false),
-            "new write file (defaults)");
+            storageNewWriteP(
+                storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR, .timeModified = 1,
+                .noSyncPath = false),
+            "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -3651,8 +3682,7 @@ testRun(void)
                 .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
-                .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]",
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
@@ -3671,7 +3701,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
@@ -3679,10 +3710,8 @@ testRun(void)
             file,
             storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR,
                 .timeModified = 1, .noSyncPath = false),
-            "new write file (defaults)");
-
+            "new write file");
         ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
-
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -3698,11 +3727,10 @@ testRun(void)
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true,
-                .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
+                .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,10,416,0]"},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,488]"},
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
-                .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,26,416,0]"},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/sub1/testfile\",39,10,416,0]"},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]",
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
@@ -3714,14 +3742,15 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
-            storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR,
-                .timeModified = 1, .noSyncPath = false),
-            "new write file (defaults)");
-
+            storageNewWriteP(
+                storageTest, fileName, .user = TEST_USER_STR, .noAtomic = true, .group = TEST_GROUP_STR, .timeModified = 1,
+                .noSyncPath = false, .noTruncate = true),
+            "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
 
@@ -3748,7 +3777,8 @@ testRun(void)
 
         Storage *storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get error - attempt to get directory");
@@ -3771,13 +3801,14 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param =
                     "[\"/home/vagrant/test/test-0/test.empty.pgbackrest.tmp\",51,\"/home/vagrant/test/test-0/test.empty\",36,7]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         const String *emptyFile = STRDEF(TEST_PATH "/test.empty");
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), "put empty file");
@@ -3799,21 +3830,22 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 18 },
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
             // storageWriteSftpUnlinkExisting()
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX,
-                .param = "[\"/home/vagrant/test/test-0/test.empty\",36]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX,
-                .param = "[\"/home/vagrant/test/test-0/test.empty\",36]", .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 5},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/test.empty\",36]",
+                .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/test.empty\",36]",
+                .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 5},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileRemoveError,
-            "unable to remove existing '" TEST_PATH "/test.empty': libssh2 error [-31]: libssh2sftp error [0]");
+            "unable to remove existing '" TEST_PATH "/test.empty': libssh2 error [-31]: sftp error [0]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -3831,10 +3863,10 @@ testRun(void)
                     "[\"/home/vagrant/test/test-0/test.empty.pgbackrest.tmp\",51,\"/home/vagrant/test/test-0/test.empty\",36,7]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 18 },
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX,
-                .param = "[\"/home/vagrant/test/test-0/test.empty\",36]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX,
-                .param = "[\"/home/vagrant/test/test-0/test.empty\",36]", .resultInt = LIBSSH2_ERROR_NONE, .sleep = 5},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/test.empty\",36]",
+                .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/test.empty\",36]",
+                .resultInt = LIBSSH2_ERROR_NONE, .sleep = 5},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param =
                     "[\"/home/vagrant/test/test-0/test.empty.pgbackrest.tmp\",51,\"/home/vagrant/test/test-0/test.empty\",36,7]",
@@ -3849,7 +3881,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileRemoveError,
@@ -3872,17 +3905,18 @@ testRun(void)
                     "[\"/home/vagrant/test/test-0/test.empty.pgbackrest.tmp\",51,\"/home/vagrant/test/test-0/test.empty\",36,7]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL, .sleep = 18 },
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FAILURE},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX,
-                .param = "[\"/home/vagrant/test/test-0/test.empty\",36]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
-            {.function = HRNLIBSSH2_SFTP_UNLINK_EX,
-                .param = "[\"/home/vagrant/test/test-0/test.empty\",36]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/test.empty\",36]",
+                .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/test.empty\",36]",
+                .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, emptyFile), NULL), FileRemoveError,
@@ -3906,7 +3940,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR(
             storagePutP(storageNewWriteP(storageTest, STRDEF(TEST_PATH "/test.txt")), failBuffer), FileWriteError,
@@ -3936,13 +3971,14 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param =
                     "[\"/home/vagrant/test/test-0/test.txt.pgbackrest.tmp\",49,\"/home/vagrant/test/test-0/test.txt\",34,7]",
-                .resultInt = 0},
+                .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, STRDEF(TEST_PATH "/test.txt")), buffer), "put test file");
 
@@ -3965,7 +4001,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_RESULT_PTR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/" BOGUS_STR), .ignoreMissing = true)), NULL,
@@ -3987,7 +4024,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.empty"))), "get empty");
         TEST_RESULT_UINT(bufSize(buffer), 0, "size is 0");
@@ -4016,7 +4054,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(outBuffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), "get text");
         TEST_RESULT_UINT(bufSize(outBuffer), 9, "check size");
@@ -4039,7 +4078,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt")), .exactSize = 4), "get exact");
         TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
@@ -4064,7 +4104,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt")), .exactSize = 64), FileReadError,
@@ -4093,7 +4134,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), "get text");
         TEST_RESULT_UINT(bufSize(buffer), 9, "check size");
@@ -4116,7 +4158,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = UINT64_MAX)), FileOpenError,
@@ -4138,7 +4181,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), FileReadError,
@@ -4163,7 +4207,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .limit = VARUINT64(7))), "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
@@ -4190,8 +4235,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
-
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = 4)), "get");
         TEST_RESULT_UINT(bufSize(buffer), 5, "check size");
@@ -4213,7 +4258,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ERROR(
             storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"))), FileReadError,
@@ -4225,7 +4271,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageRemove()"))
     {
-        // mimic existance of /noperm/noperm
+        // mimic creation of /noperm/noperm
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file missing");
@@ -4241,7 +4287,8 @@ testRun(void)
 
         Storage *storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("missing")), "remove missing file");
 
@@ -4272,7 +4319,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
@@ -4303,14 +4351,17 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(
             file,
             storageNewWriteP(
                 storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1, .noSyncFile = true),
             "storageWriteSftpOpen sftp error");
-        TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(fileName));
+        TEST_ERROR_FMT(
+            ioWriteOpen(storageWriteIo(file)),
+            FileOpenError, STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3]", strZ(fileName));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
     }
@@ -4352,12 +4403,13 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ignore missing - file with no permission to read");
 
-        // mimic existance of /noperm/noperm
+        // mimic creation of /noperm/noperm
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileNoPerm, .ignoreMissing = true), "new read file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(file), true, "check ignore missing");
@@ -4407,7 +4459,8 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             FSLASH_STR, STRDEF("localhost"), 22, 5000, 5000, .user = TEST_USER_STR, .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"),
-            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true);
+            .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         Buffer *buffer = bufNew(0);
         Buffer *outBuffer = bufNew(2);
@@ -4469,6 +4522,362 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("StorageWrite"))
+    {
+        Storage *storageTest = NULL;
+        StorageWrite *file = NULL;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check getters");
+
+        // mimic creation of /noperm/noperm
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
+
+        TEST_ASSIGN(
+            file,
+            storageNewWriteP(
+                storageTest, fileNoPerm, .modeFile = 0444, .modePath = 0555, .noCreatePath = true, .noSyncFile = true,
+                .noSyncPath = true, .noAtomic = true),
+            "new write file");
+        TEST_RESULT_BOOL(storageWriteAtomic(file), false, "check atomic");
+        TEST_RESULT_BOOL(storageWriteCreatePath(file), false, "check create path");
+        TEST_RESULT_INT(storageWriteModeFile(file), 0444, "check mode file");
+        TEST_RESULT_INT(storageWriteModePath(file), 0555, "check mode path");
+        TEST_RESULT_STR(storageWriteName(file), fileNoPerm, "check name");
+        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "check sync path");
+        TEST_RESULT_BOOL(storageWriteSyncFile(file), false, "check sync file");
+        TEST_RESULT_BOOL(storageWriteTruncate(file), true, "file will be truncated");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("permission denied");
+
+// older systems do not support LIBSSH2_HOSTKEY_HASH_SHA256
+#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
+        #define                                                     HOSTKEY_HASH_ENTRY()                                           \
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[3]", .resultZ = "12345678910123456789"}
+#else
+        #define                                                     HOSTKEY_HASH_ENTRY()                                           \
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"}
+#endif
+
+        // mimic creation of /noperm/noperm
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            HOSTKEY_HASH_ENTRY(),
+            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
+            .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
+            .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_INIT},
+            // permission denied
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/noperm/noperm\",39,26,416,0]",
+                .resultNull = true, .sleep = 18},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/noperm/noperm\",39,26,416,0]",
+                .resultNull = true, .sleep = 18, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_PERMISSION_DENIED},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
+            .hostkeyHash = STRID5("sha256-ssh2-hostkey-hash", 0xdf1139efdde05134)
+#else
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)
+#endif
+            );
+
+        TEST_ASSIGN(
+            file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = true), "new write file");
+        TEST_ERROR_FMT(
+            ioWriteOpen(storageWriteIo(file)),
+            FileOpenError, STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3]", strZ(fileNoPerm));
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file missing");
+
+        const String *fileName = STRDEF(TEST_PATH "/sub1/test.file");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},
+            HOSTKEY_HASH_ENTRY(),
+//            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
+            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
+            .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
+            .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_INIT},
+            // missing
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/sub1/test.file\",40,26,416,0]",
+                .resultNull = true, .sleep = 18},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0/sub1/test.file\",40,26,416,0]",
+                .resultNull = true, .sleep = 18, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID5("aes-256-cbc", 0xc43dfbbcdcca10));
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noCreatePath = true, .noAtomic = true), "new write file");
+        TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(fileName));
+        TEST_RESULT_LOG("P00   INFO: requested ssh2 hostkey hash type (aes-256-cbc) not available, defaulting to SHA1");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write file success");
+
+        const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},                                                         \
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},                                            \
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},                                        \
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[1]", .resultZ = "12345678910123456789"},                              \
+            {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,                                                                \
+            .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",                       \
+            .resultInt = 0},                                                                                                       \
+            {.function = HRNLIBSSH2_SFTP_INIT},
+            // open file
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
+                .param = "[\"/home/vagrant/test/test-0/sub1/test.file.pgbackrest.tmp\",55,26,416,0]"},
+            // write null and zero size buffers are noops
+            // write filled buffer to file
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[1]", .resultInt = 1},
+            // close file
+            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_RENAME_EX,
+                .param =
+                    "[\"/home/vagrant/test/test-0/sub1/test.file.pgbackrest.tmp\",55,\"/home/vagrant/test/test-0/sub1/test.file\","
+                        "40,7]",
+                .resultInt = LIBSSH2_ERROR_NONE},
+            // move context
+            // open file
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
+                .param = "[\"/home/vagrant/test/test-0/sub1/test.file\",40,1,0,0]"},
+            // read file
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("TE")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("ST")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("FI")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("LE")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 1, .readBuffer = STRDEF("\n")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[1]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
+            // check path mode
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/sub1\",30,1]",
+                .resultInt = LIBSSH2_ERROR_NONE,
+                .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
+                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+            // check file mode
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/sub1/test.file\",40,1]",
+                .fileName = STRDEF("test.file"), .resultInt = LIBSSH2_ERROR_NONE,
+                .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
+                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+            // remove filename
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/sub1/test.file\",40]",
+                .resultInt = LIBSSH2_ERROR_NONE},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID5("md5-ssh2-hostkey-hash", 0x9bd1be2273df48d4));
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TEST_ASSIGN(file, storageWriteMove(storageNewWriteP(storageTest, fileName), memContextPrior()), "new write file");
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), NULL), "write null buffer to file");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), bufNew(0)), "write zero buffer to file");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), buffer), "write to file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+        TEST_RESULT_VOID(storageWriteFree(storageNewWriteP(storageTest, fileName)), "free file");
+        TEST_RESULT_VOID(storageWriteMove(NULL, memContextTop()), "move null file");
+
+        Buffer *expectedBuffer = storageGetP(storageNewReadP(storageTest, fileName));
+        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "check file mode");
+
+        storageRemoveP(storageTest, fileName, .errorOnMissing = true);
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write subpath and file success");
+
+        fileName = STRDEF(TEST_PATH "/sub2/test.file");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            // open file
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
+                .param = "[\"/home/vagrant/test/test-0/sub2/test.file\",40,26,384,0]"},
+            // write filled buffer to file
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[2]", .resultInt = 2},
+            {.function = HRNLIBSSH2_SFTP_WRITE, .param = "[1]", .resultInt = 1},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
+            // open file
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
+                .param = "[\"/home/vagrant/test/test-0/sub2/test.file\",40,1,0,0]"},
+            // read file
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("TE")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("ST")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("FI")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("LE")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 1, .readBuffer = STRDEF("\n")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[1]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
+            // check path mode
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/sub2\",30,1]",
+                .resultInt = LIBSSH2_ERROR_NONE,
+                .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
+                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+            // check file mode
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/sub2/test.file\",40,1]",
+                .fileName = STRDEF("test.file"), .resultInt = LIBSSH2_ERROR_NONE,
+                .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
+                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+            // remove filename
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/home/vagrant/test/test-0/sub2/test.file\",40]",
+                .resultInt = LIBSSH2_ERROR_NONE},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
+
+        TEST_ASSIGN(
+            file,
+            storageNewWriteP(
+                storageTest, fileName, .modePath = 0700, .modeFile = 0600, .noSyncPath = true, .noSyncFile = true,
+                .noAtomic = true),
+            "new write file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), buffer), "write to file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+
+        expectedBuffer = storageGetP(storageNewReadP(storageTest, fileName));
+        TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents");
+        TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "check path mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
+
+        storageRemoveP(storageTest, fileName, .errorOnMissing = true);
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no truncate");
+
+        // mimic creating file no-truncate mode 0600 contents ABC
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            // open file
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
+                .param = "[\"/home/vagrant/test/test-0/no-truncate\",37,10,432,0]"},
+            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]",
+                .resultInt = LIBSSH2_ERROR_NONE,
+                .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
+                .mtime = 77777, .uid = 1000, .gid = 1000, .filesize = 3},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
+            // open file
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX,
+                .param = "[\"/home/vagrant/test/test-0/no-truncate\",37,1,0,0]"},
+            // read file
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("AB")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 1, .readBuffer = STRDEF("C")},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[1]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
+            // check path mode
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/no-truncate\",37,1]",
+                .resultInt = LIBSSH2_ERROR_NONE,
+                .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
+                .mtime = 77777, .uid = 1000, .gid = 1000},
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/home/vagrant/test/test-0/no-truncate\",37,1]",
+                .resultInt = LIBSSH2_ERROR_NONE,
+                .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
+                .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
+                    LIBSSH2_SFTP_ATTR_SIZE,
+                .mtime = 77777, .uid = 1000, .gid = 1000},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+            .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"), .write = true,
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
+
+        TEST_ASSIGN(
+            file, storageNewWriteP(storageTest, STRDEF("no-truncate"), .modeFile = 0660, .timeModified = 77777, .noAtomic = true,
+            .noTruncate = true), "new write file");
+        TEST_RESULT_BOOL(storageWriteTruncate(file), false, "file will not be truncated");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+
+        TEST_STORAGE_GET(storageTest, "no-truncate", "ABC");
+        TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF("no-truncate")).mode, 0600, "check mode");
+        TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("no-truncate")).timeModified, 77777, "check time");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("storageRepo*()"))
     {
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
@@ -4485,6 +4894,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
         hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostkeyHash, "sha1-ssh2-hostkey-hash");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "/home/vagrant/.ssh/id_rsa");
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "/home/vagrant/.ssh/id_rsa.pub");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
@@ -4503,48 +4913,368 @@ testRun(void)
         TEST_RESULT_PTR(storageHelper.storageRepo[0], storage, "repo storage cached");
         TEST_RESULT_PTR(storageRepo(), storage, "get cached storage");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageRepo() - confirm settings");
+
+        TEST_ERROR(storagePathP(storage, STRDEF("<BOGUS>/path")), AssertError, "invalid expression '<BOGUS>'");
+        TEST_ERROR(storageNewWriteP(storage, writeFile), AssertError, "assertion 'this->write' failed");
+
+        TEST_RESULT_STR_Z(storagePathP(storage, NULL), TEST_PATH, "check base path");
+        TEST_RESULT_STR_Z(
+            storagePathP(storage, STORAGE_REPO_ARCHIVE_STR), TEST_PATH "/archive/db", "check archive path");
+        TEST_RESULT_STR_Z(
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/simple")), TEST_PATH "/archive/db/simple",
+            "check simple path");
+        TEST_RESULT_STR_Z(
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/700000007000000070000000")),
+            TEST_PATH "/archive/db/9.4-1/7000000070000000/700000007000000070000000", "check segment path");
+        TEST_RESULT_STR_Z(
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/00000008.history")),
+            TEST_PATH "/archive/db/9.4-1/00000008.history", "check history path");
+        TEST_RESULT_STR_Z(
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/000000010000014C0000001A.00000028.backup")),
+            TEST_PATH "/archive/db/9.4-1/000000010000014C/000000010000014C0000001A.00000028.backup",
+            "check archive backup path");
+        TEST_RESULT_STR_Z(storagePathP(storage, STORAGE_REPO_BACKUP_STR), TEST_PATH "/backup/db", "check backup path");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageRepo() - helper does not fail when stanza option not set");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        // Change the stanza to NULL with the stanzaInit flag still true, make sure helper does not fail when stanza option not set
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostkeyHash, "sha1-ssh2-hostkey-hash");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "/home/vagrant/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "/home/vagrant/.ssh/id_rsa.pub");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_ASSIGN(storage, storageRepo(), "new repo storage no stanza");
+        TEST_RESULT_STR(storageHelper.stanza, NULL, "stanza NULL");
+
+        TEST_RESULT_STR_Z(
+            storagePathP(storage, STORAGE_REPO_ARCHIVE_STR), TEST_PATH "/archive", "check archive path - NULL stanza");
+        TEST_RESULT_STR_Z(
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/simple")), TEST_PATH "/archive/simple",
+            "check simple archive path - NULL stanza");
+        TEST_RESULT_STR_Z(storagePathP(storage, STORAGE_REPO_BACKUP_STR), TEST_PATH "/backup", "check backup path - NULL stanza");
+        TEST_RESULT_STR_Z(
+            storagePathP(storage, STRDEF(STORAGE_REPO_BACKUP "/simple")), TEST_PATH "/backup/simple",
+            "check simple backup path - NULL stanza");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageRepoWrite() - confirm write enabled");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        TEST_RESULT_PTR(storageHelper.storageRepoWrite, NULL, "repo write storage not cached");
+        TEST_ASSIGN(storage, storageRepoWrite(), "new write storage");
+        TEST_RESULT_PTR(storageHelper.storageRepoWrite[0], storage, "repo write storage cached");
+        TEST_RESULT_PTR(storageRepoWrite(), storage, "get cached storage");
+
+        TEST_RESULT_BOOL(storage->write, true, "get write enabled");
+        TEST_RESULT_UINT(storageType(storage), storage->pub.type, "check type");
+        TEST_RESULT_STR_Z(strIdToStr(storageType(storage)), "sftp", "storage type is sftp");
+
         memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("libssh2SessionFreeResource()"))
+    if (testBegin("storageRepoGet() and StorageDriverCifs"))
+    {
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        // Load configuration
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpAccount, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "sftp");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostkeyHash, "sha1-ssh2-hostkey-hash");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyfile, "/home/vagrant/.ssh/id_rsa");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyfile, "/home/vagrant/.ssh/id_rsa.pub");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid storage type");
+
+        static const StorageHelper storageHelperListError[] = {{.type = STORAGE_CIFS_TYPE}, STORAGE_END_HELPER};
+        storageHelperInit(storageHelperListError);
+
+        TEST_ERROR(storageRepoGet(0, true), AssertError, "invalid storage type");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage configuration");
+
+        // Set storage helper
+        static const StorageHelper storageHelperList[] = {STORAGE_SFTP_HELPER, STORAGE_END_HELPER};
+        storageHelperInit(storageHelperList);
+
+        const Storage *storage = NULL;
+        TEST_ASSIGN(storage, storageRepoGet(0, true), "get sftp repo storage");
+        TEST_RESULT_UINT(storageType(storage), STORAGE_SFTP_TYPE, "check storage type");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "check path feature");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write object path sync false");
+
+        // Create a FileWrite object with path sync enabled and ensure that path sync is false in the write object
+        StorageWrite *file = NULL;
+        TEST_ASSIGN(file, storageNewWriteP(storage, STRDEF("somefile"), .noSyncPath = false), "new file write");
+
+        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "path sync is disabled");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path sync result is noop");
+
+        // Test the path sync function -- pass a bogus path to ensure that this is a noop
+        TEST_RESULT_VOID(storagePathSyncP(storage, STRDEF(BOGUS_STR)), "path sync is a noop");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageSftpLibssh2SessionFreeResource()"))
     {
         Storage *storageTest = NULL;
         StorageSftp *storageSftp = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sftpHandle not NULL, sftpSession && session NULL, force branch tests");
+        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftpHandle, sftpSession, session not NULL, branch tests, EAGAIN");
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0\",25,1,0,1]"},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgbackrest instance shutdown\",\"\"]",
+                .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgbackrest instance shutdown\",\"\"]",
+                .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_EAGAIN},
+            {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgbackrest instance shutdown\",\"\"]", .resultInt = 0},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
-            HRNLIBSSH2_MACRO_SHUTDOWN()
+            HRNLIBSSH2_MACRO_SHUTDOWN(),
         });
 
         TEST_ASSIGN(
             storageTest,
             storageSftpNewP(
-                STRDEF("/tmp"), STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
-                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub")),
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
              "new storage (defaults)");
-
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
 
         // Populate sftpHandle, NULL sftpSession and session
         storageSftp->sftpHandle = libssh2_sftp_open_ex(storageSftp->sftpSession, "/home/vagrant/test/test-0",25,1,0,1);
+
+        TEST_RESULT_VOID(storageSftpLibssh2SessionFreeResource(storageSftp), "freeResource not NULL sftpHandle");
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftpHandle, sftpSession, session all NULL");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = NULL}
+        });
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
+             "new storage (defaults)");
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+
+        // NULL out sftpSession and session
         storageSftp->sftpSession = NULL;
         storageSftp->session = NULL;
 
-        TEST_RESULT_VOID(libssh2SessionFreeResource(storageSftp), "freeResource not NULL sftpHandle");
+        TEST_RESULT_VOID(memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))), "free resource all NULL");
 
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-    }
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, libssh2 error");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0\",25,1,0,1]"},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_SOCKET_SEND},
+            {.function = NULL}
+        });
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
+             "new storage (defaults)");
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+
+        // Populate sftpHandle, NULL out sftpSession and session
+        storageSftp->sftpHandle = libssh2_sftp_open_ex(storageSftp->sftpSession, "/home/vagrant/test/test-0",25,1,0,1);
+        storageSftp->sftpSession = NULL;
+        storageSftp->session = NULL;
+
+        TEST_ERROR_FMT(
+            memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))),
+            ServiceError, "failed to free resource sftpHandle: libssh2 errno [-7]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, libssh2 sftp error");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"/home/vagrant/test/test-0\",25,1,0,1]"},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_CONNECTION_LOST},
+            {.function = NULL}
+        });
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
+             "new storage (defaults)");
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+
+        // Populate sftpHandle, NULL out sftpSession and session
+        storageSftp->sftpHandle = libssh2_sftp_open_ex(storageSftp->sftpSession, "/home/vagrant/test/test-0",25,1,0,1);
+        storageSftp->sftpSession = NULL;
+        storageSftp->session = NULL;
+
+        TEST_ERROR_FMT(
+            memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))),
+            ServiceError, "failed to free resource sftpHandle: libssh2 errno [-31]: sftp errno [7]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftp shutdown failure libssh2 error");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_SOCKET_SEND},
+            {.function = NULL},
+        });
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
+             "new storage (defaults)");
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        TEST_ERROR_FMT(
+            memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))),
+            ServiceError, "failed to free resource sftpSession: libssh2 errno [-7]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftp shutdown failure libssh2 sftp error");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_CONNECTION_LOST},
+            {.function = NULL},
+        });
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
+             "new storage (defaults)");
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        TEST_ERROR_FMT(
+            memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))),
+            ServiceError, "failed to free resource sftpSession: libssh2 errno [-31]: sftp errno [7]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpLibssh2SessionFreeResource() session disconnect failure");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgbackrest instance shutdown\",\"\"]",
+                .resultInt = LIBSSH2_ERROR_SOCKET_DISCONNECT},
+            {.function = NULL},
+        });
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
+             "new storage (defaults)");
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        TEST_ERROR_FMT(
+            memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))),
+            ServiceError, "failed to disconnect libssh2 session: libssh2 errno [-13]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpLibssh2SessionFreeResource() session free failure");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgbackrest instance shutdown\",\"\"]",
+                .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = LIBSSH2_ERROR_SOCKET_DISCONNECT},
+            {.function = NULL},
+        });
+
+        TEST_ASSIGN(
+            storageTest,
+            storageSftpNewP(
+                TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR,
+                .keyPriv = STRDEF("/home/vagrant/.ssh/id_rsa"), .keyPub = STRDEF("/home/vagrant/.ssh/id_rsa.pub"),
+                .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)),
+             "new storage (defaults)");
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
+        TEST_ERROR_FMT(
+            memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))),
+            ServiceError, "failed to free libssh2 session: libssh2 errno [-13]");
+  }
 
     // *****************************************************************************************************************************
     if (testBegin("storageSftpEvalLibssh2Error()"))
@@ -4563,21 +5293,21 @@ testRun(void)
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
             FileRemoveError,
-            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: libssh2sftp error [16]\n"
+            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16]\n"
             "HINT");
         TEST_ERROR_FMT(
             storageSftpEvalLibssh2Error(
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), NULL),
             FileRemoveError,
-            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: libssh2sftp error [16]");
+            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16]");
         TEST_ERROR_FMT(
             storageSftpEvalLibssh2Error(
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError, NULL, NULL),
             FileRemoveError,
-            "libssh2 error [-31]: libssh2sftp error [16]");
+            "libssh2 error [-31]: sftp error [16]");
     }
 
-    hrnSftpIoSessionFdShimUninstall();
+    hrnIoIoSessionFdShimUninstall();
     FUNCTION_HARNESS_RETURN_VOID();
 }

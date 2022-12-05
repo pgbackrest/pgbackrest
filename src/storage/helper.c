@@ -12,8 +12,8 @@ Storage Helper
 #include "config/config.h"
 #include "protocol/helper.h"
 #include "storage/posix/storage.h"
-#include "storage/sftp/storage.h"
 #include "storage/remote/storage.h"
+#include "storage/sftp/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************

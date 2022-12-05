@@ -1,15 +1,11 @@
 /***********************************************************************************************************************************
 libssh2 Test Harness
 ***********************************************************************************************************************************/
-//#ifndef HARNESS_LIBSSH2_REAL
 
 #include "build.auto.h"
 
 #include <stdio.h>
 #include <string.h>
-
-#include <libssh2.h>
-#include <libssh2_sftp.h>
 
 #include "common/type/json.h"
 #include "common/type/string.h"
@@ -21,7 +17,7 @@ libssh2 Test Harness
 /***********************************************************************************************************************************
 libssh2 shim error prefix
 ***********************************************************************************************************************************/
-#define LIBSSH2_ERROR_PREFIX                                             "LIBSSH2 SHIM ERROR"
+#define LIBSSH2_ERROR_PREFIX                                        "LIBSSH2 SHIM ERROR"
 
 /***********************************************************************************************************************************
 Script that defines how shim functions operate
@@ -111,12 +107,6 @@ harnessLibssh2ScriptRun(const char *const function, const VariantList *const par
         TEST_LOG_FMT(LIBSSH2_ERROR_PREFIX ": %s", harnessLibssh2ScriptError);
         harnessLibssh2ScriptFail = true;
 
-        // Return without error if closing the connection and an error is currently being thrown. Errors outside of the libssh2 shim
-        // can cause the connection to be cleaned up and we don't want to mask those errors. However, the failure is still logged
-        // and any subsequent call to the libssh2 shim will result in an error.
-//        if (strcmp(function, HRNPQ_FINISH) == 0 && errorType() != NULL)
-//            return NULL;
-
         THROW(AssertError, harnessLibssh2ScriptError);
     }
 
@@ -176,7 +166,6 @@ int libssh2_init(int flags)
 /***********************************************************************************************************************************
 Shim for libssh2_session_init
 ***********************************************************************************************************************************/
-// !!! jrt this needs to be rewritten to function correctly
 LIBSSH2_SESSION *libssh2_session_init_ex(
     LIBSSH2_ALLOC_FUNC((*myalloc)), LIBSSH2_FREE_FUNC((*myfree)), LIBSSH2_REALLOC_FUNC((*myrealloc)), void *abstract)
 {
@@ -244,6 +233,7 @@ const char *libssh2_hostkey_hash(LIBSSH2_SESSION *session, int hash_type)
 {
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_HOSTKEY_HASH, varLstAdd(varLstNew(), varNewInt(hash_type)), (HarnessLibssh2 *)session);
+
     return harnessLibssh2->resultNull ? NULL : (const char *)harnessLibssh2->resultZ;
 }
 
@@ -277,6 +267,7 @@ Shim for libssh2_sftp_init
 LIBSSH2_SFTP *libssh2_sftp_init(LIBSSH2_SESSION *session)
 {
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(HRNLIBSSH2_SFTP_INIT, NULL, (HarnessLibssh2 *)session);
+
     return harnessLibssh2->resultNull ? NULL : (LIBSSH2_SFTP *)harnessLibssh2;
 }
 
@@ -286,7 +277,6 @@ Shim for libssh2_sftp_close_handle
 int libssh2_sftp_close_handle(LIBSSH2_SFTP_HANDLE *handle)
 {
     return harnessLibssh2ScriptRun(HRNLIBSSH2_SFTP_CLOSE_HANDLE, NULL, (HarnessLibssh2 *)handle)->resultInt;
-
 }
 
 /***********************************************************************************************************************************
@@ -294,7 +284,7 @@ Shim for libssh2_sftp_shutdown
 ***********************************************************************************************************************************/
 int libssh2_sftp_shutdown(LIBSSH2_SFTP *sftp)
 {
-    return harnessLibssh2ScriptRun(HRNLIBSSH2_SFTP_CLOSE_HANDLE, NULL, (HarnessLibssh2 *)sftp)->resultInt;
+    return harnessLibssh2ScriptRun(HRNLIBSSH2_SFTP_SHUTDOWN, NULL, (HarnessLibssh2 *)sftp)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -320,15 +310,7 @@ Shim for int libssh2_session_free
 ***********************************************************************************************************************************/
 int libssh2_session_free(LIBSSH2_SESSION *session)
 {
-    return harnessLibssh2ScriptRun(HRNLIBSSH2_SFTP_CLOSE_HANDLE, NULL, (HarnessLibssh2 *)session)->resultInt;
-}
-
-/***********************************************************************************************************************************
-Shim for libssh2_exit(void)
-***********************************************************************************************************************************/
-void libssh2_exit(void)
-{
-    return;
+    return harnessLibssh2ScriptRun(HRNLIBSSH2_SESSION_FREE, NULL, (HarnessLibssh2 *)session)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -399,7 +381,7 @@ int libssh2_sftp_symlink_ex(
 
     int rc = 0;
     /* from the doc page https://www.libssh2.org/libssh2_sftp_symlink_ex.html
-     * jrt !!! the driver is using LIBSSH2_SFTP_READLINK to resolve linkDestination, should it use LIBSSH2_SFTP_REALPATH, see below
+     * !!! the driver is using LIBSSH2_SFTP_READLINK to resolve linkDestination, should it use LIBSSH2_SFTP_REALPATH, see below
      *
     target - a pointer to a buffer. The buffer has different uses depending what the link_type argument is set to.
     LIBSSH2_SFTP_SYMLINK: Remote filesystem object to link to.
@@ -425,8 +407,10 @@ int libssh2_sftp_symlink_ex(
         case LIBSSH2_SFTP_REALPATH:
             if (harnessLibssh2->symlinkExTarget != NULL)
             {
-                strncpy(target, strZ(harnessLibssh2->symlinkExTarget), PATH_MAX);
-                target[strSize(harnessLibssh2->symlinkExTarget)] = '\0';
+                if (strSize(harnessLibssh2->symlinkExTarget) < PATH_MAX)
+                    strncpy(target, strZ(harnessLibssh2->symlinkExTarget), strSize(harnessLibssh2->symlinkExTarget));
+                else
+                    THROW_FMT(AssertError, "harnessLibssh2.c %s ERROR: symlinkExTarget too large for target buffer", __FUNCTION__);
             }
 
             rc = harnessLibssh2->resultInt != 0 ? harnessLibssh2->resultInt : (int)strSize(harnessLibssh2->symlinkExTarget);
@@ -435,15 +419,17 @@ int libssh2_sftp_symlink_ex(
         case LIBSSH2_SFTP_SYMLINK:
             if (harnessLibssh2->symlinkExTarget != NULL)
             {
-                strncpy(target, strZ(harnessLibssh2->symlinkExTarget), strSize(harnessLibssh2->symlinkExTarget));
-                target[strSize(harnessLibssh2->symlinkExTarget)] = '\0';
+                if (strSize(harnessLibssh2->symlinkExTarget) < PATH_MAX)
+                    strncpy(target, strZ(harnessLibssh2->symlinkExTarget), strSize(harnessLibssh2->symlinkExTarget));
+                else
+                    THROW_FMT(AssertError, "harnessLibssh2.c %s ERROR: symlinkExTarget too large for target buffer", __FUNCTION__);
             }
 
             rc = harnessLibssh2->resultInt;
             break;
 
         default:
-            printf("harnessLibssh2.c libssh2_sftp_symlink_ex ERROR: UNKNOWN link_type\n");
+            THROW_FMT(AssertError, "harnessLibssh2.c %s ERROR: UNKNOWN link_type", __FUNCTION__);
             break;
     }
 
@@ -453,7 +439,7 @@ int libssh2_sftp_symlink_ex(
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_open_ex
 ***********************************************************************************************************************************/
- LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
+LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
     LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len, unsigned long flags, long mode, int open_type)
 {
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
@@ -511,35 +497,6 @@ int libssh2_session_last_errno(LIBSSH2_SESSION *session)
 }
 
 /***********************************************************************************************************************************
-Shim for libssh2_session_last_error
-**********************************************************************************************************************************
-int libssh2_session_last_error(LIBSSH2_SESSION *session, char **errmsg, int *errmsg_len, int want_buf)
-{
-// jrt do like libssh2_sftp_read..  do not pass errmsg to script run???
-    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
-        HRNLIBSSH2_SESSION_LAST_ERROR,
-        varLstAdd(
-            varLstAdd(
-                varLstAdd(
-                    varLstNew(), varNewStrZ(*errmsg)),
-            varNewInt(*errmsg_len)),
-        varNewInt(want_buf)),
-        (HarnessLibssh2 *)session);
-
-    if (harnessLibssh2->errMsg != NULL)
-    {
-
-    }
-
-
-    return harnessLibssh2->resultInt;
-
-//    return harnessLibssh2ScriptRun(
-//            HRNLIBSSH2_SESSION_LAST_ERROR, NULL, (HarnessLibssh2 *)session)->resultInt;
-}
-*/
-
-/***********************************************************************************************************************************
 Shim for libssh2_sftp_fstat_ex
 ***********************************************************************************************************************************/
 int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *attrs, int setstat)
@@ -563,8 +520,6 @@ int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *
     attrs->filesize = harnessLibssh2->filesize;
 
     return harnessLibssh2->resultInt;
-    //return harnessLibssh2ScriptRun(
-    //        HRNLIBSSH2_SFTP_FSTAT_EX, varLstAdd(varLstNew(), varNewInt(setstat)), (HarnessLibssh2 *)handle)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -708,195 +663,3 @@ ssize_t libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size
     // return number of bytes written
     return harnessLibssh2->resultInt;
 }
-
-/***********************************************************************************************************************************
-Shim for PQconnectdb()
-**********************************************************************************************************************************
-PGconn *PQconnectdb(const char *conninfo)
-{
-    return (PGconn *)harnessLibssh2ScriptRun(HRNPQ_CONNECTDB, varLstAdd(varLstNew(), varNewStrZ(conninfo)), NULL);
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQstatus()
-**********************************************************************************************************************************
-ConnStatusType PQstatus(const PGconn *conn)
-{
-    return (ConnStatusType)harnessLibssh2ScriptRun(HRNPQ_STATUS, NULL, (HarnessLibssh2 *)conn)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQerrorMessage()
-**********************************************************************************************************************************
-char *PQerrorMessage(const PGconn *conn)
-{
-    return (char *)harnessLibssh2ScriptRun(HRNPQ_ERRORMESSAGE, NULL, (HarnessLibssh2 *)conn)->resultZ;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQsetNoticeProcessor()
-**********************************************************************************************************************************
-PQnoticeProcessor
-PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
-{
-    (void)conn;
-
-    // Call the processor that was passed so we have coverage
-    proc(arg, "test notice");
-    return NULL;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQsendQuery()
-**********************************************************************************************************************************
-int
-PQsendQuery(PGconn *conn, const char *query)
-{
-    return harnessLibssh2ScriptRun(HRNPQ_SENDQUERY, varLstAdd(varLstNew(), varNewStrZ(query)), (HarnessLibssh2 *)conn)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQconsumeInput()
-**********************************************************************************************************************************
-int
-PQconsumeInput(PGconn *conn)
-{
-    return harnessLibssh2ScriptRun(HRNPQ_CONSUMEINPUT, NULL, (HarnessLibssh2 *)conn)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQisBusy()
-**********************************************************************************************************************************
-int
-PQisBusy(PGconn *conn)
-{
-    return harnessLibssh2ScriptRun(HRNPQ_ISBUSY, NULL, (HarnessLibssh2 *)conn)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQgetCancel()
-**********************************************************************************************************************************
-PGcancel *
-PQgetCancel(PGconn *conn)
-{
-    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(HRNPQ_GETCANCEL, NULL, (HarnessLibssh2 *)conn);
-    return harnessLibssh2->resultNull ? NULL : (PGcancel *)harnessLibssh2;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQcancel()
-**********************************************************************************************************************************
-int
-PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
-{
-    HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(HRNPQ_CANCEL, NULL, (HarnessLibssh2 *)cancel);
-
-    if (!harnessLibssh2->resultInt)
-    {
-        strncpy(errbuf, harnessLibssh2->resultZ, (size_t)errbufsize);
-        errbuf[errbufsize - 1] = '\0';
-    }
-
-    return harnessLibssh2->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQfreeCancel()
-**********************************************************************************************************************************
-void
-PQfreeCancel(PGcancel *cancel)
-{
-    harnessLibssh2ScriptRun(HRNPQ_FREECANCEL, NULL, (HarnessLibssh2 *)cancel);
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQgetResult()
-**********************************************************************************************************************************
-PGresult *
-PQgetResult(PGconn *conn)
-{
-    if (!harnessLibssh2ScriptFail)
-    {
-        HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(HRNPQ_GETRESULT, NULL, (HarnessLibssh2 *)conn);
-        return harnessLibssh2->resultNull ? NULL : (PGresult *)harnessLibssh2;
-    }
-
-    return NULL;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQresultStatus()
-**********************************************************************************************************************************
-ExecStatusType
-PQresultStatus(const PGresult *res)
-{
-    return (ExecStatusType)harnessLibssh2ScriptRun(HRNPQ_RESULTSTATUS, NULL, (HarnessLibssh2 *)res)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQresultErrorMessage()
-**********************************************************************************************************************************
-char *
-PQresultErrorMessage(const PGresult *res)
-{
-    return (char *)harnessLibssh2ScriptRun(HRNPQ_RESULTERRORMESSAGE, NULL, (HarnessLibssh2 *)res)->resultZ;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQntuples()
-**********************************************************************************************************************************
-int
-PQntuples(const PGresult *res)
-{
-    return harnessLibssh2ScriptRun(HRNPQ_NTUPLES, NULL, (HarnessLibssh2 *)res)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQnfields()
-**********************************************************************************************************************************
-int
-PQnfields(const PGresult *res)
-{
-    return harnessLibssh2ScriptRun(HRNPQ_NFIELDS, NULL, (HarnessLibssh2 *)res)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQgetisnull()
-**********************************************************************************************************************************
-int
-PQgetisnull(const PGresult *res, int tup_num, int field_num)
-{
-    return harnessLibssh2ScriptRun(
-        HRNPQ_GETISNULL, varLstAdd(varLstAdd(varLstNew(), varNewInt(tup_num)), varNewInt(field_num)), (HarnessLibssh2 *)res)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQftype()
-**********************************************************************************************************************************
-Oid
-PQftype(const PGresult *res, int field_num)
-{
-    return (Oid)harnessLibssh2ScriptRun(HRNPQ_FTYPE, varLstAdd(varLstNew(), varNewInt(field_num)), (HarnessLibssh2 *)res)->resultInt;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQgetvalue()
-**********************************************************************************************************************************
-char *
-PQgetvalue(const PGresult *res, int tup_num, int field_num)
-{
-    return (char *)harnessLibssh2ScriptRun(
-        HRNPQ_GETVALUE, varLstAdd(varLstAdd(varLstNew(), varNewInt(tup_num)), varNewInt(field_num)), (HarnessLibssh2 *)res)->resultZ;
-}
-*/
-/***********************************************************************************************************************************
-Shim for PQclear()
-**********************************************************************************************************************************
-void
-PQclear(PGresult *res)
-{
-    if (!harnessLibssh2ScriptFail)
-        harnessLibssh2ScriptRun(HRNPQ_CLEAR, NULL, (HarnessLibssh2 *)res);
-}
-*/
-//#endif // HARNESS_LIBSSH2_REAL

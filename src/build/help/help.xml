@@ -952,6 +952,16 @@
                         <example>sftprepo.domain</example>
                     </config-key>
 
+                    <config-key id="repo-sftp-hostkey-hash" name="SFTP Repository Hostkey Hash">
+                        <summary>SFTP repository hostkey hash.</summary>
+
+                        <text>
+                            <p>SFTP repository hostkey hash. Declares the hash type to be used to compute the digest of the remote system's hostkey on startup. Newer versions of libssh2 support sha256-ssh2-hostkey-hash in addition to md5-ssh2-hostkey-hash and sha1-ssh2-hostkey-hash.</p>
+                        </text>
+
+                        <example>LIBSSH2_HOSTKEY_HASH_SHA256</example>
+                    </config-key>
+
                     <config-key id="repo-sftp-host-port" name="SFTP Repository Host Port">
                         <summary>SFTP repository host port.</summary>
 
@@ -972,16 +982,6 @@
                         <example>BeSureToGenerateAndUseASecurePassphrase</example>
                     </config-key>
 
-                    <config-key id="repo-sftp-password" name="SFTP Repository Account Password">
-                        <summary>SFTP account password.</summary>
-
-                        <text>
-                            <p>SFTP account password used for authentication.</p>
-                        </text>
-
-                        <example>BeSureToGenerateAndUseASecurePassword</example>
-                    </config-key>
-
                     <config-key id="repo-sftp-private-keyfile" name="SFTP Repository Private Keyfile">
                         <summary>SFTP private keyfile.</summary>
 
@@ -996,7 +996,7 @@
                         <summary>SFTP public keyfile.</summary>
 
                         <text>
-                            <p>SFTP public keyfile used for authentication.</p>
+                            <p>SFTP public keyfile used for authentication. Optional if compiled against OpenSSL, required if compiled against a different library.</p>
                         </text>
 
                         <example>~/.ssh/id_ed25519.pub</example>

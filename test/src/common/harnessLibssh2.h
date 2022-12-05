@@ -6,7 +6,7 @@ Scripted testing for libssh2 so exact results can be returned for unit testing. 
 #ifndef TEST_COMMON_HARNESS_LIBSSH2_H
 #define TEST_COMMON_HARNESS_LIBSSH2_H
 
-//#ifndef HARNESS_LIBSSH2_REAL
+#ifndef HARNESS_LIBSSH2_REAL
 
 #include <libssh2.h>
 #include <libssh2_sftp.h>
@@ -19,7 +19,6 @@ Scripted testing for libssh2 so exact results can be returned for unit testing. 
 /***********************************************************************************************************************************
 Function constants
 ***********************************************************************************************************************************/
-#define HRNLIBSSH2_EXIT                                             "libssh2_exit"
 #define HRNLIBSSH2_HOSTKEY_HASH                                     "libssh2_hostkey_hash"
 #define HRNLIBSSH2_INIT                                             "libssh2_init"
 #define HRNLIBSSH2_SESSION_DISCONNECT_EX                            "libssh2_session_disconnect_ex"
@@ -64,9 +63,9 @@ Macros for defining groups of functions that implement commands
 
 // Set of functions mimicking libssh2 shutdown and disconnect
 #define HRNLIBSSH2_MACRO_SHUTDOWN()                                                                                                \
-    {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},                                                                    \
+    {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = 0},                                                                        \
     {.function = HRNLIBSSH2_SESSION_DISCONNECT_EX, .param ="[11,\"pgbackrest instance shutdown\",\"\"]", .resultInt = 0},          \
-    {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = 0},                                                                    \
+    {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = 0},                                                                         \
     {.function = NULL}                                                                                                             \
 
 
@@ -90,7 +89,6 @@ typedef struct HarnessLibssh2
     uint64_t offset;                                                // libssh2 seek offset
     const String *symlinkExTarget;                                  // libssh2_sftp_symlink_ex target
     const String *fileName;                                         // libssh2_readdir* libssh2_stat* filename
-    const String *errMsg;                                           // libssh2 error message to populate
     const String *readBuffer;                                       // what to copy into read buffer
     TimeMSec sleep;                                                 // Sleep specified milliseconds before returning from function
 } HarnessLibssh2;
@@ -100,6 +98,6 @@ Functions
 ***********************************************************************************************************************************/
 void harnessLibssh2ScriptSet(HarnessLibssh2 *harnessLibssh2ScriptParam);
 
-//#endif // HARNESS_LIBSSH2_REAL
+#endif // HARNESS_LIBSSH2_REAL
 
 #endif

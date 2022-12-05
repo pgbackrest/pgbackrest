@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
-Harness for Sftp Testing
+Harness for Testing
 ***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Install/uninstall the shims for sftp testing
-void hrnSftpIoSessionFdShimInstall(void);
-void hrnSftpIoSessionFdShimUninstall(void);
+// Install/uninstall the shims for testing
+void hrnIoIoSessionFdShimInstall(void);
+void hrnIoIoSessionFdShimUninstall(void);

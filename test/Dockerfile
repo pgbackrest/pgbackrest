@@ -1,7 +1,7 @@
 # export PGB=pgbackrest;export PGB_IMAGE=$PGB/test:u22-main;PGB_REPO=~/Documents/Code/$PGB
 # docker build --squash -f $PGB_REPO/test/Dockerfile -t $PGB_IMAGE .
 # docker run --privileged -itd --name $PGB-test -h $PGB-test -v $PGB_REPO:/home/vagrant/$PGB $PGB_IMAGE
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 # Install packages
 RUN apt-get update

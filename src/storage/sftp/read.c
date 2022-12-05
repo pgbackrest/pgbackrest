@@ -76,8 +76,6 @@ storageReadSftpOpen(THIS_VOID)
 
     if (this->sftpHandle == NULL)
     {
-        // If session indicates sftp error, can query for sftp error
-        // !!! see also libssh2_session_last_error() - possible to return more detailed error
         int rc = libssh2_session_last_errno(this->session);
 
         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL || rc == LIBSSH2_ERROR_EAGAIN)
@@ -94,12 +92,9 @@ storageReadSftpOpen(THIS_VOID)
     // Else success
     else
     {
-        // Seek to offset
+        // Seek to offset, libssh2_sftp_seek64 returns void
         if (this->interface.offset != 0)
-        {
-            // Returns void
             libssh2_sftp_seek64(this->sftpHandle, this->interface.offset);
-        }
     }
 
     FUNCTION_LOG_RETURN(BOOL, this->sftpHandle != NULL);
@@ -163,9 +158,6 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
         actualBytes = (ssize_t)bufUsed(buffer);
 
         // Error occurred during read
-        // jrt if remote file is removed, we still read two bytes, but the first byte is null
-        // is it valid to error in this case - i.e. bufEmpty here is an error? can't use bufEmpty as error as empty buffer may be
-        // valid?
         if (rc < 0)
         {
             if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
@@ -176,7 +168,7 @@ storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
                 if ((sftpErr = libssh2_sftp_last_error(this->sftpSession)) == LIBSSH2_FX_BAD_MESSAGE && this->interface.offset > 0)
                     THROW_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.offset, strZ(this->interface.name));
                 else
-                    THROW_FMT(FileReadError, "unable to read '%s': sftp errno [%lu]", strZ(this->interface.name), sftpErr);
+                    THROW_FMT(FileReadError, "unable to read '%s': sftp errno [%" PRIu64 "]", strZ(this->interface.name), sftpErr);
             }
             else
                 THROW_FMT(FileReadError, "unable to read '%s'", strZ(this->interface.name));
@@ -222,23 +214,11 @@ storageReadSftpClose(THIS_VOID)
 
         if (rc)
         {
-
-
             THROW_FMT(
                 FileCloseError,
                 STORAGE_ERROR_READ_CLOSE ": libssh2 errno [%d]%s", strZ(this->interface.name), rc,
                 rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                strZ(strNewFmt(" sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
-
-            /* jrt ??? figure out how to shim libssh2_session_last_error to get this to work
-            int libssh2_errno = libssh2_session_last_error(this->session, &libssh2_errmsg, &errmsg_len, 0);
-
-            THROW_FMT(
-                FileCloseError,
-                STORAGE_ERROR_READ_CLOSE ": libssh2 errno [%d] %s%s", strZ(this->interface.name), libssh2_errno, libssh2_errmsg,
-                libssh2_errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                strZ(strNewFmt("sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
-                */
+                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
         }
     }
 
@@ -267,9 +247,9 @@ storageReadSftpEof(THIS_VOID)
 /**********************************************************************************************************************************/
 StorageRead *
 storageReadSftpNew(
-    StorageSftp *const storage, const String *const name, const bool ignoreMissing, IoSession *ioSession, LIBSSH2_SESSION *session,
-    LIBSSH2_SFTP *sftpSession, LIBSSH2_SFTP_HANDLE *sftpHandle, TimeMSec timeoutSession, TimeMSec timeoutConnect,
-    const uint64_t offset, const Variant *const limit)
+    StorageSftp *const storage, const String *const name, const bool ignoreMissing, IoSession *const ioSession,
+    LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, TimeMSec timeoutSession,
+    TimeMSec timeoutConnect, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);

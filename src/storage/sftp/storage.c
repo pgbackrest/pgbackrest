@@ -50,63 +50,10 @@ struct StorageSftp
     Wait *wait;
 };
 
-/**********************************************************************************************************************************/
-bool
-storageSftpLibssh2FxNoSuchFile(THIS_VOID, const int rc)
-{
-    THIS(StorageSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-        FUNCTION_LOG_PARAM(INT, rc);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    bool result = false;
-
-    if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
-        if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
-            result = true;
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/***********************************************************************************************************************************
-Free libssh2 resources
-***********************************************************************************************************************************/
-static void
-libssh2SessionFreeResource(THIS_VOID)
-{
-    THIS(StorageSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    // jrt sftp_close may need to wrap these ssh2 funcs in  do/whiles
-    if (this->sftpHandle != NULL)
-        libssh2_sftp_close(this->sftpHandle);
-
-    if (this->sftpSession != NULL)
-        libssh2_sftp_shutdown(this->sftpSession);
-
-    if (this->session != NULL)
-    {
-        libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgbackrest instance shutdown", "");
-        libssh2_session_free(this->session);
-    }
-
-    libssh2_exit();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
 
 /**********************************************************************************************************************************/
 static StorageInfo
-storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
+storageSftpInfo(THIS_VOID, const String *const file, StorageInfoLevel level, const StorageInterfaceInfoParam param)
 {
     THIS(StorageSftp);
 
@@ -193,7 +140,7 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
 
             if (result.type == storageTypeLink)
             {
-                char linkDestination[PATH_MAX + 1] = {};
+                char linkDestination[PATH_MAX] = {};
                 ssize_t linkDestinationSize = 0;
 
                 this->wait = waitNew(this->timeoutConnect);
@@ -201,7 +148,7 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
                 do
                 {
                     linkDestinationSize = libssh2_sftp_symlink_ex(
-                        this->sftpSession, strZ(file), (unsigned int)strSize(file), linkDestination, PATH_MAX,
+                        this->sftpSession, strZ(file), (unsigned int)strSize(file), linkDestination, PATH_MAX - 1,
                         LIBSSH2_SFTP_READLINK);
                 }
                 while (linkDestinationSize == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
@@ -215,6 +162,104 @@ storageSftpInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageIn
     }
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
+}
+
+/***********************************************************************************************************************************
+Free libssh2 resources
+***********************************************************************************************************************************/
+static void
+storageSftpLibssh2SessionFreeResource(THIS_VOID)
+{
+    THIS(StorageSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    int rc = 0;
+
+    if (this->sftpHandle != NULL)
+    {
+        do
+        {
+            rc = libssh2_sftp_close(this->sftpHandle);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN);
+
+        if (rc)
+        {
+            THROW_FMT(
+                ServiceError, "failed to free resource sftpHandle: libssh2 errno [%d]%s", rc,
+                rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+        }
+    }
+
+    if (this->sftpSession != NULL)
+    {
+        do
+        {
+            rc = libssh2_sftp_shutdown(this->sftpSession);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN);
+
+        if (rc)
+        {
+            THROW_FMT(
+                ServiceError, "failed to free resource sftpSession: libssh2 errno [%d]%s", rc,
+                rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+                strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+        }
+    }
+
+    if (this->session != NULL)
+    {
+        do
+        {
+            rc = libssh2_session_disconnect_ex(this->session, SSH_DISCONNECT_BY_APPLICATION, "pgbackrest instance shutdown", "");
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN);
+
+        if (rc)
+            THROW_FMT(ServiceError, "failed to disconnect libssh2 session: libssh2 errno [%d]", rc);
+
+        do
+        {
+            rc = libssh2_session_free(this->session);
+        }
+        while (rc == LIBSSH2_ERROR_EAGAIN);
+
+        if (rc)
+            THROW_FMT(ServiceError, "failed to free libssh2 session: libssh2 errno [%d]", rc);
+    }
+
+    libssh2_exit();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+bool
+storageSftpLibssh2FxNoSuchFile(THIS_VOID, const int rc)
+{
+    THIS(StorageSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
+        FUNCTION_LOG_PARAM(INT, rc);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = false;
+
+    if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
+            result = true;
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
@@ -250,11 +295,37 @@ storageSftpLinkCreate(
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
         if (rc != 0)
-        {
-            // jrt add additional error info???? sftp error????
             THROW_FMT(FileOpenError, "unable to create symlink '%s' to '%s'", strZ(linkPath), strZ(target));
-        }
     }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+storageSftpEvalLibssh2Error(
+    const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const msg,
+    const String *const hint)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INT, ssh2Errno);
+        FUNCTION_LOG_PARAM(UINT64, sftpErrno);
+        FUNCTION_LOG_PARAM(ERROR_TYPE, errorType);
+        FUNCTION_LOG_PARAM(STRING, msg);
+        FUNCTION_LOG_PARAM(STRING, hint);
+    FUNCTION_LOG_END();
+
+    ASSERT(errorType != NULL);
+
+    THROWP_FMT(
+        errorType,
+        "%slibssh2 error [%d]%s%s",
+        msg != NULL ? strZ(strNewFmt("%s: ", strZ(msg))) : "",
+        ssh2Errno,
+        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+            strZ(strNewFmt(": sftp error [%" PRIu64 "]", sftpErrno)) :
+            "",
+        hint != NULL ? strZ(strNewFmt("\n%s", strZ(hint))) : "");
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -294,7 +365,7 @@ storageSftpListEntry(
 }
 
 static StorageList *
-storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel level, StorageInterfaceListParam param)
+storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
     THIS(StorageSftp);
 
@@ -343,7 +414,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
                 LIBSSH2_SFTP_ATTRIBUTES attrs;
-                char filename[PATH_MAX + 1] = {};
+                char filename[PATH_MAX] = {};
                 int len = 0;
 
                 this->wait = waitNew(this->timeoutConnect);
@@ -351,7 +422,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                 // read the directory entries
                 do
                 {
-                    len = libssh2_sftp_readdir_ex(sftpHandle, filename, PATH_MAX, NULL, 0, &attrs);
+                    len = libssh2_sftp_readdir_ex(sftpHandle, filename, PATH_MAX - 1, NULL, 0, &attrs);
 
                     if (len > 0)
                     {
@@ -397,7 +468,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
-            if (rc != 0)
+            if (rc)
                 THROW_FMT(PathCloseError, "unable to close path '%s' after listing", strZ(path));
 
             sftpHandle = NULL;
@@ -410,7 +481,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
 
 /**********************************************************************************************************************************/
 static void
-storageSftpRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
+storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRemoveParam param)
 {
     THIS(StorageSftp);
 
@@ -455,7 +526,7 @@ storageSftpRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam par
 
 /**********************************************************************************************************************************/
 static StorageRead *
-storageSftpNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageSftp);
 
@@ -479,7 +550,7 @@ storageSftpNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInt
 
 /**********************************************************************************************************************************/
 static StorageWrite *
-storageSftpNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageSftp);
 
@@ -495,6 +566,7 @@ storageSftpNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam
         FUNCTION_LOG_PARAM(BOOL, param.syncFile);
         FUNCTION_LOG_PARAM(BOOL, param.syncPath);
         FUNCTION_LOG_PARAM(BOOL, param.atomic);
+        FUNCTION_LOG_PARAM(BOOL, param.truncate);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -505,54 +577,7 @@ storageSftpNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam
         storageWriteSftpNew(
             this, file, this->ioSession, this->session, this->sftpSession, this->sftpHandle, this->timeoutConnect,
             this->timeoutSession, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
-            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic));
-}
-
-/**********************************************************************************************************************************/
-void
-storageSftpEvalLibssh2Error(
-    const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const msg,
-    const String *const hint)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INT, ssh2Errno);
-        FUNCTION_LOG_PARAM(UINT64, sftpErrno);
-        FUNCTION_LOG_PARAM(ERROR_TYPE, errorType);
-        FUNCTION_LOG_PARAM(STRING, msg);
-        FUNCTION_LOG_PARAM(STRING, hint);
-    FUNCTION_LOG_END();
-
-    ASSERT(errorType != NULL);
-
-    THROWP_FMT(
-        errorType,
-        "%slibssh2 error [%d]%s%s",
-        msg != NULL ? strZ(strNewFmt("%s: ",strZ(msg))) : "",
-        ssh2Errno,
-        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-            strZ(strNewFmt(": libssh2sftp error [%lu]", sftpErrno)) :
-            "",
-        hint != NULL ? strZ(strNewFmt("\n%s", strZ(hint))) : "");
-
-    /* look at incorporating libssh2_session_last_error output
-    char *libssh2_errmsg;
-    int errmsg_len;
-
-    libssh2_session_last_error(session, &libssh2_errmsg, &errmsg_len, 0);
-
-    THROWP_FMT(
-        errorType,
-        "%slibssh2 error [%d] %s%s%s",
-        msg != NULL ? strZ(strNewFmt("%s: ",strZ(msg))) : "",
-        ssh2Errno,
-        libssh2_errmsg,
-        rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-            strZ(strNewFmt(" libssh2sftp error [%lu]", libssh2_sftp_last_error(sftpSession))) :
-            "",
-        hint != NULL ? strZ(strNewFmt("\n%s", strZ(hint))) : "");
-        */
-
-    FUNCTION_LOG_RETURN_VOID();
+            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));
 }
 
 /**********************************************************************************************************************************/
@@ -587,8 +612,6 @@ storageSftpPathCreate(
 
     if (rc)
     {
-         // If session indicates sftp error, can query for sftp error
-         // !!! see also libssh2_session_last_error() - possible to return more detailed error
          if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
          {
              uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
@@ -609,11 +632,9 @@ storageSftpPathCreate(
                  }
                  while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
 
-                 // If rc = 0 then file already exists
+                 // If rc = 0 then already exists
                  if (rc == 0 && errorOnExists)
                      THROW_FMT(PathCreateError, "unable to create path '%s': path already exists", strZ(path));
-
-                 // jrt ??? Make an explicit call here to set the mode in case it's different from the existing directory's mode ???
              }
              // If the parent path does not exist then create it if allowed
              else if (sftpErrno == LIBSSH2_FX_NO_SUCH_FILE && !noParentCreate)
@@ -636,7 +657,7 @@ storageSftpPathCreate(
 }
 
 static bool
-storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
     THIS(StorageSftp);
 
@@ -657,7 +678,6 @@ storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterf
         // Recurse if requested
         if (recurse)
         {
-
             StorageList *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
 
             if (list != NULL)
@@ -667,6 +687,7 @@ storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterf
                     for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
                     {
                         const String *const file = strNewFmt("%s/%s", strZ(path), strZ(storageLstGet(list, listIdx).name));
+
                         // Rather than stat the file to discover what type it is, just try to unlink it and see what happens
                         int rc = 0;
 
@@ -710,9 +731,6 @@ storageSftpPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterf
 
         if (rc)
         {
-            // If session indicates sftp error, can query for sftp error
-            // !!! see also libssh2_session_last_error() - possible to return more detailed error
-            // jrt !!! ?? just replace this call with the returned rc everywhere - verify ??
             if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
             {
                 if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
@@ -752,9 +770,10 @@ static const StorageInterface storageInterfaceSftp =
 
 Storage *
 storageSftpNewInternal(
-    StringId type, const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
-    const String *user, const String *password, const String *keyPub, const String *keyPriv, const String *keyPassphrase,
-    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, bool pathSync)
+    StringId type, const String *const path, const String *const host, unsigned int port, const TimeMSec timeoutConnect,
+    const TimeMSec timeoutSession, const String *const user, const String *const keyPub, const String *const keyPriv,
+    const String *const keyPassphrase, const StringId hostkeyHash, const mode_t modeFile, const mode_t modePath, const bool write,
+    StoragePathExpressionCallback pathExpressionFunction, const bool pathSync)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -764,10 +783,10 @@ storageSftpNewInternal(
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
         FUNCTION_LOG_PARAM(STRING, user);
-        FUNCTION_LOG_PARAM(STRING, password);
         FUNCTION_LOG_PARAM(STRING, keyPub);
         FUNCTION_LOG_PARAM(STRING, keyPriv);
         FUNCTION_LOG_PARAM(STRING, keyPassphrase);
+        FUNCTION_LOG_PARAM(STRING_ID, hostkeyHash);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
@@ -793,7 +812,6 @@ storageSftpNewInternal(
         *driver = (StorageSftp)
         {
             .interface = storageInterfaceSftp,
-            // jrt !!! find a single location for timeouts that will be accesible everywhere
             .timeoutConnect = timeoutConnect,
             .timeoutSession = timeoutSession,
         };
@@ -820,12 +838,43 @@ storageSftpNewInternal(
         while (driver->handshakeStatus == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
         if (driver->handshakeStatus != 0)
-        {
             THROW_FMT(ServiceError, "libssh2 handshake failed");
-}
-        //!!! jrt allow for stronger hash sha - newer versions have sha256 i think
-        // do we want to store the returned hash or (void) it
-        const char *digest = libssh2_hostkey_hash(driver->session, LIBSSH2_HOSTKEY_HASH_SHA1);
+
+        int hash_type = 0;
+
+        switch (hostkeyHash)
+        {
+            case STRID5("md5-ssh2-hostkey-hash", 0x9bd1be2273df48d4):
+                hash_type = LIBSSH2_HOSTKEY_HASH_MD5;
+                break;
+
+            case STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135):
+                hash_type = LIBSSH2_HOSTKEY_HASH_SHA1;
+                break;
+
+#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
+            case STRID5("sha256-ssh2-hostkey-hash", 0xdf1139efdde05134):
+                hash_type = LIBSSH2_HOSTKEY_HASH_SHA256;
+                break;
+#endif // LIBSSH2_HOSTKEY_HASH_SHA256
+
+            default:
+
+#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
+                hash_type = LIBSSH2_HOSTKEY_HASH_SHA256;
+#else
+                hash_type = LIBSSH2_HOSTKEY_HASH_SHA1;
+#endif // LIBSSH2_HOSTKEY_HASH_SHA256
+
+                LOG_INFO_FMT(
+                    "requested ssh2 hostkey hash type (%s) not available, defaulting to SHA1", strZ(strIdToStr(hostkeyHash)));
+                break;
+        }
+
+        LOG_DEBUG_FMT("requested hostkey hash %s, set as %d", strZ(strIdToStr(hostkeyHash)), hash_type);
+
+        //should we allow for stronger hash sha - newer versions accept sha256 I think. Should this be an option?
+        const char *digest = libssh2_hostkey_hash(driver->session, hash_type);
         if (digest == NULL)
             THROW_FMT(ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(driver->session));
 
@@ -854,8 +903,7 @@ storageSftpNewInternal(
                         "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-keyfile and"
                         " --repo-sftp-public-keyfile to be provided\n"
                         "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-                        " generate the keypair")
-                    );
+                        " generate the keypair"));
             }
         }
         else
@@ -882,9 +930,9 @@ storageSftpNewInternal(
             driver->interface.feature |=
                 1 << storageFeatureSymLink | 1 << storageFeatureInfoDetail;
 
-        // jrt !!! is this valid
         // Ensure libssh2/libssh2_sftp resources freed
-        memContextCallbackSet(objMemContext(driver), libssh2SessionFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), storageSftpLibssh2SessionFreeResource, driver);
+
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }
     OBJ_NEW_END();
@@ -893,10 +941,9 @@ storageSftpNewInternal(
 }
 
 Storage *
-storageSftpNew(const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
-    StorageSftpNewParam param)
+storageSftpNew(const String *const path, const String *const host, const unsigned int port, const TimeMSec timeoutConnect,
+        const TimeMSec timeoutSession, const StorageSftpNewParam param)
 {
-// jrt update all FUNCTION_LOG* for new params in updated functs
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -904,10 +951,10 @@ storageSftpNew(const String *path, const String *host, unsigned int port, TimeMS
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutConnect);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeoutSession);
         FUNCTION_LOG_PARAM(STRING, param.user);
-        FUNCTION_LOG_PARAM(STRING, param.password);
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
         FUNCTION_LOG_PARAM(STRING, param.keyPriv);
         FUNCTION_LOG_PARAM(STRING, param.keyPassphrase);
+        FUNCTION_LOG_PARAM(STRING_ID, param.hostkeyHash);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
@@ -917,8 +964,8 @@ storageSftpNew(const String *path, const String *host, unsigned int port, TimeMS
     FUNCTION_LOG_RETURN(
         STORAGE,
         storageSftpNewInternal(
-            STORAGE_SFTP_TYPE, path, host, port, timeoutConnect, timeoutSession, param.user, param.password, param.keyPub,
-            param.keyPriv, param.keyPassphrase, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
+            STORAGE_SFTP_TYPE, path, host, port, timeoutConnect, timeoutSession, param.user, param.keyPub, param.keyPriv,
+            param.keyPassphrase, param.hostkeyHash, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
             param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, false));
 }
 

@@ -678,7 +678,9 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 
         // Call driver function
         if (!storageInterfacePathRemoveP(storageDriver(this), path, param.recurse) && param.errorOnMissing)
+        {
             THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_MISSING, strZ(path));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -560,10 +560,10 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
-        total: 19
+        total: 21
         harness: libssh2
         harness:
-          name: sftp
+          name: io
           shim:
             common/io/session:
               function:

@@ -11,21 +11,21 @@ Sftp Storage Internal
 Constructors
 ***********************************************************************************************************************************/
 Storage *storageSftpNewInternal(
-    const StringId type, const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect,
-    TimeMSec timeoutSession, const String *user, const String *password, const String *keyPub, const String *keyPriv,
-    const String *keyPassphrase, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction,
-    bool pathSync);
+    StringId type, const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
+    const String *user, const String *keyPub, const String *keyPriv, const String *keyPassphrase, const StringId hostkeyHash,
+    mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 void storageSftpPathCreate(
     THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode, StorageInterfacePathCreateParam param);
-void storageSftpPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param);
-// jrt !!! remove rc param...
+void storageSftpPathSync(THIS_VOID, const String *path, const StorageInterfacePathSyncParam param);
+
 void storageSftpEvalLibssh2Error(
-    const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const msg,
-    const String *const hint);
+        int ssh2Errno, uint64_t sftpErrno, const ErrorType *errorType, const String *msg, const String *hint);
+
+bool storageSftpLibssh2FxNoSuchFile(THIS_VOID, const int rc);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -21,8 +21,8 @@ Configuration Load
 #include "config/parse.h"
 #include "info/infoBackup.h"
 #include "storage/cifs/storage.h"
-#include "storage/sftp/storage.h"
 #include "storage/posix/storage.h"
+#include "storage/sftp/storage.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -85,7 +85,7 @@ cfgLoadUpdateOption(void)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            // If the repo is local and either posix or cifs
+            // If the repo is local and either posix, cifs or sftp
             if (!cfgOptionIdxTest(cfgOptRepoHost, optionIdx) &&
                 (cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_POSIX_TYPE ||
                  cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_SFTP_TYPE ||

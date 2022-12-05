@@ -139,6 +139,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("json", 0x73e6a0),                                                                                           // val/strid
     STRID5("lsn", 0x3a6c0),                                                                                             // val/strid
     STRID6("lz4", 0x2068c1),                                                                                            // val/strid
+    STRID5("md5-ssh2-hostkey-hash", 0x9bd1be2273df48d4),                                                                // val/strid
     STRID5("name", 0x2b42e0),                                                                                           // val/strid
     STRID5("none", 0x2b9ee0),                                                                                           // val/strid
     STRID5("off", 0x18cf0),                                                                                             // val/strid
@@ -153,6 +154,8 @@ static const StringId parseRuleValueStrId[] =
     STRID5("sas", 0x4c330),                                                                                             // val/strid
     STRID5("service", 0x1469b48b30),                                                                                    // val/strid
     STRID5("sftp", 0x850d30),                                                                                           // val/strid
+    STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135),                                                               // val/strid
+    STRID5("sha256-ssh2-hostkey-hash", 0xdf1139efdde05134),                                                             // val/strid
     STRID5("shared", 0x85905130),                                                                                       // val/strid
     STRID5("shutdown", 0x75de4a55130),                                                                                  // val/strid
     STRID5("ssh", 0x22730),                                                                                             // val/strid
@@ -193,6 +196,7 @@ typedef enum
     parseRuleValStrIdJson,                                                                                         // val/strid/enum
     parseRuleValStrIdLsn,                                                                                          // val/strid/enum
     parseRuleValStrIdLz4,                                                                                          // val/strid/enum
+    parseRuleValStrIdMd5Ssh2HostkeyHash,                                                                           // val/strid/enum
     parseRuleValStrIdName,                                                                                         // val/strid/enum
     parseRuleValStrIdNone,                                                                                         // val/strid/enum
     parseRuleValStrIdOff,                                                                                          // val/strid/enum
@@ -207,6 +211,8 @@ typedef enum
     parseRuleValStrIdSas,                                                                                          // val/strid/enum
     parseRuleValStrIdService,                                                                                      // val/strid/enum
     parseRuleValStrIdSftp,                                                                                         // val/strid/enum
+    parseRuleValStrIdSha1Ssh2HostkeyHash,                                                                          // val/strid/enum
+    parseRuleValStrIdSha256Ssh2HostkeyHash,                                                                        // val/strid/enum
     parseRuleValStrIdShared,                                                                                       // val/strid/enum
     parseRuleValStrIdShutdown,                                                                                     // val/strid/enum
     parseRuleValStrIdSsh,                                                                                          // val/strid/enum
@@ -7612,6 +7618,91 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                // opt/repo-sftp-host-port
     ),                                                                                                    // opt/repo-sftp-host-port
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                  // opt/repo-sftp-hostkey-hash
+    (                                                                                                  // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_NAME("repo-sftp-hostkey-hash"),                                              // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),                                                    // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_RESET(true),                                                                 // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_REQUIRED(true),                                                              // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                   // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                          // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                     // opt/repo-sftp-hostkey-hash
+                                                                                                       // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                 // opt/repo-sftp-hostkey-hash
+        (                                                                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                  // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                               // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                    // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                     // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                    // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                      // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                   // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                    // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                                   // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                    // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                   // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                             // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                    // opt/repo-sftp-hostkey-hash
+        ),                                                                                             // opt/repo-sftp-hostkey-hash
+                                                                                                       // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                // opt/repo-sftp-hostkey-hash
+        (                                                                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                               // opt/repo-sftp-hostkey-hash
+        ),                                                                                             // opt/repo-sftp-hostkey-hash
+                                                                                                       // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                // opt/repo-sftp-hostkey-hash
+        (                                                                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                               // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                    // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                   // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                    // opt/repo-sftp-hostkey-hash
+        ),                                                                                             // opt/repo-sftp-hostkey-hash
+                                                                                                       // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                               // opt/repo-sftp-hostkey-hash
+        (                                                                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                  // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                               // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                     // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                      // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                   // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                    // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                                   // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                    // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                   // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                             // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                    // opt/repo-sftp-hostkey-hash
+        ),                                                                                             // opt/repo-sftp-hostkey-hash
+                                                                                                       // opt/repo-sftp-hostkey-hash
+        PARSE_RULE_OPTIONAL                                                                            // opt/repo-sftp-hostkey-hash
+        (                                                                                              // opt/repo-sftp-hostkey-hash
+            PARSE_RULE_OPTIONAL_GROUP                                                                  // opt/repo-sftp-hostkey-hash
+            (                                                                                          // opt/repo-sftp-hostkey-hash
+                PARSE_RULE_OPTIONAL_DEPEND                                                             // opt/repo-sftp-hostkey-hash
+                (                                                                                      // opt/repo-sftp-hostkey-hash
+                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                                // opt/repo-sftp-hostkey-hash
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                                       // opt/repo-sftp-hostkey-hash
+                ),                                                                                     // opt/repo-sftp-hostkey-hash
+                                                                                                       // opt/repo-sftp-hostkey-hash
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                         // opt/repo-sftp-hostkey-hash
+                (                                                                                      // opt/repo-sftp-hostkey-hash
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdMd5Ssh2HostkeyHash),                         // opt/repo-sftp-hostkey-hash
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSha1Ssh2HostkeyHash),                        // opt/repo-sftp-hostkey-hash
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSha256Ssh2HostkeyHash),                      // opt/repo-sftp-hostkey-hash
+                ),                                                                                     // opt/repo-sftp-hostkey-hash
+            ),                                                                                         // opt/repo-sftp-hostkey-hash
+        ),                                                                                             // opt/repo-sftp-hostkey-hash
+    ),                                                                                                 // opt/repo-sftp-hostkey-hash
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                            // opt/repo-sftp-keyfile-passphrase
     (                                                                                            // opt/repo-sftp-keyfile-passphrase
         PARSE_RULE_OPTION_NAME("repo-sftp-keyfile-passphrase"),                                  // opt/repo-sftp-keyfile-passphrase
@@ -7690,85 +7781,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                   // opt/repo-sftp-keyfile-passphrase
         ),                                                                                       // opt/repo-sftp-keyfile-passphrase
     ),                                                                                           // opt/repo-sftp-keyfile-passphrase
-    // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                      // opt/repo-sftp-password
-    (                                                                                                      // opt/repo-sftp-password
-        PARSE_RULE_OPTION_NAME("repo-sftp-password"),                                                      // opt/repo-sftp-password
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),                                                          // opt/repo-sftp-password
-        PARSE_RULE_OPTION_RESET(true),                                                                     // opt/repo-sftp-password
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                 // opt/repo-sftp-password
-        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                       // opt/repo-sftp-password
-        PARSE_RULE_OPTION_SECURE(true),                                                                    // opt/repo-sftp-password
-        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                              // opt/repo-sftp-password
-        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                         // opt/repo-sftp-password
-                                                                                                           // opt/repo-sftp-password
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-sftp-password
-        (                                                                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                         // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                        // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                          // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                    // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                       // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                        // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                                       // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                        // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                       // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-sftp-password
-        ),                                                                                                 // opt/repo-sftp-password
-                                                                                                           // opt/repo-sftp-password
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                    // opt/repo-sftp-password
-        (                                                                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-sftp-password
-        ),                                                                                                 // opt/repo-sftp-password
-                                                                                                           // opt/repo-sftp-password
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                    // opt/repo-sftp-password
-        (                                                                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                       // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-sftp-password
-        ),                                                                                                 // opt/repo-sftp-password
-                                                                                                           // opt/repo-sftp-password
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                   // opt/repo-sftp-password
-        (                                                                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                      // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                    // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                   // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                         // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                          // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                                    // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                                       // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                        // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                                       // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                        // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                       // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                 // opt/repo-sftp-password
-            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                        // opt/repo-sftp-password
-        ),                                                                                                 // opt/repo-sftp-password
-                                                                                                           // opt/repo-sftp-password
-        PARSE_RULE_OPTIONAL                                                                                // opt/repo-sftp-password
-        (                                                                                                  // opt/repo-sftp-password
-            PARSE_RULE_OPTIONAL_GROUP                                                                      // opt/repo-sftp-password
-            (                                                                                              // opt/repo-sftp-password
-                PARSE_RULE_OPTIONAL_DEPEND                                                                 // opt/repo-sftp-password
-                (                                                                                          // opt/repo-sftp-password
-                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                                    // opt/repo-sftp-password
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                                           // opt/repo-sftp-password
-                ),                                                                                         // opt/repo-sftp-password
-            ),                                                                                             // opt/repo-sftp-password
-        ),                                                                                                 // opt/repo-sftp-password
-    ),                                                                                                     // opt/repo-sftp-password
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                               // opt/repo-sftp-private-keyfile
     (                                                                                               // opt/repo-sftp-private-keyfile
@@ -10003,8 +10015,8 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoSftpAccount,                                                                                      // opt-resolve-order
     cfgOptRepoSftpHost,                                                                                         // opt-resolve-order
     cfgOptRepoSftpHostPort,                                                                                     // opt-resolve-order
+    cfgOptRepoSftpHostkeyHash,                                                                                  // opt-resolve-order
     cfgOptRepoSftpKeyfilePassphrase,                                                                            // opt-resolve-order
-    cfgOptRepoSftpPassword,                                                                                     // opt-resolve-order
     cfgOptRepoStorageCaFile,                                                                                    // opt-resolve-order
     cfgOptRepoStorageCaPath,                                                                                    // opt-resolve-order
     cfgOptRepoStorageHost,                                                                                      // opt-resolve-order

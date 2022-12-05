@@ -1767,6 +1767,14 @@ src/storage/s3/write.h:
   class: core
   type: c/h
 
+src/storage/sftp/helper.c:
+  class: core
+  type: c
+
+src/storage/sftp/helper.h:
+  class: core
+  type: c/h
+
 src/storage/sftp/read.c:
   class: core
   type: c
@@ -2088,6 +2096,14 @@ test/src/common/harnessInfo.c:
   type: c
 
 test/src/common/harnessInfo.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessIo.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessIo.h:
   class: test/harness
   type: c/h
 

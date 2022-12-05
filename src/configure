@@ -5698,4 +5698,4 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 printf "%s\n" "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-# Generated from src/build/configure.ac sha1 54733b15b3b25486d03ddea2864b9e810fb9bab8
+# Generated from src/build/configure.ac sha1 bb92b8189e832467d306901b195b6e939c82f803

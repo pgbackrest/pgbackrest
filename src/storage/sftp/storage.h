@@ -23,7 +23,6 @@ Storage type
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-// jrt updated these 4 to const String - check code for other locs where const should be added
 typedef struct StorageSftpNewParam
 {
     VAR_PARAM_HEADER;
@@ -32,10 +31,10 @@ typedef struct StorageSftpNewParam
     mode_t modePath;
     StoragePathExpressionCallback *pathExpressionFunction;
     const String *user;
-    const String *password;
     const String *keyPub;
     const String *keyPriv;
     const String *keyPassphrase;
+    StringId hostkeyHash;
 } StorageSftpNewParam;
 
 #define storageSftpNewP(path, host, port, timeoutConnect, timeoutSession, ...)                                                     \
@@ -43,6 +42,6 @@ typedef struct StorageSftpNewParam
 
 Storage *storageSftpNew(
     const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
-    StorageSftpNewParam param);
+    const StorageSftpNewParam param);
 
 #endif
