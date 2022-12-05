@@ -1,7 +1,10 @@
 /***********************************************************************************************************************************
 Test Restore Command
 ***********************************************************************************************************************************/
+#include "command/stanza/create.h"
+#include "command/backup/backup.h"
 #include "command/backup/blockIncr.h"
+#include "command/backup/protocol.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "postgres/version.h"
@@ -142,7 +145,8 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Install local command handler shim
-    static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_RESTORE_LIST};
+    static const ProtocolServerHandler testLocalHandlerList[] =
+        {PROTOCOL_SERVER_HANDLER_BACKUP_LIST PROTOCOL_SERVER_HANDLER_RESTORE_LIST};
     hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     // Create default storage object for testing
@@ -3178,6 +3182,87 @@ testRun(void)
 
         // Free local processes that were not freed because of the error
         protocolFree();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cmdBackup() and cmdRestore()"))
+    {
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
+
+        // Created pg_control
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15, .pageChecksum = false);
+        HRN_PG_CONTROL_TIME(storagePgWrite(), 1670211128);
+
+        // Create encrypted stanza
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup with block incr");
+
+        // Zeroed file large enough to use block incr
+        Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 2);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = 1670211128);
+
+        // Add postgresql.auto.conf to contain recovery settings
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = 1670211128);
+
+        // Backup
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
+
+        TRY_BEGIN()
+        {
+            TEST_RESULT_VOID(cmdBackup(), "backup");
+        }
+        FINALLY()
+        {
+            lockRelease(true);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore with block incr");
+
+        // Remove all files from pg path
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), NULL, .recurse = true);
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(cmdRestore(), "restore");
+
+        // 2e000fa7e85759c7f4c254d4d9c33ef481e459a7
+
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

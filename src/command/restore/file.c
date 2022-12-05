@@ -258,12 +258,12 @@ List *restoreFile(
                                 .offset = file->offset, .limit = repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL);
 
                             // Add decryption filter for block incremental map
-                            if (cipherPass != NULL && file->blockIncrMapSize != 0) // {uncovered - !!!}
+                            if (cipherPass != NULL && file->blockIncrMapSize != 0)
                             {
-                                ioFilterGroupAdd( // {uncovered - !!!}
+                                ioFilterGroupAdd(
                                     ioReadFilterGroup(storageReadIo(repoFileRead)),
-                                    cipherBlockNewP( // {uncovered - !!!}
-                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));  // {uncovered - !!!}
+                                    cipherBlockNewP(
+                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
                             }
 
                             ioReadOpen(storageReadIo(repoFileRead));
@@ -389,18 +389,18 @@ List *restoreFile(
                                             IoRead *const chunkedRead = ioChunkedReadNew(storageReadIo(blockRead));
 
                                             // Add decryption filter
-                                            if (cipherPass != NULL) // {uncovered - !!!}
+                                            if (cipherPass != NULL)
                                             {
-                                                ioFilterGroupAdd( // {uncovered - !!!}
+                                                ioFilterGroupAdd(
                                                     ioReadFilterGroup(chunkedRead),
-                                                    cipherBlockNewP( // {uncovered - !!!}
-                                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));  // {uncovered - !!!}
+                                                    cipherBlockNewP(
+                                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
                                             }
 
                                             // Add decompression filter
-                                            if (repoFileCompressType != compressTypeNone) // {uncovered - !!!}
+                                            if (repoFileCompressType != compressTypeNone)
                                             {
-                                                ioFilterGroupAdd( // {uncovered - !!!}
+                                                ioFilterGroupAdd(
                                                     ioReadFilterGroup(chunkedRead), decompressFilter(repoFileCompressType));
                                             }
 

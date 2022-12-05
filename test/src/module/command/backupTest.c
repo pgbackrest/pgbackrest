@@ -4011,7 +4011,7 @@ testRun(void)
         backupTimeStart = BACKUP_EPOCH + 3200000;
 
         {
-            // Create stanza encrypted stanza
+            // Create encrypted stanza
             StringList *argList = strLstNew();
             hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
