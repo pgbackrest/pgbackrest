@@ -3207,6 +3207,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
 
+        // It is better to put as few tests here as possible because cmp/enc makes tests more expensive (especially with valgrind)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with block incr");
 
