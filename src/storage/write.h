@@ -93,6 +93,13 @@ storageWriteSyncPath(const StorageWrite *const this)
     return THIS_PUB(StorageWrite)->interface->syncPath;
 }
 
+// Will the file be truncated if it exists?
+FN_INLINE_ALWAYS bool
+storageWriteTruncate(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface->truncate;
+}
+
 // File type
 FN_INLINE_ALWAYS StringId
 storageWriteType(const StorageWrite *const this)

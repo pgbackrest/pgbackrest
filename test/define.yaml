@@ -390,7 +390,6 @@ unit:
           - common/lock
 
         depend:
-          - command/backup/pageChecksum
           - common/lock
           - config/common
           - config/config
@@ -812,11 +811,21 @@ unit:
           - command/info/info
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: remote
-        total: 1
+      - name: backup
+        total: 11
+        harness: backup
 
         coverage:
-          - command/remote/remote
+          - command/backup/backup
+          - command/backup/common
+          - command/backup/file
+          - command/backup/pageChecksum
+          - command/backup/protocol
+
+        include:
+          - info/info
+          - info/manifest
+          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
@@ -831,22 +840,6 @@ unit:
           - common/user
           - info/infoBackup
           - info/manifest
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: backup
-        total: 11
-
-        coverage:
-          - command/backup/backup
-          - command/backup/common
-          - command/backup/file
-          - command/backup/pageChecksum
-          - command/backup/protocol
-
-        include:
-          - info/info
-          - info/manifest
-          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
@@ -879,6 +872,13 @@ unit:
 
         coverage:
           - command/local/local
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: remote
+        total: 1
+
+        coverage:
+          - command/remote/remote
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exit

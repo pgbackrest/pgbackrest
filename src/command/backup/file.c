@@ -147,7 +147,7 @@ backupFile(
                             {
                                 ioFilterGroupAdd(
                                     ioReadFilterGroup(read),
-                                    cipherBlockNew(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), NULL));
+                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass)));
                             }
 
                             // Decompress the file if compressed
@@ -238,7 +238,7 @@ backupFile(
                     {
                         ioFilterGroupAdd(
                             ioReadFilterGroup(storageReadIo(read)),
-                            cipherBlockNew(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), NULL));
+                            cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass)));
                     }
 
                     // Add size filter last to calculate repo size

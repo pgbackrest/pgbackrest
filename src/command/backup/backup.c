@@ -867,7 +867,7 @@ backupStart(BackupData *backupData)
 
             // Start backup
             LOG_INFO_FMT(
-                "execute %sexclusive pg_start_backup(): backup begins after the %s checkpoint completes",
+                "execute %sexclusive backup start: backup begins after the %s checkpoint completes",
                 backupData->version >= PG_VERSION_96 ? "non-" : "",
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
@@ -941,9 +941,9 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             StorageWrite *write = storageNewWriteP(
                 storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                    strZ(compressExtStr(compressType))),
+                backupFileRepoPathP(
+                    manifestData(manifest)->backupLabel, .manifestName = manifestName,
+                    .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType))),
                 .compressible = true);
 
             IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(write));
@@ -989,7 +989,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
 
             manifestFileAdd(manifest, &file);
 
-            LOG_DETAIL_FMT("wrote '%s' file returned from pg_stop_backup()", strZ(name));
+            LOG_DETAIL_FMT("wrote '%s' file returned from backup stop function", strZ(name));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1021,7 +1021,7 @@ backupStop(BackupData *backupData, Manifest *manifest)
         {
             // Stop the backup
             LOG_INFO_FMT(
-                "execute %sexclusive pg_stop_backup() and wait for all WAL segments to archive",
+                "execute %sexclusive backup stop and wait for all WAL segments to archive",
                 backupData->version >= PG_VERSION_96 ? "non-" : "");
 
             DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
@@ -1706,20 +1706,23 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 {
                     param = protocolCommandParam(command);
 
-                    String *const repoFile = strCatFmt(strNew(), STORAGE_REPO_BACKUP "/%s/", strZ(jobData->backupLabel));
-
                     if (bundle && file.size <= jobData->bundleLimit)
-                        strCatFmt(repoFile, MANIFEST_PATH_BUNDLE "/%" PRIu64, jobData->bundleId);
+                    {
+                        pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = jobData->bundleId));
+                    }
                     else
                     {
                         CHECK(AssertError, fileTotal == 0, "cannot bundle file");
 
-                        strCatFmt(repoFile, "%s%s", strZ(file.name), strZ(compressExtStr(jobData->compressType)));
+                        pckWriteStrP(
+                            param,
+                            backupFileRepoPathP(
+                                jobData->backupLabel, .manifestName = file.name, .compressType = jobData->compressType));
+
                         fileName = file.name;
                         bundle = false;
                     }
 
-                    pckWriteStrP(param, repoFile);
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
                     pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
@@ -2093,9 +2096,9 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                             read,
                             storageNewWriteP(
                                 storageRepoWrite(),
-                                strNewFmt(
-                                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(manifestData(manifest)->backupLabel), strZ(manifestName),
-                                    strZ(compressExtStr(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))))));
+                                backupFileRepoPathP(
+                                    manifestData(manifest)->backupLabel, .manifestName = manifestName,
+                                    .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))));
 
                         // Add to manifest
                         ManifestFile file =

@@ -3,8 +3,11 @@ Test Remote Storage
 ***********************************************************************************************************************************/
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
+#include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/filter/sink.h"
+#include "common/io/filter/size.h"
 #include "config/protocol.h"
 #include "postgres/interface.h"
 
@@ -29,6 +32,17 @@ testRun(void)
     };
 
     hrnProtocolRemoteShimInstall(testRemoteHandlerList, LENGTH_OF(testRemoteHandlerList));
+
+    // Set filter handlers
+    static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
+    {
+        {.type = CIPHER_BLOCK_FILTER_TYPE, .handlerParam = cipherBlockNewPack},
+        {.type = CRYPTO_HASH_FILTER_TYPE, .handlerParam = cryptoHashNewPack},
+        {.type = SINK_FILTER_TYPE, .handlerNoParam = ioSinkNew},
+        {.type = SIZE_FILTER_TYPE, .handlerNoParam = ioSizeNew},
+    };
+
+    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList, LENGTH_OF(storageRemoteFilterHandlerList));
 
     // Test storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
@@ -277,6 +291,34 @@ testRun(void)
         TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "check read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read partial file then close");
+
+        size_t bufferOld = ioBufferSize();
+        ioBufferSizeSet(11);
+        Buffer *buffer = bufNew(11);
+
+        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
+        TEST_RESULT_UINT(ioRead(storageReadIo(fileRead), buffer), 11, "partial read");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "BABABABABAB", "check contents");
+        TEST_RESULT_BOOL(ioReadEof(storageReadIo(fileRead)), false, "no eof");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(fileRead)), "close");
+
+        ioBufferSizeSet(bufferOld);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read partial file then free");
+
+        buffer = bufNew(6);
+
+        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt")), "get file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
+        TEST_RESULT_UINT(ioRead(storageReadIo(fileRead), buffer), 6, "partial read");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "BABABA", "check contents");
+        TEST_RESULT_BOOL(ioReadEof(storageReadIo(fileRead)), false, "no eof");
+        TEST_RESULT_VOID(storageReadFree(fileRead), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file with compression");
 
         TEST_ASSIGN(
@@ -302,9 +344,8 @@ testRun(void)
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
-        ioFilterGroupAdd(filterGroup, pageChecksumNew(0, PG_SEGMENT_PAGE_DEFAULT, 0));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
-        ioFilterGroupAdd(filterGroup, cipherBlockNew(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x"), NULL));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRZ("x")));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRZ("x")));
         ioFilterGroupAdd(filterGroup, compressFilter(compressTypeGz, 3));
         ioFilterGroupAdd(filterGroup, decompressFilter(compressTypeGz));
 
@@ -313,8 +354,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             hrnPackToStr(ioFilterGroupResultAll(filterGroup)),
             "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>,"
-                " 5:strid:pg-chksum, 6:pack:<2:bool:false, 3:bool:false>, 7:strid:cipher-blk, 9:strid:cipher-blk, 11:strid:gz-cmp,"
-                " 13:strid:gz-dcmp, 15:strid:buffer",
+                " 5:strid:cipher-blk, 7:strid:cipher-blk, 9:strid:gz-cmp, 11:strid:gz-dcmp, 13:strid:buffer",
             "filter results");
 
         // Check protocol function directly (file exists but all data goes to sink)
@@ -371,6 +411,7 @@ testRun(void)
         TEST_RESULT_STR_Z(storageWriteName(write), TEST_PATH "/repo128/test.txt", "check file name");
         TEST_RESULT_BOOL(storageWriteSyncFile(write), true, "file is synced");
         TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
+        TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_UINT(((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf), "check write size");

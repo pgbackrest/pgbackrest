@@ -817,6 +817,7 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
     ASSERT(param.createPath);
+    ASSERT(param.truncate);
     ASSERT(param.user == NULL);
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);

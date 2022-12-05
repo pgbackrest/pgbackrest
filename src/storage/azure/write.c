@@ -292,6 +292,7 @@ storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId,
                 .createPath = true,
                 .syncFile = true,
                 .syncPath = true,
+                .truncate = true,
 
                 .ioInterface = (IoWriteInterface)
                 {

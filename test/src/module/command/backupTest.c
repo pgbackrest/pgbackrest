@@ -9,6 +9,7 @@ Test Backup Command
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessBackup.h"
 #include "common/harnessConfig.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
@@ -616,28 +617,6 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     else
         THROW_FMT(AssertError, "unsupported test version %u", pgVersion);           // {uncoverable - no invalid versions in tests}
 };
-
-/***********************************************************************************************************************************
-Wrap cmdBackup() with lock acquire and release
-***********************************************************************************************************************************/
-void testCmdBackup(void)
-{
-    FUNCTION_HARNESS_VOID();
-
-    lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
-
-    TRY_BEGIN()
-    {
-        cmdBackup();
-    }
-    FINALLY()
-    {
-        lockRelease(true);
-    }
-    TRY_END();
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
 
 /***********************************************************************************************************************************
 Test Run
@@ -2003,7 +1982,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTMTRPID, "PID");
 
         TEST_ERROR(
-            testCmdBackup(), PgRunningError,
+            hrnCmdBackup(), PgRunningError,
             "--no-online passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and"
                 " try again, or use --force.");
 
@@ -2024,7 +2003,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF");
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
@@ -2055,7 +2034,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_ERROR(testCmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
+        TEST_ERROR(hrnCmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2077,7 +2056,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2105,7 +2084,7 @@ testRun(void)
         sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR2");
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2139,7 +2118,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
 
@@ -2154,7 +2133,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo option not specified, defaulting to repo1\n"
@@ -2177,7 +2156,7 @@ testRun(void)
 
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
@@ -2288,17 +2267,17 @@ testRun(void)
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
 
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
                 "P00   WARN: resumable backup 20191002-070640F of same type exists -- invalid files will be removed then the backup"
                     " will resume\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
-                "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
                 "P00   INFO: new backup label = 20191002-070640F\n"
                 "P00   INFO: full backup size = [SIZE], file total = 3");
@@ -2425,14 +2404,14 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Enable storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePath;
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePathSync;
 
             TEST_RESULT_LOG(
-                "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
                 "P00   INFO: check archive for prior segment 0000000105D95D2F000000FF\n"
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- invalid files will be removed then the backup"
@@ -2460,7 +2439,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/zero-size (0B, [PCT])\n"
-                "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
                 "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
                 "P00 DETAIL: copy segment 0000000105D95D3000000000 to backup\n"
@@ -2590,13 +2569,13 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check log
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191003-105320F, version = " PROJECT_VERSION "\n"
                 "P00   WARN: diff backup cannot alter compress-type option to 'none', reset to value in 20191003-105320F\n"
-                "P00   INFO: execute exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   INFO: check archive for prior segment 0000000105D9758F000000FF\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp (1570200100) in the future (relative to copy start 1570200000),"
@@ -2620,7 +2599,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/resume-ref (0B, [PCT])\n"
                 "P00 DETAIL: hardlink pg_data/PG_VERSION to 20191003-105320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
-                "P00   INFO: execute exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
                     "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D\n"
@@ -2730,7 +2709,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
-                testCmdBackup(), ArchiveTimeoutError,
+                hrnCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69BF000000FF was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
@@ -2740,7 +2719,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
-                testCmdBackup(), ArchiveTimeoutError,
+                hrnCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
@@ -2759,7 +2738,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check archive.info/copy timestamp was updated but contents were not
             TEST_RESULT_INT_NE(
@@ -2933,14 +2912,14 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Reset storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureSymLink;
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureHardLink;
 
             TEST_RESULT_LOG(
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB5DE000000000, lsn = 5db5de0/0\n"
                 "P00   INFO: check archive for segment 0000000105DB5DE000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (40KB, [PCT]) checksum [SHA1]\n"
@@ -2955,10 +2934,10 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/pg_tblspc/32768/PG_11_201809051/1/5 (0B, [PCT])\n"
-                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB5DE000000002, lsn = 5db5de0/280000\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB5DE000000000:0000000105DB5DE000000002\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000001 to backup\n"
@@ -3063,14 +3042,14 @@ testRun(void)
 
             // Run backup
             TEST_ERROR(
-                testCmdBackup(), FileMissingError,
+                hrnCmdBackup(), FileMissingError,
                 "pg_control must be present in all online backups\n"
                 "HINT: is something wrong with the clock or filesystem timestamps?");
 
             // Check log
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB764000000000, lsn = 5db7640/0\n"
                 "P00   INFO: check archive for prior segment 0000000105DB763F00000FFF");
 
@@ -3101,11 +3080,11 @@ testRun(void)
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000002C05DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   INFO: check archive for segment 0000002C05DB8EB000000000\n"
                 "P00   WARN: a timeline switch has occurred since the 20191027-181320F backup, enabling delta checksum\n"
@@ -3118,10 +3097,10 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_data/base/1/1 to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191027-181320F\n"
                 "P00 DETAIL: hardlink pg_tblspc/32768/PG_11_201809051/1/5 to 20191027-181320F\n"
-                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000002C05DB8EB000000001, lsn = 5db8eb0/180000\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000001\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I\n"
                 "P00   INFO: incr backup size = [SIZE], file total = 7");
@@ -3234,10 +3213,10 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB8EB000000000, lsn = 5db8eb0/0\n"
                 "P00   INFO: check archive for segment 0000000105DB8EB000000000\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/zero\n"
@@ -3250,10 +3229,10 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/bigish.dat (bundle 2/0, 8.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (bundle 3/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 4/0, 8KB, [PCT]) checksum [SHA1]\n"
-                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB8EB000000001, lsn = 5db8eb0/180000\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DB8EB000000000:0000000105DB8EB000000001\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
@@ -3364,22 +3343,22 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: last backup label = 20191030-014640F, version = 2.42dev\n"
+                "P00   INFO: last backup label = 20191030-014640F, version = " PROJECT_VERSION "\n"
                 "P00   WARN: diff backup cannot alter 'checksum-page' option to 'false', reset to 'true' from 20191030-014640F\n"
-                "P00   INFO: execute non-exclusive pg_start_backup(): backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBBF8000000000, lsn = 5dbbf80/0\n"
                 "P00   INFO: check archive for segment 0000000105DBBF8000000000\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/zero\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191030-014640F\n"
-                "P00   INFO: execute non-exclusive pg_stop_backup() and wait for all WAL segments to archive\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBBF8000000001, lsn = 5dbbf80/300000\n"
-                "P00 DETAIL: wrote 'backup_label' file returned from pg_stop_backup()\n"
-                "P00 DETAIL: wrote 'tablespace_map' file returned from pg_stop_backup()\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBBF8000000000:0000000105DBBF8000000001\n"
                 "P00   INFO: new backup label = 20191030-014640F_20191101-092000D\n"
                 "P00   INFO: diff backup size = [SIZE], file total = 5");

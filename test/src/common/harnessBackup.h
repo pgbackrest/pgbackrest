@@ -1,17 +1,13 @@
 /***********************************************************************************************************************************
-Posix Storage File write
+Harness for Creating Test Backups
 ***********************************************************************************************************************************/
-#ifndef STORAGE_POSIX_WRITE_H
-#define STORAGE_POSIX_WRITE_H
-
-#include "storage/posix/storage.h"
-#include "storage/write.h"
+#ifndef TEST_COMMON_HARNESS_BACKUP_H
+#define TEST_COMMON_HARNESS_BACKUP_H
 
 /***********************************************************************************************************************************
-Constructors
+Functions
 ***********************************************************************************************************************************/
-StorageWrite *storageWritePosixNew(
-    StoragePosix *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool truncate);
+// Create test backup and handle all the required locking. The backup configuration must already be loaded.
+void hrnCmdBackup(void);
 
 #endif
