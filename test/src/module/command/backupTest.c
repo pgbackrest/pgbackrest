@@ -3842,14 +3842,14 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(128 * 1024 * 3);
+            Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
 
             // Log file just larger than block size
-            Buffer *log = bufNew(128 * 1024 + 1);
+            Buffer *log = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize + 1);
             memset(bufPtr(log), 55, bufSize(log));
             bufUsedSet(log, bufSize(log));
 
@@ -3931,7 +3931,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(128 * 1024 * 4);
+            Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 4);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
@@ -3999,6 +3999,10 @@ testRun(void)
                 "pg_data/base/1={}\n"
                 "pg_data/global={}\n",
                 "compare file list");
+
+            HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_BASE "/1/2");
+            HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_BASE "/1/smaller-than-block-size");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "pg.log");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -4035,6 +4039,13 @@ testRun(void)
             hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
+            // Zeroed file which passes page checksums
+            Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3456", relation, .timeModified = backupTimeStart);
+
             // Run backup
             testBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
@@ -4045,10 +4056,8 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
                 "P00   INFO: check archive for segment 0000000105DC520000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (512KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (128KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3456 (128KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/smaller-than-block-size (3B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC520000000001, lsn = 5dc5200/300000\n"
@@ -4056,7 +4065,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC520000000000:0000000105DC520000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 7");
+                "P00   INFO: full backup size = [SIZE], file total = 5");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -4068,11 +4077,9 @@ testRun(void)
                 "pg_data/backup_label.gz {file, s=17}\n"
                 "pg_data/base {path}\n"
                 "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, m={0,0,0,0}, s=524288}\n"
-                "pg_data/base/1/smaller-than-block-size.gz {file, s=3}\n"
+                "pg_data/base/1/3456.pgbi {file, m={0}, s=131072}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control.gz {file, s=8192}\n"
-                "pg_data/pg.log.pgbi {file, m={0,0}, s=131073}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4083,15 +4090,105 @@ testRun(void)
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573200002}\n"
-                "pg_data/base/1/2={\"bims\":104,\"bis\":16,\"checksum\":\"6a521e1d2a632c26e53b83d2cc4b0edecfc1e68c\""
-                    ",\"size\":524288,\"timestamp\":1573000000}\n"
-                "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
-                    ",\"timestamp\":1573000000}\n"
+                "pg_data/base/1/3456={\"bims\":40,\"bis\":16,\"checksum\":\"67dfd19f3eb3649d6f3f6631e44d0bd36b8d8d19\""
+                    ",\"size\":131072,\"timestamp\":1573200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
-                "pg_data/pg.log={\"bims\":72,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\",\"size\":131073"
-                    ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573200002}\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "pg_data/base={}\n"
+                "pg_data/base/1={}\n"
+                "pg_data/global={}\n",
+                "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 diff backup with comp/enc");
+
+        backupTimeStart = BACKUP_EPOCH + 3400000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+            hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Increase zeroed file enough that it would move to a new block size if it was a new file
+            Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 2].fileSize);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3456", relation, .timeModified = backupTimeStart);
+
+            // Create new file of the same size as 3456 to make sure it gets a larger block size
+            relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 2].fileSize);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/larger-block", relation, .timeModified = backupTimeStart);
+
+            // Run backup
+            testBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
+            TEST_RESULT_VOID(testCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: last backup label = 20191108-080000F, version = " PROJECT_VERSION "\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DC82D000000000, lsn = 5dc82d0/0\n"
+                "P00   INFO: check archive for segment 0000000105DC82D000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/larger-block (2MB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3456 (2MB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DC82D000000001, lsn = 5dc82d0/300000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
+                "P00   INFO: check archive for segment(s) 0000000105DC82D000000000:0000000105DC82D000000001\n"
+                "P00   INFO: new backup label = 20191108-080000F_20191110-153320D\n"
+                "P00   INFO: diff backup size = [SIZE], file total = 6");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
+                    .cipherPass = TEST_CIPHER_PASS),
+                ". {link, d=20191108-080000F_20191110-153320D}\n"
+                "pg_data {path}\n"
+                "pg_data/backup_label.gz {file, s=17}\n"
+                "pg_data/base {path}\n"
+                "pg_data/base/1 {path}\n"
+                "pg_data/base/1/3456.pgbi {file, m={0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}, s=2097152}\n"
+                "pg_data/base/1/larger-block.pgbi {file, m={1,1,1,1,1,1,1,1,1,1,1}, s=2097152}\n"
+                "pg_data/global {path}\n"
+                "pg_data/global/pg_control.gz {file, s=8192}\n"
+                "pg_data/tablespace_map.gz {file, s=19}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191108-080000F\""
+                    ",\"size\":2,\"timestamp\":1572800000}\n"
+                "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
+                    ",\"timestamp\":1573400002}\n"
+                "pg_data/base/1/3456={\"bims\":360,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                    ",\"size\":2097152,\"timestamp\":1573400000}\n"
+                "pg_data/base/1/larger-block={\"bims\":248,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                    ",\"size\":2097152,\"timestamp\":1573400000}\n"
+                "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573400000}\n"
+                "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
+                    ",\"timestamp\":1573400002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
