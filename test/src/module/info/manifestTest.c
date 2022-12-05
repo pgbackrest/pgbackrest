@@ -1431,6 +1431,81 @@ testRun(void)
                 TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
+        manifestPrior->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
+        manifest->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("block incr delta");
+
+        lstClear(manifest->pub.fileList);
+        lstClear(manifestPrior->pub.fileList);
+
+        // Prior file was not block incr but current file is
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add"), .copy = true, .size = 6, .sizeRepo = 6,
+               .blockIncrSize = 8192, .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+               .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
+
+        // Prior file was block incr but current file is not
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub"), .copy = true, .size = 6, .sizeRepo = 6,
+               .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub"), .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
+               .blockIncrMapSize = 66, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
+
+        // Prior file has different block incr size
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size"), .copy = true, .size = 6, .sizeRepo = 6,
+               .blockIncrSize = 16384, .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size"), .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
+               .blockIncrMapSize = 31, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
+
+        TEST_RESULT_VOID(
+            manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(
+                TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
+                "option-delta=true\n"
+                "option-hardlink=false\n"
+                "option-online=true\n"
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/block-incr-add={\"bis\":1,\"size\":6,\"timestamp\":1482182861}\n"
+                "pg_data/block-incr-keep-size={\"bims\":31,\"bis\":1,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
+                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
+                "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT)),
+            "check manifest");
+
         #undef TEST_MANIFEST_HEADER_PRE
         #undef TEST_MANIFEST_HEADER_MID
         #undef TEST_MANIFEST_HEADER_POST

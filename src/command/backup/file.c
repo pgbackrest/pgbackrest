@@ -250,11 +250,11 @@ backupFile(
                                 storageRepo(), file->blockIncrMapFile, .offset = file->blockIncrMapOffset,
                                 .limit = VARUINT64(file->blockIncrMapSize));
 
-                            if (cipherType != cipherTypeNone) // {uncovered - !!!}
+                            if (cipherType != cipherTypeNone)
                             {
-                                ioFilterGroupAdd( // {uncovered - !!!}
+                                ioFilterGroupAdd(
                                     ioReadFilterGroup(storageReadIo(blockMapRead)),
-                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true)); // {uncovered - !!!}
+                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
                             }
 
                             blockMap = storageGetP(blockMapRead);

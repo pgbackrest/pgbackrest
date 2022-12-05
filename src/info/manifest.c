@@ -1620,7 +1620,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
                 if (file.copy &&
-                    ((filePrior.blockIncrMapSize > 0 && file.blockIncrSize > 0) || // {uncovered - !!!}
+                    ((filePrior.blockIncrMapSize > 0 && file.blockIncrSize > 0) ||
                      (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))))
                 {
                     file.sizeRepo = filePrior.sizeRepo;
@@ -1635,10 +1635,10 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     // Copy block incr info if the file has a block incr size. It is possible for a file to shrink below the limit
                     // for block incr and lose the block incr map or block incr could be disabled. The block incr size needs to be
                     // copied from the prior file because it cannot change within a backup set without invalidating all prior maps.
-                    if (file.blockIncrSize > 0) // {uncovered - !!!}
+                    if (file.blockIncrSize > 0)
                     {
-                        file.blockIncrSize = filePrior.blockIncrSize; // {uncovered - !!!}
-                        file.blockIncrMapSize = filePrior.blockIncrMapSize; // {uncovered - !!!}
+                        file.blockIncrSize = filePrior.blockIncrSize;
+                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
                     }
 
                     // Perform delta if the file size is not zero
