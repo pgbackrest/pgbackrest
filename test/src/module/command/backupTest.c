@@ -11,6 +11,7 @@ Test Backup Command
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessBackup.h"
 #include "common/harnessConfig.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
@@ -742,28 +743,6 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     else
         THROW_FMT(AssertError, "unsupported test version %u", pgVersion);           // {uncoverable - no invalid versions in tests}
 };
-
-/***********************************************************************************************************************************
-Wrap cmdBackup() with lock acquire and release
-***********************************************************************************************************************************/
-void testCmdBackup(void)
-{
-    FUNCTION_HARNESS_VOID();
-
-    lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
-
-    TRY_BEGIN()
-    {
-        cmdBackup();
-    }
-    FINALLY()
-    {
-        lockRelease(true);
-    }
-    TRY_END();
-
-    FUNCTION_HARNESS_RETURN_VOID();
-}
 
 /***********************************************************************************************************************************
 Test Run
@@ -2406,7 +2385,7 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_POSTMTRPID, "PID");
 
         TEST_ERROR(
-            testCmdBackup(), PgRunningError,
+            hrnCmdBackup(), PgRunningError,
             "--no-online passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and"
                 " try again, or use --force.");
 
@@ -2427,7 +2406,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF");
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
@@ -2458,7 +2437,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_ERROR(testCmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
+        TEST_ERROR(hrnCmdBackup(), FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2480,7 +2459,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2508,7 +2487,7 @@ testRun(void)
         sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR2");
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-1], version = " PROJECT_VERSION "\n"
@@ -2542,7 +2521,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
 
@@ -2557,7 +2536,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo option not specified, defaulting to repo1\n"
@@ -2580,7 +2559,7 @@ testRun(void)
 
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
-        TEST_RESULT_VOID(testCmdBackup(), "backup");
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
@@ -2691,7 +2670,7 @@ testRun(void)
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
 
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
@@ -2828,7 +2807,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Enable storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePath;
@@ -2993,7 +2972,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_95, backupTimeStart);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check log
             TEST_RESULT_LOG(
@@ -3133,7 +3112,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
-                testCmdBackup(), ArchiveTimeoutError,
+                hrnCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69BF000000FF was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
@@ -3143,7 +3122,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz);
             TEST_ERROR(
-                testCmdBackup(), ArchiveTimeoutError,
+                hrnCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69C000000000 was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
@@ -3162,7 +3141,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check archive.info/copy timestamp was updated but contents were not
             TEST_RESULT_INT_NE(
@@ -3336,7 +3315,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Reset storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureSymLink;
@@ -3466,7 +3445,7 @@ testRun(void)
 
             // Run backup
             TEST_ERROR(
-                testCmdBackup(), FileMissingError,
+                hrnCmdBackup(), FileMissingError,
                 "pg_control must be present in all online backups\n"
                 "HINT: is something wrong with the clock or filesystem timestamps?");
 
@@ -3504,7 +3483,7 @@ testRun(void)
 
             // Run backup.  Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191027-181320F, version = " PROJECT_VERSION "\n"
@@ -3637,7 +3616,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
@@ -3767,7 +3746,7 @@ testRun(void)
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191030-014640F, version = " PROJECT_VERSION "\n"
@@ -3841,30 +3820,38 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 3);
-            memset(bufPtr(relation), 0, bufSize(relation));
-            bufUsedSet(relation, bufSize(relation));
+            // File that uses block incr and will grow
+            Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 3);
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
-            // Log file just larger than block size
-            Buffer *log = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize + 1);
-            memset(bufPtr(log), 55, bufSize(log));
-            bufUsedSet(log, bufSize(log));
+            // File that shrinks below the limit
+            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize + 1);
+            memset(bufPtr(file), 55, bufSize(file));
+            bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "pg.log", log, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink", file, .timeModified = backupTimeStart);
+
+            // File that grows above the limit
+            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize - 1);
+            memset(bufPtr(file), 77, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (384KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/pg.log (128KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (384KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (128KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (128.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -3873,7 +3860,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 6");
+                "P00   INFO: full backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3881,12 +3868,11 @@ testRun(void)
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION {file, s=2}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/base {path}\n"
-                "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, m={0,0,0}, s=393216}\n"
+                "pg_data/block-incr-grow.pgbi {file, m={0,0,0}, s=393216}\n"
+                "pg_data/block-incr-shrink.pgbi {file, m={0,0}, s=131073}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
-                "pg_data/pg.log.pgbi {file, m={0,0}, s=131073}\n"
+                "pg_data/grow-to-block-incr {file, s=131071}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3897,18 +3883,18 @@ testRun(void)
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1572800002}\n"
-                "pg_data/base/1/2={\"bims\":70,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
+                "pg_data/block-incr-grow={\"bims\":70,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
                     ",\"size\":393216,\"timestamp\":1572800000}\n"
+                "pg_data/block-incr-shrink={\"bims\":51,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
+                    ",\"size\":131073,\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572800000}\n"
-                "pg_data/pg.log={\"bims\":51,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\",\"size\":131073"
+                "pg_data/grow-to-block-incr={\"checksum\":\"f24ce50110bed53703bac93d9705d1e101c7cfeb\",\"size\":131071"
                     ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1572800002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
                 "pg_data/global={}\n",
                 "compare file list");
         }
@@ -3930,30 +3916,41 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // Zeroed file which passes page checksums
-            Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 4);
-            memset(bufPtr(relation), 0, bufSize(relation));
-            bufUsedSet(relation, bufSize(relation));
+            // Grow file size to check block incr delta
+            Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 4);
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
-            // File smaller than block size
-            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_PATH_BASE "/1/smaller-than-block-size", "ABC", .timeModified = backupTimeStart);
+            // Shrink file below the limit
+            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize - 1);
+            memset(bufPtr(file), 55, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink", file, .timeModified = backupTimeStart);
+
+            // Grow file above the limit
+            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize + 1);
+            memset(bufPtr(file), 77, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
             // Run backup
             testBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191103-165320F, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC213000000000, lsn = 5dc2130/0\n"
                 "P00   INFO: check archive for segment 0000000105DC213000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (512KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (512KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (128KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (128.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/smaller-than-block-size (3B, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
-                "P00 DETAIL: reference pg_data/pg.log to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3967,12 +3964,11 @@ testRun(void)
                 ". {link, d=20191103-165320F_20191106-002640D}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/base {path}\n"
-                "pg_data/base/1 {path}\n"
-                "pg_data/base/1/2.pgbi {file, m={0,0,0,1}, s=524288}\n"
-                "pg_data/base/1/smaller-than-block-size {file, s=3}\n"
+                "pg_data/block-incr-grow.pgbi {file, m={0,0,0,1}, s=524288}\n"
+                "pg_data/block-incr-shrink {file, s=131071}\n"
                 "pg_data/global {path}\n"
                 "pg_data/global/pg_control {file, s=8192}\n"
+                "pg_data/grow-to-block-incr.pgbi {file, m={1,1}, s=131073}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3983,26 +3979,24 @@ testRun(void)
                     ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                     ",\"timestamp\":1573000002}\n"
-                "pg_data/base/1/2={\"bims\":95,\"bis\":16,\"checksum\":\"6a521e1d2a632c26e53b83d2cc4b0edecfc1e68c\""
+                "pg_data/block-incr-grow={\"bims\":95,\"bis\":16,\"checksum\":\"6a521e1d2a632c26e53b83d2cc4b0edecfc1e68c\""
                     ",\"size\":524288,\"timestamp\":1573000000}\n"
-                "pg_data/base/1/smaller-than-block-size={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3"
+                "pg_data/block-incr-shrink={\"checksum\":\"a8a85be0079c68c5c5a6ee743c44d853d6be12bb\",\"size\":131071"
                     ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"
-                "pg_data/pg.log={\"bims\":51,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
-                    ",\"reference\":\"20191103-165320F\",\"size\":131073,\"timestamp\":1572800000}\n"
+                "pg_data/grow-to-block-incr={\"bims\":51,\"bis\":16,\"checksum\":\"b616afbe703280742f9c6125b738d85c80fde971\""
+                    ",\"size\":131073,\"timestamp\":1573000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                     ",\"timestamp\":1573000002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
                 "pg_data/global={}\n",
                 "compare file list");
 
-            HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_BASE "/1/2");
-            HRN_STORAGE_REMOVE(storagePgWrite(), PG_PATH_BASE "/1/smaller-than-block-size");
-            HRN_STORAGE_REMOVE(storagePgWrite(), "pg.log");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-grow");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "grow-to-block-incr");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -4050,7 +4044,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
                 .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
@@ -4140,7 +4134,7 @@ testRun(void)
             testBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
                 .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
-            TEST_RESULT_VOID(testCmdBackup(), "backup");
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191108-080000F, version = " PROJECT_VERSION "\n"

@@ -11,6 +11,7 @@ Test Restore Command
 #include "storage/posix/storage.h"
 #include "storage/helper.h"
 
+#include "common/harnessBackup.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
@@ -3232,17 +3233,7 @@ testRun(void)
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true);
-
-        TRY_BEGIN()
-        {
-            TEST_RESULT_VOID(cmdBackup(), "backup");
-        }
-        FINALLY()
-        {
-            lockRelease(true);
-        }
-        TRY_END();
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restore with block incr");
@@ -3261,8 +3252,16 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdRestore(), "restore");
 
-        // 2e000fa7e85759c7f4c254d4d9c33ef481e459a7
-
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "base/\n"
+            "base/1/\n"
+            "base/1/2\n"
+            "global/\n"
+            "global/pg_control\n"
+            "postgresql.auto.conf\n"
+            "recovery.signal\n",
+            .level = storageInfoLevelType);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
