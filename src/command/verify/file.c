@@ -52,6 +52,8 @@ verifyFile(
         if (compressType != compressTypeNone)
             ioFilterGroupAdd(filterGroup, decompressFilter(compressType));
 
+        // !!! ADD SUPPORT FOR BLOCK INCR
+
         // Add sha1 filter
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
