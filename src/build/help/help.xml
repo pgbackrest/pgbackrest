@@ -1190,7 +1190,7 @@
                         <summary>Force a checkpoint to start backup quickly.</summary>
 
                         <text>
-                            <p>Forces a checkpoint (by passing <id>y</id> to the <id>fast</id> parameter of the backup start function so the backup begins immediately. Otherwise the backup will start after the next regular checkpoint.</p>
+                            <p>Forces a checkpoint (by passing <id>y</id> to the <id>fast</id> parameter of the backup start function) so the backup begins immediately. Otherwise the backup will start after the next regular checkpoint.</p>
                         </text>
 
                         <example>y</example>
@@ -1276,14 +1276,14 @@
 
                             <list>
                                 <list-item><backrest/> will notify <postgres/> that the WAL was successfully archived, then <b>DROP IT</b>.</list-item>
-                                <list-item>A warning will be output to the Postgres log.</list-item>
+                                <list-item>A warning will be output to the <postgres/> log.</list-item>
                             </list>
 
                             <p>If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point. A new backup will be required to regain full restore capability.</p>
 
                             <p>In asynchronous mode the entire queue will be dropped to prevent spurts of WAL getting through before the queue limit is exceeded again.</p>
 
-                            <p>The purpose of this feature is to prevent the log volume from filling up at which point Postgres will stop completely. Better to lose the backup than have <postgres/> go down.</p>
+                            <p>The purpose of this feature is to prevent the log volume from filling up at which point <postgres/> will stop completely. Better to lose the backup than have <postgres/> go down.</p>
                         </text>
 
                         <example>1TiB</example>
@@ -1424,7 +1424,7 @@
                         <summary>TLS server authorized clients.</summary>
 
                         <text>
-                            <p>Clients are authorized on the server by verifying their certificate and checking their certificate CN (Common name) against a list on the server configured with the <br-option>tls-server-auth</br-option> option.</p>
+                            <p>Clients are authorized on the server by verifying their certificate and checking their certificate CN (Common Name) against a list on the server configured with the <br-option>tls-server-auth</br-option> option.</p>
 
                             <p>A client CN can be authorized for as many stanzas as needed by repeating the <br-option>tls-server-auth</br-option> option, or for all stanzas by specifying <br-option>tls-server-auth=client-cn=*</br-option>. Wildcards may not be specified for the client CN.</p>
                         </text>
@@ -1795,7 +1795,7 @@
                     <summary>Defines the stanza.</summary>
 
                     <text>
-                        <p>A stanza is the configuration for a <postgres/> database cluster that defines where it is located, how it will be backed up, archiving options, etc. Most db servers will only have one Postgres database cluster and therefore one stanza, whereas backup servers will have a stanza for every database cluster that needs to be backed up.</p>
+                        <p>A stanza is the configuration for a <postgres/> database cluster that defines where it is located, how it will be backed up, archiving options, etc. Most db servers will only have one <postgres/> database cluster and therefore one stanza, whereas backup servers will have a stanza for every database cluster that needs to be backed up.</p>
 
                         <p>It is tempting to name the stanza after the primary cluster but a better name describes the databases contained in the cluster. Because the stanza name will be used for the primary and all replicas it is more appropriate to choose a name that describes the actual function of the cluster, such as app or dw, rather than the local cluster name, such as main or prod.</p>
                     </text>
@@ -1930,7 +1930,7 @@
                         <text>
                             <p>The specified backup set (i.e. the backup label provided and all of its dependent backups, if any) will be expired regardless of backup retention rules except that at least one full backup must remain in the repository.</p>
 
-                            <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives not required to make a backup consistent from the <backrest/> repository for the specified backup set. This process may negate the ability to perform PITR. If <br-option>--repo-retention-full</br-option> and/or <br-option>--repo-retention-archive</br-option> options are configured, then it is recommended that you override these options by setting their values to the maximum while performing adhoc expiration in order to prevent an unintended expiration of archives.</admonition>
+                            <admonition type="warning">Use this option with extreme caution &amp;mdash; it will permanently remove all backups and archives not required to make a backup consistent from the <backrest/> repository for the specified backup set. This process may negate the ability to perform PITR. If <br-option>--repo-retention-full</br-option> and/or <br-option>--repo-retention-archive</br-option> options are configured, then it is recommended that you override these options by setting their values to the maximum while performing ad hoc expiration in order to prevent an unintended expiration of archives.</admonition>
                         </text>
 
                         <example>20150131-153358F_20150131-153401I</example>
@@ -2323,7 +2323,7 @@
                     <option id="output" name="Output">
                         <summary>Output type.</summary>
 
-                        <text> <p>Output may be none (default) or text. Requesting text generates ouput to stdout.</p>
+                        <text> <p>Output may be none (default) or text. Requesting text generates output to stdout.</p>
                         </text>
 
                         <example>text</example>
