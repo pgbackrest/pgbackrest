@@ -121,7 +121,8 @@ testBackupValidateList(
                     ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
 
                     uint64_t size = bufUsed(storageGetP(read));
-                    const String *checksum = bufHex(
+                    const String *checksum = strNewEncode(
+                        encodingHex,
                         pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
 
                     strCatFmt(result, ", s=%" PRIu64, size);
@@ -371,7 +372,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
         hrnPgWalToBuffer((PgWal){.version = pgControl.version, .systemId = pgControl.systemId}, walBuffer);
-        const String *walChecksum = bufHex(cryptoHashOne(hashTypeSha1, walBuffer));
+        const String *walChecksum = strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer));
 
         for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
         {
@@ -2864,7 +2865,7 @@ testRun(void)
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
-            const char *rel1_2Sha1 = strZ(bufHex(cryptoHashOne(hashTypeSha1, relation)));
+            const char *rel1_2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // File with bad page checksums
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 5);
@@ -2878,7 +2879,7 @@ testRun(void)
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
-            const char *rel1_3Sha1 = strZ(bufHex(cryptoHashOne(hashTypeSha1, relation)));
+            const char *rel1_3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // File with bad page checksum
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
@@ -2891,7 +2892,7 @@ testRun(void)
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
-            const char *rel1_4Sha1 = strZ(bufHex(cryptoHashOne(hashTypeSha1, relation)));
+            const char *rel1_4Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // Add a tablespace
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGTBLSPC);

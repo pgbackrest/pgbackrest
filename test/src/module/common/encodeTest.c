@@ -139,5 +139,57 @@ testRun(void)
         TEST_ERROR(decodeToBin(encodingBase64Url, "c3", destinationDecode), AssertError, "unsupported");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("hex"))
+    {
+        TEST_TITLE("encode");
+
+        const unsigned char *encode = (const unsigned char *)"string_to_encode\r\n";
+        char destinationEncode[256];
+
+        encodeToStr(encodingHex, encode, 1, destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "73", "1 character encode");
+        TEST_RESULT_UINT(encodeToStrSize(encodingHex, 1), strlen(destinationEncode), "check size");
+
+        encodeToStr(encodingHex, encode, strlen((char *)encode), destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "737472696e675f746f5f656e636f64650d0a", "encode full string with \\r\\n");
+        TEST_RESULT_UINT(encodeToStrSize(encodingHex, strlen((char *)encode)), strlen(destinationEncode), "check size");
+
+        encodeToStr(encodingHex, encode, strlen((char *)encode) + 1, destinationEncode);
+        TEST_RESULT_Z(destinationEncode, "737472696e675f746f5f656e636f64650d0a00", "encode full string with \\r\\n and null");
+        TEST_RESULT_UINT(encodeToStrSize(encodingHex, strlen((char *)encode) + 1), strlen(destinationEncode), "check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("decode");
+
+        unsigned char destinationDecode[256];
+
+        memset(destinationDecode, 0xFF, sizeof(destinationDecode));
+        const char *decode = "737472696e675f746f5f656e636f64650d0a00";
+        decodeToBin(encodingHex, decode, destinationDecode);
+        TEST_RESULT_Z((char *)destinationDecode, (char *)encode, "full string with \\r\\n and null decode");
+        TEST_RESULT_INT(destinationDecode[strlen((char *)encode) + 1], 0xFF, "check for overrun");
+        TEST_RESULT_UINT(decodeToBinSize(encodingHex, decode), strlen((char *)encode) + 1, "check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("decode/encode with mixed case");
+
+        const char *decodeMixed = "0123456789AaBbCcDdEeFf";
+
+        TEST_RESULT_VOID(decodeToBin(encodingHex, decodeMixed, destinationDecode), "decode");
+        TEST_RESULT_VOID(
+            encodeToStr(encodingHex, destinationDecode, decodeToBinSize(encodingHex, decodeMixed), destinationEncode), "encode");
+        TEST_RESULT_Z(destinationEncode, "0123456789aabbccddeeff", "check encoded hex");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("decode errors");
+
+        TEST_ERROR(decodeToBin(encodingHex, "c", destinationDecode), FormatError, "hex size 1 is not evenly divisible by 2");
+
+        TEST_ERROR(
+            decodeToBin(encodingHex, "hh", destinationDecode), FormatError,
+            "hex invalid character found at position 0");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

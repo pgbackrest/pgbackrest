@@ -90,6 +90,7 @@ testRun(void)
         TEST_TITLE("strNewEncode()");
 
         TEST_RESULT_STR_Z(strNewEncode(encodingBase64, BUFSTRDEF("zz")), "eno=", "encode base64");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, bufNew(0)), "", "encode empty hex");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fixed string large enough to need separate allocation");

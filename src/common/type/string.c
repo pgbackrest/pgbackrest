@@ -220,7 +220,13 @@ strNewEncode(const EncodingType type, const Buffer *const buffer)
     String *this = strNewFixed(encodeToStrSize(type, bufUsed(buffer)));
 
     // Encode buffer
-    encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->pub.buffer);
+    if (bufUsed(buffer) > 0)
+    {
+        encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->pub.buffer);
+    }
+    // Else zero-terminate
+    else
+        this->pub.buffer[0] = '\0';
 
     FUNCTION_TEST_RETURN(STRING, this);
 }

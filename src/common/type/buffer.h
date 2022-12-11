@@ -125,9 +125,6 @@ Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catS
 // Are two buffers equal?
 bool bufEq(const Buffer *this, const Buffer *compare);
 
-// Convert the buffer to a hex string
-String *bufHex(const Buffer *this);
-
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Buffer *
 bufMove(Buffer *const this, MemContext *const parentNew)

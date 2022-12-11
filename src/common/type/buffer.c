@@ -208,24 +208,6 @@ bufEq(const Buffer *this, const Buffer *compare)
 }
 
 /**********************************************************************************************************************************/
-String *
-bufHex(const Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    String *result = strNew();
-
-    for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(this); bufferIdx++)
-        strCatFmt(result, "%02x", bufPtrConst(this)[bufferIdx]);
-
-    FUNCTION_TEST_RETURN(STRING, result);
-}
-
-/**********************************************************************************************************************************/
 Buffer *
 bufResize(Buffer *this, size_t size)
 {
