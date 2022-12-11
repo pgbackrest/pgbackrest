@@ -76,7 +76,7 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
     if (param.content != NULL)
     {
         strCatFmt(
-            request, "content-md5:%s\r\n", strZ(strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
+            request, "content-md5:%s\r\n", strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
     }
 
     // Add date
@@ -200,7 +200,7 @@ testRun(void)
         TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->account, TEST_ACCOUNT_STR, "check account");
         TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->container, TEST_CONTAINER_STR, "check container");
         TEST_RESULT_STR(
-            strNewEncode(encodeBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "check key");
+            strNewEncode(encodingBase64, ((StorageAzure *)storageDriver(storage))->sharedKey), TEST_KEY_SHARED_STR, "check key");
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".blob.core.windows.net", "check host");
         TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->pathPrefix, "/" TEST_CONTAINER, "check path prefix");
         TEST_RESULT_UINT(((StorageAzure *)storageDriver(storage))->blockSize, 4 * 1024 * 1024, "check block size");

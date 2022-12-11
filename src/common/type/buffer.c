@@ -83,7 +83,7 @@ bufNewC(const void *buffer, size_t size)
 
 /**********************************************************************************************************************************/
 Buffer *
-bufNewDecode(EncodeType type, const String *string)
+bufNewDecode(const EncodingType type, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);

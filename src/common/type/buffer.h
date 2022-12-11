@@ -22,7 +22,7 @@ Buffer *bufNew(size_t size);
 Buffer *bufNewC(const void *buffer, size_t size);
 
 // Create a new buffer from a string encoded with the specified type
-Buffer *bufNewDecode(EncodeType type, const String *string);
+Buffer *bufNewDecode(EncodingType type, const String *string);
 
 // Duplicate a buffer
 Buffer *bufDup(const Buffer *buffer);

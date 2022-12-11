@@ -45,7 +45,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bufNewDecode()");
 
-        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodeBase64, STRDEF("eno="))), "zz", "decode base64");
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF("eno="))), "zz", "decode base64");
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF(""))), "", "decode empty base64");
     }
 
     // *****************************************************************************************************************************

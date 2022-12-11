@@ -28,7 +28,7 @@ cipherPassGen(CipherType cipherType)
         unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
         cryptoRandomBytes(buffer, sizeof(buffer));
 
-        result = strNewEncode(encodeBase64, BUF(buffer, sizeof(buffer)));
+        result = strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)));
     }
 
     FUNCTION_TEST_RETURN(STRING, result);

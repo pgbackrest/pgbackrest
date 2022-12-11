@@ -91,7 +91,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     if (param.content != NULL)
     {
         strCatFmt(
-            request, "content-md5:%s\r\n", strZ(strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
+            request, "content-md5:%s\r\n", strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
     }
 
     // Add host

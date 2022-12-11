@@ -89,7 +89,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strNewEncode()");
 
-        TEST_RESULT_STR_Z(strNewEncode(encodeBase64, BUFSTRDEF("zz")), "eno=", "encode base64");
+        TEST_RESULT_STR_Z(strNewEncode(encodingBase64, BUFSTRDEF("zz")), "eno=", "encode base64");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fixed string large enough to need separate allocation");
@@ -144,7 +144,7 @@ testRun(void)
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatZ(string, ""), "XXXX", "cat empty string");
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
-        TEST_RESULT_STR_Z(strCatEncode(string, encodeBase64, BUFSTRDEF("")), "XXXX", "cat empty encode");
+        TEST_RESULT_STR_Z(strCatEncode(string, encodingBase64, BUFSTRDEF("")), "XXXX", "cat empty encode");
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCat(string, STRDEF("YYYY")), "XXXXYYYY", "cat string");
         TEST_RESULT_UINT(string->pub.extra, 56, "check extra");
@@ -161,7 +161,7 @@ testRun(void)
             "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", "cat chr");
         TEST_RESULT_UINT(string->pub.extra, 35, "check extra");
         TEST_RESULT_STR_Z(
-            strCatEncode(string, encodeBase64, BUFSTRDEF("zzzzz")),
+            strCatEncode(string, encodingBase64, BUFSTRDEF("zzzzz")),
             "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
         TEST_RESULT_UINT(string->pub.extra, 27, "check extra");
         TEST_RESULT_VOID(strFree(string), "free string");

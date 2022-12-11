@@ -14,7 +14,7 @@ Binary to String Encode/Decode
 Assert that encoding type is valid. This needs to be kept up to date with the last item in the enum.
 ***********************************************************************************************************************************/
 #define ASSERT_ENCODE_TYPE_VALID(type)                                                                                             \
-    ASSERT(type <= encodeBase64Url);
+    ASSERT(type <= encodingBase64Url);
 
 /***********************************************************************************************************************************
 Base64 encoding/decoding
@@ -318,7 +318,7 @@ encodeToStrSizeBase64Url(size_t sourceSize)
 Generic encoding/decoding
 ***********************************************************************************************************************************/
 void
-encodeToStr(EncodeType type, const unsigned char *source, size_t sourceSize, char *destination)
+encodeToStr(const EncodingType type, const unsigned char *const source, const size_t sourceSize, char *const destination)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -331,11 +331,11 @@ encodeToStr(EncodeType type, const unsigned char *source, size_t sourceSize, cha
 
     switch (type)
     {
-        case encodeBase64:
+        case encodingBase64:
             encodeToStrBase64(source, sourceSize, destination);
             break;
 
-        case encodeBase64Url:
+        case encodingBase64Url:
             encodeToStrBase64Url(source, sourceSize, destination);
             break;
     }
@@ -345,7 +345,7 @@ encodeToStr(EncodeType type, const unsigned char *source, size_t sourceSize, cha
 
 /**********************************************************************************************************************************/
 size_t
-encodeToStrSize(EncodeType type, size_t sourceSize)
+encodeToStrSize(const EncodingType type, const size_t sourceSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -358,11 +358,11 @@ encodeToStrSize(EncodeType type, size_t sourceSize)
 
     switch (type)
     {
-        case encodeBase64:
+        case encodingBase64:
             destinationSize = encodeToStrSizeBase64(sourceSize);
             break;
 
-        case encodeBase64Url:
+        case encodingBase64Url:
             destinationSize = encodeToStrSizeBase64Url(sourceSize);
             break;
     }
@@ -372,7 +372,7 @@ encodeToStrSize(EncodeType type, size_t sourceSize)
 
 /**********************************************************************************************************************************/
 void
-decodeToBin(EncodeType type, const char *source, unsigned char *destination)
+decodeToBin(const EncodingType type, const char *const source, unsigned char *const destination)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -384,7 +384,7 @@ decodeToBin(EncodeType type, const char *source, unsigned char *destination)
 
     switch (type)
     {
-        case encodeBase64:
+        case encodingBase64:
             decodeToBinBase64(source, destination);
             break;
 
@@ -397,7 +397,7 @@ decodeToBin(EncodeType type, const char *source, unsigned char *destination)
 
 /**********************************************************************************************************************************/
 size_t
-decodeToBinSize(EncodeType type, const char *source)
+decodeToBinSize(const EncodingType type, const char *const source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -410,7 +410,7 @@ decodeToBinSize(EncodeType type, const char *source)
 
     switch (type)
     {
-        case encodeBase64:
+        case encodingBase64:
             destinationSize = decodeToBinSizeBase64(source);
             break;
 
