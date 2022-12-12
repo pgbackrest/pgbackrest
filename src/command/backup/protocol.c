@@ -44,7 +44,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.pgFileIgnoreMissing = pckReadBoolP(param);
             file.pgFileSize = pckReadU64P(param);
             file.pgFileCopyExactSize = pckReadBoolP(param);
-            file.pgFileChecksum = pckReadStrP(param);
+            file.pgFileChecksum = pckReadBinP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
             file.manifestFile = pckReadStrP(param);
             file.manifestFileResume = pckReadBoolP(param);
@@ -69,7 +69,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             pckWriteU64P(resultPack, fileResult->copySize);
             pckWriteU64P(resultPack, fileResult->bundleOffset);
             pckWriteU64P(resultPack, fileResult->repoSize);
-            pckWriteStrP(resultPack, fileResult->copyChecksum);
+            pckWriteBinP(resultPack, fileResult->copyChecksum);
             pckWritePackP(resultPack, fileResult->pageChecksumResult);
         }
 

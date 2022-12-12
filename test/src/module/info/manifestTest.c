@@ -31,7 +31,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(sizeof(ManifestLoadFound), TEST_64BIT() ? 1 : 1, "check size of ManifestLoadFound");
         TEST_RESULT_UINT(sizeof(ManifestPath), TEST_64BIT() ? 32 : 16, "check size of ManifestPath");
-        TEST_RESULT_UINT(sizeof(ManifestFile), TEST_64BIT() ? 136 : 108, "check size of ManifestFile");
     }
 
     // *****************************************************************************************************************************
@@ -1105,17 +1104,17 @@ testRun(void)
                 manifestPrior,
                 &(ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-                .checksumSha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709"});
+                .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("da39a3ee5e6b4b0d3255bfef95601890afd80709")))});
             manifestFileAdd(
                 manifestPrior,
                 &(ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182860,
-                .checksumSha1 = "ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd"});
+                .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd")))});
             manifestFileAdd(
                 manifestPrior,
                 &(ManifestFile){
                 .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-                .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+                .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd")))});
         }
         OBJ_NEW_END();
 
@@ -1164,14 +1163,15 @@ testRun(void)
             manifest,
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-bundle"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
+               .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
         // Zero-length file with the copy flag which will appear to come from a non-bundled backup (so will get a reference)
         manifestFileAdd(
             manifest,
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-normal"), .copy = true, .size = 0, .sizeRepo = 0,
                .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
-               .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+               .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
         manifestFileAdd(
             manifest,
             &(ManifestFile){
@@ -1183,18 +1183,19 @@ testRun(void)
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
-               .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"});
+               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd")))});
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-bundle"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
+               .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
         manifestFileAdd(
             manifestPrior,
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-normal"), .size = 0, .sizeRepo = 0,
                .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
-               .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+               .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
@@ -1249,7 +1250,8 @@ testRun(void)
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
-               .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd", .checksumPage = true, .checksumPageError = true,
+               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"))),
+               .checksumPage = true, .checksumPageError = true,
                .checksumPageErrorList = jsonFromVar(varNewVarLst(checksumPageErrorList))});
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
@@ -1304,7 +1306,7 @@ testRun(void)
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                .reference = STRDEF("20190101-010101F_20190202-010101D"),
-               .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
+               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")),
@@ -1371,7 +1373,7 @@ testRun(void)
             manifestPrior,
             &(ManifestFile){
                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa"});
+               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
@@ -1670,7 +1672,7 @@ testRun(void)
 
         // Munge files to produce errors
         ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
-        file.checksumSha1[0] = '\0';
+        file.checksumSha1 = NULL;
         file.sizeRepo = 0;
         file.resume = true;
         manifestFileUpdate(manifest, &file);
@@ -1694,7 +1696,7 @@ testRun(void)
         // Undo changes made to files
         file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
         TEST_RESULT_BOOL(file.resume, true, "resume is set");
-        memcpy(file.checksumSha1, "184473f470864e067ee3a22e64b47b0a1c356f29", HASH_TYPE_SHA1_SIZE_HEX + 1);
+        file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("184473f470864e067ee3a22e64b47b0a1c356f29")));
         file.sizeRepo = 4457;
         manifestFileUpdate(manifest, &file);
 
@@ -1862,11 +1864,11 @@ testRun(void)
         // Munge the sha1 checksum to be blank
         ManifestFilePack **const fileMungePack = manifestFilePackFindInternal(manifest, STRDEF("pg_data/postgresql.conf"));
         ManifestFile fileMunge = manifestFileUnpack(manifest, *fileMungePack);
-        fileMunge.checksumSha1[0] = '\0';
+        fileMunge.checksumSha1 = NULL;
         manifestFilePackUpdate(manifest, fileMungePack, &fileMunge);
 
         file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
-        file.checksumSha1[0] = '\0';
+        file.checksumSha1 = NULL;
         manifestFileUpdate(manifest, &file);
 
         // ManifestDb getters

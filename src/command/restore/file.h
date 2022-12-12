@@ -24,7 +24,7 @@ Functions
 typedef struct RestoreFile
 {
     const String *name;                                             // File to restore
-    const String *checksum;                                         // Expected checksum
+    const Buffer *checksum;                                         // Expected checksum
     uint64_t size;                                                  // Expected size
     time_t timeModified;                                            // Original modification time
     mode_t mode;                                                    // Original mode

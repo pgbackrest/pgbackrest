@@ -2207,7 +2207,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
 
                 // If not zero-length add the checksum
                 if (file.size != 0 && !zeroed)
-                    strCatFmt(log, " checksum %s", file.checksumSha1);
+                    strCatFmt(log, " checksum %s", strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
 
                 LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
             }
@@ -2330,7 +2330,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 }
 
                 pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
-                pckWriteStrP(param, STR(file.checksumSha1));
+                pckWriteBinP(param, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE));
                 pckWriteU64P(param, file.size);
                 pckWriteTimeP(param, file.timestamp);
                 pckWriteModeP(param, file.mode);

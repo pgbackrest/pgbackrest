@@ -177,7 +177,7 @@ testRun(void)
         RestoreFile file =
         {
             .name = STRDEF("normal"),
-            .checksum = STRDEF("ffffffffffffffffffffffffffffffffffffffff"),
+            .checksum = bufNewDecode(encodingHex, STRDEF("ffffffffffffffffffffffffffffffffffffffff")),
             .size = 7,
             .timeModified = 1557432154,
             .mode = 0600,
@@ -2035,7 +2035,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "b74d60e763728399bcd3fb63f7dd1f97b46c6b44"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("b74d60e763728399bcd3fb63f7dd1f97b46c6b44")))});
             HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_90_STR "\n");
 
             // Store the file also to the encrypted repo
@@ -2176,7 +2176,7 @@ testRun(void)
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+                    .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
 
             manifestFileAdd(
@@ -2184,7 +2184,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.conf"), .size = 10,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "1a49a3c2240449fee1422e4afcf44d5b96378511"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("1a49a3c2240449fee1422e4afcf44d5b96378511")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "/postgresql.conf", "VALID_CONF");
 
             manifestFileAdd(
@@ -2192,7 +2192,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGDATA "/postgresql.auto.conf"), .size = 15,
                     .timestamp = 1482182861, .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "/postgresql.auto.conf", "VALID_CONF_AUTO");
 
             manifestFileAdd(
@@ -2200,7 +2200,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGDATA "/size-mismatch"), .size = 1,
                     .timestamp = 1482182861, .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "c032adc1ff629c9b66f22749ad667e6beadf144b"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("c032adc1ff629c9b66f22749ad667e6beadf144b")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "/size-mismatch", "X");
 
             // pg_tblspc/1
@@ -2235,7 +2235,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION), .size = 4,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "b74d60e763728399bcd3fb63f7dd1f97b46c6b44"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("b74d60e763728399bcd3fb63f7dd1f97b46c6b44")))});
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION,
                 PG_VERSION_90_STR "\n");
@@ -2455,7 +2455,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "5e2b96c19c4f5c63a5afa2de504d29fe64a4c908"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("5e2b96c19c4f5c63a5afa2de504d29fe64a4c908")))});
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, fileBuffer);
 
             // global/888
@@ -2464,7 +2464,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/888"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+                    .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/888");
 
             // global/999
@@ -2473,7 +2473,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_PATH_GLOBAL "/999"), .size = 0, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+                    .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_PATH_GLOBAL "/999");
 
             // PG_VERSION
@@ -2481,33 +2481,33 @@ testRun(void)
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
-                    .reference = NULL, .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0, .reference = NULL,
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("8dbabb96e032b8d9f1993c0e4b9141e71ade01a1")))});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "yyy"), .size = 3, .sizeRepo = 3, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 8,
-                    .reference = NULL, .checksumSha1 = "186154712b2d5f6791d85b9a0987b98fa231779c"});
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 8, .reference = NULL,
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("186154712b2d5f6791d85b9a0987b98fa231779c")))});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "xxxxx"), .size = 5, .sizeRepo = 5, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 11,
-                    .reference = NULL, .checksumSha1 = "9addbf544119efa4a64223b649750a510f0d463f"});
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 11, .reference = NULL,
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("9addbf544119efa4a64223b649750a510f0d463f")))});
             // Set bogus sizeRepo and checksumSha1 to ensure this is not handled as a regular file
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "zero-length"), .size = 0, .sizeRepo = 1, .timestamp = 1482182866,
-                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 16,
-                    .reference = NULL, .checksumSha1 = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"});
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 16, .reference = NULL,
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")))});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "zz"), .size = 2, .sizeRepo = 2, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 17,
-                    .reference = NULL, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7"});
+                    .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 17, .reference = NULL,
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("d7dacae2c968388960bf8970080a980ed5c5dcb7")))});
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
                 PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\nyyyxxxxxAzzA");
@@ -2530,7 +2530,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 4,
-                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("8dbabb96e032b8d9f1993c0e4b9141e71ade01a1")))});
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -2542,7 +2542,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/2"), .size = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "4d7b2a36c5387decf799352a3751883b7ceb96aa"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("4d7b2a36c5387decf799352a3751883b7ceb96aa")))});
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/1/2", fileBuffer);
 
             // base/1/10
@@ -2557,7 +2557,8 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/10"), .size = 8192, .sizeRepo = 8192, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 1,
-                    .reference = STRDEF(TEST_LABEL_FULL), .checksumSha1 = "28757c756c03c37aca13692cb719c18d1510c190"});
+                    .reference = STRDEF(TEST_LABEL_FULL),
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("28757c756c03c37aca13692cb719c18d1510c190")))});
             HRN_STORAGE_PUT(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL_FULL "/bundle/1", fileBuffer);
 
             // base/1/20 and base/1/21
@@ -2566,13 +2567,15 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/20"), .size = 1, .sizeRepo = 1, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 2, .bundleOffset = 1,
-                    .reference = STRDEF(TEST_LABEL_DIFF), .checksumSha1 = "c032adc1ff629c9b66f22749ad667e6beadf144b"});
+                    .reference = STRDEF(TEST_LABEL_DIFF),
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("c032adc1ff629c9b66f22749ad667e6beadf144b")))});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/21"), .size = 1, .sizeRepo = 1, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 2, .bundleOffset = 2,
-                    .reference = STRDEF(TEST_LABEL_DIFF), .checksumSha1 = "e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98"});
+                    .reference = STRDEF(TEST_LABEL_DIFF),
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL_DIFF "/bundle/2", "aXb");
 
             // base/1/30 and base/1/31
@@ -2581,13 +2584,15 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/30"), .size = 1, .sizeRepo = 1, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 2, .bundleOffset = 1,
-                    .reference = STRDEF(TEST_LABEL_INCR), .checksumSha1 = "c032adc1ff629c9b66f22749ad667e6beadf144b"});
+                    .reference = STRDEF(TEST_LABEL_INCR),
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("c032adc1ff629c9b66f22749ad667e6beadf144b")))});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/31"), .size = 1, .sizeRepo = 1, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 2, .bundleOffset = 2,
-                    .reference = STRDEF(TEST_LABEL_INCR), .checksumSha1 = "e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98"});
+                    .reference = STRDEF(TEST_LABEL_INCR),
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL_INCR "/bundle/2", "aXb");
 
             // system db name
@@ -2605,7 +2610,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/16384/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("8dbabb96e032b8d9f1993c0e4b9141e71ade01a1")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/16384/16385
@@ -2618,7 +2623,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/16384/16385"), .size = 16384, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f")))});
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/16384/16385", fileBuffer);
 
             // base/32768 directory
@@ -2634,7 +2639,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/32768/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("8dbabb96e032b8d9f1993c0e4b9141e71ade01a1")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // base/32768/32769
@@ -2647,7 +2652,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/32768/32769"), .size = 32768, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "a40f0986acb1531ce0cc75a23dcf8aa406ae9081"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("a40f0986acb1531ce0cc75a23dcf8aa406ae9081")))});
             HRN_STORAGE_PUT(storageRepoWrite(), TEST_REPO_PATH "base/32768/32769", fileBuffer);
 
             // File link to postgresql.conf
@@ -2664,7 +2669,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "postgresql.conf"), .size = 15, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "98b8abb2e681e2a5a7d8ab082c0a79727887558d"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("98b8abb2e681e2a5a7d8ab082c0a79727887558d")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "postgresql.conf", "POSTGRESQL.CONF");
 
             // File link to pg_hba.conf
@@ -2681,7 +2686,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "pg_hba.conf"), .size = 11, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "401215e092779574988a854d8c7caed7f91dba4b"});
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("401215e092779574988a854d8c7caed7f91dba4b")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "pg_hba.conf", "PG_HBA.CONF");
 
             // tablespace_map (will be ignored during restore)
@@ -2689,7 +2694,7 @@ testRun(void)
                 manifest,
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_TABLESPACEMAP), .size = 0, .timestamp = 1482182860,
-                    .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = HASH_TYPE_SHA1_ZERO});
+                    .mode = 0600, .group = groupName(), .user = userName(), .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), TEST_REPO_PATH PG_FILE_TABLESPACEMAP);
 
             // Path link to pg_wal

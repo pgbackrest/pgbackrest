@@ -18,14 +18,14 @@ Verify File
 VerifyResult
 verifyFile(
     const String *const filePathName, const uint64_t offset, const Variant *const limit, const CompressType compressType,
-    const String *const fileChecksum, const uint64_t fileSize, const String *const cipherPass)
+    const Buffer *const fileChecksum, const uint64_t fileSize, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
         FUNCTION_LOG_PARAM(UINT64, offset);                         // Offset to read in file
         FUNCTION_LOG_PARAM(VARIANT, limit);                         // Limit to read from file
         FUNCTION_LOG_PARAM(ENUM, compressType);                     // Compression type
-        FUNCTION_LOG_PARAM(STRING, fileChecksum);                   // Checksum for the file
+        FUNCTION_LOG_PARAM(BUFFER, fileChecksum);                   // Checksum for the file
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
     FUNCTION_LOG_END();
@@ -65,9 +65,7 @@ verifyFile(
         if (ioReadDrain(read))
         {
             // Validate checksum
-            if (!strEq(
-                    fileChecksum,
-                    strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))))
+            if (!bufEq(fileChecksum, pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))))
             {
                 result = verifyChecksumMismatch;
             }

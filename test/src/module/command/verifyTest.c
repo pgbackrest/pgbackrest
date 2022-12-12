@@ -34,7 +34,7 @@ testRun(void)
 
     const char *fileContents = "acefile";
     uint64_t fileSize = 7;
-    const String *fileChecksum = STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770");
+    const Buffer *fileChecksum = bufNewDecode(encodingHex, STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"));
 
     #define TEST_BACKUP_DB1_94                                                                                                     \
         "db-catalog-version=201409291\n"                                                                                           \
@@ -932,7 +932,7 @@ testRun(void)
         String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
+            verifyFile(filePathName, 0, NULL, compressTypeNone, HASH_TYPE_SHA1_ZERO_BUF, 0, NULL), verifyOk, "file ok");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file size invalid in archive");
@@ -963,8 +963,8 @@ testRun(void)
             verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
-                filePathName, 0, NULL, compressTypeGz, STRDEF("badchecksum"), fileSize, STRDEF("pass")), verifyChecksumMismatch,
-                "file encrypted compressed checksum mismatch");
+                filePathName, 0, NULL, compressTypeGz, bufNewDecode(encodingHex, STRDEF("aa")), fileSize, STRDEF("pass")),
+                verifyChecksumMismatch, "file encrypted compressed checksum mismatch");
     }
 
     // *****************************************************************************************************************************
@@ -1248,7 +1248,7 @@ testRun(void)
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
             TEST_MANIFEST_PATH_DEFAULT,
-            strZ(fileChecksum));
+            strZ(strNewEncode(encodingHex, fileChecksum)));
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
@@ -1285,7 +1285,8 @@ testRun(void)
                 TEST_MANIFEST_LINK_DEFAULT
                 TEST_MANIFEST_PATH
                 TEST_MANIFEST_PATH_DEFAULT,
-            strZ(fileChecksum), strZ(fileChecksum), strZ(fileChecksum));
+            strZ(strNewEncode(encodingHex, fileChecksum)), strZ(strNewEncode(encodingHex, fileChecksum)),
+            strZ(strNewEncode(encodingHex, fileChecksum)));
 
         // Write manifests for dependent backup
         HRN_INFO_PUT(
@@ -1564,7 +1565,7 @@ testRun(void)
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
             TEST_MANIFEST_PATH_DEFAULT,
-            strZ(fileChecksum));
+            strZ(strNewEncode(encodingHex, fileChecksum)));
 
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
@@ -1620,7 +1621,7 @@ testRun(void)
                 TEST_MANIFEST_LINK_DEFAULT
                 TEST_MANIFEST_PATH
                 TEST_MANIFEST_PATH_DEFAULT,
-                strZ(fileChecksum), (unsigned int)fileSize);
+                strZ(strNewEncode(encodingHex, fileChecksum)), (unsigned int)fileSize);
 
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20201119-163000F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
