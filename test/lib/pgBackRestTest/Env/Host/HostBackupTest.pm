@@ -603,6 +603,9 @@ sub backupCompare
 
     foreach my $strFileKey ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
+        # Remove repo checksum
+        $oActualManifest->remove(&MANIFEST_SECTION_TARGET_FILE, $strFileKey, 'ckr');
+
         # Determine repo size if compression or encryption is enabled
         my $strCompressType = $oExpectedManifest->{&MANIFEST_SECTION_BACKUP_OPTION}{&MANIFEST_KEY_COMPRESS_TYPE};
 
@@ -1945,6 +1948,9 @@ sub restoreCompare
 
     foreach my $strName ($oActualManifest->keys(MANIFEST_SECTION_TARGET_FILE))
     {
+        # Remove repo checksum
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{'ckr'});
+
         # When bundling zero-length files will not have a reference
         if ($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'} &&
             $oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_SIZE} == 0)

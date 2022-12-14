@@ -134,46 +134,35 @@ backupFile(
                         storageRemoveP(storageRepoWrite(), repoFile);
                     }
                     // Else if the pg file matches or is unknown because delta was not performed then check the repo file
-                    else if (!file->pgFileDelta || pgFileMatch)
+                    else if (!file->pgFileDelta || pgFileMatch) // {uncovered - !!!}
                     {
                         ASSERT(file->repoFileChecksum != NULL);
 
-                        // Check the repo file in a try block because on error (e.g. missing or corrupt file that can't be decrypted
-                        // or decompressed) we should recopy rather than ending the backup.
-                        TRY_BEGIN()
+                        // Generate checksum/size for the repo file
+                        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
+                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+                        ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
+                        ioReadDrain(read);
+
+                        // Test checksum/size
+                        const Buffer *const pgTestChecksum = pckReadBinP(
+                            ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+                        uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
+
+                        // No need to recopy if checksum/size match
+                        if (file->repoFileSize == pgTestSize && bufEq(file->repoFileChecksum, pgTestChecksum)) // {uncovered - !!!}
                         {
-                            // Generate checksum/size for the repo file
-                            IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
-                            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
-                            ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
-                            ioReadDrain(read);
-
-                            // Test checksum/size
-                            const Buffer *const pgTestChecksum = pckReadBinP(
-                                ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
-                            uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
-
-                            // No need to recopy if checksum/size match
-                            if (file->repoFileSize == pgTestSize && bufEq(file->repoFileChecksum, pgTestChecksum))
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
-                                MEM_CONTEXT_BEGIN(lstMemContext(result))
-                                {
-                                    fileResult->backupCopyResult = backupCopyResultChecksum;
-                                    fileResult->copySize = pgTestSize;
-                                    fileResult->copyChecksum = bufDup(pgTestChecksum);
-                                }
-                                MEM_CONTEXT_END();
+                                fileResult->backupCopyResult = backupCopyResultChecksum;
+                                fileResult->copySize = pgTestSize;
+                                fileResult->copyChecksum = bufDup(pgTestChecksum);
                             }
-                            // Else recopy when repo file is not as expected
-                            else
-                                fileResult->backupCopyResult = backupCopyResultReCopy;
+                            MEM_CONTEXT_END();
                         }
-                        // Recopy on any kind of error
-                        CATCH_ANY()
-                        {
+                        // Else recopy when repo file is not as expected
+                        else
                             fileResult->backupCopyResult = backupCopyResultReCopy;
-                        }
-                        TRY_END();
                     }
                 }
             }
