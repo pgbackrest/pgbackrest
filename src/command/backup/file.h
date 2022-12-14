@@ -44,6 +44,7 @@ typedef struct BackupFileResult
     BackupCopyResult backupCopyResult;
     uint64_t copySize;
     Buffer *copyChecksum;
+    Buffer *repoChecksum;                                           // Checksum repo file (including compression, etc.)
     uint64_t bundleOffset;                                          // Offset in bundle if any
     uint64_t repoSize;
     Pack *pageChecksumResult;

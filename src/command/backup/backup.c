@@ -1182,6 +1182,7 @@ backupJobResult(
                 const uint64_t bundleOffset = pckReadU64P(jobResult);
                 const uint64_t repoSize = pckReadU64P(jobResult);
                 const Buffer *const copyChecksum = pckReadBinP(jobResult);
+                const Buffer *const repoChecksum = pckReadBinP(jobResult);
                 PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
                 // Increment backup copy progress
@@ -1322,6 +1323,7 @@ backupJobResult(
                     file.size = copySize;
                     file.sizeRepo = repoSize;
                     file.checksumSha1 = bufPtrConst(copyChecksum);
+                    file.checksumRepoSha1 = bufPtrConst(repoChecksum);
                     file.reference = NULL;
                     file.checksumPageError = checksumPageError;
                     file.checksumPageErrorList = checksumPageErrorList != NULL ?

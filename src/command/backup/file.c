@@ -154,6 +154,8 @@ backupFile(
                             if (repoFileCompressType != compressTypeNone)
                                 ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(repoFileCompressType));
 
+                            // !!! USE REPO CHECKSUM FOR VERIFY WHEN PRESENT
+
                             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                             ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
@@ -241,6 +243,9 @@ backupFile(
                             cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass)));
                     }
 
+                    // Capture checksum of file stored in the repo after all operations have been applied
+                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+
                     // Add size filter last to calculate repo size
                     ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
 
@@ -276,7 +281,9 @@ backupFile(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 0));
                             fileResult->bundleOffset = bundleOffset;
                             fileResult->copyChecksum = pckReadBinP(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
+                            fileResult->repoChecksum = pckReadBinP(
+                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
                             fileResult->repoSize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 1));
 

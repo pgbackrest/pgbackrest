@@ -219,6 +219,9 @@ testBackupValidateList(
         file.bundleId = 0;
         file.bundleOffset = 0;
 
+        // Remove repo checksum since it has been validated !!!
+        file.checksumRepoSha1 = NULL;
+
         // Update changes to manifest file
         manifestFilePackUpdate(manifest, filePack, &file);
     }

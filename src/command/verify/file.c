@@ -44,6 +44,8 @@ verifyFile(
             storageNewReadP(storageRepo(), filePathName, .ignoreMissing = true, .offset = offset, .limit = limit));
         IoFilterGroup *filterGroup = ioReadFilterGroup(read);
 
+        // !!! USE REPO CHECKSUM FOR VERIFY WHEN PRESENT
+
         // Add decryption filter
         if (cipherPass != NULL)
             ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass)));

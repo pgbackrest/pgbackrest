@@ -70,6 +70,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             pckWriteU64P(resultPack, fileResult->bundleOffset);
             pckWriteU64P(resultPack, fileResult->repoSize);
             pckWriteBinP(resultPack, fileResult->copyChecksum);
+            pckWriteBinP(resultPack, fileResult->repoChecksum);
             pckWritePackP(resultPack, fileResult->pageChecksumResult);
         }
 
