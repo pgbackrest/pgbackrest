@@ -599,6 +599,7 @@ backupResumeClean(
 
                                 file.sizeRepo = fileResume.sizeRepo;
                                 file.checksumSha1 = fileResume.checksumSha1;
+                                file.checksumRepoSha1 = fileResume.checksumRepoSha1;
                                 file.checksumPage = fileResume.checksumPage;
                                 file.checksumPageError = fileResume.checksumPageError;
                                 file.checksumPageErrorList = fileResume.checksumPageErrorList;
@@ -962,6 +963,9 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             cipherBlockFilterGroupAdd(
                 filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
+            // Capture checksum of file stored in the repo after all operations have been applied
+            ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
+
             // Add size filter last to calculate repo size
             ioFilterGroupAdd(filterGroup, ioSizeNew());
 
@@ -981,7 +985,8 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 .size = strSize(content),
                 .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                 .timestamp = timestamp,
-                .checksumSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))),
+                .checksumSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 0))),
+                .checksumRepoSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 1))),
             };
 
             manifestFileAdd(manifest, &file);
@@ -1737,6 +1742,8 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
                 pckWriteStrP(param, file.name);
+                pckWriteBinP(param, file.checksumRepoSha1 != NULL ? BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE) : NULL);
+                pckWriteU64P(param, file.sizeRepo);
                 pckWriteBoolP(param, file.resume);
                 pckWriteBoolP(param, file.reference != NULL);
 
@@ -2085,6 +2092,9 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                         cipherBlockFilterGroupAdd(
                             filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
+                        // Capture checksum of file stored in the repo after all operations have been applied
+                        // !!! ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
+
                         // Add size filter last to calculate repo size
                         ioFilterGroupAdd(filterGroup, ioSizeNew());
 
@@ -2110,9 +2120,10 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                             .size = backupData->walSegmentSize,
                             .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                             .timestamp = manifestData(manifest)->backupTimestampStop,
+                            .checksumSha1 = bufPtr(bufNewDecode(encodingHex, strSubN(archiveFile, 25, 40))),
+                            // !!! .checksumRepoSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))),
                         };
 
-                        file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, strSubN(archiveFile, 25, 40)));
 
                         manifestFileAdd(manifest, &file);
                     }

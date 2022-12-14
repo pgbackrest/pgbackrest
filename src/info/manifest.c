@@ -2753,6 +2753,7 @@ manifestValidate(Manifest *this, bool strict)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const String *const walPath = strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(this->pub.data.pgVersion)));
         String *error = strNew();
 
         // Validate files
@@ -2767,6 +2768,7 @@ manifestValidate(Manifest *this, bool strict)
             // These are strict checks to be performed only after a backup and before the final manifest save
             if (strict)
             {
+
                 // Zero-length files must have a specific checksum
                 if (file.size == 0 && !bufEq(HASH_TYPE_SHA1_ZERO_BUF, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
                 {
@@ -2774,6 +2776,10 @@ manifestValidate(Manifest *this, bool strict)
                         error, "\ninvalid checksum '%s' for zero size file '%s'",
                         strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))), strZ(file.name));
                 }
+
+                // Repo checksum is required for new manifests but old manifests may not have it
+                if (file.checksumRepoSha1 == NULL && !strBeginsWith(file.name, walPath) && !this->pub.data.bundle)
+                    strCatFmt(error, "\nmissing repo checksum for file '%s'", strZ(file.name));
 
                 // Non-zero size files must have non-zero repo size
                 if (file.sizeRepo == 0 && file.size != 0)

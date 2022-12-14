@@ -136,29 +136,16 @@ backupFile(
                     // Else if the pg file matches or is unknown because delta was not performed then check the repo file
                     else if (!file->pgFileDelta || pgFileMatch)
                     {
+                        ASSERT(file->repoFileChecksum != NULL);
+
                         // Check the repo file in a try block because on error (e.g. missing or corrupt file that can't be decrypted
                         // or decompressed) we should recopy rather than ending the backup.
                         TRY_BEGIN()
                         {
                             // Generate checksum/size for the repo file
                             IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
-
-                            if (cipherType != cipherTypeNone)
-                            {
-                                ioFilterGroupAdd(
-                                    ioReadFilterGroup(read),
-                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass)));
-                            }
-
-                            // Decompress the file if compressed
-                            if (repoFileCompressType != compressTypeNone)
-                                ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(repoFileCompressType));
-
-                            // !!! USE REPO CHECKSUM FOR VERIFY WHEN PRESENT
-
                             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                             ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
-
                             ioReadDrain(read);
 
                             // Test checksum/size
@@ -167,7 +154,7 @@ backupFile(
                             uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                             // No need to recopy if checksum/size match
-                            if (file->pgFileSize == pgTestSize && bufEq(file->pgFileChecksum, pgTestChecksum))
+                            if (file->repoFileSize == pgTestSize && bufEq(file->repoFileChecksum, pgTestChecksum))
                             {
                                 MEM_CONTEXT_BEGIN(lstMemContext(result))
                                 {

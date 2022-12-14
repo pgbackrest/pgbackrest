@@ -1047,87 +1047,10 @@ testRun(void)
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
         TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "confirm contents");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("resumed file is missing in repo but present in resumed manifest, file same name in repo - RECOPY");
-
-        fileList = lstNewP(sizeof(BackupFile));
-
-        file = (BackupFile)
-        {
-            .pgFile = pgFile,
-            .pgFileDelta = true,
-            .pgFileIgnoreMissing = false,
-            .pgFileSize = 9,
-            .pgFileCopyExactSize = true,
-            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
-            .pgFileChecksumPage = false,
-            .manifestFile = STRDEF(BOGUS_STR),
-            .manifestFileResume = true,
-            .manifestFileHasReference = false,
-        };
-
-        lstAdd(fileList, &file);
-
-        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
-
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", "testfile\n", .comment = "resumed file is missing in repo");
-        TEST_ASSIGN(
-            result,
-            *(BackupFileResult *)lstGet(backupFile(repoFile, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
-            "backup 9 bytes of pgfile to file to resume in repo");
-        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
-        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "check recopy result");
-        TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67",
-            "copy checksum for file size 9");
-        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
-        TEST_STORAGE_GET(
-            storageRepo(), strZ(backupPathFile), "atestfile###", .comment = "existing file with same name as pgFile not modified");
-        TEST_STORAGE_GET(
-            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F/" BOGUS_STR, "atestfile", .comment = "resumed file copied");
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190718-155825F", "testfile\n", .remove = true,
+            .comment = "resumed file is missing in repo");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("file exists in repo & db, checksum not same in repo - RECOPY");
-
-        HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), strZ(backupPathFile), "adifferentfile",
-            .comment = "create different file (size and checksum) with same name in repo");
-
-        fileList = lstNewP(sizeof(BackupFile));
-
-        file = (BackupFile)
-        {
-            .pgFile = pgFile,
-            .pgFileDelta = true,
-            .pgFileIgnoreMissing = false,
-            .pgFileSize = 9,
-            .pgFileCopyExactSize = true,
-            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
-            .pgFileChecksumPage = false,
-            .manifestFile = pgFile,
-            .manifestFileResume = true,
-            .manifestFileHasReference = false,
-        };
-
-        lstAdd(fileList, &file);
-
-        repoFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(backupLabel), strZ(file.manifestFile));
-
-        // Delta set, ignoreMissing false, no hasReference
-        TEST_ASSIGN(
-            result,
-            *(BackupFileResult *)lstGet(backupFile(repoFile, compressTypeNone, 1, cipherTypeNone, NULL, fileList), 0),
-            "db & repo file, pgFileMatch, repo checksum no match, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "copy 9 bytes");
-        TEST_RESULT_UINT(result.repoSize, 9, "repo=copy size");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
-        TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67",
-            "copy checksum for file size 9");
-        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
-        TEST_STORAGE_GET(storageRepo(), strZ(backupPathFile), "atestfile", .comment = "existing file recopied");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file exists in repo but missing from db, checksum same in repo - SKIP");
@@ -1144,6 +1067,8 @@ testRun(void)
             .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
             .pgFileChecksumPage = false,
             .manifestFile = pgFile,
+            .repoFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
+            .repoFileSize = 9,
             .manifestFileResume = true,
             .manifestFileHasReference = false,
         };
@@ -1159,7 +1084,7 @@ testRun(void)
         TEST_RESULT_PTR(result.copyChecksum, NULL, "copy checksum NULL");
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", BOGUS_STR "\n", .comment = "file removed from repo");
+            storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F", NULL, .comment = "file removed from repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compression set, all other boolean parameters false - COPY");
@@ -1197,40 +1122,6 @@ testRun(void)
             .comment = "copy file to repo compress success");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg and repo file exist & match, prior checksum, compression - COPY CHECKSUM");
-
-        fileList = lstNewP(sizeof(BackupFile));
-
-        file = (BackupFile)
-        {
-            .pgFile = pgFile,
-            .pgFileIgnoreMissing = false,
-            .pgFileSize = 9,
-            .pgFileCopyExactSize = true,
-            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
-            .pgFileChecksumPage = false,
-            .manifestFile = pgFile,
-            .manifestFileResume = true,
-            .manifestFileHasReference = false,
-        };
-
-        lstAdd(fileList, &file);
-
-        TEST_ASSIGN(
-            result,
-            *(BackupFileResult *)lstGet(backupFile(repoFile, compressTypeGz, 3, cipherTypeNone, NULL, fileList), 0),
-            "pg file & repo exists, match, checksum, no ignoreMissing, compression, no pageChecksum, no delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "copy=pgFile size");
-        TEST_RESULT_UINT(result.repoSize, 0, "repo size not calculated");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultChecksum, "checksum file");
-        TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67",
-            "compressed repo file checksum matches");
-        TEST_STORAGE_EXISTS(
-            storageRepo(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(backupLabel), strZ(pgFile)),
-            .comment = "compressed file exists");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create a zero sized file - checksum will be set but in backupManifestUpdate it will not be copied");
 
         // Create zero sized file in pg
@@ -1265,7 +1156,6 @@ testRun(void)
         TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum result is NULL");
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_BACKUP "/20190718-155825F",
-            BOGUS_STR "\n"
             "testfile.gz\n"
             "zerofile\n",
             .comment = "copy zero file to repo success");
@@ -1320,116 +1210,6 @@ testRun(void)
         TEST_STORAGE_GET(
             storageRepo(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
             .comment = "copy file to encrypted repo success");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("delta, copy file (size mismatch) to encrypted repo");
-
-        fileList = lstNewP(sizeof(BackupFile));
-
-        file = (BackupFile)
-        {
-            .pgFile = pgFile,
-            .pgFileDelta = true,
-            .pgFileIgnoreMissing = false,
-            .pgFileSize = 8,
-            .pgFileCopyExactSize = true,
-            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
-            .pgFileChecksumPage = false,
-            .manifestFile = pgFile,
-            .manifestFileResume = true,
-            .manifestFileHasReference = false,
-        };
-
-        lstAdd(fileList, &file);
-
-        // Delta but pgFile does not match size passed, prior checksum, no compression, no pageChecksum, delta, no hasReference
-        TEST_ASSIGN(
-            result,
-            *(BackupFileResult *)lstGet(
-                backupFile(repoFile, compressTypeNone, 1, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
-            "pg and repo file exists, pgFileMatch false, no ignoreMissing, no pageChecksum, delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 8, "copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultCopy, "copy file");
-        TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, result.copyChecksum), "acc972a8319d4903b839c64ec217faa3e77b4fcb",
-            "copy checksum for size passed");
-        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
-        TEST_STORAGE_GET(
-            storageRepo(), strZ(backupPathFile), "atestfil", .cipherType = cipherTypeAes256Cbc,
-            .comment = "delta, copy file (size missmatch) to encrypted repo success");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no delta, recopy (size mismatch) file to encrypted repo");
-
-        fileList = lstNewP(sizeof(BackupFile));
-
-        file = (BackupFile)
-        {
-            .pgFile = pgFile,
-            .pgFileIgnoreMissing = false,
-            .pgFileSize = 9,
-            .pgFileCopyExactSize = true,
-            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("9bc8ab2dda60ef4beed07d1e19ce0676d5edde67")),
-            .pgFileChecksumPage = false,
-            .manifestFile = pgFile,
-            .manifestFileResume = true,
-            .manifestFileHasReference = false,
-        };
-
-        lstAdd(fileList, &file);
-
-        TEST_ASSIGN(
-            result,
-            *(BackupFileResult *)lstGet(
-                backupFile(repoFile, compressTypeNone, 0, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
-            "pg and repo file exists, checksum mismatch, no ignoreMissing, no pageChecksum, no delta, no hasReference");
-        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
-        TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67", "copy checksum");
-        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
-        TEST_STORAGE_GET(
-            storageRepoWrite(), strZ(backupPathFile), "atestfile", .cipherType = cipherTypeAes256Cbc,
-            .comment = "recopy file to encrypted repo success");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("no delta, recopy (checksum mismatch), file to encrypted repo");
-
-        fileList = lstNewP(sizeof(BackupFile));
-
-        file = (BackupFile)
-        {
-            .pgFile = pgFile,
-            .pgFileIgnoreMissing = false,
-            .pgFileSize = 9,
-            .pgFileCopyExactSize = true,
-            .pgFileChecksum = bufNewDecode(encodingHex, STRDEF("1234567890123456789012345678901234567890")),
-            .pgFileChecksumPage = false,
-            .manifestFile = pgFile,
-            .manifestFileResume = true,
-            .manifestFileHasReference = false,
-        };
-
-        lstAdd(fileList, &file);
-
-        TEST_ASSIGN(
-            result,
-            *(BackupFileResult *)lstGet(
-                backupFile(repoFile, compressTypeNone, 0, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS), fileList), 0),
-            "backup file");
-
-        TEST_RESULT_UINT(result.copySize, 9, "copy size set");
-        TEST_RESULT_UINT(result.repoSize, 32, "repo size set");
-        TEST_RESULT_UINT(result.backupCopyResult, backupCopyResultReCopy, "recopy file");
-        TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, result.copyChecksum), "9bc8ab2dda60ef4beed07d1e19ce0676d5edde67",
-            "copy checksum for size passed");
-        TEST_RESULT_PTR(result.pageChecksumResult, NULL, "page checksum NULL");
-        TEST_STORAGE_GET(
-            storageRepo(), strZ(backupPathFile), "atestfile",
-            .cipherType = cipherTypeAes256Cbc, .comment = "recopy file to encrypted repo, success");
     }
 
     // *****************************************************************************************************************************
@@ -2274,6 +2054,7 @@ testRun(void)
             ManifestFile file = manifestFileUnpack(manifestResume, *filePack);
 
             file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("06d06bb31b570b94d7b4325f511f853dbe771c21")));
+            file.checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("06d06bb31b570b94d7b4325f511f853dbe771c21")));
 
             manifestFilePackUpdate(manifestResume, filePack, &file);
 
@@ -2382,6 +2163,7 @@ testRun(void)
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/size-mismatch"),
                     .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
+                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
                     .size = 33});
 
             // Time does not match between cluster and resume manifest
@@ -2392,6 +2174,7 @@ testRun(void)
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch"),
                     .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
+                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
                     .size = 4, .timestamp = backupTimeStart - 1});
 
             // Size is zero in cluster and resume manifest. ??? We'd like to remove this requirement after the migration.
@@ -2569,6 +2352,7 @@ testRun(void)
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch2"),
                     .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
+                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
                     .size = 4, .timestamp = backupTimeStart});
 
             // Links are always removed on resume

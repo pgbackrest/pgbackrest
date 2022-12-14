@@ -34,6 +34,8 @@ typedef struct BackupFile
     const Buffer *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
     const String *manifestFile;                                     // Repo file
+    const Buffer *repoFileChecksum;                                 // Expected repo file checksum
+    uint64_t repoFileSize;                                          // Expected repo file size
     bool manifestFileResume;                                        // Checksum repo file before copying
     bool manifestFileHasReference;                                  // Reference to prior backup, if any
 } BackupFile;
