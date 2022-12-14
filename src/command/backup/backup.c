@@ -2092,9 +2092,6 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                         cipherBlockFilterGroupAdd(
                             filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
 
-                        // Capture checksum of file stored in the repo after all operations have been applied
-                        // !!! ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
-
                         // Add size filter last to calculate repo size
                         ioFilterGroupAdd(filterGroup, ioSizeNew());
 
@@ -2121,9 +2118,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                             .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                             .timestamp = manifestData(manifest)->backupTimestampStop,
                             .checksumSha1 = bufPtr(bufNewDecode(encodingHex, strSubN(archiveFile, 25, 40))),
-                            // !!! .checksumRepoSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))),
                         };
-
 
                         manifestFileAdd(manifest, &file);
                     }
