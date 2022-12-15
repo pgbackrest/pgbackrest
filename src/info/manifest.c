@@ -2778,7 +2778,7 @@ manifestValidate(Manifest *this, bool strict)
 
                 // Repo checksum is required for new manifests but old manifests may not have it !!!
                 // !!! FOR BUNDLING THIS SHOULD ONLY WORK FOR ZERO -- OR JUST REMOVE IT?
-                if (file.checksumRepoSha1 == NULL && !strBeginsWith(file.name, walPath) &&
+                if (file.checksumRepoSha1 == NULL && !strBeginsWith(file.name, walPath) && // {uncovered - !!!}
                     !(this->pub.data.bundle && file.size == 0))  // {uncovered - !!!}
                 {
                     strCatFmt(error, "\nmissing repo checksum for file '%s'", strZ(file.name)); // {uncovered - !!!}
