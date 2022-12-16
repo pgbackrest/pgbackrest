@@ -173,7 +173,7 @@ testRun(void)
             "check pack string");
 
         TEST_RESULT_STR_Z(
-            bufHex(pack),
+            strNewEncode(encodingHex, pack),
             "98e803"                                                //  1,  u64, 750
             "98fd9fad8f07"                                          //  2,  u64, 1911246845
             "9c01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
@@ -304,7 +304,7 @@ testRun(void)
         TEST_RESULT_INT(pckReadI32P(packRead, .id = 7, .defaultValue = 1), 1, "read default 1");
         TEST_RESULT_VOID(pckReadArrayEndP(packRead), "read array end");
 
-        TEST_RESULT_STR_Z(bufHex(pckReadBinP(packRead)), "050403020100", "read bin");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, pckReadBinP(packRead)), "050403020100", "read bin");
         TEST_RESULT_PTR(pckReadBinP(packRead), NULL, "read bin null");
         TEST_RESULT_UINT(bufSize(pckReadBinP(packRead)), 0, "read bin zero length");
 
@@ -372,7 +372,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(pckReadNext(packRead), true, "next pack");
         TEST_RESULT_UINT(pckReadSize(packRead), 4, "pack size");
-        TEST_RESULT_STR_Z(bufHex(BUF(pckReadBufPtr(packRead), pckReadSize(packRead))), "98890600", "pack hex");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, BUF(pckReadBufPtr(packRead), pckReadSize(packRead))), "98890600", "pack hex");
         TEST_RESULT_UINT(pckReadU64P(pckReadNewC(pckReadBufPtr(packRead), pckReadSize(packRead))), 777, "u64 value");
         TEST_RESULT_VOID(pckReadConsume(packRead), "consume pack");
 

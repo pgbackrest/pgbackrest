@@ -169,7 +169,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_RESULT_STR_Z(
-            bufHex(pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), DELTA_MAP_FILTER_TYPE))),
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), DELTA_MAP_FILTER_TYPE))),
             "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
             "6dae29c06c5f04601445c493156d10fe1be23b6d"
             "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8",
@@ -191,7 +191,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_RESULT_STR_Z(
-            bufHex(pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), DELTA_MAP_FILTER_TYPE))),
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), DELTA_MAP_FILTER_TYPE))),
             "6dae29c06c5f04601445c493156d10fe1be23b6d"
             "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
             "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"

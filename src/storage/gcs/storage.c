@@ -178,7 +178,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     {
         // Add claim
         strCatEncode(
-            result, encodeBase64Url,
+            result, encodingBase64Url,
             BUFSTR(
                 strNewFmt(
                     "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\",\"aud\":\"%s\""
@@ -220,7 +220,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 
             // Add dot delimiter and signature
             strCatChr(result, '.');
-            strCatEncode(result, encodeBase64Url, signature);
+            strCatEncode(result, encodingBase64Url, signature);
         }
         FINALLY()
         {

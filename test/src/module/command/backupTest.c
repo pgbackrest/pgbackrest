@@ -193,8 +193,9 @@ testBackupValidateList(
                             strCatFmt(mapLog, "%u", blockMapItem->reference);
 
                             // Check block checksum
-                            const String *const blockChecksum = bufHex(cryptoHashOne(hashTypeSha1, block));
-                            const String *const mapChecksum = bufHex(BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE));
+                            const String *const blockChecksum = strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, block));
+                            const String *const mapChecksum = strNewEncode(
+                                encodingHex, BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE));
 
                             if (!strEq(blockChecksum, mapChecksum))
                             {
@@ -210,7 +211,7 @@ testBackupValidateList(
 
                         strCatFmt(result, ", m={%s}", strZ(mapLog));
 
-                        checksum = bufHex(pckReadBinP(pckReadNew(ioFilterResult(checksumFilter))));
+                        checksum = strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(checksumFilter))));
                     }
                     else
                     {
@@ -230,7 +231,8 @@ testBackupValidateList(
                         ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
 
                         size = bufUsed(storageGetP(read));
-                        checksum = bufHex(
+                        checksum = strNewEncode(
+                            encodingHex,
                             pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
                     }
 
@@ -497,7 +499,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
         hrnPgWalToBuffer((PgWal){.version = pgControl.version, .systemId = pgControl.systemId}, walBuffer);
-        const String *walChecksum = bufHex(cryptoHashOne(hashTypeSha1, walBuffer));
+        const String *walChecksum = strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer));
 
         for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
         {
@@ -974,7 +976,7 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
-            bufHex(buffer),
+            strNewEncode(encodingHex, buffer),
             "8101"                                      // reference 128
             "00"                                        // bundle id 0
             "00"                                        // offset 0
@@ -1021,7 +1023,7 @@ testRun(void)
         TEST_RESULT_VOID(blockMapWrite(blockMapNewRead(ioBufferReadNewOpen(buffer)), write), "read and save");
         ioWriteClose(write);
 
-        TEST_RESULT_STR(bufHex(bufferCompare), bufHex(buffer), "compare");
+        TEST_RESULT_STR(strNewEncode(encodingHex, bufferCompare), strNewEncode(encodingHex, buffer), "compare");
     }
 
     // *****************************************************************************************************************************
@@ -1041,7 +1043,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_RESULT_UINT(pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), 0, "compare");
-        TEST_RESULT_STR_Z(bufHex(destination), "", "compare");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, destination), "", "compare");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with partial block");
@@ -1060,14 +1062,14 @@ testRun(void)
         TEST_RESULT_UINT(mapSize, 26, "map size");
 
         TEST_RESULT_STR_Z(
-            bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
+            strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
             "020031023200",                             // block 0
             "block list");
 
         const Buffer *map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            bufHex(map),
+            strNewEncode(encodingHex, map),
             "01"                                        // reference
             "00"                                        // bundle id
             "00"                                        // offset
@@ -1097,7 +1099,7 @@ testRun(void)
         TEST_RESULT_UINT(mapSize, 68, "map size");
 
         TEST_RESULT_STR_Z(
-            bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
+            strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
             "02004101424300"                            // block 0
             "02015801595a00"                            // block 1
             "02013101323300",                           // block 2
@@ -1106,7 +1108,7 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            bufHex(map),
+            strNewEncode(encodingHex, map),
             "03"                                        // reference
             "04"                                        // bundle id
             "05"                                        // offset
@@ -1144,7 +1146,7 @@ testRun(void)
         TEST_RESULT_UINT(mapSize, 96, "map size");
 
         TEST_RESULT_STR_Z(
-            bufHex(BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
+            strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
             "03004143044300"                            // block 0
             "02034000",                                 // block 3
             "block list");
@@ -1152,7 +1154,7 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            bufHex(map),
+            strNewEncode(encodingHex, map),
             "04"                                        // reference
             "00"                                        // bundle id
             "00"                                        // offset
@@ -3267,7 +3269,7 @@ testRun(void)
             *(PageHeaderData *)(bufPtr(relation) + (PG_PAGE_SIZE_DEFAULT * 0x01)) = (PageHeaderData){.pd_upper = 0xFF};
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = backupTimeStart);
-            const char *rel1_2Sha1 = strZ(bufHex(cryptoHashOne(hashTypeSha1, relation)));
+            const char *rel1_2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // File with bad page checksums
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 5);
@@ -3281,7 +3283,7 @@ testRun(void)
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
-            const char *rel1_3Sha1 = strZ(bufHex(cryptoHashOne(hashTypeSha1, relation)));
+            const char *rel1_3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // File with bad page checksum
             relation = bufNew(PG_PAGE_SIZE_DEFAULT * 3);
@@ -3294,7 +3296,7 @@ testRun(void)
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
-            const char *rel1_4Sha1 = strZ(bufHex(cryptoHashOne(hashTypeSha1, relation)));
+            const char *rel1_4Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, relation)));
 
             // Add a tablespace
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGTBLSPC);

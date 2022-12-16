@@ -787,7 +787,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DEF")), "write");
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
-        TEST_RESULT_STR_Z(bufHex(destination), "034142430144454600", "check");
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, destination), "034142430144454600", "check");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read chunks");

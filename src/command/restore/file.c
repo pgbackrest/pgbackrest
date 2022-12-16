@@ -132,7 +132,8 @@ List *restoreFile(
                                 if (file->size == 0 ||
                                     strEq(
                                         file->checksum,
-                                        bufHex(
+                                        strNewEncode(
+                                            encodingHex,
                                             pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)))))
                                 {
                                     // If the hash/size are now the same but the time is not, then set the time back to the backup
@@ -478,12 +479,12 @@ List *restoreFile(
                         storageReadFree(repoFileRead);
 
                     // Validate checksum
-                    if (!strEq(file->checksum, bufHex(checksum)))
+                    if (!strEq(file->checksum, strNewEncode(encodingHex, checksum)))
                     {
                         THROW_FMT(
                             ChecksumError,
                             "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(file->name),
-                            strZ(bufHex(checksum)), strZ(file->checksum));
+                            strZ(strNewEncode(encodingHex, checksum)), strZ(file->checksum));
                     }
                 }
             }
