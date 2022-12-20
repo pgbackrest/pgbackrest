@@ -2087,18 +2087,6 @@ test/src/common/harnessPostgres.h:
   class: test/harness
   type: c/h
 
-test/src/common/harnessPostgres/harness090.c:
-  class: test/harness
-  type: c
-
-test/src/common/harnessPostgres/harness091.c:
-  class: test/harness
-  type: c
-
-test/src/common/harnessPostgres/harness092.c:
-  class: test/harness
-  type: c
-
 test/src/common/harnessPostgres/harness093.c:
   class: test/harness
   type: c

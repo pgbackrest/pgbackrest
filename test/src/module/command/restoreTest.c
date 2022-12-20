@@ -708,9 +708,7 @@ testRun(void)
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all/1'\n"
             "P00   INFO: map tablespace 'pg_tblspc/2' to '/2-3'");
 
-        // Remap all tablespaces with tablespace-map-all and update version to 9.2 to test warning
-        manifest->pub.data.pgVersion = PG_VERSION_92;
-
+        // Remap all tablespaces with tablespace-map-all
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -728,8 +726,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all2/1'\n"
-            "P00   INFO: map tablespace 'pg_tblspc/2' to '/all2/ts2'\n"
-            "P00   WARN: update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= 9.2");
+            "P00   INFO: map tablespace 'pg_tblspc/2' to '/all2/ts2'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid link");
@@ -1263,8 +1260,8 @@ testRun(void)
         OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
-            manifest->pub.data.pgVersion = PG_VERSION_90;
-            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_90);
+            manifest->pub.data.pgVersion = PG_VERSION_94;
+            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_94);
 
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
             manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION)});
@@ -1417,7 +1414,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         TEST_RESULT_STR_Z(
-            restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.0_201008051/32768/)",
+            restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.4_201409291/32768/)",
             "check expression");
 
         TEST_RESULT_LOG(
@@ -1727,10 +1724,6 @@ testRun(void)
             "pause_at_recovery_target = 'false'\n",
             "check recovery options");
 
-        TEST_ERROR(
-            restoreRecoveryConf(PG_VERSION_90, restoreLabel), OptionInvalidError,
-            "target-action option is only available in PostgreSQL >= 9.1");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recovery type = standby");
 
@@ -2012,8 +2005,8 @@ testRun(void)
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
             manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
-            manifest->pub.data.pgVersion = PG_VERSION_90;
-            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_90);
+            manifest->pub.data.pgVersion = PG_VERSION_94;
+            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_94);
             manifest->pub.data.backupType = backupTypeFull;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
@@ -2035,12 +2028,12 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "b74d60e763728399bcd3fb63f7dd1f97b46c6b44"});
-            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_90_STR "\n");
+                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n");
 
             // Store the file also to the encrypted repo
             HRN_STORAGE_PUT_Z(
-                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_90_STR "\n",
+                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_94_STR "\n",
                 .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
             // pg_tblspc
@@ -2100,7 +2093,7 @@ testRun(void)
                 "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
                 "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
                 "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
-                "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100.00%%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44"
+                "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100.00%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"
                     "\n"
                 "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
                 "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
@@ -2216,7 +2209,7 @@ testRun(void)
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1"), .mode = 0700, .group = groupName(), .user = userName()});
             manifestPathAdd(
                 manifest, &(ManifestPath){
-                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/PG_9.0_201008051"), .mode = 0700, .group = groupName(),
+                    .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/PG_9.4_201409291"), .mode = 0700, .group = groupName(),
                     .user = userName()});
             manifestLinkAdd(
                 manifest, &(ManifestLink){
@@ -2235,10 +2228,10 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION), .size = 4,
                     .timestamp = 1482182860, .mode = 0600, .group = groupName(), .user = userName(),
-                    .checksumSha1 = "b74d60e763728399bcd3fb63f7dd1f97b46c6b44"});
+                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION,
-                PG_VERSION_90_STR "\n");
+                PG_VERSION_94_STR "\n");
 
             // Always sort
             lstSort(manifest->pub.targetList, sortOrderAsc);
@@ -2263,7 +2256,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
-            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.0_201008051' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.4_201409291' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
             "P00 DETAIL: update mode for '" TEST_PATH "/pg' to 0700\n"
             "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/bogus-file'\n"
@@ -2276,17 +2269,18 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 73.53%) checksum"
                 " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
-                " (4B, 85.29%) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88.24%) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+                " (4B, 85.29%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88.24%) checksum"
+                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 88.24%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100.00%)"
-                " checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
+                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.0_201008051'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.4_201409291'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
             "P00   INFO: restore size = 34B, file total = 6");
@@ -2309,7 +2303,7 @@ testRun(void)
             ".> {d=" TEST_PATH "/ts/1}\n"
             "16384/\n"
             "16384/PG_VERSION {s=4, t=1482182860}\n"
-            "PG_9.0_201008051/\n",
+            "PG_9.4_201409291/\n",
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was not restored because delta force relies on time and size which were the same in the manifest and on disk
@@ -2340,25 +2334,25 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
-            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.0_201008051' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.4_201409291' exists\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
-            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_9.0_201008051'\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_9.4_201409291'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, [PCT]) checksum"
                 " 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, [PCT]) checksum"
                 " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, [PCT]) checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, [PCT]) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, [PCT]) checksum"
                 " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, [PCT])"
-                " checksum b74d60e763728399bcd3fb63f7dd1f97b46c6b44\n"
+                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.0_201008051'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.4_201409291'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
             "P00   INFO: restore size = [SIZE], file total = 6");
@@ -2381,14 +2375,14 @@ testRun(void)
             ".> {d=" TEST_PATH "/ts/1}\n"
             "16384/\n"
             "16384/PG_VERSION {s=4, t=1482182860}\n"
-            "PG_9.0_201008051/\n",
+            "PG_9.4_201409291/\n",
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was restored by the force option
-        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_90_STR "\n", .comment = "check PG_VERSION was restored");
+        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_94_STR "\n", .comment = "check PG_VERSION was restored");
 
         // Remove tablespace
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), MANIFEST_TARGET_PGTBLSPC "/1/PG_9.0_201008051", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), MANIFEST_TARGET_PGTBLSPC "/1/PG_9.4_201409291", .recurse = true);
 
         // Remove files
         HRN_STORAGE_REMOVE(storagePgWrite(), "postgresql.conf");
@@ -2482,7 +2476,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 0,
-                    .reference = NULL, .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .reference = NULL, .checksumSha1 = "2fafe15172578a19dbc196723bca6a4a8ad70da8"});
             manifestFileAdd(
                 manifest,
                 &(ManifestFile){
@@ -2510,7 +2504,7 @@ testRun(void)
                     .reference = NULL, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7"});
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
-                PG_VERSION_94_STR "\n" PG_VERSION_94_STR "\nyyyxxxxxAzzA");
+                PG_VERSION_96_STR "\n" PG_VERSION_96_STR "\nyyyxxxxxAzzA");
 
             // base directory
             manifestPathAdd(
@@ -2530,7 +2524,7 @@ testRun(void)
                 &(ManifestFile){
                     .name = STRDEF(TEST_PGDATA "base/1/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
                     .mode = 0600, .group = groupName(), .user = userName(), .bundleId = 1, .bundleOffset = 4,
-                    .checksumSha1 = "8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"});
+                    .checksumSha1 = "2fafe15172578a19dbc196723bca6a4a8ad70da8"});
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -2800,9 +2794,9 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (bundle 20161219-212741F/1/1, 8KB, [PCT])"
                 " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (bundle 1/0, 4B, [PCT]) checksum"
-                " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 4B, [PCT]) checksum"
-                " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
                 " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx (bundle 1/11, 5B, [PCT]) checksum"
@@ -2988,9 +2982,9 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (bundle 20161219-212741F/1/1, 8KB,"
                 " [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (bundle 1/0, 4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+                " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
                 " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx - exists and matches backup (bundle 1/11, 5B, [PCT]) checksum"

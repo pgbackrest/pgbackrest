@@ -175,19 +175,9 @@ backupInit(const InfoBackup *infoBackup)
     BackupData *result = memNew(sizeof(BackupData));
     *result = (BackupData){0};
 
-    // Check that the PostgreSQL version supports backup from standby. The check is done using the stanza info because pg_control
-    // cannot be loaded until a primary is found -- which will also lead to an error if the version does not support standby. If the
-    // pg_control version does not match the stanza version then there will be an error further down.
+    // Don't allow backup from standby when offline
     InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
-    if (cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby) && infoPg.version < PG_VERSION_BACKUP_STANDBY)
-    {
-        THROW_FMT(
-            ConfigError, "option '" CFGOPT_BACKUP_STANDBY "' not valid for " PG_NAME " < %s",
-            strZ(pgVersionToStr(PG_VERSION_BACKUP_STANDBY)));
-    }
-
-    // Don't allow backup from standby when offline
     if (!cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby))
     {
         LOG_WARN(
@@ -239,13 +229,6 @@ backupInit(const InfoBackup *infoBackup)
             PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64 "\n"
             "HINT: is this the correct stanza?", strZ(pgVersionToStr(pgControl.version)), pgControl.systemId,
             strZ(pgVersionToStr(infoPg.version)), infoPg.systemId);
-    }
-
-    // Only allow stop auto in PostgreSQL >= 9.3
-    if (cfgOptionBool(cfgOptStopAuto) && result->version < PG_VERSION_93)
-    {
-        LOG_WARN(CFGOPT_STOP_AUTO " option is only available in " PG_NAME " >= " PG_VERSION_93_STR);
-        cfgOptionSet(cfgOptStopAuto, cfgSourceParam, BOOL_FALSE_VAR);
     }
 
     // If checksum page is not explicitly set then automatically enable it when checksums are available
@@ -2037,7 +2020,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
             // Loop through all the segments in the lsn range
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
-                manifestData(manifest)->pgVersion, backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
+                backupData->timeline, lsnStart, lsnStop, backupData->walSegmentSize);
 
             for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
             {
