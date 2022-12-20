@@ -176,7 +176,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"" TEST_USER "\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
+                .param =
+                    "[\"" TEST_USER "\"," TEST_USER_LEN ",\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
                 .resultInt = -16},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = -16},
@@ -205,7 +206,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"" TEST_USER "\",7,null,\"/home/vagrant/.ssh/id_rsa\",null]", .resultInt = -16},
+                .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",null,\"/home/vagrant/.ssh/id_rsa\",null]", .resultInt = -16},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = -16},
             {.function = NULL}
@@ -233,7 +234,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "01234567899876543210"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"" TEST_USER "\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",\"keyPassphrase\"]",
+                .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\","
+                    "\"keyPassphrase\"]",
                 .resultInt = -16},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = -16},
@@ -299,10 +301,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"" TEST_USER "\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
+                .param =
+                    "[\"" TEST_USER "\"," TEST_USER_LEN ",\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 1000},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"" TEST_USER "\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
+                .param =
+                    "[\"" TEST_USER "\"," TEST_USER_LEN ",\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_OK},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_NONE},
@@ -331,7 +335,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"" TEST_USER "\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
+                .param =
+                    "[\"" TEST_USER "\"," TEST_USER_LEN ",\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
                 .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true},
             {.function = NULL}
@@ -354,7 +359,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"" TEST_USER "\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
+                .param =
+                    "[\"" TEST_USER "\"," TEST_USER_LEN ",\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
                 .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true, .sleep = 1000},
             {.function = HRNLIBSSH2_SFTP_INIT, .resultNull = true, .sleep = 200},
@@ -402,7 +408,8 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-                .param = "[\"" TEST_USER "\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
+                .param =
+                    "[\"" TEST_USER "\"," TEST_USER_LEN ",\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",
                 .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_INIT, .resultInt = LIBSSH2_ERROR_NONE, .sleep = 1000},
             HRNLIBSSH2_MACRO_SHUTDOWN()

@@ -76,6 +76,7 @@ The test code is included directly so it can freely interact with the included C
 #define TEST_USER                                                   "{[C_TEST_USER]}"
 #define TEST_USER_ID                                                {[C_TEST_USER_ID]}
 #define TEST_USER_ID_Z                                              "{[C_TEST_USER_ID]}"
+#define TEST_USER_LEN                                               "{[C_TEST_USER_LEN]}"
 
 #ifdef HRN_FEATURE_STRING
     STRING_EXTERN(TEST_USER_STR, TEST_USER);
