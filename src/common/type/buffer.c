@@ -83,7 +83,7 @@ bufNewC(const void *buffer, size_t size)
 
 /**********************************************************************************************************************************/
 Buffer *
-bufNewDecode(EncodeType type, const String *string)
+bufNewDecode(const EncodingType type, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -205,24 +205,6 @@ bufEq(const Buffer *this, const Buffer *compare)
         FUNCTION_TEST_RETURN(BOOL, memcmp(bufPtrConst(this), bufPtrConst(compare), bufUsed(compare)) == 0);
 
     FUNCTION_TEST_RETURN(BOOL, false);
-}
-
-/**********************************************************************************************************************************/
-String *
-bufHex(const Buffer *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    String *result = strNew();
-
-    for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(this); bufferIdx++)
-        strCatFmt(result, "%02x", bufPtrConst(this)[bufferIdx]);
-
-    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

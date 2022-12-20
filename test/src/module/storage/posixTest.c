@@ -356,9 +356,12 @@ testRun(void)
         TEST_RESULT_PTR(storageNewItrP(storageTest, STRDEF(BOGUS_STR), .nullOnMissing = true), NULL, "ignore missing dir");
 
 #ifdef TEST_CONTAINER_REQUIRED
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on permission denied, regardless of errorOnMissing setting");
+
         TEST_ERROR_FMT(
-            storageNewItrP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO ": [13] Permission denied",
-            strZ(pathNoPerm));
+            storageNewItrP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
@@ -516,7 +519,7 @@ testRun(void)
 
 #ifdef TEST_CONTAINER_REQUIRED
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on missing, regardless of errorOnMissing setting");
+        TEST_TITLE("error on permission denied, regardless of errorOnMissing setting");
 
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
@@ -524,8 +527,8 @@ testRun(void)
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
-            storageListP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": [13] Permission denied", strZ(pathNoPerm));
+            storageListP(storageTest, pathNoPerm), PathOpenError, STORAGE_ERROR_LIST_INFO ": [13] Permission denied",
+            strZ(pathNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------

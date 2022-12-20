@@ -321,9 +321,11 @@ testRun(void)
         pckWriteEndP(packWrite);
 
         TEST_ASSIGN(hash, cryptoHashNewPack(pckWriteResult(packWrite)), "create sha1 hash");
-        TEST_RESULT_STR_Z(bufHex(cryptoHash((CryptoHash *)ioFilterDriver(hash))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
         TEST_RESULT_STR_Z(
-            bufHex(cryptoHash((CryptoHash *)ioFilterDriver(hash))), HASH_TYPE_SHA1_ZERO, "    check empty hash again");
+            strNewEncode(encodingHex, cryptoHash((CryptoHash *)ioFilterDriver(hash))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, cryptoHash((CryptoHash *)ioFilterDriver(hash))), HASH_TYPE_SHA1_ZERO,
+            "    check empty hash again");
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -335,7 +337,7 @@ testRun(void)
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRDEF("5")), "    add 5");
 
         TEST_RESULT_STR_Z(
-            bufHex(pckReadBinP(pckReadNew(ioFilterResult(hash)))), "8cb2237d0679ca88db6464eac60da96345513964",
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
         TEST_RESULT_VOID(ioFilterFree(hash), "    free hash");
 
@@ -343,7 +345,8 @@ testRun(void)
         TEST_TITLE("md5 hash - zero bytes");
 
         TEST_ASSIGN(hash, cryptoHashNew(hashTypeMd5), "create md5 hash");
-        TEST_RESULT_STR_Z(bufHex(pckReadBinP(pckReadNew(ioFilterResult(hash)))), HASH_TYPE_MD5_ZERO, "check empty hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), HASH_TYPE_MD5_ZERO, "check empty hash");
 
         // Exercise most of the conditions in the local MD5 code
         // -------------------------------------------------------------------------------------------------------------------------
@@ -362,7 +365,9 @@ testRun(void)
         TEST_RESULT_VOID(
             ioFilterProcessIn(hash, BUFSTRZ("12345678901234567890123456789001234567890012345678901234")), "add 58 bytes");
 
-        TEST_RESULT_STR_Z(bufHex(pckReadBinP(pckReadNew(ioFilterResult(hash)))), "3318600bc9c1d379e91e4bae90721243", "check hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), "3318600bc9c1d379e91e4bae90721243",
+            "check hash");
 
         // Full coverage of local MD5 requires processing > 511MB of data but that makes the test run too long. Instead we'll cheat
         // a bit and initialize the context at 511MB to start. This does not produce a valid MD5 hash but does provide coverage of
@@ -374,22 +379,26 @@ testRun(void)
         ((CryptoHash *)ioFilterDriver(hash))->md5Context->lo = 0x1fffffff;
 
         TEST_RESULT_VOID(ioFilterProcessIn(hash, BUFSTRZ("1")), "add 1");
-        TEST_RESULT_STR_Z(bufHex(pckReadBinP(pckReadNew(ioFilterResult(hash)))), "5c99876f9cafa7f485eac9c7a8a2764c", "check hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), "5c99876f9cafa7f485eac9c7a8a2764c",
+            "check hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha256), "create sha256 hash");
-        TEST_RESULT_STR_Z(bufHex(pckReadBinP(pckReadNew(ioFilterResult(hash)))), HASH_TYPE_SHA256_ZERO, "    check empty hash");
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), HASH_TYPE_SHA256_ZERO, "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(
-            bufHex(cryptoHashOne(hashTypeSha1, BUFSTRDEF("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
+            strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, BUFSTRDEF("12345"))), "8cb2237d0679ca88db6464eac60da96345513964",
             "    check small hash");
         TEST_RESULT_STR_Z(
-            bufHex(cryptoHashOne(hashTypeSha1, BUFSTRDEF(""))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
+            strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, BUFSTRDEF(""))), HASH_TYPE_SHA1_ZERO, "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(
-            bufHex(
+            strNewEncode(
+                encodingHex,
                 cryptoHmacOne(
                     hashTypeSha256,
                     BUFSTRDEF("AWS4wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),

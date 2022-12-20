@@ -45,7 +45,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bufNewDecode()");
 
-        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodeBase64, STRDEF("eno="))), "zz", "decode base64");
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF("eno="))), "zz", "decode base64");
+        TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF(""))), "", "decode empty base64");
     }
 
     // *****************************************************************************************************************************
@@ -130,12 +131,6 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(BUFSTRDEF("123"), bufDup(BUFSTRDEF("1234"))), false, "buffer sizes not equal");
         TEST_RESULT_BOOL(bufEq(BUFSTR(STRDEF("321")), BUFSTRDEF("123")), false, "buffer sizes equal");
         TEST_RESULT_BOOL(bufEq(bufDup(BUFSTRZ("123")), BUF("123", 3)), true, "buffers equal");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("bufHex()"))
-    {
-        TEST_RESULT_STR_Z(bufHex(BUFSTRDEF("ABC-CBA")), "4142432d434241", "buffer to hex");
     }
 
     // *****************************************************************************************************************************

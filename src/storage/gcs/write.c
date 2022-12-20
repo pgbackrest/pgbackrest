@@ -89,14 +89,14 @@ storageWriteGcsVerify(StorageWriteGcs *const this, HttpResponse *const response)
         const String *const md5base64 = varStr(kvGet(content, GCS_JSON_MD5_HASH_VAR));
         CHECK(FormatError, md5base64 != NULL, "MD5 missing");
 
-        const Buffer *const md5actual = bufNewDecode(encodeBase64, md5base64);
+        const Buffer *const md5actual = bufNewDecode(encodingBase64, md5base64);
         const Buffer *const md5expected = pckReadBinP(pckReadNew(ioFilterResult(this->md5hash)));
 
         if (!bufEq(md5actual, md5expected))
         {
             THROW_FMT(
-                FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(bufHex(md5expected)), strZ(this->interface.name),
-                strZ(bufHex(md5actual)));
+                FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(strNewEncode(encodingHex, md5expected)),
+                strZ(this->interface.name), strZ(strNewEncode(encodingHex, md5actual)));
         }
 
         // Check the size when available

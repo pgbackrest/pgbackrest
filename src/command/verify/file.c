@@ -65,7 +65,9 @@ verifyFile(
         if (ioReadDrain(read))
         {
             // Validate checksum
-            if (!strEq(fileChecksum, bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))))
+            if (!strEq(
+                    fileChecksum,
+                    strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))))
             {
                 result = verifyChecksumMismatch;
             }
