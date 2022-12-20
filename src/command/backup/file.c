@@ -134,10 +134,8 @@ backupFile(
                         storageRemoveP(storageRepoWrite(), repoFile);
                     }
                     // Else if the pg file matches or is unknown because delta was not performed then check the repo file
-                    else if (!file->pgFileDelta || pgFileMatch) // {uncovered - !!!}
+                    else if (!file->pgFileDelta || pgFileMatch)
                     {
-                        ASSERT(file->repoFileChecksum != NULL);
-
                         // Generate checksum/size for the repo file
                         IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
                         ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
@@ -150,13 +148,14 @@ backupFile(
                         uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // No need to recopy if checksum/size match
-                        if (file->repoFileSize == pgTestSize && bufEq(file->repoFileChecksum, pgTestChecksum)) // {uncovered - !!!}
+                        if (file->repoFileSize == pgTestSize && // {uncovered - !!!}
+                            bufEq(file->repoFileChecksum != NULL ? file->repoFileChecksum : file->pgFileChecksum, pgTestChecksum)) // {uncovered - !!!}
                         {
                             MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
                                 fileResult->backupCopyResult = backupCopyResultChecksum;
-                                fileResult->copySize = pgTestSize;
-                                fileResult->copyChecksum = bufDup(pgTestChecksum);
+                                fileResult->copySize = file->pgFileSize;
+                                fileResult->copyChecksum = bufDup(file->pgFileChecksum);
                             }
                             MEM_CONTEXT_END();
                         }
