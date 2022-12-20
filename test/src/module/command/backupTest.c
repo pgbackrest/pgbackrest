@@ -2328,7 +2328,7 @@ testRun(void)
                 manifestResume, &(ManifestFile){
                     .name = STRDEF("pg_data/time-mismatch2"),
                     .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
-                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
+                    // .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
                     .size = 4, .timestamp = backupTimeStart});
 
             // File does not match what is in manifest
@@ -2341,6 +2341,17 @@ testRun(void)
                     .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
                     .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
                     .size = 4, .timestamp = backupTimeStart});
+
+            // Repo size mismatch
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "repo-size-mismatch", "TEST", .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_EMPTY(
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/repo-size-mismatch.gz", strZ(resumeLabel)));
+            manifestFileAdd(
+                manifestResume, &(ManifestFile){
+                    .name = STRDEF("pg_data/repo-size-mismatch"),
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
+                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
+                    .size = 4, .sizeRepo = 4, .timestamp = backupTimeStart});
 
             // Links are always removed on resume
             THROW_ON_SYS_ERROR(
@@ -2390,6 +2401,11 @@ testRun(void)
                     " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: resumed backup file pg_data/repo-size-mismatch does not have expected checksum"
+                    " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
+                    " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
+                "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/repo-size-mismatch (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/content-mismatch (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/resume-ref (0B, [PCT])\n"
@@ -2399,7 +2415,7 @@ testRun(void)
                 "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
                     "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 6");
+                "P00   INFO: diff backup size = [SIZE], file total = 7");
 
             // Check repo directory
             TEST_RESULT_STR_Z(
@@ -2412,6 +2428,7 @@ testRun(void)
                 "pg_data/global/pg_control.gz {file, s=8192}\n"
                 "pg_data/pg_xlog {path}\n"
                 "pg_data/postgresql.conf.gz {file, s=11}\n"
+                "pg_data/repo-size-mismatch.gz {file, s=4}\n"
                 "pg_data/resume-ref.gz {file, s=0}\n"
                 "pg_data/time-mismatch2.gz {file, s=4}\n"
                 "--------\n"
@@ -2426,6 +2443,8 @@ testRun(void)
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570200000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
                     ",\"reference\":\"20191003-105320F\",\"size\":11,\"timestamp\":1570000000}\n"
+                "pg_data/repo-size-mismatch={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
+                    ",\"timestamp\":1570200000}\n"
                 "pg_data/resume-ref={\"size\":0,\"timestamp\":1570200000}\n"
                 "pg_data/time-mismatch2={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
                     ",\"timestamp\":1570200100}\n"
@@ -2440,6 +2459,7 @@ testRun(void)
             HRN_STORAGE_REMOVE(storagePgWrite(), "resume-ref", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "time-mismatch2", .errorOnMissing = true);
             HRN_STORAGE_REMOVE(storagePgWrite(), "content-mismatch", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "repo-size-mismatch", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------

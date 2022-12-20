@@ -147,9 +147,10 @@ backupFile(
                             ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
                         uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
-                        // No need to recopy if checksum/size match
-                        if (file->repoFileSize == pgTestSize && // {uncovered - !!!}
-                            bufEq(file->repoFileChecksum != NULL ? file->repoFileChecksum : file->pgFileChecksum, pgTestChecksum)) // {uncovered - !!!}
+                        // No need to recopy if checksum/size match. When the repo checksum is not present still compare to repo
+                        // size since the repo checksum should only be present when the repo file was not compressed/encrypted.
+                        if (file->repoFileSize == pgTestSize &&
+                            bufEq(file->repoFileChecksum != NULL ? file->repoFileChecksum : file->pgFileChecksum, pgTestChecksum))
                         {
                             MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
