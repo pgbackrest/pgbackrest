@@ -31,7 +31,7 @@ typedef struct BackupFile
     bool pgFileIgnoreMissing;                                       // Ignore missing pg file
     uint64_t pgFileSize;                                            // Expected pg file size
     bool pgFileCopyExactSize;                                       // Copy only pg expected size
-    const String *pgFileChecksum;                                   // Expected pg file checksum
+    const Buffer *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
     const String *manifestFile;                                     // Repo file
     bool manifestFileResume;                                        // Checksum repo file before copying
@@ -43,7 +43,7 @@ typedef struct BackupFileResult
     const String *manifestFile;                                     // Manifest file
     BackupCopyResult backupCopyResult;
     uint64_t copySize;
-    String *copyChecksum;
+    Buffer *copyChecksum;
     uint64_t bundleOffset;                                          // Offset in bundle if any
     uint64_t repoSize;
     Pack *pageChecksumResult;

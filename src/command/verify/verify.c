@@ -741,7 +741,8 @@ verifyArchive(VerifyJobData *const jobData)
                         const String *fileName = strLstGet(jobData->walFileList, 0);
                         const String *filePathName = strNewFmt(
                             STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveResult->archiveId), strZ(walPath), strZ(fileName));
-                        String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
+                        Buffer *const checksum = bufNewDecode(
+                            encodingHex, strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX));
 
                         // Set up the job
                         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
@@ -750,7 +751,7 @@ verifyArchive(VerifyJobData *const jobData)
                         pckWriteStrP(param, filePathName);
                         pckWriteBoolP(param, false);
                         pckWriteU32P(param, compressTypeFromName(filePathName));
-                        pckWriteStrP(param, checksum);
+                        pckWriteBinP(param, checksum);
                         pckWriteU64P(param, archiveResult->pgWalInfo.size);
                         pckWriteStrP(param, jobData->walCipherPass);
 
@@ -995,7 +996,7 @@ verifyBackup(VerifyJobData *const jobData)
 
                             pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                             // If the checksum is not present in the manifest, it will be calculated by manifest load
-                            pckWriteStrP(param, STR(fileData.checksumSha1));
+                            pckWriteBinP(param, BUF(fileData.checksumSha1, HASH_TYPE_SHA1_SIZE));
                             pckWriteU64P(param, fileData.size);
                             pckWriteStrP(param, jobData->backupCipherPass);
 

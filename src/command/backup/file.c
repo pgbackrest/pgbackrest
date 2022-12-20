@@ -94,12 +94,12 @@ backupFile(
                     // If the pg file exists check the checksum/size
                     if (ioReadDrain(read))
                     {
-                        const String *const pgTestChecksum = strNewEncode(
-                            encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
+                        const Buffer *const pgTestChecksum = pckReadBinP(
+                            ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
                         uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // Does the pg file match?
-                        if (file->pgFileSize == pgTestSize && strEq(file->pgFileChecksum, pgTestChecksum))
+                        if (file->pgFileSize == pgTestSize && bufEq(file->pgFileChecksum, pgTestChecksum))
                         {
                             pgFileMatch = true;
 
@@ -110,7 +110,7 @@ backupFile(
                                 {
                                     fileResult->backupCopyResult = backupCopyResultNoOp;
                                     fileResult->copySize = pgTestSize;
-                                    fileResult->copyChecksum = strDup(pgTestChecksum);
+                                    fileResult->copyChecksum = bufDup(pgTestChecksum);
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -160,18 +160,18 @@ backupFile(
                             ioReadDrain(read);
 
                             // Test checksum/size
-                            const String *const pgTestChecksum = strNewEncode(
-                                encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
+                            const Buffer *const pgTestChecksum = pckReadBinP(
+                                ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
                             uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                             // No need to recopy if checksum/size match
-                            if (file->pgFileSize == pgTestSize && strEq(file->pgFileChecksum, pgTestChecksum))
+                            if (file->pgFileSize == pgTestSize && bufEq(file->pgFileChecksum, pgTestChecksum))
                             {
                                 MEM_CONTEXT_BEGIN(lstMemContext(result))
                                 {
                                     fileResult->backupCopyResult = backupCopyResultChecksum;
                                     fileResult->copySize = pgTestSize;
-                                    fileResult->copyChecksum = strDup(pgTestChecksum);
+                                    fileResult->copyChecksum = bufDup(pgTestChecksum);
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -275,9 +275,8 @@ backupFile(
                             fileResult->copySize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 0));
                             fileResult->bundleOffset = bundleOffset;
-                            fileResult->copyChecksum = strNewEncode(
-                                encodingHex,
-                                pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
+                            fileResult->copyChecksum = pckReadBinP(
+                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
                             fileResult->repoSize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 1));
 

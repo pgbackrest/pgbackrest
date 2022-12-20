@@ -566,7 +566,7 @@ backupResumeClean(
 
                             if (fileResume.reference != NULL)
                                 removeReason = "reference in resumed manifest";
-                            else if (fileResume.checksumSha1[0] == '\0')
+                            else if (fileResume.checksumSha1 == NULL)
                                 removeReason = "no checksum in resumed manifest";
                             else if (file.size != fileResume.size)
                                 removeReason = "mismatched size";
@@ -581,7 +581,7 @@ backupResumeClean(
                                 ASSERT(file.bundleId == 0);
 
                                 file.sizeRepo = fileResume.sizeRepo;
-                                memcpy(file.checksumSha1, fileResume.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                                file.checksumSha1 = fileResume.checksumSha1;
                                 file.checksumPage = fileResume.checksumPage;
                                 file.checksumPageError = fileResume.checksumPageError;
                                 file.checksumPageErrorList = fileResume.checksumPageErrorList;
@@ -964,12 +964,8 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 .size = strSize(content),
                 .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                 .timestamp = timestamp,
+                .checksumSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))),
             };
-
-            memcpy(
-                file.checksumSha1,
-                strZ(strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))),
-                HASH_TYPE_SHA1_SIZE_HEX + 1);
 
             manifestFileAdd(manifest, &file);
 
@@ -1168,7 +1164,7 @@ backupJobResult(
                 const uint64_t copySize = pckReadU64P(jobResult);
                 const uint64_t bundleOffset = pckReadU64P(jobResult);
                 const uint64_t repoSize = pckReadU64P(jobResult);
-                const String *const copyChecksum = pckReadStrP(jobResult);
+                const Buffer *const copyChecksum = pckReadBinP(jobResult);
                 PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
                 // Increment backup copy progress
@@ -1191,7 +1187,8 @@ backupJobResult(
                     logProgress, "%s, %u.%02u%%", strZ(strSizeFormat(copySize)), percentComplete / 100, percentComplete % 100);
 
                 // Format log checksum
-                const String *const logChecksum = copySize != 0 ? strNewFmt(" checksum %s", strZ(copyChecksum)) : EMPTY_STR;
+                const String *const logChecksum = copySize != 0 ?
+                    strNewFmt(" checksum %s", strZ(strNewEncode(encodingHex, copyChecksum))) : EMPTY_STR;
 
                 // If the file is in a prior backup and nothing changed, just log it
                 if (copyResult == backupCopyResultNoOp)
@@ -1226,7 +1223,7 @@ backupJobResult(
                             " continue but this may be an issue unless the resumed backup path in the repository is known to be"
                             " corrupted.\n"
                             "NOTE: this does not indicate a problem with the PostgreSQL page checksums.",
-                            strZ(file.name), file.checksumSha1);
+                            strZ(file.name), strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
                     }
 
                     LOG_DETAIL_PID_FMT(processId, "backup file %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
@@ -1307,7 +1304,7 @@ backupJobResult(
                     // Update file info and remove any reference to the file's existence in a prior backup
                     file.size = copySize;
                     file.sizeRepo = repoSize;
-                    memcpy(file.checksumSha1, strZ(copyChecksum), HASH_TYPE_SHA1_SIZE_HEX + 1);
+                    file.checksumSha1 = bufPtrConst(copyChecksum);
                     file.reference = NULL;
                     file.checksumPageError = checksumPageError;
                     file.checksumPageErrorList = checksumPageErrorList != NULL ?
@@ -1718,7 +1715,7 @@ static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
-                pckWriteStrP(param, file.checksumSha1[0] != 0 ? STR(file.checksumSha1) : NULL);
+                pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
                 pckWriteStrP(param, file.name);
                 pckWriteBoolP(param, file.resume);
@@ -2096,7 +2093,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                             .timestamp = manifestData(manifest)->backupTimestampStop,
                         };
 
-                        memcpy(file.checksumSha1, strZ(strSubN(archiveFile, 25, 40)), HASH_TYPE_SHA1_SIZE_HEX + 1);
+                        file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, strSubN(archiveFile, 25, 40)));
 
                         manifestFileAdd(manifest, &file);
                     }

@@ -94,6 +94,7 @@ static time_t manifestPackBaseTime = -1;
 // Flags used to reduce the size of packed data. They should be ordered from most to least likely and can be reordered at will.
 typedef enum
 {
+    manifestFilePackFlagChecksum,
     manifestFilePackFlagReference,
     manifestFilePackFlagBundle,
     manifestFilePackFlagCopy,
@@ -126,6 +127,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Flags
     uint64_t flag = 0;
+
+    if (file->checksumSha1 != NULL)
+        flag |= 1 << manifestFilePackFlagChecksum;
 
     if (file->copy)
         flag |= 1 << manifestFilePackFlagCopy;
@@ -178,8 +182,11 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     cvtUInt64ToVarInt128(cvtInt64ToZigZag(manifestPackBaseTime - file->timestamp), buffer, &bufferPos, sizeof(buffer));
 
     // SHA1 checksum
-    strcpy((char *)buffer + bufferPos, file->checksumSha1);
-    bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
+    if (file->checksumSha1 != NULL)
+    {
+        memcpy((uint8_t *)buffer + bufferPos, file->checksumSha1, HASH_TYPE_SHA1_SIZE);
+        bufferPos += HASH_TYPE_SHA1_SIZE;
+    }
 
     // Reference
     if (file->reference != NULL)
@@ -277,8 +284,11 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     result.checksumPage = (flag >> manifestFilePackFlagChecksumPage) & 1;
 
     // SHA1 checksum
-    memcpy(result.checksumSha1, (const uint8_t *)filePack + bufferPos, HASH_TYPE_SHA1_SIZE_HEX + 1);
-    bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
+    if (flag & (1 << manifestFilePackFlagChecksum))
+    {
+        result.checksumSha1 = (const uint8_t *)filePack + bufferPos;
+        bufferPos += HASH_TYPE_SHA1_SIZE;
+    }
 
     // Reference
     if (flag & (1 << manifestFilePackFlagReference))
@@ -926,7 +936,7 @@ manifestBuildInfo(
             if (info->size == 0 && buildData->manifest->pub.data.bundle)
             {
                 file.copy = false;
-                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                file.checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF);
             }
 
             // Determine if this file should be page checksummed
@@ -1512,7 +1522,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 if (file.copy && file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
                 {
                     file.sizeRepo = filePrior.sizeRepo;
-                    memcpy(file.checksumSha1, filePrior.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                    file.checksumSha1 = filePrior.checksumSha1;
                     file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
                     file.checksumPage = filePrior.checksumPage;
                     file.checksumPageError = filePrior.checksumPageError;
@@ -1814,7 +1824,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         // The checksum might not exist if this is a partial save that was done during the backup to preserve checksums for already
         // backed up files
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM))
-            memcpy(file.checksumSha1, strZ(jsonReadStr(json)), HASH_TYPE_SHA1_SIZE_HEX + 1);
+            file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
 
         // Page checksum errors
         if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE))
@@ -1868,7 +1878,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         // If file size is zero then assign the static zero hash
         if (file.size == 0)
-            memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+            file.checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF);
 
         // Timestamp is required so error if it is not present
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_TIMESTAMP))
@@ -2524,8 +2534,12 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
 
                 // Save if the file size is not zero and the checksum exists.  The checksum might not exist if this is a partial
                 // save performed during a backup.
-                if (file.size != 0 && file.checksumSha1[0] != 0)
-                    jsonWriteZ(jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM), file.checksumSha1);
+                if (file.size != 0 && file.checksumSha1 != NULL)
+                {
+                    jsonWriteStr(
+                        jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM),
+                        strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)));
+                }
 
                 if (file.checksumPage)
                 {
@@ -2709,15 +2723,19 @@ manifestValidate(Manifest *this, bool strict)
             const ManifestFile file = manifestFile(this, fileIdx);
 
             // All files must have a checksum
-            if (file.checksumSha1[0] == '\0')
+            if (file.checksumSha1 == NULL)
                 strCatFmt(error, "\nmissing checksum for file '%s'", strZ(file.name));
 
             // These are strict checks to be performed only after a backup and before the final manifest save
             if (strict)
             {
                 // Zero-length files must have a specific checksum
-                if (file.size == 0 && !strEqZ(HASH_TYPE_SHA1_ZERO_STR, file.checksumSha1))
-                    strCatFmt(error, "\ninvalid checksum '%s' for zero size file '%s'", file.checksumSha1, strZ(file.name));
+                if (file.size == 0 && !bufEq(HASH_TYPE_SHA1_ZERO_BUF, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
+                {
+                    strCatFmt(
+                        error, "\ninvalid checksum '%s' for zero size file '%s'",
+                        strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))), strZ(file.name));
+                }
 
                 // Non-zero size files must have non-zero repo size
                 if (file.sizeRepo == 0 && file.size != 0)
