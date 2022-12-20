@@ -924,7 +924,8 @@
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
                     yum install make gcc postgresql{[pg-version-nodot]}-devel
-                    openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel libssh2 libssh2-devel
+                    openssl-devel libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel libssh2
+                    libssh2-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
