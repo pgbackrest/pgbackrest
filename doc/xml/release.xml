@@ -15,6 +15,20 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.44dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1941"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove support for <proper>PostgreSQL</proper> <id>9.0</id>/<id>9.1</id>/<id>9.2</id>.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
         </release>
 
         <release date="2022-11-28" version="2.43" title="Bug Fix">
