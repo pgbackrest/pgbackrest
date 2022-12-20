@@ -167,7 +167,7 @@ storageAzureAuth(
             // Generate authorization header
             httpHeaderPut(
                 httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
-                strZ(strNewEncode(encodeBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
+                strZ(strNewEncode(encodingBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else
@@ -216,7 +216,8 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         if (param.content != NULL)
         {
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, param.content)));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
         // Encode path
@@ -749,7 +750,7 @@ storageAzureNew(
 
         // Store shared key or parse sas query
         if (keyType == storageAzureKeyTypeShared)
-            driver->sharedKey = bufNewDecode(encodeBase64, key);
+            driver->sharedKey = bufNewDecode(encodingBase64, key);
         else
             driver->sasKey = httpQueryNewStr(key);
 

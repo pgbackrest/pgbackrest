@@ -67,8 +67,8 @@ String *strNewBuf(const Buffer *buffer);
 // Create a new fixed length string by converting the double value
 String *strNewDbl(double value);
 
-// Create a new fixed length string encoded with the specified type (e.g. encodeBase64) from a buffer
-String *strNewEncode(EncodeType type, const Buffer *buffer);
+// Create a new fixed length string encoded with the specified type (e.g. encodingBase64) from a buffer
+String *strNewEncode(EncodingType type, const Buffer *buffer);
 
 // Create a new fixed length string from a format string with parameters (i.e. sprintf)
 String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
@@ -124,8 +124,8 @@ String *strCatBuf(String *this, const Buffer *buffer);
 // Append a character
 String *strCatChr(String *this, char cat);
 
-// Append a string encoded with the specified type (e.g. encodeBase64) from a buffer
-String *strCatEncode(String *this, EncodeType type, const Buffer *buffer);
+// Append a string encoded with the specified type (e.g. encodingBase64) from a buffer
+String *strCatEncode(String *this, EncodingType type, const Buffer *buffer);
 
 // Append a formatted string
 String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));

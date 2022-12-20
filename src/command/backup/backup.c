@@ -967,7 +967,8 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             };
 
             memcpy(
-                file.checksumSha1, strZ(bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))),
+                file.checksumSha1,
+                strZ(strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))),
                 HASH_TYPE_SHA1_SIZE_HEX + 1);
 
             manifestFileAdd(manifest, &file);

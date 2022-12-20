@@ -54,7 +54,7 @@ String *hrnPackReadToStr(PackRead *read)
                 break;
 
             case pckTypeBin:
-                strCatFmt(result, "%s", strZ(bufHex(pckReadBinP(read, .id = id))));
+                strCatFmt(result, "%s", strZ(strNewEncode(encodingHex, pckReadBinP(read, .id = id))));
                 break;
 
             case pckTypeI32:

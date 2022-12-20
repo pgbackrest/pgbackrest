@@ -229,7 +229,7 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result.checksum = bufHex(filterResult);
+                result.checksum = strNewEncode(encodingHex, filterResult);
             }
             MEM_CONTEXT_PRIOR_END();
         }

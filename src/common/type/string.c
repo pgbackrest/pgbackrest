@@ -207,7 +207,7 @@ strNewBuf(const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 String *
-strNewEncode(EncodeType type, const Buffer *buffer)
+strNewEncode(const EncodingType type, const Buffer *const buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -220,7 +220,13 @@ strNewEncode(EncodeType type, const Buffer *buffer)
     String *this = strNewFixed(encodeToStrSize(type, bufUsed(buffer)));
 
     // Encode buffer
-    encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->pub.buffer);
+    if (bufUsed(buffer) > 0)
+    {
+        encodeToStr(type, bufPtrConst(buffer), bufUsed(buffer), this->pub.buffer);
+    }
+    // Else zero-terminate
+    else
+        this->pub.buffer[0] = '\0';
 
     FUNCTION_TEST_RETURN(STRING, this);
 }
@@ -487,7 +493,7 @@ strCatChr(String *this, char cat)
 
 /**********************************************************************************************************************************/
 String *
-strCatEncode(String *this, EncodeType type, const Buffer *buffer)
+strCatEncode(String *const this, const EncodingType type, const Buffer *const buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
