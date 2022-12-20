@@ -129,7 +129,10 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
 
         // Catalog version
         if (loadData->infoPg->type == infoPgBackup)
+        {
             infoPgData.catalogVersion = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_CATALOG_VERSION));
+            infoPgData.controlVersion = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_CONTROL_VERSION));
+        }
 
         // System id
         infoPgData.systemId = jsonReadUInt64(
@@ -247,10 +250,14 @@ infoPgSet(
 
             // This is different in archive.info due to a typo that can't be fixed without a format version bump
             .systemId = pgSystemId,
-
-            // Catalog version is only required for backup info to preserve the repo format
-            .catalogVersion = this->type == infoPgBackup ? pgCatalogVersion : 0,
         };
+
+        // Catalog/control version required for backup info to preserve the repo format
+        if (this->type == infoPgBackup)
+        {
+            infoPgData.catalogVersion = pgCatalogVersion;
+            infoPgData.controlVersion = pgControlVersion(pgVersion);
+        }
 
         // Add the pg data to the history list
         infoPgAdd(this, &infoPgData);
@@ -318,7 +325,7 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
             if (saveData->infoPg->type == infoPgBackup)
             {
                 jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CATALOG_VERSION), pgData.catalogVersion);
-                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION), pgControlVersion(pgData.version));
+                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_DB_CONTROL_VERSION), pgData.controlVersion);
             }
 
             if (saveData->infoPg->type == infoPgArchive)

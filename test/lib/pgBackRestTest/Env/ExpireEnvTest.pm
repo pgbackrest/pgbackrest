@@ -77,12 +77,6 @@ sub new
 my $oPgControlVersionHash =
 {
     # iControlVersion => {iCatalogVersion => strDbVersion}
-    903 =>
-    {
-        201008051 => PG_VERSION_90,
-        201105231 => PG_VERSION_91,
-    },
-    922 => {201204301 => PG_VERSION_92},
     937 => {201306121 => PG_VERSION_93},
     942 =>
     {
@@ -538,9 +532,8 @@ sub archiveCreate
 
     my $oStanza = $self->{oStanzaHash}{$strStanza};
     my $iArchiveIdx = 0;
-    my $bSkipFF = $$oStanza{strDbVersion} <= PG_VERSION_92;
 
-    my $strArchive = defined($$oStanza{strArchiveLast}) ? $self->archiveNext($$oStanza{strArchiveLast}, $bSkipFF) :
+    my $strArchive = defined($$oStanza{strArchiveLast}) ? $self->archiveNext($$oStanza{strArchiveLast}, false) :
                                                           '000000010000000000000000';
 
     # Get passphrase (returns undefined if repo not encrypted) to access the archive files
@@ -560,7 +553,7 @@ sub archiveCreate
 
         if ($iArchiveIdx < $iArchiveTotal)
         {
-            $strArchive = $self->archiveNext($strArchive, $bSkipFF);
+            $strArchive = $self->archiveNext($strArchive, false);
         }
     }
     while ($iArchiveIdx < $iArchiveTotal);
