@@ -525,10 +525,6 @@ restoreManifestMap(Manifest *manifest)
                         THROW_FMT(TablespaceMapError, "unable to remap invalid tablespace '%s'", strZ(tablespace));
                 }
             }
-
-            // Issue a warning message when remapping tablespaces in PostgreSQL < 9.2
-            if (manifestData(manifest)->pgVersion <= PG_VERSION_92)
-                LOG_WARN("update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= " PG_VERSION_92_STR);
         }
 
         // Remap links
@@ -1630,8 +1626,8 @@ restoreRecoveryOption(unsigned int pgVersion)
                 {
                     kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
                 }
-                // Write pause_at_recovery_target on supported PostgreSQL versions
-                else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
+                // Else write pause_at_recovery_target on supported PostgreSQL versions
+                else
                 {
                     // Shutdown action is not supported with pause_at_recovery_target setting
                     if (targetAction == CFGOPTVAL_TARGET_ACTION_SHUTDOWN)
@@ -1643,13 +1639,6 @@ restoreRecoveryOption(unsigned int pgVersion)
                     }
 
                     kvPut(result, VARSTRZ(PAUSE_AT_RECOVERY_TARGET), VARSTR(FALSE_STR));
-                }
-                // Else error on unsupported version
-                else
-                {
-                    THROW_FMT(
-                        OptionInvalidError, CFGOPT_TARGET_ACTION " option is only available in PostgreSQL >= %s",
-                        strZ(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_PAUSE)));
                 }
             }
         }

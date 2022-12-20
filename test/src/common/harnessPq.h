@@ -569,14 +569,7 @@ Macros for defining groups of functions that implement various queries and comma
 /***********************************************************************************************************************************
 Macros to simplify dbOpen() for specific database versions
 ***********************************************************************************************************************************/
-#define HRNPQ_MACRO_OPEN_LE_91(sessionParam, connectParam, pgVersion, pgPathParam, archiveMode, archiveCommand)                    \
-    HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
-    HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
-    HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam),                                                                                 \
-    HRNPQ_MACRO_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand),                                 \
-    HRNPQ_MACRO_SET_APPLICATION_NAME(sessionParam)
-
-#define HRNPQ_MACRO_OPEN_GE_92(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)      \
+#define HRNPQ_MACRO_OPEN_GE_93(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)      \
     HRNPQ_MACRO_OPEN(sessionParam, connectParam),                                                                                  \
     HRNPQ_MACRO_SET_SEARCH_PATH(sessionParam),                                                                                     \
     HRNPQ_MACRO_SET_CLIENT_ENCODING(sessionParam),                                                                                 \

@@ -350,15 +350,13 @@ sub clusterCreate
     # Set defaults
     my $strWalPath = defined($$hParam{strWalPath}) ? $$hParam{strWalPath} : $self->dbPath() . '/pg_' . $self->walId();
 
-    # Don't link WAL directory for versions < 9.2 because some recovery scenarios won't work
     $self->executeSimple(
         $self->pgBinPath() . '/initdb ' .
         ($self->pgVersion() >= PG_VERSION_93 ? ' -k' : '') .
-        ($self->pgVersion() >= PG_VERSION_92 ? ' --' . $self->walId() . "dir=${strWalPath}" : '') .
         ($self->pgVersion() >= PG_VERSION_11 ? ' --wal-segsize=1' : '') .
-        ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
+        ' --' . $self->walId() . "dir=${strWalPath}" . ' --pgdata=' . $self->dbBasePath() . ' --auth=trust');
 
-    if (!$self->standby() && $self->pgVersion() >= PG_VERSION_HOT_STANDBY)
+    if (!$self->standby())
     {
         $self->executeSimple(
             "echo 'host replication replicator db-standby trust' >> " . $self->dbBasePath() . '/pg_hba.conf');
@@ -368,7 +366,7 @@ sub clusterCreate
         {bHotStandby => $$hParam{bHotStandby}, bArchive => $$hParam{bArchive}, bArchiveAlways => $$hParam{bArchiveAlways},
          bArchiveInvalid => $$hParam{bArchiveInvalid}});
 
-    if (!$self->standby() && $self->pgVersion() >= PG_VERSION_HOT_STANDBY)
+    if (!$self->standby())
     {
         $self->sqlExecute("create user replicator replication", {bCommit =>true});
     }
@@ -442,7 +440,7 @@ sub clusterStart
     }
 
     $strCommand .=
-        ($self->pgVersion() >= PG_VERSION_HOT_STANDBY ? ' -c max_wal_senders=3' : '') .
+        ' -c max_wal_senders=3' .
         ' -c listen_addresses=\'*\'' .
         ' -c log_directory=\'' . $self->pgLogPath() . "'" .
         ' -c log_filename=\'' . basename($self->pgLogFile()) . "'" .
