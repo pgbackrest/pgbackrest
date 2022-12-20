@@ -6,6 +6,8 @@ Scripted testing for libssh2 so exact results can be returned for unit testing. 
 #ifndef TEST_COMMON_HARNESS_LIBSSH2_H
 #define TEST_COMMON_HARNESS_LIBSSH2_H
 
+#ifdef HAVE_LIBSSH2
+
 #ifndef HARNESS_LIBSSH2_REAL
 
 #include <libssh2.h>
@@ -100,4 +102,6 @@ void harnessLibssh2ScriptSet(HarnessLibssh2 *harnessLibssh2ScriptParam);
 
 #endif // HARNESS_LIBSSH2_REAL
 
-#endif
+#endif // HAVE_LIBSSH2
+
+#endif // TEST_COMMON_HARNESS_LIBSSH2_H

@@ -4,6 +4,8 @@ libssh2 Test Harness
 
 #include "build.auto.h"
 
+#ifdef HAVE_LIBSSH2
+
 #include <stdio.h>
 #include <string.h>
 
@@ -663,3 +665,5 @@ ssize_t libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size
     // return number of bytes written
     return harnessLibssh2->resultInt;
 }
+
+#endif // HAVE_LIBSSH2
