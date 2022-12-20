@@ -59,7 +59,7 @@ Macros for defining groups of functions that implement commands
     {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},                                                \
     {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},                                      \
     {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,                                                                        \
-    .param = "[\"vagrant\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",                               \
+    .param = "[\"" TEST_USER "\",7,\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",                         \
     .resultInt = 0},                                                                                                               \
     {.function = HRNLIBSSH2_SFTP_INIT}
 

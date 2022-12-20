@@ -68,8 +68,7 @@ storageWriteSftpOpen(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->sftpSession != NULL);
 
-    //const unsigned long int flags = LIBSSH2_FXF_CREAT | LIBSSH2_FXF_WRITE | (this->interface.truncate ? LIBSSH2_FXF_TRUNC : 0);
-    const uint64_t flags = LIBSSH2_FXF_CREAT | LIBSSH2_FXF_WRITE | (this->interface.truncate ? LIBSSH2_FXF_TRUNC : 0);
+    const unsigned long int flags = LIBSSH2_FXF_CREAT | LIBSSH2_FXF_WRITE | (this->interface.truncate ? LIBSSH2_FXF_TRUNC : 0);
 
     // Open the file
     this->wait = waitNew(this->timeoutConnect);
