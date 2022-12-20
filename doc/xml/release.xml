@@ -28,6 +28,24 @@
                         <p>Remove support for <proper>PostgreSQL</proper> <id>9.0</id>/<id>9.1</id>/<id>9.2</id>.</p>
                     </release-item>
                 </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Rename EncodeType enum to EncodingType."/>
+                        <commit subject="Add hex encode/decoding to decode module."/>
+                        <commit subject="Use smaller type for decode tables."/>
+                        <commit subject="Store manifest checksums in memory more efficiently.">
+                            <github-pull-request id="1953"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Store manifest checksums in memory more efficiently.</p>
+                    </release-item>
+                </release-development-list>
             </release-core-list>
         </release>
 
