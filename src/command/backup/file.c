@@ -189,6 +189,8 @@ backupFile(
                     // Setup pg file for read. Only read as many bytes as passed in pgFileSize.  If the file is growing it does no
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
                     // replayed from WAL during recovery.
+                    bool repoChecksum = false;
+
                     StorageRead *read = storageNewReadP(
                         storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
                         .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL);
@@ -209,6 +211,8 @@ backupFile(
                     {
                         ioFilterGroupAdd(
                             ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
+
+                        repoChecksum = true;
                     }
 
                     // If there is a cipher then add the encrypt filter
@@ -217,10 +221,13 @@ backupFile(
                         ioFilterGroupAdd(
                             ioReadFilterGroup(storageReadIo(read)),
                             cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass)));
+
+                        repoChecksum = true;
                     }
 
-                    // Capture checksum of file stored in the repo after all operations have been applied
-                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+                    // Capture checksum of file stored in the repo if filters that modify the output have been applied
+                    if (repoChecksum)
+                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
 
                     // Add size filter last to calculate repo size
                     ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
@@ -258,8 +265,6 @@ backupFile(
                             fileResult->bundleOffset = bundleOffset;
                             fileResult->copyChecksum = pckReadBinP(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
-                            fileResult->repoChecksum = pckReadBinP(
-                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
                             fileResult->repoSize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 1));
 
@@ -269,6 +274,15 @@ backupFile(
                                 fileResult->pageChecksumResult = pckDup(
                                     ioFilterGroupResultPackP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE));
                             }
+
+                            // Get repo checksum
+                            if (repoChecksum)
+                            {
+                                fileResult->repoChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(
+                                        ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
+                            }
+
                         }
                         MEM_CONTEXT_END();
 

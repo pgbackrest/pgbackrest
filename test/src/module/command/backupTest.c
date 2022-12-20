@@ -112,6 +112,8 @@ testBackupValidateList(
                         storage, strNewFmt("%s/%s", strZ(path), strZ(info.name)), .offset = file.bundleOffset,
                         .limit = VARUINT64(file.sizeRepo));
 
+                    ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
+
                     if (manifestData->backupOptionCompressType != compressTypeNone)
                     {
                         ioFilterGroupAdd(
@@ -121,10 +123,22 @@ testBackupValidateList(
                     ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
 
                     uint64_t size = bufUsed(storageGetP(read));
-                    const Buffer *const checksum = pckReadBinP(
-                        ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
 
                     strCatFmt(result, ", s=%" PRIu64, size);
+
+                    // Validate repo checksum
+                    if (file.checksumRepoSha1 != NULL)
+                    {
+                        const Buffer *const checksum = pckReadBinP(
+                            ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE));
+
+                        if (!bufEq(checksum, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)))
+                            THROW_FMT(AssertError, "'%s' repo checksum does match manifest", strZ(file.name));
+                    }
+
+                    // Validate checksum
+                    const Buffer *const checksum = pckReadBinP(
+                        ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
 
                     if (!bufEq(checksum, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
                         THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
@@ -219,7 +233,7 @@ testBackupValidateList(
         file.bundleId = 0;
         file.bundleOffset = 0;
 
-        // Remove repo checksum since it has been validated !!!
+        // Remove repo checksum since it has been validated
         file.checksumRepoSha1 = NULL;
 
         // Update changes to manifest file

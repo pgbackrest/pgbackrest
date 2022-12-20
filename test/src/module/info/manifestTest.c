@@ -1477,19 +1477,14 @@ testRun(void)
                 ",\"ckr\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"reference\":\"20190818-084502F_20190819-084506D\""        \
                 ",\"size\":4,\"timestamp\":1565282114}\n"                                                                          \
             "pg_data/base/16384/17000={\"bni\":1,\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"\
-                ",\"checksum-page-error\":[1],\"ckr\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"repo-size\":4096"             \
-                ",\"size\":8192,\"timestamp\":1565282114}\n"                                                                       \
-            "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\","        \
-                "\"ckr\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115"    \
-                ",\"user\":false}\n"                                                                                               \
-            "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true,"          \
-                "\"ckr\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"reference\":\"20190818-084502F\",\"size\":1073741824"      \
-                ",\"timestamp\":1565282116}\n"                                                                                     \
+                ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
+            "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""         \
+                ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                      \
+            "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
+                ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
             "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
-                ",\"ckr\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"reference\":\"20190818-084502F\",\"size\":32768"          \
-                ",\"timestamp\":1565282114}\n"                                                                                     \
-            "pg_data/postgresql.conf={\"ckr\":\"ffffffffffffffffffffffffffffffffffffffff\",\"size\":4457,"                         \
-                "\"timestamp\":1565282114}\n"                                                                                      \
+                ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                   \
+            "pg_data/postgresql.conf={\"size\":4457,\"timestamp\":1565282114}\n"                                                   \
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
@@ -1585,7 +1580,6 @@ testRun(void)
         // Munge files to produce errors
         ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
         file.checksumSha1 = NULL;
-        file.checksumRepoSha1 = NULL;
         file.sizeRepo = 0;
         file.resume = true;
         manifestFileUpdate(manifest, &file);
@@ -1604,14 +1598,12 @@ testRun(void)
             "manifest validation failed:\n"
             "invalid checksum '6e99b589e550e68e934fd235ccba59fe5b592a9e' for zero size file 'pg_data/base/32768/33000.32767'\n"
             "missing checksum for file 'pg_data/postgresql.conf'\n"
-            "missing repo checksum for file 'pg_data/postgresql.conf'\n"
             "repo size must be > 0 for file 'pg_data/postgresql.conf'");
 
         // Undo changes made to files
         file = manifestFileFind(manifest, STRDEF("pg_data/postgresql.conf"));
         TEST_RESULT_BOOL(file.resume, true, "resume is set");
         file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("184473f470864e067ee3a22e64b47b0a1c356f29")));
-        file.checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ffffffffffffffffffffffffffffffffffffffff")));
         file.sizeRepo = 4457;
         manifestFileUpdate(manifest, &file);
 

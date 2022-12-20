@@ -1311,7 +1311,7 @@ backupJobResult(
                     file.size = copySize;
                     file.sizeRepo = repoSize;
                     file.checksumSha1 = bufPtrConst(copyChecksum);
-                    file.checksumRepoSha1 = bufPtrConst(repoChecksum);
+                    file.checksumRepoSha1 = repoChecksum != NULL ? bufPtrConst(repoChecksum) : NULL;
                     file.reference = NULL;
                     file.checksumPageError = checksumPageError;
                     file.checksumPageErrorList = checksumPageErrorList != NULL ?

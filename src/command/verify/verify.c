@@ -994,11 +994,22 @@ verifyBackup(VerifyJobData *const jobData)
                                 pckWriteBoolP(param, false);
                             }
 
-                            pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
-                            // If the checksum is not present in the manifest, it will be calculated by manifest load
-                            pckWriteBinP(param, BUF(fileData.checksumSha1, HASH_TYPE_SHA1_SIZE));
-                            pckWriteU64P(param, fileData.size);
-                            pckWriteStrP(param, jobData->backupCipherPass);
+                            // Use the repo checksum when present
+                            if (fileData.checksumRepoSha1 != NULL)
+                            {
+                                pckWriteU32P(param, compressTypeNone);
+                                pckWriteBinP(param, BUF(fileData.checksumRepoSha1, HASH_TYPE_SHA1_SIZE));
+                                pckWriteU64P(param, fileData.sizeRepo);
+                                pckWriteStrP(param, NULL);
+                            }
+                            // Else use the file checksum, which may require additional filters, e.g. decompression
+                            else
+                            {
+                                pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
+                                pckWriteBinP(param, BUF(fileData.checksumSha1, HASH_TYPE_SHA1_SIZE));
+                                pckWriteU64P(param, fileData.size);
+                                pckWriteStrP(param, jobData->backupCipherPass);
+                            }
 
                             // Assign job to result (prepend backup label being processed to the key since some files are in a prior
                             // backup)

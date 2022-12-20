@@ -2749,7 +2749,6 @@ manifestValidate(Manifest *this, bool strict)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const walPath = strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(this->pub.data.pgVersion)));
         String *error = strNew();
 
         // Validate files
@@ -2770,14 +2769,6 @@ manifestValidate(Manifest *this, bool strict)
                     strCatFmt(
                         error, "\ninvalid checksum '%s' for zero size file '%s'",
                         strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))), strZ(file.name));
-                }
-
-                // Repo checksum is required for new manifests but old manifests may not have it !!!
-                // !!! FOR BUNDLING THIS SHOULD ONLY WORK FOR ZERO -- OR JUST REMOVE IT?
-                if (file.checksumRepoSha1 == NULL && !strBeginsWith(file.name, walPath) && // {uncovered - !!!}
-                    !(this->pub.data.bundle && file.size == 0))  // {uncovered - !!!}
-                {
-                    strCatFmt(error, "\nmissing repo checksum for file '%s'", strZ(file.name)); // {uncovered - !!!}
                 }
 
                 // Non-zero size files must have non-zero repo size
