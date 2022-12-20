@@ -920,6 +920,7 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Create file
+            bool repoChecksum = false;
             const String *manifestName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(name));
             CompressType compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType));
 
@@ -940,14 +941,23 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             {
                 ioFilterGroupAdd(
                     ioWriteFilterGroup(storageWriteIo(write)), compressFilter(compressType, cfgOptionInt(cfgOptCompressLevel)));
+
+                repoChecksum = true;
             }
 
             // Add encryption filter if required
-            cipherBlockFilterGroupAdd(
-                filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
+            if (manifestCipherSubPass(manifest) != NULL)
+            {
+                ioFilterGroupAdd(
+                    ioWriteFilterGroup(storageWriteIo(write)),
+                    cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(manifestCipherSubPass(manifest))));
 
-            // Capture checksum of file stored in the repo after all operations have been applied
-            ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
+                repoChecksum = true;
+            }
+
+            // Capture checksum of file stored in the repo if filters that modify the output have been applied
+            if (repoChecksum)
+                ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
 
             // Add size filter last to calculate repo size
             ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -969,8 +979,10 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
                 .sizeRepo = pckReadU64P(ioFilterGroupResultP(filterGroup, SIZE_FILTER_TYPE)),
                 .timestamp = timestamp,
                 .checksumSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 0))),
-                .checksumRepoSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 1))),
             };
+
+            if (repoChecksum)
+                file.checksumRepoSha1 = bufPtr(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE, .idx = 1)));
 
             manifestFileAdd(manifest, &file);
 
