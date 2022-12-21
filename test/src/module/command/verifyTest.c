@@ -1184,7 +1184,7 @@ testRun(void)
                     "\"reference\":\"20181119-152900F\",\"size\":4,\"timestamp\":1565282114}\n"
                 "pg_data/testfile={\"checksum\":\"%s\",\"reference\":\"20181119-152900F\",\"size\":7,\"timestamp\":1565282114}\n"
                 "pg_data/testfile2={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
-                "pg_data/repochk={\"checksum\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"ckr\":\"%s\",\"repo-size\":7"
+                "pg_data/repochk={\"checksum\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"rck\":\"%s\",\"repo-size\":7"
                     ",\"size\":3,\"timestamp\":1565282114}\n"
                 "pg_data/testmissing="
                     "{\"checksum\":\"123473f470864e067ee3a22e64b47b0a1c356abc\",\"size\":7,\"timestamp\":1565282114}\n"
