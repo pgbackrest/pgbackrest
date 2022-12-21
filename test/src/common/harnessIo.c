@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Harness for Protocol Testing
+Harness for Testing
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -12,6 +12,7 @@ Harness for Protocol Testing
 
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
+#include "common/harnessIo.h"
 #include "common/harnessLog.h"
 #include "common/harnessProtocol.h"
 #include "common/wait.h"
@@ -44,9 +45,9 @@ int ioSessionFd(IoSession *this)
 
     int fd = 0;
 
-    // Call the shim when installed, return the value of 63581
+    // Call the shim when installed, return the arbitrary value of HRNIO_FILE_DESCRIPTOR
     if (hrnIoStatic.localShimIoSessionFd)
-        fd = 63581;
+        fd = HRNIO_FILE_DESCRIPTOR;
     else
         fd = ioSessionFd_SHIMMED(this);
 
