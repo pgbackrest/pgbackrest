@@ -1703,7 +1703,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BUNDLE_ID                                      STRID5("bni", 0x25c20)
 #define MANIFEST_KEY_BUNDLE_OFFSET                                  STRID5("bno", 0x3dc20)
 #define MANIFEST_KEY_CHECKSUM                                       STRID5("checksum", 0x6d66b195030)
-#define MANIFEST_KEY_CHECKSUM_REPO                                  STRID5("ckr", 0x49630)
+#define MANIFEST_KEY_CHECKSUM_REPO                                  STRID5("rck", 0x2c720)
 #define MANIFEST_KEY_CHECKSUM_PAGE                                  "checksum-page"
 #define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
 #define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
@@ -1856,11 +1856,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
                 file.checksumPageErrorList = jsonFromVar(jsonReadVar(json));
         }
 
-        // The repo checksum might not exist if this is a partial save that was done during the backup to preserve checksums for
-        // already backed up files or if this is an older manifest
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM_REPO))
-            file.checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
-
         // Group
         if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
             file.group = manifestOwnerGet(jsonReadVar(json));
@@ -1872,6 +1867,11 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             file.mode = cvtZToMode(strZ(jsonReadStr(json)));
         else
             file.mode = manifest->fileModeDefault;
+
+        // The repo checksum might not exist if this is a partial save that was done during the backup to preserve checksums for
+        // already backed up files or if this is an older manifest
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM_REPO))
+            file.checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
 
         // Reference
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
@@ -2574,6 +2574,12 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                         jsonWriteJson(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR), file.checksumPageErrorList);
                 }
 
+                if (!varEq(manifestOwnerVar(file.group), saveData->groupDefault))
+                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(file.group));
+
+                if (file.mode != saveData->fileModeDefault)
+                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", file.mode);
+
                 // Save if the repo checksum is not null. The repo checksum for zero-length files may vary depending on compression
                 // and encryption applied.
                 if (file.checksumRepoSha1 != NULL)
@@ -2582,12 +2588,6 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                         jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM_REPO),
                         strNewEncode(encodingHex, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)));
                 }
-
-                if (!varEq(manifestOwnerVar(file.group), saveData->groupDefault))
-                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(file.group));
-
-                if (file.mode != saveData->fileModeDefault)
-                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", file.mode);
 
                 if (file.reference != NULL)
                     jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_REFERENCE), file.reference);
