@@ -956,7 +956,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("shimmed ioSessionFd() returns defined arbitrary file descriptor");
 
-
         struct addrinfo hints = (struct addrinfo)
         {
             .ai_family = AF_UNSPEC,
