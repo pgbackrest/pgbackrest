@@ -526,11 +526,11 @@ testRun(void)
         TEST_TITLE("pgControl and database match");
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_93);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
@@ -551,7 +551,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_93, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
@@ -564,36 +564,36 @@ testRun(void)
         TEST_TITLE("pg_control and version mismatch");
 
         // Create pg_control with different version
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_91);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_91_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
+            "version '" PG_VERSION_11_STR "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
+            PG_VERSION_10_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg_control and path mismatch");
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg2", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg2", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
-            "version '" PG_VERSION_92_STR "' and path '" TEST_PATH "/pg2' queried from cluster do not match version '"
-                PG_VERSION_92_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
+            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "/pg2' queried from cluster do not match version '"
+                PG_VERSION_15_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL
             "'\nHINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -609,23 +609,23 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for primary
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_92);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_13);
 
         // Create pg_control for standby
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94);
 
         harnessPqScriptSet((HarnessPq [])
         {
-            HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, TEST_PATH "/pg", true, NULL, NULL),
-            HRNPQ_MACRO_OPEN_GE_92(2, "dbname='postgres' port=5434", PG_VERSION_92, TEST_PATH "/pg1", false, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_13, TEST_PATH "/pg", true, NULL, NULL),
+            HRNPQ_MACRO_OPEN_GE_96(2, "dbname='postgres' port=5434", PG_VERSION_13, TEST_PATH "/pg1", false, NULL, NULL),
             HRNPQ_MACRO_DONE()
         });
 
         PgControl pgControl = {0};
         TEST_ASSIGN(pgControl, pgValidate(), "validate primary on pg2");
-        TEST_RESULT_UINT(pgControl.version, PG_VERSION_92, "version set");
-        TEST_RESULT_UINT(pgControl.systemId, HRN_PG_SYSTEMID_92, "systemId set");
-        TEST_RESULT_UINT(pgControl.catalogVersion, 201204301, "catalogVersion set");
+        TEST_RESULT_UINT(pgControl.version, PG_VERSION_13, "version set");
+        TEST_RESULT_UINT(pgControl.systemId, HRN_PG_SYSTEMID_13, "systemId set");
+        TEST_RESULT_UINT(pgControl.catalogVersion, 202007201, "catalogVersion set");
     }
 
     // *****************************************************************************************************************************

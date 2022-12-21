@@ -34,7 +34,7 @@ testRun(void)
 
     const char *fileContents = "acefile";
     uint64_t fileSize = 7;
-    const String *fileChecksum = STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770");
+    const Buffer *fileChecksum = bufNewDecode(encodingHex, STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"));
 
     #define TEST_BACKUP_DB1_94                                                                                                     \
         "db-catalog-version=201409291\n"                                                                                           \
@@ -127,15 +127,6 @@ testRun(void)
         "backup-timestamp-start=0\n"                                                                                               \
         "backup-timestamp-stop=0\n"                                                                                                \
         "backup-type=\"full\"\n"
-
-    #define TEST_MANIFEST_DB_92                                                                                                    \
-        "\n"                                                                                                                       \
-        "[backup:db]\n"                                                                                                            \
-        "db-catalog-version=201204301\n"                                                                                           \
-        "db-control-version=922\n"                                                                                                 \
-        "db-id=1\n"                                                                                                                \
-        "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"                                                                                  \
-        "db-version=\"9.2\"\n"
 
     #define TEST_MANIFEST_DB_94                                                                                                    \
         "\n"                                                                                                                       \
@@ -238,7 +229,13 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
-            TEST_MANIFEST_DB_92
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201306121\n"
+            "db-control-version=937\n"
+            "db-id=1\n"
+            "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"
+            "db-version=\"9.3\"\n"
             TEST_MANIFEST_OPTION_ALL
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -259,7 +256,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
                 " for read\n"
-            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.2, system-id "
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.3, system-id "
                 HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
@@ -436,7 +433,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: duplicate WAL '000000020000000200000000' for '9.4-1' exists, skipping");
 
         //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("FF Wal not skipped > 9.2, duplicates at beginning and end of list are removed");
+        TEST_TITLE("duplicates at beginning and end of list are removed");
 
         errTotal = 0;
         strLstAddZ(walFileList, "000000020000000100000000-daa497dba64008db824607940609ba1cd7c6c501.gz");
@@ -462,96 +459,6 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping\n"
             "P00   INFO: duplicate WAL '000000020000000200000001' for '9.4-1' exists, skipping");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("FF Wal skipped <= 9.2, duplicates in middle of list removed");
-
-        // Clear the range lists and rerun the test with PG_VERSION_92 to ensure FF is reported as an error
-        lstClear(archiveIdResult->walRangeList);
-        errTotal = 0;
-        archiveIdResult->archiveId = strNewZ("9.2-1");
-        archiveIdResult->pgWalInfo.version = PG_VERSION_92;
-
-        strLstAddZ(walFileList, "000000020000000200000001");
-        strLstAddZ(walFileList, "000000020000000200000001");
-        strLstAddZ(walFileList, "000000020000000200000002");
-
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
-        TEST_RESULT_UINT(errTotal, 2, "error reported");
-        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
-            "get range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
-            "get second range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
-
-        TEST_RESULT_LOG(
-            "P00   INFO: invalid WAL '0000000200000001000000FF' for '9.2-1' exists, skipping\n"
-            "P00   INFO: duplicate WAL '000000020000000200000001' for '9.2-1' exists, skipping");
-
-        TEST_RESULT_STRLST_Z(
-            walFileList,
-            "0000000200000001000000FD-daa497dba64008db824607940609ba1cd7c6c501.gz\n"
-            "0000000200000001000000FE-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz\n"
-            "000000020000000200000000\n000000020000000200000002\n",
-            "skipped files removed");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("Rerun <= 9.2, missing FF not a gap");
-
-        // Clear the range lists, rerun the PG_VERSION_92 test to ensure the missing FF is not considered a gap
-        lstClear(archiveIdResult->walRangeList);
-        errTotal = 0;
-
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
-        TEST_RESULT_UINT(errTotal, 0, "error reported");
-        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 2, "multiple ranges");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
-            "get range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
-            "get second range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000002", "stop range");
-
-        //--------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("version > 9.2, missing FF is a gap");
-
-        // Clear the range lists and update the version > 9.2 so missing FF is considered a gap in the WAL ranges
-        lstClear(archiveIdResult->walRangeList);
-        errTotal = 0;
-        archiveIdResult->archiveId = strNewZ("9.6-1");
-        archiveIdResult->pgWalInfo.version = PG_VERSION_96;
-
-        strLstAddZ(walFileList, "000000020000000200000003-123456");
-        strLstAddZ(walFileList, "000000020000000200000004-123456");
-
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
-        TEST_RESULT_UINT(errTotal, 0, "no errors");
-        TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 3, "multiple ranges");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 0),
-            "get first range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "0000000200000001000000FE", "stop range");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 1),
-            "get second range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
-        TEST_ASSIGN(
-            walRangeResult, (VerifyWalRange *)lstGet(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList, 2),
-            "get third range");
-        TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000002", "start range");
-        TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000004", "stop range");
     }
 
     // *****************************************************************************************************************************
@@ -932,7 +839,7 @@ testRun(void)
         String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, STRDEF(HASH_TYPE_SHA1_ZERO), 0, NULL), verifyOk, "file ok");
+            verifyFile(filePathName, 0, NULL, compressTypeNone, HASH_TYPE_SHA1_ZERO_BUF, 0, NULL), verifyOk, "file ok");
 
         //--------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file size invalid in archive");
@@ -963,8 +870,8 @@ testRun(void)
             verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
-                filePathName, 0, NULL, compressTypeGz, STRDEF("badchecksum"), fileSize, STRDEF("pass")), verifyChecksumMismatch,
-                "file encrypted compressed checksum mismatch");
+                filePathName, 0, NULL, compressTypeGz, bufNewDecode(encodingHex, STRDEF("aa")), fileSize, STRDEF("pass")),
+                verifyChecksumMismatch, "file encrypted compressed checksum mismatch");
     }
 
     // *****************************************************************************************************************************
@@ -1248,7 +1155,7 @@ testRun(void)
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
             TEST_MANIFEST_PATH_DEFAULT,
-            strZ(fileChecksum));
+            strZ(strNewEncode(encodingHex, fileChecksum)));
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
@@ -1277,6 +1184,8 @@ testRun(void)
                     "\"reference\":\"20181119-152900F\",\"size\":4,\"timestamp\":1565282114}\n"
                 "pg_data/testfile={\"checksum\":\"%s\",\"reference\":\"20181119-152900F\",\"size\":7,\"timestamp\":1565282114}\n"
                 "pg_data/testfile2={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
+                "pg_data/repochk={\"checksum\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"ckr\":\"%s\",\"repo-size\":7"
+                    ",\"size\":3,\"timestamp\":1565282114}\n"
                 "pg_data/testmissing="
                     "{\"checksum\":\"123473f470864e067ee3a22e64b47b0a1c356abc\",\"size\":7,\"timestamp\":1565282114}\n"
                 "pg_data/testother={\"checksum\":\"%s\",\"reference\":\"UNPROCESSEDBACKUP\",\"size\":7,\"timestamp\":1565282114}\n"
@@ -1285,7 +1194,8 @@ testRun(void)
                 TEST_MANIFEST_LINK_DEFAULT
                 TEST_MANIFEST_PATH
                 TEST_MANIFEST_PATH_DEFAULT,
-            strZ(fileChecksum), strZ(fileChecksum), strZ(fileChecksum));
+            strZ(strNewEncode(encodingHex, fileChecksum)), strZ(strNewEncode(encodingHex, fileChecksum)),
+            strZ(strNewEncode(encodingHex, fileChecksum)), strZ(strNewEncode(encodingHex, fileChecksum)));
 
         // Write manifests for dependent backup
         HRN_INFO_PUT(
@@ -1297,6 +1207,10 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storageRepoIdxWrite(0),
             STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/pg_data/testfile2", fileContents,
+            .comment = "put valid file to dependent");
+        HRN_STORAGE_PUT_Z(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/pg_data/repochk", fileContents,
             .comment = "put valid file to dependent");
 
         // Create an unprocessed backup label with a file that will be referenced in the dependent manifest
@@ -1369,8 +1283,8 @@ testRun(void)
                 "              backup: 20181119-152810F, status: invalid, total files checked: 0, total valid files: 0\n"
                 "              backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 2\n"
                 "                checksum invalid: 1\n"
-                "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 5,"
-                                   " total valid files: 2\n"
+                "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 6,"
+                                   " total valid files: 3\n"
                 "                missing: 1, checksum invalid: 1, other: 1");
 
         harnessLogLevelReset();
@@ -1392,7 +1306,7 @@ testRun(void)
             "  backup: 20181119-152810F, status: invalid, total files checked: 0, total valid files: 0\n"
             "  backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 2\n"
             "    checksum invalid: 1\n"
-            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 5, total valid files: 2\n"
+            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 6, total valid files: 3\n"
             "    missing: 1, checksum invalid: 1, other: 1", "verify text output, not verbose, with verify failures");
         TEST_RESULT_LOG(
                 "P01   INFO: invalid checksum "
@@ -1564,7 +1478,7 @@ testRun(void)
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
             TEST_MANIFEST_PATH_DEFAULT,
-            strZ(fileChecksum));
+            strZ(strNewEncode(encodingHex, fileChecksum)));
 
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
@@ -1620,7 +1534,7 @@ testRun(void)
                 TEST_MANIFEST_LINK_DEFAULT
                 TEST_MANIFEST_PATH
                 TEST_MANIFEST_PATH_DEFAULT,
-                strZ(fileChecksum), (unsigned int)fileSize);
+                strZ(strNewEncode(encodingHex, fileChecksum)), (unsigned int)fileSize);
 
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20201119-163000F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),

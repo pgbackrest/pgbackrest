@@ -11,18 +11,6 @@ Harness for PostgreSQL Interface
 /***********************************************************************************************************************************
 Interface definition
 ***********************************************************************************************************************************/
-uint32_t hrnPgInterfaceCatalogVersion090(void);
-void hrnPgInterfaceControl090(PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal090(PgWal pgWal, unsigned char *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion091(void);
-void hrnPgInterfaceControl091(PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal091(PgWal pgWal, unsigned char *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion092(void);
-void hrnPgInterfaceControl092(PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal092(PgWal pgWal, unsigned char *buffer);
-
 uint32_t hrnPgInterfaceCatalogVersion093(void);
 void hrnPgInterfaceControl093(PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal093(PgWal pgWal, unsigned char *buffer);
@@ -149,26 +137,6 @@ static const HrnPgInterface hrnPgInterface[] =
         .catalogVersion = hrnPgInterfaceCatalogVersion093,
         .control = hrnPgInterfaceControl093,
         .wal = hrnPgInterfaceWal093,
-    },
-    {
-        .version = PG_VERSION_92,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion092,
-        .control = hrnPgInterfaceControl092,
-        .wal = hrnPgInterfaceWal092,
-    },
-    {
-        .version = PG_VERSION_91,
-        .catalogVersion = hrnPgInterfaceCatalogVersion091,
-        .control = hrnPgInterfaceControl091,
-        .wal = hrnPgInterfaceWal091,
-    },
-    {
-        .version = PG_VERSION_90,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion090,
-        .control = hrnPgInterfaceControl090,
-        .wal = hrnPgInterfaceWal090,
     },
 };
 

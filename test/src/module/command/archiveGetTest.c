@@ -36,7 +36,7 @@ testRun(void)
         TEST_TITLE("path missing");
 
         TEST_ERROR(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_95),
             PathMissingError, "unable to list file info for missing path '" TEST_PATH "/spool/archive/test1/in'");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_95),
             "000000010000000100000001\n000000010000000100000002\n", "queue size smaller than min");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -54,26 +54,14 @@ testRun(void)
         queueSize = (16 * 1024 * 1024) * 3;
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_92),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_95),
             "000000010000000100000001\n000000010000000100000002\n000000010000000100000003\n", "empty queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg version earlier than 9.3");
+        TEST_TITLE("ok/junk status files");
 
         Buffer *walSegmentBuffer = bufNew(walSegmentSize);
         memset(bufPtr(walSegmentBuffer), 0, walSegmentSize);
-
-        HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FE", walSegmentBuffer);
-        HRN_STORAGE_PUT(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/0000000100000001000000FF", walSegmentBuffer);
-
-        TEST_RESULT_STRLST_Z(
-            queueNeed(STRDEF("0000000100000001000000FE"), false, queueSize, walSegmentSize, PG_VERSION_92),
-            "000000010000000200000000\n000000010000000200000001\n", "queue has wal < 9.3");
-
-        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "0000000100000001000000FE\n", .comment = "check queue");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg >= 9.3 and ok/junk status files");
 
         walSegmentSize = 1024 * 1024;
         queueSize = walSegmentSize * 5;

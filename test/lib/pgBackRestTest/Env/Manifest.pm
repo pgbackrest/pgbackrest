@@ -874,10 +874,10 @@ sub build
         next if $strFile =~ ('^' . MANIFEST_PATH_PGREPLSLOT . '\/') && $self->dbVersion() >= PG_VERSION_94;
 
         # Skip pg_serial/* since these files are reset
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSERIAL . '\/') && $self->dbVersion() >= PG_VERSION_91;
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSERIAL . '\/');
 
         # Skip pg_snapshots/* since these files cannot be reused on recovery
-        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/') && $self->dbVersion() >= PG_VERSION_92;
+        next if $strFile =~ ('^' . MANIFEST_PATH_PGSNAPSHOTS . '\/');
 
         # Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always created
         # there.
@@ -928,23 +928,20 @@ sub build
                     next;
                 }
 
-                # If version is greater than 9.1 then check for unlogged tables to skip
-                if ($self->dbVersion() >= PG_VERSION_91)
+                # Check for unlogged tables to skip
+                # Exclude all forks for unlogged tables except the init fork (numbers underscore init and optional dot segment)
+                if ($strBaseName =~ '^[0-9]+(|\_(fsm|vm)){0,1}(\.[0-9]+){0,1}$')
                 {
-                    # Exclude all forks for unlogged tables except the init fork (numbers underscore init and optional dot segment)
-                    if ($strBaseName =~ '^[0-9]+(|\_(fsm|vm)){0,1}(\.[0-9]+){0,1}$')
+                    # Get the filenode (OID)
+                    my ($strFileNode) = $strBaseName =~ '^(\d+)';
+
+                    # Add _init to the OID to see if this is an unlogged object
+                    $strFileNode = $strDir. "/" . $strFileNode . "_init";
+
+                    # If key exists in manifest then skip
+                    if (exists($hManifest->{$strFileNode}) && $hManifest->{$strFileNode}{type} eq 'f')
                     {
-                        # Get the filenode (OID)
-                        my ($strFileNode) = $strBaseName =~ '^(\d+)';
-
-                        # Add _init to the OID to see if this is an unlogged object
-                        $strFileNode = $strDir. "/" . $strFileNode . "_init";
-
-                        # If key exists in manifest then skip
-                        if (exists($hManifest->{$strFileNode}) && $hManifest->{$strFileNode}{type} eq 'f')
-                        {
-                            next;
-                        }
+                        next;
                     }
                 }
             }

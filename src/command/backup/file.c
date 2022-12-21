@@ -98,12 +98,12 @@ backupFile(
                     // If the pg file exists check the checksum/size
                     if (ioReadDrain(read))
                     {
-                        const String *const pgTestChecksum = strNewEncode(
-                            encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
+                        const Buffer *const pgTestChecksum = pckReadBinP(
+                            ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
                         uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
                         // Does the pg file match?
-                        if (file->pgFileSize == pgTestSize && strEq(file->pgFileChecksum, pgTestChecksum))
+                        if (file->pgFileSize == pgTestSize && bufEq(file->pgFileChecksum, pgTestChecksum))
                         {
                             pgFileMatch = true;
 
@@ -114,7 +114,7 @@ backupFile(
                                 {
                                     fileResult->backupCopyResult = backupCopyResultNoOp;
                                     fileResult->copySize = pgTestSize;
-                                    fileResult->copyChecksum = strDup(pgTestChecksum);
+                                    fileResult->copyChecksum = bufDup(pgTestChecksum);
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -140,55 +140,33 @@ backupFile(
                     // Else if the pg file matches or is unknown because delta was not performed then check the repo file
                     else if (!file->pgFileDelta || pgFileMatch)
                     {
-                        // Check the repo file in a try block because on error (e.g. missing or corrupt file that can't be decrypted
-                        // or decompressed) we should recopy rather than ending the backup.
-                        TRY_BEGIN()
+                        // Generate checksum/size for the repo file
+                        IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
+                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+                        ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
+                        ioReadDrain(read);
+
+                        // Test checksum/size
+                        const Buffer *const pgTestChecksum = pckReadBinP(
+                            ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
+                        uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
+
+                        // No need to recopy if checksum/size match. When the repo checksum is not present still compare to repo
+                        // size since the repo checksum should only be present when the repo file was not compressed/encrypted.
+                        if (file->repoFileSize == pgTestSize &&
+                            bufEq(file->repoFileChecksum != NULL ? file->repoFileChecksum : file->pgFileChecksum, pgTestChecksum))
                         {
-                            // Generate checksum/size for the repo file
-                            IoRead *read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
-
-                            if (cipherType != cipherTypeNone)
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
-                                // !!! Can this ever be raw?
-                                ioFilterGroupAdd(
-                                    ioReadFilterGroup(read), cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass)));
+                                fileResult->backupCopyResult = backupCopyResultChecksum;
+                                fileResult->copySize = file->pgFileSize;
+                                fileResult->copyChecksum = bufDup(file->pgFileChecksum);
                             }
-
-                            // Decompress the file if compressed
-                            if (repoFileCompressType != compressTypeNone)
-                                ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilter(repoFileCompressType));
-
-                            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
-                            ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
-
-                            ioReadDrain(read);
-
-                            // Test checksum/size
-                            const String *const pgTestChecksum = strNewEncode(
-                                encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
-                            uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
-
-                            // No need to recopy if checksum/size match
-                            if (file->pgFileSize == pgTestSize && strEq(file->pgFileChecksum, pgTestChecksum))
-                            {
-                                MEM_CONTEXT_BEGIN(lstMemContext(result))
-                                {
-                                    fileResult->backupCopyResult = backupCopyResultChecksum;
-                                    fileResult->copySize = pgTestSize;
-                                    fileResult->copyChecksum = strDup(pgTestChecksum);
-                                }
-                                MEM_CONTEXT_END();
-                            }
-                            // Else recopy when repo file is not as expected
-                            else
-                                fileResult->backupCopyResult = backupCopyResultReCopy;
+                            MEM_CONTEXT_END();
                         }
-                        // Recopy on any kind of error
-                        CATCH_ANY()
-                        {
+                        // Else recopy when repo file is not as expected
+                        else
                             fileResult->backupCopyResult = backupCopyResultReCopy;
-                        }
-                        TRY_END();
                     }
                 }
             }
@@ -215,6 +193,8 @@ backupFile(
                     // Setup pg file for read. Only read as many bytes as passed in pgFileSize.  If the file is growing it does no
                     // good to copy data past the end of the size recorded in the manifest since those blocks will need to be
                     // replayed from WAL during recovery.
+                    bool repoChecksum = false;
+
                     StorageRead *read = storageNewReadP(
                         storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
                         .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL);
@@ -266,18 +246,30 @@ backupFile(
                                 blockIncrNew(
                                     (size_t)file->blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap, compress,
                                     encrypt));
+
+                        repoChecksum = true;
                     }
                     // Else apply compress/encrypt filters to the entire file
                     else
                     {
                         // Add compress filter
                         if (compress != NULL)
+                        {
                             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), compress);
+                            repoChecksum = true;
+                        }
 
                         // Add encrypt filter
                         if (encrypt != NULL)
+                        {
                             ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), encrypt);
+                            repoChecksum = true;
+                        }
                     }
+
+                    // Capture checksum of file stored in the repo if filters that modify the output have been applied
+                    if (repoChecksum)
+                        ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
 
                     // Add size filter last to calculate repo size
                     ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), ioSizeNew());
@@ -313,9 +305,8 @@ backupFile(
                             fileResult->copySize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 0));
                             fileResult->bundleOffset = bundleOffset;
-                            fileResult->copyChecksum = strNewEncode(
-                                encodingHex,
-                                pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE)));
+                            fileResult->copyChecksum = pckReadBinP(
+                                ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 0));
                             fileResult->repoSize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), SIZE_FILTER_TYPE, .idx = 1));
 
@@ -331,6 +322,14 @@ backupFile(
                             {
                                 fileResult->blockIncrMapSize = pckReadU64P(
                                     ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), BLOCK_INCR_FILTER_TYPE));
+                            }
+
+                            // Get repo checksum
+                            if (repoChecksum)
+                            {
+                                fileResult->repoChecksum = pckReadBinP(
+                                    ioFilterGroupResultP(
+                                        ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
                             }
                         }
                         MEM_CONTEXT_END();

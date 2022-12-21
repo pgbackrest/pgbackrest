@@ -42,7 +42,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
         while (!pckReadNullP(param))
         {
             RestoreFile file = {.name = pckReadStrP(param)};
-            file.checksum = pckReadStrP(param);
+            file.checksum = pckReadBinP(param);
             file.size = pckReadU64P(param);
             file.timeModified = pckReadTimeP(param);
             file.mode = pckReadModeP(param);

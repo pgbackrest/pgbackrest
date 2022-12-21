@@ -510,13 +510,6 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
             major++;
             minor = 0;
         }
-
-        // Special hack for PostgreSQL < 9.3 which skipped minor FF
-        if (minor == 0xFF && pgVersion < PG_VERSION_93)
-        {
-            major++;
-            minor = 0;
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
