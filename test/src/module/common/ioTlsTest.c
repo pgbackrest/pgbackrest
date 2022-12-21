@@ -951,7 +951,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("harnessIo"))
+    if (testBegin("verify shimmed ioSessionFd()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("shimmed ioSessionFd() returns defined arbitrary file descriptor");
