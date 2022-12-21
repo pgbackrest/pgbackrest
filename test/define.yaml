@@ -332,9 +332,15 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
-        total: 5
+        total: 6
         feature: SOCKET
         harness: server
+        harness:
+          name: io
+          shim:
+            common/io/session:
+              function:
+                - ioSessionFd
 
         coverage:
           - common/io/client

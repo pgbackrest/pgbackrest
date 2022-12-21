@@ -8,6 +8,7 @@ Test Tls Client
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessIo.h"
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
 #include "common/harnessStorage.h"
@@ -947,6 +948,51 @@ testRun(void)
         TEST_TITLE("stastistics exist");
 
         TEST_RESULT_PTR_NE(statToJson(), NULL, "check");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("harnessIo"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("shimmed ioSessionFd() returns defined arbitrary file descriptor");
+
+
+        struct addrinfo hints = (struct addrinfo)
+        {
+            .ai_family = AF_UNSPEC,
+            .ai_socktype = SOCK_STREAM,
+            .ai_protocol = IPPROTO_TCP,
+        };
+
+        const char *port = "7777";
+        const char *hostBad = "172.31.255.255";
+        struct addrinfo *hostBadAddress;
+        int result;
+
+        if ((result = getaddrinfo(hostBad, port, &hints, &hostBadAddress)) != 0)
+        {
+            THROW_FMT(                                              // {uncoverable - lookup on IP should never fail}
+                HostConnectError, "unable to get address for '%s': [%d] %s", hostBad, result, gai_strerror(result));
+        }
+
+        int fd = socket(hostBadAddress->ai_family, hostBadAddress->ai_socktype, hostBadAddress->ai_protocol);
+
+        // Create socket session and wait for timeout
+        IoSession *session = NULL;
+        TEST_ASSIGN(session, sckSessionNew(ioSessionRoleClient, fd, strNewZ(hostBad), 7777, 100), "new socket");
+
+        // What are the odds of getting assigned HRNIO_FILE_DESCRIPTOR?
+        TEST_RESULT_BOOL(ioSessionFd(session) != HRNIO_FILE_DESCRIPTOR, true, "check fd != HRNIO_FILE_DESCRIPTOR");
+
+        // install shim to return defined fd
+        hrnIoIoSessionFdShimInstall();
+
+        TEST_RESULT_INT(ioSessionFd(session), HRNIO_FILE_DESCRIPTOR, "shim function returns defined arbitrary fd");
+
+        TEST_RESULT_VOID(ioSessionClose(session), "close socket session");
+        TEST_RESULT_VOID(ioSessionFree(session), "free socket session");
+
+        hrnIoIoSessionFdShimUninstall();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
