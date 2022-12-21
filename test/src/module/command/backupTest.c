@@ -23,18 +23,8 @@ Get a list of all files in the backup and a redacted version of the manifest tha
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    const CipherType cipherType, const String *const cipherPass, String *const result)
+    String *const result)
 {
-    FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(STORAGE, storage);
-        FUNCTION_HARNESS_PARAM(STRING, path);
-        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
-        FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
-        FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
-        FUNCTION_HARNESS_PARAM(STRING, cipherPass);
-        FUNCTION_HARNESS_PARAM(STRING, result);
-    FUNCTION_HARNESS_END();
-
     // Output root path if it is a link so we can verify the destination
     const StorageInfo dotInfo = storageInfoP(storage, path);
 
@@ -123,13 +113,6 @@ testBackupValidateList(
                         .limit = VARUINT64(file.sizeRepo));
 
                     ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cryptoHashNew(hashTypeSha1));
-
-                    if (cipherType != cipherTypeNone)
-                    {
-                        ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)),
-                            cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass)));
-                    }
 
                     if (manifestData->backupOptionCompressType != compressTypeNone)
                     {
@@ -257,27 +240,15 @@ testBackupValidateList(
         manifestFilePackUpdate(manifest, filePack, &file);
     }
 
-    FUNCTION_HARNESS_RETURN(STRING, result);
+    return result;
 }
 
-typedef struct TestBackupValidateParam
-{
-    VAR_PARAM_HEADER;
-    CipherType cipherType;                                          // Cipher type
-    const char *cipherPass;                                         // Cipher pass
-} TestBackupValidateParam;
-
-#define testBackupValidateP(storage, path, ...)                                                                                    \
-    testBackupValidate(storage, path, (TestBackupValidateParam){VAR_PARAM_INIT, __VA_ARGS__})
-
 static String *
-testBackupValidate(const Storage *const storage, const String *const path, TestBackupValidateParam param)
+testBackupValidate(const Storage *storage, const String *path)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
         FUNCTION_HARNESS_PARAM(STRING, path);
-        FUNCTION_HARNESS_PARAM(UINT64, param.cipherType);
-        FUNCTION_HARNESS_PARAM(STRINGZ, param.cipherPass);
     FUNCTION_HARNESS_END();
 
     ASSERT(storage != NULL);
@@ -289,16 +260,8 @@ testBackupValidate(const Storage *const storage, const String *const path, TestB
     {
         // Build a list of files in the backup path and verify against the manifest
         // -------------------------------------------------------------------------------------------------------------------------
-        const InfoBackup *const infoBackup = infoBackupLoadFile(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : STR(param.cipherPass));
-
-        Manifest *manifest = manifestLoadFile(
-            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : infoBackupCipherPass(infoBackup));
-        testBackupValidateList(
-            storage, path, manifest, manifestData(manifest), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest), result);
+        Manifest *manifest = manifestLoadFile(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), cipherTypeNone, NULL);
+        testBackupValidateList(storage, path, manifest, manifestData(manifest), result);
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
         if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path))))
@@ -327,7 +290,6 @@ testBackupValidate(const Storage *const storage, const String *const path, TestB
                 const String *section = strSubN(line, 1, strSize(line) - 2);
 
                 if (strEqZ(section, INFO_SECTION_BACKREST) ||
-                    strEqZ(section, INFO_SECTION_CIPHER) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP_DB) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP_OPTION) ||
@@ -2103,7 +2065,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 3");
 
             TEST_RESULT_STR_Z(
-                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191002-070640F}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION {file, s=3}\n"
@@ -2271,7 +2233,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 8");
 
             TEST_RESULT_STR_Z(
-                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191003-105320F}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION.gz {file, s=3}\n"
@@ -2461,7 +2423,7 @@ testRun(void)
 
             // Check repo directory
             TEST_RESULT_STR_Z(
-                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191003-105320F_20191004-144000D}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION.gz {file, s=3}\n"
@@ -2617,7 +2579,7 @@ testRun(void)
                 "P00   WARN: no prior backup exists, incr backup has been changed to full");
 
             TEST_RESULT_STR_Z(
-                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191016-042640F}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION {file, s=3}\n"
@@ -2808,7 +2770,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 13");
 
             TEST_RESULT_STR(
-                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
                 strNewFmt(
                     "pg_data {path}\n"
                     "pg_data/PG_VERSION.gz {file, s=2}\n"
@@ -2968,7 +2930,7 @@ testRun(void)
                 "P00   INFO: incr backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
-                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191027-181320F_20191030-014640I}\n"
                 "pg_data {path}\n"
                 "pg_data/PG_VERSION.gz {file, s=2}\n"
@@ -3102,7 +3064,7 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 14");
 
             TEST_RESULT_STR_Z(
-                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191030-014640F}\n"
                 "bundle {path}\n"
                 "bundle/1/pg_data/PG_VERSION {file, s=2}\n"
@@ -3226,7 +3188,7 @@ testRun(void)
                 "P00   INFO: diff backup size = [SIZE], file total = 5");
 
             TEST_RESULT_STR_Z(
-                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                testBackupValidate(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ". {link, d=20191030-014640F_20191101-092000D}\n"
                 "bundle {path}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
