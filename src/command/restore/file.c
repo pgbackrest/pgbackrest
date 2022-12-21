@@ -220,9 +220,8 @@ List *restoreFile(
                             ASSERT(varUInt64(file->limit) != 0);
                             repoFileLimit = varUInt64(file->limit);
 
-                            // !!! Multiple files cannot be read when the file to read is a block incremental. This is because the
-                            // remote protocol does not support multiple open files at once. Should we only do this for remote or
-                            // leave as is and try to fix remote in a future commit???
+                            // Multiple files cannot be read when the file to read is a block incremental. This is because the
+                            // remote protocol does not support multiple open files at once.
                             if (file->blockIncrMapSize == 0)
                             {
                                 // Determine how many files can be copied with one read
@@ -287,7 +286,7 @@ List *restoreFile(
                         // be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
 
-                        // !!! The repo file needs to be closed so that block lists can be read from the remote protocol
+                        // The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));
 
                         // Size of delta map. If there is no delta map because the pg file does not exist then set to zero, which
