@@ -557,7 +557,7 @@
 
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install postgresql-libs libssh2
+                    yum install postgresql-libs
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>

@@ -681,17 +681,17 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // info - path exists only
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // info basic - path
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // info - file
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/fileinfo\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE,
@@ -704,7 +704,7 @@ testRun(void)
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .uid = 1000, .gid = 1000},
+                .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/testlink\",\"\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("/tmp")},
             // info - link .followLink = true
@@ -727,7 +727,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/testlink\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .uid = 1000, .gid = 1000},
+                .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/testlink\",\"\",1]",
                 .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/testlink\",\"\",1]",
@@ -737,7 +737,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP | LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .uid = 1000, .gid = 1000},
+                .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
@@ -932,35 +932,35 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // path with file, link, pipe, dot dotdot
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",0]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg\",0,0,1]"},
             // readdir returns .
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns ..
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF(".."),
                 .resultInt = 8, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns .include
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"..\",4095,null,0]", .fileName = STRDEF(".include"),
                 .resultInt = 8, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
@@ -975,40 +975,40 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".include\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns link
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/pg/link\",\"\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/pipe\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/.include\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
@@ -1022,12 +1022,12 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH | LIBSSH2_SFTP_S_IWOTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/pg/link\",\"\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             // helper function - storageSftpListEntry() info doesn't exist
@@ -1121,7 +1121,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF(".include"),
                 .resultInt = 8, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
@@ -1135,40 +1135,40 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".include\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns link
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/pg/link\",\"\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/pipe\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -1197,12 +1197,12 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
@@ -1216,38 +1216,38 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns link
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/pipe\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse readdir path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
@@ -1255,29 +1255,29 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/path/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/pg/link\",\"\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -1313,13 +1313,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg\",0,0,1]"},
             // readdir returns dot
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns path
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
@@ -1334,48 +1334,48 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns link
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/pipe\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns zzz
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF("zzz"),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/zzz\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir return empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse readdir path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
@@ -1383,18 +1383,18 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/path/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz\",0,0,1]"},
@@ -1402,17 +1402,17 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",0,0,1]"},
@@ -1420,18 +1420,18 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/pg/link\",\"\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -1466,13 +1466,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg\",0,0,1]"},
             // readdir returns dot
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns path
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
@@ -1487,48 +1487,48 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns link
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/pipe\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns zzz
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF("zzz"),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/zzz\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir return empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz\",0,0,1]"},
@@ -1536,17 +1536,17 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",0,0,1]"},
@@ -1554,7 +1554,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
@@ -1562,29 +1562,29 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/path/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/pg/link\",\"\",1]",
                 .resultInt = LIBSSH2_ERROR_NONE, .symlinkExTarget = STRDEF("../file")},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -1625,13 +1625,13 @@ testRun(void)
             .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                 LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg\",0,0,1]"},
             // readdir returns dot
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("empty"),
                 .resultInt = 5, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
@@ -1656,55 +1656,55 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns link
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/pipe\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns zzz
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF("zzz"),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/zzz\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir return empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse empty
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/empty\",0,0,1]"},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
@@ -1712,18 +1712,18 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/path/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz\",0,0,1]"},
@@ -1731,17 +1731,17 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",0,0,1]"},
@@ -1749,7 +1749,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -1775,13 +1775,13 @@ testRun(void)
             .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                 LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg\",0,0,1]"},
             // readdir returns dot
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns path
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".\",4095,null,0]", .fileName = STRDEF("path"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
@@ -1796,48 +1796,48 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"path\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns link
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF("link"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/link\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("../file")},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("../file")},
             // readdir returns pipe
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"link\",4095,null,0]", .fileName = STRDEF("pipe"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/pipe\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFIFO | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns zzz
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"pipe\",4095,null,0]", .fileName = STRDEF("zzz"),
                 .resultInt = 3, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/zzz\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir return empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"zzz\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse path
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/path\",0,0,1]"},
@@ -1845,18 +1845,18 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("file"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/path/file\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
                     LIBSSH2_SFTP_S_IWGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"file\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse zzz
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz\",0,0,1]"},
@@ -1864,17 +1864,17 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("yyy"),
                 .resultInt = 4, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IWGRP |
                     LIBSSH2_SFTP_S_IROTH,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // readdir returns empty
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"yyy\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656433838, .uid = 1000, .gid = 1000},
+                .mtime = 1656433838, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             // recurse yyy
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg/zzz/yyy\",0,0,1]"},
@@ -1882,7 +1882,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -2008,12 +2008,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF(".aaa.txt"),
                 .resultInt = 8, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/.aaa.txt\",1]", .fileName = STRDEF(".aaa.txt"),
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\".aaa.txt\",4095,null,0]", .fileName = STRDEF("noperm"),
                 .resultInt = 6, .uid = 0, .gid = 0},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/noperm\",1]", .fileName = STRDEF("noperm"),
@@ -2033,12 +2033,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("bbb.txt"),
                 .resultInt = 7, .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/bbb.txt\",1]", .fileName = STRDEF("bbb.txt"),
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"bbb.txt\",4095,null,0]", .fileName = STRDEF("noperm"),
                 .resultInt = 6, .uid = 0, .gid = 0},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/noperm\",1]", .fileName = STRDEF("noperm"),
@@ -2057,7 +2057,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("."),
                 .resultInt = LIBSSH2_ERROR_NONE, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1555160000, .uid = 1000, .gid = 1000},
+                .mtime = 1555160000, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -2183,7 +2183,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // create again
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
@@ -2193,7 +2193,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // errorOnExists
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
@@ -2202,14 +2202,14 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // sub2 custom mode
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub2\",511]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/sub2\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG | LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // sub3/sub4 .noParentCreate fail
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub3/sub4\",488]",
                 .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
@@ -2347,7 +2347,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove2"),
                 .resultInt = 7, .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4095,null,0]", .fileName = STRDEF("remove.txt"),
                 .resultInt = 10,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
@@ -2387,7 +2387,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove2"), .resultInt = 7,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG| LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
@@ -2488,7 +2488,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"\",4095,null,0]", .fileName = STRDEF("remove2"), .resultInt = 7,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRWXG| LIBSSH2_SFTP_S_IRWXO,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_READDIR_EX, .param = "[\"remove2\",4095,null,0]", .fileName = STRDEF(""),
                 .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP |
@@ -2584,7 +2584,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFLNK | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000, .symlinkExTarget = STRDEF("20181119-152138F")},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .symlinkExTarget = STRDEF("20181119-152138F")},
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"" TEST_PATH "/latest\",\"\",1]",
                 .symlinkExTarget = STRDEF("20181119-152138F")},
             // assert failure - asserts before libssh2 call
@@ -3057,14 +3057,14 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
@@ -3101,7 +3101,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 20},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 7},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -3138,13 +3138,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
@@ -3187,13 +3187,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_RENAME_EX,
                 .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
@@ -3324,7 +3324,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
@@ -3363,14 +3363,14 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 18},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 5},
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -3407,13 +3407,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
        });
@@ -3447,13 +3447,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
        });
@@ -3492,13 +3492,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
        });
@@ -3538,12 +3538,12 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_FSTAT_EX, .param = "[1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
        });
@@ -3582,7 +3582,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1, .uid = 1000, .gid = 1000, .filesize = 8},
+                .mtime = 1, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 8},
             HRNLIBSSH2_MACRO_SHUTDOWN()
        });
 
@@ -4507,13 +4507,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU | LIBSSH2_SFTP_S_IRGRP | LIBSSH2_SFTP_S_IXGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // check file mode
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/sub1/test.file\",1]",
                 .fileName = STRDEF("test.file"), .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR | LIBSSH2_SFTP_S_IRGRP,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // remove filename
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/sub1/test.file\"]",
                 .resultInt = LIBSSH2_ERROR_NONE},
@@ -4579,13 +4579,13 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRWXU,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // check file mode
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/sub2/test.file\",1]",
                 .fileName = STRDEF("test.file"), .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID,
-                .mtime = 1656434296, .uid = 1000, .gid = 1000},
+                .mtime = 1656434296, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             // remove filename
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/sub2/test.file\"]",
                 .resultInt = LIBSSH2_ERROR_NONE},
@@ -4630,7 +4630,7 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFREG | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 77777, .uid = 1000, .gid = 1000, .filesize = 3},
+                .mtime = 77777, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID, .filesize = 3},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
             // open file
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/no-truncate\",1,0,0]"},
@@ -4644,12 +4644,12 @@ testRun(void)
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 77777, .uid = 1000, .gid = 1000},
+                .mtime = 77777, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/no-truncate\",1]", .resultInt = LIBSSH2_ERROR_NONE,
                 .attrPerms = LIBSSH2_SFTP_S_IFDIR | LIBSSH2_SFTP_S_IRUSR | LIBSSH2_SFTP_S_IWUSR,
                 .flags = LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID |
                     LIBSSH2_SFTP_ATTR_SIZE,
-                .mtime = 77777, .uid = 1000, .gid = 1000},
+                .mtime = 77777, .uid = TEST_USER_ID, .gid = TEST_GROUP_ID},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
