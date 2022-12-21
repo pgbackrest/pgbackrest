@@ -321,13 +321,19 @@ Shim for libssh2_sftp_stat_ex
 int libssh2_sftp_stat_ex(
     LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, int stat_type, LIBSSH2_SFTP_ATTRIBUTES *attrs)
 {
+    // To avoid compiler complaining of unused param.
+    // Not passing to harnessLibssh2ScriptRun as parameter will vary depending on where tests are being run.
+    // Could we utilize test.c/build.c to calculate/define this and other length params?
+    if (path_len)
+    {
+        // do nothing
+    }
+
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_STAT_EX,
         varLstAdd(
             varLstAdd(
-                varLstAdd(
-                    varLstNew(), varNewStrZ(path)),
-                varNewUInt(path_len)),
+                varLstNew(), varNewStrZ(path)),
             varNewInt(stat_type)),
         (HarnessLibssh2 *)sftp);
 
@@ -359,7 +365,7 @@ unsigned long libssh2_sftp_last_error(LIBSSH2_SFTP *sftp)
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_symlink_ex
     LIBSSH2_SFTP_SYMLINK
-        path is file to link to , target is symlink to create
+        path is file to link to, target is symlink to create
     LIBSSH2_SFTP_READLINK
     LIBSSH2_SFTP_REALPATH
         path is file to retrive data from, target is populated with the data
@@ -367,22 +373,31 @@ Shim for libssh2_sftp_symlink_ex
 int libssh2_sftp_symlink_ex(
     LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, char *target, unsigned int target_len, int link_type)
 {
+    // To avoid compiler complaining of unused param.
+    // Not passing to harnessLibssh2ScriptRun as parameter will vary depending on where tests are being run.
+    if (path_len)
+    {
+        // do nothing
+    }
+
+    if (target_len)
+    {
+        // do nothing
+    }
+
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_SYMLINK_EX,
         varLstAdd(
             varLstAdd(
                 varLstAdd(
-                    varLstAdd(
-                        varLstAdd(
-                            varLstNew(), varNewStrZ(path)),
-                    varNewUInt(path_len)),
-                varNewStrZ(target)),
-            varNewUInt(target_len)),
+                    varLstNew(), varNewStrZ(path)),
+            varNewStrZ(target)),
         varNewInt(link_type)),
         (HarnessLibssh2 *)sftp);
 
     int rc = 0;
     /* from the doc page https://www.libssh2.org/libssh2_sftp_symlink_ex.html
+     *
      * !!! the driver is using LIBSSH2_SFTP_READLINK to resolve linkDestination, should it use LIBSSH2_SFTP_REALPATH, see below
      *
     target - a pointer to a buffer. The buffer has different uses depending what the link_type argument is set to.
@@ -444,15 +459,20 @@ Shim for libssh2_sftp_open_ex
 LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
     LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len, unsigned long flags, long mode, int open_type)
 {
+    // To avoid compiler complaining of unused param.
+    // Not passing to harnessLibssh2ScriptRun as parameter will vary depending on where tests are being run.
+    if (filename_len)
+    {
+        // do nothing
+    }
+
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_OPEN_EX,
         varLstAdd(
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
-                        varLstAdd(
-                            varLstNew(), varNewStrZ(filename)),
-                    varNewUInt(filename_len)),
+                        varLstNew(), varNewStrZ(filename)),
                 varNewUInt64(flags)),
             varNewInt64(mode)),
         varNewInt(open_type)),
@@ -537,13 +557,18 @@ Shim for libssh2_sftp_mkdir_ex
 ***********************************************************************************************************************************/
 int libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, long mode)
 {
+    // To avoid compiler complaining of unused param.
+    // Not passing to harnessLibssh2ScriptRun as parameter will vary depending on where tests are being run.
+    if (path_len)
+    {
+        // do nothing
+    }
+
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_MKDIR_EX,
         varLstAdd(
             varLstAdd(
-                varLstAdd(
-                    varLstNew(), varNewStrZ(path)),
-            varNewUInt(path_len)),
+                varLstNew(), varNewStrZ(path)),
         varNewInt64(mode)),
         (HarnessLibssh2 *)sftp);
 
@@ -578,17 +603,25 @@ int libssh2_sftp_rename_ex(
     LIBSSH2_SFTP *sftp, const char *source_filename, unsigned int source_filename_len, const char *dest_filename,
     unsigned int dest_filename_len, long flags)
 {
+    // To avoid compiler complaining of unused param.
+    // Not passing to harnessLibssh2ScriptRun as parameter will vary depending on where tests are being run.
+    if (source_filename_len)
+    {
+        // do nothing
+    }
+
+    if (dest_filename_len)
+    {
+        // do nothing
+    }
+
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_RENAME_EX,
         varLstAdd(
             varLstAdd(
                 varLstAdd(
-                    varLstAdd(
-                        varLstAdd(
-                            varLstNew(), varNewStrZ(source_filename)),
-                    varNewUInt64(source_filename_len)),
-                varNewStrZ(dest_filename)),
-            varNewUInt64(dest_filename_len)),
+                    varLstNew(), varNewStrZ(source_filename)),
+            varNewStrZ(dest_filename)),
         varNewInt64(flags)),
         (HarnessLibssh2 *)sftp);
 
@@ -600,12 +633,17 @@ Shim for libssh2_sftp_rmdir_ex
 ***********************************************************************************************************************************/
 int libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len)
 {
+    // To avoid compiler complaining of unused param.
+    // Not passing to harnessLibssh2ScriptRun as parameter will vary depending on where tests are being run.
+    if (path_len)
+    {
+        // do nothing
+    }
+
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_RMDIR_EX,
-        varLstAdd(
             varLstAdd(
                 varLstNew(), varNewStrZ(path)),
-            varNewUInt64(path_len)),
         (HarnessLibssh2 *)sftp);
 
     return harnessLibssh2->resultInt;
@@ -622,8 +660,11 @@ void libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
             varLstNew(), varNewUInt64(offset)),
         (HarnessLibssh2 *)handle);
 
-    if (harnessLibssh2->offset <= 0)
-        // to avoid compiler complaining of unused harnessLibssh2
+    // to avoid compiler complaining of unused harnessLibssh2 var
+    if (harnessLibssh2->offset)
+    {
+        // do nothing
+    }
 
     return;
 }
@@ -633,12 +674,17 @@ Shim for libssh2_sftp_unlink_ex
 ***********************************************************************************************************************************/
 int libssh2_sftp_unlink_ex(LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len)
 {
+    // To avoid compiler complaining of unused param.
+    // Not passing to harnessLibssh2ScriptRun as parameter will vary depending on where tests are being run.
+    if (filename_len)
+    {
+        // do nothing
+    }
+
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_UNLINK_EX,
-        varLstAdd(
             varLstAdd(
                 varLstNew(), varNewStrZ(filename)),
-            varNewUInt64(filename_len)),
         (HarnessLibssh2 *)sftp);
 
     return harnessLibssh2->resultInt;
@@ -659,7 +705,7 @@ ssize_t libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size
 
     if (buffer)
     {
-        // silence unused param warning/error
+        // do nothing
     }
 
     // return number of bytes written

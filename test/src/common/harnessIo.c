@@ -1,21 +1,11 @@
 /***********************************************************************************************************************************
-Harness for Protocol Testing
+Harness for Io Testing
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdlib.h>
-#include <unistd.h>
-
-#include "common/io/fdRead.h"
-#include "common/io/fdWrite.h"
-#include "common/fork.h"
-
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
-#include "common/harnessLog.h"
-#include "common/harnessProtocol.h"
-#include "common/wait.h"
-#include "storage/storage.h"
+#include "common/harnessIo.h"
 
 /***********************************************************************************************************************************
 Include shimmed C modules
@@ -44,9 +34,9 @@ int ioSessionFd(IoSession *this)
 
     int fd = 0;
 
-    // Call the shim when installed, return the value of 63581
+    // Call the shim when installed, return the arbitrary value of HRNIO_FILE_DESCRIPTOR
     if (hrnIoStatic.localShimIoSessionFd)
-        fd = 63581;
+        fd = HRNIO_FILE_DESCRIPTOR;
     else
         fd = ioSessionFd_SHIMMED(this);
 

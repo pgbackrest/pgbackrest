@@ -19,6 +19,14 @@ Scripted testing for libssh2 so exact results can be returned for unit testing. 
 #include "version.h"
 
 /***********************************************************************************************************************************
+libssh2 authorization constants
+***********************************************************************************************************************************/
+#define KEYPRIV                                                     STRDEF("/home/" TEST_USER "/.ssh/id_rsa")
+#define KEYPUB                                                      STRDEF("/home/" TEST_USER "/.ssh/id_rsa.pub")
+#define KEYPRIV_CSTR                                                "/home/" TEST_USER "/.ssh/id_rsa"
+#define KEYPUB_CSTR                                                 "/home/" TEST_USER "/.ssh/id_rsa.pub"
+
+/***********************************************************************************************************************************
 Function constants
 ***********************************************************************************************************************************/
 #define HRNLIBSSH2_HOSTKEY_HASH                                     "libssh2_hostkey_hash"
@@ -56,10 +64,10 @@ Macros for defining groups of functions that implement commands
 #define HRNLIBSSH2_MACRO_STARTUP()                                                                                                 \
     {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},                                                                 \
     {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},                                                    \
-    {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = "[63581]", .resultInt = 0},                                                \
+    {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = 0},                                          \
     {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},                                      \
     {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,                                                                        \
-    .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"/home/vagrant/.ssh/id_rsa.pub\",\"/home/vagrant/.ssh/id_rsa\",null]",         \
+    .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",                                \
     .resultInt = 0},                                                                                                               \
     {.function = HRNLIBSSH2_SFTP_INIT}
 
