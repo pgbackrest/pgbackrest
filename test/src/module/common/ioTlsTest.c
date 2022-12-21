@@ -991,6 +991,9 @@ testRun(void)
         TEST_RESULT_VOID(ioSessionClose(session), "close socket session");
         TEST_RESULT_VOID(ioSessionFree(session), "free socket session");
 
+        // This needs to be freed or valgrind will complain
+        freeaddrinfo(hostBadAddress);
+
         hrnIoIoSessionFdShimUninstall();
     }
 
