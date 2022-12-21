@@ -950,7 +950,8 @@ backupFilePut(BackupData *backupData, Manifest *manifest, const String *name, ti
             {
                 ioFilterGroupAdd(
                     ioWriteFilterGroup(storageWriteIo(write)),
-                    cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(manifestCipherSubPass(manifest))));
+                    cipherBlockNewP(
+                        cipherModeEncrypt, cfgOptionStrId(cfgOptRepoCipherType), BUFSTR(manifestCipherSubPass(manifest))));
 
                 repoChecksum = true;
             }

@@ -3210,6 +3210,69 @@ testRun(void)
                 "pg_data/global={}\n",
                 "compare file list");
         }
+
+        // It is better to put as few tests here as possible because cmp/enc makes tests more expensive (especially with valgrind)
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 full backup with comp/enc");
+
+        backupTimeStart = BACKUP_EPOCH + 3200000;
+
+        {
+            // Remove old pg data
+            HRN_STORAGE_PATH_REMOVE(storageTest, "pg1", .recurse = true);
+
+            // Update pg_control
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksum = false, .walSegmentSize = 2 * 1024 * 1024);
+
+            // Update version
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_STR, .timeModified = backupTimeStart);
+
+            // Create encrypted stanza
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawBool(argList, cfgOptOnline, false);
+            hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+            hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+            HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+            HRN_STORAGE_PATH_REMOVE(storageRepoIdxWrite(0), NULL, .recurse = true);
+
+            cmdStanzaCreate();
+            TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'test1' on repo1");
+
+            // Load options
+            argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+            hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Run backup
+            testBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2);
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
+                "P00   INFO: check archive for segment 0000000105DC520000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DC520000000001, lsn = 5dc5200/300000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
+                "P00   INFO: check archive for segment(s) 0000000105DC520000000000:0000000105DC520000000001\n"
+                "P00   INFO: new backup label = 20191108-080000F\n"
+                "P00   INFO: full backup size = [SIZE], file total = 5");
+        }
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
