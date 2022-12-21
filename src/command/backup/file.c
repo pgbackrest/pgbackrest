@@ -282,7 +282,6 @@ backupFile(
                                     ioFilterGroupResultP(
                                         ioReadFilterGroup(storageReadIo(read)), CRYPTO_HASH_FILTER_TYPE, .idx = 1));
                             }
-
                         }
                         MEM_CONTEXT_END();
 
