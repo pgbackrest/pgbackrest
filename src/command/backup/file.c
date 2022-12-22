@@ -151,8 +151,10 @@ backupFile(
                             ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
                         uint64_t pgTestSize = pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(read), SIZE_FILTER_TYPE));
 
-                        // No need to recopy if checksum/size match. When the repo checksum is not present still compare to repo
-                        // size since the repo checksum should only be present when the repo file was not compressed/encrypted.
+                        // No need to recopy if checksum/size match. When the repo checksum is missing still compare to repo size
+                        // since the repo checksum should only be missing when the repo file was not compressed/encrypted, i.e. the
+                        // repo size should match the original size. There is no need to worry about old manifests here since resume
+                        // does not work across versions.
                         if (file->repoFileSize == pgTestSize &&
                             bufEq(file->repoFileChecksum != NULL ? file->repoFileChecksum : file->pgFileChecksum, pgTestChecksum))
                         {
