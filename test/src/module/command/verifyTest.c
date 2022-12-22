@@ -1184,6 +1184,8 @@ testRun(void)
                     "\"reference\":\"20181119-152900F\",\"size\":4,\"timestamp\":1565282114}\n"
                 "pg_data/testfile={\"checksum\":\"%s\",\"reference\":\"20181119-152900F\",\"size\":7,\"timestamp\":1565282114}\n"
                 "pg_data/testfile2={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
+                "pg_data/repochk={\"checksum\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"rck\":\"%s\",\"repo-size\":7"
+                    ",\"size\":3,\"timestamp\":1565282114}\n"
                 "pg_data/testmissing="
                     "{\"checksum\":\"123473f470864e067ee3a22e64b47b0a1c356abc\",\"size\":7,\"timestamp\":1565282114}\n"
                 "pg_data/testother={\"checksum\":\"%s\",\"reference\":\"UNPROCESSEDBACKUP\",\"size\":7,\"timestamp\":1565282114}\n"
@@ -1193,7 +1195,7 @@ testRun(void)
                 TEST_MANIFEST_PATH
                 TEST_MANIFEST_PATH_DEFAULT,
             strZ(strNewEncode(encodingHex, fileChecksum)), strZ(strNewEncode(encodingHex, fileChecksum)),
-            strZ(strNewEncode(encodingHex, fileChecksum)));
+            strZ(strNewEncode(encodingHex, fileChecksum)), strZ(strNewEncode(encodingHex, fileChecksum)));
 
         // Write manifests for dependent backup
         HRN_INFO_PUT(
@@ -1205,6 +1207,10 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storageRepoIdxWrite(0),
             STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/pg_data/testfile2", fileContents,
+            .comment = "put valid file to dependent");
+        HRN_STORAGE_PUT_Z(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/pg_data/repochk", fileContents,
             .comment = "put valid file to dependent");
 
         // Create an unprocessed backup label with a file that will be referenced in the dependent manifest
@@ -1277,8 +1283,8 @@ testRun(void)
                 "              backup: 20181119-152810F, status: invalid, total files checked: 0, total valid files: 0\n"
                 "              backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 2\n"
                 "                checksum invalid: 1\n"
-                "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 5,"
-                                   " total valid files: 2\n"
+                "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 6,"
+                                   " total valid files: 3\n"
                 "                missing: 1, checksum invalid: 1, other: 1");
 
         harnessLogLevelReset();
@@ -1300,7 +1306,7 @@ testRun(void)
             "  backup: 20181119-152810F, status: invalid, total files checked: 0, total valid files: 0\n"
             "  backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 2\n"
             "    checksum invalid: 1\n"
-            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 5, total valid files: 2\n"
+            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 6, total valid files: 3\n"
             "    missing: 1, checksum invalid: 1, other: 1", "verify text output, not verbose, with verify failures");
         TEST_RESULT_LOG(
                 "P01   INFO: invalid checksum "

@@ -37,13 +37,16 @@
                         <commit subject="Store manifest checksums in memory more efficiently.">
                             <github-pull-request id="1953"/>
                         </commit>
+                        <commit subject="Add repository checksum to make verify and resume more efficient.">
+                            <github-pull-request id="1956"/>
+                        </commit>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                             <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
-                        <p>Store manifest checksums in memory more efficiently.</p>
+                        <p>Add repository checksum to make verify and resume more efficient.</p>
                     </release-item>
                 </release-development-list>
             </release-core-list>

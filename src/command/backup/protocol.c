@@ -47,6 +47,8 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.pgFileChecksum = pckReadBinP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
             file.manifestFile = pckReadStrP(param);
+            file.repoFileChecksum = pckReadBinP(param);
+            file.repoFileSize = pckReadU64P(param);
             file.manifestFileResume = pckReadBoolP(param);
             file.manifestFileHasReference = pckReadBoolP(param);
 
@@ -70,6 +72,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             pckWriteU64P(resultPack, fileResult->bundleOffset);
             pckWriteU64P(resultPack, fileResult->repoSize);
             pckWriteBinP(resultPack, fileResult->copyChecksum);
+            pckWriteBinP(resultPack, fileResult->repoChecksum);
             pckWritePackP(resultPack, fileResult->pageChecksumResult);
         }
 

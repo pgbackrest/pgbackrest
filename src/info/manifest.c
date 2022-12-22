@@ -95,6 +95,7 @@ static time_t manifestPackBaseTime = -1;
 typedef enum
 {
     manifestFilePackFlagChecksum,
+    manifestFilePackFlagChecksumRepo,
     manifestFilePackFlagReference,
     manifestFilePackFlagBundle,
     manifestFilePackFlagCopy,
@@ -130,6 +131,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     if (file->checksumSha1 != NULL)
         flag |= 1 << manifestFilePackFlagChecksum;
+
+    if (file->checksumRepoSha1 != NULL)
+        flag |= 1 << manifestFilePackFlagChecksumRepo;
 
     if (file->copy)
         flag |= 1 << manifestFilePackFlagCopy;
@@ -185,6 +189,13 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     if (file->checksumSha1 != NULL)
     {
         memcpy((uint8_t *)buffer + bufferPos, file->checksumSha1, HASH_TYPE_SHA1_SIZE);
+        bufferPos += HASH_TYPE_SHA1_SIZE;
+    }
+
+    // SHA1 repo checksum
+    if (file->checksumRepoSha1 != NULL)
+    {
+        memcpy((uint8_t *)buffer + bufferPos, file->checksumRepoSha1, HASH_TYPE_SHA1_SIZE);
         bufferPos += HASH_TYPE_SHA1_SIZE;
     }
 
@@ -287,6 +298,13 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     if (flag & (1 << manifestFilePackFlagChecksum))
     {
         result.checksumSha1 = (const uint8_t *)filePack + bufferPos;
+        bufferPos += HASH_TYPE_SHA1_SIZE;
+    }
+
+    // SHA1 repo checksum
+    if (flag & (1 << manifestFilePackFlagChecksumRepo))
+    {
+        result.checksumRepoSha1 = (const uint8_t *)filePack + bufferPos;
         bufferPos += HASH_TYPE_SHA1_SIZE;
     }
 
@@ -1523,6 +1541,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 {
                     file.sizeRepo = filePrior.sizeRepo;
                     file.checksumSha1 = filePrior.checksumSha1;
+                    file.checksumRepoSha1 = filePrior.checksumRepoSha1;
                     file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
                     file.checksumPage = filePrior.checksumPage;
                     file.checksumPageError = filePrior.checksumPageError;
@@ -1684,6 +1703,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BUNDLE_ID                                      STRID5("bni", 0x25c20)
 #define MANIFEST_KEY_BUNDLE_OFFSET                                  STRID5("bno", 0x3dc20)
 #define MANIFEST_KEY_CHECKSUM                                       STRID5("checksum", 0x6d66b195030)
+#define MANIFEST_KEY_CHECKSUM_REPO                                  STRID5("rck", 0x2c720)
 #define MANIFEST_KEY_CHECKSUM_PAGE                                  "checksum-page"
 #define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
 #define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
@@ -1847,6 +1867,11 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             file.mode = cvtZToMode(strZ(jsonReadStr(json)));
         else
             file.mode = manifest->fileModeDefault;
+
+        // The repo checksum might not exist if this is a partial save that was done during the backup to preserve checksums for
+        // already backed up files or if this is an older manifest
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM_REPO))
+            file.checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
 
         // Reference
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
@@ -2554,6 +2579,15 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
 
                 if (file.mode != saveData->fileModeDefault)
                     jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", file.mode);
+
+                // Save if the repo checksum is not null. The repo checksum for zero-length files may vary depending on compression
+                // and encryption applied.
+                if (file.checksumRepoSha1 != NULL)
+                {
+                    jsonWriteStr(
+                        jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM_REPO),
+                        strNewEncode(encodingHex, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)));
+                }
 
                 if (file.reference != NULL)
                     jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_REFERENCE), file.reference);
