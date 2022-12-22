@@ -3231,6 +3231,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
         hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
         hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
