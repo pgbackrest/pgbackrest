@@ -1828,6 +1828,11 @@ option:
       backup: {}
     command-role:
       main: {}
+    depend:
+      option: repo-bundle
+      default: false
+      list:
+        - true
 
   repo-cipher-pass:
     section: global

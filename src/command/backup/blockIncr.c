@@ -138,7 +138,6 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                             bool bufferRequired = true;
 
                             // Add compress filter
-                            // !!! COMPRESS FILTER SHOULD OMIT FILE HEADER
                             if (this->compressParam != NULL)
                             {
                                 ioFilterGroupAdd(

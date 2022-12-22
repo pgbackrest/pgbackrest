@@ -4885,6 +4885,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                          // opt/repo-block
             PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/repo-block
             (                                                                                                      // opt/repo-block
+                PARSE_RULE_OPTIONAL_DEPEND                                                                         // opt/repo-block
+                (                                                                                                  // opt/repo-block
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),                                 // opt/repo-block
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBundle),                                                          // opt/repo-block
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                                      // opt/repo-block
+                ),                                                                                                 // opt/repo-block
+                                                                                                                   // opt/repo-block
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/repo-block
                 (                                                                                                  // opt/repo-block
                     PARSE_RULE_VAL_BOOL_FALSE,                                                                     // opt/repo-block
@@ -9412,7 +9419,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRecurse,                                                                                              // opt-resolve-order
     cfgOptRemoteType,                                                                                           // opt-resolve-order
     cfgOptRepo,                                                                                                 // opt-resolve-order
-    cfgOptRepoBlock,                                                                                            // opt-resolve-order
     cfgOptRepoBundle,                                                                                           // opt-resolve-order
     cfgOptRepoBundleLimit,                                                                                      // opt-resolve-order
     cfgOptRepoBundleSize,                                                                                       // opt-resolve-order
@@ -9468,6 +9474,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoAzureKey,                                                                                         // opt-resolve-order
     cfgOptRepoAzureKeyType,                                                                                     // opt-resolve-order
     cfgOptRepoAzureUriStyle,                                                                                    // opt-resolve-order
+    cfgOptRepoBlock,                                                                                            // opt-resolve-order
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order
