@@ -2075,9 +2075,15 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                         if (!dependResult.valid && optionSet && parseOptionValue->source == cfgSourceParam)
                         {
                             PackRead *filter = pckReadNewC(optionalRules.valid, optionalRules.validSize);
-                            ConfigOption dependId = pckReadU32P(filter);
 
-                            // Get depend option name
+                            // If there is a boolean default value just consume it since it is not needed here
+                            pckReadNext(filter);
+
+                            if (pckReadType(filter) == pckTypeBool)
+                                pckReadBoolP(filter);
+
+                            // Get depend option id and name
+                            ConfigOption dependId = pckReadU32P(filter);
                             const String *dependOptionName = STR(cfgParseOptionKeyIdxName(dependId, optionKeyIdx));
 
                             // If depend value is not set
