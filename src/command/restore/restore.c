@@ -525,10 +525,6 @@ restoreManifestMap(Manifest *manifest)
                         THROW_FMT(TablespaceMapError, "unable to remap invalid tablespace '%s'", strZ(tablespace));
                 }
             }
-
-            // Issue a warning message when remapping tablespaces in PostgreSQL < 9.2
-            if (manifestData(manifest)->pgVersion <= PG_VERSION_92)
-                LOG_WARN("update pg_tablespace.spclocation with new tablespace locations for PostgreSQL <= " PG_VERSION_92_STR);
         }
 
         // Remap links
@@ -1630,8 +1626,8 @@ restoreRecoveryOption(unsigned int pgVersion)
                 {
                     kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
                 }
-                // Write pause_at_recovery_target on supported PostgreSQL versions
-                else if (pgVersion >= PG_VERSION_RECOVERY_TARGET_PAUSE)
+                // Else write pause_at_recovery_target on supported PostgreSQL versions
+                else
                 {
                     // Shutdown action is not supported with pause_at_recovery_target setting
                     if (targetAction == CFGOPTVAL_TARGET_ACTION_SHUTDOWN)
@@ -1643,13 +1639,6 @@ restoreRecoveryOption(unsigned int pgVersion)
                     }
 
                     kvPut(result, VARSTRZ(PAUSE_AT_RECOVERY_TARGET), VARSTR(FALSE_STR));
-                }
-                // Else error on unsupported version
-                else
-                {
-                    THROW_FMT(
-                        OptionInvalidError, CFGOPT_TARGET_ACTION " option is only available in PostgreSQL >= %s",
-                        strZ(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_PAUSE)));
                 }
             }
         }
@@ -2207,7 +2196,7 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
 
                 // If not zero-length add the checksum
                 if (file.size != 0 && !zeroed)
-                    strCatFmt(log, " checksum %s", file.checksumSha1);
+                    strCatFmt(log, " checksum %s", strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
 
                 LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
             }
@@ -2330,7 +2319,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 }
 
                 pckWriteStrP(param, restoreFilePgPath(jobData->manifest, file.name));
-                pckWriteStrP(param, STR(file.checksumSha1));
+                pckWriteBinP(param, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE));
                 pckWriteU64P(param, file.size);
                 pckWriteTimeP(param, file.timestamp);
                 pckWriteModeP(param, file.mode);

@@ -162,9 +162,9 @@
 
         <!-- =================================================================================================================== -->
         <section id="postgres-compatibility">
-            <title>Compatibility with <postgres/> >= 9.0</title>
+            <title>Compatibility with ten versions of <postgres/></title>
 
-            <p><backrest/> includes support for versions down to 9.0, since older versions of PostgreSQL are still regularly utilized.</p>
+            <p><backrest/> includes support for ten versions of <postgres/>, the five supported versions and the last five EOL versions. This allows ample time to upgrade to a supported version.</p>
         </section>
     </section>
 

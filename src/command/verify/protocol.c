@@ -39,7 +39,7 @@ verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         const CompressType compressType = (CompressType)pckReadU32P(param);
-        const String *const fileChecksum = pckReadStrP(param);
+        const Buffer *const fileChecksum = pckReadBinP(param);
         const uint64_t fileSize = pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
 

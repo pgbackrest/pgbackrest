@@ -105,7 +105,8 @@ typedef struct ManifestFile
     bool checksumPage:1;                                            // Does this file have page checksums?
     bool checksumPageError:1;                                       // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
-    char checksumSha1[HASH_TYPE_SHA1_SIZE_HEX + 1];                 // SHA1 checksum
+    const uint8_t *checksumSha1;                                    // SHA1 checksum
+    const uint8_t *checksumRepoSha1;                                // SHA1 checksum as stored in repo (including compression, etc.)
     const String *checksumPageErrorList;                            // List of page checksum errors if there are any
     const String *user;                                             // User name
     const String *group;                                            // Group name

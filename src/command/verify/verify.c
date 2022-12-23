@@ -565,19 +565,6 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
     {
         String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
 
-        // If walSegment found ends in FF for PG versions 9.2 or less then skip it but log error because it should not exist and
-        // PostgreSQL will ignore it
-        if (archiveIdResult->pgWalInfo.version <= PG_VERSION_92 && strEndsWithZ(walSegment, "FF"))
-        {
-            LOG_INFO_FMT("invalid WAL '%s' for '%s' exists, skipping", strZ(walSegment), strZ(archiveIdResult->archiveId));
-
-            (*jobErrorTotal)++;
-
-            // Remove the file from the original list so no attempt is made to verify it
-            strLstRemoveIdx(walFileList, walFileIdx);
-            continue;
-        }
-
         // The lists are sorted so look ahead to see if this is a duplicate of the next one in the list
         if (walFileIdx + 1 < strLstSize(walFileList))
         {
@@ -754,7 +741,8 @@ verifyArchive(VerifyJobData *const jobData)
                         const String *fileName = strLstGet(jobData->walFileList, 0);
                         const String *filePathName = strNewFmt(
                             STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveResult->archiveId), strZ(walPath), strZ(fileName));
-                        String *checksum = strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX);
+                        Buffer *const checksum = bufNewDecode(
+                            encodingHex, strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX));
 
                         // Set up the job
                         ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
@@ -763,7 +751,7 @@ verifyArchive(VerifyJobData *const jobData)
                         pckWriteStrP(param, filePathName);
                         pckWriteBoolP(param, false);
                         pckWriteU32P(param, compressTypeFromName(filePathName));
-                        pckWriteStrP(param, checksum);
+                        pckWriteBinP(param, checksum);
                         pckWriteU64P(param, archiveResult->pgWalInfo.size);
                         pckWriteStrP(param, jobData->walCipherPass);
 
@@ -1006,11 +994,22 @@ verifyBackup(VerifyJobData *const jobData)
                                 pckWriteBoolP(param, false);
                             }
 
-                            pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
-                            // If the checksum is not present in the manifest, it will be calculated by manifest load
-                            pckWriteStrP(param, STR(fileData.checksumSha1));
-                            pckWriteU64P(param, fileData.size);
-                            pckWriteStrP(param, jobData->backupCipherPass);
+                            // Use the repo checksum when present
+                            if (fileData.checksumRepoSha1 != NULL)
+                            {
+                                pckWriteU32P(param, compressTypeNone);
+                                pckWriteBinP(param, BUF(fileData.checksumRepoSha1, HASH_TYPE_SHA1_SIZE));
+                                pckWriteU64P(param, fileData.sizeRepo);
+                                pckWriteStrP(param, NULL);
+                            }
+                            // Else use the file checksum, which may require additional filters, e.g. decompression
+                            else
+                            {
+                                pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
+                                pckWriteBinP(param, BUF(fileData.checksumSha1, HASH_TYPE_SHA1_SIZE));
+                                pckWriteU64P(param, fileData.size);
+                                pckWriteStrP(param, jobData->backupCipherPass);
+                            }
 
                             // Assign job to result (prepend backup label being processed to the key since some files are in a prior
                             // backup)
