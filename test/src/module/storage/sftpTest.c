@@ -4459,7 +4459,13 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
-            .write = true, .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
+            .write = true,
+#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
+            .hostkeyHash = STRID5("sha256-ssh2-hostkey-hash", 0xdf1139efdde05134)
+#else
+            .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135)
+#endif
+            );
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noCreatePath = true, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(fileName));
