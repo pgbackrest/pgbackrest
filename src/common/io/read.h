@@ -69,6 +69,9 @@ ioReadLine(IoRead *const this)
     return ioReadLineParam(this, false);
 }
 
+// Read varint-128 encoding
+uint64_t ioReadVarIntU64(IoRead *this);
+
 // Are there bytes ready to read immediately? There are no guarantees on how much data is available to read but it must be at least
 // one byte.
 typedef struct IoReadReadyParam
@@ -76,9 +79,6 @@ typedef struct IoReadReadyParam
     VAR_PARAM_HEADER;
     bool error;                                                     // Error when read not ready
 } IoReadReadyParam;
-
-// Read varint-128 encoding
-uint64_t ioReadVarIntU64(IoRead *this);
 
 #define ioReadReadyP(this, ...)                                                                                                    \
     ioReadReady(this, (IoReadReadyParam){VAR_PARAM_INIT, __VA_ARGS__})
