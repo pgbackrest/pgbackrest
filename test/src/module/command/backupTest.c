@@ -2368,7 +2368,6 @@ testRun(void)
         // Replace percent complete and backup size since they can cause a lot of churn when files are added/removed
         hrnLogReplaceAdd(", [0-9]{1,3}.[0-9]{1,2}%\\)", "[0-9].+%", "PCT", false);
         hrnLogReplaceAdd(" backup size = [0-9.]+[A-Z]+", "[^ ]+$", "SIZE", false);
-        hrnLogReplaceAdd(" \\(map [0-9.]+[A-Z]+", "[^ ]+$", "SIZE", false);
 
         // Replace checksums since they can differ between architectures (e.g. 32/64 bit)
         hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
@@ -3684,7 +3683,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE] (map [SIZE]), file total = 7");
+                "P00   INFO: full backup size = [SIZE], file total = 7");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3792,7 +3791,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
-                "P00   INFO: diff backup size = [SIZE] (map [SIZE]), file total = 8");
+                "P00   INFO: diff backup size = [SIZE], file total = 8");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3901,7 +3900,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC520000000000:0000000105DC520000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F\n"
-                "P00   INFO: full backup size = [SIZE] (map [SIZE]), file total = 5");
+                "P00   INFO: full backup size = [SIZE], file total = 5");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -3983,7 +3982,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC82D000000000:0000000105DC82D000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F_20191110-153320D\n"
-                "P00   INFO: diff backup size = [SIZE] (map [SIZE]), file total = 5");
+                "P00   INFO: diff backup size = [SIZE], file total = 5");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(

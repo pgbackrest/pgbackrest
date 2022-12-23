@@ -2342,7 +2342,7 @@ testRun(void)
             "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
+            "            repo1: backup set size: 2.3MB (100B map), backup size: 346B (12B map)\n"
             "            backup reference list: 20201116-155000F\n"
             "            database list: none\n"
             "            annotation(s)\n"
