@@ -167,6 +167,22 @@ testRun(void)
             ServiceError, "libssh2 hostkey hash failed: libssh2 errno [-14]");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid hostkey hash");
+
+        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        {
+            {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
+            {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = 0},
+            {.function = NULL}
+        });
+
+        TEST_ERROR(storageSftpNewP(
+            TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
+                .write = true, .hostkeyHash = STRID5("aes-256-cbc", 0xc43dfbbcdcca10)),
+            ServiceError, "requested ssh2 hostkey hash type (aes-256-cbc) not available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth failure");
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
@@ -4373,15 +4389,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("permission denied");
 
-// older systems do not support LIBSSH2_HOSTKEY_HASH_SHA256
-#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
-        #define                                                     HOSTKEY_HASH_ENTRY()                                           \
-            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[3]", .resultZ = "12345678910123456789"}
-#else
-        #define                                                     HOSTKEY_HASH_ENTRY()                                           \
-            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"}
-#endif
-
         // mimic creation of /noperm/noperm
 
         harnessLibssh2ScriptSet((HarnessLibssh2 [])
@@ -4435,7 +4442,6 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = 0},
             HOSTKEY_HASH_ENTRY(),
-//            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
             .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]", .resultInt = 0},
             {.function = HRNLIBSSH2_SFTP_INIT},
@@ -4453,11 +4459,10 @@ testRun(void)
 
         storageTest = storageSftpNewP(
             TEST_PATH_STR, STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
-            .write = true, .hostkeyHash = STRID5("aes-256-cbc", 0xc43dfbbcdcca10));
+            .write = true, .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noCreatePath = true, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(ioWriteOpen(storageWriteIo(file)), FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(fileName));
-        TEST_RESULT_LOG("P00   INFO: requested ssh2 hostkey hash type (aes-256-cbc) not available, defaulting to SHA1");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 

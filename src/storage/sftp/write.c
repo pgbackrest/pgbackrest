@@ -5,16 +5,8 @@ Sftp Storage File write
 
 #ifdef HAVE_LIBSSH2
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <utime.h>
-#include <sys/select.h>
-
 #include "common/debug.h"
-#include "common/io/write.h"
 #include "common/log.h"
-#include "common/type/object.h"
 #include "common/user.h"
 #include "common/wait.h"
 #include "storage/sftp/storage.intern.h"

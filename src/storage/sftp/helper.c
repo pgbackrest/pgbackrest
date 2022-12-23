@@ -6,8 +6,6 @@ Sftp Storage Helper
 #ifdef HAVE_LIBSSH2
 
 #include "common/debug.h"
-#include "common/io/http/url.h"
-#include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "storage/sftp/helper.h"

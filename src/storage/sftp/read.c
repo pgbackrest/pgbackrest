@@ -5,16 +5,9 @@ Sftp Storage Read
 
 #ifdef HAVE_LIBSSH2
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/select.h>
-
 #include "common/debug.h"
-#include "common/io/fd.h"
-#include "common/io/read.h"
 #include "common/io/session.h"
 #include "common/log.h"
-#include "common/type/object.h"
 #include "common/wait.h"
 #include "storage/sftp/read.h"
 #include "storage/sftp/storage.intern.h"

@@ -5,19 +5,9 @@ Sftp Storage
 
 #ifdef HAVE_LIBSSH2
 
-#include <dirent.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include "common/debug.h"
-#include "common/io/fd.h"
 #include "common/io/socket/client.h"
 #include "common/log.h"
-#include "common/regExp.h"
 #include "common/user.h"
 #include "common/wait.h"
 #include "storage/sftp/read.h"
@@ -859,15 +849,7 @@ storageSftpNewInternal(
 #endif // LIBSSH2_HOSTKEY_HASH_SHA256
 
             default:
-
-#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
-                hash_type = LIBSSH2_HOSTKEY_HASH_SHA256;
-#else
-                hash_type = LIBSSH2_HOSTKEY_HASH_SHA1;
-#endif // LIBSSH2_HOSTKEY_HASH_SHA256
-
-                LOG_INFO_FMT(
-                    "requested ssh2 hostkey hash type (%s) not available, defaulting to SHA1", strZ(strIdToStr(hostkeyHash)));
+                THROW_FMT(ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(hostkeyHash)));
                 break;
         }
 

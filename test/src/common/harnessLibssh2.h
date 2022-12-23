@@ -78,6 +78,14 @@ Macros for defining groups of functions that implement commands
     {.function = HRNLIBSSH2_SESSION_FREE, .resultInt = 0},                                                                         \
     {.function = NULL}                                                                                                             \
 
+// older systems do not support LIBSSH2_HOSTKEY_HASH_SHA256
+#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
+        #define                                                     HOSTKEY_HASH_ENTRY()                                           \
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[3]", .resultZ = "12345678910123456789"}
+#else
+        #define                                                     HOSTKEY_HASH_ENTRY()                                           \
+            {.function = HRNLIBSSH2_HOSTKEY_HASH, .param = "[2]", .resultZ = "12345678910123456789"}
+#endif
 
 /***********************************************************************************************************************************
 Structure for scripting libssh2 responses

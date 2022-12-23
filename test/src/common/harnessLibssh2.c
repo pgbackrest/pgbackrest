@@ -187,9 +187,9 @@ LIBSSH2_SESSION *libssh2_session_init_ex(
                     varLstAdd(
                         varLstAdd(
                             varLstNew(), varNewStr(NULL)),
-                        varNewStr(NULL)),
                     varNewStr(NULL)),
                 varNewStr(NULL)),
+            varNewStr(NULL)),
             NULL);
 
     return harnessLibssh2->resultNull ? NULL : (LIBSSH2_SESSION *)harnessLibssh2;
@@ -248,17 +248,17 @@ int libssh2_userauth_publickey_fromfile_ex(
 {
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
+        varLstAdd(
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
                         varLstAdd(
-                            varLstAdd(
-                                varLstNew(), varNewStrZ(username)),
-                            varNewUInt(ousername_len)),
-                        varNewStrZ(publickey)),
-                    varNewStrZ(privatekey)),
-                varNewStrZ(passphrase)),
-            (HarnessLibssh2 *)session);
+                            varLstNew(), varNewStrZ(username)),
+                    varNewUInt(ousername_len)),
+                varNewStrZ(publickey)),
+            varNewStrZ(privatekey)),
+        varNewStrZ(passphrase)),
+        (HarnessLibssh2 *)session);
 
     return harnessLibssh2->resultInt;
 }
@@ -300,8 +300,8 @@ int libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason, const ch
             varLstAdd(
                 varLstAdd(
                     varLstNew(), varNewInt(reason)),
-                varNewStrZ(description)),
-            varNewStrZ(lang)),
+            varNewStrZ(description)),
+        varNewStrZ(lang)),
         (HarnessLibssh2 *)session);
 
     return harnessLibssh2->resultInt;
@@ -334,7 +334,7 @@ int libssh2_sftp_stat_ex(
         varLstAdd(
             varLstAdd(
                 varLstNew(), varNewStrZ(path)),
-            varNewInt(stat_type)),
+        varNewInt(stat_type)),
         (HarnessLibssh2 *)sftp);
 
     if (attrs == NULL)
@@ -584,8 +584,8 @@ ssize_t libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buff
     // an issue for sftpTest.c.
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_READ,
-            varLstAdd(
-                varLstNew(), varNewUInt64(buffer_maxlen)),
+        varLstAdd(
+            varLstNew(), varNewUInt64(buffer_maxlen)),
         (HarnessLibssh2 *)handle);
 
     // copy read into buffer
@@ -642,8 +642,8 @@ int libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int pat
 
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_RMDIR_EX,
-            varLstAdd(
-                varLstNew(), varNewStrZ(path)),
+        varLstAdd(
+            varLstNew(), varNewStrZ(path)),
         (HarnessLibssh2 *)sftp);
 
     return harnessLibssh2->resultInt;
@@ -683,8 +683,8 @@ int libssh2_sftp_unlink_ex(LIBSSH2_SFTP *sftp, const char *filename, unsigned in
 
     HarnessLibssh2 *harnessLibssh2 = harnessLibssh2ScriptRun(
         HRNLIBSSH2_SFTP_UNLINK_EX,
-            varLstAdd(
-                varLstNew(), varNewStrZ(filename)),
+        varLstAdd(
+            varLstNew(), varNewStrZ(filename)),
         (HarnessLibssh2 *)sftp);
 
     return harnessLibssh2->resultInt;
