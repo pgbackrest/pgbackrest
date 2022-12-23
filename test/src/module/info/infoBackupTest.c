@@ -137,7 +137,8 @@ testRun(void)
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","
             "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
-            "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
+            "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-repo-size-map\":100,"
+            "\"backup-info-repo-size-map-delta\":12,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","
             "\"20161219-212741F_20161219-212803D\"],"
             "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"incr\",\"db-id\":1,"
@@ -198,6 +199,8 @@ testRun(void)
         TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "archive start NULL");
         TEST_RESULT_STR(backupData.backupArchiveStop, NULL, "archive stop NULL");
         TEST_RESULT_UINT(backupData.backupType, backupTypeIncr, "backup type incr");
+        TEST_RESULT_UINT(varUInt64(backupData.backupInfoRepoSizeMap), 100, "repo map size");
+        TEST_RESULT_UINT(varUInt64(backupData.backupInfoRepoSizeMapDelta), 12, "repo map size delta");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20161219-212741F", "backup prior exists");
         TEST_RESULT_BOOL(
             (strLstSize(backupData.backupReference) == 2 && strLstExists(backupData.backupReference, STRDEF("20161219-212741F")) &&
@@ -365,6 +368,7 @@ testRun(void)
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
             "backup-archive-stop=\"000000030000028500000090\"\n"                                                                   \
+            "backup-block-incr=true\n"                                                                                             \
             "backup-label=\"20190818-084502F_20190820-084502I\"\n"                                                                 \
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
@@ -407,10 +411,11 @@ testRun(void)
                 ",\"timestamp\":1565282115}\n"                                                                                     \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
-            "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
-                ",\"reference\":\"20190818-084502F_20190819-084506I\",\"size\":32768,\"timestamp\":1565282114}\n"                  \
-            "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"size\":4457"                     \
+            "pg_data/base/32768/33000.32767={\"bims\":88,\"bis\":1,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\""      \
+                ",\"checksum-page\":true,\"reference\":\"20190818-084502F_20190819-084506I\",\"size\":32768"                       \
                 ",\"timestamp\":1565282114}\n"                                                                                     \
+            "pg_data/postgresql.conf={\"bims\":12,\"bis\":1,\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\""             \
+                ",\"size\":4457,\"timestamp\":1565282114}\n"                                                                       \
             "pg_data/special={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"                             \
             "pg_data/dupref={\"mode\":\"0640\",\"reference\":\"20190818-084502F\",\"size\":0"                                      \
                 ",\"timestamp\":1565282120,\"user\":false}\n"                                                                      \
@@ -455,6 +460,8 @@ testRun(void)
         TEST_RESULT_UINT(backupData.backupInfoSizeDelta, 12653, "backup size");
         TEST_RESULT_UINT(backupData.backupInfoRepoSize, 1073783153, "repo size");
         TEST_RESULT_UINT(backupData.backupInfoRepoSizeDelta, 8557, "repo backup size");
+        TEST_RESULT_UINT(varUInt64(backupData.backupInfoRepoSizeMap), 100, "repo map size");
+        TEST_RESULT_UINT(varUInt64(backupData.backupInfoRepoSizeMapDelta), 12, "repo map size delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoBackupDataAnnotationSet()");

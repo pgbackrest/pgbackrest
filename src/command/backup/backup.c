@@ -2363,10 +2363,17 @@ cmdBackup(void)
         backupComplete(infoBackup, manifest);
 
         // Backup info
-        LOG_INFO_FMT(
-            "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
-            strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
-            manifestFileTotal(manifest));
+        const InfoBackupData *infoBackupData = infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel);
+
+        String *const info = strCatFmt(
+            strNew(), "%s backup size = %s", strZ(strIdToStr(manifestData(manifest)->backupType)),
+            strZ(strSizeFormat(infoBackupData->backupInfoSizeDelta)));
+
+        if (infoBackupData->backupInfoRepoSizeMapDelta != NULL)
+            strCatFmt(info, " (map %s)", strZ(strSizeFormat(varUInt64(infoBackupData->backupInfoRepoSizeMapDelta))));
+
+        strCatFmt(info, ", file total = %u", manifestFileTotal(manifest));
+        LOG_INFO(strZ(info));
     }
     MEM_CONTEXT_TEMP_END();
 
