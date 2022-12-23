@@ -105,7 +105,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             {
                 const size_t copySize = bufRemains(this->block);
 
-                bufCatSub(this->block, input, this->inputOffset, bufRemains(this->block));
+                bufCatSub(this->block, input, this->inputOffset, copySize);
                 this->inputOffset += copySize;
 
                 // The same input will be needed again to copy the rest
@@ -116,8 +116,10 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         // If done or block is full
         if (this->done || bufUsed(this->block) == this->blockSize)
         {
+            // The output buffer must be empty before writing the new block (if not it will be flushed below)
             if (bufUsed(this->blockOut) == 0)
             {
+                // Store the block when size > 0
                 if (bufUsed(this->block) > 0)
                 {
                     MEM_CONTEXT_TEMP_BEGIN()

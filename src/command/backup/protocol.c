@@ -52,12 +52,12 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
 
             if (file.blockIncrSize > 0)
             {
-                file.blockIncrMapFile = pckReadStrP(param);
+                file.blockIncrMapPriorFile = pckReadStrP(param);
 
-                if (file.blockIncrMapFile != NULL)
+                if (file.blockIncrMapPriorFile != NULL)
                 {
-                    file.blockIncrMapOffset = pckReadU64P(param);
-                    file.blockIncrMapSize = pckReadU64P(param);
+                    file.blockIncrMapPriorOffset = pckReadU64P(param);
+                    file.blockIncrMapPriorSize = pckReadU64P(param);
                 }
             }
 

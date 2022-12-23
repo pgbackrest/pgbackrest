@@ -76,7 +76,7 @@ blockMapNewRead(IoRead *const map)
         // If no reference is currently being processed
         if (blockMapRef == NULL)
         {
-            // Get reference and subtract one
+            // Get reference and subtract one (a zero reference indicates the end of the block map)
             unsigned int reference = (unsigned int)ioReadVarIntU64(map);
 
             if (reference == 0)
@@ -167,6 +167,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
 
         if (referenceLast != blockMapItem->reference)
         {
+            // Terminate last reference
             if (referenceLast != UINT_MAX)
                 ioWriteVarIntU64(output, 0);
 

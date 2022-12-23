@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Chunk Filter
 
-Split data up into chunks so it can be written without knowing the eventual length of the data.
+Split data up into chunks so it can be written (and later read) without knowing the eventual size of the data.
 ***********************************************************************************************************************************/
 #ifndef COMMON_IO_FILTER_CHUNK_H
 #define COMMON_IO_FILTER_CHUNK_H

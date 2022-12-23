@@ -2011,7 +2011,7 @@ sub restoreCompare
                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{size});
         }
 
-        # Remove repo-size, bno, bni, bims from the manifest
+        # Remove repo-size, bno, bni, bims, bis from the manifest
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bni");
@@ -2162,6 +2162,7 @@ sub restoreCompare
                 $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
         }
 
+        # Delete block incr headers since old Perl manifest code will not generate them
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-block-incr'});
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-block-incr-size'});
 

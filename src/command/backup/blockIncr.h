@@ -20,10 +20,6 @@ consists of the following, compressed and encrypted as required:
 
 The block list is followed by the block map, which is encrypted separately when required but not compressed. The return value of the
 filter is the stored block size. Combined with the repo size this allows the block map to be read separately.
-
-??? Allow files in the full backup to be stored without blocks. This would be closer to the original optimistic method I had thought
-of that would apply the blocks in the incrementals and if there was still no checksum match then go fetch the blocks out of the
-full.
 ***********************************************************************************************************************************/
 #ifndef COMMAND_BACKUP_BLOCK_INCR_H
 #define COMMAND_BACKUP_BLOCK_INCR_H

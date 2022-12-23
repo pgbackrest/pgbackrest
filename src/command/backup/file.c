@@ -224,13 +224,14 @@ backupFile(
                     // compressed/encrypted separately
                     if (file->blockIncrSize != 0)
                     {
+                        // Read prior block map
                         const Buffer *blockMap = NULL;
 
-                        if (file->blockIncrMapFile != NULL)
+                        if (file->blockIncrMapPriorFile != NULL)
                         {
                             StorageRead *const blockMapRead = storageNewReadP(
-                                storageRepo(), file->blockIncrMapFile, .offset = file->blockIncrMapOffset,
-                                .limit = VARUINT64(file->blockIncrMapSize));
+                                storageRepo(), file->blockIncrMapPriorFile, .offset = file->blockIncrMapPriorOffset,
+                                .limit = VARUINT64(file->blockIncrMapPriorSize));
 
                             if (cipherType != cipherTypeNone)
                             {
@@ -242,6 +243,7 @@ backupFile(
                             blockMap = storageGetP(blockMapRead);
                         }
 
+                        // Add block incremental filter
                         ioFilterGroupAdd(
                             ioReadFilterGroup(
                                 storageReadIo(read)),

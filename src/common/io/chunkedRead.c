@@ -47,8 +47,10 @@ ioChunkedRead(THIS_VOID, Buffer *const buffer, const bool block)
 
     size_t actualBytes = 0;
 
+    // Keep reading until the output buffer is full
     while (!bufFull(buffer))
     {
+        // If no data remaining in chunk then read the next chunk header
         if (this->chunkRemains == 0)
         {
             const uint64_t chunkDelta = ioReadVarIntU64(this->read);

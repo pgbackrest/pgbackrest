@@ -34,9 +34,9 @@ typedef struct BackupFile
     const Buffer *pgFileChecksum;                                   // Expected pg file checksum
     bool pgFileChecksumPage;                                        // Validate page checksums?
     uint64_t blockIncrSize;                                         // Perform block incremental on this file?
-    const String *blockIncrMapFile;                                 // File containing the block incremental map (NULL if none)
-    uint64_t blockIncrMapOffset;                                    // Offset of block incremental map
-    uint64_t blockIncrMapSize;                                      // Size of block incremental map
+    const String *blockIncrMapPriorFile;                            // File containing prior block incremental map (NULL if none)
+    uint64_t blockIncrMapPriorOffset;                               // Offset of prior block incremental map
+    uint64_t blockIncrMapPriorSize;                                 // Size of prior block incremental map
     const String *manifestFile;                                     // Repo file
     const Buffer *repoFileChecksum;                                 // Expected repo file checksum
     uint64_t repoFileSize;                                          // Expected repo file size
