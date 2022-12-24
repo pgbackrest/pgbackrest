@@ -363,8 +363,10 @@ cfgLoadUpdateOption(void)
         const CompressType compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType));
 
         if (cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
+        {
             cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, VARINT64(compressLevelDefault(compressType)));
-        else
+        }
+        else if (compressType != compressTypeNone)
         {
             if (cfgOptionInt(cfgOptCompressLevel) < compressLevelMin(compressType) ||
                 cfgOptionInt(cfgOptCompressLevel) > compressLevelMax(compressType))
