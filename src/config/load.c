@@ -357,12 +357,24 @@ cfgLoadUpdateOption(void)
     if (cfgOptionValid(cfgOptCompressType))
         compressTypePresent(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
 
-    // Update compress-level default based on the compression type
-    if (cfgOptionValid(cfgOptCompressLevel) && cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
+    // Update compress-level default based on the compression type. Also check that level range is valid per compression type.
+    if (cfgOptionValid(cfgOptCompressLevel))
     {
-        cfgOptionSet(
-            cfgOptCompressLevel, cfgSourceDefault,
-            VARINT64(compressLevelDefault(compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))));
+        const CompressType compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType));
+
+        if (cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
+            cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, VARINT64(compressLevelDefault(compressType)));
+        else
+        {
+            if (cfgOptionInt(cfgOptCompressLevel) < compressLevelMin(compressType) ||
+                cfgOptionInt(cfgOptCompressLevel) > compressLevelMax(compressType))
+            {
+                THROW_FMT(
+                    OptionInvalidValueError, "'%d' is out of range for '" CFGOPT_COMPRESS_LEVEL "' option when '"
+                        CFGOPT_COMPRESS_TYPE " option ' = '%s'",
+                    cfgOptionInt(cfgOptCompressLevel), strZ(strIdToStr(cfgOptionStrId(cfgOptCompressType))));
+            }
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();

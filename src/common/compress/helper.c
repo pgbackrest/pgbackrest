@@ -42,7 +42,9 @@ static const struct CompressHelperLocal
     IoFilter *(*compressNew)(int);                                  // Function to create new compression filter
     StringId decompressType;                                        // Type of the decompression filter
     IoFilter *(*decompressNew)(void);                               // Function to create new decompression filter
-    int levelDefault;                                               // Default compression level
+    int levelDefault:8;                                             // Default compression level
+    int levelMin:8;                                                 // Minimum compression level
+    int levelMax:8;                                                 // Maximum compression level
 } compressHelperLocal[] =
 {
     {
@@ -58,7 +60,9 @@ static const struct CompressHelperLocal
         .compressNew = bz2CompressNew,
         .decompressType = BZ2_DECOMPRESS_FILTER_TYPE,
         .decompressNew = bz2DecompressNew,
-        .levelDefault = 9,
+        .levelDefault = BZ2_COMPRESS_LEVEL_DEFAULT,
+        .levelMin = BZ2_COMPRESS_LEVEL_MIN,
+        .levelMax = BZ2_COMPRESS_LEVEL_MAX,
     },
     {
         .typeId = STRID5("gz", 0x3470),
@@ -68,7 +72,9 @@ static const struct CompressHelperLocal
         .compressNew = gzCompressNew,
         .decompressType = GZ_DECOMPRESS_FILTER_TYPE,
         .decompressNew = gzDecompressNew,
-        .levelDefault = 6,
+        .levelDefault = GZ_COMPRESS_LEVEL_DEFAULT,
+        .levelMin = GZ_COMPRESS_LEVEL_MIN,
+        .levelMax = GZ_COMPRESS_LEVEL_MAX,
     },
     {
         .typeId = STRID6("lz4", 0x2068c1),
@@ -79,7 +85,9 @@ static const struct CompressHelperLocal
         .compressNew = lz4CompressNew,
         .decompressType = LZ4_DECOMPRESS_FILTER_TYPE,
         .decompressNew = lz4DecompressNew,
-        .levelDefault = 1,
+        .levelDefault = LZ4_COMPRESS_LEVEL_DEFAULT,
+        .levelMin = LZ4_COMPRESS_LEVEL_MIN,
+        .levelMax = LZ4_COMPRESS_LEVEL_MAX,
 #endif
     },
     {
@@ -91,7 +99,9 @@ static const struct CompressHelperLocal
         .compressNew = zstCompressNew,
         .decompressType = ZST_DECOMPRESS_FILTER_TYPE,
         .decompressNew = zstDecompressNew,
-        .levelDefault = 3,
+        .levelDefault = ZST_COMPRESS_LEVEL_DEFAULT,
+        .levelMin = ZST_COMPRESS_LEVEL_MIN,
+        .levelMax = ZST_COMPRESS_LEVEL_MAX,
 #endif
     },
     {
@@ -188,6 +198,34 @@ compressLevelDefault(CompressType type)
     compressTypePresent(type);
 
     FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelDefault);
+}
+
+/**********************************************************************************************************************************/
+int
+compressLevelMin(CompressType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
+    compressTypePresent(type);
+
+    FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelMin);
+}
+
+/**********************************************************************************************************************************/
+int
+compressLevelMax(CompressType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+    FUNCTION_TEST_END();
+
+    ASSERT(type < LENGTH_OF(compressHelperLocal));
+    compressTypePresent(type);
+
+    FUNCTION_TEST_RETURN(INT, compressHelperLocal[type].levelMax);
 }
 
 /**********************************************************************************************************************************/
