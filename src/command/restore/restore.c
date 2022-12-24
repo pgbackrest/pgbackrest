@@ -2329,8 +2329,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
 
-                // If block incremental then modified offset and size to where the map is stored, since we need to read that first.
-                // This essentially makes it look like a bundled file, which in essence it is.
+                // If block incremental then modify offset and size to where the map is stored since we need to read that first.
                 if (file.blockIncrMapSize != 0)
                 {
                     pckWriteBoolP(param, true);
