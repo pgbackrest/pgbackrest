@@ -27,6 +27,21 @@
 
                         <p>Remove support for <proper>PostgreSQL</proper> <id>9.0</id>/<id>9.1</id>/<id>9.2</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1216"/>
+                        <github-issue id="1931"/>
+                        <github-pull-request id="1962"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="gkleen"/>
+                            <release-item-ideator id="viperru"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>compress-level</br-option> range checking for each <br-option>compress-type</br-option>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -12046,6 +12061,11 @@
             <contributor-id type="github">geirra</contributor-id>
         </contributor>
 
+        <contributor id="gkleen">
+            <contributor-name-display>gkleen</contributor-name-display>
+            <contributor-id type="github">gkleen</contributor-id>
+        </contributor>
+
         <contributor id="greg.sabino.mullane">
             <contributor-name-display>Greg Sabino Mullane</contributor-name-display>
             <contributor-id type="github">turnstep</contributor-id>
@@ -12604,6 +12624,11 @@
 
         <contributor id="viorel.tabara">
             <contributor-name-display>Viorel Tabara</contributor-name-display>
+        </contributor>
+
+        <contributor id="viperru">
+            <contributor-name-display>ViperRu</contributor-name-display>
+            <contributor-id type="github">ViperRu</contributor-id>
         </contributor>
 
         <contributor id="vitaliy.kukharik">

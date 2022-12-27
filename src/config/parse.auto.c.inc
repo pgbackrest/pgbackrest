@@ -1375,18 +1375,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                      // opt/compress-level
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                       // opt/compress-level
         ),                                                                                                     // opt/compress-level
-                                                                                                               // opt/compress-level
-        PARSE_RULE_OPTIONAL                                                                                    // opt/compress-level
-        (                                                                                                      // opt/compress-level
-            PARSE_RULE_OPTIONAL_GROUP                                                                          // opt/compress-level
-            (                                                                                                  // opt/compress-level
-                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                                // opt/compress-level
-                (                                                                                              // opt/compress-level
-                    PARSE_RULE_VAL_INT(parseRuleValInt0),                                                      // opt/compress-level
-                    PARSE_RULE_VAL_INT(parseRuleValInt9),                                                      // opt/compress-level
-                ),                                                                                             // opt/compress-level
-            ),                                                                                                 // opt/compress-level
-        ),                                                                                                     // opt/compress-level
     ),                                                                                                         // opt/compress-level
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                  // opt/compress-level-network
