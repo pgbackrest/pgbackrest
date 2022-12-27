@@ -199,7 +199,7 @@ eval
         # Extra packages required when testing without containers
         if ($strVm eq VM_NONE)
         {
-            $strPackage .= " valgrind liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev libssh2-1 libssh2-1-dev";
+            $strPackage .= " valgrind liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev libssh2-1-dev";
         }
         # Else packages needed for integration tests on containers
         else
