@@ -562,7 +562,7 @@ unit:
       - name: sftp
         total: 21
         containerReq: true
-        harness: libssh2
+        harness: libSsh2
         harness:
           name: io
           shim:

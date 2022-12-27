@@ -13,7 +13,7 @@ Test SFTP Storage
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessIo.h"
-#include "common/harnessLibssh2.h"
+#include "common/harnessLibSsh2.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
@@ -84,7 +84,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ssh2 init failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = -1},
             {.function = NULL}
@@ -98,7 +98,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("driver session failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]", .resultNull = true},
@@ -114,7 +114,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("handshake failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -132,7 +132,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("handshake failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -150,7 +150,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("hostkey hash fail");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -169,7 +169,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid hostkey hash");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -185,7 +185,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -212,7 +212,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth failure, no public key");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -239,7 +239,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth failure, key passphrase");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -267,7 +267,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth no private key failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -285,7 +285,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth no user, no private key failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -303,7 +303,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file LIBSSH2_ERROR_EAGAIN, failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -334,7 +334,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -356,7 +356,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init fail && timeout");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -379,7 +379,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init success");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -395,14 +395,14 @@ testRun(void)
              "new storage (defaults)");
         TEST_RESULT_BOOL(storageTest->write, false, "check write");
 
-        // Free context, otherwise callbacks to storageSftpLibssh2SessionFreeResource() accumulate
+        // Free context, otherwise callbacks to storageSftpLibSsh2SessionFreeResource() accumulate
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp session init success timeout");
 
         // shim sets FD for tests.
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -428,7 +428,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create new storage with defaults");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -451,7 +451,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create new storage - override defaults");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -480,7 +480,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageSftpNewInternal create new storage - override pathSync, incorrect storage type to cover branches");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -506,7 +506,7 @@ testRun(void)
         // total 1
         // -rw------- 1 root root 0 Dec  5 15:30 noperm
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // file missing
@@ -620,7 +620,7 @@ testRun(void)
     if (testBegin("storageInfo()"))
     {
         // File open error via permission denied
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/noperm/noperm\",1]",
@@ -641,7 +641,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info for / exists");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"/\",1]", .resultInt = LIBSSH2_ERROR_NONE},
@@ -660,7 +660,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info for / does not exist with no path feature");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -680,7 +680,7 @@ testRun(void)
 
         const String *fileName = STRDEF(TEST_PATH "/fileinfo");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // file does not exist
@@ -912,7 +912,7 @@ testRun(void)
     {
         // mimic creation of /noperm/noperm
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
               HRNLIBSSH2_MACRO_STARTUP(),
             // path missing errorOnMissing true
@@ -1130,7 +1130,7 @@ testRun(void)
 
         StorageIterator *storageItr = NULL;
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/pg\",0,0,1]"},
@@ -1206,7 +1206,7 @@ testRun(void)
         // mimic creation of "pg/path" mode 0700
         // mimic creation of "pg/path/file" mode 0600 timemodified 1656434296 containing "TESTDATA"
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",0]", .resultInt = LIBSSH2_ERROR_NONE,
@@ -1322,7 +1322,7 @@ testRun(void)
         // Create a path with a subpath that will always be last to make sure lists are not freed too early in the iterator
         // mimic creation of "pg/zzz/yyy" mode 0700
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",0]", .resultInt = LIBSSH2_ERROR_NONE,
@@ -1475,7 +1475,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path basic info - recurse");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",0]", .resultInt = LIBSSH2_ERROR_NONE,
@@ -1634,7 +1634,7 @@ testRun(void)
 
         // mimic "pg/empty" mode 0700
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",0]", .resultInt = LIBSSH2_ERROR_NONE,
@@ -1784,7 +1784,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("filter in subpath during recursion");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/pg\",0]", .resultInt = LIBSSH2_ERROR_NONE,
@@ -1924,7 +1924,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path missing");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/BOGUS\",0,0,1]", .resultNull = true},
@@ -2002,7 +2002,7 @@ testRun(void)
         TEST_TITLE("list - path with files");
 
         ioBufferSizeSet(14);
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // storagePutP(storageNewWriteP())
@@ -2116,7 +2116,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path - root path");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -2140,7 +2140,7 @@ testRun(void)
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -2189,7 +2189,7 @@ testRun(void)
     {
         Storage *storageTest = NULL;
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // create /sub1
@@ -2277,7 +2277,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path create, timeout success on stat");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // timeout success
@@ -2325,7 +2325,7 @@ testRun(void)
     {
         Storage *storageTest = NULL;
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // path remove missing errorOnMissing
@@ -2497,7 +2497,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - unlink LIBSSH2_ERROR_EAGAIN timeout");
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/remove1\",0,0,1]"},
@@ -2549,7 +2549,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - rmdir LIBSSH2_ERROR_EAGAIN timeout");
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/remove1\",0,0,1]"},
@@ -2584,7 +2584,7 @@ testRun(void)
         const String *backupLabel = STRDEF("20181119-152138F");
         const String *latestLabel = strNewFmt("%s%s",TEST_PATH, "/latest");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // create path to link to
@@ -2634,7 +2634,7 @@ testRun(void)
         backupLabel = STRDEF("20181119-152138F");
         latestLabel = strNewFmt("%s%s",TEST_PATH, "/latest");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SYMLINK_EX, .param = "[\"20181119-152138F\",\"" TEST_PATH "/latest\",0]",
@@ -2662,7 +2662,7 @@ testRun(void)
         backupLabel = STRDEF("20181119-152138F");
         latestLabel = strNewFmt("%s%s",TEST_PATH, "/latest");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // create symlink
@@ -2751,7 +2751,7 @@ testRun(void)
         StorageRead *file = NULL;
         const String *fileName = STRDEF(TEST_PATH "/readtest.txt");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // missing sftp error no such file
@@ -2819,7 +2819,7 @@ testRun(void)
         // ------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("close success via storageReadSftpClose()");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // storageReadSftpClose
@@ -2848,7 +2848,7 @@ testRun(void)
         // ------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("close success via close()");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // close(ioSessionFd()...)
@@ -2869,7 +2869,7 @@ testRun(void)
         // ------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("close, null sftpHandle");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // storageReadSftpClose null sftpHandle
@@ -2891,7 +2891,7 @@ testRun(void)
         // ------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("close fail via storageReadSftpClose() EAGAIN");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // storageReadSftpClose
@@ -2917,7 +2917,7 @@ testRun(void)
         // ------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("close fail via storageReadSftpClose() sftp error");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // storageReadSftpClose
@@ -2943,7 +2943,7 @@ testRun(void)
         // ------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageReadSftp()");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // storageReadSftpClose
@@ -2977,7 +2977,7 @@ testRun(void)
 
         // mimic creation of /noperm/noperm
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // permission denied
@@ -3007,7 +3007,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timeout");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // timeout
@@ -3035,7 +3035,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // missing
@@ -3061,7 +3061,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file - defaults");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3105,7 +3105,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timeout on fsync");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3142,7 +3142,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("timeout on rename");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3191,7 +3191,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sftp error on rename, other than LIBSSH2_FX_FAILURE");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3238,7 +3238,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("unable to set ownership storageWriteSftpOpen");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3269,7 +3269,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteSftpOpen group NULL");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3299,7 +3299,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteSftpOpen user NULL");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3328,7 +3328,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteSftpClose timeout EAGAIN libssh2_sftp_fsetstat");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3367,7 +3367,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteSftpClose() timeout EAGAIN on libssh2_sftp_close");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -3411,7 +3411,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file - noAtomic = true");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true,
@@ -3452,7 +3452,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file - syncPath not NULL, .noSyncPath = true");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
@@ -3497,7 +3497,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file - syncPath not NULL, .noSyncPath = false");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
@@ -3543,7 +3543,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file - syncFile false");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",26,416,0]"},
@@ -3587,7 +3587,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteSftpClose() - null sftpHandle");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .param = "[\"" TEST_PATH "/sub1/testfile\",10,416,0]"},
@@ -3626,7 +3626,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storagePut() and storageGet()"))
     {
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",1,0,0]"},
@@ -3652,7 +3652,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("put - empty file");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.empty.pgbackrest.tmp\",26,416,0]"},
@@ -3676,7 +3676,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("put - empty file, already exists");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.empty.pgbackrest.tmp\",26,416,0]"},
@@ -3708,7 +3708,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("put - empty file, remove already existing file, storageWriteSftpRename timeout EAGAIN");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.empty.pgbackrest.tmp\",26,416,0]"},
@@ -3745,7 +3745,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("put - empty file, EAGAIN fail on remove already existing file");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.empty.pgbackrest.tmp\",26,416,0]"},
@@ -3778,7 +3778,7 @@ testRun(void)
 
         const Buffer *failBuffer = BUFSTRDEF("FAIL\n");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt.pgbackrest.tmp\",26,416,0]"},
@@ -3802,7 +3802,7 @@ testRun(void)
 
         const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt.pgbackrest.tmp\",26,416,0]"},
@@ -3833,7 +3833,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get - ignore missing");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/BOGUS\",1,0,0]", .resultNull = true, .sleep = 18},
@@ -3856,7 +3856,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get - empty file");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.empty\",1,0,0]"},
@@ -3879,7 +3879,7 @@ testRun(void)
 
         const Buffer *outBuffer = bufNew(2);
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -3907,7 +3907,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get - exact size smaller");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -3931,7 +3931,7 @@ testRun(void)
         TEST_TITLE("get - exact size larger");
 
         ioBufferSizeSet(4);
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -3957,7 +3957,7 @@ testRun(void)
 
         ioBufferSizeSet(2);
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -3984,7 +3984,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid read offset bytes");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -4007,7 +4007,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid read");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -4029,7 +4029,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read limited bytes");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -4054,7 +4054,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read offset bytes");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -4081,7 +4081,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("get - read timeout EAGAIN");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
@@ -4109,7 +4109,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file missing");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"/missing\"]", .resultInt = LIBSSH2_ERROR_EAGAIN},
@@ -4132,7 +4132,7 @@ testRun(void)
         StorageWrite *file = NULL;
         const String *fileName = STRDEF(TEST_PATH "/sub1/testfile");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -4165,7 +4165,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteSftpOpen libssh2_sftp_open_ex sftp error");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true, .sleep = 18,
@@ -4202,7 +4202,7 @@ testRun(void)
         Storage *storageTest = NULL;
         StorageRead *file = NULL;
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // ignore missing - file with no permission to read
@@ -4269,7 +4269,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental load, storageReadSftp(), storageReadSftpEof()");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // open file
@@ -4359,7 +4359,7 @@ testRun(void)
         TEST_TITLE("check getters");
 
         // mimic creation of /noperm/noperm
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -4391,7 +4391,7 @@ testRun(void)
 
         // mimic creation of /noperm/noperm
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -4436,7 +4436,7 @@ testRun(void)
 
         const String *fileName = STRDEF(TEST_PATH "/sub1/test.file");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -4477,7 +4477,7 @@ testRun(void)
 
         const Buffer *buffer = BUFSTRDEF("TESTFILE\n");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},
             {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},
@@ -4563,7 +4563,7 @@ testRun(void)
 
         fileName = STRDEF(TEST_PATH "/sub2/test.file");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // open file
@@ -4631,7 +4631,7 @@ testRun(void)
 
         // mimic creating file no-truncate mode 0600 contents ABC
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             // open file
@@ -4685,7 +4685,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageRepo*()"))
     {
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -4747,7 +4747,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageRepo() - helper does not fail when stanza option not set");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -4782,7 +4782,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageRepoWrite() - confirm write enabled");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -4803,7 +4803,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet() and StorageDriverCifs"))
     {
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             HRNLIBSSH2_MACRO_SHUTDOWN()
@@ -4861,15 +4861,15 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageSftpLibssh2SessionFreeResource()"))
+    if (testBegin("storageSftpLibSsh2SessionFreeResource()"))
     {
         Storage *storageTest = NULL;
         StorageSftp *storageSftp = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftpHandle, sftpSession, session not NULL, branch tests, EAGAIN");
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftpHandle, sftpSession, session not NULL, branch tests, EAGAIN");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",1,0,1]"},
@@ -4898,14 +4898,14 @@ testRun(void)
         // Populate sftpHandle, NULL sftpSession and session
         storageSftp->sftpHandle = libssh2_sftp_open_ex(storageSftp->sftpSession, TEST_PATH, 25, 1, 0, 1);
 
-        TEST_RESULT_VOID(storageSftpLibssh2SessionFreeResource(storageSftp), "freeResource not NULL sftpHandle");
+        TEST_RESULT_VOID(storageSftpLibSsh2SessionFreeResource(storageSftp), "freeResource not NULL sftpHandle");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftpHandle, sftpSession, session all NULL");
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftpHandle, sftpSession, session all NULL");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = NULL}
@@ -4926,9 +4926,9 @@ testRun(void)
         TEST_RESULT_VOID(memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))), "free resource all NULL");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, libssh2 error");
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, libssh2 error");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",1,0,1]"},
@@ -4954,9 +4954,9 @@ testRun(void)
             ServiceError, "failed to free resource sftpHandle: libssh2 errno [-7]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, libssh2 sftp error");
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, libssh2 sftp error");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",1,0,1]"},
@@ -4983,9 +4983,9 @@ testRun(void)
             ServiceError, "failed to free resource sftpHandle: libssh2 errno [-31]: sftp errno [7]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftp shutdown failure libssh2 error");
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp shutdown failure libssh2 error");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_SOCKET_SEND},
@@ -5004,9 +5004,9 @@ testRun(void)
             "failed to free resource sftpSession: libssh2 errno [-7]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibssh2SessionFreeResource() sftp shutdown failure libssh2 sftp error");
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp shutdown failure libssh2 sftp error");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
@@ -5026,9 +5026,9 @@ testRun(void)
             "failed to free resource sftpSession: libssh2 errno [-31]: sftp errno [7]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibssh2SessionFreeResource() session disconnect failure");
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() session disconnect failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
@@ -5049,9 +5049,9 @@ testRun(void)
             ServiceError, "failed to disconnect libssh2 session: libssh2 errno [-13]");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibssh2SessionFreeResource() session free failure");
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() session free failure");
 
-        harnessLibssh2ScriptSet((HarnessLibssh2 [])
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
             {.function = HRNLIBSSH2_SFTP_SHUTDOWN, .resultInt = LIBSSH2_ERROR_NONE},
@@ -5074,32 +5074,32 @@ testRun(void)
   }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageSftpEvalLibssh2Error()"))
+    if (testBegin("storageSftpEvalLibSsh2Error()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpEvalLibssh2Error()");
+        TEST_TITLE("storageSftpEvalLibSsh2Error()");
 
         TEST_ERROR_FMT(
-            storageSftpEvalLibssh2Error(
+            storageSftpEvalLibSsh2Error(
                 -11, 16, &FileRemoveError, strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
             FileRemoveError,
             "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-11]\n"
             "HINT");
         TEST_ERROR_FMT(
-            storageSftpEvalLibssh2Error(
+            storageSftpEvalLibSsh2Error(
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
             FileRemoveError,
             "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16]\n"
             "HINT");
         TEST_ERROR_FMT(
-            storageSftpEvalLibssh2Error(
+            storageSftpEvalLibSsh2Error(
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), NULL),
             FileRemoveError,
             "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16]");
         TEST_ERROR_FMT(
-            storageSftpEvalLibssh2Error(
+            storageSftpEvalLibSsh2Error(
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError, NULL, NULL),
             FileRemoveError,
             "libssh2 error [-31]: sftp error [16]");

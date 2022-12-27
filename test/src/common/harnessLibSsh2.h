@@ -90,7 +90,7 @@ Macros for defining groups of functions that implement commands
 /***********************************************************************************************************************************
 Structure for scripting libssh2 responses
 ***********************************************************************************************************************************/
-typedef struct HarnessLibSsh2
+typedef struct HrnLibSsh2
 {
     unsigned int session;                                           // Session number when multiple sessions are run concurrently
     const char *function;                                           // Function call expected
@@ -109,12 +109,12 @@ typedef struct HarnessLibSsh2
     const String *fileName;                                         // libssh2_readdir* libssh2_stat* filename
     const String *readBuffer;                                       // what to copy into read buffer
     TimeMSec sleep;                                                 // Sleep specified milliseconds before returning from function
-} HarnessLibSsh2;
+} HrnLibSsh2;
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void harnessLibSsh2ScriptSet(HarnessLibSsh2 *harnessLibSsh2ScriptParam);
+void hrnLibSsh2ScriptSet(HrnLibSsh2 *hrnLibSsh2ScriptParam);
 
 #endif // HARNESS_LIBSSH2_REAL
 

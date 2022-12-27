@@ -84,7 +84,7 @@ storageSftpInfo(THIS_VOID, const String *const file, StorageInfoLevel level, con
     if (rc)
     {
         // Mimics posix driver - throw on libssh2 errors other than no such file
-        if (!storageSftpLibssh2FxNoSuchFile(this, rc))
+        if (!storageSftpLibSsh2FxNoSuchFile(this, rc))
             THROW_FMT(FileOpenError, STORAGE_ERROR_INFO, strZ(file));
     }
     // On success the file exists
@@ -158,7 +158,7 @@ storageSftpInfo(THIS_VOID, const String *const file, StorageInfoLevel level, con
 Free libssh2 resources
 ***********************************************************************************************************************************/
 static void
-storageSftpLibssh2SessionFreeResource(THIS_VOID)
+storageSftpLibSsh2SessionFreeResource(THIS_VOID)
 {
     THIS(StorageSftp);
 
@@ -232,7 +232,7 @@ storageSftpLibssh2SessionFreeResource(THIS_VOID)
 
 /**********************************************************************************************************************************/
 bool
-storageSftpLibssh2FxNoSuchFile(THIS_VOID, const int rc)
+storageSftpLibSsh2FxNoSuchFile(THIS_VOID, const int rc)
 {
     THIS(StorageSftp);
 
@@ -293,7 +293,7 @@ storageSftpLinkCreate(
 
 /**********************************************************************************************************************************/
 void
-storageSftpEvalLibssh2Error(
+storageSftpEvalLibSsh2Error(
     const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const msg,
     const String *const hint)
 {
@@ -387,9 +387,9 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
     if (sftpHandle == NULL)
     {
         // If sftpHandle == NULL is due to LIBSSH2_FX_NO_SUCH_FILE, do not throw error here, return NULL result
-        if (!storageSftpLibssh2FxNoSuchFile(this, libssh2_session_last_errno(this->session)))
+        if (!storageSftpLibSsh2FxNoSuchFile(this, libssh2_session_last_errno(this->session)))
         {
-            storageSftpEvalLibssh2Error(
+            storageSftpEvalLibSsh2Error(
                 libssh2_session_last_errno(this->session), libssh2_sftp_last_error(this->sftpSession), &PathOpenError,
                 strNewFmt(STORAGE_ERROR_LIST_INFO, strZ(path)), NULL);
         }
@@ -498,8 +498,8 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
     {
         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
-            if (param.errorOnMissing || !storageSftpLibssh2FxNoSuchFile(this, rc))
-                storageSftpEvalLibssh2Error(
+            if (param.errorOnMissing || !storageSftpLibSsh2FxNoSuchFile(this, rc))
+                storageSftpEvalLibSsh2Error(
                     rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
                     strNewFmt("unable to remove '%s'", strZ(file)),
                     NULL);
@@ -878,7 +878,7 @@ storageSftpNewInternal(
 
             if (rc)
             {
-                storageSftpEvalLibssh2Error(
+                storageSftpEvalLibSsh2Error(
                     libssh2_session_last_errno(driver->session), libssh2_sftp_last_error(driver->sftpSession), &ServiceError,
                     STRDEF("public key authentication failed"),
                     STRDEF(
@@ -913,7 +913,7 @@ storageSftpNewInternal(
                 1 << storageFeatureSymLink | 1 << storageFeatureInfoDetail;
 
         // Ensure libssh2/libssh2_sftp resources freed
-        memContextCallbackSet(objMemContext(driver), storageSftpLibssh2SessionFreeResource, driver);
+        memContextCallbackSet(objMemContext(driver), storageSftpLibSsh2SessionFreeResource, driver);
 
         this = storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, driver->interface);
     }

@@ -105,7 +105,7 @@ storageWriteSftpOpen(THIS_VOID)
                 THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->interface.name));
             else
             {
-                storageSftpEvalLibssh2Error(
+                storageSftpEvalLibSsh2Error(
                     rc, sftpErr, &FileOpenError, strNewFmt(STORAGE_ERROR_WRITE_OPEN, strZ(this->interface.name)), NULL);
             }
         }
@@ -223,7 +223,7 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
 
     if (rc)
     {
-        storageSftpEvalLibssh2Error(
+        storageSftpEvalLibSsh2Error(
             rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
             strNewFmt("unable to remove existing '%s'", strZ(this->interface.name)), NULL);
     }
@@ -260,7 +260,7 @@ storageWriteSftpRename(THIS_VOID)
 
     if (rc)
     {
-        storageSftpEvalLibssh2Error(
+        storageSftpEvalLibSsh2Error(
             rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
             strNewFmt("unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name)), NULL);
     }
@@ -376,7 +376,7 @@ storageWriteSftpClose(THIS_VOID)
                 }
                 else
                 {
-                    storageSftpEvalLibssh2Error(
+                    storageSftpEvalLibSsh2Error(
                         rc, libssh2_sftp_last_error(this->sftpSession), &FileCloseError,
                         strNewFmt("unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name)), NULL);
                 }
