@@ -526,7 +526,7 @@ testRun(void)
 
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
-            "'-2' is out of range for 'compress-level' option when 'compress-type option ' = 'gz'");
+            "'-2' is out of range for 'compress-level' option when 'compress-type' option ' = 'gz'");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
@@ -535,7 +535,7 @@ testRun(void)
 
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
-            "'10' is out of range for 'compress-level' option when 'compress-type option ' = 'gz'");
+            "'10' is out of range for 'compress-level' option when 'compress-type' option ' = 'gz'");
 
         // In practice level should not be used here but preserve the prior behavior in case something depends on it
         // -------------------------------------------------------------------------------------------------------------------------

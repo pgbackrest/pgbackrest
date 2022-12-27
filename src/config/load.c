@@ -373,7 +373,7 @@ cfgLoadUpdateOption(void)
             {
                 THROW_FMT(
                     OptionInvalidValueError,
-                    "'%d' is out of range for '" CFGOPT_COMPRESS_LEVEL "' option when '" CFGOPT_COMPRESS_TYPE " option ' = '%s'",
+                    "'%d' is out of range for '" CFGOPT_COMPRESS_LEVEL "' option when '" CFGOPT_COMPRESS_TYPE "' option ' = '%s'",
                     cfgOptionInt(cfgOptCompressLevel), strZ(strIdToStr(cfgOptionStrId(cfgOptCompressType))));
             }
         }
