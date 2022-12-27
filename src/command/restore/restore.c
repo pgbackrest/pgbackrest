@@ -340,6 +340,19 @@ restoreBackupSet(void)
                 // Else use backup set found
                 else
                 {
+                    // Is this backup part of the latest db history?
+                    InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+
+                    if (latestBackup.backupPgId < backupInfoPg.id)
+                    {
+                        THROW_FMT(BackupSetInvalidError,
+                            "the latest backup set found '%s' is not part of the latest db history\n"
+                            "HINT: has a stanza-upgrade been performed and a new backup taken?\n"
+                            "HINT: to restore a backup from a previous db version, the --set option or a target time or LSN are"
+                                " needed.",
+                            strZ(latestBackup.backupLabel));
+                    }
+
                     result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                     break;
                 }
