@@ -5,12 +5,12 @@ Harness for Io Testing
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-// Arbitrary value of HRNIO_FILE_DESCRIPTOR
-#define HRNIO_FILE_DESCRIPTOR                                       1163581
+// Arbitrary value for the shimmed socket file descriptor
+#define HRN_SCK_FILE_DESCRIPTOR                                     1163581
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Install/uninstall the shims for testing
-void hrnIoIoSessionFdShimInstall(void);
-void hrnIoIoSessionFdShimUninstall(void);
+void hrnSckClientOpenShimInstall(void);
+void hrnSckClientOpenShimUninstall(void);

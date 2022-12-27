@@ -12,14 +12,14 @@ Test SFTP Storage
 
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
-#include "common/harnessIo.h"
+#include "common/harnessSocket.h"
 #include "common/harnessLibSsh2.h"
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define HANDSHAKE_PARAM                                             "["STRINGIFY(HRNIO_FILE_DESCRIPTOR)"]"
+#define HANDSHAKE_PARAM                                             "["STRINGIFY(HRN_SCK_FILE_DESCRIPTOR)"]"
 
 /***********************************************************************************************************************************
 Test function for path expression
@@ -46,7 +46,7 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // install shim to return defined fd
-    hrnIoIoSessionFdShimInstall();
+    hrnSckClientOpenShimInstall();
 
     ioBufferSizeSet(2);
 
@@ -762,10 +762,7 @@ testRun(void)
            TEST_PATH_STR , STRDEF("localhost"), 22, 20, 20, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
            .write = true, .hostkeyHash = STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135));
 
-        TEST_ERROR_FMT(
-            storageInfoP(
-                storageTest, fileName),
-            FileOpenError, STORAGE_ERROR_INFO_MISSING ": [115] Operation now in progress", strZ(fileName));
+        TEST_ERROR_FMT(storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file does not exists");
@@ -5105,6 +5102,6 @@ testRun(void)
             "libssh2 error [-31]: sftp error [16]");
     }
 
-    hrnIoIoSessionFdShimUninstall();
+    hrnSckClientOpenShimUninstall();
     FUNCTION_HARNESS_RETURN_VOID();
 }

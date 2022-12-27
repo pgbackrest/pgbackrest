@@ -5,7 +5,7 @@ Harness for Io Testing
 
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
-#include "common/harnessIo.h"
+#include "common/harnessSocket.h"
 
 /***********************************************************************************************************************************
 Include shimmed C modules
@@ -18,47 +18,58 @@ Shim install state
 static struct
 {
     // Local process shims
-    bool localShimIoSessionFd;
+    bool localShimSckClientOpen;
 } hrnIoStatic;
 
 /***********************************************************************************************************************************
-Shim ioSessionFd
+Shim sckClientOpen()
 ***********************************************************************************************************************************/
-int ioSessionFd(IoSession *this)
+IoSession *
+sckClientOpen(THIS_VOID)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_SESSION, this);
-    FUNCTION_TEST_END();
+    THIS(SocketClient);
+
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(SOCKET_CLIENT, this);
+    FUNCTION_HARNESS_END();
 
     ASSERT(this != NULL);
 
-    int fd = 0;
+    IoSession *result = NULL;
 
-    // Call the shim when installed, return the arbitrary value of HRNIO_FILE_DESCRIPTOR
-    if (hrnIoStatic.localShimIoSessionFd)
-        fd = HRNIO_FILE_DESCRIPTOR;
+    // When shim is installed create IoSession with a known fd
+    if (hrnIoStatic.localShimSckClientOpen)
+    {
+        result = sckSessionNew(ioSessionRoleClient, HRN_SCK_FILE_DESCRIPTOR, this->host, this->port, this->timeoutSession);
+
+        // Remove the callback so we will not try to close the fake descriptor
+        memContextCallbackClear(objMemContext(((IoSessionPub *)result)->driver));
+    }
+    // Else call normal function
     else
-        fd = ioSessionFd_SHIMMED(this);
+        result = sckClientOpen_SHIMMED(this);
 
-    FUNCTION_TEST_RETURN(INT, fd);
+    FUNCTION_HARNESS_RETURN(IO_SESSION, result);
 }
 
 /**********************************************************************************************************************************/
-void hrnIoIoSessionFdShimInstall(void)
+void
+hrnSckClientOpenShimInstall(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    hrnIoStatic.localShimIoSessionFd = true;
+    hrnIoStatic.localShimSckClientOpen = true;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
-void hrnIoIoSessionFdShimUninstall(void)
+void
+hrnSckClientOpenShimUninstall(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    hrnIoStatic.localShimIoSessionFd = false;
+    hrnIoStatic.localShimSckClientOpen = false;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
