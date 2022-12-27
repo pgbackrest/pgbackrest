@@ -1,5 +1,5 @@
 /***********************************************************************************************************************************
-Sftp Storage File write
+SFTP Storage File Write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -212,8 +212,8 @@ storageWriteSftpUnlinkExisting(THIS_VOID)
     ASSERT(this != NULL);
 
     int rc = 0;
-
     this->wait = waitNew(this->timeoutConnect);
+
     do
     {
         rc = libssh2_sftp_unlink_ex(
@@ -246,7 +246,6 @@ storageWriteSftpRename(THIS_VOID)
     ASSERT(this != NULL);
 
     int rc = 0;
-
     this->wait = waitNew(this->timeoutConnect);
 
     do
