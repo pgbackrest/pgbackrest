@@ -97,7 +97,7 @@ storageReadSftpOpen(THIS_VOID)
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
-storageReadSftp(THIS_VOID, Buffer *buffer, bool block)
+storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageReadSftp);
 

@@ -43,7 +43,7 @@ struct StorageSftp
 
 /**********************************************************************************************************************************/
 static StorageInfo
-storageSftpInfo(THIS_VOID, const String *const file, StorageInfoLevel level, const StorageInterfaceInfoParam param)
+storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel level, const StorageInterfaceInfoParam param)
 {
     THIS(StorageSftp);
 
@@ -324,7 +324,6 @@ storageSftpEvalLibSsh2Error(
 // Helper function to get info for a file if it exists.  This logic can't live directly in storageSftpList() because there is a race
 // condition where a file might exist while listing the directory but it is gone before stat() can be called.  In order to get
 // complete test coverage this function must be split out.
-
 static void
 storageSftpListEntry(
     StorageSftp *const this, StorageList *const list, const String *const path, const char *const name,
