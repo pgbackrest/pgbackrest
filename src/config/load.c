@@ -198,75 +198,80 @@ cfgLoadUpdateOption(void)
     // If archive retention is valid for the command, then set archive settings
     if (cfgOptionValid(cfgOptRepoRetentionArchive))
     {
-        // For each possible repo, check and adjust the settings as appropriate
-        for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
+        // !!! NEED CHECK HERE THAT IF ARCHIVE RETENTION IS 0 THEN ARCHIVE-CHECK MUST BE ENABLED WHEN VALID
+
+        if (cfgOptionValid(cfgOptRepoRetentionArchiveType))
         {
-            const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, optionIdx);
-
-            const String *msgArchiveOff = strNewFmt(
-                "WAL segments will not be expired: option '%s=%s' but", cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
-                strZ(strIdToStr(archiveRetentionType)));
-
-            // If the archive retention is not explicitly set then determine what it should be defaulted to
-            if (!cfgOptionIdxTest(cfgOptRepoRetentionArchive, optionIdx))
+            // For each possible repo, check and adjust the settings as appropriate
+            for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
             {
-                // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the
-                // repo-retention-archive to this value when retention-full-type is 'count', else ignore archiving. If
-                // retention-full-type is 'time' then the expire command will default the archive retention accordingly.
-                switch (archiveRetentionType)
+                const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, optionIdx);
+
+                const String *msgArchiveOff = strNewFmt(
+                    "WAL segments will not be expired: option '%s=%s' but",
+                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), strZ(strIdToStr(archiveRetentionType)));
+
+                // If the archive retention is not explicitly set then determine what it should be defaulted to
+                if (!cfgOptionIdxTest(cfgOptRepoRetentionArchive, optionIdx))
                 {
-                    case backupTypeFull:
+                    // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the
+                    // repo-retention-archive to this value when retention-full-type is 'count', else ignore archiving. If
+                    // retention-full-type is 'time' then the expire command will default the archive retention accordingly.
+                    switch (archiveRetentionType)
                     {
-                        if (cfgOptionIdxStrId(cfgOptRepoRetentionFullType, optionIdx) ==
-                                CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT &&
-                            cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx))
+                        case backupTypeFull:
                         {
-                            cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
-                                VARINT64(cfgOptionIdxInt64(cfgOptRepoRetentionFull, optionIdx)));
+                            if (cfgOptionIdxStrId(cfgOptRepoRetentionFullType, optionIdx) ==
+                                    CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT &&
+                                cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx))
+                            {
+                                cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
+                                    VARINT64(cfgOptionIdxInt64(cfgOptRepoRetentionFull, optionIdx)));
+                            }
+
+                            break;
                         }
 
-                        break;
-                    }
+                        case backupTypeDiff:
+                        {
+                            // if repo-retention-diff is set then user must have set it
+                            if (cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
+                            {
+                                cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
+                                    VARINT64(cfgOptionIdxInt64(cfgOptRepoRetentionDiff, optionIdx)));
+                            }
+                            else
+                            {
+                                LOG_WARN_FMT(
+                                    "%s neither option '%s' nor option '%s' is set", strZ(msgArchiveOff),
+                                    cfgOptionIdxName(cfgOptRepoRetentionArchive, optionIdx),
+                                    cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx));
+                            }
 
-                    case backupTypeDiff:
-                    {
-                        // if repo-retention-diff is set then user must have set it
-                        if (cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
-                        {
-                            cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
-                                VARINT64(cfgOptionIdxInt64(cfgOptRepoRetentionDiff, optionIdx)));
+                            break;
                         }
-                        else
-                        {
+
+                        case backupTypeIncr:
                             LOG_WARN_FMT(
-                                "%s neither option '%s' nor option '%s' is set", strZ(msgArchiveOff),
-                                cfgOptionIdxName(cfgOptRepoRetentionArchive, optionIdx),
-                                cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx));
-                        }
-
-                        break;
+                                "%s option '%s' is not set", strZ(msgArchiveOff),
+                                cfgOptionIdxName(cfgOptRepoRetentionArchive, optionIdx));
+                            break;
                     }
-
-                    case backupTypeIncr:
-                        LOG_WARN_FMT(
-                            "%s option '%s' is not set", strZ(msgArchiveOff),
-                            cfgOptionIdxName(cfgOptRepoRetentionArchive, optionIdx));
-                        break;
                 }
-            }
-            else
-            {
-                // If repo-retention-archive is set then check repo-retention-archive-type and issue a warning if the
-                // corresponding setting is UNDEF since UNDEF means backups will not be expired but they should be in the
-                // practice of setting this value even though expiring the archive itself is OK and will be performed.
-                if (archiveRetentionType == backupTypeDiff && !cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
+                else
                 {
-                    LOG_WARN_FMT(
-                        "option '%s' is not set for '%s=" CFGOPTVAL_TYPE_DIFF_Z "'\n"
-                        "HINT: to retain differential backups indefinitely (without warning), set option '%s' to the maximum.",
-                        cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx),
-                        cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
-                        cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx));
+                    // If repo-retention-archive is set then check repo-retention-archive-type and issue a warning if the
+                    // corresponding setting is UNDEF since UNDEF means backups will not be expired but they should be in the
+                    // practice of setting this value even though expiring the archive itself is OK and will be performed.
+                    if (archiveRetentionType == backupTypeDiff && !cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
+                    {
+                        LOG_WARN_FMT(
+                            "option '%s' is not set for '%s=" CFGOPTVAL_TYPE_DIFF_Z "'\n"
+                            "HINT: to retain differential backups indefinitely (without warning), set option '%s' to the maximum.",
+                            cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx),
+                            cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
+                            cfgOptionIdxName(cfgOptRepoRetentionDiff, optionIdx));
+                    }
                 }
             }
         }

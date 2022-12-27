@@ -2089,7 +2089,6 @@ option:
       - diff
       - incr
     command:
-      archive-push: {}
       backup: {}
       expire: {}
     command-role:
@@ -2120,7 +2119,6 @@ option:
       - count
       - time
     command:
-      archive-push: {}
       backup: {}
       expire: {}
     command-role:

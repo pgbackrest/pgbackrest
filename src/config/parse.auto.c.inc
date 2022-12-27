@@ -6408,7 +6408,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                   // opt/repo-retention-archive-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                            // opt/repo-retention-archive-type
         (                                                                                         // opt/repo-retention-archive-type
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                          // opt/repo-retention-archive-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                               // opt/repo-retention-archive-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                               // opt/repo-retention-archive-type
         ),                                                                                        // opt/repo-retention-archive-type
@@ -6474,7 +6473,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-retention-full
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-retention-full
         (                                                                                                 // opt/repo-retention-full
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                  // opt/repo-retention-full
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                       // opt/repo-retention-full
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                       // opt/repo-retention-full
         ),                                                                                                // opt/repo-retention-full
@@ -6504,7 +6502,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                      // opt/repo-retention-full-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                               // opt/repo-retention-full-type
         (                                                                                            // opt/repo-retention-full-type
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                             // opt/repo-retention-full-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                  // opt/repo-retention-full-type
             PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                  // opt/repo-retention-full-type
         ),                                                                                           // opt/repo-retention-full-type
