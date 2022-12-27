@@ -65,6 +65,25 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1910"/>
+                        <github-pull-request id="1963"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="rudonx"/>
+                            <release-item-ideator id="gmustdie"/>
+                            <release-item-ideator id="ivan.shelestov"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add replacement for linefeeds in monitoring example.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2022-11-28" version="2.43" title="Bug Fix">
@@ -12066,6 +12085,11 @@
             <contributor-id type="github">gkleen</contributor-id>
         </contributor>
 
+        <contributor id="gmustdie">
+            <contributor-name-display>gmustdie</contributor-name-display>
+            <contributor-id type="github">gmustdie</contributor-id>
+        </contributor>
+
         <contributor id="greg.sabino.mullane">
             <contributor-name-display>Greg Sabino Mullane</contributor-name-display>
             <contributor-id type="github">turnstep</contributor-id>
@@ -12108,6 +12132,11 @@
         <contributor id="isaac.yuen">
             <contributor-name-display>Isaac Yuen</contributor-name-display>
             <contributor-id type="github">Isaacwhyuenac</contributor-id>
+        </contributor>
+
+        <contributor id="ivan.shelestov">
+            <contributor-name-display>Ivan Shelestov</contributor-name-display>
+            <contributor-id type="github">Shelestov7</contributor-id>
         </contributor>
 
         <contributor id="reid.thompson">
@@ -12496,6 +12525,11 @@
         <contributor id="ronan.dunklau">
             <contributor-name-display>Ronan Dunklau</contributor-name-display>
             <contributor-id type="github">rdunklau</contributor-id>
+        </contributor>
+
+        <contributor id="rudonx">
+            <contributor-name-display>rudonx</contributor-name-display>
+            <contributor-id type="github">rudonx</contributor-id>
         </contributor>
 
         <contributor id="ryan.lambert">
