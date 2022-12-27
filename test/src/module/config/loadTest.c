@@ -517,6 +517,40 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "compress is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid compress level");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "-2");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
+            "'-2' is out of range for 'compress-level' option when 'compress-type' option = 'gz'");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "10");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
+            "'10' is out of range for 'compress-level' option when 'compress-type' option = 'gz'");
+
+        // In practice level should not be used here but preserve the prior behavior in case something depends on it
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("do not check range when compress-type = none");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "3");
+
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptCompressType), CFGOPTVAL_COMPRESS_TYPE_NONE, "compress-type=none");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level=3");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn when compress-type and compress both set");
 
         argList = strLstNew();

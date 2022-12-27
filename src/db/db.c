@@ -431,14 +431,13 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
                 strZ(lsnStart));
         }
 
-        // If archive check then make sure WAL segment was switched on start backup
+        // If archive check then make sure WAL segment was switched on start backup. The WAL segment might not have been switched if
+        // a switch occurred before the backup and nothing was written since then. In this case, force a switch so we can verify
+        // that archiving is functional before starting the backup.
         const String *const walSegmentName = pckReadStrP(read);
 
         if (archiveCheck && strEq(walSegmentCheck, walSegmentName))
-        {
-            // Force a WAL switch
             dbWalSwitch(this);
-        }
 
         // Check that the WAL timeline matches what is in pg_control
         if (pgTimelineFromWalSegment(walSegmentName) != dbPgControl(this).timeline)
