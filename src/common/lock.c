@@ -28,7 +28,7 @@ Lock Handler
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-// Indicates a lock that was made by matching exec-id rather than holding an actual lock. This disguishes it from -1, which is a
+// Indicates a lock that was made by matching exec-id rather than holding an actual lock. This distinguishes it from -1, which is a
 // general system error.
 #define LOCK_ON_EXEC_ID                                             -2
 
