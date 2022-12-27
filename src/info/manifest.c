@@ -94,6 +94,8 @@ static time_t manifestPackBaseTime = -1;
 // Flags used to reduce the size of packed data. They should be ordered from most to least likely and can be reordered at will.
 typedef enum
 {
+    manifestFilePackFlagChecksum,
+    manifestFilePackFlagChecksumRepo,
     manifestFilePackFlagReference,
     manifestFilePackFlagBundle,
     manifestFilePackFlagCopy,
@@ -126,6 +128,12 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // Flags
     uint64_t flag = 0;
+
+    if (file->checksumSha1 != NULL)
+        flag |= 1 << manifestFilePackFlagChecksum;
+
+    if (file->checksumRepoSha1 != NULL)
+        flag |= 1 << manifestFilePackFlagChecksumRepo;
 
     if (file->copy)
         flag |= 1 << manifestFilePackFlagCopy;
@@ -178,8 +186,18 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     cvtUInt64ToVarInt128(cvtInt64ToZigZag(manifestPackBaseTime - file->timestamp), buffer, &bufferPos, sizeof(buffer));
 
     // SHA1 checksum
-    strcpy((char *)buffer + bufferPos, file->checksumSha1);
-    bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
+    if (file->checksumSha1 != NULL)
+    {
+        memcpy((uint8_t *)buffer + bufferPos, file->checksumSha1, HASH_TYPE_SHA1_SIZE);
+        bufferPos += HASH_TYPE_SHA1_SIZE;
+    }
+
+    // SHA1 repo checksum
+    if (file->checksumRepoSha1 != NULL)
+    {
+        memcpy((uint8_t *)buffer + bufferPos, file->checksumRepoSha1, HASH_TYPE_SHA1_SIZE);
+        bufferPos += HASH_TYPE_SHA1_SIZE;
+    }
 
     // Reference
     if (file->reference != NULL)
@@ -277,8 +295,18 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     result.checksumPage = (flag >> manifestFilePackFlagChecksumPage) & 1;
 
     // SHA1 checksum
-    memcpy(result.checksumSha1, (const uint8_t *)filePack + bufferPos, HASH_TYPE_SHA1_SIZE_HEX + 1);
-    bufferPos += HASH_TYPE_SHA1_SIZE_HEX + 1;
+    if (flag & (1 << manifestFilePackFlagChecksum))
+    {
+        result.checksumSha1 = (const uint8_t *)filePack + bufferPos;
+        bufferPos += HASH_TYPE_SHA1_SIZE;
+    }
+
+    // SHA1 repo checksum
+    if (flag & (1 << manifestFilePackFlagChecksumRepo))
+    {
+        result.checksumRepoSha1 = (const uint8_t *)filePack + bufferPos;
+        bufferPos += HASH_TYPE_SHA1_SIZE;
+    }
 
     // Reference
     if (flag & (1 << manifestFilePackFlagReference))
@@ -804,11 +832,11 @@ manifestBuildInfo(
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_serial/* since these files are reset
-                if (strEqZ(info->name, PG_PATH_PGSERIAL) && pgVersion >= PG_VERSION_91)
+                if (strEqZ(info->name, PG_PATH_PGSERIAL))
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip pg_snapshots/* since these files cannot be reused on recovery
-                if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS) && pgVersion >= PG_VERSION_92)
+                if (strEqZ(info->name, PG_PATH_PGSNAPSHOTS))
                     FUNCTION_TEST_RETURN_VOID();
 
                 // Skip temporary statistics in pg_stat_tmp even when stats_temp_directory is set because PGSS_TEXT_FILE is always
@@ -926,7 +954,7 @@ manifestBuildInfo(
             if (info->size == 0 && buildData->manifest->pub.data.bundle)
             {
                 file.copy = false;
-                memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                file.checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF);
             }
 
             // Determine if this file should be page checksummed
@@ -1141,7 +1169,6 @@ manifestNewBuild(
 
     ASSERT(storagePg != NULL);
     ASSERT(pgVersion != 0);
-    ASSERT(!checksumPage || pgVersion >= PG_VERSION_93);
 
     Manifest *this = NULL;
 
@@ -1272,75 +1299,72 @@ manifestNewBuild(
             // to check for _init files which will sort after the vast majority of the relation files.  We could check storage for
             // each _init file but that would be expensive.
             // -------------------------------------------------------------------------------------------------------------------------
-            if (pgVersion >= PG_VERSION_91)
-            {
-                RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strZ(buildData.tablespaceId)));
-                unsigned int fileIdx = 0;
-                char lastRelationFileId[21] = "";                   // Large enough for a 64-bit unsigned integer
-                bool lastRelationFileIdUnlogged = false;
+            RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strZ(buildData.tablespaceId)));
+            unsigned int fileIdx = 0;
+            char lastRelationFileId[21] = "";                   // Large enough for a 64-bit unsigned integer
+            bool lastRelationFileIdUnlogged = false;
 
 #ifdef DEBUG_MEM
-                // Record the temp context size before the loop begins
-                size_t sizeBegin = memContextSize(memContextCurrent());
+            // Record the temp context size before the loop begins
+            size_t sizeBegin = memContextSize(memContextCurrent());
 #endif
 
-                while (fileIdx < manifestFileTotal(this))
+            while (fileIdx < manifestFileTotal(this))
+            {
+                // If this file looks like a relation.  Note that this never matches on _init forks.
+                const String *const filePathName = manifestFileNameGet(this, fileIdx);
+
+                if (regExpMatch(relationExp, filePathName))
                 {
-                    // If this file looks like a relation.  Note that this never matches on _init forks.
-                    const String *const filePathName = manifestFileNameGet(this, fileIdx);
+                    // Get the filename (without path)
+                    const char *fileName = strBaseZ(filePathName);
+                    size_t fileNameSize = strlen(fileName);
 
-                    if (regExpMatch(relationExp, filePathName))
+                    // Strip off the numeric part of the relation
+                    char relationFileId[sizeof(lastRelationFileId)];
+                    unsigned int nameIdx = 0;
+
+                    for (; nameIdx < fileNameSize; nameIdx++)
                     {
-                        // Get the filename (without path)
-                        const char *fileName = strBaseZ(filePathName);
-                        size_t fileNameSize = strlen(fileName);
+                        if (!isdigit(fileName[nameIdx]))
+                            break;
 
-                        // Strip off the numeric part of the relation
-                        char relationFileId[sizeof(lastRelationFileId)];
-                        unsigned int nameIdx = 0;
-
-                        for (; nameIdx < fileNameSize; nameIdx++)
-                        {
-                            if (!isdigit(fileName[nameIdx]))
-                                break;
-
-                            relationFileId[nameIdx] = fileName[nameIdx];
-                        }
-
-                        relationFileId[nameIdx] = '\0';
-
-                        // The filename must have characters
-                        ASSERT(relationFileId[0] != '\0');
-
-                        // Store the last relation so it does not need to be found everytime
-                        if (strcmp(lastRelationFileId, relationFileId) != 0)
-                        {
-                            // Determine if the relation is unlogged
-                            String *relationInit = strNewFmt(
-                                "%.*s%s_init", (int)(strSize(filePathName) - fileNameSize), strZ(filePathName), relationFileId);
-                            lastRelationFileIdUnlogged = manifestFileExists(this, relationInit);
-                            strFree(relationInit);
-
-                            // Save the file id so we don't need to do the lookup next time if it doesn't change
-                            strcpy(lastRelationFileId, relationFileId);
-                        }
-
-                        // If relation is unlogged then remove it
-                        if (lastRelationFileIdUnlogged)
-                        {
-                            manifestFileRemove(this, filePathName);
-                            continue;
-                        }
+                        relationFileId[nameIdx] = fileName[nameIdx];
                     }
 
-                    fileIdx++;
+                    relationFileId[nameIdx] = '\0';
+
+                    // The filename must have characters
+                    ASSERT(relationFileId[0] != '\0');
+
+                    // Store the last relation so it does not need to be found everytime
+                    if (strcmp(lastRelationFileId, relationFileId) != 0)
+                    {
+                        // Determine if the relation is unlogged
+                        String *relationInit = strNewFmt(
+                            "%.*s%s_init", (int)(strSize(filePathName) - fileNameSize), strZ(filePathName), relationFileId);
+                        lastRelationFileIdUnlogged = manifestFileExists(this, relationInit);
+                        strFree(relationInit);
+
+                        // Save the file id so we don't need to do the lookup next time if it doesn't change
+                        strcpy(lastRelationFileId, relationFileId);
+                    }
+
+                    // If relation is unlogged then remove it
+                    if (lastRelationFileIdUnlogged)
+                    {
+                        manifestFileRemove(this, filePathName);
+                        continue;
+                    }
                 }
 
-#ifdef DEBUG_MEM
-                // Make sure that the temp context did not grow too much during the loop
-                ASSERT(memContextSize(memContextCurrent()) - sizeBegin < 256);
-#endif
+                fileIdx++;
             }
+
+#ifdef DEBUG_MEM
+            // Make sure that the temp context did not grow too much during the loop
+            ASSERT(memContextSize(memContextCurrent()) - sizeBegin < 256);
+#endif
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -1516,7 +1540,8 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                 if (file.copy && file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
                 {
                     file.sizeRepo = filePrior.sizeRepo;
-                    memcpy(file.checksumSha1, filePrior.checksumSha1, HASH_TYPE_SHA1_SIZE_HEX + 1);
+                    file.checksumSha1 = filePrior.checksumSha1;
+                    file.checksumRepoSha1 = filePrior.checksumRepoSha1;
                     file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
                     file.checksumPage = filePrior.checksumPage;
                     file.checksumPageError = filePrior.checksumPageError;
@@ -1678,6 +1703,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BUNDLE_ID                                      STRID5("bni", 0x25c20)
 #define MANIFEST_KEY_BUNDLE_OFFSET                                  STRID5("bno", 0x3dc20)
 #define MANIFEST_KEY_CHECKSUM                                       STRID5("checksum", 0x6d66b195030)
+#define MANIFEST_KEY_CHECKSUM_REPO                                  STRID5("rck", 0x2c720)
 #define MANIFEST_KEY_CHECKSUM_PAGE                                  "checksum-page"
 #define MANIFEST_KEY_CHECKSUM_PAGE_ERROR                            "checksum-page-error"
 #define MANIFEST_KEY_DB_CATALOG_VERSION                             "db-catalog-version"
@@ -1818,7 +1844,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         // The checksum might not exist if this is a partial save that was done during the backup to preserve checksums for already
         // backed up files
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM))
-            memcpy(file.checksumSha1, strZ(jsonReadStr(json)), HASH_TYPE_SHA1_SIZE_HEX + 1);
+            file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
 
         // Page checksum errors
         if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE))
@@ -1841,6 +1867,11 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             file.mode = cvtZToMode(strZ(jsonReadStr(json)));
         else
             file.mode = manifest->fileModeDefault;
+
+        // The repo checksum might not exist if this is a partial save that was done during the backup to preserve checksums for
+        // already backed up files or if this is an older manifest
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM_REPO))
+            file.checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
 
         // Reference
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
@@ -1872,7 +1903,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         // If file size is zero then assign the static zero hash
         if (file.size == 0)
-            memcpy(file.checksumSha1, HASH_TYPE_SHA1_ZERO, HASH_TYPE_SHA1_SIZE_HEX + 1);
+            file.checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF);
 
         // Timestamp is required so error if it is not present
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_TIMESTAMP))
@@ -2187,6 +2218,12 @@ manifestNewLoad(IoRead *read)
 
         this->pub.info = infoNewLoad(read, manifestLoadCallback, &loadData);
         this->pub.data.backrestVersion = infoBackrestVersion(this->pub.info);
+
+        // Add the label to the reference list in case the manifest was created before 2.42 when the explicit reference list was
+        // added. Most references are added when the file list is loaded but the current backup will never be referenced from a file
+        // (the reference is assumed) so it must be added here.
+        if (!loadData.referenceListFound)
+            strLstAddIfMissing(this->pub.referenceList, this->pub.data.backupLabel);
 
         // Process link defaults
         for (unsigned int linkIdx = 0; linkIdx < manifestLinkTotal(this); linkIdx++)
@@ -2522,8 +2559,12 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
 
                 // Save if the file size is not zero and the checksum exists.  The checksum might not exist if this is a partial
                 // save performed during a backup.
-                if (file.size != 0 && file.checksumSha1[0] != 0)
-                    jsonWriteZ(jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM), file.checksumSha1);
+                if (file.size != 0 && file.checksumSha1 != NULL)
+                {
+                    jsonWriteStr(
+                        jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM),
+                        strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)));
+                }
 
                 if (file.checksumPage)
                 {
@@ -2538,6 +2579,15 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
 
                 if (file.mode != saveData->fileModeDefault)
                     jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", file.mode);
+
+                // Save if the repo checksum is not null. The repo checksum for zero-length files may vary depending on compression
+                // and encryption applied.
+                if (file.checksumRepoSha1 != NULL)
+                {
+                    jsonWriteStr(
+                        jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM_REPO),
+                        strNewEncode(encodingHex, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)));
+                }
 
                 if (file.reference != NULL)
                     jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_REFERENCE), file.reference);
@@ -2707,15 +2757,19 @@ manifestValidate(Manifest *this, bool strict)
             const ManifestFile file = manifestFile(this, fileIdx);
 
             // All files must have a checksum
-            if (file.checksumSha1[0] == '\0')
+            if (file.checksumSha1 == NULL)
                 strCatFmt(error, "\nmissing checksum for file '%s'", strZ(file.name));
 
             // These are strict checks to be performed only after a backup and before the final manifest save
             if (strict)
             {
                 // Zero-length files must have a specific checksum
-                if (file.size == 0 && !strEqZ(HASH_TYPE_SHA1_ZERO_STR, file.checksumSha1))
-                    strCatFmt(error, "\ninvalid checksum '%s' for zero size file '%s'", file.checksumSha1, strZ(file.name));
+                if (file.size == 0 && !bufEq(HASH_TYPE_SHA1_ZERO_BUF, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
+                {
+                    strCatFmt(
+                        error, "\ninvalid checksum '%s' for zero size file '%s'",
+                        strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))), strZ(file.name));
+                }
 
                 // Non-zero size files must have non-zero repo size
                 if (file.sizeRepo == 0 && file.size != 0)
@@ -3062,6 +3116,7 @@ manifestBackupLabelSet(Manifest *this, const String *backupLabel)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->pub.data.backupLabel == NULL);
 
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {

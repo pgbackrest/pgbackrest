@@ -22,7 +22,7 @@ Buffer *bufNew(size_t size);
 Buffer *bufNewC(const void *buffer, size_t size);
 
 // Create a new buffer from a string encoded with the specified type
-Buffer *bufNewDecode(EncodeType type, const String *string);
+Buffer *bufNewDecode(EncodingType type, const String *string);
 
 // Duplicate a buffer
 Buffer *bufDup(const Buffer *buffer);
@@ -124,9 +124,6 @@ Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catS
 
 // Are two buffers equal?
 bool bufEq(const Buffer *this, const Buffer *compare);
-
-// Convert the buffer to a hex string
-String *bufHex(const Buffer *this);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Buffer *

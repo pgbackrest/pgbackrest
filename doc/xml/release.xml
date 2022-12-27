@@ -14,7 +14,80 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.42dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.44dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="1941"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove support for <proper>PostgreSQL</proper> <id>9.0</id>/<id>9.1</id>/<id>9.2</id>.</p>
+                    </release-item>
+                </release-improvement-list>
+
+                <release-development-list>
+                    <release-item>
+                        <commit subject="Rename EncodeType enum to EncodingType."/>
+                        <commit subject="Add hex encode/decoding to decode module."/>
+                        <commit subject="Use smaller type for decode tables."/>
+                        <commit subject="Store manifest checksums in memory more efficiently.">
+                            <github-pull-request id="1953"/>
+                        </commit>
+                        <commit subject="Add repository checksum to make verify and resume more efficient.">
+                            <github-pull-request id="1956"/>
+                        </commit>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add repository checksum to make verify and resume more efficient.</p>
+                    </release-item>
+                </release-development-list>
+            </release-core-list>
+        </release>
+
+        <release date="2022-11-28" version="2.43" title="Bug Fix">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <github-issue id="1933"/>
+                        <github-pull-request id="1935"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="marcel.borger"/>
+                            <release-item-ideator id="ulfedf"/>
+                            <release-item-ideator id="jaymefSO"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Fix missing reference in diff/incr backup.</p>
+                    </release-item>
+                </release-bug-list>
+
+                <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1925"/>
+                        <github-pull-request id="1929"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add hint when an option is specified without an index.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
+        </release>
+
+        <release date="2022-11-22" version="2.42" title="Bug Fixes">
             <release-core-list>
                 <release-bug-list>
                     <release-item>
@@ -12072,6 +12145,11 @@
             <contributor-id type="github">javierwilson</contributor-id>
         </contributor>
 
+        <contributor id="jaymefSO">
+            <contributor-name-display>jaymefSO</contributor-name-display>
+            <contributor-id type="github">jaymefSO</contributor-id>
+        </contributor>
+
         <contributor id="jeff.mccormick">
             <contributor-name-display>Jeff McCormick</contributor-name-display>
             <contributor-id type="github">jmccormick2001</contributor-id>
@@ -12233,6 +12311,11 @@
         <contributor id="marc.cousin">
             <contributor-name-display>Marc Cousin</contributor-name-display>
             <contributor-id type="github">marco44</contributor-id>
+        </contributor>
+
+        <contributor id="marcel.borger">
+            <contributor-name-display>Marcel Borger</contributor-name-display>
+            <contributor-id type="github">m-borger</contributor-id>
         </contributor>
 
         <contributor id="marco.montagna">
@@ -12497,6 +12580,11 @@
 
         <contributor id="ugo.bellavance">
             <contributor-name-display>Ugo Bellavance</contributor-name-display>
+        </contributor>
+
+        <contributor id="ulfedf">
+            <contributor-name-display>ulfedf</contributor-name-display>
+            <contributor-id type="github">ulfedf</contributor-id>
         </contributor>
 
         <contributor id="urs.kramer">

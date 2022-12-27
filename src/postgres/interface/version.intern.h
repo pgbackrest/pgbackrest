@@ -16,7 +16,7 @@ alpha/beta/rc period without needing to be updated, unless of course the actual 
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_90
+#elif PG_VERSION >= PG_VERSION_93
 
 #ifdef CATALOG_VERSION_NO_MAX
 
@@ -75,28 +75,6 @@ Read the version specific pg_control into a general data structure
         };                                                                                                                         \
     }
 
-#elif PG_VERSION >= PG_VERSION_90
-
-#define PG_INTERFACE_CONTROL(version)                                                                                              \
-    static PgControl                                                                                                               \
-    pgInterfaceControl##version(const unsigned char *controlFile)                                                                  \
-    {                                                                                                                              \
-        ASSERT(controlFile != NULL);                                                                                               \
-        ASSERT(pgInterfaceControlIs##version(controlFile));                                                                        \
-                                                                                                                                   \
-        return (PgControl)                                                                                                         \
-        {                                                                                                                          \
-            .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
-            .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
-            .checkpoint =                                                                                                          \
-                (uint64_t)((ControlFileData *)controlFile)->checkPoint.xlogid << 32 |                                              \
-                ((ControlFileData *)controlFile)->checkPoint.xrecoff,                                                              \
-            .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
-            .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
-            .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
-        };                                                                                                                         \
-    }
-
 #endif
 
 /***********************************************************************************************************************************
@@ -104,7 +82,7 @@ Get the control version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_90
+#elif PG_VERSION >= PG_VERSION_93
 
 #define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
     static uint32_t                                                                                                                \
@@ -120,7 +98,7 @@ Determine if the supplied WAL is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_90
+#elif PG_VERSION >= PG_VERSION_93
 
 #define PG_INTERFACE_WAL_IS(version)                                                                                               \
     static bool                                                                                                                    \
@@ -138,7 +116,7 @@ Read the version specific WAL header into a general data structure
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_90
+#elif PG_VERSION >= PG_VERSION_93
 
 #define PG_INTERFACE_WAL(version)                                                                                                  \
     static PgWal                                                                                                                   \

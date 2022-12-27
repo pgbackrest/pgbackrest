@@ -57,7 +57,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         {
             TRY_BEGIN()
             {
-                bufNewDecode(encodeBase64, key);
+                bufNewDecode(encodingBase64, key);
             }
             CATCH(FormatError)
             {

@@ -442,30 +442,23 @@ pgTimelineFromWalSegment(const String *const walSegment)
 /**********************************************************************************************************************************/
 StringList *
 pgLsnRangeToWalSegmentList(
-    const unsigned int pgVersion, const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop,
-    const unsigned int walSegmentSize)
+    const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop, const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT, timeline);
         FUNCTION_TEST_PARAM(UINT64, lsnStart);
         FUNCTION_TEST_PARAM(UINT64, lsnStop);
         FUNCTION_TEST_PARAM(UINT, walSegmentSize);
     FUNCTION_TEST_END();
 
-    ASSERT(pgVersion != 0);
     ASSERT(timeline != 0);
     ASSERT(lsnStart <= lsnStop);
     ASSERT(walSegmentSize != 0);
-    ASSERT(pgVersion > PG_VERSION_92 || walSegmentSize == PG_WAL_SEGMENT_SIZE_DEFAULT);
 
     StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Skip the FF segment when PostgreSQL <= 9.2 (in this case segment size should always be 16MB)
-        const bool skipFF = pgVersion <= PG_VERSION_92;
-
         // Calculate the start and stop segments
         unsigned int startMajor = (unsigned int)(lsnStart >> 32);
         unsigned int startMinor = (unsigned int)(lsnStart & 0xFFFFFFFF) / walSegmentSize;
@@ -482,7 +475,7 @@ pgLsnRangeToWalSegmentList(
         {
             startMinor++;
 
-            if ((skipFF && startMinor == 0xFF) || (!skipFF && startMinor > minorPerMajor))
+            if (startMinor > minorPerMajor)
             {
                 startMajor++;
                 startMinor = 0;

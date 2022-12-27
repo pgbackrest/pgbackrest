@@ -160,8 +160,8 @@ archivePushFile(
             ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
             ioReadDrain(read);
 
-            const String *const walSegmentChecksum = bufHex(
-                pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
+            const String *const walSegmentChecksum = strNewEncode(
+                encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
 
             // Is the check command currently running?
             const bool checkLockHeld = lockRead(

@@ -268,35 +268,35 @@ pgbackrest/test/test.pl --vm=none --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        2022-09-19 16:10:16.785 P00   INFO: test command begin 2.41: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
-        2022-09-19 16:10:19.212 P00   INFO: test command end: completed successfully (2428ms)
+        2022-11-28 09:25:06.417 P00   INFO: test command begin 2.43: [common/wait] --log-level=info --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        2022-11-28 09:25:08.806 P00   INFO: test command end: completed successfully (2389ms)
         run 1 - waitNew(), waitMore, and waitFree()
             000.010s          L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
         
         run 1/1 ------------- L0021 0ms wait
             000.050s 000.040s L0025     new wait
             000.056s 000.006s L0026         check remaining time
-            000.058s 000.002s L0027         check wait time
-            000.059s 000.001s L0028         check sleep time
-            000.059s 000.000s L0029         check sleep prev time
+            000.057s 000.001s L0027         check wait time
+            000.058s 000.001s L0028         check sleep time
+            000.059s 000.001s L0029         check sleep prev time
             000.060s 000.001s L0030         no wait more
-            000.065s 000.005s L0033     new wait = 0.2 sec
-            000.066s 000.001s L0034         check remaining time
-            000.067s 000.001s L0035         check wait time
-            000.068s 000.001s L0036         check sleep time
-            000.069s 000.001s L0037         check sleep prev time
-            000.070s 000.001s L0038         check begin time
-            000.268s 000.198s L0044         lower range check
-            000.268s 000.000s L0045         upper range check
-            000.269s 000.001s L0047         free wait
-            000.271s 000.002s L0052     new wait = 1.1 sec
-            000.272s 000.001s L0053         check wait time
-            000.273s 000.001s L0054         check sleep time
-            000.274s 000.001s L0055         check sleep prev time
-            000.275s 000.001s L0056         check begin time
-            001.373s 001.098s L0062         lower range check
-            001.374s 000.001s L0063         upper range check
-            001.375s 000.001s L0065         free wait
+            000.064s 000.004s L0033     new wait = 0.2 sec
+            000.065s 000.001s L0034         check remaining time
+            000.066s 000.001s L0035         check wait time
+            000.067s 000.001s L0036         check sleep time
+            000.067s 000.000s L0037         check sleep prev time
+            000.068s 000.001s L0038         check begin time
+            000.266s 000.198s L0044         lower range check
+            000.267s 000.001s L0045         upper range check
+            000.268s 000.001s L0047         free wait
+            000.270s 000.002s L0052     new wait = 1.1 sec
+            000.271s 000.001s L0053         check wait time
+            000.272s 000.001s L0054         check sleep time
+            000.273s 000.001s L0055         check sleep prev time
+            000.274s 000.001s L0056         check begin time
+            001.372s 001.098s L0062         lower range check
+            001.373s 000.001s L0063         upper range check
+            001.373s 000.000s L0065         free wait
         
         TESTS COMPLETED SUCCESSFULLY
     
@@ -341,7 +341,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u20-base-20220726A image (f5b22e94c4bac5589e92977a3edd52507f8fa150) ...
+    P00   INFO: Building pgbackrest/test:u20-base image (5f3dc325901f5274f9e21399ef6d3facd606d85a) ...
     P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
@@ -508,8 +508,8 @@ A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Be
 // Set up two standbys but no primary
 harnessPqScriptSet((HarnessPq [])
 {
-    HRNPQ_MACRO_OPEN_GE_92(1, "dbname='postgres' port=5432", PG_VERSION_92, "/pgdata", true, NULL, NULL),
-    HRNPQ_MACRO_OPEN_GE_92(8, "dbname='postgres' port=5433", PG_VERSION_92, "/pgdata", true, NULL, NULL),
+    HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+    HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
 
     // Close the "inner" session first (8) then the outer (1)
     HRNPQ_MACRO_CLOSE(8),

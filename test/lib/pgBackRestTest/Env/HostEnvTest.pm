@@ -241,9 +241,6 @@ sub dbCatalogVersion
 
     my $hCatalogVersion =
     {
-        &PG_VERSION_90 => 201008051,
-        &PG_VERSION_91 => 201105231,
-        &PG_VERSION_92 => 201204301,
         &PG_VERSION_93 => 201306121,
         &PG_VERSION_94 => 201409291,
         &PG_VERSION_95 => 201510051,
@@ -285,9 +282,6 @@ sub dbControlVersion
 
     my $hControlVersion =
     {
-        &PG_VERSION_90 => 903,
-        &PG_VERSION_91 => 903,
-        &PG_VERSION_92 => 922,
         &PG_VERSION_93 => 937,
         &PG_VERSION_94 => 942,
         &PG_VERSION_95 => 942,
@@ -336,9 +330,6 @@ sub controlGenerateContent
     {
         32 =>
         {
-            '9.0' => 140 - length($tControlContent),
-            '9.1' => 140 - length($tControlContent),
-            '9.2' => 156 - length($tControlContent),
             '9.3' => 180 - length($tControlContent),
             '9.4' => 188 - length($tControlContent),
             '9.5' => 200 - length($tControlContent),
@@ -351,9 +342,6 @@ sub controlGenerateContent
 
         64 =>
         {
-            '9.0' => 152 - length($tControlContent),
-            '9.1' => 152 - length($tControlContent),
-            '9.2' => 168 - length($tControlContent),
             '9.3' => 192 - length($tControlContent),
             '9.4' => 200 - length($tControlContent),
             '9.5' => 216 - length($tControlContent),
@@ -442,9 +430,6 @@ sub walGenerateContent
     # Get WAL magic for the PG version
     my $hWalMagic =
     {
-        &PG_VERSION_90 => hex('0xD064'),
-        &PG_VERSION_91 => hex('0xD066'),
-        &PG_VERSION_92 => hex('0xD071'),
         &PG_VERSION_93 => hex('0xD075'),
         &PG_VERSION_94 => hex('0xD07E'),
         &PG_VERSION_95 => hex('0xD087'),

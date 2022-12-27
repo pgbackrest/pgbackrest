@@ -119,10 +119,9 @@ List *restoreFile(
 
                                 // If the checksum is the same (or file is zero size) then no need to copy the file
                                 if (file->size == 0 ||
-                                    strEq(
+                                    bufEq(
                                         file->checksum,
-                                        bufHex(
-                                            pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)))))
+                                        pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
                                 {
                                     // If the hash/size are now the same but the time is not, then set the time back to the backup
                                     // time. This helps with unit testing, but also presents a pristine version of the database
@@ -268,13 +267,14 @@ List *restoreFile(
                         storageReadFree(repoFileRead);
 
                     // Validate checksum
-                    if (!strEq(file->checksum, bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))))
+                    if (!bufEq(file->checksum, pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE))))
                     {
                         THROW_FMT(
                             ChecksumError,
                             "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(file->name),
-                            strZ(bufHex(pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))),
-                            strZ(file->checksum));
+                            strZ(
+                                strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE)))),
+                            strZ(strNewEncode(encodingHex, file->checksum)));
                     }
                 }
             }

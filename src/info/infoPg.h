@@ -30,6 +30,9 @@ typedef struct InfoPgData
     uint64_t systemId;
     unsigned int catalogVersion;
     unsigned int version;
+
+    // Control version is required to maintain the file format for older versions of pgBackRest but should not be used elsewhere
+    unsigned int controlVersion;
 } InfoPgData;
 
 /***********************************************************************************************************************************

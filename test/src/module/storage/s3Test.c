@@ -91,7 +91,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     if (param.content != NULL)
     {
         strCatFmt(
-            request, "content-md5:%s\r\n", strZ(strNewEncode(encodeBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
+            request, "content-md5:%s\r\n", strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
     }
 
     // Add host
@@ -117,7 +117,8 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             request,
             "x-amz-content-sha256:%s\r\n"
                 "x-amz-date:????????T??????Z" "\r\n",
-            param.content == NULL ? HASH_TYPE_SHA256_ZERO : strZ(bufHex(cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content)))));
+            param.content == NULL ?
+                HASH_TYPE_SHA256_ZERO : strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content)))));
 
         // Add security token
         if (securityToken != NULL)
