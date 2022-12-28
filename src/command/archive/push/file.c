@@ -163,38 +163,10 @@ archivePushFile(
             const String *const walSegmentChecksum = strNewEncode(
                 encodingHex, pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)));
 
-            // Is the check command currently running?
-            const bool checkLockHeld = lockRead(
-                cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeCheck).status == lockReadStatusValid;
-
-            // Is the backup command running for a specific repo?
-            const Variant *runningBackupRepoIdx = lockRead(
-                cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup).data.repoIdx;
-
             // Check each repo for the WAL segment
             for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
                 const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
-
-                // Skip archiving if archive retention is set to 0 and the backup command isn't currently running for this specific
-                // repository. Archiving should always happen when the check command is running for all the repositories.
-                bool lockHeld = false;
-                if (checkLockHeld || (runningBackupRepoIdx != NULL && varUInt(runningBackupRepoIdx) == repoData->repoIdx))
-                    lockHeld = true;
-
-                if (!lockHeld
-                    && (cfgOptionIdxTest(cfgOptRepoRetentionArchive, repoData->repoIdx)
-                        && cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoData->repoIdx) == 0))
-                {
-                    // Add warning to the result that will be returned to the main process
-                    strLstAddFmt(
-                        result.warnList,
-                        "WAL file '%s' skipped for %s, because option '%s' is set to 0",
-                        strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx),
-                        cfgOptionIdxName(cfgOptRepoRetentionArchive, repoData->repoIdx));
-                    destinationCopy[repoListIdx] = false;
-                    continue;
-                }
 
                 // Check if the WAL segment already exists in the repo
                 const String *walSegmentFile = NULL;
@@ -277,6 +249,29 @@ archivePushFile(
             for (unsigned int repoListIdx = 0; repoListIdx < lstSize(repoList); repoListIdx++)
             {
                 const ArchivePushFileRepoData *const repoData = lstGet(repoList, repoListIdx);
+
+                // Skip archiving if archive retention is set to 0 and the backup command isn't currently running for this specific
+                // repository. Archiving should always happen when the check command is running for all the repositories.
+                if (cfgOptionIdxTest(cfgOptRepoRetentionArchive, repoData->repoIdx)
+                    && cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoData->repoIdx) == 0)
+                {
+                    // Is the check command currently running?
+                    const bool checkLockHeld = lockRead(
+                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeCheck).status == lockReadStatusValid;
+
+                    // Is the backup command running for a specific repo?
+                    const Variant *runningBackupRepoIdx = lockRead(
+                        cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptStanza), lockTypeBackup).data.repoIdx;
+
+                    if (!checkLockHeld && (runningBackupRepoIdx == NULL || varUInt(runningBackupRepoIdx) != repoData->repoIdx))
+                    {
+                        LOG_DETAIL_FMT("'%s' skipped for %s, because option '%s' is set to 0",
+                            strZ(archiveFile), cfgOptionGroupName(cfgOptGrpRepo, repoData->repoIdx),
+                            cfgOptionIdxName(cfgOptRepoRetentionArchive, repoData->repoIdx));
+                        destinationCopy[repoListIdx] = false;
+                        continue;
+                    }
+                }
 
                 // Does this repo need a copy?
                 if (destinationCopy[repoListIdx])
