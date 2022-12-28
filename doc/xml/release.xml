@@ -82,6 +82,23 @@
 
                         <p>Add replacement for linefeeds in monitoring example.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="987"/>
+                        <github-issue id="1314"/>
+                        <github-pull-request id="1960"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="anton.kurochkin"/>
+                            <release-item-ideator id="chris.bandy"/>
+                            <release-item-contributor id="chris.bandy"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="anton.kurochkin"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify <br-option>target-action</br-option> behavior on various <postgres/> versions.</p>
+                    </release-item>
                 </release-improvement-list>
             </release-doc-list>
         </release>
