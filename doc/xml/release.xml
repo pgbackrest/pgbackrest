@@ -27,6 +27,21 @@
 
                         <p>Remove support for <proper>PostgreSQL</proper> <id>9.0</id>/<id>9.1</id>/<id>9.2</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1216"/>
+                        <github-issue id="1931"/>
+                        <github-pull-request id="1962"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="gkleen"/>
+                            <release-item-ideator id="viperru"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>compress-level</br-option> range checking for each <br-option>compress-type</br-option>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -50,6 +65,25 @@
                     </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1910"/>
+                        <github-pull-request id="1963"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="rudonx"/>
+                            <release-item-ideator id="gmustdie"/>
+                            <release-item-ideator id="ivan.shelestov"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add replacement for linefeeds in monitoring example.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2022-11-28" version="2.43" title="Bug Fix">
@@ -12046,6 +12080,16 @@
             <contributor-id type="github">geirra</contributor-id>
         </contributor>
 
+        <contributor id="gkleen">
+            <contributor-name-display>gkleen</contributor-name-display>
+            <contributor-id type="github">gkleen</contributor-id>
+        </contributor>
+
+        <contributor id="gmustdie">
+            <contributor-name-display>gmustdie</contributor-name-display>
+            <contributor-id type="github">gmustdie</contributor-id>
+        </contributor>
+
         <contributor id="greg.sabino.mullane">
             <contributor-name-display>Greg Sabino Mullane</contributor-name-display>
             <contributor-id type="github">turnstep</contributor-id>
@@ -12088,6 +12132,11 @@
         <contributor id="isaac.yuen">
             <contributor-name-display>Isaac Yuen</contributor-name-display>
             <contributor-id type="github">Isaacwhyuenac</contributor-id>
+        </contributor>
+
+        <contributor id="ivan.shelestov">
+            <contributor-name-display>Ivan Shelestov</contributor-name-display>
+            <contributor-id type="github">Shelestov7</contributor-id>
         </contributor>
 
         <contributor id="reid.thompson">
@@ -12478,6 +12527,11 @@
             <contributor-id type="github">rdunklau</contributor-id>
         </contributor>
 
+        <contributor id="rudonx">
+            <contributor-name-display>rudonx</contributor-name-display>
+            <contributor-id type="github">rudonx</contributor-id>
+        </contributor>
+
         <contributor id="ryan.lambert">
             <contributor-name-display>Ryan Lambert</contributor-name-display>
             <contributor-id type="github">rustprooflabs</contributor-id>
@@ -12604,6 +12658,11 @@
 
         <contributor id="viorel.tabara">
             <contributor-name-display>Viorel Tabara</contributor-name-display>
+        </contributor>
+
+        <contributor id="viperru">
+            <contributor-name-display>ViperRu</contributor-name-display>
+            <contributor-id type="github">ViperRu</contributor-id>
         </contributor>
 
         <contributor id="vitaliy.kukharik">
