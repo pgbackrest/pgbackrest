@@ -692,7 +692,6 @@ option:
     section: global
     type: integer
     required: false
-    allow-range: [0, 9]
     command: compress
     command-role:
       async: {}
