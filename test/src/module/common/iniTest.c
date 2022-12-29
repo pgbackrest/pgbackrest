@@ -34,41 +34,29 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("iniNewP() strict, iniValid()"))
     {
-        // Empty file
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_STR_Z(testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("")), .strict = true)), "", "empty ini");
+        TEST_TITLE("errors");
 
-        // Key outside of section
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("key=value\n")), .strict = true)), FormatError,
             "key/value found outside of section at line 1: key=value");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("empty section");
-
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("\n[]\n")), .strict = true)), FormatError,
             "invalid empty section at line 2: []");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("invalid JSON value");
-
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey=value\n")), .strict = true)), FormatError,
             "invalid JSON value at line 2 'key=value': invalid type at: value");
-
-        // Key outside of section
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\n""key")), .strict = true)), FormatError,
             "missing '=' in key/value at line 2: key");
-
-        // Zero length key
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\n=\"value\"")), .strict = true)), FormatError,
             "key is zero-length at line 2: =\"value\"");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("empty ini");
+
+        TEST_RESULT_STR_Z(testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("")), .strict = true)), "", "check");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one section");
@@ -86,10 +74,11 @@ testRun(void)
             "section1:key2:\"value2\"\n"
             "section1:key=3=:\"value3\"\n"
             "section1:=:\"=\"\n",
-            "check ini");
+            "check");
 
-        // Two sections
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("two sections");
+
         iniBuf = BUFSTRZ(
             "[section1]\n"
             "[key1=\"value1\"\n"
@@ -104,12 +93,15 @@ testRun(void)
             "section1:[key1:\"value1\"\n"
             "section1:key2:\"value2\"\n"
             "section2:#key2:\"value2\"\n",
-            "check ini");
+            "check");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("validate");
 
         TEST_RESULT_VOID(iniValid(iniNewP(ioBufferReadNew(iniBuf), .strict = true)), "ini valid");
+        TEST_ERROR(
+            iniValid(iniNewP(ioBufferReadNew(BUFSTRDEF("key=value\n")), .strict = true)), FormatError,
+            "key/value found outside of section at line 1: key=value");
     }
 
     // *****************************************************************************************************************************
@@ -132,7 +124,7 @@ testRun(void)
             "key is zero-length at line 2: =value");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("store");
+        TEST_TITLE("store and retrieve values");
 
         const Buffer *iniBuf = BUFSTRDEF
         (

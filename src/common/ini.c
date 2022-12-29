@@ -22,17 +22,18 @@ struct Ini
     IoRead *read;                                                   // Read object for ini data
     IniValue value;                                                 // Current value
     unsigned int lineIdx;                                           // Current line used for error reporting
-    bool strict;                                                    // Every value must be JSON and no trimming
+    bool strict;                                                    // Expect all values to be JSON and do not trim
 };
 
 /**********************************************************************************************************************************/
 Ini *
 iniNew(IoRead *const read, const IniNewParam param)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_READ, read);
-        FUNCTION_TEST_PARAM(BOOL, param.strict);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(IO_READ, read);
+        FUNCTION_LOG_PARAM(BOOL, param.strict);
+        FUNCTION_LOG_PARAM(BOOL, param.store);
+    FUNCTION_LOG_END();
 
     Ini *this = NULL;
 
@@ -63,6 +64,7 @@ iniNew(IoRead *const read, const IniNewParam param)
             {
                 const IniValue *value = iniValueNext(this);
 
+                // Add values while not done
                 while (value != NULL)
                 {
                     const Variant *const sectionKey = VARSTR(value->section);
@@ -82,7 +84,7 @@ iniNew(IoRead *const read, const IniNewParam param)
     }
     OBJ_NEW_END();
 
-    FUNCTION_TEST_RETURN(INI, this);
+    FUNCTION_LOG_RETURN(INI, this);
 }
 
 /**********************************************************************************************************************************/
@@ -151,10 +153,9 @@ iniValueNext(Ini *const this)
                         strCatZN(strTrunc(this->value.key), linePtr, (size_t)(lineEqual - linePtr));
                         strCatZ(strTrunc(this->value.value), lineEqual + 1);
 
-                        // !!!
+                        // Value is expected to be valid JSON
                         if (this->strict)
                         {
-                            // Check that the value is valid JSON
                             TRY_BEGIN()
                             {
                                 jsonValidate(this->value.value);
@@ -176,7 +177,7 @@ iniValueNext(Ini *const this)
                             }
                             TRY_END();
                         }
-                        // !!!
+                        // Else just trim
                         else
                         {
                             strTrim(this->value.key);
