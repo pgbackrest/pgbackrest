@@ -221,7 +221,7 @@ testRun(void)
         TEST_LOG_FMT("ini size = %s, keys = %u", strZ(strSizeFormat(strSize(iniStr))), iniMax);
 
         TimeMSec timeBegin = timeMSec();
-        Ini *ini = iniNewIo(ioBufferReadNew(BUFSTR(iniStr)));
+        Ini *ini = iniNewP(ioBufferReadNew(BUFSTR(iniStr)), .strict = true);
 
         unsigned int iniTotal = 0;
         const IniValue *value = iniValueNext(ini);

@@ -167,7 +167,7 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
 
             TRY_BEGIN()
             {
-                Ini *const ini = iniNewIo(read);
+                Ini *const ini = iniNewP(read, .strict = true);
 
                 MEM_CONTEXT_TEMP_RESET_BEGIN()
                 {

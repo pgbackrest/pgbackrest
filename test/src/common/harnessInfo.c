@@ -51,7 +51,7 @@ harnessInfoChecksum(const String *info)
         // Generate checksum by loading ini file
         ioFilterProcessIn(checksum, BUFSTRDEF("{"));
 
-        Ini *const ini = iniNewIo(ioBufferReadNew(result));
+        Ini *const ini = iniNewP(ioBufferReadNew(result), .strict = true);
         const IniValue *value = iniValueNext(ini);
 
         while (value != NULL)

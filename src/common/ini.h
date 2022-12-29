@@ -27,8 +27,17 @@ typedef struct IniValue
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Ini *iniNew(void);
-Ini *iniNewIo(IoRead *read);
+typedef struct IniNewParam
+{
+    VAR_PARAM_HEADER;
+    bool strict;                                                    // Expect all values to be JSON and do not trim
+    bool store;                                                     // Store in KeyValue so functions can be used to query
+} IniNewParam;
+
+#define iniNewP(read, ...)                                                                                                         \
+    iniNew(read, (IniNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+Ini *iniNew(IoRead *read, IniNewParam param);
 
 /***********************************************************************************************************************************
 Functions
@@ -40,9 +49,8 @@ iniMove(Ini *const this, MemContext *const parentNew)
     return objMove(this, parentNew);
 }
 
-// Parse ini from a string. Comments are ignored and additional whitespace around sections, keys, and values is trimmed. Should be
-// used *only* to read user-generated config files, for code-generated info files see iniLoad().
-void iniParse(Ini *this, const String *content);
+// Check that the ini is valid
+void iniValid(Ini *this);
 
 // Get the next value in the ini file. Note that members of IniValue are reused between calls so the members of a previous call may
 // change after the next call. Any members that need to be preserved should be copied before the next call.

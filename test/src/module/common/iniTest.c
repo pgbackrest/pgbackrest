@@ -32,60 +32,48 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("iniNewIo()"))
+    if (testBegin("iniNewP() strict, iniValid()"))
     {
         // Empty file
         // -------------------------------------------------------------------------------------------------------------------------
-        const Buffer *iniBuf = bufNew(0);
-
-        TEST_RESULT_STR_Z(testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), "", "check ini");
+        TEST_RESULT_STR_Z(testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("")), .strict = true)), "", "empty ini");
 
         // Key outside of section
         // -------------------------------------------------------------------------------------------------------------------------
-        iniBuf = BUFSTRZ(
-            "key=value\n");
-
         TEST_ERROR(
-            testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError,
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("key=value\n")), .strict = true)), FormatError,
             "key/value found outside of section at line 1: key=value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("empty section");
 
-        iniBuf = BUFSTRZ(
-            "\n[]\n");
-
-        TEST_ERROR(testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError, "invalid empty section at line 2: []");
+        TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("\n[]\n")), .strict = true)), FormatError,
+            "invalid empty section at line 2: []");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid JSON value");
 
-        iniBuf = BUFSTRZ("[section]\nkey=value\n");
-
         TEST_ERROR(
-            testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError,
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey=value\n")), .strict = true)), FormatError,
             "invalid JSON value at line 2 'key=value': invalid type at: value");
 
         // Key outside of section
         // -------------------------------------------------------------------------------------------------------------------------
-        iniBuf = BUFSTRZ(
-            "[section]\n"
-            "key");
-
-        TEST_ERROR(testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError, "missing '=' in key/value at line 2: key");
+        TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\n""key")), .strict = true)), FormatError,
+            "missing '=' in key/value at line 2: key");
 
         // Zero length key
         // -------------------------------------------------------------------------------------------------------------------------
-        iniBuf = BUFSTRZ(
-            "[section]\n"
-            "=\"value\"");
-
-        TEST_ERROR(testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError, "key is zero-length at line 2: =\"value\"");
+        TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\n=\"value\"")), .strict = true)), FormatError,
+            "key is zero-length at line 2: =\"value\"");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one section");
 
-        iniBuf = BUFSTRZ(
+        const Buffer *iniBuf = BUFSTRZ(
             "[section1]\n"
             " key1 =\"value1\"\n"
             "key2=\"value2\"\n"
@@ -93,7 +81,7 @@ testRun(void)
             "==\"=\"");
 
         TEST_RESULT_STR_Z(
-            testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))),
+            testIniNextValue(iniNewP(ioBufferReadNew(iniBuf), .strict = true)),
             "section1: key1 :\"value1\"\n"
             "section1:key2:\"value2\"\n"
             "section1:key=3=:\"value3\"\n"
@@ -112,89 +100,66 @@ testRun(void)
             "#key2=\"value2\"");
 
         TEST_RESULT_STR_Z(
-            testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))),
+            testIniNextValue(iniNewP(ioBufferReadNew(iniBuf), .strict = true)),
             "section1:[key1:\"value1\"\n"
             "section1:key2:\"value2\"\n"
             "section2:#key2:\"value2\"\n",
             "check ini");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("iniNew() and iniFree()"))
-    {
-        Ini *ini = NULL;
-
-        TEST_ASSIGN(ini, iniNew(), "new ini");
-        TEST_RESULT_PTR_NE(ini->store, NULL, "store is set");
-        TEST_RESULT_VOID(iniFree(ini), "free ini");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("iniSet(), iniGet(), and iniSectionKeyList()"))
-    {
-        Ini *ini = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            TEST_ASSIGN(ini, iniNew(), "new ini");
-
-            TEST_RESULT_VOID(iniSet(ini, STRDEF("section1"), STRDEF("key1"), STRDEF("11")), "set section, key");
-            TEST_RESULT_VOID(iniSet(ini, STRDEF("section1"), STRDEF("key2"), STRDEF("1.234")), "set section, key");
-
-            TEST_RESULT_VOID(iniMove(ini, memContextPrior()), "move ini");
-            TEST_RESULT_VOID(iniMove(NULL, memContextPrior()), "move null ini");
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("section1"), STRDEF("key1")), "11", "get section, key");
-        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("section1"), STRDEF("key2")), "1.234", "get section, key");
-
-        TEST_ERROR(iniGet(ini, STRDEF("section2"), STRDEF("key2")), FormatError, "section 'section2', key 'key2' does not exist");
-
-        TEST_RESULT_INT(strLstSize(iniSectionKeyList(ini, STRDEF("bogus"))), 0, "get keys for missing section");
-        TEST_RESULT_STRLST_Z(iniSectionKeyList(ini, STRDEF("section1")), "key1\nkey2\n", "get keys for section");
-
-        TEST_RESULT_VOID(iniSet(ini, STRDEF("section2"), STRDEF("key2"), STRDEF("2")), "set section2, key");
-        TEST_RESULT_BOOL(iniSectionKeyIsList(ini, STRDEF("section1"), STRDEF("key1")), false, "single value is not list");
-        TEST_RESULT_VOID(iniSet(ini, STRDEF("section2"), STRDEF("key2"), STRDEF("7")), "set section2, key");
-        TEST_RESULT_BOOL(iniSectionKeyIsList(ini, STRDEF("section2"), STRDEF("key2")), true, "section2, key2 is a list");
-        TEST_RESULT_STRLST_Z(iniGetList(ini, STRDEF("section2"), STRDEF("key2")), "2\n7\n", "get list");
-        TEST_RESULT_PTR(iniGetList(ini, STRDEF("section2"), STRDEF("key-missing")), NULL, "get missing list");
-
-        TEST_RESULT_VOID(iniFree(ini), "free ini");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("iniParse()"))
-    {
-        Ini *ini = NULL;
-        const String *content = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(iniParse(iniNew(), NULL), "no content");
+        TEST_TITLE("validate");
+
+        TEST_RESULT_VOID(iniValid(iniNewP(ioBufferReadNew(iniBuf), .strict = true)), "ini valid");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("iniNewP() loose"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("errors");
+
         TEST_ERROR(
-            iniParse(iniNew(), STRDEF("compress=y\n")), FormatError, "key/value found outside of section at line 1: compress=y");
-        TEST_ERROR(iniParse(iniNew(), STRDEF("[section\n")), FormatError, "ini section should end with ] at line 1: [section");
-        TEST_ERROR(iniParse(iniNew(), STRDEF("[section]\nkey")), FormatError, "missing '=' in key/value at line 2: key");
-        TEST_ERROR(iniParse(iniNew(), STRDEF("[section]\n =value")), FormatError, "key is zero-length at line 1: =value");
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("compress=y\n")))), FormatError,
+            "key/value found outside of section at line 1: compress=y");
+        TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section\n")))), FormatError,
+            "ini section should end with ] at line 1: [section");
+        TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey")))), FormatError,
+            "missing '=' in key/value at line 2: key");
+        TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\n =value")))), FormatError,
+            "key is zero-length at line 2: =value");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(ini, iniNew(), "new ini");
+        TEST_TITLE("store");
 
-        content = STRDEF
+        const Buffer *iniBuf = BUFSTRDEF
         (
             "# Comment\n"
             "[global] \n"
             "compress=y \n"
+            " repeat = 1 \n"
+            "repeat=2\n"
             "\n"
             " [db]\n"
             "pg1-path = /path/to/pg"
         );
 
-        TEST_RESULT_VOID(iniParse(ini, content), "load ini");
+        Ini *ini = NULL;
+        TEST_ASSIGN(ini, iniNewP(ioBufferReadNew(iniBuf), .store = true), "new ini");
+        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("global"), STRDEF("compress")), "y", "ini get");
+        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("db"), STRDEF("pg1-path")), "/path/to/pg", "ini get");
+        TEST_ERROR(iniGet(ini, STRDEF("sec"), STRDEF("key")), FormatError, "section 'sec', key 'key' does not exist");
 
-        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("global"), STRDEF("compress")), "y", "get compress");
-        TEST_RESULT_STR_Z(iniGet(ini, STRDEF("db"), STRDEF("pg1-path")), "/path/to/pg", "get pg1-path");
+        TEST_RESULT_BOOL(iniSectionKeyIsList(ini, STRDEF("global"), STRDEF("repeat")), true, "key is list");
+        TEST_RESULT_STRLST_Z(iniGetList(ini, STRDEF("global"), STRDEF("repeat")), "1\n2\n", "key list");
+        TEST_RESULT_PTR(iniGetList(ini, STRDEF("globalx"), STRDEF("repeat2")), NULL, "null key list");
+
+        TEST_RESULT_STRLST_Z(iniSectionKeyList(ini, STRDEF("global")), "compress\nrepeat\n", "section keys");
+        TEST_RESULT_STRLST_Z(iniSectionKeyList(ini, STRDEF("bogus")), NULL, "empty section keys");
+
+        TEST_RESULT_VOID(iniFree(ini), "ini free");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
