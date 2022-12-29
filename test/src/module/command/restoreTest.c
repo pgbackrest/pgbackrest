@@ -370,7 +370,7 @@ testRun(void)
 
         TEST_ERROR(
             restoreBackupSet(), BackupSetInvalidError,
-            "the latest backup set found '20161219-212741F_20161219-212918I' is not part of the latest PostgreSQL history\n"
+            "the latest backup set found '20161219-212741F_20161219-212918I' is from a prior version of PostgreSQL\n"
             "HINT: was a backup created after the stanza-upgrade?\n"
             "HINT: specify --set or --type=time/lsn to restore from a prior version of PostgreSQL.");
 
