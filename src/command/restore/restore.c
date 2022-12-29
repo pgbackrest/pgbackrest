@@ -346,7 +346,7 @@ restoreBackupSet(void)
                     if (latestBackup.backupPgId < backupInfoPg.id)
                     {
                         THROW_FMT(BackupSetInvalidError,
-                            "the latest backup set found '%s' is not part of the current " PG_NAME " history\n"
+                            "the latest backup set found '%s' is from a prior version of " PG_NAME "\n"
                             "HINT: was a backup created after the stanza-upgrade?\n"
                             "HINT: specify --" CFGOPT_SET " or --" CFGOPT_TYPE "=time/lsn to restore from a prior version of "
                                 PG_NAME ".",
