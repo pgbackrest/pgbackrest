@@ -90,23 +90,6 @@ iniGet(const Ini *this, const String *section, const String *key)
 }
 
 /**********************************************************************************************************************************/
-const String *
-iniGetDefault(const Ini *this, const String *section, const String *key, const String *defaultValue)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(STRING, section);
-        FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, defaultValue);
-    FUNCTION_TEST_END();
-
-    // Get the value
-    const Variant *result = iniGetInternal(this, section, key, false);
-
-    FUNCTION_TEST_RETURN_CONST(STRING, result == NULL ? defaultValue : varStr(result));
-}
-
-/**********************************************************************************************************************************/
 StringList *
 iniGetList(const Ini *this, const String *section, const String *key)
 {
@@ -172,30 +155,33 @@ iniSectionKeyList(const Ini *this, const String *section)
 }
 
 /**********************************************************************************************************************************/
-StringList *
-iniSectionList(const Ini *this)
+// Helper to set an ini value
+static void
+iniSet(Ini *const this, const String *const section, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
+        FUNCTION_TEST_PARAM(STRING, section);
+        FUNCTION_TEST_PARAM(STRING, key);
+        FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(section != NULL);
+    ASSERT(key != NULL);
+    ASSERT(value != NULL);
 
-    StringList *result = NULL;
+    const Variant *const sectionKey = VARSTR(section);
+    KeyValue *sectionKv = varKv(kvGet(this->store, sectionKey));
 
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Get the sections from the keyList
-        result = strLstNewVarLst(kvKeyList(this->store));
+    if (sectionKv == NULL)
+        sectionKv = kvPutKv(this->store, sectionKey);
 
-        strLstMove(result, memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
+    kvAdd(sectionKv, VARSTR(key), VARSTR(value));
 
-    FUNCTION_TEST_RETURN(STRING_LIST, result);
+    FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
 void
 iniParse(Ini *this, const String *content)
 {
@@ -268,37 +254,6 @@ iniParse(Ini *this, const String *content)
         }
     }
     MEM_CONTEXT_OBJ_END();
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-void
-iniSet(Ini *this, const String *section, const String *key, const String *value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(STRING, section);
-        FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(section != NULL);
-    ASSERT(key != NULL);
-    ASSERT(value != NULL);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        const Variant *sectionKey = VARSTR(section);
-        KeyValue *sectionKv = varKv(kvGet(this->store, sectionKey));
-
-        if (sectionKv == NULL)
-            sectionKv = kvPutKv(this->store, sectionKey);
-
-        kvAdd(sectionKv, VARSTR(key), VARSTR(value));
-    }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }

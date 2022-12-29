@@ -33,17 +33,11 @@ iniMove(Ini *const this, MemContext *const parentNew)
 // used *only* to read user-generated config files, for code-generated info files see iniLoad().
 void iniParse(Ini *this, const String *content);
 
-// Set an ini value
-void iniSet(Ini *this, const String *section, const String *key, const String *value);
-
 /***********************************************************************************************************************************
-Getters/Setters
+Getters
 ***********************************************************************************************************************************/
 // Get an ini value -- error if it does not exist
 const String *iniGet(const Ini *this, const String *section, const String *key);
-
-// Get an ini value -- if it does not exist then return specified default
-const String *iniGetDefault(const Ini *this, const String *section, const String *key, const String *defaultValue);
 
 // Ini key list
 StringList *iniGetList(const Ini *this, const String *section, const String *key);
@@ -53,9 +47,6 @@ bool iniSectionKeyIsList(const Ini *this, const String *section, const String *k
 
 // List of keys for a section
 StringList *iniSectionKeyList(const Ini *this, const String *section);
-
-// List of sections
-StringList *iniSectionList(const Ini *this);
 
 /***********************************************************************************************************************************
 Destructor
