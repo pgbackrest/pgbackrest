@@ -29,6 +29,19 @@
                     </release-item>
 
                     <release-item>
+                        <github-issue id="1942"/>
+                        <github-pull-request id="1967"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="soulou"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Restore errors when no backup matches the current version of <postgres/>.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1216"/>
                         <github-issue id="1931"/>
                         <github-pull-request id="1962"/>
