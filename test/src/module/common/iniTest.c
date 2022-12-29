@@ -8,10 +8,19 @@ Test Ini
 /***********************************************************************************************************************************
 Test callback to accumulate ini load results
 ***********************************************************************************************************************************/
-static void
-testIniLoadCallback(void *data, const String *section, const String *key, const String *value)
+static String *
+testIniNextValue(Ini *const ini)
 {
-    strCatFmt((String *)data, "%s:%s:%s\n", strZ(section), strZ(key), strZ(value));
+    String *const result = strNew();
+    const IniValue *value = iniValueNext(ini);
+
+    while (value != NULL)
+    {
+        strCatFmt(result, "%s:%s:%s\n", strZ(value->section), strZ(value->key), strZ(value->value));
+        value = iniValueNext(ini);
+    }
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -23,15 +32,13 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("iniLoad()"))
+    if (testBegin("iniNewIo()"))
     {
         // Empty file
         // -------------------------------------------------------------------------------------------------------------------------
         const Buffer *iniBuf = bufNew(0);
-        String *result = strNew();
 
-        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
-        TEST_RESULT_STR_Z(result, "", "    check ini");
+        TEST_RESULT_STR_Z(testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), "", "check ini");
 
         // Key outside of section
         // -------------------------------------------------------------------------------------------------------------------------
@@ -39,7 +46,7 @@ testRun(void)
             "key=value\n");
 
         TEST_ERROR(
-            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError,
             "key/value found outside of section at line 1: key=value");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -48,9 +55,7 @@ testRun(void)
         iniBuf = BUFSTRZ(
             "\n[]\n");
 
-        TEST_ERROR(
-            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
-            "invalid empty section at line 2: []");
+        TEST_ERROR(testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError, "invalid empty section at line 2: []");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid JSON value");
@@ -58,7 +63,7 @@ testRun(void)
         iniBuf = BUFSTRZ("[section]\nkey=value\n");
 
         TEST_ERROR(
-            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
+            testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError,
             "invalid JSON value at line 2 'key=value': invalid type at: value");
 
         // Key outside of section
@@ -67,9 +72,7 @@ testRun(void)
             "[section]\n"
             "key");
 
-        TEST_ERROR(
-            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
-            "missing '=' in key/value at line 2: key");
+        TEST_ERROR(testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError, "missing '=' in key/value at line 2: key");
 
         // Zero length key
         // -------------------------------------------------------------------------------------------------------------------------
@@ -77,9 +80,7 @@ testRun(void)
             "[section]\n"
             "=\"value\"");
 
-        TEST_ERROR(
-            iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), FormatError,
-            "key is zero-length at line 2: =\"value\"");
+        TEST_ERROR(testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))), FormatError, "key is zero-length at line 2: =\"value\"");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one section");
@@ -90,16 +91,14 @@ testRun(void)
             "key2=\"value2\"\n"
             "key=3==\"value3\"\n"
             "==\"=\"");
-        result = strNew();
 
-        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
         TEST_RESULT_STR_Z(
-            result,
+            testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))),
             "section1: key1 :\"value1\"\n"
             "section1:key2:\"value2\"\n"
             "section1:key=3=:\"value3\"\n"
             "section1:=:\"=\"\n",
-            "    check ini");
+            "check ini");
 
         // Two sections
         // -------------------------------------------------------------------------------------------------------------------------
@@ -111,15 +110,13 @@ testRun(void)
             "[section2]\n"
             "\n"
             "#key2=\"value2\"");
-        result = strNew();
 
-        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(iniBuf), testIniLoadCallback, result), "load ini");
         TEST_RESULT_STR_Z(
-            result,
+            testIniNextValue(iniNewIo(ioBufferReadNew(iniBuf))),
             "section1:[key1:\"value1\"\n"
             "section1:key2:\"value2\"\n"
             "section2:#key2:\"value2\"\n",
-            "    check ini");
+            "check ini");
     }
 
     // *****************************************************************************************************************************

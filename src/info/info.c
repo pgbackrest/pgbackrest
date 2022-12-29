@@ -25,7 +25,6 @@ Object types
 struct Info
 {
     InfoPub pub;                                                    // Publicly accessible variables
-    MemContext *memContext;                                         // Mem context
 };
 
 struct InfoSave
@@ -105,7 +104,6 @@ infoNewInternal(void)
 
     *this = (Info)
     {
-        .memContext = memContextCurrent(),
     };
 
     FUNCTION_TEST_RETURN(INFO, this);
@@ -134,115 +132,14 @@ infoNew(const String *cipherPass)
     FUNCTION_LOG_RETURN(INFO, this);
 }
 
-/***********************************************************************************************************************************
-Load and validate the info file (or copy)
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 #define INFO_SECTION_BACKREST                                       "backrest"
 #define INFO_KEY_CHECKSUM                                           "backrest-checksum"
 #define INFO_SECTION_CIPHER                                         "cipher"
 #define INFO_KEY_CIPHER_PASS                                        "cipher-pass"
 
-typedef struct InfoLoadData
-{
-    MemContext *memContext;                                         // Mem context to use for storing data in this structure
-    InfoLoadNewCallback *callbackFunction;                          // Callback function for child object
-    void *callbackData;                                             // Callback data for child object
-    Info *info;                                                     // Info object
-    String *sectionLast;                                            // The last section seen during load
-    IoFilter *checksumActual;                                       // Checksum calculated from the file
-    const String *checksumExpected;                                 // Checksum found in ini file
-} InfoLoadData;
-
-static void
-infoLoadCallback(void *const data, const String *const section, const String *const key, const String *const value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, data);
-        FUNCTION_TEST_PARAM(STRING, section);
-        FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(data != NULL);
-    ASSERT(section != NULL);
-    ASSERT(key != NULL);
-    ASSERT(value != NULL);
-
-    InfoLoadData *const loadData = (InfoLoadData *)data;
-
-    // Calculate checksum
-    if (!(strEqZ(section, INFO_SECTION_BACKREST) && strEqZ(key, INFO_KEY_CHECKSUM)))
-    {
-        if (loadData->sectionLast == NULL || !strEq(section, loadData->sectionLast))
-        {
-            if (loadData->sectionLast != NULL)
-                INFO_CHECKSUM_SECTION_NEXT(loadData->checksumActual);
-
-            INFO_CHECKSUM_SECTION(loadData->checksumActual, section);
-
-            MEM_CONTEXT_BEGIN(loadData->memContext)
-            {
-                loadData->sectionLast = strDup(section);
-            }
-            MEM_CONTEXT_END();
-        }
-        else
-            INFO_CHECKSUM_KEY_VALUE_NEXT(loadData->checksumActual);
-
-        INFO_CHECKSUM_KEY_VALUE(loadData->checksumActual, key, value);
-    }
-
-    // Process backrest section
-    if (strEqZ(section, INFO_SECTION_BACKREST))
-    {
-        // Validate format
-        if (strEqZ(key, INFO_KEY_FORMAT))
-        {
-            if (varUInt64(jsonToVar(value)) != REPOSITORY_FORMAT)
-                THROW_FMT(FormatError, "expected format %d but found %" PRIu64, REPOSITORY_FORMAT, varUInt64(jsonToVar(value)));
-        }
-        // Store pgBackRest version
-        else if (strEqZ(key, INFO_KEY_VERSION))
-        {
-            MEM_CONTEXT_BEGIN(loadData->info->memContext)
-            {
-                loadData->info->pub.backrestVersion = varStr(jsonToVar(value));
-            }
-            MEM_CONTEXT_END();
-        }
-        // Store checksum to be validated later
-        else if (strEqZ(key, INFO_KEY_CHECKSUM))
-        {
-            MEM_CONTEXT_BEGIN(loadData->memContext)
-            {
-                loadData->checksumExpected = varStr(jsonToVar(value));
-            }
-            MEM_CONTEXT_END();
-        }
-    }
-    // Process cipher section
-    else if (strEqZ(section, INFO_SECTION_CIPHER))
-    {
-        // No validation needed for cipher-pass, just store it
-        if (strEqZ(key, INFO_KEY_CIPHER_PASS))
-        {
-            MEM_CONTEXT_BEGIN(loadData->info->memContext)
-            {
-                loadData->info->pub.cipherPass = varStr(jsonToVar(value));
-            }
-            MEM_CONTEXT_END();
-        }
-    }
-    // Else pass to callback for processing
-    else
-        loadData->callbackFunction(loadData->callbackData, section, key, value);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 Info *
-infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData)
+infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
@@ -262,21 +159,93 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Load and parse the info file
-            InfoLoadData data =
-            {
-                .memContext = MEM_CONTEXT_TEMP(),
-                .callbackFunction = callbackFunction,
-                .callbackData = callbackData,
-                .info = this,
-                .checksumActual = cryptoHashNew(hashTypeSha1),
-            };
+            String *const sectionLast = strNew();                               // The last section seen during load
+            IoFilter *const checksumActualFilter = cryptoHashNew(hashTypeSha1); // Checksum calculated from the file
+            const String *checksumExpected = NULL;                              // Checksum found in ini file
 
-            INFO_CHECKSUM_BEGIN(data.checksumActual);
+            INFO_CHECKSUM_BEGIN(checksumActualFilter);
 
             TRY_BEGIN()
             {
-                iniLoad(read, infoLoadCallback, &data);
+                Ini *const ini = iniNewIo(read);
+
+                MEM_CONTEXT_TEMP_RESET_BEGIN()
+                {
+                    const IniValue *value = iniValueNext(ini);
+
+                    while (value != NULL)
+                    {
+                        // Calculate checksum
+                        if (!(strEqZ(value->section, INFO_SECTION_BACKREST) && strEqZ(value->key, INFO_KEY_CHECKSUM)))
+                        {
+                            if (strEmpty(sectionLast) || !strEq(value->section, sectionLast))
+                            {
+                                if (!strEmpty(sectionLast))
+                                    INFO_CHECKSUM_SECTION_NEXT(checksumActualFilter);
+
+                                INFO_CHECKSUM_SECTION(checksumActualFilter, value->section);
+                                strCat(strTrunc(sectionLast), value->section);
+                            }
+                            else
+                                INFO_CHECKSUM_KEY_VALUE_NEXT(checksumActualFilter);
+
+                            INFO_CHECKSUM_KEY_VALUE(checksumActualFilter, value->key, value->value);
+                        }
+
+                        // Process backrest section
+                        if (strEqZ(value->section, INFO_SECTION_BACKREST))
+                        {
+                            // Validate format
+                            if (strEqZ(value->key, INFO_KEY_FORMAT))
+                            {
+                                if (varUInt64(jsonToVar(value->value)) != REPOSITORY_FORMAT)
+                                {
+                                    THROW_FMT(
+                                        FormatError, "expected format %d but found %" PRIu64, REPOSITORY_FORMAT,
+                                        varUInt64(jsonToVar(value->value)));
+                                }
+                            }
+                            // Store pgBackRest version
+                            else if (strEqZ(value->key, INFO_KEY_VERSION))
+                            {
+                                MEM_CONTEXT_OBJ_BEGIN(this)
+                                {
+                                    this->pub.backrestVersion = varStr(jsonToVar(value->value));
+                                }
+                                MEM_CONTEXT_END();
+                            }
+                            // Store checksum to be validated later
+                            else if (strEqZ(value->key, INFO_KEY_CHECKSUM))
+                            {
+                                MEM_CONTEXT_OBJ_BEGIN(this)
+                                {
+                                    checksumExpected = varStr(jsonToVar(value->value));
+                                }
+                                MEM_CONTEXT_END();
+                            }
+                        }
+                        // Process cipher section
+                        else if (strEqZ(value->section, INFO_SECTION_CIPHER))
+                        {
+                            // No validation needed for cipher-pass, just store it
+                            if (strEqZ(value->key, INFO_KEY_CIPHER_PASS))
+                            {
+                                MEM_CONTEXT_OBJ_BEGIN(this)
+                                {
+                                    this->pub.cipherPass = varStr(jsonToVar(value->value));
+                                }
+                                MEM_CONTEXT_END();
+                            }
+                        }
+                        // Else pass to callback for processing
+                        else
+                            callbackFunction(callbackData, value->section, value->key, value->value);
+
+                        value = iniValueNext(ini);
+                        MEM_CONTEXT_TEMP_RESET(1000);
+                    }
+                }
+                MEM_CONTEXT_TEMP_END();
             }
             CATCH(CryptoError)
             {
@@ -284,19 +253,19 @@ infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackD
             }
             TRY_END();
 
-            INFO_CHECKSUM_END(data.checksumActual);
+            INFO_CHECKSUM_END(checksumActualFilter);
 
             // Verify the checksum
             const String *const checksumActual = strNewEncode(
-                encodingHex, pckReadBinP(pckReadNew(ioFilterResult(data.checksumActual))));
+                encodingHex, pckReadBinP(pckReadNew(ioFilterResult(checksumActualFilter))));
 
-            if (data.checksumExpected == NULL)
+            if (checksumExpected == NULL)
                 THROW_FMT(ChecksumError, "invalid checksum, actual '%s' but no checksum found", strZ(checksumActual));
-            else if (!strEq(data.checksumExpected, checksumActual))
+            else if (!strEq(checksumExpected, checksumActual))
             {
                 THROW_FMT(
                     ChecksumError, "invalid checksum, actual '%s' but expected '%s'", strZ(checksumActual),
-                    strZ(data.checksumExpected));
+                    strZ(checksumExpected));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -452,7 +421,7 @@ infoCipherPassSet(Info *this, const String *cipherPass)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_BEGIN(this->memContext)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->pub.cipherPass = strDup(cipherPass);
     }

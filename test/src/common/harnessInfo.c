@@ -19,46 +19,9 @@ Harness for Loading Test Configurations
 /***********************************************************************************************************************************
 Add header and checksum to an info file
 
-This prevents churn in headers and checksums in the unit tests.  We purposefully do not use the checksum macros from the info module
+This prevents churn in headers and checksums in the unit tests. We purposefully do not use the checksum macros from the info module
 here as a cross-check of that code.
 ***********************************************************************************************************************************/
-typedef struct HarnessInfoChecksumData
-{
-    MemContext *memContext;                                         // Mem context to use for storing data in this structure
-    String *sectionLast;                                            // The last section seen during load
-    IoFilter *checksum;                                             // Checksum calculated from the file
-} HarnessInfoChecksumData;
-
-static void
-harnessInfoChecksumCallback(
-    void *const callbackData, const String *const section, const String *const key, const String *const value)
-{
-    HarnessInfoChecksumData *data = (HarnessInfoChecksumData *)callbackData;
-
-    // Calculate checksum
-    if (data->sectionLast == NULL || !strEq(section, data->sectionLast))
-    {
-        if (data->sectionLast != NULL)
-            ioFilterProcessIn(data->checksum, BUFSTRDEF("},"));
-
-        ioFilterProcessIn(data->checksum, BUFSTRDEF("\""));
-        ioFilterProcessIn(data->checksum, BUFSTR(section));
-        ioFilterProcessIn(data->checksum, BUFSTRDEF("\":{"));
-
-        MEM_CONTEXT_BEGIN(data->memContext)
-        {
-            data->sectionLast = strDup(section);
-        }
-        MEM_CONTEXT_END();
-    }
-    else
-        ioFilterProcessIn(data->checksum, BUFSTRDEF(","));
-
-    ioFilterProcessIn(data->checksum, BUFSTR(jsonFromVar(VARSTR(key))));
-    ioFilterProcessIn(data->checksum, BUFSTRDEF(":"));
-    ioFilterProcessIn(data->checksum, BUFSTR(value));
-}
-
 Buffer *
 harnessInfoChecksum(const String *info)
 {
@@ -72,12 +35,8 @@ harnessInfoChecksum(const String *info)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Initialize callback data
-        HarnessInfoChecksumData data =
-        {
-            .memContext = MEM_CONTEXT_TEMP(),
-            .checksum = cryptoHashNew(hashTypeSha1),
-        };
+        const String *sectionLast = NULL;                           // The last section seen during load
+        IoFilter *const checksum = cryptoHashNew(hashTypeSha1);     // Checksum calculated from the file
 
         // Create buffer with space for data, header, and checksum
         result = bufNew(strSize(info) + 256);
@@ -90,14 +49,39 @@ harnessInfoChecksum(const String *info)
         bufCat(result, BUFSTR(info));
 
         // Generate checksum by loading ini file
-        ioFilterProcessIn(data.checksum, BUFSTRDEF("{"));
-        iniLoad(ioBufferReadNew(result), harnessInfoChecksumCallback, &data);
-        ioFilterProcessIn(data.checksum, BUFSTRDEF("}}"));
+        ioFilterProcessIn(checksum, BUFSTRDEF("{"));
+
+        Ini *const ini = iniNewIo(ioBufferReadNew(result));
+        const IniValue *value = iniValueNext(ini);
+
+        while (value != NULL)
+        {
+            if (sectionLast == NULL || !strEq(value->section, sectionLast))
+            {
+                if (sectionLast != NULL)
+                    ioFilterProcessIn(checksum, BUFSTRDEF("},"));
+
+                ioFilterProcessIn(checksum, BUFSTRDEF("\""));
+                ioFilterProcessIn(checksum, BUFSTR(value->section));
+                ioFilterProcessIn(checksum, BUFSTRDEF("\":{"));
+
+                sectionLast = strDup(value->section);
+            }
+            else
+                ioFilterProcessIn(checksum, BUFSTRDEF(","));
+
+            ioFilterProcessIn(checksum, BUFSTR(jsonFromVar(VARSTR(value->key))));
+            ioFilterProcessIn(checksum, BUFSTRDEF(":"));
+            ioFilterProcessIn(checksum, BUFSTR(value->value));
+
+            value = iniValueNext(ini);
+        }
+
+        ioFilterProcessIn(checksum, BUFSTRDEF("}}"));
 
         // Append checksum to buffer
         bufCat(result, BUFSTRDEF("\n[backrest]\nbackrest-checksum="));
-        bufCat(
-            result, BUFSTR(jsonFromVar(VARSTR(strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(data.checksum))))))));
+        bufCat(result, BUFSTR(jsonFromVar(VARSTR(strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(checksum))))))));
         bufCat(result, BUFSTRDEF("\n"));
 
         bufMove(result, memContextPrior());
