@@ -101,9 +101,10 @@ iniValueNext(Ini *const this)
 
     MEM_CONTEXT_TEMP_RESET_BEGIN()
     {
-
+        // Read until a value is found or eof
         while (result == NULL && !ioReadEof(this->read))
         {
+            // Read the line and trim if needed
             String *const line = ioReadLineParam(this->read, true);
 
             if (!this->strict)
@@ -122,6 +123,7 @@ iniValueNext(Ini *const this)
                     if (!this->strict && linePtr[strSize(line) - 1] != ']')
                         THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", this->lineIdx, linePtr);
 
+                    // Store the section
                     strCatZN(strTrunc(this->value.section), linePtr + 1, strSize(line) - 2);
 
                     if (strEmpty(this->value.section))
@@ -198,6 +200,7 @@ iniValueNext(Ini *const this)
             MEM_CONTEXT_TEMP_RESET(1000);
         }
 
+        // If no more values found then close
         if (result == NULL)
             ioReadClose(this->read);
     }

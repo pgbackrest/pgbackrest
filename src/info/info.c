@@ -92,23 +92,6 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
     }                                                                                                                              \
     while (0)
 
-/***********************************************************************************************************************************
-Internal constructor
-***********************************************************************************************************************************/
-static Info *
-infoNewInternal(void)
-{
-    FUNCTION_TEST_VOID();
-
-    Info *this = OBJ_NEW_ALLOC();
-
-    *this = (Info)
-    {
-    };
-
-    FUNCTION_TEST_RETURN(INFO, this);
-}
-
 /**********************************************************************************************************************************/
 Info *
 infoNew(const String *cipherPass)
@@ -121,7 +104,8 @@ infoNew(const String *cipherPass)
 
     OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = infoNewInternal();
+        this = OBJ_NEW_ALLOC();
+        *this = (Info){};
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
         infoCipherPassSet(this, cipherPass);
@@ -155,7 +139,8 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
 
     OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        this = infoNewInternal();
+        this = OBJ_NEW_ALLOC();
+        *this = (Info){};
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
