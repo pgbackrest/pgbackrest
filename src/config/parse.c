@@ -1234,12 +1234,14 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 
             // Create the result config file
             if (*config == NULL)
+            {
                 *config = strNew();
+            }
             // Else add an LF in case the previous file did not end with one
             else
+                strCat(*config, LF_STR);
 
             // Add the config part to the result config file
-            strCat(*config, LF_STR);
             strCat(*config, configPartStr);
         }
     }
@@ -1340,8 +1342,8 @@ cfgFileLoad(                                                        // NOTE: Pas
     if (loadConfigInclude)
     {
         if (result != NULL)
-        {
-            // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
+    {
+        // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
             Ini *ini = iniNew();
             iniParse(ini, result);
         }
