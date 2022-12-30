@@ -1441,7 +1441,7 @@ typedef struct BackupJobData
 } BackupJobData;
 
 // Identify files that must be copied from the primary
-bool
+static bool
 backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
 {
     FUNCTION_TEST_BEGIN();

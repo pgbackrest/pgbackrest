@@ -14,5 +14,4 @@ Constructors
 ***********************************************************************************************************************************/
 IoSession *sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port, TimeMSec timeout);
 
-
 #endif

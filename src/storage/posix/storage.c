@@ -113,7 +113,7 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 storagePosixLinkCreate(
     THIS_VOID, const String *const target, const String *const linkPath, const StorageInterfaceLinkCreateParam param)
 {
@@ -388,7 +388,7 @@ storagePosixNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWritePara
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 storagePosixPathCreate(
     THIS_VOID, const String *const path, const bool errorOnExists, const bool noParentCreate, const mode_t mode,
     const StorageInterfacePathCreateParam param)
@@ -498,7 +498,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param)
 {
     THIS(StoragePosix);

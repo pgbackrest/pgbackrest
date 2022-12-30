@@ -21,7 +21,7 @@ Repository Get Command
 /***********************************************************************************************************************************
 Write source file to destination IO
 ***********************************************************************************************************************************/
-int
+static int
 storageGetProcess(IoWrite *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
