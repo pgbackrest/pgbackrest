@@ -284,7 +284,9 @@ MemContext *memContextPrior(void);
 MemContext *memContextTop(void);
 
 // Get total size of mem context and all children
-size_t memContextSize(const MemContext *this);
+#ifdef DEBUG
+    size_t memContextSize(const MemContext *this);
+#endif // DEBUG
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -950,6 +950,8 @@ memContextPrior(void)
 }
 
 /**********************************************************************************************************************************/
+#ifdef DEBUG
+
 size_t
 memContextSize(const MemContext *const this)
 {
@@ -1032,6 +1034,8 @@ memContextSize(const MemContext *const this)
 
     FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (unsigned char *)this) + total);
 }
+
+#endif // DEBUG
 
 /**********************************************************************************************************************************/
 void
