@@ -139,7 +139,6 @@ Pack *dbTablespaceList(Db *this);
 
 // Switch the WAL segment and return the segment that should have been archived
 String *dbWalSwitch(Db *this);
-void dbClose(Db *this);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Db *
