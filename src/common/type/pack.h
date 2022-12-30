@@ -123,7 +123,6 @@ typedef enum
     pckTypeObj = STRID5("obj", 0x284f0),
     pckTypeMode = STRID5("mode", 0x291ed0),
     pckTypePack = STRID5("pack", 0x58c300),
-    pckTypePtr = STRID5("ptr", 0x4a900),
     pckTypeStr = STRID5("str", 0x4a930),
     pckTypeStrId = STRID5("strid", 0x44ca930),
     pckTypeTime = STRID5("time", 0x2b5340),
@@ -324,18 +323,6 @@ PackRead *pckReadPackReadConst(PackRead *this, PckReadPackParam param);
     pckReadPack(this, (PckReadPackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 Pack *pckReadPack(PackRead *this, PckReadPackParam param);
-
-// Read pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
-typedef struct PckReadPtrParam
-{
-    VAR_PARAM_HEADER;
-    unsigned int id;
-} PckReadPtrParam;
-
-#define pckReadPtrP(this, ...)                                                                                                     \
-    pckReadPtr(this, (PckReadPtrParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-void *pckReadPtr(PackRead *this, PckReadPtrParam param);
 
 // Read string
 typedef struct PckReadStrParam
@@ -563,19 +550,6 @@ typedef struct PckWritePackParam
     pckWritePack(this, value, (PckWritePackParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 PackWrite *pckWritePack(PackWrite *this, const Pack *value, PckWritePackParam param);
-
-// Write pointer. Use with extreme caution. Pointers cannot be sent to another host -- they must only be used locally.
-typedef struct PckWritePtrParam
-{
-    VAR_PARAM_HEADER;
-    bool defaultWrite;
-    unsigned int id;
-} PckWritePtrParam;
-
-#define pckWritePtrP(this, value, ...)                                                                                             \
-    pckWritePtr(this, value, (PckWritePtrParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-PackWrite *pckWritePtr(PackWrite *this, const void *value, PckWritePtrParam param);
 
 // Write string
 typedef struct PckWriteStrParam

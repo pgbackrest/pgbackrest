@@ -368,20 +368,6 @@ cfgOptionGroupIdxTotal(ConfigOptionGroup groupId)
 }
 
 /**********************************************************************************************************************************/
-bool
-cfgOptionGroupValid(ConfigOptionGroup groupId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, groupId);
-    FUNCTION_TEST_END();
-
-    ASSERT(configLocal != NULL);
-    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
-
-    FUNCTION_TEST_RETURN(BOOL, configLocal->optionGroup[groupId].valid);
-}
-
-/**********************************************************************************************************************************/
 unsigned int
 cfgOptionIdxDefault(ConfigOption optionId)
 {
@@ -613,16 +599,6 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
 
 /**********************************************************************************************************************************/
 bool
-cfgOptionNegate(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(BOOL, cfgOptionIdxNegate(optionId, cfgOptionIdxDefault(optionId)));
-}
-
-bool
 cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -637,17 +613,6 @@ cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx)
     ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
     FUNCTION_TEST_RETURN(BOOL, configLocal->option[optionId].index[optionIdx].negate);
-}
-
-/**********************************************************************************************************************************/
-bool
-cfgOptionReset(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(BOOL, cfgOptionIdxReset(optionId, cfgOptionIdxDefault(optionId)));
 }
 
 bool

@@ -261,8 +261,6 @@ manifestDb(const Manifest *const this, const unsigned int dbIdx)
     return lstGet(THIS_PUB(Manifest)->dbList, dbIdx);
 }
 
-const ManifestDb *manifestDbFind(const Manifest *this, const String *name);
-
 // If the database requested is not found in the list, return the default passed rather than throw an error
 FN_INLINE_ALWAYS const ManifestDb *
 manifestDbFindDefault(const Manifest *const this, const String *const name, const ManifestDb *const dbDefault)

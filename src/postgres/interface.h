@@ -150,9 +150,8 @@ String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
 uint64_t pgLsnFromStr(const String *lsn);
 String *pgLsnToStr(uint64_t lsn);
 
-// Convert a timeline and lsn to a wal segment and vice versa
+// Convert a timeline and lsn to a wal segment
 String *pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize);
-uint64_t pgLsnFromWalSegment(const String *walSegment, unsigned int walSegmentSize);
 
 // Get timeline from WAL segment name
 uint32_t pgTimelineFromWalSegment(const String *walSegment);

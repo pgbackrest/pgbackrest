@@ -86,7 +86,6 @@ mode_t cvtZToMode(const char *value);
 
 // Convert size/ssize to zero-terminated string
 size_t cvtSizeToZ(size_t value, char *buffer, size_t bufferSize);
-size_t cvtSSizeToZ(ssize_t value, char *buffer, size_t bufferSize);
 
 // Convert time_t to zero-terminated string
 size_t cvtTimeToZ(time_t value, char *buffer, size_t bufferSize);

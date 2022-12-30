@@ -116,7 +116,9 @@ typedef enum
     pckTypeMapI32 = 3,                                              // Maps to pckTypeI32
     pckTypeMapI64 = 4,                                              // Maps to pckTypeI64
     pckTypeMapObj = 5,                                              // Maps to pckTypeObj
-    pckTypeMapPtr = 6,                                              // Maps to pckTypePtr
+
+    // The empty position 6 can be used for a new type that will be encoded entirely in the tag
+
     pckTypeMapStr = 7,                                              // Maps to pckTypeStr
     pckTypeMapU32 = 8,                                              // Maps to pckTypeU32
     pckTypeMapU64 = 9,                                              // Maps to pckTypeU64
@@ -162,10 +164,8 @@ static const PackTypeMapData packTypeMapData[] =
     {
         .type = pckTypeObj,
     },
-    {
-        .type = pckTypePtr,
-        .valueMultiBit = true,
-    },
+    // Placeholders for unused type that can be encoded entirely in the tag
+    {0},
     {
         .type = pckTypeStr,
         .valueSingleBit = true,
@@ -1080,23 +1080,6 @@ pckReadPack(PackRead *const this, PckReadPackParam param)
 }
 
 /**********************************************************************************************************************************/
-void *
-pckReadPtr(PackRead *this, PckReadPtrParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, this);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    if (pckReadNullInternal(this, &param.id))
-        FUNCTION_TEST_RETURN_P(VOID, NULL);
-
-    FUNCTION_TEST_RETURN_P(VOID, (void *)(uintptr_t)pckReadTag(this, &param.id, pckTypeMapPtr, false));
-}
-
-/**********************************************************************************************************************************/
 String *
 pckReadStr(PackRead *this, PckReadStrParam param)
 {
@@ -1774,25 +1757,6 @@ pckWritePack(PackWrite *const this, const Pack *const value, const PckWritePackP
         pckWriteU64Internal(this, bufUsed((Buffer *)value));
         pckWriteBuffer(this, (Buffer *)value);
     }
-
-    FUNCTION_TEST_RETURN(PACK_WRITE, this);
-}
-
-/**********************************************************************************************************************************/
-PackWrite *
-pckWritePtr(PackWrite *this, const void *value, PckWritePtrParam param)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_WRITE, this);
-        FUNCTION_TEST_PARAM_P(VOID, value);
-        FUNCTION_TEST_PARAM(UINT, param.id);
-        FUNCTION_TEST_PARAM(BOOL, param.defaultWrite);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    if (!pckWriteDefaultNull(this, param.defaultWrite, value == NULL))
-        pckWriteTag(this, pckTypeMapPtr, param.id, (uintptr_t)value);
 
     FUNCTION_TEST_RETURN(PACK_WRITE, this);
 }

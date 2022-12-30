@@ -77,14 +77,6 @@ cryptoInit(void)
 }
 
 /**********************************************************************************************************************************/
-bool
-cryptoIsInit(void)
-{
-    FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(BOOL, cryptoInitDone);
-}
-
-/**********************************************************************************************************************************/
 void
 cryptoRandomBytes(unsigned char *buffer, size_t size)
 {

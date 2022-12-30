@@ -177,10 +177,6 @@ String *strPath(const String *this);
 // Combine with a base path to get an absolute path
 String *strPathAbsolute(const String *this, const String *base);
 
-// Quote a string
-String *strQuote(const String *this, const String *quote);
-String *strQuoteZ(const String *this, const char *quote);
-
 // Replace a substring with another string
 String *strReplace(String *this, const String *replace, const String *with);
 

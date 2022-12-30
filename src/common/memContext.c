@@ -509,19 +509,6 @@ memContextFromAllocExtra(void *const allocExtra)
     FUNCTION_TEST_RETURN(MEM_CONTEXT, (MemContext *)allocExtra - 1);
 }
 
-const MemContext *
-memContextConstFromAllocExtra(const void *const allocExtra)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, allocExtra);
-    FUNCTION_TEST_END();
-
-    ASSERT(allocExtra != NULL);
-    ASSERT(((MemContext *)allocExtra - 1)->allocExtra != 0);
-
-    FUNCTION_TEST_RETURN(MEM_CONTEXT, (MemContext *)allocExtra - 1);
-}
-
 /**********************************************************************************************************************************/
 void
 memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *callbackArgument)

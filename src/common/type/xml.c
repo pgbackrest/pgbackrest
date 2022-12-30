@@ -263,41 +263,6 @@ xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool 
     FUNCTION_TEST_RETURN(XML_NODE, child);
 }
 
-/**********************************************************************************************************************************/
-unsigned int
-xmlNodeChildTotal(const XmlNode *this, const String *name)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    unsigned int result = 0;
-
-    for (xmlNodePtr currentNode = this->node->children; currentNode != NULL; currentNode = currentNode->next)
-    {
-        if (currentNode->type == XML_ELEMENT_NODE && strEqZ(name, (char *)currentNode->name))
-            result++;
-    }
-
-    FUNCTION_TEST_RETURN(UINT, result);
-}
-
-/**********************************************************************************************************************************/
-void
-xmlNodeFree(XmlNode *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE, this);
-    FUNCTION_TEST_END();
-
-    if (this != NULL)
-        memFree(this);
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
 /***********************************************************************************************************************************
 Free document
 ***********************************************************************************************************************************/

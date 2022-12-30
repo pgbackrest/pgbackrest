@@ -54,10 +54,6 @@ testRun(void)
 
         TEST_RESULT_STR(xmlNodeContent(NULL), NULL, "    get null content for null node");
 
-        TEST_RESULT_VOID(xmlNodeFree(nodeMaxKeys), "free node");
-        TEST_RESULT_VOID(xmlNodeFree(NULL), "free null node");
-
-        TEST_RESULT_UINT(xmlNodeChildTotal(rootNode, STRDEF("Contents")), 2, "Contents child total");
         TEST_RESULT_STR_Z(
             xmlNodeContent(xmlNodeChild(xmlNodeChildN(rootNode, STRDEF("Contents"), 0, true), STRDEF("Key"), true)),
             "test1.txt", "Contents index 0 Key");

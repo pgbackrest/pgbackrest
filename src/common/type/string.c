@@ -874,35 +874,6 @@ strZNull(const String *this)
 
 /**********************************************************************************************************************************/
 String *
-strQuote(const String *this, const String *quote)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-        FUNCTION_TEST_PARAM(STRING, quote);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(quote != NULL);
-
-    FUNCTION_TEST_RETURN(STRING, strQuoteZ(this, strZ(quote)));
-}
-
-String *
-strQuoteZ(const String *this, const char *quote)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, this);
-        FUNCTION_TEST_PARAM(STRINGZ, quote);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(quote != NULL);
-
-    FUNCTION_TEST_RETURN(STRING, strNewFmt("%s%s%s", quote, strZ(this), quote));
-}
-
-/**********************************************************************************************************************************/
-String *
 strReplaceChr(String *this, char find, char replace)
 {
     FUNCTION_TEST_BEGIN();

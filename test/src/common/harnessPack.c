@@ -81,10 +81,6 @@ String *hrnPackReadToStr(PackRead *read)
                 break;
             }
 
-            case pckTypePtr:
-                strCatFmt(result, "%p", pckReadPtrP(read, .id = id));
-                break;
-
             case pckTypeStr:
                 strCatFmt(result, "%s", strZ(pckReadStrP(read, .id = id)));
                 break;

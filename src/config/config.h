@@ -94,9 +94,6 @@ unsigned int cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int grou
 // configuration. e.g., if pg1-path and pg8-path are configured then this function will return 2.
 unsigned int cfgOptionGroupIdxTotal(ConfigOptionGroup groupId);
 
-// Are any options in the group valid for the command?
-bool cfgOptionGroupValid(ConfigOptionGroup groupId);
-
 /***********************************************************************************************************************************
 Option Functions
 
@@ -253,11 +250,9 @@ const String *cfgExe(void);
 void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
 
 // Was the option negated?
-bool cfgOptionNegate(ConfigOption optionId);
 bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx);
 
 // Was the option reset?
-bool cfgOptionReset(ConfigOption optionId);
 bool cfgOptionIdxReset(ConfigOption optionId, unsigned int optionIdx);
 
 // Set config option

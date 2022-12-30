@@ -384,25 +384,6 @@ cvtSizeToZ(size_t value, char *buffer, size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, result);
 }
 
-size_t
-cvtSSizeToZ(ssize_t value, char *buffer, size_t bufferSize)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(SSIZE, value);
-        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
-        FUNCTION_TEST_PARAM(SIZE, bufferSize);
-    FUNCTION_TEST_END();
-
-    ASSERT(buffer != NULL);
-
-    size_t result = (size_t)snprintf(buffer, bufferSize, "%zd", value);
-
-    if (result >= bufferSize)
-        THROW(AssertError, "buffer overflow");
-
-    FUNCTION_TEST_RETURN(SIZE, result);
-}
-
 /**********************************************************************************************************************************/
 size_t
 cvtTimeToZ(time_t value, char *buffer, size_t bufferSize)

@@ -2787,28 +2787,6 @@ manifestValidate(Manifest *this, bool strict)
 }
 
 /***********************************************************************************************************************************
-Db functions and getters/setters
-***********************************************************************************************************************************/
-const ManifestDb *
-manifestDbFind(const Manifest *this, const String *name)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    const ManifestDb *result = lstFind(this->pub.dbList, &name);
-
-    if (result == NULL)
-        THROW_FMT(AssertError, "unable to find '%s' in manifest db list", strZ(name));
-
-    FUNCTION_TEST_RETURN_CONST(MANIFEST_DB, result);
-}
-
-/***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
 static ManifestFilePack **

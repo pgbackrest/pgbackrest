@@ -80,17 +80,9 @@ xmlNodeChild(const XmlNode *const this, const String *const name, const bool err
 // List of child nodes
 XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
 
-// Node child total
-unsigned int xmlNodeChildTotal(const XmlNode *this, const String *name);
-
 // Node content
 String *xmlNodeContent(const XmlNode *this);
 void xmlNodeContentSet(XmlNode *this, const String *content);
-
-/***********************************************************************************************************************************
-Node Destructor
-***********************************************************************************************************************************/
-void xmlNodeFree(XmlNode *this);
 
 /***********************************************************************************************************************************
 Node List Getters

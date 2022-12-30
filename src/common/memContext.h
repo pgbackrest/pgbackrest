@@ -272,7 +272,6 @@ void *memContextAllocExtra(MemContext *this);
 
 // Get mem context using pointer to the memory allocated with the mem context
 MemContext *memContextFromAllocExtra(void *allocExtra);
-const MemContext *memContextConstFromAllocExtra(const void *allocExtra);
 
 // Current memory context
 MemContext *memContextCurrent(void);

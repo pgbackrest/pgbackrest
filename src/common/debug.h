@@ -172,11 +172,6 @@ size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize);
 #define FUNCTION_LOG_SIZE_FORMAT(value, buffer, bufferSize)                                                                        \
     cvtSizeToZ(value, buffer, bufferSize)
 
-#define FUNCTION_LOG_SSIZE_TYPE                                                                                                    \
-    ssize_t
-#define FUNCTION_LOG_SSIZE_FORMAT(value, buffer, bufferSize)                                                                       \
-    cvtSSizeToZ(value, buffer, bufferSize)
-
 #define FUNCTION_LOG_TIME_TYPE                                                                                                     \
     time_t
 #define FUNCTION_LOG_TIME_FORMAT(value, buffer, bufferSize)                                                                        \
