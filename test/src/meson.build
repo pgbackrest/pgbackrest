@@ -27,6 +27,7 @@ subdir('command/help')
 ####################################################################################################################################
 src_test = [
     '../../src/build/common/render.c',
+    '../../src/build/common/string.c',
     '../../src/build/common/yaml.c',
     '../../src/command/command.c',
     '../../src/command/exit.c',

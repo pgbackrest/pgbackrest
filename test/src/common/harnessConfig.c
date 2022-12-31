@@ -7,6 +7,7 @@ Harness for Loading Test Configurations
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "build/common/string.h"
 #include "common/io/io.h"
 #include "config/config.intern.h"
 #include "config/load.h"

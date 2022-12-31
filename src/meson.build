@@ -31,7 +31,6 @@ src_common = files(
 	'common/type/list.c',
 	'common/type/object.c',
 	'common/type/pack.c',
-	'common/type/string.c',
 	'common/type/stringZ.c',
 	'common/type/stringId.c',
 	'common/type/stringList.c',
@@ -55,6 +54,7 @@ src_common = files(
 ####################################################################################################################################
 src_build_code = [
 	'build/common/render.c',
+	'build/common/string.c',
 	'build/common/yaml.c',
 	'build/config/parse.c',
 	'build/config/render.c',
@@ -179,6 +179,7 @@ src_pgbackrest = [
 	'common/lock.c',
 	'common/stat.c',
 	'common/type/json.c',
+	'common/type/string.c',
 	'common/type/xml.c',
 	'config/config.c',
 	'config/exec.c',

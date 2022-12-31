@@ -166,9 +166,6 @@ String *strFirstUpper(String *this);
 String *strFirstLower(String *this);
 
 // Upper-case entire string
-String *strUpper(String *this);
-
-// Upper-case entire string
 String *strLower(String *this);
 
 // Return the path part of a string (i.e. everything before the last / or "" if there is no /)
@@ -176,9 +173,6 @@ String *strPath(const String *this);
 
 // Combine with a base path to get an absolute path
 String *strPathAbsolute(const String *this, const String *base);
-
-// Replace a substring with another string
-String *strReplace(String *this, const String *replace, const String *with);
 
 // Replace a character with another character
 String *strReplaceChr(String *this, char find, char replace);

@@ -148,7 +148,8 @@ unit:
         feature: string
 
         coverage:
-          - common/type/string
+          - build/common/string
+          - common/type/string: included
           - common/type/stringZ
           - common/type/stringId
           - common/type/stringList
