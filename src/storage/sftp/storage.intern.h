@@ -18,14 +18,8 @@ Storage *storageSftpNewInternal(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void storageSftpPathCreate(
-    THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode, StorageInterfacePathCreateParam param);
-void storageSftpPathSync(THIS_VOID, const String *path, const StorageInterfacePathSyncParam param);
-
 void storageSftpEvalLibSsh2Error(
         int ssh2Errno, uint64_t sftpErrno, const ErrorType *errorType, const String *msg, const String *hint);
-
-bool storageSftpLibSsh2FxNoSuchFile(THIS_VOID, const int rc);
 
 /***********************************************************************************************************************************
 Macros for function logging

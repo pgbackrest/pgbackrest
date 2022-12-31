@@ -40,6 +40,27 @@ struct StorageSftp
     Wait *wait;
 };
 
+/**********************************************************************************************************************************/
+static bool
+storageSftpLibSsh2FxNoSuchFile(THIS_VOID, const int rc)
+{
+    THIS(StorageSftp);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
+        FUNCTION_LOG_PARAM(INT, rc);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    bool result = false;
+
+    if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
+            result = true;
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
 
 /**********************************************************************************************************************************/
 static StorageInfo
@@ -231,29 +252,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-bool
-storageSftpLibSsh2FxNoSuchFile(THIS_VOID, const int rc)
-{
-    THIS(StorageSftp);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-        FUNCTION_LOG_PARAM(INT, rc);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    bool result = false;
-
-    if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
-        if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
-            result = true;
-
-    FUNCTION_LOG_RETURN(BOOL, result);
-}
-
-/**********************************************************************************************************************************/
-void
+static void
 storageSftpLinkCreate(
     THIS_VOID, const String *const target, const String *const linkPath, const StorageInterfaceLinkCreateParam param)
 {
@@ -570,7 +569,7 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 storageSftpPathCreate(
     THIS_VOID, const String *const path, const bool errorOnExists, const bool noParentCreate, const mode_t mode,
     const StorageInterfacePathCreateParam param)
