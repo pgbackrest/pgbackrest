@@ -30,7 +30,7 @@ typedef struct IoReadInterface
 #define ioReadNewP(driver, ...)                                                                                                    \
     ioReadNew(driver, (IoReadInterface){__VA_ARGS__})
 
-IoRead *ioReadNew(void *driver, IoReadInterface interface);
+FV_EXTERN IoRead *ioReadNew(void *driver, IoReadInterface interface);
 
 /***********************************************************************************************************************************
 Getters/Setters

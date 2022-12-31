@@ -8,7 +8,7 @@ Debug Routines
 #include "common/debug.h"
 
 /**********************************************************************************************************************************/
-size_t
+FV_EXTERN size_t
 objToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize)
 {
     size_t result = 0;
@@ -22,7 +22,7 @@ objToLog(const void *object, const char *objectName, char *buffer, size_t buffer
 }
 
 /**********************************************************************************************************************************/
-size_t
+FV_EXTERN size_t
 ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize)
 {
     size_t result = 0;
@@ -36,7 +36,7 @@ ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t buff
 }
 
 /**********************************************************************************************************************************/
-size_t
+FV_EXTERN size_t
 typeToLog(const char *typeName, char *buffer, size_t bufferSize)
 {
     return (size_t)snprintf(buffer, bufferSize, "%s", typeName);

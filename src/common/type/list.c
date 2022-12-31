@@ -25,7 +25,7 @@ struct List
 };
 
 /**********************************************************************************************************************************/
-List *
+FV_EXTERN List *
 lstNew(size_t itemSize, ListParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -53,7 +53,7 @@ lstNew(size_t itemSize, ListParam param)
 }
 
 /**********************************************************************************************************************************/
-List *
+FV_EXTERN List *
 lstClear(List *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -78,7 +78,7 @@ lstClear(List *this)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 lstComparatorStr(const void *item1, const void *item2)
 {
     FUNCTION_TEST_BEGIN();
@@ -93,7 +93,7 @@ lstComparatorStr(const void *item1, const void *item2)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 lstComparatorZ(const void *item1, const void *item2)
 {
     FUNCTION_TEST_BEGIN();
@@ -119,7 +119,7 @@ lstComparatorDesc(const void *item1, const void *item2)
 }
 
 /**********************************************************************************************************************************/
-void *
+FV_EXTERN void *
 lstGet(const List *this, unsigned int listIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -137,7 +137,7 @@ lstGet(const List *this, unsigned int listIdx)
     FUNCTION_TEST_RETURN_P(VOID, this->list + (listIdx * this->itemSize));
 }
 
-void *
+FV_EXTERN void *
 lstGetLast(const List *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -155,7 +155,7 @@ lstGetLast(const List *this)
 }
 
 /**********************************************************************************************************************************/
-void *
+FV_EXTERN void *
 lstFind(const List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -190,7 +190,7 @@ lstFind(const List *this, const void *item)
     FUNCTION_TEST_RETURN_P(VOID, NULL);
 }
 
-unsigned int
+FV_EXTERN unsigned int
 lstFindIdx(const List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -206,7 +206,7 @@ lstFindIdx(const List *this, const void *item)
     FUNCTION_TEST_RETURN(UINT, result == NULL ? LIST_NOT_FOUND : lstIdx(this, result));
 }
 
-void *
+FV_EXTERN void *
 lstFindDefault(const List *this, const void *item, void *itemDefault)
 {
     FUNCTION_TEST_BEGIN();
@@ -224,7 +224,7 @@ lstFindDefault(const List *this, const void *item, void *itemDefault)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 lstIdx(const List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -247,7 +247,7 @@ lstIdx(const List *this, const void *item)
 }
 
 /**********************************************************************************************************************************/
-void *
+FV_EXTERN void *
 lstInsert(List *this, unsigned int listIdx, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -306,7 +306,7 @@ lstInsert(List *this, unsigned int listIdx, const void *item)
 }
 
 /**********************************************************************************************************************************/
-List *
+FV_EXTERN List *
 lstRemoveIdx(List *this, unsigned int listIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -336,7 +336,7 @@ lstRemoveIdx(List *this, unsigned int listIdx)
     FUNCTION_TEST_RETURN(LIST, this);
 }
 
-bool
+FV_EXTERN bool
 lstRemove(List *this, const void *item)
 {
     FUNCTION_TEST_BEGIN();
@@ -358,7 +358,7 @@ lstRemove(List *this, const void *item)
     FUNCTION_TEST_RETURN(BOOL, false);
 }
 
-List *
+FV_EXTERN List *
 lstRemoveLast(List *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -374,7 +374,7 @@ lstRemoveLast(List *this)
 }
 
 /**********************************************************************************************************************************/
-List *
+FV_EXTERN List *
 lstSort(List *this, SortOrder sortOrder)
 {
     FUNCTION_TEST_BEGIN();
@@ -413,7 +413,7 @@ lstSort(List *this, SortOrder sortOrder)
 }
 
 /**********************************************************************************************************************************/
-List *
+FV_EXTERN List *
 lstComparatorSet(List *this, ListComparator *comparator)
 {
     FUNCTION_TEST_BEGIN();
@@ -430,7 +430,7 @@ lstComparatorSet(List *this, ListComparator *comparator)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 lstToLog(const List *this)
 {
     return strNewFmt("{size: %u}", lstSize(this));

@@ -19,6 +19,6 @@ session.
 Constructors
 ***********************************************************************************************************************************/
 // Only called by TLS client/server code
-IoSession *tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout);
+FV_EXTERN IoSession *tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout);
 
 #endif

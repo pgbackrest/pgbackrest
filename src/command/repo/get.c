@@ -162,7 +162,7 @@ storageGetProcess(IoWrite *destination)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 cmdStorageGet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

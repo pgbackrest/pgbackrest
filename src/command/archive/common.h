@@ -67,42 +67,43 @@ Functions
 ***********************************************************************************************************************************/
 // Remove errors for an archive file.  This should be done before forking the async process to prevent a race condition where an
 // old error may be reported rather than waiting for the async process to succeed or fail.
-void archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile);
+FV_EXTERN void archiveAsyncErrorClear(ArchiveMode archiveMode, const String *archiveFile);
 
 // Check for ok/error status files in the spool in/out directory. throwOnError determines whether an error will be thrown when an
 // error file is found. warnOnOk determines whether a warning will be output when found in an ok file.
-bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError, bool warnOnOk);
+FV_EXTERN bool archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError, bool warnOnOk);
 
 // Write an ok status file
-void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning);
+FV_EXTERN void archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning);
 
 // Write an error status file
-void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message);
+FV_EXTERN void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message);
 
 // Execute the async process. This function will only return in the calling process and the implementation is platform dependent.
-void archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec);
+FV_EXTERN void archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec);
 
 // Comparator function for sorting archive ids by the database history id (the number after the dash) e.g. 9.4-1, 10-2
-int archiveIdComparator(const void *item1, const void *item2);
+FV_EXTERN int archiveIdComparator(const void *item1, const void *item2);
 
 // Is the segment partial?
-bool walIsPartial(const String *walSegment);
+FV_EXTERN bool walIsPartial(const String *walSegment);
 
 // Is the file a segment or some other file (e.g. .history, .backup, etc)
-bool walIsSegment(const String *walSegment);
+FV_EXTERN bool walIsSegment(const String *walSegment);
 
 // Generates the location of the wal directory using a relative wal path and the supplied pg path
-String *walPath(const String *walFile, const String *pgPath, const String *command);
+FV_EXTERN String *walPath(const String *walFile, const String *pgPath, const String *command);
 
 // Find a WAL segment in the repository. The file name can have several things appended such as a hash, compression extension, and
 // partial extension so it is possible to have multiple files that match the segment, though more than one match is not a good
 // thing.
-String *walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
+FV_EXTERN String *walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout);
 
 // Get the next WAL segment given a WAL segment and WAL segment size
-String *walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);
+FV_EXTERN String *walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);
 
 // Build a list of WAL segments based on a beginning WAL and number of WAL in the range (inclusive)
-StringList *walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range);
+FV_EXTERN StringList *walSegmentRange(
+    const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range);
 
 #endif

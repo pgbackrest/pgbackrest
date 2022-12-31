@@ -12,7 +12,7 @@ Exec Configuration
 #include "config/parse.h"
 
 /**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const KeyValue *optionReplace, bool local, bool quote)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

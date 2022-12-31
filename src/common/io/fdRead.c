@@ -143,7 +143,7 @@ ioFdReadFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoRead *
+FV_EXTERN IoRead *
 ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

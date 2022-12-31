@@ -16,7 +16,7 @@ struct IoSession
 };
 
 /**********************************************************************************************************************************/
-IoSession *
+FV_EXTERN IoSession *
 ioSessionNew(void *driver, const IoSessionInterface *interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -49,7 +49,7 @@ ioSessionNew(void *driver, const IoSessionInterface *interface)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioSessionAuthenticatedSet(IoSession *const this, const bool authenticated)
 {
     FUNCTION_TEST_BEGIN();
@@ -63,7 +63,7 @@ ioSessionAuthenticatedSet(IoSession *const this, const bool authenticated)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 ioSessionFd(IoSession *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -76,7 +76,7 @@ ioSessionFd(IoSession *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioSessionPeerNameSet(IoSession *const this, const String *const peerName)                                           // {vm_covered}
 {
     FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
@@ -94,7 +94,7 @@ ioSessionPeerNameSet(IoSession *const this, const String *const peerName)       
 }                                                                                                                   // {vm_covered}
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 ioSessionToLog(const IoSession *this)
 {
     return strNewFmt(

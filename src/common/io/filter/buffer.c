@@ -103,7 +103,7 @@ ioBufferInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 ioBufferNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

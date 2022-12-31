@@ -8,6 +8,6 @@ Repository Remove Command
 Functions
 ***********************************************************************************************************************************/
 // Remove paths/files from the repository
-void cmdStorageRemove(void);
+FV_EXTERN void cmdStorageRemove(void);
 
 #endif

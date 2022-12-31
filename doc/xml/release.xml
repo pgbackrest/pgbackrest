@@ -76,6 +76,27 @@
 
                         <p>Add repository checksum to make verify and resume more efficient.</p>
                     </release-item>
+
+                    <release-item>
+                        <commit subject="Mark functions not used externally as static."/>
+                        <commit subject="Remove declaration for function that is no longer defined."/>
+                        <commit subject="Remove unused functions."/>
+                        <commit subject="Put memContextSize() in a DEBUG block."/>
+                        <commit subject="Add explicit keyword for covered modules included in other modules."/>
+                        <commit subject="Move strReplace() and strUpper() to build/common/string module."/>
+                        <commit subject="Move xmlNodeAttribute() to build/common/xml module."/>
+                        <commit subject="Use error*() getters where possible."/>
+                        <commit subject="Move regExpMatchPtr()/regExpMatchStr() to build/common/regExp module."/>
+                        <commit subject="Move storageHelperFree() to storageHelper test harness."/>
+                        <commit subject="Use memcpy() instead of strncpy when source size is known."/>
+                        <commit subject="Put logging functions unused by release builds into DEBUG blocks."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add meson unity build and tests.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 

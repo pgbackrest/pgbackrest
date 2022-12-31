@@ -559,7 +559,7 @@ helpRender(const Buffer *const helpData)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cmdHelp(const Buffer *const helpData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

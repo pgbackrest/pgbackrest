@@ -25,13 +25,14 @@ typedef struct CipherBlockNewParam
 #define cipherBlockNewP(mode, cipherType, pass, ...)                                                                               \
     cipherBlockNew(mode, cipherType, pass, (CipherBlockNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, CipherBlockNewParam param);
-IoFilter *cipherBlockNewPack(const Pack *paramList);
+FV_EXTERN IoFilter *cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, CipherBlockNewParam param);
+FV_EXTERN IoFilter *cipherBlockNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Add a block cipher to an io object
-IoFilterGroup *cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass);
+FV_EXTERN IoFilterGroup *cipherBlockFilterGroupAdd(
+    IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass);
 
 #endif

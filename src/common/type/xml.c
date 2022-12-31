@@ -103,7 +103,7 @@ xmlNodeNew(xmlNodePtr node)
 }
 
 /**********************************************************************************************************************************/
-XmlNode *
+FV_EXTERN XmlNode *
 xmlNodeAdd(XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -145,7 +145,7 @@ xmlNodeLstAdd(XmlNodeList *this, xmlNodePtr node)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 xmlNodeContent(const XmlNode *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -164,7 +164,7 @@ xmlNodeContent(const XmlNode *this)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-void
+FV_EXTERN void
 xmlNodeContentSet(XmlNode *this, const String *content)
 {
     FUNCTION_TEST_BEGIN();
@@ -181,7 +181,7 @@ xmlNodeContentSet(XmlNode *this, const String *content)
 }
 
 /**********************************************************************************************************************************/
-XmlNodeList *
+FV_EXTERN XmlNodeList *
 xmlNodeChildList(const XmlNode *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -204,7 +204,7 @@ xmlNodeChildList(const XmlNode *this, const String *name)
 }
 
 /**********************************************************************************************************************************/
-XmlNode *
+FV_EXTERN XmlNode *
 xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing)
 {
     FUNCTION_TEST_BEGIN();
@@ -259,7 +259,7 @@ xmlDocumentFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-XmlDocument *
+FV_EXTERN XmlDocument *
 xmlDocumentNew(const String *rootName)
 {
     FUNCTION_TEST_BEGIN();
@@ -294,7 +294,7 @@ xmlDocumentNew(const String *rootName)
 }
 
 /**********************************************************************************************************************************/
-XmlDocument *
+FV_EXTERN XmlDocument *
 xmlDocumentNewBuf(const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -329,7 +329,7 @@ xmlDocumentNewBuf(const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FV_EXTERN Buffer *
 xmlDocumentBuf(const XmlDocument *this)
 {
     FUNCTION_TEST_BEGIN();

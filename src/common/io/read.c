@@ -22,7 +22,7 @@ struct IoRead
 };
 
 /**********************************************************************************************************************************/
-IoRead *
+FV_EXTERN IoRead *
 ioReadNew(void *driver, IoReadInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -57,7 +57,7 @@ ioReadNew(void *driver, IoReadInterface interface)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 ioReadOpen(IoRead *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -165,7 +165,7 @@ ioReadInternal(IoRead *this, Buffer *buffer, bool block)
 /***********************************************************************************************************************************
 Read data and use buffered line read output when present
 ***********************************************************************************************************************************/
-size_t
+FV_EXTERN size_t
 ioRead(IoRead *this, Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -202,7 +202,7 @@ ioRead(IoRead *this, Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-size_t
+FV_EXTERN size_t
 ioReadSmall(IoRead *this, Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -270,7 +270,7 @@ ioReadSmall(IoRead *this, Buffer *buffer)
 /***********************************************************************************************************************************
 The entire string to search for must fit within a single buffer.
 ***********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 ioReadLineParam(IoRead *this, bool allowEof)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -356,7 +356,7 @@ ioReadLineParam(IoRead *this, bool allowEof)
 }
 
 /**********************************************************************************************************************************/
-uint64_t
+FV_EXTERN uint64_t
 ioReadVarIntU64(IoRead *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -414,7 +414,7 @@ ioReadVarIntU64(IoRead *const this)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 ioReadReady(IoRead *this, IoReadReadyParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -433,7 +433,7 @@ ioReadReady(IoRead *this, IoReadReadyParam param)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioReadClose(IoRead *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -458,7 +458,7 @@ ioReadClose(IoRead *this)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 ioReadFd(const IoRead *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

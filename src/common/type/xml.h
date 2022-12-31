@@ -24,10 +24,10 @@ typedef struct XmlNodeList XmlNodeList;
 Document Constructors
 ***********************************************************************************************************************************/
 // Document with the specified root node
-XmlDocument *xmlDocumentNew(const String *rootNode);
+FV_EXTERN XmlDocument *xmlDocumentNew(const String *rootNode);
 
 // Document from Buffer
-XmlDocument *xmlDocumentNewBuf(const Buffer *);
+FV_EXTERN XmlDocument *xmlDocumentNewBuf(const Buffer *);
 
 /***********************************************************************************************************************************
 Document Getters
@@ -38,7 +38,7 @@ typedef struct XmlDocumentPub
 } XmlDocumentPub;
 
 // Dump document to a buffer
-Buffer *xmlDocumentBuf(const XmlDocument *this);
+FV_EXTERN Buffer *xmlDocumentBuf(const XmlDocument *this);
 
 // Root node
 FN_INLINE_ALWAYS XmlNode *
@@ -60,13 +60,13 @@ xmlDocumentFree(XmlDocument *const this)
 Node Functions
 ***********************************************************************************************************************************/
 // Add a node
-XmlNode *xmlNodeAdd(XmlNode *this, const String *name);
+FV_EXTERN XmlNode *xmlNodeAdd(XmlNode *this, const String *name);
 
 /***********************************************************************************************************************************
 Node Getters/Setters
 ***********************************************************************************************************************************/
 // Node child (by name or index)
-XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
+FV_EXTERN XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
 
 FN_INLINE_ALWAYS XmlNode *
 xmlNodeChild(const XmlNode *const this, const String *const name, const bool errorOnMissing)
@@ -75,11 +75,11 @@ xmlNodeChild(const XmlNode *const this, const String *const name, const bool err
 }
 
 // List of child nodes
-XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
+FV_EXTERN XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
 
 // Node content
-String *xmlNodeContent(const XmlNode *this);
-void xmlNodeContentSet(XmlNode *this, const String *content);
+FV_EXTERN String *xmlNodeContent(const XmlNode *this);
+FV_EXTERN void xmlNodeContentSet(XmlNode *this, const String *content);
 
 /***********************************************************************************************************************************
 Node List Getters

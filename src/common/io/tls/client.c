@@ -344,7 +344,7 @@ static const IoClientInterface tlsClientInterface =
     .toLog = tlsClientToLog,
 };
 
-IoClient *
+FV_EXTERN IoClient *
 tlsClientNew(
     IoClient *const ioClient, const String *const host, const TimeMSec timeoutConnect, const TimeMSec timeoutSession,
     const bool verifyPeer, const TlsClientNewParam param)

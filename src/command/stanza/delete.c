@@ -18,7 +18,7 @@ Stanza Delete Command
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cmdStanzaDelete(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

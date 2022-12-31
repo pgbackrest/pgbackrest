@@ -18,6 +18,6 @@ Zero-terminated strings that are generally useful
 Functions
 ***********************************************************************************************************************************/
 // Format a zero-terminated string
-char *zNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
+FV_EXTERN char *zNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 #endif

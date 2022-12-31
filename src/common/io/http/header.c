@@ -18,7 +18,7 @@ struct HttpHeader
 };
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FV_EXTERN HttpHeader *
 httpHeaderNew(const StringList *redactList)
 {
     FUNCTION_TEST_VOID();
@@ -42,7 +42,7 @@ httpHeaderNew(const StringList *redactList)
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FV_EXTERN HttpHeader *
 httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 {
     FUNCTION_TEST_BEGIN();
@@ -72,7 +72,7 @@ httpHeaderDup(const HttpHeader *header, const StringList *redactList)
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FV_EXTERN HttpHeader *
 httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -112,7 +112,7 @@ httpHeaderAdd(HttpHeader *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 httpHeaderGet(const HttpHeader *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -127,7 +127,7 @@ httpHeaderGet(const HttpHeader *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 httpHeaderList(const HttpHeader *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -140,7 +140,7 @@ httpHeaderList(const HttpHeader *this)
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FV_EXTERN HttpHeader *
 httpHeaderPut(HttpHeader *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -160,7 +160,7 @@ httpHeaderPut(HttpHeader *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-HttpHeader *
+FV_EXTERN HttpHeader *
 httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_TEST_BEGIN();
@@ -187,7 +187,7 @@ httpHeaderPutRange(HttpHeader *const this, const uint64_t offset, const Variant 
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 httpHeaderRedact(const HttpHeader *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -202,7 +202,7 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 httpHeaderToLog(const HttpHeader *this)
 {
     String *result = strCatZ(strNew(), "{");

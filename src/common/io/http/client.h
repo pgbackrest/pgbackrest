@@ -42,7 +42,7 @@ Statistics constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpClient *httpClientNew(IoClient *ioClient, TimeMSec timeout);
+FV_EXTERN HttpClient *httpClientNew(IoClient *ioClient, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -62,15 +62,15 @@ httpClientTimeout(const HttpClient *const this)
 Functions
 ***********************************************************************************************************************************/
 // Open a new session
-HttpSession *httpClientOpen(HttpClient *this);
+FV_EXTERN HttpSession *httpClientOpen(HttpClient *this);
 
 // Request/response finished cleanly so session can be reused
-void httpClientReuse(HttpClient *this, HttpSession *session);
+FV_EXTERN void httpClientReuse(HttpClient *this, HttpSession *session);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *httpClientToLog(const HttpClient *this);
+FV_EXTERN String *httpClientToLog(const HttpClient *this);
 
 #define FUNCTION_LOG_HTTP_CLIENT_TYPE                                                                                              \
     HttpClient *

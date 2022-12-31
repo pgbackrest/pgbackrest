@@ -26,10 +26,10 @@ typedef struct HttpQueryNewParam
 #define httpQueryNewP(...)                                                                                                         \
     httpQueryNew((HttpQueryNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpQuery *httpQueryNew(HttpQueryNewParam param);
+FV_EXTERN HttpQuery *httpQueryNew(HttpQueryNewParam param);
 
 // New from encoded query string
-HttpQuery *httpQueryNewStr(const String *query);
+FV_EXTERN HttpQuery *httpQueryNewStr(const String *query);
 
 // Duplicate
 typedef struct HttpQueryDupParam
@@ -41,22 +41,22 @@ typedef struct HttpQueryDupParam
 #define httpQueryDupP(query, ...)                                                                                                  \
     httpQueryDup(query, (HttpQueryDupParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpQuery *httpQueryDup(const HttpQuery *query, HttpQueryDupParam param);
+FV_EXTERN HttpQuery *httpQueryDup(const HttpQuery *query, HttpQueryDupParam param);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Add a query item
-HttpQuery *httpQueryAdd(HttpQuery *this, const String *key, const String *value);
+FV_EXTERN HttpQuery *httpQueryAdd(HttpQuery *this, const String *key, const String *value);
 
 // Get a value using the key
-const String *httpQueryGet(const HttpQuery *this, const String *key);
+FV_EXTERN const String *httpQueryGet(const HttpQuery *this, const String *key);
 
 // Get list of keys
-StringList *httpQueryList(const HttpQuery *this);
+FV_EXTERN StringList *httpQueryList(const HttpQuery *this);
 
 // Merge the contents of another query into this one
-HttpQuery *httpQueryMerge(HttpQuery *this, const HttpQuery *query);
+FV_EXTERN HttpQuery *httpQueryMerge(HttpQuery *this, const HttpQuery *query);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS HttpQuery *
@@ -66,10 +66,10 @@ httpQueryMove(HttpQuery *const this, MemContext *const parentNew)
 }
 
 // Put a query item
-HttpQuery *httpQueryPut(HttpQuery *this, const String *header, const String *value);
+FV_EXTERN HttpQuery *httpQueryPut(HttpQuery *this, const String *header, const String *value);
 
 // Should the query key be redacted when logging?
-bool httpQueryRedact(const HttpQuery *this, const String *key);
+FV_EXTERN bool httpQueryRedact(const HttpQuery *this, const String *key);
 
 // Render the query for inclusion in an HTTP request
 typedef struct HttpQueryRenderParam
@@ -81,7 +81,7 @@ typedef struct HttpQueryRenderParam
 #define httpQueryRenderP(this, ...)                                                                                                \
     httpQueryRender(this, (HttpQueryRenderParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-String *httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param);
+FV_EXTERN String *httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param);
 
 /***********************************************************************************************************************************
 Destructor
@@ -95,7 +95,7 @@ httpQueryFree(HttpQuery *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *httpQueryToLog(const HttpQuery *this);
+FV_EXTERN String *httpQueryToLog(const HttpQuery *this);
 
 #define FUNCTION_LOG_HTTP_QUERY_TYPE                                                                                               \
     HttpQuery *

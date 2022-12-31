@@ -45,22 +45,22 @@ ioReadFilterGroup(IoRead *const this)
 }
 
 // File descriptor for the read object. Not all read objects have a file descriptor and -1 will be returned in that case.
-int ioReadFd(const IoRead *this);
+FV_EXTERN int ioReadFd(const IoRead *this);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Open the IO
-bool ioReadOpen(IoRead *this);
+FV_EXTERN bool ioReadOpen(IoRead *this);
 
 // Read data from IO and process filters
-size_t ioRead(IoRead *this, Buffer *buffer);
+FV_EXTERN size_t ioRead(IoRead *this, Buffer *buffer);
 
 // Same as ioRead() but optimized for small reads (intended for making repetitive reads that are smaller than ioBufferSize())
-size_t ioReadSmall(IoRead *this, Buffer *buffer);
+FV_EXTERN size_t ioReadSmall(IoRead *this, Buffer *buffer);
 
 // Read linefeed-terminated string and optionally error on eof
-String *ioReadLineParam(IoRead *this, bool allowEof);
+FV_EXTERN String *ioReadLineParam(IoRead *this, bool allowEof);
 
 // Read linefeed-terminated string
 FN_INLINE_ALWAYS String *
@@ -70,7 +70,7 @@ ioReadLine(IoRead *const this)
 }
 
 // Read varint-128 encoding
-uint64_t ioReadVarIntU64(IoRead *this);
+FV_EXTERN uint64_t ioReadVarIntU64(IoRead *this);
 
 // Are there bytes ready to read immediately? There are no guarantees on how much data is available to read but it must be at least
 // one byte.
@@ -83,10 +83,10 @@ typedef struct IoReadReadyParam
 #define ioReadReadyP(this, ...)                                                                                                    \
     ioReadReady(this, (IoReadReadyParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-bool ioReadReady(IoRead *this, IoReadReadyParam param);
+FV_EXTERN bool ioReadReady(IoRead *this, IoReadReadyParam param);
 
 // Close the IO
-void ioReadClose(IoRead *this);
+FV_EXTERN void ioReadClose(IoRead *this);
 
 /***********************************************************************************************************************************
 Destructor

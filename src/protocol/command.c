@@ -19,7 +19,7 @@ struct ProtocolCommand
 };
 
 /**********************************************************************************************************************************/
-ProtocolCommand *
+FV_EXTERN ProtocolCommand *
 protocolCommandNew(const StringId command)
 {
     FUNCTION_TEST_BEGIN();
@@ -45,7 +45,7 @@ protocolCommandNew(const StringId command)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 {
     FUNCTION_TEST_BEGIN();
@@ -80,7 +80,7 @@ protocolCommandPut(ProtocolCommand *const this, IoWrite *const write)
 }
 
 /**********************************************************************************************************************************/
-PackWrite *
+FV_EXTERN PackWrite *
 protocolCommandParam(ProtocolCommand *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -102,7 +102,7 @@ protocolCommandParam(ProtocolCommand *this)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 protocolCommandToLog(const ProtocolCommand *this)
 {
     return strNewFmt("{command: %s}", strZ(strIdToStr(this->command)));

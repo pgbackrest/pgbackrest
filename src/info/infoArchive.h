@@ -29,10 +29,10 @@ Archive info filename
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *cipherPassSub);
+FV_EXTERN InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *cipherPassSub);
 
 // Create new object and load contents from IoRead
-InfoArchive *infoArchiveNewLoad(IoRead *read);
+FV_EXTERN InfoArchive *infoArchiveNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -50,7 +50,7 @@ infoArchivePg(const InfoArchive *const this)
     return THIS_PUB(InfoArchive)->infoPg;
 }
 
-InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
+FV_EXTERN InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 
 // Current archive id
 FN_INLINE_ALWAYS const String *
@@ -70,7 +70,7 @@ infoArchiveCipherPass(const InfoArchive *const this)
 Functions
 ***********************************************************************************************************************************/
 // Given a backrest history id and postgres systemId and version, return the archiveId of the best match
-const String *infoArchiveIdHistoryMatch(
+FV_EXTERN const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);
 
 // Move to a new parent mem context
@@ -93,11 +93,11 @@ infoArchiveFree(InfoArchive *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load archive info
-InfoArchive *infoArchiveLoadFile(
+FV_EXTERN InfoArchive *infoArchiveLoadFile(
     const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 // Save archive info
-void infoArchiveSaveFile(
+FV_EXTERN void infoArchiveSaveFile(
     InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************

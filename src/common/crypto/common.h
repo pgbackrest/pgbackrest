@@ -38,13 +38,13 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 // Initialize crypto
-void cryptoInit(void);
+FV_EXTERN void cryptoInit(void);
 
 // Throw crypto errors
-void cryptoError(bool error, const char *description);
-FN_NO_RETURN void cryptoErrorCode(unsigned long code, const char *description);
+FV_EXTERN void cryptoError(bool error, const char *description);
+FV_EXTERN FN_NO_RETURN void cryptoErrorCode(unsigned long code, const char *description);
 
 // Generate random bytes
-void cryptoRandomBytes(unsigned char *buffer, size_t size);
+FV_EXTERN void cryptoRandomBytes(unsigned char *buffer, size_t size);
 
 #endif

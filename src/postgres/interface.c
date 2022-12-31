@@ -117,7 +117,7 @@ pgInterfaceVersion(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 pgDbIsTemplate(const String *const name)
 {
     FUNCTION_TEST_BEGIN();
@@ -128,7 +128,7 @@ pgDbIsTemplate(const String *const name)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 pgDbIsSystem(const String *const name)
 {
     FUNCTION_TEST_BEGIN();
@@ -139,7 +139,7 @@ pgDbIsSystem(const String *const name)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 pgDbIsSystemId(const unsigned int id)
 {
     FUNCTION_TEST_BEGIN();
@@ -218,7 +218,7 @@ pgControlFromBuffer(const Buffer *controlFile)
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
 
-PgControl
+FV_EXTERN PgControl
 pgControlFromFile(const Storage *storage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -243,7 +243,7 @@ pgControlFromFile(const Storage *storage)
 }
 
 /**********************************************************************************************************************************/
-uint32_t
+FV_EXTERN uint32_t
 pgControlVersion(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -266,7 +266,7 @@ typedef struct PgWalCommon
 #define PG_WAL_LONG_HEADER                                          0x0002
 
 /**********************************************************************************************************************************/
-PgWal
+FV_EXTERN PgWal
 pgWalFromBuffer(const Buffer *walBuffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -311,7 +311,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
 
-PgWal
+FV_EXTERN PgWal
 pgWalFromFile(const String *walFile, const Storage *storage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -335,7 +335,7 @@ pgWalFromFile(const String *walFile, const Storage *storage)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -361,7 +361,7 @@ pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
 }
 
 /**********************************************************************************************************************************/
-uint64_t
+FV_EXTERN uint64_t
 pgLsnFromStr(const String *lsn)
 {
     FUNCTION_TEST_BEGIN();
@@ -383,7 +383,7 @@ pgLsnFromStr(const String *lsn)
     FUNCTION_TEST_RETURN(UINT64, result);
 }
 
-String *
+FV_EXTERN String *
 pgLsnToStr(uint64_t lsn)
 {
     FUNCTION_TEST_BEGIN();
@@ -394,7 +394,7 @@ pgLsnToStr(uint64_t lsn)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -408,7 +408,7 @@ pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
 }
 
 /**********************************************************************************************************************************/
-uint32_t
+FV_EXTERN uint32_t
 pgTimelineFromWalSegment(const String *const walSegment)
 {
     FUNCTION_TEST_BEGIN();
@@ -422,7 +422,7 @@ pgTimelineFromWalSegment(const String *const walSegment)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 pgLsnRangeToWalSegmentList(
     const uint32_t timeline, const uint64_t lsnStart, const uint64_t lsnStop, const unsigned int walSegmentSize)
 {
@@ -472,7 +472,7 @@ pgLsnRangeToWalSegmentList(
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 pgLsnName(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -485,7 +485,7 @@ pgLsnName(unsigned int pgVersion)
 /***********************************************************************************************************************************
 Get WAL name (wal/xlog) for a PostgreSQL version
 ***********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 pgWalName(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -496,7 +496,7 @@ pgWalName(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 pgWalPath(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -507,7 +507,7 @@ pgWalPath(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 pgXactPath(unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
@@ -518,7 +518,7 @@ pgXactPath(unsigned int pgVersion)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 pgVersionFromStr(const String *const version)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -542,7 +542,7 @@ pgVersionFromStr(const String *const version)
         UINT, cvtZSubNToUInt(strZ(version), 0, (size_t)idxStart) * 10000 + cvtZToUInt(strZ(version) + (size_t)idxStart + 1) * 100);
 }
 
-String *
+FV_EXTERN String *
 pgVersionToStr(unsigned int version)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -556,7 +556,7 @@ pgVersionToStr(unsigned int version)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 pgControlToLog(const PgControl *pgControl)
 {
     return strNewFmt(
@@ -564,7 +564,7 @@ pgControlToLog(const PgControl *pgControl)
         pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
 }
 
-String *
+FV_EXTERN String *
 pgWalToLog(const PgWal *pgWal)
 {
     return strNewFmt("{version: %u, systemId: %" PRIu64 "}", pgWal->version, pgWal->systemId);

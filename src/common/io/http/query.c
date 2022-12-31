@@ -18,7 +18,7 @@ struct HttpQuery
 };
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FV_EXTERN HttpQuery *
 httpQueryNew(HttpQueryNewParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -44,7 +44,7 @@ httpQueryNew(HttpQueryNewParam param)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FV_EXTERN HttpQuery *
 httpQueryNewStr(const String *query)
 {
     FUNCTION_TEST_BEGIN();
@@ -96,7 +96,7 @@ httpQueryNewStr(const String *query)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FV_EXTERN HttpQuery *
 httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -126,7 +126,7 @@ httpQueryDup(const HttpQuery *query, HttpQueryDupParam param)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FV_EXTERN HttpQuery *
 httpQueryAdd(HttpQuery *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -152,7 +152,7 @@ httpQueryAdd(HttpQuery *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 httpQueryGet(const HttpQuery *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -167,7 +167,7 @@ httpQueryGet(const HttpQuery *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 httpQueryList(const HttpQuery *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -180,7 +180,7 @@ httpQueryList(const HttpQuery *this)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FV_EXTERN HttpQuery *
 httpQueryMerge(HttpQuery *this, const HttpQuery *query)
 {
     FUNCTION_TEST_BEGIN();
@@ -208,7 +208,7 @@ httpQueryMerge(HttpQuery *this, const HttpQuery *query)
 }
 
 /**********************************************************************************************************************************/
-HttpQuery *
+FV_EXTERN HttpQuery *
 httpQueryPut(HttpQuery *this, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -228,7 +228,7 @@ httpQueryPut(HttpQuery *this, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 httpQueryRedact(const HttpQuery *this, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -243,7 +243,7 @@ httpQueryRedact(const HttpQuery *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -288,7 +288,7 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 httpQueryToLog(const HttpQuery *this)
 {
     String *result = strCatZ(strNew(), "{");

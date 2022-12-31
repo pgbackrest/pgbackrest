@@ -35,10 +35,10 @@ typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *i
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Info *infoNew(const String *cipherPassSub);
+FV_EXTERN Info *infoNew(const String *cipherPassSub);
 
 // Create new object and load contents from a file
-Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
+FV_EXTERN Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -56,7 +56,7 @@ infoCipherPass(const Info *const this)
     return THIS_PUB(Info)->cipherPass;
 }
 
-void infoCipherPassSet(Info *this, const String *cipherPass);
+FV_EXTERN void infoCipherPassSet(Info *this, const String *cipherPass);
 
 // pgBackRest version
 FN_INLINE_ALWAYS const String *
@@ -69,19 +69,19 @@ infoBackrestVersion(const Info *const this)
 Functions
 ***********************************************************************************************************************************/
 // Save to file
-void infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
+FV_EXTERN void infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
 
 // Check if the section should be saved
-bool infoSaveSection(InfoSave *infoSaveData, const char *section, const String *sectionNext);
+FV_EXTERN bool infoSaveSection(InfoSave *infoSaveData, const char *section, const String *sectionNext);
 
 // Save a JSON formatted value and update checksum
-void infoSaveValue(InfoSave *infoSaveData, const char *section, const char *key, const String *jsonValue);
+FV_EXTERN void infoSaveValue(InfoSave *infoSaveData, const char *section, const char *key, const String *jsonValue);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Load info file(s) and throw error for each attempt if none are successful
-void infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData);
+FV_EXTERN void infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Macros for function logging

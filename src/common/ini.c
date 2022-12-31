@@ -22,7 +22,7 @@ struct Ini
 };
 
 /**********************************************************************************************************************************/
-Ini *
+FV_EXTERN Ini *
 iniNew(void)
 {
     FUNCTION_TEST_VOID();
@@ -77,7 +77,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key, bool r
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 iniGet(const Ini *this, const String *section, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -89,8 +89,7 @@ iniGet(const Ini *this, const String *section, const String *key)
     FUNCTION_TEST_RETURN_CONST(STRING, varStr(iniGetInternal(this, section, key, true)));
 }
 
-/**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 iniGetList(const Ini *this, const String *section, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -106,7 +105,7 @@ iniGetList(const Ini *this, const String *section, const String *key)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 iniSectionKeyIsList(const Ini *this, const String *section, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -122,7 +121,7 @@ iniSectionKeyIsList(const Ini *this, const String *section, const String *key)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 iniSectionKeyList(const Ini *this, const String *section)
 {
     FUNCTION_TEST_BEGIN();
@@ -155,7 +154,7 @@ iniSectionKeyList(const Ini *this, const String *section)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 iniParse(Ini *this, const String *content)
 {
     FUNCTION_TEST_BEGIN();
@@ -232,7 +231,7 @@ iniParse(Ini *this, const String *content)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 iniSet(Ini *this, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -263,7 +262,7 @@ iniSet(Ini *this, const String *section, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 iniLoad(
     IoRead *const read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
     void *const callbackData)

@@ -29,7 +29,7 @@ typedef struct IoServerInterface
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoServer *ioServerNew(void *driver, const IoServerInterface *interface);
+FV_EXTERN IoServer *ioServerNew(void *driver, const IoServerInterface *interface);
 
 /***********************************************************************************************************************************
 Macros for function logging

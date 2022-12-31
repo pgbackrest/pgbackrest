@@ -2381,7 +2381,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cmdRestore(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

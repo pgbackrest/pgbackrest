@@ -20,7 +20,7 @@ Flag to indicate if OpenSSL has already been initialized
 static bool cryptoInitDone = false;
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cryptoError(bool error, const char *description)
 {
     FUNCTION_TEST_BEGIN();
@@ -34,7 +34,7 @@ cryptoError(bool error, const char *description)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 cryptoErrorCode(unsigned long code, const char *description)
 {
     FUNCTION_TEST_BEGIN();
@@ -49,7 +49,7 @@ cryptoErrorCode(unsigned long code, const char *description)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cryptoInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -77,7 +77,7 @@ cryptoInit(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cryptoRandomBytes(unsigned char *buffer, size_t size)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

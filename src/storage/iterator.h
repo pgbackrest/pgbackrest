@@ -15,7 +15,7 @@ typedef struct StorageIterator StorageIterator;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageIterator *storageItrNew(
+FV_EXTERN StorageIterator *storageItrNew(
     void *driver, const String *path, StorageInfoLevel level, bool errorOnMissing, bool nullOnMissing, bool recurse,
     SortOrder sortOrder, const String *expression);
 
@@ -23,7 +23,7 @@ StorageIterator *storageItrNew(
 Functions
 ***********************************************************************************************************************************/
 // Is there more info to be retrieved from the iterator?
-bool storageItrMore(StorageIterator *this);
+FV_EXTERN bool storageItrMore(StorageIterator *this);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS StorageIterator *
@@ -34,7 +34,7 @@ storageItrMove(StorageIterator *const this, MemContext *const parentNew)
 
 // Get next info. An error will be thrown if there is no more data so use storageItrMore() to check. Note that StorageInfo pointer
 // members (e.g. name) will be undefined after the next call to storageItrMore().
-StorageInfo storageItrNext(StorageIterator *this);
+FV_EXTERN StorageInfo storageItrNext(StorageIterator *this);
 
 /***********************************************************************************************************************************
 Destructor
@@ -48,7 +48,7 @@ storageItrFree(StorageIterator *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *storageItrToLog(const StorageIterator *this);
+FV_EXTERN String *storageItrToLog(const StorageIterator *this);
 
 #define FUNCTION_LOG_STORAGE_ITERATOR_TYPE                                                                                         \
     StorageIterator *

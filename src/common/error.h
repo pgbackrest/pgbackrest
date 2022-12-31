@@ -48,7 +48,7 @@ typedef struct ErrorType ErrorType;
 
 // Macro for declaring new error types
 #define ERROR_DECLARE(name)                                                                                                        \
-    extern const ErrorType name
+    FV_EXTERN const ErrorType name
 
 // Include error type declarations
 #include "common/error.auto.h"
@@ -65,66 +65,66 @@ typedef struct ErrorType ErrorType;
 Functions to get information about a generic error type
 ***********************************************************************************************************************************/
 // Error type code
-int errorTypeCode(const ErrorType *errorType);
+FV_EXTERN int errorTypeCode(const ErrorType *errorType);
 
 // Is the error type fatal
-bool errorTypeFatal(const ErrorType *errorType);
+FV_EXTERN bool errorTypeFatal(const ErrorType *errorType);
 
 // Get error type using a code
-const ErrorType *errorTypeFromCode(int code);
+FV_EXTERN const ErrorType *errorTypeFromCode(int code);
 
 // Error type name
-const char *errorTypeName(const ErrorType *errorType);
+FV_EXTERN const char *errorTypeName(const ErrorType *errorType);
 
 // Error type parent
-const ErrorType *errorTypeParent(const ErrorType *errorType);
+FV_EXTERN const ErrorType *errorTypeParent(const ErrorType *errorType);
 
 // Does the child error type extend the parent error type?
-bool errorTypeExtends(const ErrorType *child, const ErrorType *parent);
+FV_EXTERN bool errorTypeExtends(const ErrorType *child, const ErrorType *parent);
 
 /***********************************************************************************************************************************
 Functions to get information about the current error within a CATCH() block. Invalid outside a CATCH() block.
 ***********************************************************************************************************************************/
 // Error type
-const ErrorType *errorType(void);
+FV_EXTERN const ErrorType *errorType(void);
 
 // Error code (pulled from error type)
-int errorCode(void);
+FV_EXTERN int errorCode(void);
 
 // Is the error fatal?
-bool errorFatal(void);
+FV_EXTERN bool errorFatal(void);
 
 // Error filename
-const char *errorFileName(void);
+FV_EXTERN const char *errorFileName(void);
 
 // Error function name
-const char *errorFunctionName(void);
+FV_EXTERN const char *errorFunctionName(void);
 
 // Error file line number
-int errorFileLine(void);
+FV_EXTERN int errorFileLine(void);
 
 // Is this error an instance of the error type?
-bool errorInstanceOf(const ErrorType *errorTypeTest);
+FV_EXTERN bool errorInstanceOf(const ErrorType *errorTypeTest);
 
 // Error message
-const char *errorMessage(void);
+FV_EXTERN const char *errorMessage(void);
 
 // Error name (pulled from error type)
-const char *errorName(void);
+FV_EXTERN const char *errorName(void);
 
 // Error stack trace
-const char *errorStackTrace(void);
+FV_EXTERN const char *errorStackTrace(void);
 
 /***********************************************************************************************************************************
 Try stack getters/setters
 ***********************************************************************************************************************************/
 // Get the depth of the current try statement (0 if none)
-unsigned int errorTryDepth(void);
+FV_EXTERN unsigned int errorTryDepth(void);
 
 // Add a handler to be called when an error occurs
 typedef void (*const ErrorHandlerFunction)(unsigned int, bool);
 
-void errorHandlerSet(const ErrorHandlerFunction *list, unsigned int total);
+FV_EXTERN void errorHandlerSet(const ErrorHandlerFunction *list, unsigned int total);
 
 /***********************************************************************************************************************************
 Begin a block where errors can be thrown
@@ -307,44 +307,44 @@ Internal functions
 These functions are used by the macros to implement the error handler and should never be called independently.
 ***********************************************************************************************************************************/
 // Begin the try block
-void errorInternalTryBegin(const char *fileName, const char *functionName, int fileLine);
+FV_EXTERN void errorInternalTryBegin(const char *fileName, const char *functionName, int fileLine);
 
 // Return jump buffer for current try
-jmp_buf *errorInternalJump(void);
+FV_EXTERN jmp_buf *errorInternalJump(void);
 
 // True when in catch state and the expected error matches
-bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
+FV_EXTERN bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
 
 // Propagate the error up so it can be caught
-FN_NO_RETURN void errorInternalPropagate(void);
+FV_EXTERN FN_NO_RETURN void errorInternalPropagate(void);
 
 // End the try block
-void errorInternalTryEnd(void);
+FV_EXTERN void errorInternalTryEnd(void);
 
 // Throw an error
-FN_NO_RETURN void errorInternalThrow(
+FV_EXTERN FN_NO_RETURN void errorInternalThrow(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message,
     const char *stackTrace);
-FN_NO_RETURN void errorInternalThrowFmt(
+FV_EXTERN FN_NO_RETURN void errorInternalThrowFmt(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
     __attribute__((format(printf, 5, 6)));
 
 // Throw a system error
-FN_NO_RETURN void errorInternalThrowSys(
+FV_EXTERN FN_NO_RETURN void errorInternalThrowSys(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message);
 
 // Throw a formatted system error
-FN_NO_RETURN void errorInternalThrowSysFmt(
+FV_EXTERN FN_NO_RETURN void errorInternalThrowSysFmt(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
     __attribute__((format(printf, 6, 7)));
 
 // Versions of the above for coverage testing which checks the error condition inside the function
 #ifdef DEBUG_COVERAGE
-    void errorInternalThrowOnSys(
+    FV_EXTERN void errorInternalThrowOnSys(
         bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
         const char *message);
 
-    void errorInternalThrowOnSysFmt(
+    FV_EXTERN void errorInternalThrowOnSysFmt(
         bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
         const char *format, ...) __attribute__((format(printf, 7, 8)));
 #endif

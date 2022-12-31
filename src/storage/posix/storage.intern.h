@@ -10,7 +10,7 @@ Posix Storage Internal
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Storage *storagePosixNewInternal(
+FV_EXTERN Storage *storagePosixNewInternal(
     StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
 

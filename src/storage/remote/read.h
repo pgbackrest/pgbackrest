@@ -11,7 +11,7 @@ Remote Storage Read
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageRead *storageReadRemoteNew(
+FV_EXTERN StorageRead *storageReadRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
     unsigned int compressLevel, uint64_t offset, const Variant *limit);
 

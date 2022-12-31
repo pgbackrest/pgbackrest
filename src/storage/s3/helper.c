@@ -14,7 +14,7 @@ S3 Storage Helper
 #include "storage/s3/helper.h"
 
 /**********************************************************************************************************************************/
-Storage *
+FV_EXTERN Storage *
 storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

@@ -40,35 +40,35 @@ supported type is not in this list then it should cause an integration test to f
 Functions
 ***********************************************************************************************************************************/
 // Get enum from a compression type string
-CompressType compressTypeEnum(StringId type);
+FV_EXTERN CompressType compressTypeEnum(StringId type);
 
 // Check that a valid compress type is compiled into this binary.  Errors when the compress type is not present.
-void compressTypePresent(CompressType type);
+FV_EXTERN void compressTypePresent(CompressType type);
 
 // Get string representation of a compression type. This is the extension without the period.
-const String *compressTypeStr(CompressType type);
+FV_EXTERN const String *compressTypeStr(CompressType type);
 
 // Get compression type from a (file) name by checking the extension. If the extension is not a supported compression type then
 // compressType none is returned, even if the file is compressed with some unknown type.
-CompressType compressTypeFromName(const String *name);
+FV_EXTERN CompressType compressTypeFromName(const String *name);
 
 // Compression filter for the specified type.  Error when compress type is none or invalid.
-IoFilter *compressFilter(CompressType type, int level);
+FV_EXTERN IoFilter *compressFilter(CompressType type, int level);
 
 // Compression/decompression filter based on string type and a parameter list.  This is useful when a filter must be created on a
 // remote system since the filter type and parameters can be passed through a protocol.
-IoFilter *compressFilterPack(StringId filterType, const Pack *filterParam);
+FV_EXTERN IoFilter *compressFilterPack(StringId filterType, const Pack *filterParam);
 
 // Decompression filter for the specified type.  Error when compress type is none or invalid.
-IoFilter *decompressFilter(CompressType type);
+FV_EXTERN IoFilter *decompressFilter(CompressType type);
 
 // Get extension for the current compression type
-const String *compressExtStr(CompressType type);
+FV_EXTERN const String *compressExtStr(CompressType type);
 
 // Add extension for current compression type to the file
-void compressExtCat(String *file, CompressType type);
+FV_EXTERN void compressExtCat(String *file, CompressType type);
 
 // Remove the specified compression extension. Error when the extension is not correct.
-String *compressExtStrip(const String *file, CompressType type);
+FV_EXTERN String *compressExtStrip(const String *file, CompressType type);
 
 #endif

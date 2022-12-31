@@ -90,7 +90,7 @@ archivePushFileIo(ArchivePushFileIoType type, IoWrite *write, const Buffer *buff
 }
 
 /**********************************************************************************************************************************/
-ArchivePushFileResult
+FV_EXTERN ArchivePushFileResult
 archivePushFile(
     const String *const walSource, const bool headerCheck, const bool modeCheck, const unsigned int pgVersion,
     const uint64_t pgSystemId, const String *const archiveFile, const CompressType compressType, const int compressLevel,

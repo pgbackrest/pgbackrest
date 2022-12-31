@@ -24,7 +24,7 @@ Stanza Update Command
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cmdStanzaUpgrade(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

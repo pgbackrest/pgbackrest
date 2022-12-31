@@ -242,7 +242,7 @@ lz4CompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 lz4CompressNew(int level)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
