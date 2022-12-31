@@ -37,7 +37,7 @@ typedef struct HttpUrlNewParseParam
 #define httpUrlNewParseP(url, ...)                                                                                                 \
     httpUrlNewParse(url, (HttpUrlNewParseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpUrl *httpUrlNewParse(const String *const url, HttpUrlNewParseParam param);
+FV_EXTERN HttpUrl *httpUrlNewParse(const String *const url, HttpUrlNewParseParam param);
 
 /***********************************************************************************************************************************
 Getters/setters
@@ -98,11 +98,15 @@ httpUrlFree(HttpUrl *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *httpUrlToLog(const HttpUrl *this);
+#ifdef DEBUG
+
+FV_EXTERN String *httpUrlToLog(const HttpUrl *this);
 
 #define FUNCTION_LOG_HTTP_URL_TYPE                                                                                               \
     HttpUrl *
 #define FUNCTION_LOG_HTTP_URL_FORMAT(value, buffer, bufferSize)                                                                  \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpUrlToLog, buffer, bufferSize)
+
+#endif // DEBUG
 
 #endif

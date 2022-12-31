@@ -597,7 +597,7 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 cmdArchiveGet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -894,7 +894,7 @@ static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int cli
     FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
-void
+FV_EXTERN void
 cmdArchiveGetAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

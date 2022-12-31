@@ -15,7 +15,7 @@ Constants describing number of sub-units in an interval
 #define MSEC_PER_USEC                                               ((TimeMSec)1000)
 
 /**********************************************************************************************************************************/
-TimeMSec
+FV_EXTERN TimeMSec
 timeMSec(void)
 {
     FUNCTION_TEST_VOID();
@@ -27,7 +27,7 @@ timeMSec(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 sleepMSec(TimeMSec sleepMSec)
 {
     FUNCTION_TEST_BEGIN();
@@ -46,7 +46,7 @@ sleepMSec(TimeMSec sleepMSec)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 datePartsValid(int year, int month, int day)
 {
     FUNCTION_TEST_BEGIN();
@@ -68,7 +68,7 @@ datePartsValid(int year, int month, int day)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 timePartsValid(int hour, int minute, int second)
 {
     FUNCTION_TEST_BEGIN();
@@ -84,7 +84,7 @@ timePartsValid(int hour, int minute, int second)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 tzPartsValid(int tzHour, int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
@@ -105,7 +105,7 @@ tzPartsValid(int tzHour, int tzMinute)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 tzOffsetSeconds(int tzHour, int tzMinute)
 {
     FUNCTION_TEST_BEGIN();
@@ -129,7 +129,7 @@ tzOffsetSeconds(int tzHour, int tzMinute)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 yearIsLeap(int year)
 {
     FUNCTION_TEST_BEGIN();
@@ -140,7 +140,7 @@ yearIsLeap(int year)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 dayOfYear(int year, int month, int day)
 {
     FUNCTION_TEST_BEGIN();
@@ -161,7 +161,7 @@ dayOfYear(int year, int month, int day)
 }
 
 /**********************************************************************************************************************************/
-time_t
+FV_EXTERN time_t
 epochFromParts(int year, int month, int day, int hour, int minute, int second, int tzOffsetSecond)
 {
     FUNCTION_TEST_BEGIN();

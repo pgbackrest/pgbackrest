@@ -24,7 +24,7 @@ Statistics constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoServer *tlsServerNew(
+FV_EXTERN IoServer *tlsServerNew(
     const String *host, const String *caFile, const String *keyFile, const String *certFile, TimeMSec timeout);
 
 #endif

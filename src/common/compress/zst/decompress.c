@@ -155,7 +155,7 @@ zstDecompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 zstDecompressNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

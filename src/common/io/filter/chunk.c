@@ -146,7 +146,7 @@ ioChunkProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 ioChunkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

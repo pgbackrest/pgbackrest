@@ -340,6 +340,19 @@ restoreBackupSet(void)
                 // Else use backup set found
                 else
                 {
+                    // Is this backup part of the latest pg history?
+                    InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
+
+                    if (latestBackup.backupPgId < backupInfoPg.id)
+                    {
+                        THROW_FMT(BackupSetInvalidError,
+                            "the latest backup set found '%s' is from a prior version of " PG_NAME "\n"
+                            "HINT: was a backup created after the stanza-upgrade?\n"
+                            "HINT: specify --" CFGOPT_SET " or --" CFGOPT_TYPE "=time/lsn to restore from a prior version of "
+                                PG_NAME ".",
+                            strZ(latestBackup.backupLabel));
+                    }
+
                     result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
                     break;
                 }
@@ -2385,7 +2398,7 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cmdRestore(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

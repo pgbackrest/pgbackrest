@@ -22,7 +22,7 @@ typedef struct Exec Exec;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-Exec *execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout);
+FV_EXTERN Exec *execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -58,7 +58,7 @@ execMemContext(Exec *const this)
 Functions
 ***********************************************************************************************************************************/
 // Execute command
-void execOpen(Exec *this);
+FV_EXTERN void execOpen(Exec *this);
 
 /***********************************************************************************************************************************
 Destructor

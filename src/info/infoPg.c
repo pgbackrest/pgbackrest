@@ -59,7 +59,7 @@ infoPgNewInternal(InfoPgType type)
 }
 
 /**********************************************************************************************************************************/
-InfoPg *
+FV_EXTERN InfoPg *
 infoPgNew(InfoPgType type, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -151,7 +151,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
     FUNCTION_TEST_RETURN_VOID();
 }
 
-InfoPg *
+FV_EXTERN InfoPg *
 infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -202,7 +202,7 @@ infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFuncti
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -220,7 +220,7 @@ infoPgAdd(InfoPg *this, const InfoPgData *infoPgData)
 }
 
 /**********************************************************************************************************************************/
-InfoPg *
+FV_EXTERN InfoPg *
 infoPgSet(
     InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion)
 {
@@ -349,7 +349,7 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -380,7 +380,7 @@ infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, voi
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 infoPgArchiveId(const InfoPg *const this, const unsigned int pgDataIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -401,7 +401,7 @@ infoPgArchiveId(const InfoPg *const this, const unsigned int pgDataIdx)
 }
 
 /**********************************************************************************************************************************/
-InfoPgData
+FV_EXTERN InfoPgData
 infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -415,7 +415,7 @@ infoPgData(const InfoPg *this, unsigned int pgDataIdx)
 }
 
 /**********************************************************************************************************************************/
-InfoPgData
+FV_EXTERN InfoPgData
 infoPgDataCurrent(const InfoPg *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -428,7 +428,7 @@ infoPgDataCurrent(const InfoPg *this)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 infoPgDataCurrentId(const InfoPg *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -441,7 +441,7 @@ infoPgDataCurrentId(const InfoPg *this)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 infoPgCurrentDataId(const InfoPg *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -456,7 +456,7 @@ infoPgCurrentDataId(const InfoPg *this)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 infoPgDataToLog(const InfoPgData *this)
 {
     return strNewFmt(

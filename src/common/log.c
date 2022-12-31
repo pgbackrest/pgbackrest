@@ -105,7 +105,7 @@ static const struct LogLevel
     },
 };
 
-LogLevel
+FV_EXTERN LogLevel
 logLevelEnum(const StringId logLevelId)
 {
     FUNCTION_TEST_BEGIN();
@@ -127,7 +127,7 @@ logLevelEnum(const StringId logLevelId)
     FUNCTION_TEST_RETURN(ENUM, result);
 }
 
-const char *
+FV_EXTERN const char *
 logLevelStr(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
@@ -156,7 +156,7 @@ logAnySet(void)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-bool
+FV_EXTERN bool
 logAny(LogLevel logLevel)
 {
     FUNCTION_TEST_BEGIN();
@@ -169,7 +169,7 @@ logAny(LogLevel logLevel)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
     unsigned int processId, unsigned int logProcessMax, bool dryRunParam)
@@ -224,7 +224,7 @@ logFileClose(void)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 logFileSet(const char *logFile)
 {
     FUNCTION_TEST_BEGIN();
@@ -264,7 +264,7 @@ logFileSet(const char *logFile)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 logClose(void)
 {
     FUNCTION_TEST_VOID();
@@ -508,7 +508,7 @@ logPost(LogPreResult *logData, LogLevel logLevel, LogLevel logRangeMin, LogLevel
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 logInternal(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *message)
@@ -538,7 +538,7 @@ logInternal(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 logInternalFmt(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *format, ...)

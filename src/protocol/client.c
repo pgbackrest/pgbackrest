@@ -74,7 +74,7 @@ protocolClientFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-ProtocolClient *
+FV_EXTERN ProtocolClient *
 protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -175,7 +175,7 @@ protocolClientStateExpect(const ProtocolClient *const this, const ProtocolClient
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolClientDataPut(ProtocolClient *const this, PackWrite *const data)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -251,7 +251,7 @@ protocolClientError(ProtocolClient *const this, const ProtocolMessageType type, 
 }
 
 /**********************************************************************************************************************************/
-PackRead *
+FV_EXTERN PackRead *
 protocolClientDataGet(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -293,7 +293,7 @@ protocolClientDataGet(ProtocolClient *const this)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolClientDataEndGet(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -325,7 +325,7 @@ protocolClientDataEndGet(ProtocolClient *const this)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const command, const bool dataPut)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -356,7 +356,7 @@ protocolClientCommandPut(ProtocolClient *const this, ProtocolCommand *const comm
 }
 
 /**********************************************************************************************************************************/
-PackRead *
+FV_EXTERN PackRead *
 protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command, const bool resultRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -384,7 +384,7 @@ protocolClientExecute(ProtocolClient *const this, ProtocolCommand *const command
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolClientNoOp(ProtocolClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -403,7 +403,7 @@ protocolClientNoOp(ProtocolClient *this)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 protocolClientToLog(const ProtocolClient *this)
 {
     return strNewFmt("{name: %s, state: %s}", strZ(this->name), strZ(strIdToStr(this->state)));

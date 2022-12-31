@@ -25,7 +25,7 @@ strLstNew(void)
 }
 
 // Split a string into a string list based on a delimiter
-StringList *strLstNewSplitZ(const String *string, const char *delimiter);
+FV_EXTERN StringList *strLstNewSplitZ(const String *string, const char *delimiter);
 
 FN_INLINE_ALWAYS StringList *
 strLstNewSplit(const String *const string, const String *const delimiter)
@@ -34,10 +34,10 @@ strLstNewSplit(const String *const string, const String *const delimiter)
 }
 
 // New string list from a variant list -- all variants in the list must be type string
-StringList *strLstNewVarLst(const VariantList *sourceList);
+FV_EXTERN StringList *strLstNewVarLst(const VariantList *sourceList);
 
 // Duplicate a string list
-StringList *strLstDup(const StringList *sourceList);
+FV_EXTERN StringList *strLstDup(const StringList *sourceList);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -67,8 +67,8 @@ strLstEmpty(const StringList *const this)
 Functions
 ***********************************************************************************************************************************/
 // Add String to the list
-String *strLstAdd(StringList *this, const String *string);
-String *strLstAddSubN(StringList *this, const String *string, size_t offset, size_t size);
+FV_EXTERN String *strLstAdd(StringList *this, const String *string);
+FV_EXTERN String *strLstAddSubN(StringList *this, const String *string, size_t offset, size_t size);
 
 FN_INLINE_ALWAYS String *
 strLstAddSub(StringList *const this, const String *const string, const size_t size)
@@ -76,9 +76,9 @@ strLstAddSub(StringList *const this, const String *const string, const size_t si
     return strLstAddSubN(this, string, 0, size);
 }
 
-String *strLstAddFmt(StringList *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
-String *strLstAddZ(StringList *this, const char *string);
-String *strLstAddZSubN(StringList *this, const char *string, size_t offset, size_t size);
+FV_EXTERN String *strLstAddFmt(StringList *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FV_EXTERN String *strLstAddZ(StringList *this, const char *string);
+FV_EXTERN String *strLstAddZSubN(StringList *this, const char *string, size_t offset, size_t size);
 
 FN_INLINE_ALWAYS String *
 strLstAddZSub(StringList *const this, const char *const string, const size_t size)
@@ -86,7 +86,7 @@ strLstAddZSub(StringList *const this, const char *const string, const size_t siz
     return strLstAddZSubN(this, string, 0, size);
 }
 
-String *strLstAddIfMissing(StringList *this, const String *string);
+FV_EXTERN String *strLstAddIfMissing(StringList *this, const String *string);
 
 // Does the specified string exist in the list?
 FN_INLINE_ALWAYS bool
@@ -105,10 +105,10 @@ typedef struct StrLstFindIdxParam
 #define strLstFindIdxP(this, string, ...)                                                                                          \
     strLstFindIdx(this, string, (StrLstFindIdxParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-unsigned int strLstFindIdx(const StringList *this, const String *string, StrLstFindIdxParam param);
+FV_EXTERN unsigned int strLstFindIdx(const StringList *this, const String *string, StrLstFindIdxParam param);
 
 // Insert into the list
-String *strLstInsert(StringList *this, unsigned int listIdx, const String *string);
+FV_EXTERN String *strLstInsert(StringList *this, unsigned int listIdx, const String *string);
 
 // Get a string by index
 FN_INLINE_ALWAYS String *
@@ -118,7 +118,7 @@ strLstGet(const StringList *const this, const unsigned int listIdx)
 }
 
 // Join a list of strings into a single string using the specified separator and quote with specified quote character
-String *strLstJoinQuote(const StringList *this, const char *separator, const char *quote);
+FV_EXTERN String *strLstJoinQuote(const StringList *this, const char *separator, const char *quote);
 
 // Join a list of strings into a single string using the specified separator
 FN_INLINE_ALWAYS String *
@@ -129,7 +129,7 @@ strLstJoin(const StringList *const this, const char *const separator)
 
 // Return all items in this list which are not in the anti list. The input lists must *both* be sorted ascending or the results will
 // be undefined.
-StringList *strLstMergeAnti(const StringList *this, const StringList *anti);
+FV_EXTERN StringList *strLstMergeAnti(const StringList *this, const StringList *anti);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS StringList *
@@ -140,7 +140,7 @@ strLstMove(StringList *const this, MemContext *const parentNew)
 
 // Return a null-terminated array of pointers to the zero-terminated strings in this list. DO NOT override const and modify any of
 // the strings in this array, though it is OK to modify the array itself.
-const char **strLstPtr(const StringList *this);
+FV_EXTERN const char **strLstPtr(const StringList *this);
 
 // Remove an item from the list
 FN_INLINE_ALWAYS bool
@@ -174,7 +174,7 @@ strLstFree(StringList *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *strLstToLog(const StringList *this);
+FV_EXTERN String *strLstToLog(const StringList *this);
 
 #define FUNCTION_LOG_STRING_LIST_TYPE                                                                                              \
     StringList *

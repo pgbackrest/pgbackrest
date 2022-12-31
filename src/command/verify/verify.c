@@ -488,7 +488,7 @@ verifyManifestFile(
 /***********************************************************************************************************************************
 Check the history in the info files
 ***********************************************************************************************************************************/
-void
+static void
 verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
 {
     FUNCTION_TEST_BEGIN();
@@ -1711,7 +1711,7 @@ verifyProcess(const bool verboseText)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cmdVerify(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

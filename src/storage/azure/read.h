@@ -10,7 +10,7 @@ Azure Storage Read
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageRead *storageReadAzureNew(
+FV_EXTERN StorageRead *storageReadAzureNew(
     StorageAzure *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
 
 #endif

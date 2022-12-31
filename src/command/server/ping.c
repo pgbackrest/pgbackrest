@@ -11,7 +11,7 @@ Server Ping Command
 #include "protocol/client.h"
 #include "protocol/helper.h"
 
-void
+FV_EXTERN void
 cmdServerPing(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

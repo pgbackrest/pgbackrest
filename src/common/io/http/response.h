@@ -27,7 +27,7 @@ HTTP Response Constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpResponse *httpResponseNew(HttpSession *session, const String *verb, bool contentCache);
+FV_EXTERN HttpResponse *httpResponseNew(HttpSession *session, const String *verb, bool contentCache);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -80,7 +80,7 @@ httpResponseCodeOk(const HttpResponse *const this)
 }
 
 // Fetch all response content. Content will be cached so it can be retrieved again without additional cost.
-const Buffer *httpResponseContent(HttpResponse *this);
+FV_EXTERN const Buffer *httpResponseContent(HttpResponse *this);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS HttpResponse *
@@ -101,7 +101,7 @@ httpResponseFree(HttpResponse *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *httpResponseToLog(const HttpResponse *this);
+FV_EXTERN String *httpResponseToLog(const HttpResponse *this);
 
 #define FUNCTION_LOG_HTTP_RESPONSE_TYPE                                                                                            \
     HttpResponse *

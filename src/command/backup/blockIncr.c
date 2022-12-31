@@ -54,7 +54,7 @@ typedef struct BlockIncr
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *
+static String *
 blockIncrToLog(const BlockIncr *this)
 {
     return strNewFmt("{blockSize: %zu}", this->blockSize);
@@ -321,7 +321,7 @@ blockIncrInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 blockIncrNew(
     const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset,
     const Buffer *const blockMapPrior, const IoFilter *const compress, const IoFilter *const encrypt)
@@ -415,7 +415,7 @@ blockIncrNew(
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
-IoFilter *
+FV_EXTERN IoFilter *
 blockIncrNewPack(const Pack *const paramList)
 {
     IoFilter *result = NULL;

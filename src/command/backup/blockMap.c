@@ -58,7 +58,7 @@ lstComparatorBlockMapRef(const void *const blockMapRef1, const void *const block
     FUNCTION_TEST_RETURN(INT, 0);
 }
 
-BlockMap *
+FV_EXTERN BlockMap *
 blockMapNewRead(IoRead *const map)
 {
     FUNCTION_TEST_BEGIN();
@@ -142,7 +142,7 @@ blockMapNewRead(IoRead *const map)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 blockMapWrite(const BlockMap *const this, IoWrite *const output)
 {
     FUNCTION_TEST_BEGIN();

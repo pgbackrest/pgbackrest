@@ -62,7 +62,7 @@ ioServerFree(IoServer *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *ioServerToLog(const IoServer *this);
+FV_EXTERN String *ioServerToLog(const IoServer *this);
 
 #define FUNCTION_LOG_IO_SERVER_TYPE                                                                                                \
     IoServer *

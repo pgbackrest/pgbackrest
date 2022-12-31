@@ -1,4 +1,21 @@
 ####################################################################################################################################
+# Change extern'd functions/variables to static when unity is enabled
+####################################################################################################################################
+arg_unity = []
+
+if get_option('unity') == 'on'
+    configuration.set('FV_EXTERN', 'static', description: 'Change extern\'d functions/variables to static')
+    configuration.set('VR_EXTERN', 'static', description: 'Change extern\'d variable definitions to static')
+
+    # Add args to builds to prevent non-pgbackrest binaries failing due to unused functions
+    arg_unity += '-Wno-unused-function'
+else
+    configuration.set('FV_EXTERN', 'extern', description: 'Leave extern\'d functions/variables alone')
+    configuration.set('VR_EXTERN', '', description: 'Leave extern\'d variable definitions alone')
+endif
+
+
+####################################################################################################################################
 # Write configuration
 ####################################################################################################################################
 configure_file(output: 'build.auto.h', configuration: configuration)
@@ -31,7 +48,6 @@ src_common = files(
 	'common/type/list.c',
 	'common/type/object.c',
 	'common/type/pack.c',
-	'common/type/string.c',
 	'common/type/stringZ.c',
 	'common/type/stringId.c',
 	'common/type/stringList.c',
@@ -55,6 +71,8 @@ src_common = files(
 ####################################################################################################################################
 src_build_code = [
 	'build/common/render.c',
+	'build/common/string.c',
+	'build/common/xml.c',
 	'build/common/yaml.c',
 	'build/config/parse.c',
 	'build/config/render.c',
@@ -67,7 +85,6 @@ src_build_code = [
 	'build/main.c',
 	'common/compress/bz2/common.c',
 	'common/compress/bz2/compress.c',
-	'common/type/xml.c',
 ]
 
 build_code = executable(
@@ -78,6 +95,9 @@ build_code = executable(
         lib_bz2,
         lib_xml,
         lib_yaml
+    ],
+    c_args: [
+        arg_unity,
     ],
 )
 
@@ -184,6 +204,7 @@ src_pgbackrest = [
 	'common/lock.c',
 	'common/stat.c',
 	'common/type/json.c',
+	'common/type/string.c',
 	'common/type/xml.c',
 	'config/config.c',
 	'config/exec.c',

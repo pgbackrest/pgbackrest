@@ -50,7 +50,7 @@ httpProtocolTypeStr(HttpProtocolType type)
 }
 
 /**********************************************************************************************************************************/
-HttpUrl *
+FV_EXTERN HttpUrl *
 httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -195,7 +195,9 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 }
 
 /**********************************************************************************************************************************/
-String *
+#ifdef DEBUG
+
+FV_EXTERN String *
 httpUrlToLog(const HttpUrl *this)
 {
     // Is IPv6 address?
@@ -205,3 +207,5 @@ httpUrlToLog(const HttpUrl *this)
         "{%s://%s%s%s:%u%s}", strZ(httpProtocolTypeStr(this->pub.type)), ipv6 ? "[" : "", strZ(this->pub.host), ipv6 ? "]" : "",
         this->pub.port, strZ(this->pub.path));
 }
+
+#endif // DEBUG

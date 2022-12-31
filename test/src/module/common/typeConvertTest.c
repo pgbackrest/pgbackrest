@@ -29,8 +29,6 @@ testRun(void)
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
-        TEST_ERROR(cvtCharToZ('A', buffer, 1), AssertError, "buffer overflow");
-
         TEST_RESULT_UINT(cvtCharToZ('C', buffer, STACK_TRACE_PARAM_MAX), 1, "convert char to string");
         TEST_RESULT_Z(buffer, "C", "    check buffer");
     }
@@ -116,7 +114,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtSizeToZ() and cvtSSizeToZ()"))
+    if (testBegin("cvtSizeToZ()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
@@ -124,12 +122,6 @@ testRun(void)
 
         TEST_RESULT_UINT(cvtSizeToZ(4294967295, buffer, STACK_TRACE_PARAM_MAX), 10, "convert size to string");
         TEST_RESULT_Z(buffer, "4294967295", "    check buffer");
-
-        // ------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(cvtSSizeToZ(-9999, buffer, 4), AssertError, "buffer overflow");
-
-        TEST_RESULT_UINT(cvtSSizeToZ(-9999, buffer, STACK_TRACE_PARAM_MAX), 5, "convert ssize to string");
-        TEST_RESULT_Z(buffer, "-9999", "    check buffer");
     }
 
     // *****************************************************************************************************************************

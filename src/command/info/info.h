@@ -8,6 +8,6 @@ Info Command
 Functions
 ***********************************************************************************************************************************/
 // Render info and output to stdout
-void cmdInfo(void);
+FV_EXTERN void cmdInfo(void);
 
 #endif

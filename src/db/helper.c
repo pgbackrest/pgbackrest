@@ -47,7 +47,7 @@ dbGetIdx(unsigned int pgIdx)
     FUNCTION_LOG_RETURN(DB, result);
 }
 
-DbGetResult
+FV_EXTERN DbGetResult
 dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

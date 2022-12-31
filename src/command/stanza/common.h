@@ -11,9 +11,9 @@ Stanza Commands Handler
 Functions
 ***********************************************************************************************************************************/
 // Generate a cipher
-String *cipherPassGen(CipherType cipherType);
+FV_EXTERN String *cipherPassGen(CipherType cipherType);
 
 // Validate and return database information
-PgControl pgValidate(void);
+FV_EXTERN PgControl pgValidate(void);
 
 #endif

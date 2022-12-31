@@ -65,7 +65,7 @@ exitOnSignal(int signalType)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 exitInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -105,7 +105,7 @@ exitErrorDetail(void)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-int
+FV_EXTERN int
 exitSafe(int result, bool error, SignalType signalType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

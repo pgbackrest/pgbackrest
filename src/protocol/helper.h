@@ -30,42 +30,42 @@ Constants
 Getters/Setters
 ***********************************************************************************************************************************/
 // Is pg local?
-bool pgIsLocal(unsigned int pgIdx);
+FV_EXTERN bool pgIsLocal(unsigned int pgIdx);
 
 // Error if PostgreSQL is not local, i.e. pg-host is set
-void pgIsLocalVerify(void);
+FV_EXTERN void pgIsLocalVerify(void);
 
 // Is the repository local?
-bool repoIsLocal(unsigned int repoIdx);
+FV_EXTERN bool repoIsLocal(unsigned int repoIdx);
 
 // Error if the repository is not local
-void repoIsLocalVerify(void);
-void repoIsLocalVerifyIdx(unsigned int repoIdx);
+FV_EXTERN void repoIsLocalVerify(void);
+FV_EXTERN void repoIsLocalVerifyIdx(unsigned int repoIdx);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Send keepalives to all remotes
-void protocolKeepAlive(void);
+FV_EXTERN void protocolKeepAlive(void);
 
 // Local protocol client
-ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId);
+FV_EXTERN ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostId, unsigned int protocolId);
 
 // Free (shutdown) a local
-void protocolLocalFree(unsigned int protocolId);
+FV_EXTERN void protocolLocalFree(unsigned int protocolId);
 
 // Remote protocol client
-ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
+FV_EXTERN ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
 
 // Free (shutdown) a remote
-void protocolRemoteFree(unsigned int hostId);
+FV_EXTERN void protocolRemoteFree(unsigned int hostId);
 
 // Initialize a server
-ProtocolServer *protocolServer(IoServer *const tlsServer, IoSession *const socketSession);
+FV_EXTERN ProtocolServer *protocolServer(IoServer *const tlsServer, IoSession *const socketSession);
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
-void protocolFree(void);
+FV_EXTERN void protocolFree(void);
 
 #endif

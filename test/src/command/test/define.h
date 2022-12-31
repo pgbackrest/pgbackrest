@@ -5,7 +5,7 @@ Parse Define Yaml
 #define TEST_COMMAND_TEST_DEFINE_H
 
 #include "common/type/list.h"
-#include "common/type/string.h"
+#include "build/common/string.h"
 #include "storage/storage.h"
 
 // Test definition types
@@ -21,7 +21,7 @@ typedef struct TestDefCoverage
 {
     const String *name;                                             // Code module name
     bool coverable;                                                 // Does this code module include coverable code?
-    bool include;                                                   // Is this module included in another module?
+    bool included;                                                  // Is this module included in another module?
 } TestDefCoverage;
 
 // Harness modules

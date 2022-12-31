@@ -65,7 +65,7 @@ static struct LockLocal
 };
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 lockFileName(const String *const stanza, const LockType lockType)
 {
     FUNCTION_TEST_BEGIN();
@@ -135,7 +135,7 @@ lockReadFileData(const String *const lockFile, const int fd)
 }
 
 /**********************************************************************************************************************************/
-LockReadResult
+FV_EXTERN LockReadResult
 lockReadFile(const String *const lockFile, const LockReadFileParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -195,7 +195,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
 }
 
 /**********************************************************************************************************************************/
-LockReadResult
+FV_EXTERN LockReadResult
 lockRead(const String *const lockPath, const String *const stanza, const LockType lockType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -224,7 +224,7 @@ lockRead(const String *const lockPath, const String *const stanza, const LockTyp
 /***********************************************************************************************************************************
 Write contents of lock file
 ***********************************************************************************************************************************/
-void
+FV_EXTERN void
 lockWriteData(const LockType lockType, const LockWriteDataParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -384,7 +384,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
-bool
+FV_EXTERN bool
 lockAcquire(
     const String *lockPath, const String *stanza, const String *execId, LockType lockType, TimeMSec lockTimeout, bool failOnNoLock)
 {
@@ -487,7 +487,7 @@ lockReleaseFile(const int lockFd, const String *const lockFile)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-bool
+FV_EXTERN bool
 lockRelease(bool failOnNoLock)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

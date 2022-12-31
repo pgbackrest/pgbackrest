@@ -9,10 +9,10 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct TestBuild TestBuild;
 
+#include "build/common/string.h"
 #include "command/test/define.h"
 #include "common/logLevel.h"
 #include "common/type/object.h"
-#include "common/type/string.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************

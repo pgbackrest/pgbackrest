@@ -275,7 +275,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     FUNCTION_TEST_RETURN_TYPE_P(ManifestFilePack, (ManifestFilePack *)result);
 }
 
-ManifestFile
+FV_EXTERN ManifestFile
 manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const filePack)
 {
     FUNCTION_TEST_BEGIN();
@@ -374,7 +374,7 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     FUNCTION_TEST_RETURN_TYPE(ManifestFile, result);
 }
 
-void
+FV_EXTERN void
 manifestFileAdd(Manifest *const this, ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
@@ -423,7 +423,7 @@ manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, 
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 manifestLinkAdd(Manifest *this, const ManifestLink *link)
 {
     FUNCTION_TEST_BEGIN();
@@ -482,7 +482,7 @@ manifestPathAdd(Manifest *this, const ManifestPath *path)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 manifestTargetAdd(Manifest *this, const ManifestTarget *target)
 {
     FUNCTION_TEST_BEGIN();
@@ -724,7 +724,7 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
     FUNCTION_LOG_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 manifestLinkCheck(const Manifest *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1252,7 +1252,7 @@ manifestBuildInfo(
 #define DB_PATH_EXP                                                                                                                \
     "(" MANIFEST_TARGET_PGDATA "/(" PG_PATH_GLOBAL "|" PG_PATH_BASE "/[0-9]+)|" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+)"
 
-Manifest *
+FV_EXTERN Manifest *
 manifestNewBuild(
     const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const time_t timestampStart,
     const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const StringList *const excludeList,
@@ -1480,7 +1480,7 @@ manifestNewBuild(
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1537,7 +1537,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type, const String *archiveStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1683,7 +1683,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 manifestBuildComplete(
     Manifest *const this, const String *const lsnStart, const String *const archiveStart, const time_t timestampStop,
     const String *const lsnStop, const String *const archiveStop, const unsigned int pgId, const uint64_t pgSystemId,
@@ -2308,7 +2308,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
     FUNCTION_TEST_RETURN_VOID();
 }
 
-Manifest *
+FV_EXTERN Manifest *
 manifestNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -2844,7 +2844,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 manifestSave(Manifest *this, IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -2881,7 +2881,7 @@ manifestSave(Manifest *this, IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 manifestValidate(Manifest *this, bool strict)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -2931,28 +2931,6 @@ manifestValidate(Manifest *this, bool strict)
 }
 
 /***********************************************************************************************************************************
-Db functions and getters/setters
-***********************************************************************************************************************************/
-const ManifestDb *
-manifestDbFind(const Manifest *this, const String *name)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    const ManifestDb *result = lstFind(this->pub.dbList, &name);
-
-    if (result == NULL)
-        THROW_FMT(AssertError, "unable to find '%s' in manifest db list", strZ(name));
-
-    FUNCTION_TEST_RETURN_CONST(MANIFEST_DB, result);
-}
-
-/***********************************************************************************************************************************
 File functions and getters/setters
 ***********************************************************************************************************************************/
 static ManifestFilePack **
@@ -2988,7 +2966,7 @@ manifestFilePackFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN_TYPE_P(ManifestFilePack, *manifestFilePackFindInternal(this, name));
 }
 
-void
+FV_EXTERN void
 manifestFileRemove(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -3005,7 +2983,7 @@ manifestFileRemove(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
@@ -3030,7 +3008,7 @@ manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 /***********************************************************************************************************************************
 Link functions and getters/setters
 ***********************************************************************************************************************************/
-const ManifestLink *
+FV_EXTERN const ManifestLink *
 manifestLinkFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -3049,7 +3027,7 @@ manifestLinkFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN_CONST(MANIFEST_LINK, result);
 }
 
-void
+FV_EXTERN void
 manifestLinkRemove(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -3066,7 +3044,7 @@ manifestLinkRemove(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 manifestLinkUpdate(const Manifest *this, const String *name, const String *destination)
 {
     FUNCTION_TEST_BEGIN();
@@ -3094,7 +3072,7 @@ manifestLinkUpdate(const Manifest *this, const String *name, const String *desti
 /***********************************************************************************************************************************
 Path functions and getters/setters
 ***********************************************************************************************************************************/
-const ManifestPath *
+FV_EXTERN const ManifestPath *
 manifestPathFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -3113,7 +3091,7 @@ manifestPathFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN_CONST(MANIFEST_PATH, result);
 }
 
-String *
+FV_EXTERN String *
 manifestPathPg(const String *manifestPath)
 {
     FUNCTION_TEST_BEGIN();
@@ -3143,7 +3121,7 @@ manifestPathPg(const String *manifestPath)
 /***********************************************************************************************************************************
 Target functions and getters/setters
 ***********************************************************************************************************************************/
-const ManifestTarget *
+FV_EXTERN const ManifestTarget *
 manifestTargetFind(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -3162,7 +3140,7 @@ manifestTargetFind(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN_CONST(MANIFEST_TARGET, result);
 }
 
-String *
+FV_EXTERN String *
 manifestTargetPath(const Manifest *this, const ManifestTarget *target)
 {
     FUNCTION_TEST_BEGIN();
@@ -3200,7 +3178,7 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-void
+FV_EXTERN void
 manifestTargetRemove(const Manifest *this, const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -3217,7 +3195,7 @@ manifestTargetRemove(const Manifest *this, const String *name)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file)
 {
     FUNCTION_TEST_BEGIN();
@@ -3251,7 +3229,7 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-void
+FV_EXTERN void
 manifestBackupLabelSet(Manifest *this, const String *backupLabel)
 {
     FUNCTION_TEST_BEGIN();
@@ -3320,7 +3298,7 @@ manifestLoadFileCallback(void *const data, const unsigned int try)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-Manifest *
+FV_EXTERN Manifest *
 manifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

@@ -8,6 +8,6 @@ Verify Command
 Functions
 ***********************************************************************************************************************************/
 // Verify the contents of the repository
-void cmdVerify(void);
+FV_EXTERN void cmdVerify(void);
 
 #endif

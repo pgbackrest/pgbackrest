@@ -18,7 +18,7 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *deltaMapNew(size_t blockSize);
-IoFilter *deltaMapNewPack(const Pack *paramList);
+FV_EXTERN IoFilter *deltaMapNew(size_t blockSize);
+FV_EXTERN IoFilter *deltaMapNewPack(const Pack *paramList);
 
 #endif

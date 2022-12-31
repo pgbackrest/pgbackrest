@@ -21,7 +21,7 @@ Constant variants that are generally useful
 ***********************************************************************************************************************************/
 // Used to declare Bool Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
 #define VARIANT_BOOL_EXTERN(name, dataParam)                                                                                       \
-    const Variant *const name = ((const Variant *)&(const VariantBoolPub){.type = varTypeBool, .data = dataParam})
+    VR_EXTERN const Variant *const name = ((const Variant *)&(const VariantBoolPub){.type = varTypeBool, .data = dataParam})
 
 VARIANT_BOOL_EXTERN(BOOL_FALSE_VAR,                                 false);
 VARIANT_BOOL_EXTERN(BOOL_TRUE_VAR,                                  true);
@@ -92,7 +92,7 @@ static const char *const variantTypeName[] =
 };
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varDup(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -145,7 +145,7 @@ varDup(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 varEq(const Variant *this1, const Variant *this2)
 {
     FUNCTION_TEST_BEGIN();
@@ -200,7 +200,7 @@ varEq(const Variant *this1, const Variant *this2)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varNewBool(bool data)
 {
     FUNCTION_TEST_BEGIN();
@@ -228,7 +228,7 @@ varNewBool(bool data)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 varBool(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -241,7 +241,7 @@ varBool(const Variant *this)
     FUNCTION_TEST_RETURN(BOOL, ((VariantBool *)this)->pub.data);
 }
 
-bool
+FV_EXTERN bool
 varBoolForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -309,7 +309,7 @@ varBoolForce(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varNewInt(int data)
 {
     FUNCTION_TEST_BEGIN();
@@ -337,7 +337,7 @@ varNewInt(int data)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 varInt(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -350,7 +350,7 @@ varInt(const Variant *this)
     FUNCTION_TEST_RETURN(INT, ((VariantInt *)this)->pub.data);
 }
 
-int
+FV_EXTERN int
 varIntForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -425,7 +425,7 @@ varIntForce(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varNewInt64(int64_t data)
 {
     FUNCTION_TEST_BEGIN();
@@ -453,7 +453,7 @@ varNewInt64(int64_t data)
 }
 
 /**********************************************************************************************************************************/
-int64_t
+FV_EXTERN int64_t
 varInt64(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -466,7 +466,7 @@ varInt64(const Variant *this)
     FUNCTION_TEST_RETURN(INT64, ((VariantInt64 *)this)->pub.data);
 }
 
-int64_t
+FV_EXTERN int64_t
 varInt64Force(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -525,7 +525,7 @@ varInt64Force(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varNewUInt(unsigned int data)
 {
     FUNCTION_TEST_BEGIN();
@@ -553,7 +553,7 @@ varNewUInt(unsigned int data)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 varUInt(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -566,7 +566,7 @@ varUInt(const Variant *this)
     FUNCTION_TEST_RETURN(UINT, ((VariantUInt *)this)->pub.data);
 }
 
-unsigned int
+FV_EXTERN unsigned int
 varUIntForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -650,7 +650,7 @@ varUIntForce(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varNewUInt64(uint64_t data)
 {
     FUNCTION_TEST_BEGIN();
@@ -678,7 +678,7 @@ varNewUInt64(uint64_t data)
 }
 
 /**********************************************************************************************************************************/
-uint64_t
+FV_EXTERN uint64_t
 varUInt64(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -691,7 +691,7 @@ varUInt64(const Variant *this)
     FUNCTION_TEST_RETURN(UINT64, ((VariantUInt64 *)this)->pub.data);
 }
 
-uint64_t
+FV_EXTERN uint64_t
 varUInt64Force(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -762,7 +762,7 @@ varUInt64Force(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varNewKv(KeyValue *data)
 {
     FUNCTION_TEST_BEGIN();
@@ -789,7 +789,7 @@ varNewKv(KeyValue *data)
 }
 
 /**********************************************************************************************************************************/
-KeyValue *
+FV_EXTERN KeyValue *
 varKv(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -808,7 +808,7 @@ varKv(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varNewStr(const String *data)
 {
     FUNCTION_TEST_BEGIN();
@@ -868,7 +868,7 @@ varNewStr(const String *data)
             };
 
             // Assign the string
-            strncpy(pubData->buffer, strZ(data), strSize(data));
+            memcpy(pubData->buffer, strZ(data), strSize(data));
             pubData->buffer[strSize(data)] = '\0';
         }
     }
@@ -877,7 +877,7 @@ varNewStr(const String *data)
     FUNCTION_TEST_RETURN(VARIANT, (Variant *)this);
 }
 
-Variant *
+FV_EXTERN Variant *
 varNewStrZ(const char *data)
 {
     FUNCTION_TEST_BEGIN();
@@ -888,7 +888,7 @@ varNewStrZ(const char *data)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 varStr(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -906,7 +906,7 @@ varStr(const Variant *this)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-String *
+FV_EXTERN String *
 varStrForce(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -971,7 +971,7 @@ varStrForce(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-Variant *
+FV_EXTERN Variant *
 varNewVarLst(const VariantList *data)
 {
     FUNCTION_TEST_BEGIN();
@@ -998,7 +998,7 @@ varNewVarLst(const VariantList *data)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+FV_EXTERN VariantList *
 varVarLst(const Variant *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1017,7 +1017,7 @@ varVarLst(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 varToLog(const Variant *this)
 {
     String *result = NULL;

@@ -143,7 +143,7 @@ bz2DecompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 bz2DecompressNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

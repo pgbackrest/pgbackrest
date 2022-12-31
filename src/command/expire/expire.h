@@ -8,6 +8,6 @@ Expire Command
 Functions
 ***********************************************************************************************************************************/
 // Expire backups and archives
-void cmdExpire(void);
+FV_EXTERN void cmdExpire(void);
 
 #endif

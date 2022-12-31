@@ -110,7 +110,7 @@ storageReadS3Eof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
+FV_EXTERN StorageRead *
 storageReadS3New(
     StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit)
 {

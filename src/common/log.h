@@ -21,24 +21,24 @@ Max size allowed for a single log message including header
 Functions
 ***********************************************************************************************************************************/
 // Initialize the log system
-void logInit(
+FV_EXTERN void logInit(
     LogLevel logLevelStdOutParam, LogLevel logLevelStdErrParam, LogLevel logLevelFileParam, bool logTimestampParam,
     unsigned int processId, unsigned int logProcessMax, bool dryRun);
 
 // Close the log system
-void logClose(void);
+FV_EXTERN void logClose(void);
 
 // Set the log file. Returns true if file logging is off or the log file was successfully opened, false if the log file could not be
 // opened.
-bool logFileSet(const char *logFile);
+FV_EXTERN bool logFileSet(const char *logFile);
 
 // Check if a log level will be logged to any output. This is useful for log messages that are expensive to generate and should be
 // skipped if they will be discarded.
-bool logAny(LogLevel logLevel);
+FV_EXTERN bool logAny(LogLevel logLevel);
 
 // Convert log level to string and vice versa
-LogLevel logLevelEnum(StringId logLevelId);
-const char *logLevelStr(LogLevel logLevel);
+FV_EXTERN LogLevel logLevelEnum(StringId logLevelId);
+FV_EXTERN const char *logLevelStr(LogLevel logLevel);
 
 /***********************************************************************************************************************************
 Macros
@@ -152,12 +152,12 @@ do                                                                              
 Internal Functions (in virtually all cases the macros above should be used in preference to these functions)
 ***********************************************************************************************************************************/
 // Log function
-void logInternal(
+FV_EXTERN void logInternal(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *message);
 
 // Log function with formatting
-void logInternalFmt(
+FV_EXTERN void logInternalFmt(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
     const char *functionName, int code, const char *format, ...) __attribute__((format(printf, 8, 9)));
 

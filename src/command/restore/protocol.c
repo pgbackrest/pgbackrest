@@ -13,7 +13,7 @@ Restore Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
