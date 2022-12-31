@@ -10,7 +10,7 @@ Start Command
 #include "storage/storage.h"
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cmdStart(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

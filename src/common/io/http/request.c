@@ -175,7 +175,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 }
 
 /**********************************************************************************************************************************/
-HttpRequest *
+FV_EXTERN HttpRequest *
 httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
@@ -219,7 +219,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
 }
 
 /**********************************************************************************************************************************/
-HttpResponse *
+FV_EXTERN HttpResponse *
 httpRequestResponse(HttpRequest *this, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
@@ -233,7 +233,7 @@ httpRequestResponse(HttpRequest *this, bool contentCache)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 httpRequestError(const HttpRequest *this, HttpResponse *response)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -302,7 +302,7 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 httpRequestToLog(const HttpRequest *this)
 {
     return strNewFmt(

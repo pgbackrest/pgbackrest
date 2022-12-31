@@ -22,7 +22,7 @@ struct Ini
 };
 
 /**********************************************************************************************************************************/
-Ini *
+FV_EXTERN Ini *
 iniNew(void)
 {
     FUNCTION_TEST_VOID();
@@ -77,7 +77,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key, bool r
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 iniGet(const Ini *this, const String *section, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -89,25 +89,7 @@ iniGet(const Ini *this, const String *section, const String *key)
     FUNCTION_TEST_RETURN_CONST(STRING, varStr(iniGetInternal(this, section, key, true)));
 }
 
-/**********************************************************************************************************************************/
-const String *
-iniGetDefault(const Ini *this, const String *section, const String *key, const String *defaultValue)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-        FUNCTION_TEST_PARAM(STRING, section);
-        FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, defaultValue);
-    FUNCTION_TEST_END();
-
-    // Get the value
-    const Variant *result = iniGetInternal(this, section, key, false);
-
-    FUNCTION_TEST_RETURN_CONST(STRING, result == NULL ? defaultValue : varStr(result));
-}
-
-/**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 iniGetList(const Ini *this, const String *section, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -123,7 +105,7 @@ iniGetList(const Ini *this, const String *section, const String *key)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 iniSectionKeyIsList(const Ini *this, const String *section, const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -139,7 +121,7 @@ iniSectionKeyIsList(const Ini *this, const String *section, const String *key)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 iniSectionKeyList(const Ini *this, const String *section)
 {
     FUNCTION_TEST_BEGIN();
@@ -172,31 +154,7 @@ iniSectionKeyList(const Ini *this, const String *section)
 }
 
 /**********************************************************************************************************************************/
-StringList *
-iniSectionList(const Ini *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(INI, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    StringList *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Get the sections from the keyList
-        result = strLstNewVarLst(kvKeyList(this->store));
-
-        strLstMove(result, memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(STRING_LIST, result);
-}
-
-/**********************************************************************************************************************************/
-void
+FV_EXTERN void
 iniParse(Ini *this, const String *content)
 {
     FUNCTION_TEST_BEGIN();
@@ -273,7 +231,7 @@ iniParse(Ini *this, const String *content)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 iniSet(Ini *this, const String *section, const String *key, const String *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -304,7 +262,7 @@ iniSet(Ini *this, const String *section, const String *key, const String *value)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 iniLoad(
     IoRead *const read, void (*callbackFunction)(void *data, const String *section, const String *key, const String *value),
     void *const callbackData)

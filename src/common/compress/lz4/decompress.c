@@ -156,7 +156,7 @@ lz4DecompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 lz4DecompressNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

@@ -27,6 +27,34 @@
 
                         <p>Remove support for <proper>PostgreSQL</proper> <id>9.0</id>/<id>9.1</id>/<id>9.2</id>.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-issue id="1942"/>
+                        <github-pull-request id="1967"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="soulou"/>
+                            <release-item-contributor id="stefan.fercot"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Restore errors when no backup matches the current version of <postgres/>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="1216"/>
+                        <github-issue id="1931"/>
+                        <github-pull-request id="1962"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="gkleen"/>
+                            <release-item-ideator id="viperru"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add <br-option>compress-level</br-option> range checking for each <br-option>compress-type</br-option>.</p>
+                    </release-item>
                 </release-improvement-list>
 
                 <release-development-list>
@@ -48,8 +76,76 @@
 
                         <p>Add repository checksum to make verify and resume more efficient.</p>
                     </release-item>
+
+                    <release-item>
+                        <commit subject="Mark functions not used externally as static."/>
+                        <commit subject="Remove declaration for function that is no longer defined."/>
+                        <commit subject="Remove unused functions."/>
+                        <commit subject="Put memContextSize() in a DEBUG block."/>
+                        <commit subject="Add explicit keyword for covered modules included in other modules."/>
+                        <commit subject="Move strReplace() and strUpper() to build/common/string module."/>
+                        <commit subject="Move xmlNodeAttribute() to build/common/xml module."/>
+                        <commit subject="Use error*() getters where possible."/>
+                        <commit subject="Move regExpMatchPtr()/regExpMatchStr() to build/common/regExp module."/>
+                        <commit subject="Move storageHelperFree() to storageHelper test harness."/>
+                        <commit subject="Use memcpy() instead of strncpy when source size is known."/>
+                        <commit subject="Put logging functions unused by release builds into DEBUG blocks."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add meson unity build and tests.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-issue id="1910"/>
+                        <github-pull-request id="1963"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="rudonx"/>
+                            <release-item-ideator id="gmustdie"/>
+                            <release-item-ideator id="ivan.shelestov"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add replacement for linefeeds in monitoring example.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-issue id="987"/>
+                        <github-issue id="1314"/>
+                        <github-pull-request id="1960"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="anton.kurochkin"/>
+                            <release-item-ideator id="chris.bandy"/>
+                            <release-item-contributor id="chris.bandy"/>
+                            <release-item-reviewer id="david.steele"/>
+                            <release-item-reviewer id="anton.kurochkin"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Clarify <br-option>target-action</br-option> behavior on various <postgres/> versions.</p>
+                    </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1966"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Updates and clarifications to index page.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
         </release>
 
         <release date="2022-11-28" version="2.43" title="Bug Fix">
@@ -12046,6 +12142,16 @@
             <contributor-id type="github">geirra</contributor-id>
         </contributor>
 
+        <contributor id="gkleen">
+            <contributor-name-display>gkleen</contributor-name-display>
+            <contributor-id type="github">gkleen</contributor-id>
+        </contributor>
+
+        <contributor id="gmustdie">
+            <contributor-name-display>gmustdie</contributor-name-display>
+            <contributor-id type="github">gmustdie</contributor-id>
+        </contributor>
+
         <contributor id="greg.sabino.mullane">
             <contributor-name-display>Greg Sabino Mullane</contributor-name-display>
             <contributor-id type="github">turnstep</contributor-id>
@@ -12088,6 +12194,11 @@
         <contributor id="isaac.yuen">
             <contributor-name-display>Isaac Yuen</contributor-name-display>
             <contributor-id type="github">Isaacwhyuenac</contributor-id>
+        </contributor>
+
+        <contributor id="ivan.shelestov">
+            <contributor-name-display>Ivan Shelestov</contributor-name-display>
+            <contributor-id type="github">Shelestov7</contributor-id>
         </contributor>
 
         <contributor id="reid.thompson">
@@ -12478,6 +12589,11 @@
             <contributor-id type="github">rdunklau</contributor-id>
         </contributor>
 
+        <contributor id="rudonx">
+            <contributor-name-display>rudonx</contributor-name-display>
+            <contributor-id type="github">rudonx</contributor-id>
+        </contributor>
+
         <contributor id="ryan.lambert">
             <contributor-name-display>Ryan Lambert</contributor-name-display>
             <contributor-id type="github">rustprooflabs</contributor-id>
@@ -12604,6 +12720,11 @@
 
         <contributor id="viorel.tabara">
             <contributor-name-display>Viorel Tabara</contributor-name-display>
+        </contributor>
+
+        <contributor id="viperru">
+            <contributor-name-display>ViperRu</contributor-name-display>
+            <contributor-id type="github">ViperRu</contributor-id>
         </contributor>
 
         <contributor id="vitaliy.kukharik">

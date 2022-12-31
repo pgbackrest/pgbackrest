@@ -133,7 +133,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("iniSet(), iniGet(), iniGetDefault(), iniSectionList(), and iniSectionKeyList()"))
+    if (testBegin("iniSet(), iniGet(), and iniSectionKeyList()"))
     {
         Ini *ini = NULL;
 
@@ -154,17 +154,10 @@ testRun(void)
 
         TEST_ERROR(iniGet(ini, STRDEF("section2"), STRDEF("key2")), FormatError, "section 'section2', key 'key2' does not exist");
 
-        TEST_RESULT_STR_Z(iniGetDefault(ini, STRDEF("section1"), STRDEF("key1"), NULL), "11", "get section, key, int");
-        TEST_RESULT_STR(iniGetDefault(ini, STRDEF("section2"), STRDEF("key2"), NULL), NULL, "get section, key, NULL");
-        TEST_RESULT_STR_Z(iniGetDefault(ini, STRDEF("section3"), STRDEF("key3"), STRDEF("true")), "true", "get section, key, bool");
-
         TEST_RESULT_INT(strLstSize(iniSectionKeyList(ini, STRDEF("bogus"))), 0, "get keys for missing section");
         TEST_RESULT_STRLST_Z(iniSectionKeyList(ini, STRDEF("section1")), "key1\nkey2\n", "get keys for section");
 
         TEST_RESULT_VOID(iniSet(ini, STRDEF("section2"), STRDEF("key2"), STRDEF("2")), "set section2, key");
-        TEST_RESULT_INT(strLstSize(iniSectionList(ini)), 2, "number of sections");
-        TEST_RESULT_STRLST_Z(iniSectionList(ini), "section1\nsection2\n", "get sections");
-
         TEST_RESULT_BOOL(iniSectionKeyIsList(ini, STRDEF("section1"), STRDEF("key1")), false, "single value is not list");
         TEST_RESULT_VOID(iniSet(ini, STRDEF("section2"), STRDEF("key2"), STRDEF("7")), "set section2, key");
         TEST_RESULT_BOOL(iniSectionKeyIsList(ini, STRDEF("section2"), STRDEF("key2")), true, "section2, key2 is a list");

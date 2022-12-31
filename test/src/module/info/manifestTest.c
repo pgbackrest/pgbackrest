@@ -1780,8 +1780,7 @@ testRun(void)
 
         // ManifestDb getters
         const ManifestDb *db = NULL;
-        TEST_ERROR(manifestDbFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest db list");
-        TEST_ASSIGN(db, manifestDbFind(manifest, STRDEF("postgres")), "manifestDbFind()");
+        TEST_ASSIGN(db, manifestDbFindDefault(manifest, STRDEF("postgres"), NULL), "manifestDbFind()");
         TEST_RESULT_STR_Z(db->name, "postgres", "check name");
         TEST_RESULT_STR_Z(
             manifestDbFindDefault(manifest, STRDEF("bogus"), db)->name, "postgres", "manifestDbFindDefault() - return default");

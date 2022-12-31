@@ -13,7 +13,7 @@ Archive Push Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

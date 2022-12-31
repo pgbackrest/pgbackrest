@@ -10,7 +10,7 @@ GCS Storage Helper
 #include "storage/gcs/helper.h"
 
 /**********************************************************************************************************************************/
-Storage *
+FV_EXTERN Storage *
 storageGcsHelper(const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

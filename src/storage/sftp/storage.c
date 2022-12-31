@@ -11,7 +11,6 @@ SFTP Storage
 #include "common/user.h"
 #include "common/wait.h"
 #include "storage/sftp/read.h"
-#include "storage/sftp/storage.h"
 #include "storage/sftp/storage.intern.h"
 #include "storage/sftp/write.h"
 
@@ -25,7 +24,7 @@ Define PATH_MAX if it is not defined
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct StorageSftp
+typedef struct StorageSftp
 {
     STORAGE_COMMON_MEMBER;
 
@@ -38,7 +37,7 @@ struct StorageSftp
     TimeMSec timeoutConnect;
     TimeMSec timeoutSession;
     Wait *wait;
-};
+} StorageSftp;
 
 /**********************************************************************************************************************************/
 static bool
@@ -291,7 +290,7 @@ storageSftpLinkCreate(
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 storageSftpEvalLibSsh2Error(
     const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const msg,
     const String *const hint)
@@ -756,7 +755,7 @@ static const StorageInterface storageInterfaceSftp =
     .remove = storageSftpRemove,
 };
 
-Storage *
+FV_EXTERN Storage *
 storageSftpNewInternal(
     StringId type, const String *const path, const String *const host, unsigned int port, const TimeMSec timeoutConnect,
     const TimeMSec timeoutSession, const String *const user, const String *const keyPub, const String *const keyPriv,
@@ -920,7 +919,7 @@ storageSftpNewInternal(
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
-Storage *
+FV_EXTERN Storage *
 storageSftpNew(const String *const path, const String *const host, const unsigned int port, const TimeMSec timeoutConnect,
         const TimeMSec timeoutSession, const StorageSftpNewParam param)
 {

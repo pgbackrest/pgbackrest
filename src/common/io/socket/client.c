@@ -158,7 +158,7 @@ static const IoClientInterface sckClientInterface =
     .toLog = sckClientToLog,
 };
 
-IoClient *
+FV_EXTERN IoClient *
 sckClientNew(const String *const host, const unsigned int port, const TimeMSec timeoutConnect, const TimeMSec timeoutSession)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)

@@ -27,9 +27,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("Common"))
     {
-        TEST_RESULT_BOOL(cryptoIsInit(), false, "crypto is not initialized");
         TEST_RESULT_VOID(cryptoInit(), "initialize crypto");
-        TEST_RESULT_BOOL(cryptoIsInit(), true, "crypto is initialized");
         TEST_RESULT_VOID(cryptoInit(), "initialize crypto again");
 
         // -------------------------------------------------------------------------------------------------------------------------

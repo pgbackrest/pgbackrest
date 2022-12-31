@@ -20,8 +20,8 @@ Constant to indicate key not found
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-KeyValue *kvNew(void);
-KeyValue *kvDup(const KeyValue *source);
+FV_EXTERN KeyValue *kvNew(void);
+FV_EXTERN KeyValue *kvDup(const KeyValue *source);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -45,7 +45,7 @@ Functions
 // value is converted to a VariantList with the existing value and the new value as list items. Subsequent calls expand the list.
 //
 // NOTE: this function is seldom required and kvPut() should be used when a key is expected to have a single value.
-KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
+FV_EXTERN KeyValue *kvAdd(KeyValue *this, const Variant *key, const Variant *value);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS KeyValue *
@@ -55,20 +55,20 @@ kvMove(KeyValue *const this, MemContext *const parentNew)
 }
 
 // Put key/value pair
-KeyValue *kvPut(KeyValue *this, const Variant *key, const Variant *value);
+FV_EXTERN KeyValue *kvPut(KeyValue *this, const Variant *key, const Variant *value);
 
 // Put key/value store. If this is called on an existing key it will replace the key with an empty kev/value store, even if the key
 // already contains a key/value store.
-KeyValue *kvPutKv(KeyValue *this, const Variant *key);
+FV_EXTERN KeyValue *kvPutKv(KeyValue *this, const Variant *key);
 
 // Get a value using the key
-const Variant *kvGet(const KeyValue *this, const Variant *key);
+FV_EXTERN const Variant *kvGet(const KeyValue *this, const Variant *key);
 
 // Get a value using the key and return a default if not found
-const Variant *kvGetDefault(const KeyValue *this, const Variant *key, const Variant *defaultValue);
+FV_EXTERN const Variant *kvGetDefault(const KeyValue *this, const Variant *key, const Variant *defaultValue);
 
 // Get key index if it exists
-unsigned int kvGetIdx(const KeyValue *this, const Variant *key);
+FV_EXTERN unsigned int kvGetIdx(const KeyValue *this, const Variant *key);
 
 // Does the key exist (even if the value is NULL)
 FN_INLINE_ALWAYS bool
@@ -78,10 +78,10 @@ kvKeyExists(const KeyValue *const this, const Variant *const key)
 }
 
 // Get a value as a list (even if there is only one value) using the key
-VariantList *kvGetList(const KeyValue *this, const Variant *key);
+FV_EXTERN VariantList *kvGetList(const KeyValue *this, const Variant *key);
 
 // Remove a key/value pair
-KeyValue *kvRemove(KeyValue *this, const Variant *key);
+FV_EXTERN KeyValue *kvRemove(KeyValue *this, const Variant *key);
 
 /***********************************************************************************************************************************
 Destructor

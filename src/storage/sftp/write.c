@@ -9,7 +9,6 @@ SFTP Storage File Write
 #include "common/log.h"
 #include "common/user.h"
 #include "common/wait.h"
-#include "storage/sftp/storage.intern.h"
 #include "storage/sftp/write.h"
 #include "storage/write.intern.h"
 
@@ -387,7 +386,7 @@ storageWriteSftpClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
+FV_EXTERN StorageWrite *
 storageWriteSftpNew(
     StorageSftp *const storage, const String *const name, IoSession *const ioSession, LIBSSH2_SESSION *const session,
     LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const TimeMSec timeoutConnect,

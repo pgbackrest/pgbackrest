@@ -52,7 +52,7 @@ cfgParseSizeQualifier(const char qualifier)
     FUNCTION_TEST_RETURN(INT64, result);
 }
 
-int64_t
+FV_EXTERN int64_t
 cfgParseSize(const String *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -115,7 +115,7 @@ cfgParseSize(const String *const value)
 }
 
 /**********************************************************************************************************************************/
-int64_t
+FV_EXTERN int64_t
 cfgParseTime(const String *const value)
 {
     FUNCTION_TEST_BEGIN();

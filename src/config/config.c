@@ -18,7 +18,7 @@ Data for the currently loaded configuration
 static Config *configLocal = NULL;
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cfgInit(Config *config)
 {
     FUNCTION_TEST_BEGIN();
@@ -39,14 +39,14 @@ cfgInit(Config *config)
 }
 
 /**********************************************************************************************************************************/
-ConfigCommand
+FV_EXTERN ConfigCommand
 cfgCommand(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(ENUM, configLocal == NULL ? cfgCmdNone : configLocal->command);
 }
 
-ConfigCommandRole
+FV_EXTERN ConfigCommandRole
 cfgCommandRole(void)
 {
     FUNCTION_TEST_VOID();
@@ -54,7 +54,7 @@ cfgCommandRole(void)
     FUNCTION_TEST_RETURN(ENUM, configLocal->commandRole);
 }
 
-void
+FV_EXTERN void
 cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId)
 {
     FUNCTION_TEST_BEGIN();
@@ -72,7 +72,7 @@ cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 cfgCommandHelp(void)
 {
     FUNCTION_TEST_VOID();
@@ -81,7 +81,7 @@ cfgCommandHelp(void)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+FV_EXTERN VariantList *
 cfgCommandJobRetry(void)
 {
     FUNCTION_TEST_VOID();
@@ -108,7 +108,7 @@ cfgCommandJobRetry(void)
 }
 
 /**********************************************************************************************************************************/
-const char *
+FV_EXTERN const char *
 cfgCommandName(void)
 {
     FUNCTION_TEST_VOID();
@@ -119,7 +119,7 @@ cfgCommandName(void)
     FUNCTION_TEST_RETURN_CONST(STRINGZ, cfgParseCommandName(configLocal->command));
 }
 
-String *
+FV_EXTERN String *
 cfgCommandRoleName(void)
 {
     FUNCTION_TEST_VOID();
@@ -127,7 +127,7 @@ cfgCommandRoleName(void)
 }
 
 /**********************************************************************************************************************************/
-const StringList *
+FV_EXTERN const StringList *
 cfgCommandParam(void)
 {
     FUNCTION_TEST_VOID();
@@ -147,7 +147,7 @@ cfgCommandParam(void)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 cfgExe(void)
 {
     FUNCTION_TEST_VOID();
@@ -156,7 +156,7 @@ cfgExe(void)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 cfgLockRequired(void)
 {
     FUNCTION_TEST_VOID();
@@ -174,7 +174,7 @@ cfgLockRequired(void)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 cfgLockRemoteRequired(void)
 {
     FUNCTION_TEST_VOID();
@@ -186,7 +186,7 @@ cfgLockRemoteRequired(void)
 }
 
 /**********************************************************************************************************************************/
-LockType
+FV_EXTERN LockType
 cfgLockType(void)
 {
     FUNCTION_TEST_VOID();
@@ -198,7 +198,7 @@ cfgLockType(void)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 cfgLogFile(void)
 {
     FUNCTION_TEST_VOID();
@@ -217,7 +217,7 @@ cfgLogFile(void)
 }
 
 /**********************************************************************************************************************************/
-LogLevel
+FV_EXTERN LogLevel
 cfgLogLevelDefault(void)
 {
     FUNCTION_TEST_VOID();
@@ -229,7 +229,7 @@ cfgLogLevelDefault(void)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 cfgOptionGroup(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -243,7 +243,7 @@ cfgOptionGroup(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-const char *
+FV_EXTERN const char *
 cfgOptionGroupName(const ConfigOptionGroup groupId, const unsigned int groupIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -274,7 +274,7 @@ cfgOptionGroupName(const ConfigOptionGroup groupId, const unsigned int groupIdx)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 cfgOptionGroupId(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -289,7 +289,7 @@ cfgOptionGroupId(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 cfgOptionGroupIdxDefault(ConfigOptionGroup groupId)
 {
     FUNCTION_TEST_BEGIN();
@@ -304,7 +304,7 @@ cfgOptionGroupIdxDefault(ConfigOptionGroup groupId)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int groupIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -320,7 +320,7 @@ cfgOptionGroupIdxToKey(ConfigOptionGroup groupId, unsigned int groupIdx)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key)
 {
     FUNCTION_TEST_BEGIN();
@@ -354,7 +354,7 @@ cfgOptionKeyToIdx(ConfigOption optionId, unsigned int key)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 cfgOptionGroupIdxTotal(ConfigOptionGroup groupId)
 {
     FUNCTION_TEST_BEGIN();
@@ -368,21 +368,7 @@ cfgOptionGroupIdxTotal(ConfigOptionGroup groupId)
 }
 
 /**********************************************************************************************************************************/
-bool
-cfgOptionGroupValid(ConfigOptionGroup groupId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, groupId);
-    FUNCTION_TEST_END();
-
-    ASSERT(configLocal != NULL);
-    ASSERT(groupId < CFG_OPTION_GROUP_TOTAL);
-
-    FUNCTION_TEST_RETURN(BOOL, configLocal->optionGroup[groupId].valid);
-}
-
-/**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 cfgOptionIdxDefault(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -400,7 +386,7 @@ cfgOptionIdxDefault(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-unsigned int
+FV_EXTERN unsigned int
 cfgOptionIdxTotal(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -416,7 +402,7 @@ cfgOptionIdxTotal(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 cfgOptionDefault(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -434,7 +420,7 @@ cfgOptionDefault(ConfigOption optionId)
     FUNCTION_TEST_RETURN_CONST(STRING, option->defaultValue);
 }
 
-void
+FV_EXTERN void
 cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 {
     FUNCTION_TEST_BEGIN();
@@ -476,7 +462,7 @@ cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue)
 
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType)
 {
     FUNCTION_TEST_BEGIN();
@@ -507,7 +493,7 @@ cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionTyp
     FUNCTION_TEST_RETURN(STRING, varStrForce(value));
 }
 
-const String *
+FV_EXTERN const String *
 cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -542,7 +528,7 @@ cfgOptionIdxDisplay(const ConfigOption optionId, const unsigned int optionIdx)
     FUNCTION_TEST_RETURN_CONST(STRING, option->display);
 }
 
-const String *
+FV_EXTERN const String *
 cfgOptionDisplay(const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -555,7 +541,7 @@ cfgOptionDisplay(const ConfigOption optionId)
 /***********************************************************************************************************************************
 Get option name by id
 ***********************************************************************************************************************************/
-const char *
+FV_EXTERN const char *
 cfgOptionName(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -567,7 +553,7 @@ cfgOptionName(ConfigOption optionId)
     FUNCTION_TEST_RETURN_CONST(STRINGZ, cfgOptionIdxName(optionId, cfgOptionIdxDefault(optionId)));
 }
 
-const char *
+FV_EXTERN const char *
 cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -612,17 +598,7 @@ cfgOptionIdxName(ConfigOption optionId, unsigned int optionIdx)
 }
 
 /**********************************************************************************************************************************/
-bool
-cfgOptionNegate(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(BOOL, cfgOptionIdxNegate(optionId, cfgOptionIdxDefault(optionId)));
-}
-
-bool
+FV_EXTERN bool
 cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -640,17 +616,7 @@ cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx)
 }
 
 /**********************************************************************************************************************************/
-bool
-cfgOptionReset(ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(BOOL, cfgOptionIdxReset(optionId, cfgOptionIdxDefault(optionId)));
-}
-
-bool
+FV_EXTERN bool
 cfgOptionIdxReset(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -710,7 +676,7 @@ cfgOptionIdxInternal(
     FUNCTION_TEST_RETURN_TYPE_P(ConfigOptionValue, result);
 }
 
-Variant *
+FV_EXTERN Variant *
 cfgOptionIdxVar(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -757,7 +723,7 @@ cfgOptionIdxVar(const ConfigOption optionId, const unsigned int optionIdx)
     FUNCTION_TEST_RETURN(VARIANT, NULL);
 }
 
-bool
+FV_EXTERN bool
 cfgOptionIdxBool(const ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -768,7 +734,7 @@ cfgOptionIdxBool(const ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN(BOOL, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeBoolean, false)->value.boolean);
 }
 
-int
+FV_EXTERN int
 cfgOptionIdxInt(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -782,7 +748,7 @@ cfgOptionIdxInt(const ConfigOption optionId, const unsigned int optionIdx)
     FUNCTION_LOG_RETURN(INT, (int)cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeInteger, false)->value.integer);
 }
 
-int64_t
+FV_EXTERN int64_t
 cfgOptionIdxInt64(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -793,7 +759,7 @@ cfgOptionIdxInt64(const ConfigOption optionId, const unsigned int optionIdx)
     FUNCTION_LOG_RETURN(INT64, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeInteger, false)->value.integer);
 }
 
-unsigned int
+FV_EXTERN unsigned int
 cfgOptionIdxUInt(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -807,7 +773,7 @@ cfgOptionIdxUInt(const ConfigOption optionId, const unsigned int optionIdx)
     FUNCTION_LOG_RETURN(UINT, (unsigned int)cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeInteger, false)->value.integer);
 }
 
-uint64_t
+FV_EXTERN uint64_t
 cfgOptionIdxUInt64(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -820,7 +786,7 @@ cfgOptionIdxUInt64(const ConfigOption optionId, const unsigned int optionIdx)
     FUNCTION_LOG_RETURN(UINT64, (uint64_t)cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeInteger, false)->value.integer);
 }
 
-const KeyValue *
+FV_EXTERN const KeyValue *
 cfgOptionIdxKv(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -831,7 +797,7 @@ cfgOptionIdxKv(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN_CONST(KEY_VALUE, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeHash, false)->value.keyValue);
 }
 
-const KeyValue *
+FV_EXTERN const KeyValue *
 cfgOptionIdxKvNull(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -842,7 +808,7 @@ cfgOptionIdxKvNull(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN_CONST(KEY_VALUE, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeHash, true)->value.keyValue);
 }
 
-const VariantList *
+FV_EXTERN const VariantList *
 cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -867,7 +833,7 @@ cfgOptionIdxLst(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN_CONST(VARIANT_LIST, optionValue);
 }
 
-const String *
+FV_EXTERN const String *
 cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -878,7 +844,7 @@ cfgOptionIdxStr(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN_CONST(STRING, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeString, false)->value.string);
 }
 
-const String *
+FV_EXTERN const String *
 cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -889,7 +855,7 @@ cfgOptionIdxStrNull(ConfigOption optionId, unsigned int optionIdx)
     FUNCTION_LOG_RETURN_CONST(STRING, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeString, true)->value.string);
 }
 
-StringId
+FV_EXTERN StringId
 cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -901,7 +867,7 @@ cfgOptionIdxStrId(ConfigOption optionId, unsigned int optionIdx)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -915,7 +881,7 @@ cfgOptionSet(ConfigOption optionId, ConfigSource source, const Variant *value)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource source, const Variant *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -1002,7 +968,7 @@ cfgOptionIdxSet(ConfigOption optionId, unsigned int optionIdx, ConfigSource sour
 }
 
 /**********************************************************************************************************************************/
-ConfigSource
+FV_EXTERN ConfigSource
 cfgOptionSource(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1012,7 +978,7 @@ cfgOptionSource(ConfigOption optionId)
     FUNCTION_TEST_RETURN(ENUM, cfgOptionIdxSource(optionId, cfgOptionIdxDefault(optionId)));
 }
 
-ConfigSource
+FV_EXTERN ConfigSource
 cfgOptionIdxSource(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -1030,7 +996,7 @@ cfgOptionIdxSource(ConfigOption optionId, unsigned int optionIdx)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 cfgOptionTest(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1040,7 +1006,7 @@ cfgOptionTest(ConfigOption optionId)
     FUNCTION_TEST_RETURN(BOOL, cfgOptionIdxTest(optionId, cfgOptionIdxDefault(optionId)));
 }
 
-bool
+FV_EXTERN bool
 cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -1058,7 +1024,7 @@ cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 cfgOptionValid(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1071,7 +1037,7 @@ cfgOptionValid(ConfigOption optionId)
     FUNCTION_TEST_RETURN(BOOL, configLocal->option[optionId].valid);
 }
 
-void
+FV_EXTERN void
 cfgOptionInvalidate(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();

@@ -206,7 +206,7 @@ httpResponseEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-HttpResponse *
+FV_EXTERN HttpResponse *
 httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
@@ -369,7 +369,7 @@ httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 }
 
 /**********************************************************************************************************************************/
-const Buffer *
+FV_EXTERN const Buffer *
 httpResponseContent(HttpResponse *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -399,7 +399,7 @@ httpResponseContent(HttpResponse *this)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 httpResponseToLog(const HttpResponse *this)
 {
     return strNewFmt(

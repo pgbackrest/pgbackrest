@@ -17,7 +17,7 @@ struct ProtocolParallelJob
 };
 
 /**********************************************************************************************************************************/
-ProtocolParallelJob *
+FV_EXTERN ProtocolParallelJob *
 protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -48,7 +48,7 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -72,7 +72,7 @@ protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *m
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -89,7 +89,7 @@ protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processI
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -106,7 +106,7 @@ protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const re
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -130,7 +130,7 @@ protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState 
     FUNCTION_LOG_RETURN_VOID();
 }
 
-String *
+FV_EXTERN String *
 protocolParallelJobToLog(const ProtocolParallelJob *this)
 {
     return strNewFmt(

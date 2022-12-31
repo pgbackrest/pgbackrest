@@ -6,12 +6,12 @@ SFTP Storage File Write
 
 #include "common/io/session.h"
 #include "storage/sftp/storage.h"
-#include "storage/write.h"
+#include "storage/sftp/storage.intern.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageWrite *storageWriteSftpNew(
+FV_EXTERN StorageWrite *storageWriteSftpNew(
     StorageSftp *storage, const String *name, IoSession *ioSession, LIBSSH2_SESSION *session, LIBSSH2_SFTP *sftpSession,
     LIBSSH2_SFTP_HANDLE *sftpHandle, TimeMSec timeoutConnect, TimeMSec timeoutSession, mode_t modeFile, mode_t modePath,
     const String *user, const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic,

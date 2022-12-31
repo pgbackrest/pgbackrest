@@ -107,7 +107,7 @@ storageReadAzureEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
+FV_EXTERN StorageRead *
 storageReadAzureNew(
     StorageAzure *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
     const Variant *const limit)

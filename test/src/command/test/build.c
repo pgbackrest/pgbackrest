@@ -349,6 +349,8 @@ testBldUnit(TestBuild *const this)
             MESON_COMMENT_BLOCK "\n"
             "configure_file(output: 'build.auto.h', configuration: configuration)\n"
             "\n"
+            "add_global_arguments('-DFV_EXTERN=extern', language : 'c')\n"
+            "add_global_arguments('-DVR_EXTERN=', language : 'c')\n"
             "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
 
         // Configure features
@@ -528,7 +530,7 @@ testBldUnit(TestBuild *const this)
             {
                 const TestDefCoverage *const coverage = lstGet(module->coverageList, coverageIdx);
 
-                if (coverage->coverable && !coverage->include)
+                if (coverage->coverable && !coverage->included)
                     strLstAdd(testIncludeFileList, coverage->name);
             }
         }

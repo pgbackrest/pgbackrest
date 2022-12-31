@@ -16,7 +16,7 @@ struct IoClient
 };
 
 /**********************************************************************************************************************************/
-IoClient *
+FV_EXTERN IoClient *
 ioClientNew(void *driver, const IoClientInterface *interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -47,7 +47,7 @@ ioClientNew(void *driver, const IoClientInterface *interface)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 ioClientToLog(const IoClient *this)
 {
     return strNewFmt(

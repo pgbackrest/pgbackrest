@@ -426,9 +426,8 @@ foreach my $strKey (sort(keys(%{$rhConfigDefine})))
         $rhConfigDefine->{$strKey}{&CFGDEF_SECURE} = false;
     }
 
-    # All int, size and time options must have an allow range
-    if (($rhConfigDefine->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_INTEGER ||
-         $rhConfigDefine->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ||
+    # All size and time options must have an allow range
+    if (($rhConfigDefine->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_TIME ||
          $rhConfigDefine->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_SIZE) &&
          !(defined($rhConfigDefine->{$strKey}{&CFGDEF_ALLOW_RANGE}) || defined($rhConfigDefine->{$strKey}{&CFGDEF_ALLOW_LIST})))
     {

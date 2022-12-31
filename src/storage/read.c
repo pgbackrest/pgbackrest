@@ -26,7 +26,7 @@ Macros for function logging
     objToLog(&value, "StorageReadInterface", buffer, bufferSize)
 
 /**********************************************************************************************************************************/
-StorageRead *
+FV_EXTERN StorageRead *
 storageReadNew(void *driver, const StorageReadInterface *interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -56,7 +56,7 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 storageReadToLog(const StorageRead *this)
 {
     return strNewFmt(

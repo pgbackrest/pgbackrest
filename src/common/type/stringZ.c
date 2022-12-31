@@ -11,7 +11,7 @@ Zero-Terminated String Handler
 #include "common/type/stringZ.h"
 
 /**********************************************************************************************************************************/
-char *
+FV_EXTERN char *
 zNewFmt(const char *const format, ...)
 {
     FUNCTION_TEST_BEGIN();

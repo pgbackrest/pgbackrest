@@ -2226,7 +2226,9 @@
                         <summary>Action to take when recovery target is reached.</summary>
 
                         <text>
-                            <p>This option is effective when <setting>hot_standby=on</setting> is configured in <file>postgresql.conf</file>, otherwise the cluster will be promoted when the target is reached or there is no more WAL in the archive.</p>
+                            <p>When <setting>hot_standby=on</setting>, the default since <postgres/> 10, this option consistently controls what the cluster does when the target is reached or there is no more WAL in the archive.</p>
+
+                            <p>When <setting>hot_standby=off</setting> in <postgres/> &gt;= 12, <id>pause</id> acts like <id>shutdown</id>. When <setting>hot_standby=off</setting> in <postgres/> &lt; 12, <id>pause</id> acts like <id>promote</id>.</p>
 
                             <p>The following actions are supported:</p>
 

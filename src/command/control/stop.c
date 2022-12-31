@@ -20,7 +20,7 @@ Stop Command
 #include "storage/storage.intern.h"
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 cmdStop(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

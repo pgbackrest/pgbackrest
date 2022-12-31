@@ -33,7 +33,7 @@ typedef struct ProtocolServerHandler
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
+FV_EXTERN ProtocolServer *protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
 Functions
@@ -46,22 +46,22 @@ typedef struct ProtocolServerCommandGetResult
     Pack *param;                                                    // Parameter pack
 } ProtocolServerCommandGetResult;
 
-ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
+FV_EXTERN ProtocolServerCommandGetResult protocolServerCommandGet(ProtocolServer *this);
 
 // Get data from the client
-PackRead *protocolServerDataGet(ProtocolServer *this);
+FV_EXTERN PackRead *protocolServerDataGet(ProtocolServer *this);
 
 // Put data to the client
-void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
+FV_EXTERN void protocolServerDataPut(ProtocolServer *this, PackWrite *data);
 
 // Put data end to the client. This ends command processing and no more data should be sent.
-void protocolServerDataEndPut(ProtocolServer *this);
+FV_EXTERN void protocolServerDataEndPut(ProtocolServer *this);
 
 // Return an error
-void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
+FV_EXTERN void protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack);
 
 // Process requests
-void protocolServerProcess(
+FV_EXTERN void protocolServerProcess(
     ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *handlerList,
     const unsigned int handlerListSize);
 
@@ -84,7 +84,7 @@ protocolServerFree(ProtocolServer *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *protocolServerToLog(const ProtocolServer *this);
+FV_EXTERN String *protocolServerToLog(const ProtocolServer *this);
 
 #define FUNCTION_LOG_PROTOCOL_SERVER_TYPE                                                                                          \
     ProtocolServer *

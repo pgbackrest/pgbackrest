@@ -92,13 +92,18 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                     YAML_MAP_BEGIN(yaml)
                                     {
                                         testDefCoverage.name = yamlScalarNext(yaml).value;
-                                        yamlScalarNextCheckZ(yaml, "noCode");
+                                        const String *const type = yamlScalarNext(yaml).value;
+                                        testDefCoverage.included = true;
+
+                                        if (strEqZ(type, "included"))
+                                        {
+                                            testDefCoverage.coverable = true;
+                                        }
+                                        else if (!strEqZ(type, "noCode"))
+                                            THROW_FMT(FormatError, "invalid coverage type '%s'", strZ(type));
                                     }
                                     YAML_MAP_END();
                                 }
-
-                                testDefCoverage.include =
-                                    strEndsWithZ(testDefCoverage.name, ".vendor") || strEndsWithZ(testDefCoverage.name, ".auto");
 
                                 MEM_CONTEXT_OBJ_BEGIN(coverageList)
                                 {
@@ -108,7 +113,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                 MEM_CONTEXT_OBJ_END();
 
                                 // Also add to the global depend list
-                                if (testDefCoverage.coverable && !testDefCoverage.include)
+                                if (testDefCoverage.coverable && !testDefCoverage.included)
                                     strLstAddIfMissing(globalDependList, testDefCoverage.name);
                             }
                             YAML_SEQ_END();

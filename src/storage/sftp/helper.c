@@ -9,10 +9,9 @@ SFTP Storage Helper
 #include "common/log.h"
 #include "config/config.h"
 #include "storage/sftp/helper.h"
-#include "storage/sftp/storage.h"
 
 /**********************************************************************************************************************************/
-Storage *
+FV_EXTERN Storage *
 storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

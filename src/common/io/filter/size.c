@@ -23,7 +23,7 @@ typedef struct IoSize
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *
+static String *
 ioSizeToLog(const IoSize *this)
 {
     return strNewFmt("{size: %" PRIu64 "}", this->size);
@@ -86,7 +86,7 @@ ioSizeResult(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 ioSizeNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

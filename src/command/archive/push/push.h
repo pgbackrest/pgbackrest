@@ -8,9 +8,9 @@ Archive Push Command
 Functions
 ***********************************************************************************************************************************/
 // Push a WAL segment to the repository
-void cmdArchivePush(void);
+FV_EXTERN void cmdArchivePush(void);
 
 // Async version of archive push that runs in parallel for performance
-void cmdArchivePushAsync(void);
+FV_EXTERN void cmdArchivePushAsync(void);
 
 #endif

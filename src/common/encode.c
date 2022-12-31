@@ -442,7 +442,7 @@ decodeToBinSizeHex(const char *const source)
 /***********************************************************************************************************************************
 Generic encoding/decoding
 ***********************************************************************************************************************************/
-void
+FV_EXTERN void
 encodeToStr(const EncodingType type, const unsigned char *const source, const size_t sourceSize, char *const destination)
 {
     FUNCTION_TEST_BEGIN();
@@ -473,7 +473,7 @@ encodeToStr(const EncodingType type, const unsigned char *const source, const si
 }
 
 /**********************************************************************************************************************************/
-size_t
+FV_EXTERN size_t
 encodeToStrSize(const EncodingType type, const size_t sourceSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -504,7 +504,7 @@ encodeToStrSize(const EncodingType type, const size_t sourceSize)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 decodeToBin(const EncodingType type, const char *const source, unsigned char *const destination)
 {
     FUNCTION_TEST_BEGIN();
@@ -533,7 +533,7 @@ decodeToBin(const EncodingType type, const char *const source, unsigned char *co
 }
 
 /**********************************************************************************************************************************/
-size_t
+FV_EXTERN size_t
 decodeToBinSize(const EncodingType type, const char *const source)
 {
     FUNCTION_TEST_BEGIN();

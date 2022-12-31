@@ -17,20 +17,20 @@ typedef struct HttpHeader HttpHeader;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-HttpHeader *httpHeaderNew(const StringList *redactList);
-HttpHeader *httpHeaderDup(const HttpHeader *header, const StringList *redactList);
+FV_EXTERN HttpHeader *httpHeaderNew(const StringList *redactList);
+FV_EXTERN HttpHeader *httpHeaderDup(const HttpHeader *header, const StringList *redactList);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Add a header
-HttpHeader *httpHeaderAdd(HttpHeader *this, const String *key, const String *value);
+FV_EXTERN HttpHeader *httpHeaderAdd(HttpHeader *this, const String *key, const String *value);
 
 // Get a value using the key
-const String *httpHeaderGet(const HttpHeader *this, const String *key);
+FV_EXTERN const String *httpHeaderGet(const HttpHeader *this, const String *key);
 
 // Get list of keys
-StringList *httpHeaderList(const HttpHeader *this);
+FV_EXTERN StringList *httpHeaderList(const HttpHeader *this);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS HttpHeader *
@@ -40,13 +40,13 @@ httpHeaderMove(HttpHeader *const this, MemContext *const parentNew)
 }
 
 // Put a header
-HttpHeader *httpHeaderPut(HttpHeader *this, const String *header, const String *value);
+FV_EXTERN HttpHeader *httpHeaderPut(HttpHeader *this, const String *header, const String *value);
 
 // Put range header when needed
-HttpHeader *httpHeaderPutRange(HttpHeader *this, uint64_t offset, const Variant *limit);
+FV_EXTERN HttpHeader *httpHeaderPutRange(HttpHeader *this, uint64_t offset, const Variant *limit);
 
 // Should the header be redacted when logging?
-bool httpHeaderRedact(const HttpHeader *this, const String *key);
+FV_EXTERN bool httpHeaderRedact(const HttpHeader *this, const String *key);
 
 /***********************************************************************************************************************************
 Destructor
@@ -60,7 +60,7 @@ httpHeaderFree(HttpHeader *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *httpHeaderToLog(const HttpHeader *this);
+FV_EXTERN String *httpHeaderToLog(const HttpHeader *this);
 
 #define FUNCTION_LOG_HTTP_HEADER_TYPE                                                                                              \
     HttpHeader *

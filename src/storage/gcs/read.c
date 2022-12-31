@@ -114,7 +114,7 @@ storageReadGcsEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageRead *
+FV_EXTERN StorageRead *
 storageReadGcsNew(
     StorageGcs *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
     const Variant *const limit)

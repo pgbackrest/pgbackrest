@@ -29,7 +29,7 @@ Macros for function logging
 This object expects its context to be created in advance.  This is so the calling function can add whatever data it wants without
 required multiple functions and contexts to make it safe.
 ***********************************************************************************************************************************/
-StorageWrite *
+FV_EXTERN StorageWrite *
 storageWriteNew(void *driver, const StorageWriteInterface *interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -57,7 +57,7 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 storageWriteToLog(const StorageWrite *this)
 {
     return strNewFmt(

@@ -220,7 +220,7 @@ storageWritePosixFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-StorageWrite *
+FV_EXTERN StorageWrite *
 storageWritePosixNew(
     StoragePosix *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
     const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,

@@ -42,7 +42,7 @@ typedef struct TlsClientNewParam
 #define tlsClientNewP(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, ...)                                             \
     tlsClientNew(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, (TlsClientNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-IoClient *tlsClientNew(
+FV_EXTERN IoClient *tlsClientNew(
     IoClient *ioClient, const String *host, TimeMSec timeoutConnect, TimeMSec timeoutSession, bool verifyPeer,
     TlsClientNewParam param);
 
