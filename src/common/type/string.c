@@ -163,7 +163,7 @@ strNewZ(const char *const string)
     String *this = strNewFixed(strlen(string));
 
     // Assign string
-    strncpy(this->pub.buffer, string, strSize(this));
+    memcpy(this->pub.buffer, string, strSize(this));
     this->pub.buffer[strSize(this)] = '\0';
 
     FUNCTION_TEST_RETURN(STRING, this);
@@ -270,7 +270,7 @@ strNewZN(const char *string, size_t size)
     String *this = strNewFixed(size);
 
     // Assign string
-    strncpy(this->pub.buffer, string, strSize(this));
+    memcpy(this->pub.buffer, string, strSize(this));
     this->pub.buffer[strSize(this)] = 0;
 
     FUNCTION_TEST_RETURN(STRING, this);
@@ -442,7 +442,7 @@ strCatZN(String *this, const char *cat, size_t size)
         strResize(this, size);
 
         // Append the string
-        strncpy(this->pub.buffer + strSize(this), cat, size);
+        memcpy(this->pub.buffer + strSize(this), cat, size);
         this->pub.buffer[strSize(this) + size] = '\0';
 
         // Update size/extra

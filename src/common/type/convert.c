@@ -262,7 +262,7 @@ cvtZSubNToIntBase(const char *const value, const size_t offset, const size_t siz
 
     char buffer[CVT_BASE10_BUFFER_SIZE + 1];
     ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
-    strncpy(buffer, value + offset, size);
+    memcpy(buffer, value + offset, size);
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(INT, cvtZToIntBase(buffer, base));
@@ -326,7 +326,7 @@ cvtZSubNToInt64Base(const char *const value, const size_t offset, const size_t s
 
     char buffer[CVT_BASE10_BUFFER_SIZE + 1];
     ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
-    strncpy(buffer, value + offset, size);
+    memcpy(buffer, value + offset, size);
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(INT64, cvtZToInt64Base(buffer, base));
@@ -469,7 +469,7 @@ cvtZSubNToUIntBase(const char *const value, const size_t offset, const size_t si
 
     char buffer[CVT_BASE10_BUFFER_SIZE + 1];
     ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
-    strncpy(buffer, value + offset, size);
+    memcpy(buffer, value + offset, size);
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(UINT, cvtZToUIntBase(buffer, base));
@@ -539,7 +539,7 @@ cvtZSubNToUInt64Base(const char *const value, const size_t offset, const size_t 
 
     char buffer[CVT_BASE10_BUFFER_SIZE + 1];
     ASSERT(size <= CVT_BASE10_BUFFER_SIZE);
-    strncpy(buffer, value + offset, size);
+    memcpy(buffer, value + offset, size);
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(UINT64, cvtZToUInt64Base(buffer, base));

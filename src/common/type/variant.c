@@ -868,7 +868,7 @@ varNewStr(const String *data)
             };
 
             // Assign the string
-            strncpy(pubData->buffer, strZ(data), strSize(data));
+            memcpy(pubData->buffer, strZ(data), strSize(data));
             pubData->buffer[strSize(data)] = '\0';
         }
     }
