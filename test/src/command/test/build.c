@@ -527,7 +527,7 @@ testBldUnit(TestBuild *const this)
             {
                 const TestDefCoverage *const coverage = lstGet(module->coverageList, coverageIdx);
 
-                if (coverage->coverable && !coverage->include)
+                if (coverage->coverable && !coverage->included)
                     strLstAdd(testIncludeFileList, coverage->name);
             }
         }

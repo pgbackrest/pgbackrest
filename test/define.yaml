@@ -16,7 +16,8 @@
 # Some options are unique to tests:
 #     * coverage - a list of code modules that the test provides coverage for. A code module may be covered by multiple tests. That
 #         means you must run all the tests by providing the --run option multiple times to get full coverage on the code module. If
-#         a code module contains only data it should be marked noCode (e.g. - help/help.auto.c: noCode).
+#         a code module contains only data it should be marked noCode (e.g. - help/help.auto: noCode). If a code module is included
+#         in another code module it should be marked as included (e.g. - md5.vendor: included).
 #     * feature - Defines a feature that is now available in the harness. For example, the "error" feature defines HRN_FEATURE_ERROR
 #         used to automatically check for errors in later tests. The common/error test is not able to access this error handling
 #         because it is used to implement the error handling, so it must do error testing in a more primitive way.
@@ -328,7 +329,7 @@ unit:
           - common/crypto/cipherBlock
           - common/crypto/common
           - common/crypto/hash
-          - common/crypto/md5.vendor
+          - common/crypto/md5.vendor: included
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io-tls
