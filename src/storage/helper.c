@@ -567,17 +567,3 @@ storageSpoolWrite(void)
 
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpoolWrite);
 }
-
-/**********************************************************************************************************************************/
-void
-storageHelperFree(void)
-{
-    FUNCTION_TEST_VOID();
-
-    if (storageHelper.memContext != NULL)
-        memContextFree(storageHelper.memContext);
-
-    storageHelper = (struct StorageHelperLocal){.memContext = NULL, .helperList = storageHelper.helperList};
-
-    FUNCTION_TEST_RETURN_VOID();
-}

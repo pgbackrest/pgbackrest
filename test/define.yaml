@@ -389,6 +389,10 @@ unit:
       - name: lock
         total: 3
         harness: config
+        harness:
+          name: storageHelper
+          shim:
+            storage/helper: ~
 
         coverage:
           - common/lock

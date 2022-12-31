@@ -62,8 +62,4 @@ const Storage *storageRepoWrite(void);
 const Storage *storageSpool(void);
 const Storage *storageSpoolWrite(void);
 
-// Free all storage helper objects. This should be done on any config load to ensure that stanza changes are honored. ?? Currently
-// this is only done in testing, but in the future it will likely be done in production as well.
-void storageHelperFree(void);
-
 #endif

@@ -19,6 +19,7 @@ Harness for Loading Test Configurations
 #include "common/harnessDebug.h"
 #include "common/harnessLog.h"
 #include "common/harnessTest.h"
+#include "common/harnessStorageHelper.h"
 
 /**********************************************************************************************************************************/
 void
@@ -73,7 +74,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     }
 
     // Free objects in storage helper
-    storageHelperFree();
+    hrnStorageHelperFree();
 
     // Parse config
     configParse(storageLocal(), strLstSize(argList), strLstPtr(argList), false);
