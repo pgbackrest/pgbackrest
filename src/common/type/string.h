@@ -165,7 +165,7 @@ String *strFirstUpper(String *this);
 // Lower-case the first letter
 String *strFirstLower(String *this);
 
-// Upper-case entire string
+// Lower-case entire string
 String *strLower(String *this);
 
 // Return the path part of a string (i.e. everything before the last / or "" if there is no /)
