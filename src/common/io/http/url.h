@@ -98,11 +98,15 @@ httpUrlFree(HttpUrl *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+#ifdef DEBUG
+
 String *httpUrlToLog(const HttpUrl *this);
 
 #define FUNCTION_LOG_HTTP_URL_TYPE                                                                                               \
     HttpUrl *
 #define FUNCTION_LOG_HTTP_URL_FORMAT(value, buffer, bufferSize)                                                                  \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpUrlToLog, buffer, bufferSize)
+
+#endif // DEBUG
 
 #endif

@@ -29,8 +29,6 @@ testRun(void)
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
-        TEST_ERROR(cvtCharToZ('A', buffer, 1), AssertError, "buffer overflow");
-
         TEST_RESULT_UINT(cvtCharToZ('C', buffer, STACK_TRACE_PARAM_MAX), 1, "convert char to string");
         TEST_RESULT_Z(buffer, "C", "    check buffer");
     }

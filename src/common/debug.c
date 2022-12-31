@@ -37,13 +37,6 @@ ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t buff
 
 /**********************************************************************************************************************************/
 size_t
-strzToLog(const char *string, char *buffer, size_t bufferSize)
-{
-    return (size_t)snprintf(buffer, bufferSize, string == NULL ? "%s" : "\"%s\"", string == NULL ? NULL_Z : string);
-}
-
-/**********************************************************************************************************************************/
-size_t
 typeToLog(const char *typeName, char *buffer, size_t bufferSize)
 {
     return (size_t)snprintf(buffer, bufferSize, "%s", typeName);

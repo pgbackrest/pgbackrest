@@ -8,7 +8,10 @@ Contains conversions to/from native C types. Conversions of project types should
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <sys/types.h>
+
+#include "common/assert.h"
 
 /***********************************************************************************************************************************
 Required buffer sizes
@@ -21,7 +24,14 @@ Required buffer sizes
 Functions
 ***********************************************************************************************************************************/
 // Convert char to zero-terminated string
-size_t cvtCharToZ(char value, char *buffer, size_t bufferSize);
+FN_INLINE_ALWAYS size_t
+cvtCharToZ(const char value, char *const buffer, const size_t bufferSize)
+{
+    ASSERT_INLINE(buffer != NULL);
+    ASSERT_INLINE(bufferSize >= 2);
+
+    return (size_t)snprintf(buffer, bufferSize, "%c", value);
+}
 
 // Convert double to zero-terminated string and vice versa
 size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
@@ -50,7 +60,6 @@ cvtZSubNToInt64(const char *const value, const size_t offset, const size_t size)
 {
     return cvtZSubNToInt64Base(value, offset, size, 10);
 }
-
 
 // Convert int32/64 to uint32/64 using zigzag encoding and vice versa. Zigzag encoding places the sign in the least significant bit
 // so that signed and unsigned values alternate, e.g. 0 = 0, -1 = 1, 1 = 2, -2 = 3, 2 = 4, -3 = 5, 3 = 6, etc. This moves as many

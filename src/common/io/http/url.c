@@ -195,6 +195,8 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 }
 
 /**********************************************************************************************************************************/
+#ifdef DEBUG
+
 String *
 httpUrlToLog(const HttpUrl *this)
 {
@@ -205,3 +207,5 @@ httpUrlToLog(const HttpUrl *this)
         "{%s://%s%s%s:%u%s}", strZ(httpProtocolTypeStr(this->pub.type)), ipv6 ? "[" : "", strZ(this->pub.host), ipv6 ? "]" : "",
         this->pub.port, strZ(this->pub.path));
 }
+
+#endif // DEBUG

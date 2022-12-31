@@ -1293,11 +1293,15 @@ jsonValidate(const String *const json)
 }
 
 /**********************************************************************************************************************************/
+#ifdef DEBUG
+
 String *
 jsonReadToLog(const JsonRead *const this)
 {
     return strNewFmt("{json: %s}", this->json);
 }
+
+#endif // DEBUG
 
 /**********************************************************************************************************************************/
 JsonWrite *
@@ -2041,8 +2045,12 @@ jsonFromVar(const Variant *const value)
 }
 
 /**********************************************************************************************************************************/
+#ifdef DEBUG
+
 String *
 jsonWriteToLog(const JsonWrite *const this)
 {
     return strNewFmt("{size: %zu}", strSize(this->json));
 }
+
+#endif // DEBUG

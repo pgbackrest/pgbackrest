@@ -182,18 +182,22 @@ String *jsonFromVar(const Variant *value);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
+#ifdef DEBUG
+
 String *jsonReadToLog(const JsonRead *this);
 
-#define FUNCTION_LOG_JSON_READ_TYPE                                                                                                \
+#define FUNCTION_LOG_JSON_READ_TYPE                                                                                            \
     JsonRead *
-#define FUNCTION_LOG_JSON_READ_FORMAT(value, buffer, bufferSize)                                                                   \
+#define FUNCTION_LOG_JSON_READ_FORMAT(value, buffer, bufferSize)                                                               \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, jsonReadToLog, buffer, bufferSize)
 
 String *jsonWriteToLog(const JsonWrite *this);
 
-#define FUNCTION_LOG_JSON_WRITE_TYPE                                                                                               \
+#define FUNCTION_LOG_JSON_WRITE_TYPE                                                                                           \
     JsonWrite *
-#define FUNCTION_LOG_JSON_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
+#define FUNCTION_LOG_JSON_WRITE_FORMAT(value, buffer, bufferSize)                                                              \
     FUNCTION_LOG_STRING_OBJECT_FORMAT(value, jsonWriteToLog, buffer, bufferSize)
+
+#endif // DEBUG
 
 #endif
