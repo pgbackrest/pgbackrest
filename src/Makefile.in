@@ -37,7 +37,6 @@ SRCS_COMMON = \
 	common/type/stringList.c \
 	common/type/variant.c \
 	common/type/variantList.c \
-	common/type/xml.c \
 	common/user.c \
 	common/wait.c \
 	config/common.c \
@@ -138,6 +137,7 @@ SRCS = \
 	common/stat.c \
 	common/type/json.c \
 	common/type/string.c \
+	common/type/xml.c \
 	config/config.c \
 	config/exec.c \
 	config/load.c \
@@ -213,6 +213,7 @@ pgbackrest: $(OBJS_PGBACKREST)
 SRCS_BUILD_CODE = \
 	build/common/render.c \
 	build/common/string.c \
+	build/common/xml.c \
 	build/common/yaml.c \
 	build/config/parse.c \
 	build/config/render.c \

@@ -55,6 +55,7 @@ src_common = files(
 src_build_code = [
 	'build/common/render.c',
 	'build/common/string.c',
+	'build/common/xml.c',
 	'build/common/yaml.c',
 	'build/config/parse.c',
 	'build/config/render.c',
@@ -67,7 +68,6 @@ src_build_code = [
 	'build/main.c',
 	'common/compress/bz2/common.c',
 	'common/compress/bz2/compress.c',
-	'common/type/xml.c',
 ]
 
 build_code = executable(

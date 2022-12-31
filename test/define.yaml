@@ -243,7 +243,8 @@ unit:
         total: 1
 
         coverage:
-          - common/type/xml
+          - build/common/xml
+          - common/type/xml: included
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stat

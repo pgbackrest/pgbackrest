@@ -65,9 +65,6 @@ XmlNode *xmlNodeAdd(XmlNode *this, const String *name);
 /***********************************************************************************************************************************
 Node Getters/Setters
 ***********************************************************************************************************************************/
-// Node attribute
-String *xmlNodeAttribute(const XmlNode *this, const String *name);
-
 // Node child (by name or index)
 XmlNode *xmlNodeChildN(const XmlNode *this, const String *name, unsigned int index, bool errorOnMissing);
 

@@ -146,30 +146,6 @@ xmlNodeLstAdd(XmlNodeList *this, xmlNodePtr node)
 
 /**********************************************************************************************************************************/
 String *
-xmlNodeAttribute(const XmlNode *this, const String *name)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(XML_NODE, this);
-        FUNCTION_TEST_PARAM(STRING, name);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-    ASSERT(name != NULL);
-
-    String *result = NULL;
-    xmlChar *value = xmlGetProp(this->node, (unsigned char *)strZ(name));
-
-    if (value != NULL)
-    {
-        result = strNewZ((char *)value);
-        xmlFree(value);
-    }
-
-    FUNCTION_TEST_RETURN(STRING, result);
-}
-
-/**********************************************************************************************************************************/
-String *
 xmlNodeContent(const XmlNode *this)
 {
     FUNCTION_TEST_BEGIN();
