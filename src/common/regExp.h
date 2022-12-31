@@ -24,18 +24,6 @@ Functions
 bool regExpMatch(RegExp *this, const String *string);
 
 /***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-// Get pointer to the last match.  NULL if there was no match.
-const char *regExpMatchPtr(RegExp *this);
-
-// Get size of the last match.  0 if there was no match.
-size_t regExpMatchSize(RegExp *this);
-
-// Get the last match as a String.  NULL if there was no match.
-String *regExpMatchStr(RegExp *this);
-
-/***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Match a regular expression in one call for brevity

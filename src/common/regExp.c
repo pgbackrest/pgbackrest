@@ -15,8 +15,6 @@ Contains information about the regular expression handler
 struct RegExp
 {
     regex_t regExp;
-    const char *matchPtr;
-    size_t matchSize;
 };
 
 /***********************************************************************************************************************************
@@ -95,7 +93,7 @@ regExpNew(const String *expression)
 
 /**********************************************************************************************************************************/
 bool
-regExpMatch(RegExp *this, const String *string)
+regExpMatch(RegExp *const this, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(REGEXP, this);
@@ -107,64 +105,12 @@ regExpMatch(RegExp *this, const String *string)
 
     // Test for a match
     regmatch_t matchPtr;
-    int result = regexec(&this->regExp, strZ(string), 1, &matchPtr, 0);
+    const int result = regexec(&this->regExp, strZ(string), 1, &matchPtr, 0);
 
     // Check for an error
     regExpErrorCheck(result);
 
-    // Store match results
-    if (result == 0)
-    {
-        this->matchPtr = strZ(string) + matchPtr.rm_so;
-        this->matchSize = (size_t)(matchPtr.rm_eo - matchPtr.rm_so);
-    }
-    // Else reset match results
-    else
-    {
-        this->matchPtr = NULL;
-        this->matchSize = 0;
-    }
-
     FUNCTION_TEST_RETURN(BOOL, result == 0);
-}
-
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-const char *
-regExpMatchPtr(RegExp *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN_CONST(STRINGZ, this->matchPtr);
-}
-
-size_t
-regExpMatchSize(RegExp *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(SIZE, this->matchSize);
-}
-
-String *
-regExpMatchStr(RegExp *this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(REGEXP, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    FUNCTION_TEST_RETURN(STRING, this->matchPtr == NULL ? NULL : strNewZN(regExpMatchPtr(this), regExpMatchSize(this)));
 }
 
 /**********************************************************************************************************************************/

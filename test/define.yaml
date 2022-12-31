@@ -188,7 +188,8 @@ unit:
         total: 3
 
         coverage:
-          - common/regExp
+          - build/common/regExp
+          - common/regExp: included
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: log
