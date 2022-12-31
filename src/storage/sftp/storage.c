@@ -24,7 +24,7 @@ Define PATH_MAX if it is not defined
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageSftp
+struct StorageSftp
 {
     STORAGE_COMMON_MEMBER;
 
@@ -37,7 +37,7 @@ typedef struct StorageSftp
     TimeMSec timeoutConnect;
     TimeMSec timeoutSession;
     Wait *wait;
-} StorageSftp;
+};
 
 /**********************************************************************************************************************************/
 static bool
