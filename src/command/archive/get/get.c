@@ -843,7 +843,8 @@ typedef struct ArchiveGetAsyncData
     unsigned int archiveFileIdx;                                    // Current index in the list to be processed
 } ArchiveGetAsyncData;
 
-static ProtocolParallelJob *archiveGetAsyncCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
