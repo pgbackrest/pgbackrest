@@ -17,7 +17,6 @@ Azure Storage
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/azure/read.h"
-#include "storage/azure/storage.intern.h"
 #include "storage/azure/write.h"
 
 /***********************************************************************************************************************************

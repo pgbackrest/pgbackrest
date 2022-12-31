@@ -4,8 +4,12 @@ Posix Storage Internal
 #ifndef STORAGE_POSIX_STORAGE_INTERN_H
 #define STORAGE_POSIX_STORAGE_INTERN_H
 
-#include "common/type/object.h"
 #include "storage/posix/storage.h"
+
+/***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StoragePosix StoragePosix;
 
 /***********************************************************************************************************************************
 Constructors

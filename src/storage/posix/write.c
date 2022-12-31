@@ -13,7 +13,6 @@ Posix Storage File write
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/user.h"
-#include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
 #include "storage/write.intern.h"
 

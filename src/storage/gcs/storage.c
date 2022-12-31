@@ -22,7 +22,6 @@ GCS Storage
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/gcs/read.h"
-#include "storage/gcs/storage.intern.h"
 #include "storage/gcs/write.h"
 #include "storage/posix/storage.h"
 

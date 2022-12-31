@@ -17,7 +17,6 @@ S3 Storage
 #include "common/type/json.h"
 #include "common/type/xml.h"
 #include "storage/s3/read.h"
-#include "storage/s3/storage.intern.h"
 #include "storage/s3/write.h"
 
 /***********************************************************************************************************************************
