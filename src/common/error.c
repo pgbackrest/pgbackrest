@@ -328,7 +328,7 @@ errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
 void
 errorInternalPropagate(void)
 {
-    assert(errorContext.error.errorType != NULL);
+    assert(errorType() != NULL);
 
     // Mark the error as uncaught
     errorContext.tryList[errorContext.tryTotal].uncaught = true;
@@ -391,7 +391,8 @@ errorInternalThrow(
     // Else generate the stack trace for the error
     else if (
         stackTraceToZ(
-            stackTraceBuffer, sizeof(stackTraceBuffer), fileName, functionName, (unsigned int)fileLine) >= sizeof(stackTraceBuffer))
+            stackTraceBuffer, sizeof(stackTraceBuffer), errorFileName(), errorFunctionName(),
+            (unsigned int)fileLine) >= sizeof(stackTraceBuffer))
     {
         // Indicate that the stack trace was truncated
     }
