@@ -13,15 +13,15 @@ Socket Common Functions
 Functions
 ***********************************************************************************************************************************/
 // Initialize settings for socket connections (some are used only for TCP)
-void sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval);
+FV_EXTERN void sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval);
 
 // Get address info for a host/address. The caller is responsible for freeing addrinfo.
-struct addrinfo *sckHostLookup(const String *const host, unsigned int port);
+FV_EXTERN struct addrinfo *sckHostLookup(const String *const host, unsigned int port);
 
 // Set options on a socket
-void sckOptionSet(int fd);
+FV_EXTERN void sckOptionSet(int fd);
 
 // Connect socket to an IP address
-void sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout);
+FV_EXTERN void sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout);
 
 #endif

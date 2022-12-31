@@ -17,7 +17,7 @@ Archive Get File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-ArchiveGetFileResult archiveGetFile(
+FV_EXTERN ArchiveGetFileResult archiveGetFile(
     const Storage *storage, const String *request, const List *actualList, const String *walDestination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

@@ -9,9 +9,9 @@ Log Test Harness
 #include <stdio.h>
 #include <string.h>
 
+#include "build/common/regExp.h"
 #include "common/log.h"
 #include "common/memContext.h"
-#include "common/regExp.h"
 #include "common/type/stringList.h"
 
 #include "common/harnessDebug.h"
@@ -325,10 +325,11 @@ hrnLogReplace(void)
                 while (regExpMatch(logReplace->regExp, STRDEF(harnessLogBuffer)))
                 {
                     // Get the match
-                    String *match = regExpMatchStr(logReplace->regExp);
+                    String *match = regExpMatchStr(logReplace->regExp, STRDEF(harnessLogBuffer));
 
                     // Find beginning of match
-                    char *begin = harnessLogBuffer + (regExpMatchPtr(logReplace->regExp) - harnessLogBuffer);
+                    char *begin =
+                        harnessLogBuffer + (regExpMatchPtr(logReplace->regExp, STRDEF(harnessLogBuffer)) - harnessLogBuffer);
 
                     // If there is a sub expression then evaluate it
                     if (logReplace->regExpSub != NULL)
@@ -342,10 +343,10 @@ hrnLogReplace(void)
                         }
 
                         // Find beginning of match
-                        begin += regExpMatchPtr(logReplace->regExpSub) - strZ(match);
+                        begin += regExpMatchPtr(logReplace->regExpSub, match) - strZ(match);
 
                         // Get the match
-                        match = regExpMatchStr(logReplace->regExpSub);
+                        match = regExpMatchStr(logReplace->regExpSub, match);
                     }
 
                     // Build replacement string.  If versioned then append the version number.

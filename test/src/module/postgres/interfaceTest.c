@@ -129,13 +129,6 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFFAAAAAAAA, 0x40000000), "00000001FFFFFFFF00000002", "lsn to wal segment");
         TEST_RESULT_STR_Z(pgLsnToWalSegment(1, 0xFFFFFFFF40000000, 0x40000000), "00000001FFFFFFFF00000001", "lsn to wal segment");
 
-        TEST_RESULT_UINT(
-            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF000000AA"), 0x1000000), 0xFFFFFFFFAA000000, "16M wal segment to lsn");
-        TEST_RESULT_UINT(
-            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF00000002"), 0x40000000), 0xFFFFFFFF80000000, "1G wal segment to lsn");
-        TEST_RESULT_UINT(
-            pgLsnFromWalSegment(STRDEF("00000001FFFFFFFF00000001"), 0x40000000), 0xFFFFFFFF40000000, "1G wal segment to lsn");
-
         TEST_RESULT_UINT(pgTimelineFromWalSegment(STRDEF("00000001FFFFFFFF000000AA")), 1, "timeline 1");
         TEST_RESULT_UINT(pgTimelineFromWalSegment(STRDEF("F000000FFFFFFFFF000000AA")), 0xF000000F, "timeline F000000F");
 

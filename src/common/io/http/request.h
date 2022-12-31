@@ -80,7 +80,7 @@ typedef struct HttpRequestNewParam
 #define httpRequestNewP(client, verb, path, ...)                                                                                   \
     httpRequestNew(client, verb, path, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
+FV_EXTERN HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -125,10 +125,10 @@ httpRequestVerb(const HttpRequest *const this)
 Functions
 ***********************************************************************************************************************************/
 // Wait for a response from the request
-HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
+FV_EXTERN HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
 
 // Throw an error if the request failed
-FN_NO_RETURN void httpRequestError(const HttpRequest *this, HttpResponse *response);
+FV_EXTERN FN_NO_RETURN void httpRequestError(const HttpRequest *this, HttpResponse *response);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS HttpRequest *
@@ -149,7 +149,7 @@ httpRequestFree(HttpRequest *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *httpRequestToLog(const HttpRequest *this);
+FV_EXTERN String *httpRequestToLog(const HttpRequest *this);
 
 #define FUNCTION_LOG_HTTP_REQUEST_TYPE                                                                                            \
     HttpRequest *

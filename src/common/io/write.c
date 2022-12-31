@@ -28,7 +28,7 @@ struct IoWrite
 };
 
 /**********************************************************************************************************************************/
-IoWrite *
+FV_EXTERN IoWrite *
 ioWriteNew(void *driver, IoWriteInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -63,7 +63,7 @@ ioWriteNew(void *driver, IoWriteInterface interface)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioWriteOpen(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -92,7 +92,7 @@ ioWriteOpen(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioWrite(IoWrite *this, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -124,7 +124,7 @@ ioWrite(IoWrite *this, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioWriteLine(IoWrite *this, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -142,7 +142,7 @@ ioWriteLine(IoWrite *this, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-bool
+FV_EXTERN bool
 ioWriteReady(IoWrite *this, IoWriteReadyParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -161,7 +161,7 @@ ioWriteReady(IoWrite *this, IoWriteReadyParam param)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioWriteStr(IoWrite *this, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -178,7 +178,7 @@ ioWriteStr(IoWrite *this, const String *string)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioWriteStrLine(IoWrite *this, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -196,7 +196,10 @@ ioWriteStrLine(IoWrite *this, const String *string)
 }
 
 /**********************************************************************************************************************************/
-void
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+
+FV_EXTERN void
 ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -215,8 +218,10 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+#pragma GCC diagnostic pop
+
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioWriteFlush(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -237,7 +242,7 @@ ioWriteFlush(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 ioWriteClose(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -276,7 +281,7 @@ ioWriteClose(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 ioWriteFd(const IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

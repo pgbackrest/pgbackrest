@@ -12,15 +12,15 @@ Configuration Load
 Functions
 ***********************************************************************************************************************************/
 // Load the configuration
-void cfgLoad(unsigned int argListSize, const char *argList[]);
+FV_EXTERN void cfgLoad(unsigned int argListSize, const char *argList[]);
 
 // Generate log file path and name. Only the command role is configurable here because log settings may vary between commands.
-String *cfgLoadLogFileName(ConfigCommandRole commandRole);
+FV_EXTERN String *cfgLoadLogFileName(ConfigCommandRole commandRole);
 
 // Attempt to set the log file and turn file logging off if the file cannot be opened
-void cfgLoadLogFile(void);
+FV_EXTERN void cfgLoadLogFile(void);
 
 // Update options that have complex rules
-void cfgLoadUpdateOption(void);
+FV_EXTERN void cfgLoadUpdateOption(void);
 
 #endif

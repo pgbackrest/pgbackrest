@@ -8,6 +8,6 @@ Stanza Create Command
 Functions
 ***********************************************************************************************************************************/
 // Process stanza-create
-void cmdStanzaCreate(void);
+FV_EXTERN void cmdStanzaCreate(void);
 
 #endif

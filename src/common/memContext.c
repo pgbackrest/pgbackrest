@@ -386,7 +386,7 @@ memContextNewIndex(MemContext *const memContext, MemContextChildMany *const memC
 }
 
 /**********************************************************************************************************************************/
-MemContext *
+FV_EXTERN MemContext *
 memContextNew(
 #ifdef DEBUG
     const char *const name,
@@ -482,7 +482,7 @@ memContextNew(
 }
 
 /**********************************************************************************************************************************/
-void *
+FV_EXTERN void *
 memContextAllocExtra(MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -496,7 +496,7 @@ memContextAllocExtra(MemContext *const this)
 }
 
 /**********************************************************************************************************************************/
-MemContext *
+FV_EXTERN MemContext *
 memContextFromAllocExtra(void *const allocExtra)
 {
     FUNCTION_TEST_BEGIN();
@@ -509,21 +509,8 @@ memContextFromAllocExtra(void *const allocExtra)
     FUNCTION_TEST_RETURN(MEM_CONTEXT, (MemContext *)allocExtra - 1);
 }
 
-const MemContext *
-memContextConstFromAllocExtra(const void *const allocExtra)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, allocExtra);
-    FUNCTION_TEST_END();
-
-    ASSERT(allocExtra != NULL);
-    ASSERT(((MemContext *)allocExtra - 1)->allocExtra != 0);
-
-    FUNCTION_TEST_RETURN(MEM_CONTEXT, (MemContext *)allocExtra - 1);
-}
-
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *callbackArgument)
 {
     FUNCTION_TEST_BEGIN();
@@ -552,7 +539,7 @@ memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memContextCallbackClear(MemContext *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -686,7 +673,7 @@ memContextAllocResize(MemContextAlloc *alloc, size_t size)
 }
 
 /**********************************************************************************************************************************/
-void *
+FV_EXTERN void *
 memNew(size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -699,7 +686,7 @@ memNew(size_t size)
 }
 
 /**********************************************************************************************************************************/
-void *
+FV_EXTERN void *
 memNewPtrArray(size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -717,7 +704,7 @@ memNewPtrArray(size_t size)
 }
 
 /**********************************************************************************************************************************/
-void *
+FV_EXTERN void *
 memResize(const void *buffer, size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -729,7 +716,7 @@ memResize(const void *buffer, size_t size)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memFree(void *const buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -770,7 +757,7 @@ memFree(void *const buffer)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memContextMove(MemContext *this, MemContext *parentNew)
 {
     FUNCTION_TEST_BEGIN();
@@ -831,7 +818,7 @@ memContextMove(MemContext *this, MemContext *parentNew)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memContextSwitch(MemContext *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -857,7 +844,7 @@ memContextSwitch(MemContext *this)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memContextSwitchBack(void)
 {
     FUNCTION_TEST_VOID();
@@ -888,7 +875,7 @@ memContextSwitchBack(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memContextKeep(void)
 {
     FUNCTION_TEST_VOID();
@@ -909,7 +896,7 @@ memContextKeep(void)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memContextDiscard(void)
 {
     FUNCTION_TEST_VOID();
@@ -931,7 +918,7 @@ memContextDiscard(void)
 }
 
 /**********************************************************************************************************************************/
-MemContext *
+FV_EXTERN MemContext *
 memContextTop(void)
 {
     FUNCTION_TEST_VOID();
@@ -939,7 +926,7 @@ memContextTop(void)
 }
 
 /**********************************************************************************************************************************/
-MemContext *
+FV_EXTERN MemContext *
 memContextCurrent(void)
 {
     FUNCTION_TEST_VOID();
@@ -947,7 +934,7 @@ memContextCurrent(void)
 }
 
 /**********************************************************************************************************************************/
-MemContext *
+FV_EXTERN MemContext *
 memContextPrior(void)
 {
     FUNCTION_TEST_VOID();
@@ -963,7 +950,9 @@ memContextPrior(void)
 }
 
 /**********************************************************************************************************************************/
-size_t
+#ifdef DEBUG
+
+FV_EXTERN size_t
 memContextSize(const MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -1046,8 +1035,10 @@ memContextSize(const MemContext *const this)
     FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (unsigned char *)this) + total);
 }
 
+#endif // DEBUG
+
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 memContextClean(const unsigned int tryDepth, const bool fatal)
 {
     FUNCTION_TEST_BEGIN();
@@ -1237,7 +1228,7 @@ memContextFreeRecurse(MemContext *const this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-void
+FV_EXTERN void
 memContextFree(MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();

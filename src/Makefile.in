@@ -22,7 +22,6 @@ SRCS_COMMON = \
 	common/io/write.c \
 	common/log.c \
 	common/memContext.c \
-	common/regExp.c \
 	common/stackTrace.c \
 	common/time.c \
 	common/type/blob.c \
@@ -32,13 +31,11 @@ SRCS_COMMON = \
 	common/type/list.c \
 	common/type/object.c \
 	common/type/pack.c \
-	common/type/string.c \
 	common/type/stringZ.c \
 	common/type/stringId.c \
 	common/type/stringList.c \
 	common/type/variant.c \
 	common/type/variantList.c \
-	common/type/xml.c \
 	common/user.c \
 	common/wait.c \
 	config/common.c \
@@ -136,8 +133,11 @@ SRCS = \
 	common/io/tls/server.c \
 	common/io/tls/session.c \
 	common/lock.c \
+	common/regExp.c \
 	common/stat.c \
 	common/type/json.c \
+	common/type/string.c \
+	common/type/xml.c \
 	config/config.c \
 	config/exec.c \
 	config/load.c \
@@ -211,7 +211,10 @@ pgbackrest: $(OBJS_PGBACKREST)
 # Compile and link code builder
 ####################################################################################################################################
 SRCS_BUILD_CODE = \
+	build/common/regExp.c \
 	build/common/render.c \
+	build/common/string.c \
+	build/common/xml.c \
 	build/common/yaml.c \
 	build/config/parse.c \
 	build/config/render.c \

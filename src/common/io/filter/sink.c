@@ -47,7 +47,7 @@ ioSinkProcess(THIS_VOID, const Buffer *input, Buffer *output)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 ioSinkNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

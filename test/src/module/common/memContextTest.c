@@ -120,7 +120,6 @@ testRun(void)
             "test5", .allocExtra = 16, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1);
         TEST_RESULT_PTR(memContextAllocExtra(memContext), memContext + 1, "mem context alloc extra");
         TEST_RESULT_PTR(memContextFromAllocExtra(memContext + 1), memContext, "mem context from alloc extra");
-        TEST_RESULT_PTR(memContextConstFromAllocExtra(memContext + 1), memContext, "const mem context from alloc extra");
         memContextKeep();
         TEST_RESULT_INT(
             memContextChildMany(memContextTop())->listSize, MEM_CONTEXT_INITIAL_SIZE * 2, "increased child context list size");

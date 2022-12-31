@@ -13,7 +13,7 @@ Configuration Protocol Handler
 #include "config/protocol.h"
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 configOptionProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -45,7 +45,7 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
-VariantList *
+FV_EXTERN VariantList *
 configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

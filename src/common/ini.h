@@ -37,7 +37,7 @@ typedef struct IniNewParam
 #define iniNewP(read, ...)                                                                                                         \
     iniNew(read, (IniNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-Ini *iniNew(IoRead *read, IniNewParam param);
+FV_EXTERN Ini *iniNew(IoRead *read, IniNewParam param);
 
 /***********************************************************************************************************************************
 Functions
@@ -50,26 +50,26 @@ iniMove(Ini *const this, MemContext *const parentNew)
 }
 
 // Check that the ini is valid
-void iniValid(Ini *this);
+FV_EXTERN void iniValid(Ini *this);
 
 // Get the next value in the ini file. Note that members of IniValue are reused between calls so the members of a previous call may
 // change after the next call. Any members that need to be preserved should be copied before the next call.
-const IniValue *iniValueNext(Ini *this);
+FV_EXTERN const IniValue *iniValueNext(Ini *this);
 
 /***********************************************************************************************************************************
 Getters
 ***********************************************************************************************************************************/
 // Get an ini value -- error if it does not exist
-const String *iniGet(const Ini *this, const String *section, const String *key);
+FV_EXTERN const String *iniGet(const Ini *this, const String *section, const String *key);
 
 // Ini key list
-StringList *iniGetList(const Ini *this, const String *section, const String *key);
+FV_EXTERN StringList *iniGetList(const Ini *this, const String *section, const String *key);
 
 // The key's value is a list
-bool iniSectionKeyIsList(const Ini *this, const String *section, const String *key);
+FV_EXTERN bool iniSectionKeyIsList(const Ini *this, const String *section, const String *key);
 
 // List of keys for a section
-StringList *iniSectionKeyList(const Ini *this, const String *section);
+FV_EXTERN StringList *iniSectionKeyList(const Ini *this, const String *section);
 
 /***********************************************************************************************************************************
 Destructor

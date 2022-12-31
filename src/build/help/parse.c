@@ -3,7 +3,6 @@ Parse Help Xml
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "common/type/xml.h"
 #include "storage/storage.h"
 
 #include "build/config/parse.h"

@@ -275,7 +275,7 @@ static const IoServerInterface tlsServerInterface =
     .toLog = tlsServerToLog,
 };
 
-IoServer *
+FV_EXTERN IoServer *
 tlsServerNew(
     const String *const host, const String *const caFile, const String *const keyFile, const String *const certFile,
     const TimeMSec timeout)

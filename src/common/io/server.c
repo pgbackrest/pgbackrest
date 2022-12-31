@@ -17,7 +17,7 @@ struct IoServer
 };
 
 /**********************************************************************************************************************************/
-IoServer *
+FV_EXTERN IoServer *
 ioServerNew(void *const driver, const IoServerInterface *const interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace)
@@ -48,7 +48,7 @@ ioServerNew(void *const driver, const IoServerInterface *const interface)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 ioServerToLog(const IoServer *const this)
 {
     return strNewFmt(

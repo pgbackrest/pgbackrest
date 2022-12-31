@@ -6,7 +6,7 @@ Build Common
 
 #include <inttypes.h>
 
-#include "common/type/string.h"
+#include "build/common/string.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************

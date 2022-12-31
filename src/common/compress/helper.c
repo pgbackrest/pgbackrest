@@ -112,7 +112,7 @@ static const struct CompressHelperLocal
 };
 
 /**********************************************************************************************************************************/
-CompressType
+FV_EXTERN CompressType
 compressTypeEnum(const StringId type)
 {
     FUNCTION_TEST_BEGIN();
@@ -136,7 +136,7 @@ compressTypeEnum(const StringId type)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 compressTypePresent(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -152,7 +152,7 @@ compressTypePresent(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 compressTypeStr(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -165,7 +165,7 @@ compressTypeStr(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-CompressType
+FV_EXTERN CompressType
 compressTypeFromName(const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -187,7 +187,7 @@ compressTypeFromName(const String *name)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 compressLevelDefault(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -201,7 +201,7 @@ compressLevelDefault(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 compressLevelMin(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -215,7 +215,7 @@ compressLevelMin(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-int
+FV_EXTERN int
 compressLevelMax(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -229,7 +229,7 @@ compressLevelMax(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 compressFilter(CompressType type, int level)
 {
     FUNCTION_TEST_BEGIN();
@@ -245,7 +245,7 @@ compressFilter(CompressType type, int level)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 compressFilterPack(const StringId filterType, const Pack *const filterParam)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -283,7 +283,7 @@ compressFilterPack(const StringId filterType, const Pack *const filterParam)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 decompressFilter(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -298,7 +298,7 @@ decompressFilter(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-const String *
+FV_EXTERN const String *
 compressExtStr(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -311,7 +311,7 @@ compressExtStr(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 compressExtCat(String *file, CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -327,7 +327,7 @@ compressExtCat(String *file, CompressType type)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 compressExtStrip(const String *file, CompressType type)
 {
     FUNCTION_TEST_BEGIN();

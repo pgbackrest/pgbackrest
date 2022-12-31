@@ -40,16 +40,16 @@ Hash type sizes
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoFilter *cryptoHashNew(HashType type);
-IoFilter *cryptoHashNewPack(const Pack *paramList);
+FV_EXTERN IoFilter *cryptoHashNew(HashType type);
+FV_EXTERN IoFilter *cryptoHashNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Get hash for one buffer
-Buffer *cryptoHashOne(HashType type, const Buffer *message);
+FV_EXTERN Buffer *cryptoHashOne(HashType type, const Buffer *message);
 
 // Get hmac for one message/key
-Buffer *cryptoHmacOne(HashType type, const Buffer *key, const Buffer *message);
+FV_EXTERN Buffer *cryptoHmacOne(HashType type, const Buffer *key, const Buffer *message);
 
 #endif

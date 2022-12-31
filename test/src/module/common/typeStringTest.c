@@ -248,12 +248,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strQuote()"))
-    {
-        TEST_RESULT_STR_Z(strQuote(STRDEF("abcd"), STRDEF("'")), "'abcd'", "quote string");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("strReplace() and strReplaceChr()"))
     {
         TEST_RESULT_STR_Z(strReplace(strNewZ(""), STRDEF("A"), STRDEF("B")), "", "replace none");

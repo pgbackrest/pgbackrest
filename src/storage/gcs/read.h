@@ -10,6 +10,7 @@ GCS Storage Read
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageRead *storageReadGcsNew(StorageGcs *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
+FV_EXTERN StorageRead *storageReadGcsNew(
+    StorageGcs *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
 
 #endif

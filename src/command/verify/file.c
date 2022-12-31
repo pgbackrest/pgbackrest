@@ -15,7 +15,7 @@ Verify File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-VerifyResult
+FV_EXTERN VerifyResult
 verifyFile(
     const String *const filePathName, const uint64_t offset, const Variant *const limit, const CompressType compressType,
     const Buffer *const fileChecksum, const uint64_t fileSize, const String *const cipherPass)

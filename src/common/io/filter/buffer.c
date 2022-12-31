@@ -28,7 +28,7 @@ typedef struct IoBuffer
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *
+static String *
 ioBufferToLog(const IoBuffer *this)
 {
     return strNewFmt("{inputSame: %s, inputPos: %zu}", cvtBoolToConstZ(this->inputSame), this->inputPos);
@@ -103,7 +103,7 @@ ioBufferInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 ioBufferNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

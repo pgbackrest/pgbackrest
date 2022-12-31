@@ -62,7 +62,7 @@ infoBackupNewInternal(void)
 }
 
 /**********************************************************************************************************************************/
-InfoBackup *
+FV_EXTERN InfoBackup *
 infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -219,7 +219,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
 }
 
 /**********************************************************************************************************************************/
-InfoBackup *
+FV_EXTERN InfoBackup *
 infoBackupNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -341,7 +341,7 @@ infoBackupSave(InfoBackup *this, IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-InfoBackup *
+FV_EXTERN InfoBackup *
 infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -357,7 +357,7 @@ infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, u
 }
 
 /**********************************************************************************************************************************/
-InfoBackupData
+FV_EXTERN InfoBackupData
 infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -371,7 +371,7 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -475,7 +475,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const backupLabel, const KeyValue *const newAnnotationKv)
 {
     FUNCTION_TEST_BEGIN();
@@ -526,7 +526,7 @@ infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const ba
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -548,7 +548,7 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 infoBackupDataLabelList(const InfoBackup *this, const String *expression)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -583,7 +583,7 @@ infoBackupDataLabelList(const InfoBackup *this, const String *expression)
 }
 
 /**********************************************************************************************************************************/
-StringList *
+FV_EXTERN StringList *
 infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -663,7 +663,7 @@ infoBackupLoadFileCallback(void *const data, const unsigned int try)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-InfoBackup *
+FV_EXTERN InfoBackup *
 infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -713,7 +713,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
 }
 
 /**********************************************************************************************************************************/
-InfoBackup *
+FV_EXTERN InfoBackup *
 infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -815,7 +815,7 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 infoBackupSaveFile(
     InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
@@ -850,7 +850,7 @@ infoBackupSaveFile(
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 infoBackupDataToLog(const InfoBackupData *this)
 {
     return strNewFmt("{label: %s, pgId: %u}", strZ(this->backupLabel), this->backupPgId);

@@ -1,0 +1,17 @@
+_IO_stdin_used
+__TMC_END__
+__bss_start
+__data_start
+__dso_handle
+__environ@GLIBC_2.2.5
+_edata
+_end
+_fini
+_init
+_start
+data_start
+environ@GLIBC_2.2.5
+main
+stderr@GLIBC_2.2.5
+stdout@GLIBC_2.2.5
+xmlFree@LIBXML2_2.4.30

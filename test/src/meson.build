@@ -1,7 +1,7 @@
 ####################################################################################################################################
 # Error on release builds since we do not want anyone using meson for production yet
 ####################################################################################################################################
-if get_option('buildtype') != 'debug' and get_option('buildtype') != 'debugoptimized'
+if not get_option('force-release') and get_option('buildtype') != 'debug' and get_option('buildtype') != 'debugoptimized'
     error('meson is currently not supported for release builds')
 endif
 
@@ -27,6 +27,7 @@ subdir('command/help')
 ####################################################################################################################################
 src_test = [
     '../../src/build/common/render.c',
+    '../../src/build/common/string.c',
     '../../src/build/common/yaml.c',
     '../../src/command/command.c',
     '../../src/command/exit.c',
@@ -60,6 +61,7 @@ executable(
         # Use large buffer sizes to capture large error/log outputs
         '-DERROR_MESSAGE_BUFFER_SIZE=262144',
         '-DLOG_BUFFER_SIZE=262144',
+        arg_unity,
     ],
     dependencies: [
         lib_bz2,

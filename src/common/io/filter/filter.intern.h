@@ -54,7 +54,7 @@ typedef struct IoFilterInterface
 #define ioFilterNewP(type, driver, paramList, ...)                                                                                 \
     ioFilterNew(type, driver, paramList, (IoFilterInterface){__VA_ARGS__})
 
-IoFilter *ioFilterNew(StringId type, void *driver, Pack *paramList, IoFilterInterface);
+FV_EXTERN IoFilter *ioFilterNew(StringId type, void *driver, Pack *paramList, IoFilterInterface);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -69,7 +69,7 @@ typedef struct IoFilterPub
 } IoFilterPub;
 
 // Is the filter done?
-bool ioFilterDone(const IoFilter *this);
+FV_EXTERN bool ioFilterDone(const IoFilter *this);
 
 // Driver for the filter
 FN_INLINE_ALWAYS void *
@@ -80,7 +80,7 @@ ioFilterDriver(IoFilter *const this)
 
 // Does the filter need the same input again? If the filter cannot get all its output into the output buffer then it may need access
 // to the same input again.
-bool ioFilterInputSame(const IoFilter *this);
+FV_EXTERN bool ioFilterInputSame(const IoFilter *this);
 
 // Interface for the filter
 FN_INLINE_ALWAYS const IoFilterInterface *
@@ -107,10 +107,10 @@ ioFilterParamList(const IoFilter *const this)
 Functions
 ***********************************************************************************************************************************/
 // Filter input only (a result is expected)
-void ioFilterProcessIn(IoFilter *this, const Buffer *input);
+FV_EXTERN void ioFilterProcessIn(IoFilter *this, const Buffer *input);
 
 // Filter input and produce output
-void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
+FV_EXTERN void ioFilterProcessInOut(IoFilter *this, const Buffer *input, Buffer *output);
 
 // Move filter to a new parent mem context
 FN_INLINE_ALWAYS IoFilter *

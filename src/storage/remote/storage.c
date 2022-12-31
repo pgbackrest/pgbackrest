@@ -465,7 +465,7 @@ static const StorageInterface storageInterfaceRemote =
     .linkCreate = storageRemoteLinkCreate,
 };
 
-Storage *
+FV_EXTERN Storage *
 storageRemoteNew(
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
     unsigned int compressLevel)

@@ -22,7 +22,7 @@ Hashes for zero-length files (i.e., seed value)
 ***********************************************************************************************************************************/
 static uint8_t hashTypeSha1Zero[HASH_TYPE_SHA1_SIZE] =
     {0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d, 0x32, 0x55, 0xbf, 0xef, 0x95, 0x60, 0x18, 0x90, 0xaf, 0xd8, 0x07, 0x09};
-const Buffer *const HASH_TYPE_SHA1_ZERO_BUF = BUF(hashTypeSha1Zero, sizeof(hashTypeSha1Zero));
+VR_EXTERN const Buffer *const HASH_TYPE_SHA1_ZERO_BUF = BUF(hashTypeSha1Zero, sizeof(hashTypeSha1Zero));
 
 STRING_EXTERN(HASH_TYPE_SHA256_ZERO_STR,                            HASH_TYPE_SHA256_ZERO);
 
@@ -166,7 +166,7 @@ cryptoHashResult(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 cryptoHashNew(const HashType type)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -237,7 +237,7 @@ cryptoHashNew(const HashType type)
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
-IoFilter *
+FV_EXTERN IoFilter *
 cryptoHashNewPack(const Pack *const paramList)
 {
     FUNCTION_TEST_BEGIN();
@@ -256,7 +256,7 @@ cryptoHashNewPack(const Pack *const paramList)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FV_EXTERN Buffer *
 cryptoHashOne(const HashType type, const Buffer *message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -290,7 +290,7 @@ cryptoHashOne(const HashType type, const Buffer *message)
 }
 
 /**********************************************************************************************************************************/
-Buffer *
+FV_EXTERN Buffer *
 cryptoHmacOne(const HashType type, const Buffer *const key, const Buffer *const message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

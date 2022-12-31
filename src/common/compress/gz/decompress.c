@@ -143,7 +143,7 @@ gzDecompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 gzDecompressNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

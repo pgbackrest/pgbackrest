@@ -41,7 +41,7 @@ checkArchiveCommand(const String *archiveCommand)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *dbObject, bool isStandby)
 {
     FUNCTION_TEST_BEGIN();
@@ -94,7 +94,7 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo)
 {
     FUNCTION_TEST_BEGIN();
@@ -122,7 +122,7 @@ checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *backupInfo)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 checkStanzaInfoPg(
     const Storage *storage, const unsigned int pgVersion, const uint64_t pgSystemId, CipherType cipherType,
     const String *cipherPass)

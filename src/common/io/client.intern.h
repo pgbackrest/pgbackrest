@@ -29,7 +29,7 @@ typedef struct IoClientInterface
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-IoClient *ioClientNew(void *driver, const IoClientInterface *interface);
+FV_EXTERN IoClient *ioClientNew(void *driver, const IoClientInterface *interface);
 
 /***********************************************************************************************************************************
 Macros for function logging

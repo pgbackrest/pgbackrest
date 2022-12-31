@@ -10,6 +10,6 @@ S3 Storage File Write
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-StorageWrite *storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize);
+FV_EXTERN StorageWrite *storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize);
 
 #endif

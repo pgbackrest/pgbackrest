@@ -59,7 +59,7 @@ protocolPackNew(void)
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
+FV_EXTERN ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -80,7 +80,7 @@ protocolClientIoReadFd(ProtocolClient *const this)
 Functions
 ***********************************************************************************************************************************/
 // Execute a command and get the result
-PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
+FV_EXTERN PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS ProtocolClient *
@@ -97,17 +97,17 @@ protocolClientNoExit(ProtocolClient *const this)
 }
 
 // Send noop to test connection or keep it alive
-void protocolClientNoOp(ProtocolClient *this);
+FV_EXTERN void protocolClientNoOp(ProtocolClient *this);
 
 // Get data put by the server
-PackRead *protocolClientDataGet(ProtocolClient *this);
-void protocolClientDataEndGet(ProtocolClient *this);
+FV_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this);
+FV_EXTERN void protocolClientDataEndGet(ProtocolClient *this);
 
 // Put command to the server
-void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command, const bool dataPut);
+FV_EXTERN void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command, const bool dataPut);
 
 // Put data to the server
-void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
+FV_EXTERN void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
 
 /***********************************************************************************************************************************
 Destructor
@@ -121,7 +121,7 @@ protocolClientFree(ProtocolClient *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-String *protocolClientToLog(const ProtocolClient *this);
+FV_EXTERN String *protocolClientToLog(const ProtocolClient *this);
 
 #define FUNCTION_LOG_PROTOCOL_CLIENT_TYPE                                                                                          \
     ProtocolClient *

@@ -10,12 +10,12 @@ Compression Helper Internal
 Functions
 ***********************************************************************************************************************************/
 // Default compression level for a compression type, used while loading the configuration
-int compressLevelDefault(CompressType type);
+FV_EXTERN int compressLevelDefault(CompressType type);
 
 // Minimum compression level for a compression type, used while loading the configuration
-int compressLevelMin(CompressType type);
+FV_EXTERN int compressLevelMin(CompressType type);
 
 // Maximum compression level for a compression type, used while loading the configuration
-int compressLevelMax(CompressType type);
+FV_EXTERN int compressLevelMax(CompressType type);
 
 #endif

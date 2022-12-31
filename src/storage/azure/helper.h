@@ -9,7 +9,7 @@ Azure Storage Helper
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-Storage *storageAzureHelper(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
+FV_EXTERN Storage *storageAzureHelper(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
 
 /***********************************************************************************************************************************
 Storage helper for StorageHelper array passed to storageHelperInit()

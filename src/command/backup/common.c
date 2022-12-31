@@ -17,7 +17,7 @@ Constants
 #define BACKUP_LINK_LATEST                                          "latest"
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 backupFileRepoPath(const String *const backupLabel, const BackupFileRepoPathParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -41,7 +41,7 @@ backupFileRepoPath(const String *const backupLabel, const BackupFileRepoPathPara
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -79,7 +79,7 @@ backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timest
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 backupRegExp(const BackupRegExpParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -142,7 +142,7 @@ backupRegExp(const BackupRegExpParam param)
 }
 
 /**********************************************************************************************************************************/
-void
+FV_EXTERN void
 backupLinkLatest(const String *backupLabel, unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();

@@ -17,7 +17,7 @@ static const char *const httpCommonMonthList[] =
     {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 static const char *const httpCommonDayList[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
-time_t
+FV_EXTERN time_t
 httpDateToTime(const String *const lastModified)
 {
     FUNCTION_TEST_BEGIN();
@@ -46,7 +46,7 @@ httpDateToTime(const String *const lastModified)
             cvtZSubNToInt(strZ(lastModified), 23, 2), 0));
 }
 
-String *
+FV_EXTERN String *
 httpDateFromTime(const time_t time)
 {
     FUNCTION_TEST_BEGIN();
@@ -65,7 +65,7 @@ httpDateFromTime(const time_t time)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 httpUriDecode(const String *const uri)
 {
     FUNCTION_TEST_BEGIN();
@@ -106,7 +106,7 @@ httpUriDecode(const String *const uri)
 }
 
 /**********************************************************************************************************************************/
-String *
+FV_EXTERN String *
 httpUriEncode(const String *uri, bool path)
 {
     FUNCTION_TEST_BEGIN();

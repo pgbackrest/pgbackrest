@@ -161,7 +161,7 @@ gzCompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-IoFilter *
+FV_EXTERN IoFilter *
 gzCompressNew(int level)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

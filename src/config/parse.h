@@ -40,16 +40,16 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 // Parse the command-line arguments and config file to produce final config data
-void configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel);
+FV_EXTERN void configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel);
 
 // Get command name by id
-const char *cfgParseCommandName(ConfigCommand commandId);
+FV_EXTERN const char *cfgParseCommandName(ConfigCommand commandId);
 
 // Get command/role name with custom separator
-String *cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole commandRoleId);
+FV_EXTERN String *cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole commandRoleId);
 
 // Convert command role enum to String
-const String *cfgParseCommandRoleStr(ConfigCommandRole commandRole);
+FV_EXTERN const String *cfgParseCommandRoleStr(ConfigCommandRole commandRole);
 
 // Parse option name and return option info
 typedef struct CfgParseOptionParam
@@ -72,30 +72,30 @@ typedef struct CfgParseOptionResult
 #define cfgParseOptionP(optionName, ...)                                                                                            \
     cfgParseOption(optionName, (CfgParseOptionParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-CfgParseOptionResult cfgParseOption(const String *const optionName, const CfgParseOptionParam param);
+FV_EXTERN CfgParseOptionResult cfgParseOption(const String *const optionName, const CfgParseOptionParam param);
 
 // Default value for the option
-const String *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
+FV_EXTERN const String *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
 
 // Option name from id
-const char *cfgParseOptionName(ConfigOption optionId);
+FV_EXTERN const char *cfgParseOptionName(ConfigOption optionId);
 
 // Option name from id and key
-const char *cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
+FV_EXTERN const char *cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
 
 // Does the option need to be protected from showing up in logs, command lines, etc?
-bool cfgParseOptionSecure(ConfigOption optionId);
+FV_EXTERN bool cfgParseOptionSecure(ConfigOption optionId);
 
 // Option data type
-ConfigOptionType cfgParseOptionType(ConfigOption optionId);
+FV_EXTERN ConfigOptionType cfgParseOptionType(ConfigOption optionId);
 
 // Get the underlying data type for an option
-ConfigOptionDataType cfgParseOptionDataType(ConfigOption optionId);
+FV_EXTERN ConfigOptionDataType cfgParseOptionDataType(ConfigOption optionId);
 
 // Is the option required?
-bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);
+FV_EXTERN bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);
 
 // Is the option valid for the command?
-bool cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId);
+FV_EXTERN bool cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId);
 
 #endif

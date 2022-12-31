@@ -333,29 +333,16 @@ testRun(void)
         TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unterminated varint-128 integer");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pack/unpack pointer");
-
-        TEST_ASSIGN(packWrite, pckWriteNewP(.size = 1), "new write");
-        TEST_RESULT_VOID(pckWritePtrP(packWrite, NULL), "write default pointer");
-        TEST_RESULT_VOID(pckWritePtrP(packWrite, "sample"), "write pointer");
-        TEST_RESULT_VOID(pckWriteEndP(packWrite), "write end");
-
-        TEST_ASSIGN(packRead, pckReadNew(pckDup(pckWriteResult(packWrite))), "new read");
-        TEST_RESULT_Z(pckReadPtrP(packRead), NULL, "read default pointer");
-        TEST_RESULT_Z(pckReadPtrP(packRead, .id = 2), "sample", "read pointer");
-
-        TEST_RESULT_PTR(pckWriteResult(NULL), NULL, "null pack result");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read const packs");
 
-        TEST_ASSIGN(packWrite, pckWriteNewP(), "new write");
+        TEST_ASSIGN(packWrite, pckWriteNewP(.size = 1), "new write");
 
         // Write pack to read as ptr/size
         packSub = pckWriteNewP();
         pckWriteU64P(packSub, 777);
         pckWriteEndP(packSub);
 
+        TEST_RESULT_PTR(pckWriteResult(NULL), NULL, "null pack result");
         TEST_RESULT_VOID(pckWritePackP(packWrite, pckWriteResult(packSub)), "write pack");
 
         // Write pack to read as const

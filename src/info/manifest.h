@@ -163,12 +163,12 @@ typedef struct ManifestTarget
 Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
-Manifest *manifestNewBuild(
+FV_EXTERN Manifest *manifestNewBuild(
     const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
     const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
-Manifest *manifestNewLoad(IoRead *read);
+FV_EXTERN Manifest *manifestNewLoad(IoRead *read);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -214,19 +214,19 @@ manifestReferenceList(const Manifest *const this)
 }
 
 // Set backup label
-void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
+FV_EXTERN void manifestBackupLabelSet(Manifest *this, const String *backupLabel);
 
 /***********************************************************************************************************************************
 Build functions
 ***********************************************************************************************************************************/
 // Validate the timestamps in the manifest given a copy start time, i.e. all times should be <= the copy start time
-void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType);
+FV_EXTERN void manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType);
 
 // Create a diff/incr backup by comparing to a previous backup manifest
-void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
+FV_EXTERN void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
 
 // Set remaining values before the final save
-void manifestBuildComplete(
+FV_EXTERN void manifestBuildComplete(
     Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
     const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
     bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
@@ -237,7 +237,7 @@ void manifestBuildComplete(
 Functions
 ***********************************************************************************************************************************/
 // Ensure that symlinks do not point to the same file, directory, or subdirectory of another link
-void manifestLinkCheck(const Manifest *this);
+FV_EXTERN void manifestLinkCheck(const Manifest *this);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Manifest *
@@ -247,10 +247,10 @@ manifestMove(Manifest *const this, MemContext *const parentNew)
 }
 
 // Manifest save
-void manifestSave(Manifest *this, IoWrite *write);
+FV_EXTERN void manifestSave(Manifest *this, IoWrite *write);
 
 // Validate a completed manifest.  Use strict mode only when saving the manifest after a backup.
-void manifestValidate(Manifest *this, bool strict);
+FV_EXTERN void manifestValidate(Manifest *this, bool strict);
 
 /***********************************************************************************************************************************
 Db functions and getters/setters
@@ -260,8 +260,6 @@ manifestDb(const Manifest *const this, const unsigned int dbIdx)
 {
     return lstGet(THIS_PUB(Manifest)->dbList, dbIdx);
 }
-
-const ManifestDb *manifestDbFind(const Manifest *this, const String *name);
 
 // If the database requested is not found in the list, return the default passed rather than throw an error
 FN_INLINE_ALWAYS const ManifestDb *
@@ -283,7 +281,7 @@ File functions and getters/setters
 typedef struct ManifestFilePack ManifestFilePack;
 
 // Unpack file pack returned by manifestFilePackGet()
-ManifestFile manifestFileUnpack(const Manifest *manifest, const ManifestFilePack *filePack);
+FV_EXTERN ManifestFile manifestFileUnpack(const Manifest *manifest, const ManifestFilePack *filePack);
 
 // Get file in pack format by index
 FN_INLINE_ALWAYS const ManifestFilePack *
@@ -307,10 +305,10 @@ manifestFile(const Manifest *const this, const unsigned int fileIdx)
 }
 
 // Add a file
-void manifestFileAdd(Manifest *this, ManifestFile *file);
+FV_EXTERN void manifestFileAdd(Manifest *this, ManifestFile *file);
 
 // Find file in pack format by name
-const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
+FV_EXTERN const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
 
 // Find file by name
 FN_INLINE_ALWAYS ManifestFile
@@ -328,7 +326,7 @@ manifestFileExists(const Manifest *const this, const String *const name)
     return lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL) != NULL;
 }
 
-void manifestFileRemove(const Manifest *this, const String *name);
+FV_EXTERN void manifestFileRemove(const Manifest *this, const String *name);
 
 FN_INLINE_ALWAYS unsigned int
 manifestFileTotal(const Manifest *const this)
@@ -337,7 +335,7 @@ manifestFileTotal(const Manifest *const this)
 }
 
 // Update a file with new data
-void manifestFileUpdate(Manifest *const this, const ManifestFile *file);
+FV_EXTERN void manifestFileUpdate(Manifest *const this, const ManifestFile *file);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters
@@ -348,8 +346,8 @@ manifestLink(const Manifest *const this, const unsigned int linkIdx)
     return lstGet(THIS_PUB(Manifest)->linkList, linkIdx);
 }
 
-void manifestLinkAdd(Manifest *this, const ManifestLink *link);
-const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
+FV_EXTERN void manifestLinkAdd(Manifest *this, const ManifestLink *link);
+FV_EXTERN const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
 
 // If the link requested is not found in the list, return the default passed rather than throw an error
 FN_INLINE_ALWAYS const ManifestLink *
@@ -359,7 +357,7 @@ manifestLinkFindDefault(const Manifest *const this, const String *const name, co
     return lstFindDefault(THIS_PUB(Manifest)->linkList, &name, (void *)linkDefault);
 }
 
-void manifestLinkRemove(const Manifest *this, const String *name);
+FV_EXTERN void manifestLinkRemove(const Manifest *this, const String *name);
 
 FN_INLINE_ALWAYS unsigned int
 manifestLinkTotal(const Manifest *const this)
@@ -367,7 +365,7 @@ manifestLinkTotal(const Manifest *const this)
     return lstSize(THIS_PUB(Manifest)->linkList);
 }
 
-void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
+FV_EXTERN void manifestLinkUpdate(const Manifest *this, const String *name, const String *path);
 
 /***********************************************************************************************************************************
 Path functions and getters/setters
@@ -378,7 +376,7 @@ manifestPath(const Manifest *const this, const unsigned int pathIdx)
     return lstGet(THIS_PUB(Manifest)->pathList, pathIdx);
 }
 
-const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
+FV_EXTERN const ManifestPath *manifestPathFind(const Manifest *this, const String *name);
 
 // If the path requested is not found in the list, return the default passed rather than throw an error
 FN_INLINE_ALWAYS const ManifestPath *
@@ -389,7 +387,7 @@ manifestPathFindDefault(const Manifest *const this, const String *const name, co
 }
 
 // Data directory relative path for any manifest file/link/path/target name
-String *manifestPathPg(const String *manifestPath);
+FV_EXTERN String *manifestPathPg(const String *manifestPath);
 
 FN_INLINE_ALWAYS unsigned int
 manifestPathTotal(const Manifest *const this)
@@ -406,8 +404,8 @@ manifestTarget(const Manifest *const this, const unsigned int targetIdx)
     return lstGet(THIS_PUB(Manifest)->targetList, targetIdx);
 }
 
-void manifestTargetAdd(Manifest *this, const ManifestTarget *target);
-const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
+FV_EXTERN void manifestTargetAdd(Manifest *this, const ManifestTarget *target);
+FV_EXTERN const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
 
 // If the target requested is not found in the list, return the default passed rather than throw an error
 FN_INLINE_ALWAYS const ManifestTarget *
@@ -425,9 +423,9 @@ manifestTargetBase(const Manifest *const this)
 }
 
 // Absolute path to the target
-String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
+FV_EXTERN String *manifestTargetPath(const Manifest *this, const ManifestTarget *target);
 
-void manifestTargetRemove(const Manifest *this, const String *name);
+FV_EXTERN void manifestTargetRemove(const Manifest *this, const String *name);
 
 FN_INLINE_ALWAYS unsigned int
 manifestTargetTotal(const Manifest *const this)
@@ -435,7 +433,7 @@ manifestTargetTotal(const Manifest *const this)
     return lstSize(THIS_PUB(Manifest)->targetList);
 }
 
-void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
+FV_EXTERN void manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file);
 
 /***********************************************************************************************************************************
 Destructor
@@ -450,7 +448,8 @@ manifestFree(Manifest *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load backup manifest
-Manifest *manifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+FV_EXTERN Manifest *manifestLoadFile(
+    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
 
 /***********************************************************************************************************************************
 Macros for function logging

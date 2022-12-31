@@ -343,6 +343,38 @@ testRun(void)
         TEST_ERROR(restoreBackupSet(), BackupSetInvalidError, "backup set BOGUS is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Fail restore when no backup found in the latest db history");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            TEST_RESTORE_BACKUP_INFO
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
+                "\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
+                "\"db-version\":\"10\"}\n");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            restoreBackupSet(), BackupSetInvalidError,
+            "the latest backup set found '20161219-212741F_20161219-212918I' is from a prior version of PostgreSQL\n"
+            "HINT: was a backup created after the stanza-upgrade?\n"
+            "HINT: specify --set or --type=time/lsn to restore from a prior version of PostgreSQL.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("target time");
         setenv("TZ", "UTC", true);
 

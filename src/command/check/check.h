@@ -8,6 +8,6 @@ Check Command
 Functions
 ***********************************************************************************************************************************/
 // Perform standard checks
-void cmdCheck(void);
+FV_EXTERN void cmdCheck(void);
 
 #endif
