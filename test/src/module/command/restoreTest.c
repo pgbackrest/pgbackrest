@@ -180,7 +180,7 @@ testRun(void)
 
         output = bufNew(0);
         write = ioBufferWriteNew(output);
-        ioFilterGroupAdd(ioWriteFilterGroup(write), deltaMapNewPack(ioFilterParamList(deltaMapNew(3))));
+        ioFilterGroupAdd(ioWriteFilterGroup(write), deltaMapNew(3));
         ioWriteOpen(write);
 
         TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DE")), "write");

@@ -170,21 +170,3 @@ deltaMapNew(const size_t blockSize)
 
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
-
-FV_EXTERN IoFilter *
-deltaMapNewPack(const Pack *const paramList)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK, paramList);
-    FUNCTION_TEST_END();
-
-    IoFilter *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        result = ioFilterMove(deltaMapNew((size_t)pckReadU64P(pckReadNew(paramList))), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN(IO_FILTER, result);
-}
