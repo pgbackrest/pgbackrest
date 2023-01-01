@@ -51,7 +51,6 @@ static struct StackTraceLocal
 #endif
 } stackTraceLocal;
 
-
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
@@ -267,7 +266,7 @@ stackTraceFmt(char *buffer, size_t bufferSize, size_t bufferUsed, const char *fo
 /**********************************************************************************************************************************/
 #ifdef HAVE_LIBBACKTRACE
 
-typedef struct BackTraceDumpData
+typedef struct StackTraceBackData
 {
     bool firstCall;
     bool firstLine;
@@ -275,61 +274,77 @@ typedef struct BackTraceDumpData
     size_t result;
     char *const buffer;
     const size_t bufferSize;
-} BackTraceDumpData;
+} StackTraceBackData;
 
+// Helper to trim off extra path before the src path
+static const char *
+stackTraceTrimSrc(const char *const fileName)
+{
+    const char *const src = strstr(fileName, "src/");
+    return src == NULL ? fileName : src + 4;
+}
+
+// Callback to add backtrace data when available
 static int
-backTraceDump(void *const dataVoid, const uintptr_t pc, const char *fileName, const int fileLine, const char *const functionName)
+stackTraceBackCallback(
+    void *const dataVoid, const uintptr_t pc, const char *fileName, const int fileLine, const char *const functionName)
 {
     (void)(pc);
-    BackTraceDumpData *const data = dataVoid;
+    StackTraceBackData *const data = dataVoid;
 
+    // Stop if the stack has been exhausted
     if (data->stackIdx < 0)
         return true;
 
-    if (fileName == NULL || fileLine == 0 || functionName == NULL) // {uncovered - !!!}
+    // Catch any unset parameters which indicates the debug data is not available
+    if (fileName == NULL || fileLine == 0 || functionName == NULL)
     {
-        if (data->firstCall) // {uncovered - !!!}
-            return true; // {uncovered - !!!}
+        // If this is the first call then stop because the top of the stack must be one of our functions
+        if (data->firstCall)
+            return true;
 
-        data->firstCall = false; // {uncovered - !!!}
-        return false; // {uncovered - !!!}
+        // Else return but do not stop
+        data->firstCall = false;
+        return false;
     }
 
+    // Reset first call
     data->firstCall = false;
+
+    // If the function name matches combine backtrace data with stack data
     const StackTraceData *const traceData = &stackTraceLocal.stack[data->stackIdx];
 
-    if (strcmp(functionName, traceData->functionName) == 0) // {uncovered - !!!}
+    if (strcmp(functionName, traceData->functionName) == 0)
     {
-        const char *const src = strstr(traceData->fileName, "src/"); // {uncovered - !!!}
+        data->result += stackTraceFmt(
+            data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(%s)", data->firstLine ? "" : "\n",
+            stackTraceTrimSrc(traceData->fileName), functionName, fileLine, stackTraceParamIdx(data->stackIdx));
 
-        data->result += stackTraceFmt( // {uncovered - !!!}
-            data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(%s)", data->firstLine ? "" : "\n", // {uncovered - !!!}
-            src != NULL ? src + 4 : traceData->fileName, functionName, fileLine, stackTraceParamIdx(data->stackIdx)); // {uncovered - !!!}
-
-        data->stackIdx--; // {uncovered - !!!}
+        data->stackIdx--;
     }
+    // Else just use stack data. Skip any functions in the error module since they are not useful for the user
     else
     {
-        const char *const src = strstr(fileName, "src/");
+        fileName = stackTraceTrimSrc(fileName);
 
-        if (src != NULL)
-            fileName = src + 4;
-
-        if (strcmp(fileName, "common/error.c") == 0) // {uncovered - !!!}
-            return false; // {uncovered - !!!}
+        if (strcmp(fileName, "common/error.c") == 0)
+            return false;
 
         data->result += stackTraceFmt(
             data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(no parameters available)", data->firstLine ? "" : "\n",
             fileName, functionName, fileLine);
     }
 
+    // Reset first line
     data->firstLine = false;
 
+    // Stop when the main function has been processed
     return strcmp(functionName, "main") == 0;
 }
 
+// Dummy error callback. If there is an error just generate the default stack trace.
 static void
-backTraceCallbackError(void *data, const char *msg, int errnum)
+stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 {
     (void)data;
     (void)msg;
@@ -338,6 +353,7 @@ backTraceCallbackError(void *data, const char *msg, int errnum)
 
 #endif
 
+// Helper to build stack trace when backtrace is not available
 static size_t
 stackTraceToZDefault(
     char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
@@ -348,7 +364,7 @@ stackTraceToZDefault(
     size_t result = 0;
 
     // If the current function passed in is the same as the top function on the stack then use the parameters for that function
-    if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceLocal.stack[stackIdx].fileName) == 0 && // {uncovered - !!!}
+    if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceLocal.stack[stackIdx].fileName) == 0 &&
         strcmp(functionName, stackTraceLocal.stack[stackIdx].functionName) == 0)
     {
         param = stackTraceParamIdx(stackTraceLocal.stackSize - 1);
@@ -388,7 +404,8 @@ stackTraceToZ(
     const unsigned int fileLine)
 {
 #ifdef HAVE_LIBBACKTRACE
-    BackTraceDumpData data =
+    // Attempt to use backtrace data
+    StackTraceBackData data =
     {
         .firstCall = true,
         .firstLine = true,
@@ -401,13 +418,15 @@ stackTraceToZ(
     if (stackTraceLocal.backTraceState == NULL)
         stackTraceLocal.backTraceState = backtrace_create_state(NULL, false, NULL, NULL);
 
-    backtrace_full(stackTraceLocal.backTraceState, 2, backTraceDump, backTraceCallbackError, &data);
+    backtrace_full(stackTraceLocal.backTraceState, 2, stackTraceBackCallback, stackTraceBackErrorCallback, &data);
 
+    // If the backtrace was not available generate default stack trace
     if (data.result == 0)
         return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
 
     return data.result;
 #else
+    // Generate default stack trace
     return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
 #endif
 }
