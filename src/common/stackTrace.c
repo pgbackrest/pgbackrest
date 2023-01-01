@@ -130,7 +130,7 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
 
     // Get line number from backtrace if available
 #ifdef HAVE_LIBBACKTRACE
-    // if (functionLogLevel == logLevelDebug)
+    if (stackTraceBackLocal.backTraceState != NULL)
         backtrace_full(stackTraceBackLocal.backTraceState, 2, backTraceCallback, backTraceCallbackError, NULL);
 #endif
 
