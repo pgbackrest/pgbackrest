@@ -278,7 +278,7 @@ typedef struct BackTraceDumpData
 } BackTraceDumpData;
 
 static int
-backTraceDump(void *const dataVoid, const uintptr_t pc, const char *filename, const int lineno, const char *const function)
+backTraceDump(void *const dataVoid, const uintptr_t pc, const char *fileName, const int fileLine, const char *const functionName)
 {
     (void)(pc);
     BackTraceDumpData *const data = dataVoid;
@@ -286,7 +286,7 @@ backTraceDump(void *const dataVoid, const uintptr_t pc, const char *filename, co
     if (data->stackIdx < 0)
         return true;
 
-    if (filename == NULL || lineno == 0 || function == NULL) // {uncovered - !!!}
+    if (fileName == NULL || fileLine == 0 || functionName == NULL) // {uncovered - !!!}
     {
         if (data->firstCall) // {uncovered - !!!}
             return true; // {uncovered - !!!}
@@ -298,34 +298,34 @@ backTraceDump(void *const dataVoid, const uintptr_t pc, const char *filename, co
     data->firstCall = false;
     const StackTraceData *const traceData = &stackTraceLocal.stack[data->stackIdx];
 
-    if (strcmp(function, traceData->functionName) == 0) // {uncovered - !!!}
+    if (strcmp(functionName, traceData->functionName) == 0) // {uncovered - !!!}
     {
         const char *const src = strstr(traceData->fileName, "src/"); // {uncovered - !!!}
 
         data->result += stackTraceFmt( // {uncovered - !!!}
             data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(%s)", data->firstLine ? "" : "\n", // {uncovered - !!!}
-            src != NULL ? src + 4 : traceData->fileName, function, lineno, stackTraceParamIdx(data->stackIdx)); // {uncovered - !!!}
+            src != NULL ? src + 4 : traceData->fileName, functionName, fileLine, stackTraceParamIdx(data->stackIdx)); // {uncovered - !!!}
 
         data->stackIdx--; // {uncovered - !!!}
     }
     else
     {
-        const char *const src = strstr(filename, "src/");
+        const char *const src = strstr(fileName, "src/");
 
         if (src != NULL)
-            filename = src + 4;
+            fileName = src + 4;
 
-        if (strcmp(filename, "common/error.c") == 0) // {uncovered - !!!}
+        if (strcmp(fileName, "common/error.c") == 0) // {uncovered - !!!}
             return false; // {uncovered - !!!}
 
         data->result += stackTraceFmt(
             data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(no parameters available)", data->firstLine ? "" : "\n",
-            filename, function, lineno);
+            fileName, functionName, fileLine);
     }
 
     data->firstLine = false;
 
-    return strcmp(function, "main") == 0;
+    return strcmp(functionName, "main") == 0;
 }
 
 static void
@@ -339,45 +339,43 @@ backTraceCallbackError(void *data, const char *msg, int errnum)
 #endif
 
 static size_t
-stackTraceToZInternal(
-    size_t result, char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
+stackTraceToZDefault(
+    char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
     const unsigned int fileLine)
 {
-    if (result == 0)
+    const char *param = "test build required for parameters";
+    int stackIdx = stackTraceLocal.stackSize - 1;
+    size_t result = 0;
+
+    // If the current function passed in is the same as the top function on the stack then use the parameters for that function
+    if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceLocal.stack[stackIdx].fileName) == 0 && // {uncovered - !!!}
+        strcmp(functionName, stackTraceLocal.stack[stackIdx].functionName) == 0)
     {
-        const char *param = "test build required for parameters";
-        int stackIdx = stackTraceLocal.stackSize - 1;
+        param = stackTraceParamIdx(stackTraceLocal.stackSize - 1);
+        stackIdx--;
+    }
 
-        // If the current function passed in is the same as the top function on the stack then use the parameters for that function
-        if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceLocal.stack[stackIdx].fileName) == 0 && // {uncovered - !!!}
-            strcmp(functionName, stackTraceLocal.stack[stackIdx].functionName) == 0)
+    // Output the current function
+    result = stackTraceFmt(buffer, bufferSize, 0, "%s:%s:%u:(%s)", fileName, functionName, fileLine, param);
+
+    // Output stack if there is anything on it
+    if (stackIdx >= 0)
+    {
+        // If the function passed in was not at the top of the stack then some functions are missing
+        if (stackIdx == stackTraceLocal.stackSize - 1)
+            result += stackTraceFmt(buffer, bufferSize, result, "\n    ... function(s) omitted ...");
+
+        // Output the rest of the stack
+        for (; stackIdx >= 0; stackIdx--)
         {
-            param = stackTraceParamIdx(stackTraceLocal.stackSize - 1);
-            stackIdx--;
-        }
+            StackTraceData *traceData = &stackTraceLocal.stack[stackIdx];
 
-        // Output the current function
-        result = stackTraceFmt(buffer, bufferSize, 0, "%s:%s:%u:(%s)", fileName, functionName, fileLine, param);
+            result += stackTraceFmt(buffer, bufferSize, result, "\n%s:%s", traceData->fileName, traceData->functionName);
 
-        // Output stack if there is anything on it
-        if (stackIdx >= 0)
-        {
-            // If the function passed in was not at the top of the stack then some functions are missing
-            if (stackIdx == stackTraceLocal.stackSize - 1)
-                result += stackTraceFmt(buffer, bufferSize, result, "\n    ... function(s) omitted ...");
+            if (traceData->fileLine > 0)
+                result += stackTraceFmt(buffer, bufferSize, result, ":%u", traceData->fileLine);
 
-            // Output the rest of the stack
-            for (; stackIdx >= 0; stackIdx--)
-            {
-                StackTraceData *traceData = &stackTraceLocal.stack[stackIdx];
-
-                result += stackTraceFmt(buffer, bufferSize, result, "\n%s:%s", traceData->fileName, traceData->functionName);
-
-                if (traceData->fileLine > 0)
-                    result += stackTraceFmt(buffer, bufferSize, result, ":%u", traceData->fileLine);
-
-                result += stackTraceFmt(buffer, bufferSize, result, ":(%s)", stackTraceParamIdx(stackIdx));
-            }
+            result += stackTraceFmt(buffer, bufferSize, result, ":(%s)", stackTraceParamIdx(stackIdx));
         }
     }
 
@@ -389,8 +387,6 @@ stackTraceToZ(
     char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
     const unsigned int fileLine)
 {
-    size_t result = 0;
-
 #ifdef HAVE_LIBBACKTRACE
     BackTraceDumpData data =
     {
@@ -406,10 +402,14 @@ stackTraceToZ(
         stackTraceLocal.backTraceState = backtrace_create_state(NULL, false, NULL, NULL);
 
     backtrace_full(stackTraceLocal.backTraceState, 2, backTraceDump, backTraceCallbackError, &data);
-    result = data.result;
-#endif
 
-    return stackTraceToZInternal(result, buffer, bufferSize, fileName, functionName, fileLine);
+    if (data.result == 0)
+        return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
+
+    return data.result;
+#else
+    return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
+#endif
 }
 
 /**********************************************************************************************************************************/
