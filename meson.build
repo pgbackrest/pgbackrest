@@ -147,7 +147,7 @@ endif
 lib_backtrace = cc.find_library('backtrace')
 
 if lib_lz4.found()
-    configuration.set('WITH_BACKTRACE', true, description: 'Is libbacktrace present?')
+    configuration.set('HAVE_LIBBACKTRACE', true, description: 'Is libbacktrace present?')
 endif
 
 # Find required openssl library

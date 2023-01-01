@@ -21,7 +21,7 @@ Code Builder
 int
 main(const int argListSize, const char *const argList[])
 {
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_LIBBACKTRACE
     stackTraceInit(argList[0]);
 #endif
 

@@ -73,7 +73,7 @@ main(int argListSize, const char *argList[])
 
     storageHelperInit(storageHelperList);
 
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_LIBBACKTRACE
     stackTraceInit(argList[0]);
 #endif
 

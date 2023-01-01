@@ -32,7 +32,7 @@ Macros to access internal functions
 Internal Functions
 ***********************************************************************************************************************************/
 // Backtrace init
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_LIBBACKTRACE
     FV_EXTERN void stackTraceInit(const char *exe);
 #endif
 

@@ -28,7 +28,7 @@ Include automatically generated help data
 int
 main(int argListSize, const char *argList[])
 {
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_LIBBACKTRACE
     stackTraceInit(argList[0]);
 #endif
 

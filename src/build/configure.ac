@@ -41,6 +41,13 @@ AC_LINK_IFELSE(
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_SUBST(CPPFLAGS, "${CPPFLAGS} -I.")
 
+# Check backtrace library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [backtrace], [backtrace_full],
+    [AC_CHECK_HEADER(backtrace.h, [AC_DEFINE(HAVE_LIBBACKTRACE) AC_SUBST(LIBS, "${LIBS} -lbacktrace")],
+        [AC_MSG_ERROR([header file <backtrace.h> is required])])])
+
 # Check required pq library
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_ARG_VAR(PG_CONFIG, [path to pg_config utility])dnl

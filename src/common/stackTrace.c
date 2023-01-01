@@ -7,7 +7,7 @@ Stack Trace Handler
 #include <stdio.h>
 #include <string.h>
 
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_LIBBACKTRACE
     #include <backtrace.h>
     #include <backtrace-supported.h>
 #endif
@@ -48,7 +48,7 @@ static struct StackTraceLocal
 } stackTraceLocal;
 
 /**********************************************************************************************************************************/
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_LIBBACKTRACE
 
 static struct StackTraceBackLocal
 {
@@ -129,8 +129,9 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
     ASSERT(stackTraceLocal.stackSize < STACK_TRACE_MAX - 1);
 
     // Get line number from backtrace if available
-#ifdef WITH_BACKTRACE
-    backtrace_full(stackTraceBackLocal.backTraceState, 2, backTraceCallback, backTraceCallbackError, NULL);
+#ifdef HAVE_LIBBACKTRACE
+    // if (functionLogLevel == logLevelDebug)
+        backtrace_full(stackTraceBackLocal.backTraceState, 2, backTraceCallback, backTraceCallbackError, NULL);
 #endif
 
     // Set function info

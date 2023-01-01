@@ -730,7 +730,7 @@ eval
 
                         # Build configure/compile options and see if they have changed from the previous build
                         my $strCFlags =
-                            (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DWITH_BACKTRACE' : '') .
+                            (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DHAVE_BACKTRACE' : '') .
                             ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
                         my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace ? '-lbacktrace' : '';
                         my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');

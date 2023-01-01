@@ -27,7 +27,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("stackTraceInit() and stackTraceError()"))
     {
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_BACKTRACE
         stackTraceInit(BOGUS_STR);
 
         // This time does nothing
@@ -65,7 +65,7 @@ testRun(void)
     {
         char buffer[4096];
 
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_BACKTRACE
         stackTraceInit(testExe());
 #endif
         // -------------------------------------------------------------------------------------------------------------------------

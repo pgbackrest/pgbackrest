@@ -7,7 +7,7 @@ C Debug Harness
 #ifdef HRN_FEATURE_DEBUG
     #include "common/debug.h"
 
-    #ifdef WITH_BACKTRACE
+    #ifdef HAVE_BACKTRACE
         #define FUNCTION_HARNESS_INIT(exe)                                                                                         \
                 stackTraceInit(exe)
     #else

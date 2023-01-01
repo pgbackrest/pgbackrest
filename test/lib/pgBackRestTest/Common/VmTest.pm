@@ -44,8 +44,8 @@ use constant VMDEF_PGSQL_BIN                                        => 'psql-bin
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
 use constant VMDEF_LCOV_VERSION                                     => 'lcov-version';
     push @EXPORT, qw(VMDEF_LCOV_VERSION);
-use constant VMDEF_WITH_BACKTRACE                                   => 'with-backtrace';
-    push @EXPORT, qw(VMDEF_WITH_BACKTRACE);
+use constant VMDEF_HAVE_BACKTRACE                                   => 'with-backtrace';
+    push @EXPORT, qw(VMDEF_HAVE_BACKTRACE);
 use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
     push @EXPORT, qw(VMDEF_WITH_LZ4);
 use constant VMDEF_WITH_ZST                                         => 'with-zst';
@@ -191,7 +191,7 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_BACKTRACE => true,
+        &VMDEF_HAVE_BACKTRACE => true,
         &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
@@ -218,7 +218,7 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_BACKTRACE => true,
+        &VMDEF_HAVE_BACKTRACE => true,
         &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
@@ -252,7 +252,7 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_BACKTRACE => true,
+        &VMDEF_HAVE_BACKTRACE => true,
         &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
@@ -440,7 +440,7 @@ sub vmWithBackTrace
 {
     my $strVm = shift;
 
-    return ($oyVm->{$strVm}{&VMDEF_WITH_BACKTRACE} ? true : false);
+    return ($oyVm->{$strVm}{&VMDEF_HAVE_BACKTRACE} ? true : false);
 }
 
 push @EXPORT, qw(vmWithBackTrace);
