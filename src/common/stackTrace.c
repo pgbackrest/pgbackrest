@@ -354,12 +354,12 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 #endif
 
 // Helper to build stack trace when backtrace is not available
-static size_t
-
 #ifdef HAVE_LIBBACKTRACE
-    stackTraceToZDefault(
+    static size_t
+        stackTraceToZDefault(
 #else
-    stackTraceToZ(
+    FV_EXTERN size_t
+        stackTraceToZ(
 #endif // HAVE_LIBBACKTRACE
 
     char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
