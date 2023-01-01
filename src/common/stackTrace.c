@@ -59,7 +59,7 @@ FV_EXTERN void
 stackTraceInit(const char *exe)
 {
     if (stackTraceBackLocal.backTraceState == NULL)
-        stackTraceBackLocal.backTraceState = backtrace_create_state(exe, false, NULL, NULL);
+        stackTraceBackLocal.backTraceState = backtrace_create_state(NULL, false, NULL, NULL);
 }
 
 static int
