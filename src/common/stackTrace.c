@@ -300,11 +300,11 @@ backTraceDump(void *const dataVoid, const uintptr_t pc, const char *filename, co
 
     if (strcmp(function, traceData->functionName) == 0) // {uncovered - !!!}
     {
-        const char *const src = strstr(traceData->fileName, "src/");
+        const char *const src = strstr(traceData->fileName, "src/"); // {uncovered - !!!}
 
-        data->result += stackTraceFmt(
-            data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(%s)", data->firstLine ? "" : "\n",
-            src != NULL ? src + 4 : traceData->fileName, function, lineno, stackTraceParamIdx(data->stackIdx));
+        data->result += stackTraceFmt( // {uncovered - !!!}
+            data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(%s)", data->firstLine ? "" : "\n", // {uncovered - !!!}
+            src != NULL ? src + 4 : traceData->fileName, function, lineno, stackTraceParamIdx(data->stackIdx)); // {uncovered - !!!}
 
         data->stackIdx--; // {uncovered - !!!}
     }
