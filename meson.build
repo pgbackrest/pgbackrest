@@ -136,7 +136,7 @@ configuration = configuration_data()
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false)
 
-if lib_lz4.found()
+if lib_backtrace.found()
     configuration.set('HAVE_LIBBACKTRACE', true, description: 'Is libbacktrace present?')
 endif
 
