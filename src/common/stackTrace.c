@@ -299,7 +299,7 @@ stackTraceBackCallback(
     // Catch any unset parameters which indicates the debug data is not available
     if (fileName == NULL || fileLine == 0 || functionName == NULL)
     {
-        // If this is the first call then stop because the top of the stack must be one of our functions
+        // If this is the first call then stop because the top of the backtrace must be one of our functions
         if (data->firstCall)
             return true;
 
@@ -355,7 +355,13 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 
 // Helper to build stack trace when backtrace is not available
 static size_t
-stackTraceToZDefault(
+
+#ifdef HAVE_LIBBACKTRACE
+    stackTraceToZDefault(
+#else
+    stackTraceToZ(
+#endif // HAVE_LIBBACKTRACE
+
     char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
     const unsigned int fileLine)
 {
@@ -384,7 +390,7 @@ stackTraceToZDefault(
         // Output the rest of the stack
         for (; stackIdx >= 0; stackIdx--)
         {
-            StackTraceData *traceData = &stackTraceLocal.stack[stackIdx];
+            const StackTraceData *const traceData = &stackTraceLocal.stack[stackIdx];
 
             result += stackTraceFmt(buffer, bufferSize, result, "\n%s:%s", traceData->fileName, traceData->functionName);
 
@@ -398,12 +404,13 @@ stackTraceToZDefault(
     return result;
 }
 
+#ifdef HAVE_LIBBACKTRACE
+
 FV_EXTERN size_t
 stackTraceToZ(
     char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
     const unsigned int fileLine)
 {
-#ifdef HAVE_LIBBACKTRACE
     // Attempt to use backtrace data
     StackTraceBackData data =
     {
@@ -425,11 +432,9 @@ stackTraceToZ(
         return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
 
     return data.result;
-#else
-    // Generate default stack trace
-    return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
-#endif
 }
+
+#endif // HAVE_LIBBACKTRACE
 
 /**********************************************************************************************************************************/
 FV_EXTERN void
