@@ -133,6 +133,13 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 ####################################################################################################################################
 configuration = configuration_data()
 
+# Find optional backtrace library
+lib_backtrace = cc.find_library('backtrace', required: false)
+
+if lib_lz4.found()
+    configuration.set('HAVE_LIBBACKTRACE', true, description: 'Is libbacktrace present?')
+endif
+
 # Find required bz2 library
 lib_bz2 = cc.find_library('bz2')
 
@@ -141,13 +148,6 @@ lib_lz4 = dependency('liblz4', required: false)
 
 if lib_lz4.found()
     configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
-endif
-
-# Find optional backtrace library
-lib_backtrace = cc.find_library('backtrace')
-
-if lib_lz4.found()
-    configuration.set('HAVE_LIBBACKTRACE', true, description: 'Is libbacktrace present?')
 endif
 
 # Find required openssl library
