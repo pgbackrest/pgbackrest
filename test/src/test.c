@@ -150,9 +150,6 @@ main(int argListSize, const char *argList[])
         exit(25);
     }
 
-    // Initialize stack trace for the harness
-    FUNCTION_HARNESS_INIT(argList[0]);
-
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, argListSize);
         FUNCTION_HARNESS_PARAM(CHARPY, argList);

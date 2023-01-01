@@ -25,17 +25,14 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("stackTraceInit() and stackTraceError()"))
+    if (testBegin("libBackTrace"))
     {
-#ifdef HAVE_BACKTRACE
-        stackTraceInit(BOGUS_STR);
-
-        // This time does nothing
-        stackTraceInit(BOGUS_STR);
-
+#ifdef HAVE_LIBBACKTRACE
         // This will call the error routine since we passed a bogus exe
         assert(stackTracePush("file1.c", "function1", logLevelDebug) == logLevelDebug);
         stackTracePop("file1.c", "function1", false);
+
+        TEST_RESULT_VOID(backTraceCallbackError(NULL, NULL, 0), "call error");
 
         stackTraceLocal.backTraceState = NULL;
 #endif
@@ -65,9 +62,6 @@ testRun(void)
     {
         char buffer[4096];
 
-#ifdef HAVE_BACKTRACE
-        stackTraceInit(testExe());
-#endif
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check size of StackTraceData");
 
@@ -94,7 +88,7 @@ testRun(void)
             stackTraceParamLog();
             assert(strcmp(stackTraceParam(), "void") == 0);
 
-            stackTraceToZ(buffer, sizeof(buffer), "file1.c", "function2", 99);
+            stackTraceToZInternal(0, buffer, sizeof(buffer), "file1.c", "function2", 99);
 
             TEST_RESULT_Z(
                 buffer,
@@ -150,7 +144,7 @@ testRun(void)
                 stackTraceParamAdd((size_t)snprintf(stackTraceParamBuffer("param1"), STACK_TRACE_PARAM_MAX, "value1"));
                 assert(strcmp(stackTraceParam(), "buffer full - parameters not available") == 0);
 
-                stackTraceToZ(buffer, sizeof(buffer), "file4.c", "function4", 99);
+                stackTraceToZInternal(0, buffer, sizeof(buffer), "file4.c", "function4", 99);
 
                 TEST_RESULT_Z(
                     buffer,

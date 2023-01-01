@@ -84,7 +84,6 @@ test.pl [options]
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-coverage-report run coverage but don't generate coverage report (saves time)
    --no-optimize        don't do compile optimization for C (saves compile time)
-   --backtrace          enable backtrace when available (adds stack trace line numbers -- very slow)
    --profile            generate profile info
    --no-debug           don't generate a debug build
    --scale              scale performance tests
@@ -158,7 +157,6 @@ my $bGenOnly = false;
 my $bGenCheck = false;
 my $bMinGen = false;
 my $bCodeCount = false;
-my $bBackTrace = false;
 my $bProfile = false;
 my $bNoValgrind = false;
 my $bNoOptimize = false;
@@ -208,7 +206,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'gen-check' => \$bGenCheck,
             'min-gen' => \$bMinGen,
             'code-count' => \$bCodeCount,
-            'backtrace' => \$bBackTrace,
             'profile' => \$bProfile,
             'no-valgrind' => \$bNoValgrind,
             'no-optimize' => \$bNoOptimize,
@@ -729,12 +726,9 @@ eval
                         $rhBinBuild->{$strBuildVM} = false;
 
                         # Build configure/compile options and see if they have changed from the previous build
-                        my $strCFlags =
-                            (vmWithBackTrace($strBuildVM) && $bBackTrace ? ' -DHAVE_BACKTRACE' : '') .
-                            ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
-                        my $strLdFlags = vmWithBackTrace($strBuildVM) && $bBackTrace ? '-lbacktrace' : '';
+                        my $strCFlags = ($bDebugTestTrace ? ' -DDEBUG_TEST_TRACE' : '');
                         my $strConfigOptions = (vmDebugIntegration($strBuildVM) ? ' --enable-test' : '');
-                        my $strBuildFlags = "CFLAGS_EXTRA=${strCFlags}\nLDFLAGS_EXTRA=${strLdFlags}\nCONFIGURE=${strConfigOptions}";
+                        my $strBuildFlags = "CFLAGS_EXTRA=${strCFlags}\nCONFIGURE=${strConfigOptions}";
                         my $strBuildFlagFile = "${strBinPath}/${strBuildVM}/build.flags";
 
                         my $bBuildOptionsDiffer = buildPutDiffers($oStorageBackRest, $strBuildFlagFile, $strBuildFlags);
@@ -760,8 +754,7 @@ eval
                         executeTest(
                             'docker exec -i -u ' . TEST_USER . ' test-build ' .
                             "${strMakeCmd} -s -j ${iBuildMax}" . ($bLogDetail ? '' : ' --silent') .
-                                " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'" .
-                                ($strLdFlags ne '' ? " LDFLAGS_EXTRA='${strLdFlags}'" : ''),
+                                " --directory ${strBuildPath} CFLAGS_EXTRA='${strCFlags}'",
                             {bShowOutputAsync => $bLogDetail});
                     }
                 }
@@ -1062,7 +1055,7 @@ eval
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx, $iVmMax,
                         $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, !$bNoLogTimestamp,
                         $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize,
-                        $bBackTrace, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                        $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
                         $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 

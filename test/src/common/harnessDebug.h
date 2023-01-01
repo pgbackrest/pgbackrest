@@ -7,13 +7,6 @@ C Debug Harness
 #ifdef HRN_FEATURE_DEBUG
     #include "common/debug.h"
 
-    #ifdef HAVE_BACKTRACE
-        #define FUNCTION_HARNESS_INIT(exe)                                                                                         \
-                stackTraceInit(exe)
-    #else
-        #define FUNCTION_HARNESS_INIT(exe)
-    #endif
-
     // Set line numer of the current function in the stack trace. This is used to give more detailed info about which test macro
     // caused an error.
     #ifdef DEBUG
@@ -61,7 +54,6 @@ C Debug Harness
     #define FUNCTION_HARNESS_RETURN_VOID()                                                                                         \
         STACK_TRACE_POP(false);
 #else
-    #define FUNCTION_HARNESS_INIT(exe)
     #define FUNCTION_HARNESS_STACK_TRACE_LINE_SET(lineNo)
     #define FUNCTION_HARNESS_BEGIN()
     #define FUNCTION_HARNESS_PARAM(typeMacroPrefix, param)

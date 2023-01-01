@@ -28,10 +28,6 @@ Include automatically generated help data
 int
 main(int argListSize, const char *argList[])
 {
-#ifdef HAVE_LIBBACKTRACE
-    stackTraceInit(argList[0]);
-#endif
-
     // Set stack trace and mem context error cleanup handlers
     static const ErrorHandlerFunction errorHandlerList[] = {stackTraceClean, memContextClean};
     errorHandlerSet(errorHandlerList, LENGTH_OF(errorHandlerList));

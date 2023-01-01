@@ -31,11 +31,6 @@ Macros to access internal functions
 /***********************************************************************************************************************************
 Internal Functions
 ***********************************************************************************************************************************/
-// Backtrace init
-#ifdef HAVE_LIBBACKTRACE
-    FV_EXTERN void stackTraceInit(const char *exe);
-#endif
-
 #ifdef DEBUG
     // Enable/disable test function logging
     FV_EXTERN void stackTraceTestStart(void);

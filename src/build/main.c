@@ -6,7 +6,6 @@ Code Builder
 #include <unistd.h>
 
 #include "common/log.h"
-#include "common/stackTrace.h"
 #include "storage/posix/storage.h"
 
 #include "build/config/parse.h"
@@ -21,10 +20,6 @@ Code Builder
 int
 main(const int argListSize, const char *const argList[])
 {
-#ifdef HAVE_LIBBACKTRACE
-    stackTraceInit(argList[0]);
-#endif
-
     // Check parameters
     CHECK(ParamInvalidError, argListSize >= 2 && argListSize <= 4, "only one to three parameters allowed");
 
