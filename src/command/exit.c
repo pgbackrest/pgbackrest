@@ -125,7 +125,7 @@ exitSafe(int result, bool error, SignalType signalType)
             String *const detail = exitErrorDetail();
 
             LOG_INTERNAL_FMT(
-                logLevel, logLevel == logLevelAssert ? LOG_LEVEL_MIN : logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\n%s",
+                logLevel, logLevelDebug, LOG_LEVEL_MAX, 0, errorCode(), "%s\n%s",
                 errorMessage(), strZ(detail));
 
             strFree(detail);

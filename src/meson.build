@@ -92,6 +92,7 @@ build_code = executable(
     src_common,
     src_build_code,
     dependencies: [
+        lib_backtrace,
         lib_bz2,
         lib_xml,
         lib_yaml
@@ -251,7 +252,9 @@ executable(
     src_pgbackrest,
     help_auto_c_inc,
     interface_auto_c_inc,
+    c_args: ['-lbacktrace'],
     dependencies : [
+        lib_backtrace,
         lib_bz2,
         lib_openssl,
         lib_lz4,

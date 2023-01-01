@@ -33,7 +33,7 @@ Internal Functions
 ***********************************************************************************************************************************/
 // Backtrace init
 #ifdef WITH_BACKTRACE
-    void stackTraceInit(const char *exe);
+    FV_EXTERN void stackTraceInit(const char *exe);
 #endif
 
 #ifdef DEBUG
