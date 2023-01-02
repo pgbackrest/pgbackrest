@@ -178,6 +178,11 @@ By convention all buffer constant identifiers are appended with _BUF.
 #define BUFSTRDEF(stringdef)                                                                                                       \
     BUF((unsigned char *)stringdef, (sizeof(stringdef) - 1))
 
+// Used to define buffer constants that will be externed using BUFFER_DECLARE(). Must be used in a .c file.
+#define BUFFER_EXTERN(name, ...)                                                                                                   \
+    static const uint8_t name##_RAW[] = {__VA_ARGS__};                                                                             \
+    VR_EXTERN_DEFINE const Buffer *const name = BUF(name##_RAW, sizeof(name##_RAW));
+
 // Used to define String Buffer constants that will be externed using BUFFER_DECLARE(). Must be used in a .c file.
 #define BUFFER_STRDEF_EXTERN(name, string)                                                                                         \
     VR_EXTERN_DEFINE const Buffer *const name = BUFSTRDEF(string)
