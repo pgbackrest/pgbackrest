@@ -3228,7 +3228,6 @@ testRun(void)
 
         // Created pg_control
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15, .pageChecksum = false);
-        HRN_PG_CONTROL_TIME(storagePgWrite(), 1670211128);
 
         // Create encrypted stanza
         StringList *argList = strLstNew();
@@ -3251,10 +3250,10 @@ testRun(void)
         memset(bufPtr(relation), 0, bufSize(relation));
         bufUsedSet(relation, bufSize(relation));
 
-        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = 1670211128);
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation);
 
         // Add postgresql.auto.conf to contain recovery settings
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = 1670211128);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF);
 
         // Backup
         argList = strLstNew();
