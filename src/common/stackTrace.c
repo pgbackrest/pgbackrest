@@ -362,7 +362,7 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
         stackTraceToZ(
 #endif // HAVE_LIBBACKTRACE
 
-    char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
+    char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName,
     const unsigned int fileLine)
 {
     const char *param = "test build required for parameters";
@@ -370,7 +370,9 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
     size_t result = 0;
 
     // If the current function passed in is the same as the top function on the stack then use the parameters for that function
-    if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceLocal.stack[stackIdx].fileName) == 0 &&
+    fileName = stackTraceTrimSrc(fileName);
+
+    if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceTrimSrc(stackTraceLocal.stack[stackIdx].fileName)) == 0 &&
         strcmp(functionName, stackTraceLocal.stack[stackIdx].functionName) == 0)
     {
         param = stackTraceParamIdx(stackTraceLocal.stackSize - 1);
@@ -392,7 +394,8 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
         {
             const StackTraceData *const traceData = &stackTraceLocal.stack[stackIdx];
 
-            result += stackTraceFmt(buffer, bufferSize, result, "\n%s:%s", traceData->fileName, traceData->functionName);
+            result += stackTraceFmt(
+                buffer, bufferSize, result, "\n%s:%s", stackTraceTrimSrc(traceData->fileName), traceData->functionName);
 
             if (traceData->fileLine > 0)
                 result += stackTraceFmt(buffer, bufferSize, result, ":%u", traceData->fileLine);
