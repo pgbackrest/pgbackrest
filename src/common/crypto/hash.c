@@ -166,7 +166,7 @@ cryptoHashResult(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 cryptoHashNew(const HashType type)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -237,7 +237,7 @@ cryptoHashNew(const HashType type)
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 cryptoHashNewPack(const Pack *const paramList)
 {
     FUNCTION_TEST_BEGIN();
@@ -256,7 +256,7 @@ cryptoHashNewPack(const Pack *const paramList)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 cryptoHashOne(const HashType type, const Buffer *message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -290,7 +290,7 @@ cryptoHashOne(const HashType type, const Buffer *message)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 cryptoHmacOne(const HashType type, const Buffer *const key, const Buffer *const message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

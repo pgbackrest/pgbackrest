@@ -104,7 +104,7 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageIterator *
+FN_EXTERN StorageIterator *
 storageItrNew(
     void *const driver, const String *const path, const StorageInfoLevel level, const bool errorOnMissing, const bool nullOnMissing,
     const bool recurse, const SortOrder sortOrder, const String *const expression)
@@ -172,7 +172,7 @@ storageItrNew(
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 storageItrMore(StorageIterator *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -259,7 +259,7 @@ storageItrMore(StorageIterator *const this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageInfo storageItrNext(StorageIterator *const this)
+FN_EXTERN StorageInfo storageItrNext(StorageIterator *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_ITERATOR, this);
@@ -274,7 +274,7 @@ FV_EXTERN StorageInfo storageItrNext(StorageIterator *const this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 storageItrToLog(const StorageIterator *const this)
 {
     return strNewFmt("{stack: %s}", strZ(lstToLog(this->stack)));

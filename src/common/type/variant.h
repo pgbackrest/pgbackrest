@@ -50,21 +50,21 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN Variant *varNewBool(bool data);
-FV_EXTERN Variant *varNewInt(int data);
-FV_EXTERN Variant *varNewInt64(int64_t data);
+FN_EXTERN Variant *varNewBool(bool data);
+FN_EXTERN Variant *varNewInt(int data);
+FN_EXTERN Variant *varNewInt64(int64_t data);
 
 // Note that the KeyValue is not duplicated because it this a heavy-weight operation. It is merely moved into the same MemContext as
 // the Variant.
-FV_EXTERN Variant *varNewKv(KeyValue *data);
+FN_EXTERN Variant *varNewKv(KeyValue *data);
 
-FV_EXTERN Variant *varNewStr(const String *data);
-FV_EXTERN Variant *varNewStrZ(const char *data);
-FV_EXTERN Variant *varNewUInt(unsigned int data);
-FV_EXTERN Variant *varNewUInt64(uint64_t data);
-FV_EXTERN Variant *varNewVarLst(const VariantList *data);
+FN_EXTERN Variant *varNewStr(const String *data);
+FN_EXTERN Variant *varNewStrZ(const char *data);
+FN_EXTERN Variant *varNewUInt(unsigned int data);
+FN_EXTERN Variant *varNewUInt64(uint64_t data);
+FN_EXTERN Variant *varNewVarLst(const VariantList *data);
 
-FV_EXTERN Variant *varDup(const Variant *this);
+FN_EXTERN Variant *varDup(const Variant *this);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -113,27 +113,27 @@ typedef struct VariantUInt64Pub
     uint64_t data;                                                  // 64-bit unsigned integer data
 } VariantUInt64Pub;
 
-FV_EXTERN bool varBool(const Variant *this);
-FV_EXTERN bool varBoolForce(const Variant *this);
+FN_EXTERN bool varBool(const Variant *this);
+FN_EXTERN bool varBoolForce(const Variant *this);
 
-FV_EXTERN int varInt(const Variant *this);
-FV_EXTERN int varIntForce(const Variant *this);
+FN_EXTERN int varInt(const Variant *this);
+FN_EXTERN int varIntForce(const Variant *this);
 
-FV_EXTERN int64_t varInt64(const Variant *this);
-FV_EXTERN int64_t varInt64Force(const Variant *this);
+FN_EXTERN int64_t varInt64(const Variant *this);
+FN_EXTERN int64_t varInt64Force(const Variant *this);
 
-FV_EXTERN KeyValue *varKv(const Variant *this);
+FN_EXTERN KeyValue *varKv(const Variant *this);
 
-FV_EXTERN const String *varStr(const Variant *this);
-FV_EXTERN String *varStrForce(const Variant *this);
+FN_EXTERN const String *varStr(const Variant *this);
+FN_EXTERN String *varStrForce(const Variant *this);
 
-FV_EXTERN unsigned int varUInt(const Variant *this);
-FV_EXTERN unsigned int varUIntForce(const Variant *this);
+FN_EXTERN unsigned int varUInt(const Variant *this);
+FN_EXTERN unsigned int varUIntForce(const Variant *this);
 
-FV_EXTERN uint64_t varUInt64(const Variant *this);
-FV_EXTERN uint64_t varUInt64Force(const Variant *this);
+FN_EXTERN uint64_t varUInt64(const Variant *this);
+FN_EXTERN uint64_t varUInt64Force(const Variant *this);
 
-FV_EXTERN VariantList *varVarLst(const Variant *this);
+FN_EXTERN VariantList *varVarLst(const Variant *this);
 
 // Variant type
 FN_INLINE_ALWAYS VariantType
@@ -146,7 +146,7 @@ varType(const Variant *const this)
 Functions
 ***********************************************************************************************************************************/
 // Test if Variants are equal
-FV_EXTERN bool varEq(const Variant *this1, const Variant *this2);
+FN_EXTERN bool varEq(const Variant *this1, const Variant *this2);
 
 /***********************************************************************************************************************************
 Destructor
@@ -209,7 +209,7 @@ By convention all variant constant identifiers are appended with _VAR.
 
 // Used to extern String Variant constants declared with VARIANT_STRDEF_EXTERN/STATIC().  Must be used in a .h file.
 #define VARIANT_DECLARE(name)                                                                                                      \
-    FV_EXTERN const Variant *const name
+    FN_EXTERN const Variant *const name
 
 /***********************************************************************************************************************************
 Constant variants that are generally useful
@@ -220,7 +220,7 @@ VARIANT_DECLARE(BOOL_TRUE_VAR);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *varToLog(const Variant *this);
+FN_EXTERN String *varToLog(const Variant *this);
 
 #define FUNCTION_LOG_VARIANT_TYPE                                                                                                  \
     Variant *

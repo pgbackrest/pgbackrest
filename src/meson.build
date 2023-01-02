@@ -4,13 +4,13 @@
 arg_unity = []
 
 if get_option('unity') == 'on'
-    configuration.set('FV_EXTERN', 'static', description: 'Change extern\'d functions/variables to static')
+    configuration.set('FN_EXTERN', 'static', description: 'Change extern\'d functions/variables to static')
     configuration.set('VR_EXTERN', 'static', description: 'Change extern\'d variable definitions to static')
 
     # Add args to builds to prevent non-pgbackrest binaries failing due to unused functions
     arg_unity += '-Wno-unused-function'
 else
-    configuration.set('FV_EXTERN', 'extern', description: 'Leave extern\'d functions/variables alone')
+    configuration.set('FN_EXTERN', 'extern', description: 'Leave extern\'d functions/variables alone')
     configuration.set('VR_EXTERN', '', description: 'Leave extern\'d variable definitions alone')
 endif
 

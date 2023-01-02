@@ -28,7 +28,7 @@ static struct
 } statLocalData;
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 statInit(void)
 {
     FUNCTION_TEST_VOID();
@@ -86,7 +86,7 @@ statGetOrCreate(const String *key)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 statInc(const String *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -102,7 +102,7 @@ statInc(const String *key)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 statToJson(void)
 {
     FUNCTION_TEST_VOID();

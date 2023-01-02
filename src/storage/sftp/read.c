@@ -237,7 +237,7 @@ storageReadSftpEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageRead *
+FN_EXTERN StorageRead *
 storageReadSftpNew(
     StorageSftp *const storage, const String *const name, const bool ignoreMissing, IoSession *const ioSession,
     LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, TimeMSec timeoutSession,

@@ -163,7 +163,7 @@ zstCompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 zstCompressNew(int level)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

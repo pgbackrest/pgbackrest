@@ -52,7 +52,7 @@ typedef struct BackupFileResult
     Pack *pageChecksumResult;
 } BackupFileResult;
 
-FV_EXTERN List *backupFile(
+FN_EXTERN List *backupFile(
     const String *repoFile, CompressType repoFileCompressType, int repoFileCompressLevel, CipherType cipherType,
     const String *cipherPass, const List *fileList);
 

@@ -17,7 +17,7 @@ typedef struct StorageSftp StorageSftp;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN Storage *storageSftpNewInternal(
+FN_EXTERN Storage *storageSftpNewInternal(
     StringId type, const String *path, const String *host, unsigned int port, TimeMSec timeoutConnect, TimeMSec timeoutSession,
     const String *user, const String *keyPub, const String *keyPriv, const String *keyPassphrase, const StringId hostkeyHash,
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
@@ -25,7 +25,7 @@ FV_EXTERN Storage *storageSftpNewInternal(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-FV_EXTERN void storageSftpEvalLibSsh2Error(
+FN_EXTERN void storageSftpEvalLibSsh2Error(
     int ssh2Errno, uint64_t sftpErrno, const ErrorType *errorType, const String *msg, const String *hint);
 
 /***********************************************************************************************************************************

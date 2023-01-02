@@ -10,9 +10,9 @@ Configuration Common
 Functions
 ***********************************************************************************************************************************/
 // Parse option size, e.g. 23m
-FV_EXTERN int64_t cfgParseSize(const String *value);
+FN_EXTERN int64_t cfgParseSize(const String *value);
 
 // Parse option time, e.g. 900
-FV_EXTERN int64_t cfgParseTime(const String *value);
+FN_EXTERN int64_t cfgParseTime(const String *value);
 
 #endif

@@ -11,7 +11,7 @@ SFTP Storage File Write
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN StorageWrite *storageWriteSftpNew(
+FN_EXTERN StorageWrite *storageWriteSftpNew(
     StorageSftp *storage, const String *name, IoSession *ioSession, LIBSSH2_SESSION *session, LIBSSH2_SFTP *sftpSession,
     LIBSSH2_SFTP_HANDLE *sftpHandle, TimeMSec timeoutConnect, TimeMSec timeoutSession, mode_t modeFile, mode_t modePath,
     const String *user, const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic,

@@ -19,6 +19,6 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Process gz errors
-FV_EXTERN int gzError(int error);
+FN_EXTERN int gzError(int error);
 
 #endif

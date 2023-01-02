@@ -366,7 +366,7 @@ cfgParseCommandId(const char *const commandName)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 cfgParseCommandName(const ConfigCommand commandId)
 {
     FUNCTION_TEST_BEGIN();
@@ -404,7 +404,7 @@ cfgParseCommandRoleEnum(const String *const commandRole)
     THROW_FMT(CommandInvalidError, "invalid command role '%s'", strZ(commandRole));
 }
 
-FV_EXTERN const String *
+FN_EXTERN const String *
 cfgParseCommandRoleStr(const ConfigCommandRole commandRole)
 {
     FUNCTION_TEST_BEGIN();
@@ -435,7 +435,7 @@ cfgParseCommandRoleStr(const ConfigCommandRole commandRole)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 cfgParseCommandRoleName(const ConfigCommand commandId, const ConfigCommandRole commandRoleId)
 {
     FUNCTION_TEST_BEGIN();
@@ -458,7 +458,7 @@ Find an option by name in the option list
 #define OPTION_PREFIX_RESET                                         "reset-"
 #define OPTION_NAME_SIZE_MAX                                        64
 
-FV_EXTERN CfgParseOptionResult
+FN_EXTERN CfgParseOptionResult
 cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -687,7 +687,7 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN ConfigOptionDataType
+FN_EXTERN ConfigOptionDataType
 cfgParseOptionDataType(const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1047,7 +1047,7 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const String *
+FN_EXTERN const String *
 cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1073,7 +1073,7 @@ cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 cfgParseOptionName(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1086,7 +1086,7 @@ cfgParseOptionName(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -1112,7 +1112,7 @@ cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1145,7 +1145,7 @@ cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 cfgParseOptionSecure(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1158,7 +1158,7 @@ cfgParseOptionSecure(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN ConfigOptionType
+FN_EXTERN ConfigOptionType
 cfgParseOptionType(ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1171,7 +1171,7 @@ cfgParseOptionType(ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 cfgParseOptionValid(ConfigCommand commandId, ConfigCommandRole commandRoleId, ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
@@ -1386,7 +1386,7 @@ cfgFileLoad(                                                        // NOTE: Pas
 ??? Add validation of section names and check all sections for invalid options in the check command.  It's too expensive to add the
 logic to this critical path code.
 ***********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 configParse(const Storage *storage, unsigned int argListSize, const char *argList[], bool resetLogLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

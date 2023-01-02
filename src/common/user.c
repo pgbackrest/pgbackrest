@@ -52,7 +52,7 @@ userInitInternal(void)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FV_EXTERN void
+FN_EXTERN void
 userInit(void)
 {
     FUNCTION_TEST_VOID();
@@ -64,7 +64,7 @@ userInit(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN gid_t
+FN_EXTERN gid_t
 groupId(void)
 {
     FUNCTION_TEST_VOID();
@@ -72,7 +72,7 @@ groupId(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN gid_t
+FN_EXTERN gid_t
 groupIdFromName(const String *groupName)
 {
     FUNCTION_TEST_BEGIN();
@@ -91,7 +91,7 @@ groupIdFromName(const String *groupName)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const String *
+FN_EXTERN const String *
 groupName(void)
 {
     FUNCTION_TEST_VOID();
@@ -99,7 +99,7 @@ groupName(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 groupNameFromId(gid_t groupId)
 {
     FUNCTION_TEST_BEGIN();
@@ -115,7 +115,7 @@ groupNameFromId(gid_t groupId)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN uid_t
+FN_EXTERN uid_t
 userId(void)
 {
     FUNCTION_TEST_VOID();
@@ -123,7 +123,7 @@ userId(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN uid_t
+FN_EXTERN uid_t
 userIdFromName(const String *userName)
 {
     FUNCTION_TEST_BEGIN();
@@ -142,7 +142,7 @@ userIdFromName(const String *userName)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const String *
+FN_EXTERN const String *
 userName(void)
 {
     FUNCTION_TEST_VOID();
@@ -150,7 +150,7 @@ userName(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 userNameFromId(uid_t userId)
 {
     FUNCTION_TEST_BEGIN();
@@ -166,7 +166,7 @@ userNameFromId(uid_t userId)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 userRoot(void)
 {
     FUNCTION_TEST_VOID();

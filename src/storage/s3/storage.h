@@ -33,7 +33,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN Storage *storageS3New(
+FN_EXTERN Storage *storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
     const String *secretAccessKey, const String *securityToken, const String *kmsKeyId, const String *credRole,

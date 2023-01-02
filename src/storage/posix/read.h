@@ -10,7 +10,7 @@ Posix Storage Read
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN StorageRead *storageReadPosixNew(
+FN_EXTERN StorageRead *storageReadPosixNew(
     StoragePosix *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
 
 #endif

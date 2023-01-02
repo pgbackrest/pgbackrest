@@ -386,7 +386,7 @@ storageWriteSftpClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageWrite *
+FN_EXTERN StorageWrite *
 storageWriteSftpNew(
     StorageSftp *const storage, const String *const name, IoSession *const ioSession, LIBSSH2_SESSION *const session,
     LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const TimeMSec timeoutConnect,

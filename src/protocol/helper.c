@@ -74,7 +74,7 @@ protocolHelperInit(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 repoIsLocal(unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -85,7 +85,7 @@ repoIsLocal(unsigned int repoIdx)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 repoIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
@@ -96,7 +96,7 @@ repoIsLocalVerify(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 repoIsLocalVerifyIdx(unsigned int repoIdx)
 {
     FUNCTION_TEST_VOID();
@@ -108,7 +108,7 @@ repoIsLocalVerifyIdx(unsigned int repoIdx)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 pgIsLocal(unsigned int pgIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -119,7 +119,7 @@ pgIsLocal(unsigned int pgIdx)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 pgIsLocalVerify(void)
 {
     FUNCTION_TEST_VOID();
@@ -229,7 +229,7 @@ protocolLocalExec(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FV_EXTERN ProtocolClient *
+FN_EXTERN ProtocolClient *
 protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -323,7 +323,7 @@ protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolLocalFree(unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -386,7 +386,7 @@ protocolServerAuthorize(const String *authListStr, const String *const stanza)
     FUNCTION_TEST_RETURN(BOOL, result);
 }
 
-FV_EXTERN ProtocolServer *
+FN_EXTERN ProtocolServer *
 protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -786,7 +786,7 @@ protocolRemoteExec(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FV_EXTERN ProtocolClient *
+FN_EXTERN ProtocolClient *
 protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -859,7 +859,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolRemoteFree(unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -873,7 +873,7 @@ protocolRemoteFree(unsigned int hostIdx)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolKeepAlive(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -891,7 +891,7 @@ protocolKeepAlive(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolFree(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

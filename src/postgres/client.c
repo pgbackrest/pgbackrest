@@ -39,7 +39,7 @@ pgClientFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN PgClient *
+FN_EXTERN PgClient *
 pgClientNew(const String *host, const unsigned int port, const String *database, const String *user, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -118,7 +118,7 @@ pgClientEscape(const String *string)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN PgClient *
+FN_EXTERN PgClient *
 pgClientOpen(PgClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -165,7 +165,7 @@ pgClientOpen(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Pack *
+FN_EXTERN Pack *
 pgClientQuery(PgClient *const this, const String *const query, const PgClientQueryResult resultType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -357,7 +357,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 pgClientClose(PgClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -377,7 +377,7 @@ pgClientClose(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 pgClientToLog(const PgClient *this)
 {
     return strNewFmt(

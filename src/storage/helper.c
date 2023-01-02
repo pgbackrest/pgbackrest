@@ -85,7 +85,7 @@ storageHelperContextInit(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void storageHelperInit(const StorageHelper *const helperList)
+FN_EXTERN void storageHelperInit(const StorageHelper *const helperList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, helperList);
@@ -97,7 +97,7 @@ FV_EXTERN void storageHelperInit(const StorageHelper *const helperList)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageHelperDryRunInit(bool dryRun)
 {
     FUNCTION_TEST_VOID();
@@ -134,7 +134,7 @@ storageHelperStanzaInit(const bool stanzaRequired)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storageLocal(void)
 {
     FUNCTION_TEST_VOID();
@@ -153,7 +153,7 @@ storageLocal(void)
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageLocal);
 }
 
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storageLocalWrite(void)
 {
     FUNCTION_TEST_VOID();
@@ -202,7 +202,7 @@ storagePgGet(unsigned int pgIdx, bool write)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storagePgIdx(unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -226,14 +226,14 @@ storagePgIdx(unsigned int pgIdx)
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storagePg[pgIdx]);
 }
 
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storagePg(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN_CONST(STORAGE, storagePgIdx(cfgOptionGroupIdxDefault(cfgOptGrpPg)));
 }
 
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storagePgIdxWrite(unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -261,7 +261,7 @@ storagePgIdxWrite(unsigned int pgIdx)
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storagePgWrite[pgIdx]);
 }
 
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storagePgWrite(void)
 {
     FUNCTION_TEST_VOID();
@@ -397,7 +397,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storageRepoIdx(unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -429,14 +429,14 @@ storageRepoIdx(unsigned int repoIdx)
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageRepo[repoIdx]);
 }
 
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storageRepo(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storageRepoIdxWrite(unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
@@ -472,7 +472,7 @@ storageRepoIdxWrite(unsigned int repoIdx)
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageRepoWrite[repoIdx]);
 }
 
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storageRepoWrite(void)
 {
     FUNCTION_TEST_VOID();
@@ -523,7 +523,7 @@ storageSpoolPathExpression(const String *expression, const String *path)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storageSpool(void)
 {
     FUNCTION_TEST_VOID();
@@ -544,7 +544,7 @@ storageSpool(void)
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpool);
 }
 
-FV_EXTERN const Storage *
+FN_EXTERN const Storage *
 storageSpoolWrite(void)
 {
     FUNCTION_TEST_VOID();

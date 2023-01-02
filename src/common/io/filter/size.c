@@ -86,7 +86,7 @@ ioSizeResult(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 ioSizeNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

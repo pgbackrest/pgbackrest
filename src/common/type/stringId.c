@@ -211,7 +211,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
     }
 }
 
-FV_EXTERN StringId
+FN_EXTERN StringId
 strIdFromZN(const char *const buffer, const size_t size, const bool error)
 {
     FUNCTION_TEST_BEGIN();
@@ -236,7 +236,7 @@ strIdFromZN(const char *const buffer, const size_t size, const bool error)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN size_t
+FN_EXTERN size_t
 strIdToZN(StringId strId, char *const buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -344,7 +344,7 @@ strIdToZN(StringId strId, char *const buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strIdToStr(const StringId strId)
 {
     FUNCTION_TEST_BEGIN();
@@ -358,7 +358,7 @@ strIdToStr(const StringId strId)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN size_t
+FN_EXTERN size_t
 strIdToZ(const StringId strId, char *const buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -373,7 +373,7 @@ strIdToZ(const StringId strId, char *const buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN size_t
+FN_EXTERN size_t
 strIdToLog(const StringId strId, char *const buffer, const size_t bufferSize)
 {
     ASSERT(bufferSize > STRID_MAX);

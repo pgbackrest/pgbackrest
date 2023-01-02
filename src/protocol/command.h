@@ -15,7 +15,7 @@ typedef struct ProtocolCommand ProtocolCommand;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN ProtocolCommand *protocolCommandNew(const StringId command);
+FN_EXTERN ProtocolCommand *protocolCommandNew(const StringId command);
 
 /***********************************************************************************************************************************
 Functions
@@ -29,10 +29,10 @@ protocolCommandMove(ProtocolCommand *const this, MemContext *const parentNew)
 }
 
 // Read the command output
-FV_EXTERN PackWrite *protocolCommandParam(ProtocolCommand *this);
+FN_EXTERN PackWrite *protocolCommandParam(ProtocolCommand *this);
 
 // Write protocol command
-FV_EXTERN void protocolCommandPut(ProtocolCommand *this, IoWrite *write);
+FN_EXTERN void protocolCommandPut(ProtocolCommand *this, IoWrite *write);
 
 /***********************************************************************************************************************************
 Destructor
@@ -46,7 +46,7 @@ protocolCommandFree(ProtocolCommand *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *protocolCommandToLog(const ProtocolCommand *this);
+FN_EXTERN String *protocolCommandToLog(const ProtocolCommand *this);
 
 #define FUNCTION_LOG_PROTOCOL_COMMAND_TYPE                                                                                         \
     ProtocolCommand *

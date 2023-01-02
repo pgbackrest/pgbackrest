@@ -290,7 +290,7 @@ storageSftpLinkCreate(
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageSftpEvalLibSsh2Error(
     const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const msg,
     const String *const hint)
@@ -755,7 +755,7 @@ static const StorageInterface storageInterfaceSftp =
     .remove = storageSftpRemove,
 };
 
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storageSftpNewInternal(
     StringId type, const String *const path, const String *const host, unsigned int port, const TimeMSec timeoutConnect,
     const TimeMSec timeoutSession, const String *const user, const String *const keyPub, const String *const keyPriv,
@@ -919,7 +919,7 @@ storageSftpNewInternal(
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storageSftpNew(const String *const path, const String *const host, const unsigned int port, const TimeMSec timeoutConnect,
         const TimeMSec timeoutSession, const StorageSftpNewParam param)
 {

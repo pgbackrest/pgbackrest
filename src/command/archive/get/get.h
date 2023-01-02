@@ -8,9 +8,9 @@ Archive Get Command
 Functions
 ***********************************************************************************************************************************/
 // Get an archive file from the repository (WAL segment, history file, etc.)
-FV_EXTERN int cmdArchiveGet(void);
+FN_EXTERN int cmdArchiveGet(void);
 
 // Async version of archive get that runs in parallel for performance
-FV_EXTERN void cmdArchiveGetAsync(void);
+FN_EXTERN void cmdArchiveGetAsync(void);
 
 #endif
