@@ -531,8 +531,10 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         // Generate authorization header
         storageS3Auth(
             this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
-            param.content == NULL || bufEmpty(param.content) ?
-                HASH_TYPE_SHA256_ZERO_STR : strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, param.content)));
+            strNewEncode(
+                encodingHex,
+                param.content == NULL || bufEmpty(param.content) ?
+                    HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content)));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()

@@ -23,7 +23,7 @@ Hashes for zero-length files (i.e., starting hash)
     BUFFER_DECLARE(HASH_TYPE_SHA1_ZERO_BUF);
 #define HASH_TYPE_SHA256_ZERO                                                                                                      \
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    STRING_DECLARE(HASH_TYPE_SHA256_ZERO_STR);
+    BUFFER_DECLARE(HASH_TYPE_SHA256_ZERO_BUF);
 
 /***********************************************************************************************************************************
 Hash type sizes
