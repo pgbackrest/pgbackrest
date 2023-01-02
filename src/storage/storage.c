@@ -30,7 +30,7 @@ struct Storage
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storageNew(
     StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface)
@@ -100,7 +100,7 @@ storageNew(
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 storageCopy(StorageRead *source, StorageWrite *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -138,7 +138,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -174,7 +174,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 storageGet(StorageRead *file, StorageGetParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -231,7 +231,7 @@ storageGet(StorageRead *file, StorageGetParam param)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageInfo
+FN_EXTERN StorageInfo
 storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -286,7 +286,7 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageIterator *
+FN_EXTERN StorageIterator *
 storageNewItr(const Storage *const this, const String *const pathExp, StorageNewItrParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -325,7 +325,7 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void storageLinkCreate(
+FN_EXTERN void storageLinkCreate(
     const Storage *const this, const String *const target, const String *const linkPath, const StorageLinkCreateParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -354,7 +354,7 @@ FV_EXTERN void storageLinkCreate(
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StringList *
+FN_EXTERN StringList *
 storageList(const Storage *this, const String *pathExp, StorageListParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -392,7 +392,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -432,7 +432,7 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageRead *
+FN_EXTERN StorageRead *
 storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -463,7 +463,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageWrite *
+FN_EXTERN StorageWrite *
 storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -506,7 +506,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -607,7 +607,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -637,7 +637,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 storagePathExists(const Storage *this, const String *pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -656,7 +656,7 @@ storagePathExists(const Storage *this, const String *pathExp)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -688,7 +688,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void storagePathSync(const Storage *this, const String *pathExp)
+FN_EXTERN void storagePathSync(const Storage *this, const String *pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -712,7 +712,7 @@ FV_EXTERN void storagePathSync(const Storage *this, const String *pathExp)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storagePut(StorageWrite *file, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -730,7 +730,7 @@ storagePut(StorageWrite *file, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -756,7 +756,7 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 storageToLog(const Storage *this)
 {
     return strNewFmt(

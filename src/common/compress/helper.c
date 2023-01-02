@@ -112,7 +112,7 @@ static const struct CompressHelperLocal
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN CompressType
+FN_EXTERN CompressType
 compressTypeEnum(const StringId type)
 {
     FUNCTION_TEST_BEGIN();
@@ -136,7 +136,7 @@ compressTypeEnum(const StringId type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 compressTypePresent(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -152,7 +152,7 @@ compressTypePresent(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const String *
+FN_EXTERN const String *
 compressTypeStr(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -165,7 +165,7 @@ compressTypeStr(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN CompressType
+FN_EXTERN CompressType
 compressTypeFromName(const String *name)
 {
     FUNCTION_TEST_BEGIN();
@@ -187,7 +187,7 @@ compressTypeFromName(const String *name)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 compressLevelDefault(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -201,7 +201,7 @@ compressLevelDefault(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 compressLevelMin(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -215,7 +215,7 @@ compressLevelMin(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 compressLevelMax(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -229,7 +229,7 @@ compressLevelMax(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 compressFilter(CompressType type, int level)
 {
     FUNCTION_TEST_BEGIN();
@@ -245,7 +245,7 @@ compressFilter(CompressType type, int level)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 compressFilterPack(const StringId filterType, const Pack *const filterParam)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -283,7 +283,7 @@ compressFilterPack(const StringId filterType, const Pack *const filterParam)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 decompressFilter(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -298,7 +298,7 @@ decompressFilter(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const String *
+FN_EXTERN const String *
 compressExtStr(CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -311,7 +311,7 @@ compressExtStr(CompressType type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 compressExtCat(String *file, CompressType type)
 {
     FUNCTION_TEST_BEGIN();
@@ -327,7 +327,7 @@ compressExtCat(String *file, CompressType type)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 compressExtStrip(const String *file, CompressType type)
 {
     FUNCTION_TEST_BEGIN();

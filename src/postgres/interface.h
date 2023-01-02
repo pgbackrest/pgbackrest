@@ -121,64 +121,64 @@ typedef struct PgWal
 Functions
 ***********************************************************************************************************************************/
 // Is this a template database?
-FV_EXTERN bool pgDbIsTemplate(const String *name);
+FN_EXTERN bool pgDbIsTemplate(const String *name);
 
 // Is this a system database, i.e. template or postgres?
-FV_EXTERN bool pgDbIsSystem(const String *name);
+FN_EXTERN bool pgDbIsSystem(const String *name);
 
 // Does this database have a system id, i.e. less than the minimum assignable user id?
-FV_EXTERN bool pgDbIsSystemId(unsigned int id);
+FN_EXTERN bool pgDbIsSystemId(unsigned int id);
 
 // Get info from pg_control
-FV_EXTERN PgControl pgControlFromFile(const Storage *storage);
+FN_EXTERN PgControl pgControlFromFile(const Storage *storage);
 
 // Get the control version for a PostgreSQL version
-FV_EXTERN uint32_t pgControlVersion(unsigned int pgVersion);
+FN_EXTERN uint32_t pgControlVersion(unsigned int pgVersion);
 
 // Convert version string to version number and vice versa
-FV_EXTERN unsigned int pgVersionFromStr(const String *version);
-FV_EXTERN String *pgVersionToStr(unsigned int version);
+FN_EXTERN unsigned int pgVersionFromStr(const String *version);
+FN_EXTERN String *pgVersionToStr(unsigned int version);
 
 // Get info from WAL header
-FV_EXTERN PgWal pgWalFromFile(const String *walFile, const Storage *storage);
-FV_EXTERN PgWal pgWalFromBuffer(const Buffer *walBuffer);
+FN_EXTERN PgWal pgWalFromFile(const String *walFile, const Storage *storage);
+FN_EXTERN PgWal pgWalFromBuffer(const Buffer *walBuffer);
 
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_15_202209061
-FV_EXTERN String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
+FN_EXTERN String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
 
 // Convert a string to an lsn and vice versa
-FV_EXTERN uint64_t pgLsnFromStr(const String *lsn);
-FV_EXTERN String *pgLsnToStr(uint64_t lsn);
+FN_EXTERN uint64_t pgLsnFromStr(const String *lsn);
+FN_EXTERN String *pgLsnToStr(uint64_t lsn);
 
 // Convert a timeline and lsn to a wal segment and vice versa
-FV_EXTERN String *pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize);
+FN_EXTERN String *pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize);
 
 // Get timeline from WAL segment name
-FV_EXTERN uint32_t pgTimelineFromWalSegment(const String *walSegment);
+FN_EXTERN uint32_t pgTimelineFromWalSegment(const String *walSegment);
 
 // Convert a timeline and lsn range to a list of wal segments
-FV_EXTERN StringList *pgLsnRangeToWalSegmentList(
+FN_EXTERN StringList *pgLsnRangeToWalSegmentList(
     uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize);
 
 // Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
-FV_EXTERN const String *pgLsnName(unsigned int pgVersion);
+FN_EXTERN const String *pgLsnName(unsigned int pgVersion);
 
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
-FV_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo);
+FN_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo);
 
-FV_EXTERN const String *pgWalName(unsigned int pgVersion);
+FN_EXTERN const String *pgWalName(unsigned int pgVersion);
 
 // Get wal path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
-FV_EXTERN const String *pgWalPath(unsigned int pgVersion);
+FN_EXTERN const String *pgWalPath(unsigned int pgVersion);
 
 // Get transaction commit log path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
-FV_EXTERN const String *pgXactPath(unsigned int pgVersion);
+FN_EXTERN const String *pgXactPath(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *pgControlToLog(const PgControl *pgControl);
-FV_EXTERN String *pgWalToLog(const PgWal *pgWal);
+FN_EXTERN String *pgControlToLog(const PgControl *pgControl);
+FN_EXTERN String *pgWalToLog(const PgWal *pgWal);
 
 #define FUNCTION_LOG_PG_CONTROL_TYPE                                                                                               \
     PgControl

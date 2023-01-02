@@ -9,7 +9,7 @@ CIFS Storage Helper
 #include "storage/cifs/helper.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storageCifsHelper(const unsigned int repoIdx, const bool write, StoragePathExpressionCallback pathExpressionCallback)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

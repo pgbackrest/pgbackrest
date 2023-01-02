@@ -101,7 +101,7 @@ ioFdWriteFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoWrite *
+FN_EXTERN IoWrite *
 ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -131,7 +131,7 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioFdWriteOneStr(int fd, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

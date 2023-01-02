@@ -29,7 +29,7 @@ typedef struct KeyValuePair
 } KeyValuePair;
 
 /**********************************************************************************************************************************/
-FV_EXTERN KeyValue *
+FN_EXTERN KeyValue *
 kvNew(void)
 {
     FUNCTION_TEST_VOID();
@@ -56,7 +56,7 @@ kvNew(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN KeyValue *
+FN_EXTERN KeyValue *
 kvDup(const KeyValue *const source)
 {
     FUNCTION_TEST_BEGIN();
@@ -85,7 +85,7 @@ kvDup(const KeyValue *const source)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN unsigned int
+FN_EXTERN unsigned int
 kvGetIdx(const KeyValue *this, const Variant *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -163,7 +163,7 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN KeyValue *
+FN_EXTERN KeyValue *
 kvPut(KeyValue *this, const Variant *key, const Variant *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -185,7 +185,7 @@ kvPut(KeyValue *this, const Variant *key, const Variant *value)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN KeyValue *
+FN_EXTERN KeyValue *
 kvAdd(KeyValue *this, const Variant *key, const Variant *value)
 {
     FUNCTION_TEST_BEGIN();
@@ -231,7 +231,7 @@ kvAdd(KeyValue *this, const Variant *key, const Variant *value)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN KeyValue *
+FN_EXTERN KeyValue *
 kvPutKv(KeyValue *this, const Variant *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -255,7 +255,7 @@ kvPutKv(KeyValue *this, const Variant *key)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const Variant *
+FN_EXTERN const Variant *
 kvGet(const KeyValue *this, const Variant *key)
 {
     FUNCTION_TEST_BEGIN();
@@ -278,7 +278,7 @@ kvGet(const KeyValue *this, const Variant *key)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const Variant *
+FN_EXTERN const Variant *
 kvGetDefault(const KeyValue *const this, const Variant *const key, const Variant *const defaultValue)
 {
     FUNCTION_TEST_BEGIN();
@@ -301,7 +301,7 @@ kvGetDefault(const KeyValue *const this, const Variant *const key, const Variant
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN VariantList *
+FN_EXTERN VariantList *
 kvGetList(const KeyValue *const this, const Variant *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -333,7 +333,7 @@ kvGetList(const KeyValue *const this, const Variant *const key)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN KeyValue *
+FN_EXTERN KeyValue *
 kvRemove(KeyValue *this, const Variant *key)
 {
     FUNCTION_TEST_BEGIN();

@@ -173,7 +173,7 @@ storageListRender(IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdStorageList(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

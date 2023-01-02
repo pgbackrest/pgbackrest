@@ -22,9 +22,9 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 // Setup signal handlers
-FV_EXTERN void exitInit(void);
+FN_EXTERN void exitInit(void);
 
 // Do cleanup and return result code
-FV_EXTERN int exitSafe(int result, bool error, SignalType signalType);
+FN_EXTERN int exitSafe(int result, bool error, SignalType signalType);
 
 #endif

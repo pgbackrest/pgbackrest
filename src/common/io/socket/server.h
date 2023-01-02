@@ -24,6 +24,6 @@ Statistics constants
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN IoServer *sckServerNew(const String *address, unsigned int port, TimeMSec timeout);
+FN_EXTERN IoServer *sckServerNew(const String *address, unsigned int port, TimeMSec timeout);
 
 #endif

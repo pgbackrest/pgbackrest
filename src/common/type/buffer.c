@@ -30,7 +30,7 @@ struct Buffer
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 bufNew(size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -63,7 +63,7 @@ bufNew(size_t size)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 bufNewC(const void *buffer, size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -82,7 +82,7 @@ bufNewC(const void *buffer, size_t size)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 bufNewDecode(const EncodingType type, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
@@ -99,7 +99,7 @@ bufNewDecode(const EncodingType type, const String *const string)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 bufDup(const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -120,7 +120,7 @@ bufDup(const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 bufCat(Buffer *this, const Buffer *cat)
 {
     FUNCTION_TEST_BEGIN();
@@ -137,7 +137,7 @@ bufCat(Buffer *this, const Buffer *cat)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -166,7 +166,7 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -190,7 +190,7 @@ bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 bufEq(const Buffer *this, const Buffer *compare)
 {
     FUNCTION_TEST_BEGIN();
@@ -208,7 +208,7 @@ bufEq(const Buffer *this, const Buffer *compare)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 bufResize(Buffer *this, size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -264,7 +264,7 @@ bufResize(Buffer *this, size_t size)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 bufLimitClear(Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -279,7 +279,7 @@ bufLimitClear(Buffer *this)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FV_EXTERN void
+FN_EXTERN void
 bufLimitSet(Buffer *this, size_t limit)
 {
     FUNCTION_TEST_BEGIN();
@@ -298,7 +298,7 @@ bufLimitSet(Buffer *this, size_t limit)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 bufUsedInc(Buffer *this, size_t inc)
 {
     FUNCTION_TEST_BEGIN();
@@ -314,7 +314,7 @@ bufUsedInc(Buffer *this, size_t inc)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FV_EXTERN void
+FN_EXTERN void
 bufUsedSet(Buffer *this, size_t used)
 {
     FUNCTION_TEST_BEGIN();
@@ -330,7 +330,7 @@ bufUsedSet(Buffer *this, size_t used)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FV_EXTERN void
+FN_EXTERN void
 bufUsedZero(Buffer *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -345,7 +345,7 @@ bufUsedZero(Buffer *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 bufToLog(const Buffer *this)
 {
     String *result = strNewFmt(

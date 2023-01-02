@@ -12,6 +12,6 @@ A simple socket session intended to allow access to services that are exposed vi
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN IoSession *sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port, TimeMSec timeout);
+FN_EXTERN IoSession *sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port, TimeMSec timeout);
 
 #endif

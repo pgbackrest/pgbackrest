@@ -24,7 +24,7 @@ typedef struct IoFilter IoFilter;
 Getters/Setters
 ***********************************************************************************************************************************/
 // Get filter result
-FV_EXTERN Pack *ioFilterResult(const IoFilter *this);
+FN_EXTERN Pack *ioFilterResult(const IoFilter *this);
 
 // Identifies the filter and is used when pulling results from the filter group
 FN_INLINE_ALWAYS StringId
@@ -45,7 +45,7 @@ ioFilterFree(IoFilter *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *ioFilterToLog(const IoFilter *this);
+FN_EXTERN String *ioFilterToLog(const IoFilter *this);
 
 #define FUNCTION_LOG_IO_FILTER_TYPE                                                                                                \
     IoFilter *

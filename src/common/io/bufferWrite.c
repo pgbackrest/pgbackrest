@@ -47,7 +47,7 @@ ioBufferWrite(THIS_VOID, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoWrite *
+FN_EXTERN IoWrite *
 ioBufferWriteNew(Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

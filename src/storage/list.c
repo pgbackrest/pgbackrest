@@ -73,7 +73,7 @@ static const uint8_t storageLstInfoSize[storageInfoLevelDetail + 1] =
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageList *
+FN_EXTERN StorageList *
 storageLstNew(const StorageInfoLevel level)
 {
     FUNCTION_TEST_BEGIN();
@@ -108,7 +108,7 @@ storageLstNew(const StorageInfoLevel level)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageLstInsert(StorageList *const this, const unsigned int idx, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
@@ -160,7 +160,7 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageInfo
+FN_EXTERN StorageInfo
 storageLstGet(StorageList *const this, const unsigned int idx)
 {
     FUNCTION_TEST_BEGIN();
@@ -208,7 +208,7 @@ storageLstGet(StorageList *const this, const unsigned int idx)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 storageLstToLog(const StorageList *const this)
 {
     return strNewFmt("{size: %u}", lstSize(this->pub.list));

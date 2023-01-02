@@ -349,8 +349,9 @@ testBldUnit(TestBuild *const this)
             MESON_COMMENT_BLOCK "\n"
             "configure_file(output: 'build.auto.h', configuration: configuration)\n"
             "\n"
-            "add_global_arguments('-DFV_EXTERN=extern', language : 'c')\n"
-            "add_global_arguments('-DVR_EXTERN=', language : 'c')\n"
+            "add_global_arguments('-DFN_EXTERN=extern', language : 'c')\n"
+            "add_global_arguments('-DVR_EXTERN_DECLARE=extern', language : 'c')\n"
+            "add_global_arguments('-DVR_EXTERN_DEFINE=', language : 'c')\n"
             "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
 
         // Configure features

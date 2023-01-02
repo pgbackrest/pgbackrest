@@ -59,7 +59,7 @@ typedef struct StorageGcsRequestAsyncParam
 #define storageGcsRequestAsyncP(this, verb, ...)                                                                                   \
     storageGcsRequestAsync(this, verb, (StorageGcsRequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN HttpRequest *storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param);
+FN_EXTERN HttpRequest *storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param);
 
 // Get async response
 typedef struct StorageGcsResponseParam
@@ -73,7 +73,7 @@ typedef struct StorageGcsResponseParam
 #define storageGcsResponseP(request, ...)                                                                                          \
     storageGcsResponse(request, (StorageGcsResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN HttpResponse *storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param);
+FN_EXTERN HttpResponse *storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param);
 
 typedef struct StorageGcsRequestParam
 {
@@ -93,7 +93,7 @@ typedef struct StorageGcsRequestParam
 #define storageGcsRequestP(this, verb, ...)                                                                                        \
     storageGcsRequest(this, verb, (StorageGcsRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN HttpResponse *storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam param);
+FN_EXTERN HttpResponse *storageGcsRequest(StorageGcs *this, const String *verb, StorageGcsRequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging

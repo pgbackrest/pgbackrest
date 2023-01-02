@@ -265,7 +265,7 @@ storageWriteS3Close(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageWrite *
+FN_EXTERN StorageWrite *
 storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
