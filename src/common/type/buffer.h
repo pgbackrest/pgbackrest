@@ -178,15 +178,15 @@ By convention all buffer constant identifiers are appended with _BUF.
 #define BUFSTRDEF(stringdef)                                                                                                       \
     BUF((unsigned char *)stringdef, (sizeof(stringdef) - 1))
 
-// Used to declare buffer constants that will be externed using BUFFER_DECLARE().  Must be used in a .c file.
+// Used to define String Buffer constants that will be externed using BUFFER_DECLARE(). Must be used in a .c file.
 #define BUFFER_STRDEF_EXTERN(name, string)                                                                                         \
     VR_EXTERN_DEFINE const Buffer *const name = BUFSTRDEF(string)
 
-// Used to declare buffer constants that will be local to the .c file.  Must be used in a .c file.
+// Used to define String Buffer constants that will be local to the .c file. Must be used in a .c file.
 #define BUFFER_STRDEF_STATIC(name, string)                                                                                         \
     static const Buffer *const name = BUFSTRDEF(string)
 
-// Used to extern buffer constants declared with BUFFER_STRDEF_EXTERN(.  Must be used in a .h file.
+// Used to declare externed Buffer constants defined with BUFFER*EXTERN(). Must be used in a .h file.
 #define BUFFER_DECLARE(name)                                                                                                       \
     VR_EXTERN_DECLARE const Buffer *const name
 
