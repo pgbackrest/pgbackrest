@@ -83,7 +83,7 @@ ioBufferReadEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoRead *
+FN_EXTERN IoRead *
 ioBufferReadNew(const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

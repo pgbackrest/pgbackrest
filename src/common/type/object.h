@@ -101,17 +101,17 @@ objMemContext(void *const this)
 }
 
 // Move an object to a new context if this != NULL
-FV_EXTERN void *objMove(THIS_VOID, MemContext *parentNew);
+FN_EXTERN void *objMove(THIS_VOID, MemContext *parentNew);
 
 // Move an object to a new context if this != NULL. The mem context to move must be the first member of the object struct. This
 // pattern is typically used by interfaces.
-FV_EXTERN void *objMoveContext(THIS_VOID, MemContext *parentNew);
+FN_EXTERN void *objMoveContext(THIS_VOID, MemContext *parentNew);
 
 // Free the object mem context if this != NULL
-FV_EXTERN void objFree(THIS_VOID);
+FN_EXTERN void objFree(THIS_VOID);
 
 // Free the object mem context if not NULL. The mem context to be freed must be the first member of the object struct. This pattern
 // is typically used by interfaces.
-FV_EXTERN void objFreeContext(THIS_VOID);
+FN_EXTERN void objFreeContext(THIS_VOID);
 
 #endif

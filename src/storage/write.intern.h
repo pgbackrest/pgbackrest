@@ -36,6 +36,6 @@ typedef struct StorageWriteInterface
     IoWriteInterface ioInterface;
 } StorageWriteInterface;
 
-FV_EXTERN StorageWrite *storageWriteNew(void *driver, const StorageWriteInterface *interface);
+FN_EXTERN StorageWrite *storageWriteNew(void *driver, const StorageWriteInterface *interface);
 
 #endif

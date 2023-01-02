@@ -61,7 +61,7 @@ regExpErrorCheck(int error)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN RegExp *
+FN_EXTERN RegExp *
 regExpNew(const String *expression)
 {
     FUNCTION_TEST_BEGIN();
@@ -92,7 +92,7 @@ regExpNew(const String *expression)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 regExpMatch(RegExp *const this, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
@@ -114,7 +114,7 @@ regExpMatch(RegExp *const this, const String *const string)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 regExpMatchOne(const String *expression, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -137,7 +137,7 @@ regExpMatchOne(const String *expression, const String *string)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 regExpPrefix(const String *expression)
 {
     FUNCTION_TEST_BEGIN();

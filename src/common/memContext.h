@@ -44,16 +44,16 @@ Memory management functions
 All these functions operate in the current memory context, including memResize() and memFree().
 ***********************************************************************************************************************************/
 // Allocate memory in the current memory context
-FV_EXTERN void *memNew(size_t size);
+FN_EXTERN void *memNew(size_t size);
 
 // Allocate requested number of pointers and initialize them to NULL
-FV_EXTERN void *memNewPtrArray(size_t size);
+FN_EXTERN void *memNewPtrArray(size_t size);
 
 // Reallocate to the new size.  Original buffer pointer is undefined on return.
-FV_EXTERN void *memResize(const void *buffer, size_t size);
+FN_EXTERN void *memResize(const void *buffer, size_t size);
 
 // Free memory allocation
-FV_EXTERN void memFree(void *buffer);
+FN_EXTERN void memFree(void *buffer);
 
 /***********************************************************************************************************************************
 Ensure that the prior memory context is restored after the block executes (even on error)
@@ -225,67 +225,67 @@ typedef struct MemContextNewParam
         memContextNew((MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 #endif
 
-FV_EXTERN MemContext *memContextNew(
+FN_EXTERN MemContext *memContextNew(
 #ifdef DEBUG
     const char *name,
 #endif
     MemContextNewParam param);
 
 // Switch to a context making it the current mem context
-FV_EXTERN void memContextSwitch(MemContext *this);
+FN_EXTERN void memContextSwitch(MemContext *this);
 
 // Switch back to the context that was current before the last switch. If the last function called was memContextNewP(), then
 // memContextKeep()/memContextDiscard() must be called before calling memContextSwitchBack(), otherwise an error will occur in
 // debug builds and the behavior is undefined in production builds.
-FV_EXTERN void memContextSwitchBack(void);
+FN_EXTERN void memContextSwitchBack(void);
 
 // Keep a context created by memContextNewP() so that it will not be automatically freed if an error occurs. If the context was
 // switched after the call to memContextNewP(), then it must be switched back before calling memContextKeep() or an error will occur
 // in debug builds and the behavior is undefined in production builds.
-FV_EXTERN void memContextKeep(void);
+FN_EXTERN void memContextKeep(void);
 
 // Discard a context created by memContextNewP(). If the context was switched after the call to memContextNewP(), then it must be
 // switched back before calling memContextDiscard() or an error will occur in debug builds and the behavior is undefined in
 // production builds.
-FV_EXTERN void memContextDiscard(void);
+FN_EXTERN void memContextDiscard(void);
 
 // Move mem context to a new parent. This is generally used to move objects to a new context once they have been successfully
 // created.
-FV_EXTERN void memContextMove(MemContext *this, MemContext *parentNew);
+FN_EXTERN void memContextMove(MemContext *this, MemContext *parentNew);
 
 // Set a function that will be called when this mem context is freed
-FV_EXTERN void memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *);
+FN_EXTERN void memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *);
 
 // Clear the callback function so it won't be called when the mem context is freed.  This is usually done in the object free method
 // after resources have been freed but before memContextFree() is called.  The goal is to prevent the object free method from being
 // called more than once.
-FV_EXTERN void memContextCallbackClear(MemContext *this);
+FN_EXTERN void memContextCallbackClear(MemContext *this);
 
 // Free a memory context
-FV_EXTERN void memContextFree(MemContext *this);
+FN_EXTERN void memContextFree(MemContext *this);
 
 /***********************************************************************************************************************************
 Memory context getters
 ***********************************************************************************************************************************/
 // Pointer to the extra memory allocated with the mem context
-FV_EXTERN void *memContextAllocExtra(MemContext *this);
+FN_EXTERN void *memContextAllocExtra(MemContext *this);
 
 // Get mem context using pointer to the memory allocated with the mem context
-FV_EXTERN MemContext *memContextFromAllocExtra(void *allocExtra);
+FN_EXTERN MemContext *memContextFromAllocExtra(void *allocExtra);
 
 // Current memory context
-FV_EXTERN MemContext *memContextCurrent(void);
+FN_EXTERN MemContext *memContextCurrent(void);
 
 // Prior context, i.e. the context that was current before the last memContextSwitch()
-FV_EXTERN MemContext *memContextPrior(void);
+FN_EXTERN MemContext *memContextPrior(void);
 
 // "top" context.  This context is created at initialization and is always present, i.e. it is never freed.  The top context is a
 // good place to put long-lived mem contexts since they won't be automatically freed until the program exits.
-FV_EXTERN MemContext *memContextTop(void);
+FN_EXTERN MemContext *memContextTop(void);
 
 // Get total size of mem context and all children
 #ifdef DEBUG
-    FV_EXTERN size_t memContextSize(const MemContext *this);
+    FN_EXTERN size_t memContextSize(const MemContext *this);
 #endif // DEBUG
 
 /***********************************************************************************************************************************
@@ -300,6 +300,6 @@ Macros for function logging
 Internal functions
 ***********************************************************************************************************************************/
 // Clean up mem contexts after an error.  Should only be called from error handling routines.
-FV_EXTERN void memContextClean(unsigned int tryDepth, bool fatal);
+FN_EXTERN void memContextClean(unsigned int tryDepth, bool fatal);
 
 #endif

@@ -10,7 +10,6 @@ Remote Storage
 #include "common/type/pack.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
-#include "storage/remote/storage.intern.h"
 #include "storage/remote/write.h"
 
 /***********************************************************************************************************************************
@@ -465,7 +464,7 @@ static const StorageInterface storageInterfaceRemote =
     .linkCreate = storageRemoteLinkCreate,
 };
 
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storageRemoteNew(
     mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *client,
     unsigned int compressLevel)

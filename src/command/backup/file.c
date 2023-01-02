@@ -36,7 +36,7 @@ segmentNumber(const String *pgFile)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN List *
+FN_EXTERN List *
 backupFile(
     const String *const repoFile, const CompressType repoFileCompressType, const int repoFileCompressLevel,
     const CipherType cipherType, const String *const cipherPass, const List *const fileList)

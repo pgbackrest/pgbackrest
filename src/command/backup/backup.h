@@ -8,6 +8,6 @@ Backup Command
 Functions
 ***********************************************************************************************************************************/
 // Make a backup
-FV_EXTERN void cmdBackup(void);
+FN_EXTERN void cmdBackup(void);
 
 #endif

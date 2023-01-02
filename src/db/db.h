@@ -21,7 +21,7 @@ typedef struct Db Db;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *storage, const String *applicationName);
+FN_EXTERN Db *dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *storage, const String *applicationName);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -99,7 +99,7 @@ dbDbTimeout(const Db *const this)
 Functions
 ***********************************************************************************************************************************/
 // Open the db connection
-FV_EXTERN void dbOpen(Db *this);
+FN_EXTERN void dbOpen(Db *this);
 
 // Start backup and return starting lsn and wal segment name
 typedef struct DbBackupStartResult
@@ -109,7 +109,7 @@ typedef struct DbBackupStartResult
     String *walSegmentCheck;                                        // Segment used to check archiving, may be NULL
 } DbBackupStartResult;
 
-FV_EXTERN DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto, bool archiveCheck);
+FN_EXTERN DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto, bool archiveCheck);
 
 // Stop backup and return starting lsn, wal segment name, backup label, and tablespace map
 typedef struct DbBackupStopResult
@@ -120,25 +120,25 @@ typedef struct DbBackupStopResult
     String *tablespaceMap;
 } DbBackupStopResult;
 
-FV_EXTERN DbBackupStopResult dbBackupStop(Db *this);
+FN_EXTERN DbBackupStopResult dbBackupStop(Db *this);
 
 // Get list of databases in the cluster: select oid, datname, datlastsysoid from pg_database
-FV_EXTERN Pack *dbList(Db *this);
+FN_EXTERN Pack *dbList(Db *this);
 
 // Waits for replay on the standby to equal the target LSN
-FV_EXTERN void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
+FN_EXTERN void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
 
 // Check that the cluster is alive and correctly configured during the backup
-FV_EXTERN void dbPing(Db *const this, bool force);
+FN_EXTERN void dbPing(Db *const this, bool force);
 
 // Epoch time on the PostgreSQL host in ms
-FV_EXTERN TimeMSec dbTimeMSec(Db *this);
+FN_EXTERN TimeMSec dbTimeMSec(Db *this);
 
 // Get list of tablespaces in the cluster: select oid, datname, datlastsysoid from pg_database
-FV_EXTERN Pack *dbTablespaceList(Db *this);
+FN_EXTERN Pack *dbTablespaceList(Db *this);
 
 // Switch the WAL segment and return the segment that should have been archived
-FV_EXTERN String *dbWalSwitch(Db *this);
+FN_EXTERN String *dbWalSwitch(Db *this);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Db *
@@ -159,7 +159,7 @@ dbFree(Db *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *dbToLog(const Db *this);
+FN_EXTERN String *dbToLog(const Db *this);
 
 #define FUNCTION_LOG_DB_TYPE                                                                                                       \
     Db *

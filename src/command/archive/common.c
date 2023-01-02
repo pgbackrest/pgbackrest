@@ -55,7 +55,7 @@ archiveAsyncSpoolQueue(ArchiveMode archiveMode)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 archiveAsyncErrorClear(const ArchiveMode archiveMode, const String *const archiveFile)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -76,7 +76,7 @@ archiveAsyncErrorClear(const ArchiveMode archiveMode, const String *const archiv
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throwOnError, bool warnOnOk)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -182,7 +182,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, int code, const String *message)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -211,7 +211,7 @@ archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const String *walSegment, 
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, const String *warning)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -236,7 +236,7 @@ archiveAsyncStatusOkWrite(ArchiveMode archiveMode, const String *walSegment, con
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -293,7 +293,7 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 archiveIdComparator(const void *item1, const void *item2)
 {
     StringList *archiveSort1 = strLstNewSplitZ(*(String **)item1, "-");
@@ -305,7 +305,7 @@ archiveIdComparator(const void *item1, const void *item2)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 walIsPartial(const String *walSegment)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -319,7 +319,7 @@ walIsPartial(const String *walSegment)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 walPath(const String *walFile, const String *pgPath, const String *command)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -381,7 +381,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 walIsSegment(const String *walSegment)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -406,7 +406,7 @@ walIsSegment(const String *walSegment)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 walSegmentFind(const Storage *storage, const String *archiveId, const String *walSegment, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -477,7 +477,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -517,7 +517,7 @@ walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgV
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StringList *
+FN_EXTERN StringList *
 walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

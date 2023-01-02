@@ -56,7 +56,7 @@ infoArchiveNewInternal(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN InfoArchive *
+FN_EXTERN InfoArchive *
 infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -83,7 +83,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN InfoArchive *
+FN_EXTERN InfoArchive *
 infoArchiveNewLoad(IoRead *read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -185,7 +185,7 @@ infoArchiveSave(InfoArchive *this, IoWrite *write)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN InfoArchive *
+FN_EXTERN InfoArchive *
 infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -249,7 +249,7 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
-FV_EXTERN InfoArchive *
+FN_EXTERN InfoArchive *
 infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -301,7 +301,7 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 infoArchiveSaveFile(
     InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
 {

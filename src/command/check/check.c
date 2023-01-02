@@ -164,7 +164,7 @@ checkPrimary(const DbGetResult dbGroup)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdCheck(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

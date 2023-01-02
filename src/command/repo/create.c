@@ -14,7 +14,7 @@ Repository Create Command
 #include "storage/s3/storage.intern.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdRepoCreate(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

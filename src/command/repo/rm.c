@@ -11,7 +11,7 @@ Repository Remove Command
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdStorageRemove(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

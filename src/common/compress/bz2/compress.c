@@ -156,7 +156,7 @@ bz2CompressInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 bz2CompressNew(int level)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

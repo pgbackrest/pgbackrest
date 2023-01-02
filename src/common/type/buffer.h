@@ -16,16 +16,16 @@ typedef struct Buffer Buffer;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN Buffer *bufNew(size_t size);
+FN_EXTERN Buffer *bufNew(size_t size);
 
 // Create a new buffer from a C buffer
-FV_EXTERN Buffer *bufNewC(const void *buffer, size_t size);
+FN_EXTERN Buffer *bufNewC(const void *buffer, size_t size);
 
 // Create a new buffer from a string encoded with the specified type
-FV_EXTERN Buffer *bufNewDecode(EncodingType type, const String *string);
+FN_EXTERN Buffer *bufNewDecode(EncodingType type, const String *string);
 
 // Duplicate a buffer
-FV_EXTERN Buffer *bufDup(const Buffer *buffer);
+FN_EXTERN Buffer *bufDup(const Buffer *buffer);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -114,16 +114,16 @@ bufSizeLimit(const Buffer *const this)
 Functions
 ***********************************************************************************************************************************/
 // Append the contents of another buffer
-FV_EXTERN Buffer *bufCat(Buffer *this, const Buffer *cat);
+FN_EXTERN Buffer *bufCat(Buffer *this, const Buffer *cat);
 
 // Append a C buffer
-FV_EXTERN Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
+FN_EXTERN Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
 
 // Append a subset of another buffer
-FV_EXTERN Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize);
+FN_EXTERN Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize);
 
 // Are two buffers equal?
-FV_EXTERN bool bufEq(const Buffer *this, const Buffer *compare);
+FN_EXTERN bool bufEq(const Buffer *this, const Buffer *compare);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Buffer *
@@ -133,15 +133,15 @@ bufMove(Buffer *const this, MemContext *const parentNew)
 }
 
 // Resize the buffer
-FV_EXTERN Buffer *bufResize(Buffer *this, size_t size);
+FN_EXTERN Buffer *bufResize(Buffer *this, size_t size);
 
 // Manage buffer limits
-FV_EXTERN void bufLimitClear(Buffer *this);
-FV_EXTERN void bufLimitSet(Buffer *this, size_t limit);
+FN_EXTERN void bufLimitClear(Buffer *this);
+FN_EXTERN void bufLimitSet(Buffer *this, size_t limit);
 
-FV_EXTERN void bufUsedInc(Buffer *this, size_t inc);
-FV_EXTERN void bufUsedSet(Buffer *this, size_t used);
-FV_EXTERN void bufUsedZero(Buffer *this);
+FN_EXTERN void bufUsedInc(Buffer *this, size_t inc);
+FN_EXTERN void bufUsedSet(Buffer *this, size_t used);
+FN_EXTERN void bufUsedZero(Buffer *this);
 
 /***********************************************************************************************************************************
 Destructor
@@ -180,7 +180,7 @@ By convention all buffer constant identifiers are appended with _BUF.
 
 // Used to declare buffer constants that will be externed using BUFFER_DECLARE().  Must be used in a .c file.
 #define BUFFER_STRDEF_EXTERN(name, string)                                                                                         \
-    VR_EXTERN const Buffer *const name = BUFSTRDEF(string)
+    VR_EXTERN_DEFINE const Buffer *const name = BUFSTRDEF(string)
 
 // Used to declare buffer constants that will be local to the .c file.  Must be used in a .c file.
 #define BUFFER_STRDEF_STATIC(name, string)                                                                                         \
@@ -188,7 +188,7 @@ By convention all buffer constant identifiers are appended with _BUF.
 
 // Used to extern buffer constants declared with BUFFER_STRDEF_EXTERN(.  Must be used in a .h file.
 #define BUFFER_DECLARE(name)                                                                                                       \
-    FV_EXTERN const Buffer *const name
+    VR_EXTERN_DECLARE const Buffer *const name
 
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
@@ -205,7 +205,7 @@ BUFFER_DECLARE(QUOTED_BUF);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *bufToLog(const Buffer *this);
+FN_EXTERN String *bufToLog(const Buffer *this);
 
 #define FUNCTION_LOG_BUFFER_TYPE                                                                                                   \
     Buffer *

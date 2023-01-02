@@ -13,7 +13,6 @@ Posix Storage File write
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/user.h"
-#include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
 #include "storage/write.intern.h"
 
@@ -220,7 +219,7 @@ storageWritePosixFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageWrite *
+FN_EXTERN StorageWrite *
 storageWritePosixNew(
     StoragePosix *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
     const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,

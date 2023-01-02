@@ -48,7 +48,7 @@ ioSessionAuthenticated(const IoSession *const this)
 }
 
 // Session file descriptor, -1 if none
-FV_EXTERN int ioSessionFd(IoSession *this);
+FN_EXTERN int ioSessionFd(IoSession *this);
 
 // Read interface
 typedef struct IoSessionIoReadParam
@@ -117,7 +117,7 @@ ioSessionFree(IoSession *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *ioSessionToLog(const IoSession *this);
+FN_EXTERN String *ioSessionToLog(const IoSession *this);
 
 #define FUNCTION_LOG_IO_SESSION_TYPE                                                                                               \
     IoSession *

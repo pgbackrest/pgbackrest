@@ -60,7 +60,7 @@ dbFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Db *
+FN_EXTERN Db *
 dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const storage, const String *applicationName)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -212,7 +212,7 @@ dbIsInRecovery(Db *const this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 dbOpen(Db *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -349,7 +349,7 @@ dbBackupStartQuery(unsigned int pgVersion, bool startFast)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-FV_EXTERN DbBackupStartResult
+FN_EXTERN DbBackupStartResult
 dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const bool archiveCheck)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -516,7 +516,7 @@ dbBackupStopQuery(unsigned int pgVersion)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-FV_EXTERN DbBackupStopResult
+FN_EXTERN DbBackupStopResult
 dbBackupStop(Db *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -562,7 +562,7 @@ dbBackupStop(Db *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Pack *
+FN_EXTERN Pack *
 dbList(Db *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -579,7 +579,7 @@ dbList(Db *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targetTimeline, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -724,7 +724,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 dbPing(Db *const this, const bool force)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -766,7 +766,7 @@ dbPing(Db *const this, const bool force)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Pack *
+FN_EXTERN Pack *
 dbTablespaceList(Db *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -779,7 +779,7 @@ dbTablespaceList(Db *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN TimeMSec
+FN_EXTERN TimeMSec
 dbTimeMSec(Db *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -799,7 +799,7 @@ dbTimeMSec(Db *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 dbWalSwitch(Db *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -833,7 +833,7 @@ dbWalSwitch(Db *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 dbToLog(const Db *this)
 {
     return strNewFmt(

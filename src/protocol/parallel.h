@@ -25,25 +25,25 @@ typedef ProtocolParallelJob *ParallelJobCallback(void *data, unsigned int client
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN ProtocolParallel *protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData);
+FN_EXTERN ProtocolParallel *protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Are all jobs done?
-FV_EXTERN bool protocolParallelDone(ProtocolParallel *this);
+FN_EXTERN bool protocolParallelDone(ProtocolParallel *this);
 
 // Completed job result
-FV_EXTERN ProtocolParallelJob *protocolParallelResult(ProtocolParallel *this);
+FN_EXTERN ProtocolParallelJob *protocolParallelResult(ProtocolParallel *this);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Add client
-FV_EXTERN void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
+FN_EXTERN void protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client);
 
 // Process jobs
-FV_EXTERN unsigned int protocolParallelProcess(ProtocolParallel *this);
+FN_EXTERN unsigned int protocolParallelProcess(ProtocolParallel *this);
 
 /***********************************************************************************************************************************
 Destructor
@@ -57,7 +57,7 @@ protocolParallelFree(ProtocolParallel *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *protocolParallelToLog(const ProtocolParallel *this);
+FN_EXTERN String *protocolParallelToLog(const ProtocolParallel *this);
 
 #define FUNCTION_LOG_PROTOCOL_PARALLEL_TYPE                                                                                        \
     ProtocolParallel *

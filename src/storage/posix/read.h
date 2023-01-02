@@ -4,13 +4,13 @@ Posix Storage Read
 #ifndef STORAGE_POSIX_READ_H
 #define STORAGE_POSIX_READ_H
 
-#include "storage/posix/storage.h"
+#include "storage/posix/storage.intern.h"
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN StorageRead *storageReadPosixNew(
+FN_EXTERN StorageRead *storageReadPosixNew(
     StoragePosix *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
 
 #endif

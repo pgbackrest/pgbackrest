@@ -584,7 +584,7 @@ static const StorageInterface storageInterfacePosix =
     .remove = storagePosixRemove,
 };
 
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storagePosixNewInternal(
     StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, bool pathSync)
@@ -636,7 +636,7 @@ storagePosixNewInternal(
     FUNCTION_LOG_RETURN(STORAGE, this);
 }
 
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storagePosixNew(const String *path, StoragePosixNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

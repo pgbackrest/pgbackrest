@@ -37,16 +37,16 @@ typedef struct IoSessionInterface
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN IoSession *ioSessionNew(void *driver, const IoSessionInterface *interface);
+FN_EXTERN IoSession *ioSessionNew(void *driver, const IoSessionInterface *interface);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 // Has the session been authenticated?
-FV_EXTERN void ioSessionAuthenticatedSet(IoSession *this, bool authenticated);
+FN_EXTERN void ioSessionAuthenticatedSet(IoSession *this, bool authenticated);
 
 // Set the peer name
-FV_EXTERN void ioSessionPeerNameSet(IoSession *this, const String *peerName);
+FN_EXTERN void ioSessionPeerNameSet(IoSession *this, const String *peerName);
 
 /***********************************************************************************************************************************
 Macros for function logging

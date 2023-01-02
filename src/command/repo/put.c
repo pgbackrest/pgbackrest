@@ -77,7 +77,7 @@ storagePutProcess(IoRead *source)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdStoragePut(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

@@ -47,10 +47,10 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN InfoPg *infoPgNew(InfoPgType type, const String *cipherPassSub);
+FN_EXTERN InfoPg *infoPgNew(InfoPgType type, const String *cipherPassSub);
 
 // Create new object and load contents from a file
-FV_EXTERN InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData);
+FN_EXTERN InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -62,7 +62,7 @@ typedef struct InfoPgPub
 } InfoPgPub;
 
 // Archive id
-FV_EXTERN String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
+FN_EXTERN String *infoPgArchiveId(const InfoPg *this, unsigned int pgDataIdx);
 
 // Base info
 FN_INLINE_ALWAYS Info *
@@ -79,16 +79,16 @@ infoPgCipherPass(const InfoPg *const this)
 }
 
 // Return current pgId from the history
-FV_EXTERN unsigned int infoPgCurrentDataId(const InfoPg *this);
+FN_EXTERN unsigned int infoPgCurrentDataId(const InfoPg *this);
 
 // PostgreSQL info
-FV_EXTERN InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
+FN_EXTERN InfoPgData infoPgData(const InfoPg *this, unsigned int pgDataIdx);
 
 // Current PostgreSQL data
-FV_EXTERN InfoPgData infoPgDataCurrent(const InfoPg *this);
+FN_EXTERN InfoPgData infoPgDataCurrent(const InfoPg *this);
 
 // Current history index
-FV_EXTERN unsigned int infoPgDataCurrentId(const InfoPg *this);
+FN_EXTERN unsigned int infoPgDataCurrentId(const InfoPg *this);
 
 // Total PostgreSQL data in the history
 FN_INLINE_ALWAYS unsigned int
@@ -101,19 +101,19 @@ infoPgDataTotal(const InfoPg *const this)
 Functions
 ***********************************************************************************************************************************/
 // Add Postgres data to the history list at position 0 to ensure the latest history is always first in the list
-FV_EXTERN void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
+FN_EXTERN void infoPgAdd(InfoPg *this, const InfoPgData *infoPgData);
 
 // Save to IO
-FV_EXTERN void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
+FN_EXTERN void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData);
 
 // Set the InfoPg object data based on values passed
-FV_EXTERN InfoPg *infoPgSet(
+FN_EXTERN InfoPg *infoPgSet(
     InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion);
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *infoPgDataToLog(const InfoPgData *this);
+FN_EXTERN String *infoPgDataToLog(const InfoPgData *this);
 
 #define FUNCTION_LOG_INFO_PG_TYPE                                                                                                  \
     InfoPg *

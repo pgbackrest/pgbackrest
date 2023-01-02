@@ -98,10 +98,10 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
 Functions and macros to render various data types
 ***********************************************************************************************************************************/
 // Convert object to a zero-terminated string for logging
-FV_EXTERN size_t objToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize);
+FN_EXTERN size_t objToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize);
 
 // Convert pointer to a zero-terminated string for logging
-FV_EXTERN size_t ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize);
+FN_EXTERN size_t ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize);
 
 // Convert zero-terminated string for logging
 FN_INLINE_ALWAYS size_t
@@ -111,7 +111,7 @@ strzToLog(const char *const string, char *const buffer, const size_t bufferSize)
 }
 
 // Convert a type name to a zero-terminated string for logging
-FV_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize);
+FN_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize);
 
 #define FUNCTION_LOG_BOOL_TYPE                                                                                                     \
     bool

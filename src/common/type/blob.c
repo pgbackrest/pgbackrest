@@ -19,7 +19,7 @@ struct Blob
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN Blob *
+FN_EXTERN Blob *
 blbNew(void)
 {
     FUNCTION_TEST_VOID();
@@ -41,7 +41,7 @@ blbNew(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const void *
+FN_EXTERN const void *
 blbAdd(Blob *const this, const void *const data, const size_t size)
 {
     FUNCTION_TEST_BEGIN();

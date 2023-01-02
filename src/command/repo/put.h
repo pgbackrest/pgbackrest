@@ -8,6 +8,6 @@ Repository Put Command
 Functions
 ***********************************************************************************************************************************/
 // Put a file into the repository
-FV_EXTERN void cmdStoragePut(void);
+FN_EXTERN void cmdStoragePut(void);
 
 #endif

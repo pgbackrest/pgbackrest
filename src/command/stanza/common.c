@@ -14,7 +14,7 @@ Stanza Commands Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 cipherPassGen(CipherType cipherType)
 {
     FUNCTION_TEST_BEGIN();
@@ -35,7 +35,7 @@ cipherPassGen(CipherType cipherType)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN PgControl
+FN_EXTERN PgControl
 pgValidate(void)
 {
     FUNCTION_TEST_VOID();

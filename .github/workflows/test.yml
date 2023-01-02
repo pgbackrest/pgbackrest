@@ -100,7 +100,7 @@ jobs:
             ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
             ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=none --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
-  # Run meson unity build to check for errors, unused functions, and extern'd functions
+  # Run meson unity build to check for errors, unused functions, and externed functions
   unity:
     runs-on: ubuntu-22.04
 

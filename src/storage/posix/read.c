@@ -11,7 +11,6 @@ Posix Storage Read
 #include "common/log.h"
 #include "common/type/object.h"
 #include "storage/posix/read.h"
-#include "storage/posix/storage.intern.h"
 #include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
@@ -207,7 +206,7 @@ storageReadPosixFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageRead *
+FN_EXTERN StorageRead *
 storageReadPosixNew(
     StoragePosix *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
     const Variant *const limit)

@@ -90,6 +90,7 @@
                         <commit subject="Move storageHelperFree() to storageHelper test harness."/>
                         <commit subject="Use memcpy() instead of strncpy when source size is known."/>
                         <commit subject="Put logging functions unused by release builds into DEBUG blocks."/>
+                        <commit subject="Split VR_EXTERN/FN_EXTERN macros from FN_EXTERN."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

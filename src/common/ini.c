@@ -26,7 +26,7 @@ struct Ini
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN Ini *
+FN_EXTERN Ini *
 iniNew(IoRead *const read, const IniNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -88,7 +88,7 @@ iniNew(IoRead *const read, const IniNewParam param)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const IniValue *
+FN_EXTERN const IniValue *
 iniValueNext(Ini *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -210,7 +210,7 @@ iniValueNext(Ini *const this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 iniValid(Ini *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -257,7 +257,7 @@ iniGetInternal(const Ini *const this, const String *const section, const String 
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const String *
+FN_EXTERN const String *
 iniGet(const Ini *const this, const String *const section, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -270,7 +270,7 @@ iniGet(const Ini *const this, const String *const section, const String *const k
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StringList *
+FN_EXTERN StringList *
 iniGetList(const Ini *const this, const String *const section, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -286,7 +286,7 @@ iniGetList(const Ini *const this, const String *const section, const String *con
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 iniSectionKeyIsList(const Ini *const this, const String *const section, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
@@ -302,7 +302,7 @@ iniSectionKeyIsList(const Ini *const this, const String *const section, const St
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StringList *
+FN_EXTERN StringList *
 iniSectionKeyList(const Ini *const this, const String *const section)
 {
     FUNCTION_TEST_BEGIN();

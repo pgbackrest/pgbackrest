@@ -93,7 +93,7 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
     while (0)
 
 /**********************************************************************************************************************************/
-FV_EXTERN Info *
+FN_EXTERN Info *
 infoNew(const String *cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -122,7 +122,7 @@ infoNew(const String *cipherPass)
 #define INFO_SECTION_CIPHER                                         "cipher"
 #define INFO_KEY_CIPHER_PASS                                        "cipher-pass"
 
-FV_EXTERN Info *
+FN_EXTERN Info *
 infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -261,7 +261,7 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 infoSaveSection(InfoSave *const infoSaveData, const char *const section, const String *const sectionNext)
 {
     FUNCTION_TEST_BEGIN();
@@ -280,7 +280,7 @@ infoSaveSection(InfoSave *const infoSaveData, const char *const section, const S
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 infoSaveValue(InfoSave *const infoSaveData, const char *const section, const char *const key, const String *const jsonValue)
 {
     FUNCTION_TEST_BEGIN();
@@ -333,7 +333,7 @@ infoSaveValue(InfoSave *const infoSaveData, const char *const section, const cha
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -396,7 +396,7 @@ infoSave(Info *this, IoWrite *write, InfoSaveCallback *callbackFunction, void *c
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 infoCipherPassSet(Info *this, const String *cipherPass)
 {
     FUNCTION_TEST_BEGIN();
@@ -416,7 +416,7 @@ infoCipherPassSet(Info *this, const String *cipherPass)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

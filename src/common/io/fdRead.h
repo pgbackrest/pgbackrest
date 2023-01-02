@@ -12,7 +12,7 @@ Read from a file descriptor using the IoRead interface.
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN IoRead *ioFdReadNew(const String *name, int fd, TimeMSec timeout);
+FN_EXTERN IoRead *ioFdReadNew(const String *name, int fd, TimeMSec timeout);
 
 // Construct and open read fd
 FN_INLINE_ALWAYS IoRead *
