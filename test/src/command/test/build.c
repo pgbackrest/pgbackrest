@@ -504,6 +504,7 @@ testBldUnit(TestBuild *const this)
             "        lib_yaml,\n"
             "        lib_z,\n"
             "        lib_zstd,\n"
+            "        lib_ssh2,\n"
             "    ],\n"
             ")\n",
             strZ(pathRepoRel), strZ(pathRepoRel));
@@ -612,6 +613,7 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_GROUP]}"), groupName());
         strReplace(testC, STRDEF("{[C_TEST_GROUP_ID]}"), strNewFmt("%u", groupId()));
         strReplace(testC, STRDEF("{[C_TEST_USER]}"), userName());
+        strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", strSize(userName())));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), strNewFmt("%u", userId()));
 
         // Test id
