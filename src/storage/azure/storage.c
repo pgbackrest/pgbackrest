@@ -180,7 +180,7 @@ storageAzureAuth(
 /***********************************************************************************************************************************
 Process Azure request
 ***********************************************************************************************************************************/
-FV_EXTERN HttpRequest *
+FN_EXTERN HttpRequest *
 storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureRequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -244,7 +244,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
 }
 
-FV_EXTERN HttpResponse *
+FN_EXTERN HttpResponse *
 storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -274,7 +274,7 @@ storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
-FV_EXTERN HttpResponse *
+FN_EXTERN HttpResponse *
 storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -698,7 +698,7 @@ static const StorageInterface storageInterfaceAzure =
     .remove = storageAzureRemove,
 };
 
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storageAzureNew(
     const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const container,
     const String *const account, const StorageAzureKeyType keyType, const String *const key, const size_t blockSize,

@@ -15,9 +15,9 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Create the stop filename
-FV_EXTERN String *lockStopFileName(const String *stanza);
+FN_EXTERN String *lockStopFileName(const String *stanza);
 
 // Test for the existence of a stop file
-FV_EXTERN void lockStopTest(void);
+FN_EXTERN void lockStopTest(void);
 
 #endif

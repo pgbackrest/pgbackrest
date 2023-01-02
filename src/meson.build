@@ -1,19 +1,20 @@
 ####################################################################################################################################
-# Change extern'd functions/variables to static when unity is enabled
+# Make externed functions/variables static when unity is enabled
 ####################################################################################################################################
 arg_unity = []
 
 if get_option('unity') == 'on'
-    configuration.set('FV_EXTERN', 'static', description: 'Change extern\'d functions/variables to static')
-    configuration.set('VR_EXTERN', 'static', description: 'Change extern\'d variable definitions to static')
+    configuration.set('FN_EXTERN', 'static', description: 'Function is static for unity build')
+    configuration.set('VR_EXTERN_DECLARE', 'static', description: 'Variable declaration is static for unity build')
+    configuration.set('VR_EXTERN_DEFINE', 'static', description: 'Variable definition is static for unity build')
 
     # Add args to builds to prevent non-pgbackrest binaries failing due to unused functions
     arg_unity += '-Wno-unused-function'
 else
-    configuration.set('FV_EXTERN', 'extern', description: 'Leave extern\'d functions/variables alone')
-    configuration.set('VR_EXTERN', '', description: 'Leave extern\'d variable definitions alone')
+    configuration.set('FN_EXTERN', 'extern', description: 'Extern function required by other compilation units')
+    configuration.set('VR_EXTERN_DECLARE', 'extern', description: 'Extern variable declaration required by other compilation units')
+    configuration.set('VR_EXTERN_DEFINE', '', description: 'Extern variable definition required by other compilation units')
 endif
-
 
 ####################################################################################################################################
 # Write configuration

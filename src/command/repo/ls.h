@@ -8,6 +8,6 @@ Repository List Command
 Functions
 ***********************************************************************************************************************************/
 // List files in the repository
-FV_EXTERN void cmdStorageList(void);
+FN_EXTERN void cmdStorageList(void);
 
 #endif

@@ -59,25 +59,25 @@ static struct StackTraceTestLocal
     bool testFlag;                                        // Don't log in parameter logging functions to avoid recursion
 } stackTraceTestLocal = {.testFlag = true};
 
-FV_EXTERN void
+FN_EXTERN void
 stackTraceTestStart(void)
 {
     stackTraceTestLocal.testFlag = true;
 }
 
-FV_EXTERN void
+FN_EXTERN void
 stackTraceTestStop(void)
 {
     stackTraceTestLocal.testFlag = false;
 }
 
-FV_EXTERN bool
+FN_EXTERN bool
 stackTraceTest(void)
 {
     return stackTraceTestLocal.testFlag;
 }
 
-FV_EXTERN void
+FN_EXTERN void
 stackTraceTestFileLineSet(unsigned int fileLine)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
@@ -88,7 +88,7 @@ stackTraceTestFileLineSet(unsigned int fileLine)
 #endif
 
 /**********************************************************************************************************************************/
-FV_EXTERN LogLevel
+FN_EXTERN LogLevel
 stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel)
 {
     ASSERT(stackTraceLocal.stackSize < STACK_TRACE_MAX - 1);
@@ -152,14 +152,14 @@ stackTraceParamIdx(int stackIdx)
     return data->functionLogLevel == logLevelTrace ? "trace" LOG_LEVEL_REQUIRED : "debug" LOG_LEVEL_REQUIRED;
 }
 
-FV_EXTERN const char *
+FN_EXTERN const char *
 stackTraceParam()
 {
     return stackTraceParamIdx(stackTraceLocal.stackSize - 1);
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN char *
+FN_EXTERN char *
 stackTraceParamBuffer(const char *paramName)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
@@ -199,7 +199,7 @@ stackTraceParamBuffer(const char *paramName)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 stackTraceParamAdd(size_t bufferSize)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
@@ -211,7 +211,7 @@ stackTraceParamAdd(size_t bufferSize)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 stackTraceParamLog(void)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
@@ -222,7 +222,7 @@ stackTraceParamLog(void)
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
-FV_EXTERN void
+FN_EXTERN void
 stackTracePop(const char *fileName, const char *functionName, bool test)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
@@ -240,7 +240,7 @@ stackTracePop(const char *fileName, const char *functionName, bool test)
 
 #else
 
-FV_EXTERN void
+FN_EXTERN void
 stackTracePop(void)
 {
     stackTraceLocal.stackSize--;
@@ -358,7 +358,7 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
     static size_t
         stackTraceToZDefault(
 #else
-    FV_EXTERN size_t
+    FN_EXTERN size_t
         stackTraceToZ(
 #endif // HAVE_LIBBACKTRACE
 
@@ -406,7 +406,7 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 
 #ifdef HAVE_LIBBACKTRACE
 
-FV_EXTERN size_t
+FN_EXTERN size_t
 stackTraceToZ(
     char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
     const unsigned int fileLine)
@@ -437,7 +437,7 @@ stackTraceToZ(
 #endif // HAVE_LIBBACKTRACE
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 stackTraceClean(const unsigned int tryDepth, const bool fatal)
 {
     (void)fatal;                                                    // Cleanup is the same for fatal errors

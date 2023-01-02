@@ -18,12 +18,12 @@ iterations of a loop would likely be a bad idea.
 Functions
 ***********************************************************************************************************************************/
 // Initialize the stats collector
-FV_EXTERN void statInit(void);
+FN_EXTERN void statInit(void);
 
 // Increment stat by one
-FV_EXTERN void statInc(const String *key);
+FN_EXTERN void statInc(const String *key);
 
 // Output stats to JSON
-FV_EXTERN String *statToJson(void);
+FN_EXTERN String *statToJson(void);
 
 #endif

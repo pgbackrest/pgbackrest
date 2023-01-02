@@ -10,7 +10,7 @@ BZ2 Common
 #include "common/memContext.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 bz2Error(int error)
 {
     FUNCTION_TEST_BEGIN();

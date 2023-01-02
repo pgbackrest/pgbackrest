@@ -369,7 +369,7 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 /***********************************************************************************************************************************
 Process Gcs request
 ***********************************************************************************************************************************/
-FV_EXTERN HttpRequest *
+FN_EXTERN HttpRequest *
 storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -433,7 +433,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
 }
 
-FV_EXTERN HttpResponse *
+FN_EXTERN HttpResponse *
 storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -466,7 +466,7 @@ storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
-FV_EXTERN HttpResponse *
+FN_EXTERN HttpResponse *
 storageGcsRequest(StorageGcs *const this, const String *const verb, const StorageGcsRequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -935,7 +935,7 @@ static const StorageInterface storageInterfaceGcs =
     .remove = storageGcsRemove,
 };
 
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storageGcsNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     StorageGcsKeyType keyType, const String *key, size_t chunkSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,

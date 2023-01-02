@@ -12,7 +12,7 @@ Fork Handler
 #include "common/log.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 forkSafe(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -25,7 +25,7 @@ forkSafe(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 forkDetach(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);

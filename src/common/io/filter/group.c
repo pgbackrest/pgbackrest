@@ -56,7 +56,7 @@ struct IoFilterGroup
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilterGroup *
+FN_EXTERN IoFilterGroup *
 ioFilterGroupNew(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -84,7 +84,7 @@ ioFilterGroupNew(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilterGroup *
+FN_EXTERN IoFilterGroup *
 ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -107,7 +107,7 @@ ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilterGroup *
+FN_EXTERN IoFilterGroup *
 ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -146,7 +146,7 @@ ioFilterGroupGet(const IoFilterGroup *this, unsigned int filterIdx)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilterGroup *
+FN_EXTERN IoFilterGroup *
 ioFilterGroupClear(IoFilterGroup *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -167,7 +167,7 @@ ioFilterGroupClear(IoFilterGroup *this)
 /***********************************************************************************************************************************
 Setup the filter group and allocate any required buffers
 ***********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioFilterGroupOpen(IoFilterGroup *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -228,7 +228,7 @@ ioFilterGroupOpen(IoFilterGroup *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -354,7 +354,7 @@ ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioFilterGroupClose(IoFilterGroup *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -385,7 +385,7 @@ ioFilterGroupClose(IoFilterGroup *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Pack *
+FN_EXTERN Pack *
 ioFilterGroupParamAll(const IoFilterGroup *this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -420,7 +420,7 @@ ioFilterGroupParamAll(const IoFilterGroup *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const Pack *
+FN_EXTERN const Pack *
 ioFilterGroupResultPack(const IoFilterGroup *const this, const StringId filterType, const IoFilterGroupResultParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -460,7 +460,7 @@ ioFilterGroupResultPack(const IoFilterGroup *const this, const StringId filterTy
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN PackRead *
+FN_EXTERN PackRead *
 ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, const IoFilterGroupResultParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -473,7 +473,7 @@ ioFilterGroupResult(const IoFilterGroup *const this, const StringId filterType, 
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Pack *
+FN_EXTERN Pack *
 ioFilterGroupResultAll(const IoFilterGroup *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -508,7 +508,7 @@ ioFilterGroupResultAll(const IoFilterGroup *const this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioFilterGroupResultAllSet(IoFilterGroup *const this, const Pack *const filterResultPack)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -544,7 +544,7 @@ ioFilterGroupResultAllSet(IoFilterGroup *const this, const Pack *const filterRes
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 ioFilterGroupToLog(const IoFilterGroup *this)
 {
     return strNewFmt(

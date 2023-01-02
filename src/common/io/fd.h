@@ -10,7 +10,7 @@ File Descriptor Functions
 Functions
 ***********************************************************************************************************************************/
 // Wait until the file descriptor is ready to read/write or timeout
-FV_EXTERN bool fdReady(int fd, bool read, bool write, TimeMSec timeout);
+FN_EXTERN bool fdReady(int fd, bool read, bool write, TimeMSec timeout);
 
 // Wait until the file descriptor is ready to read or timeout
 FN_INLINE_ALWAYS bool

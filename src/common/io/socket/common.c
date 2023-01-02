@@ -30,7 +30,7 @@ static struct SocketLocal
 } socketLocal;
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -56,7 +56,7 @@ sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle,
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN struct addrinfo *
+FN_EXTERN struct addrinfo *
 sckHostLookup(const String *const host, unsigned int port)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -91,7 +91,7 @@ sckHostLookup(const String *const host, unsigned int port)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 sckOptionSet(int fd)
 {
     FUNCTION_TEST_BEGIN();
@@ -179,7 +179,7 @@ sckConnectInProgress(int errNo)
     return errNo == EINPROGRESS || errNo == EINTR;
 }
 
-FV_EXTERN void
+FN_EXTERN void
 sckConnect(int fd, const String *host, unsigned int port, const struct addrinfo *hostAddress, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

@@ -35,19 +35,19 @@ ioWriteFilterGroup(IoWrite *const this)
 }
 
 // File descriptor for the write object. Not all write objects have a file descriptor and -1 will be returned in that case.
-FV_EXTERN int ioWriteFd(const IoWrite *this);
+FN_EXTERN int ioWriteFd(const IoWrite *this);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Open the IO
-FV_EXTERN void ioWriteOpen(IoWrite *this);
+FN_EXTERN void ioWriteOpen(IoWrite *this);
 
 // Write data to IO and process filters
-FV_EXTERN void ioWrite(IoWrite *this, const Buffer *buffer);
+FN_EXTERN void ioWrite(IoWrite *this, const Buffer *buffer);
 
 // Write linefeed-terminated buffer
-FV_EXTERN void ioWriteLine(IoWrite *this, const Buffer *buffer);
+FN_EXTERN void ioWriteLine(IoWrite *this, const Buffer *buffer);
 
 // Can bytes be written immediately? There are no guarantees on how much data can be written but it must be at least one byte.
 typedef struct IoWriteReadyParam
@@ -59,22 +59,22 @@ typedef struct IoWriteReadyParam
 #define ioWriteReadyP(this, ...)                                                                                                   \
     ioWriteReady(this, (IoWriteReadyParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN bool ioWriteReady(IoWrite *this, IoWriteReadyParam param);
+FN_EXTERN bool ioWriteReady(IoWrite *this, IoWriteReadyParam param);
 
 // Write string
-FV_EXTERN void ioWriteStr(IoWrite *this, const String *string);
+FN_EXTERN void ioWriteStr(IoWrite *this, const String *string);
 
 // Write linefeed-terminated string
-FV_EXTERN void ioWriteStrLine(IoWrite *this, const String *string);
+FN_EXTERN void ioWriteStrLine(IoWrite *this, const String *string);
 
 // Write varint-128 encoding
-FV_EXTERN void ioWriteVarIntU64(IoWrite *this, uint64_t value);
+FN_EXTERN void ioWriteVarIntU64(IoWrite *this, uint64_t value);
 
 // Flush any data in the output buffer. This does not end writing and will not work if filters are present.
-FV_EXTERN void ioWriteFlush(IoWrite *this);
+FN_EXTERN void ioWriteFlush(IoWrite *this);
 
 // Close the IO and write any additional data that has not been written yet
-FV_EXTERN void ioWriteClose(IoWrite *this);
+FN_EXTERN void ioWriteClose(IoWrite *this);
 
 /***********************************************************************************************************************************
 Destructor
