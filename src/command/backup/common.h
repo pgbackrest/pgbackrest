@@ -32,10 +32,10 @@ typedef struct BackupFileRepoPathParam
 #define backupFileRepoPathP(backupLabel, ...)                                                                                          \
     backupFileRepoPath(backupLabel, (BackupFileRepoPathParam){__VA_ARGS__})
 
-FV_EXTERN String *backupFileRepoPath(const String *backupLabel, BackupFileRepoPathParam param);
+FN_EXTERN String *backupFileRepoPath(const String *backupLabel, BackupFileRepoPathParam param);
 
 // Format a backup label from a type and timestamp with an optional prior label
-FV_EXTERN String *backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp);
+FN_EXTERN String *backupLabelFormat(BackupType type, const String *backupLabelPrior, time_t timestamp);
 
 // Returns an anchored regex string for filtering backups based on the type (at least one type is required to be true)
 typedef struct BackupRegExpParam
@@ -49,9 +49,9 @@ typedef struct BackupRegExpParam
 #define backupRegExpP(...)                                                                                                         \
     backupRegExp((BackupRegExpParam){__VA_ARGS__})
 
-FV_EXTERN String *backupRegExp(BackupRegExpParam param);
+FN_EXTERN String *backupRegExp(BackupRegExpParam param);
 
 // Create a symlink to the specified backup (if symlinks are supported)
-FV_EXTERN void backupLinkLatest(const String *backupLabel, unsigned int repoIdx);
+FN_EXTERN void backupLinkLatest(const String *backupLabel, unsigned int repoIdx);
 
 #endif

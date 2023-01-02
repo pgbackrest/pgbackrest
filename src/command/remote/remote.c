@@ -45,7 +45,7 @@ static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdRemote(ProtocolServer *const server)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

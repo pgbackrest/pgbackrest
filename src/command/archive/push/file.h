@@ -30,7 +30,7 @@ typedef struct ArchivePushFileResult
 } ArchivePushFileResult;
 
 // Copy a file from the source to the archive
-FV_EXTERN ArchivePushFileResult archivePushFile(
+FN_EXTERN ArchivePushFileResult archivePushFile(
     const String *walSource, bool headerCheck, bool modeCheck, unsigned int pgVersion, uint64_t pgSystemId,
     const String *archiveFile, CompressType compressType, int compressLevel, const List *repoList,
     const StringList *priorErrorList);

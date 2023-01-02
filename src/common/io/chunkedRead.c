@@ -111,7 +111,7 @@ ioChunkedReadEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoRead *
+FN_EXTERN IoRead *
 ioChunkedReadNew(IoRead *const read)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

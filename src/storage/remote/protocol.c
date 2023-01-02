@@ -30,7 +30,7 @@ static struct
 /***********************************************************************************************************************************
 Set filter handlers
 ***********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *filterHandler, unsigned int filterHandlerSize)
 {
     FUNCTION_TEST_BEGIN();
@@ -124,7 +124,7 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -275,7 +275,7 @@ storageRemoteInfoProtocolPut(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FV_EXTERN void
+FN_EXTERN void
 storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -312,7 +312,7 @@ storageRemoteInfoProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemoteLinkCreateProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -339,7 +339,7 @@ storageRemoteLinkCreateProtocol(PackRead *const param, ProtocolServer *const ser
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -386,7 +386,7 @@ storageRemoteListProtocol(PackRead *const param, ProtocolServer *const server)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -456,7 +456,7 @@ storageRemoteOpenReadProtocol(PackRead *const param, ProtocolServer *const serve
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -543,7 +543,7 @@ storageRemoteOpenWriteProtocol(PackRead *const param, ProtocolServer *const serv
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -571,7 +571,7 @@ storageRemotePathCreateProtocol(PackRead *const param, ProtocolServer *const ser
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -599,7 +599,7 @@ storageRemotePathRemoveProtocol(PackRead *const param, ProtocolServer *const ser
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -624,7 +624,7 @@ storageRemotePathSyncProtocol(PackRead *const param, ProtocolServer *const serve
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 storageRemoteRemoveProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

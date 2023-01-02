@@ -37,7 +37,7 @@ segmentNumber(const String *pgFile)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN List *
+FN_EXTERN List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const unsigned int blockIncrReference,
     const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,

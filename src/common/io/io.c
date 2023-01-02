@@ -23,14 +23,14 @@ static size_t bufferSize = (8 * IO_BUFFER_BLOCK_SIZE);
 static TimeMSec timeoutMs = 60000;
 
 /**********************************************************************************************************************************/
-FV_EXTERN size_t
+FN_EXTERN size_t
 ioBufferSize(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(SIZE, bufferSize);
 }
 
-FV_EXTERN void
+FN_EXTERN void
 ioBufferSizeSet(size_t bufferSizeParam)
 {
     FUNCTION_TEST_BEGIN();
@@ -43,14 +43,14 @@ ioBufferSizeSet(size_t bufferSizeParam)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN TimeMSec
+FN_EXTERN TimeMSec
 ioTimeoutMs(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(TIME_MSEC, timeoutMs);
 }
 
-FV_EXTERN void
+FN_EXTERN void
 ioTimeoutMsSet(TimeMSec timeoutMsParam)
 {
     FUNCTION_TEST_BEGIN();
@@ -63,7 +63,7 @@ ioTimeoutMsSet(TimeMSec timeoutMsParam)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN Buffer *
+FN_EXTERN Buffer *
 ioReadBuf(IoRead *read)
 {
     FUNCTION_TEST_BEGIN();
@@ -96,7 +96,7 @@ ioReadBuf(IoRead *read)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioCopy(IoRead *const source, IoWrite *const destination, const IoCopyParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -141,7 +141,7 @@ ioCopy(IoRead *const source, IoWrite *const destination, const IoCopyParam param
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 ioReadDrain(IoRead *read)
 {
     FUNCTION_TEST_BEGIN();

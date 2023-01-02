@@ -304,7 +304,7 @@ archivePushCheck(bool pgPathSet)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdArchivePush(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
@@ -513,7 +513,7 @@ archivePushAsyncCallback(void *data, unsigned int clientIdx)
     FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
 
-FV_EXTERN void
+FN_EXTERN void
 cmdArchivePushAsync(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

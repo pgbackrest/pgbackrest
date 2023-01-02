@@ -162,7 +162,7 @@ static const IoSessionInterface sckSessionInterface =
     .toLog = sckSessionToLog,
 };
 
-FV_EXTERN IoSession *
+FN_EXTERN IoSession *
 sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)

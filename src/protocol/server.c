@@ -26,7 +26,7 @@ struct ProtocolServer
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN ProtocolServer *
+FN_EXTERN ProtocolServer *
 protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -73,7 +73,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -106,7 +106,7 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN ProtocolServerCommandGetResult
+FN_EXTERN ProtocolServerCommandGetResult
 protocolServerCommandGet(ProtocolServer *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -137,7 +137,7 @@ protocolServerCommandGet(ProtocolServer *const this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolServerProcess(
     ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
     const unsigned int handlerListSize)
@@ -301,7 +301,7 @@ protocolServerProcess(
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN PackRead *
+FN_EXTERN PackRead *
 protocolServerDataGet(ProtocolServer *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -331,7 +331,7 @@ protocolServerDataGet(ProtocolServer *const this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -361,7 +361,7 @@ protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolServerDataEndPut(ProtocolServer *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -383,7 +383,7 @@ protocolServerDataEndPut(ProtocolServer *const this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 protocolServerToLog(const ProtocolServer *this)
 {
     return strNewFmt("{name: %s}", strZ(this->name));

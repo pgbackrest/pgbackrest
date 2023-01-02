@@ -349,7 +349,7 @@ static const IoSessionInterface tlsSessionInterface =
     .toLog = tlsSessionToLog,
 };
 
-FV_EXTERN IoSession *
+FN_EXTERN IoSession *
 tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)

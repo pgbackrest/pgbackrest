@@ -126,7 +126,7 @@ deltaMapResult(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 deltaMapNew(const size_t blockSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

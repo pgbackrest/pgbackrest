@@ -1711,7 +1711,7 @@ verifyProcess(const bool verboseText)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdVerify(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

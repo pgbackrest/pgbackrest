@@ -17,7 +17,6 @@ S3 Storage
 #include "common/type/json.h"
 #include "common/type/xml.h"
 #include "storage/s3/read.h"
-#include "storage/s3/storage.intern.h"
 #include "storage/s3/write.h"
 
 /***********************************************************************************************************************************
@@ -443,7 +442,7 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 /***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
-FV_EXTERN HttpRequest *
+FN_EXTERN HttpRequest *
 storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -548,7 +547,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
     FUNCTION_LOG_RETURN(HTTP_REQUEST, result);
 }
 
-FV_EXTERN HttpResponse *
+FN_EXTERN HttpResponse *
 storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -578,7 +577,7 @@ storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }
 
-FV_EXTERN HttpResponse *
+FN_EXTERN HttpResponse *
 storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1088,7 +1087,7 @@ static const StorageInterface storageInterfaceS3 =
     .remove = storageS3Remove,
 };
 
-FV_EXTERN Storage *
+FN_EXTERN Storage *
 storageS3New(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,

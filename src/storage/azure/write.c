@@ -259,7 +259,7 @@ storageWriteAzureClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageWrite *
+FN_EXTERN StorageWrite *
 storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId, size_t blockSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

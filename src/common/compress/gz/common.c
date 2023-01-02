@@ -10,7 +10,7 @@ Gz Common
 #include "common/memContext.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 gzError(int error)
 {
     if (error != Z_OK && error != Z_STREAM_END)

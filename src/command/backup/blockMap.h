@@ -37,7 +37,7 @@ blockMapNew(void)
 }
 
 // New block map from IO
-FV_EXTERN BlockMap *blockMapNewRead(IoRead *map);
+FN_EXTERN BlockMap *blockMapNewRead(IoRead *map);
 
 /***********************************************************************************************************************************
 Functions
@@ -53,7 +53,7 @@ blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
 }
 
 // Write map to IO
-FV_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output);
+FN_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output);
 
 /***********************************************************************************************************************************
 Getters/Setters

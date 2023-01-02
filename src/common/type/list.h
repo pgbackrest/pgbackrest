@@ -44,10 +44,10 @@ The return value should be -1 when item1 < item2, 0 when item1 == item2, and 1 w
 typedef int ListComparator(const void *item1, const void *item2);
 
 // General purpose list comparator for Strings or structs with a String as the first member
-FV_EXTERN int lstComparatorStr(const void *item1, const void *item2);
+FN_EXTERN int lstComparatorStr(const void *item1, const void *item2);
 
 // General purpose list comparator for zero-terminated strings or structs with a zero-terminated string as the first member
-FV_EXTERN int lstComparatorZ(const void *item1, const void *item2);
+FN_EXTERN int lstComparatorZ(const void *item1, const void *item2);
 
 /***********************************************************************************************************************************
 Constructors
@@ -62,7 +62,7 @@ typedef struct ListParam
 #define lstNewP(itemSize, ...)                                                                                                     \
     lstNew(itemSize, (ListParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN List *lstNew(size_t itemSize, ListParam param);
+FN_EXTERN List *lstNew(size_t itemSize, ListParam param);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -73,7 +73,7 @@ typedef struct ListPub
 } ListPub;
 
 // Set a new comparator
-FV_EXTERN List *lstComparatorSet(List *this, ListComparator *comparator);
+FN_EXTERN List *lstComparatorSet(List *this, ListComparator *comparator);
 
 // Memory context for this list
 FN_INLINE_ALWAYS MemContext *
@@ -100,16 +100,16 @@ lstEmpty(const List *const this)
 Functions
 ***********************************************************************************************************************************/
 // Clear items from a list
-FV_EXTERN List *lstClear(List *this);
+FN_EXTERN List *lstClear(List *this);
 
 // Get an item from the list
-FV_EXTERN void *lstGet(const List *this, unsigned int listIdx);
-FV_EXTERN void *lstGetLast(const List *this);
+FN_EXTERN void *lstGet(const List *this, unsigned int listIdx);
+FN_EXTERN void *lstGetLast(const List *this);
 
 // Find an item in the list
-FV_EXTERN void *lstFind(const List *this, const void *item);
-FV_EXTERN void *lstFindDefault(const List *this, const void *item, void *itemDefault);
-FV_EXTERN unsigned int lstFindIdx(const List *this, const void *item);
+FN_EXTERN void *lstFind(const List *this, const void *item);
+FN_EXTERN void *lstFindDefault(const List *this, const void *item, void *itemDefault);
+FN_EXTERN unsigned int lstFindIdx(const List *this, const void *item);
 
 // Does an item exist in the list?
 FN_INLINE_ALWAYS bool
@@ -119,10 +119,10 @@ lstExists(const List *const this, const void *const item)
 }
 
 // Get the index of a list item
-FV_EXTERN unsigned int lstIdx(const List *this, const void *item);
+FN_EXTERN unsigned int lstIdx(const List *this, const void *item);
 
 // Insert an item into the list
-FV_EXTERN void *lstInsert(List *this, unsigned int listIdx, const void *item);
+FN_EXTERN void *lstInsert(List *this, unsigned int listIdx, const void *item);
 
 // Add an item to the end of the list
 FN_INLINE_ALWAYS void *
@@ -139,12 +139,12 @@ lstMove(List *const this, MemContext *const parentNew)
 }
 
 // Remove an item from the list
-FV_EXTERN bool lstRemove(List *this, const void *item);
-FV_EXTERN List *lstRemoveIdx(List *this, unsigned int listIdx);
-FV_EXTERN List *lstRemoveLast(List *this);
+FN_EXTERN bool lstRemove(List *this, const void *item);
+FN_EXTERN List *lstRemoveIdx(List *this, unsigned int listIdx);
+FN_EXTERN List *lstRemoveLast(List *this);
 
 // List sort
-FV_EXTERN List *lstSort(List *this, SortOrder sortOrder);
+FN_EXTERN List *lstSort(List *this, SortOrder sortOrder);
 
 /***********************************************************************************************************************************
 Destructor
@@ -158,7 +158,7 @@ lstFree(List *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *lstToLog(const List *this);
+FN_EXTERN String *lstToLog(const List *this);
 
 #define FUNCTION_LOG_LIST_TYPE                                                                                                     \
     List *

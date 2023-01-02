@@ -141,7 +141,7 @@ static const IoServerInterface sckServerInterface =
     .toLog = sckServerToLog,
 };
 
-FV_EXTERN IoServer *
+FN_EXTERN IoServer *
 sckServerNew(const String *const address, const unsigned int port, const TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)

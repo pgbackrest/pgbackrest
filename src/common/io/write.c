@@ -28,7 +28,7 @@ struct IoWrite
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoWrite *
+FN_EXTERN IoWrite *
 ioWriteNew(void *driver, IoWriteInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -63,7 +63,7 @@ ioWriteNew(void *driver, IoWriteInterface interface)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioWriteOpen(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -92,7 +92,7 @@ ioWriteOpen(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioWrite(IoWrite *this, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -124,7 +124,7 @@ ioWrite(IoWrite *this, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioWriteLine(IoWrite *this, const Buffer *buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -142,7 +142,7 @@ ioWriteLine(IoWrite *this, const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 ioWriteReady(IoWrite *this, IoWriteReadyParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -161,7 +161,7 @@ ioWriteReady(IoWrite *this, IoWriteReadyParam param)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioWriteStr(IoWrite *this, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -178,7 +178,7 @@ ioWriteStr(IoWrite *this, const String *string)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioWriteStrLine(IoWrite *this, const String *string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -196,7 +196,7 @@ ioWriteStrLine(IoWrite *this, const String *string)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -216,7 +216,7 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioWriteFlush(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -237,7 +237,7 @@ ioWriteFlush(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 ioWriteClose(IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -276,7 +276,7 @@ ioWriteClose(IoWrite *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 ioWriteFd(const IoWrite *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

@@ -24,7 +24,7 @@ typedef struct IoFilterGroup IoFilterGroup;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN IoFilterGroup *ioFilterGroupNew(void);
+FN_EXTERN IoFilterGroup *ioFilterGroupNew(void);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -59,7 +59,7 @@ ioFilterGroupInputSame(const IoFilterGroup *const this)
 }
 
 // Get all filters and their parameters so they can be passed to a remote
-FV_EXTERN Pack *ioFilterGroupParamAll(const IoFilterGroup *this);
+FN_EXTERN Pack *ioFilterGroupParamAll(const IoFilterGroup *this);
 
 // Get filter results. If the same filter was used more than once then idx can be used to specify which one to get.
 typedef struct IoFilterGroupResultParam
@@ -71,16 +71,16 @@ typedef struct IoFilterGroupResultParam
 #define ioFilterGroupResultP(this, filterType, ...)                                                                                \
     ioFilterGroupResult(this, filterType, (IoFilterGroupResultParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN PackRead *ioFilterGroupResult(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
+FN_EXTERN PackRead *ioFilterGroupResult(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
 
 #define ioFilterGroupResultPackP(this, filterType, ...)                                                                            \
     ioFilterGroupResultPack(this, filterType, (IoFilterGroupResultParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN const Pack *ioFilterGroupResultPack(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
+FN_EXTERN const Pack *ioFilterGroupResultPack(const IoFilterGroup *this, StringId filterType, IoFilterGroupResultParam param);
 
 // Get/set all filter results
-FV_EXTERN Pack *ioFilterGroupResultAll(const IoFilterGroup *this);
-FV_EXTERN void ioFilterGroupResultAllSet(IoFilterGroup *this, const Pack *filterResult);
+FN_EXTERN Pack *ioFilterGroupResultAll(const IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupResultAllSet(IoFilterGroup *this, const Pack *filterResult);
 
 // Return total number of filters
 FN_INLINE_ALWAYS unsigned int
@@ -93,22 +93,22 @@ ioFilterGroupSize(const IoFilterGroup *const this)
 Functions
 ***********************************************************************************************************************************/
 // Add a filter
-FV_EXTERN IoFilterGroup *ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
+FN_EXTERN IoFilterGroup *ioFilterGroupAdd(IoFilterGroup *this, IoFilter *filter);
 
 // Insert a filter before an index
-FV_EXTERN IoFilterGroup *ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter);
+FN_EXTERN IoFilterGroup *ioFilterGroupInsert(IoFilterGroup *this, unsigned int listIdx, IoFilter *filter);
 
 // Clear filters
-FV_EXTERN IoFilterGroup *ioFilterGroupClear(IoFilterGroup *this);
+FN_EXTERN IoFilterGroup *ioFilterGroupClear(IoFilterGroup *this);
 
 // Open filter group
-FV_EXTERN void ioFilterGroupOpen(IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupOpen(IoFilterGroup *this);
 
 // Process filters
-FV_EXTERN void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
+FN_EXTERN void ioFilterGroupProcess(IoFilterGroup *this, const Buffer *input, Buffer *output);
 
 // Close filter group and gather results
-FV_EXTERN void ioFilterGroupClose(IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupClose(IoFilterGroup *this);
 
 /***********************************************************************************************************************************
 Destructor
@@ -122,7 +122,7 @@ ioFilterGroupFree(IoFilterGroup *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *ioFilterGroupToLog(const IoFilterGroup *this);
+FN_EXTERN String *ioFilterGroupToLog(const IoFilterGroup *this);
 
 #define FUNCTION_LOG_IO_FILTER_GROUP_TYPE                                                                                          \
     IoFilterGroup *

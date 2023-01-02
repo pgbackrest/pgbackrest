@@ -11,7 +11,7 @@ Write to a Buffer object using the IoWrite interface.
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN IoWrite *ioBufferWriteNew(Buffer *buffer);
+FN_EXTERN IoWrite *ioBufferWriteNew(Buffer *buffer);
 
 // Construct and open buffer write
 FN_INLINE_ALWAYS IoWrite *

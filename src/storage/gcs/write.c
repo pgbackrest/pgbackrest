@@ -319,7 +319,7 @@ storageWriteGcsClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageWrite *
+FN_EXTERN StorageWrite *
 storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

@@ -11,6 +11,6 @@ Read data that has been chunked with the IoChunk filter.
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN IoRead *ioChunkedReadNew(IoRead *read);
+FN_EXTERN IoRead *ioChunkedReadNew(IoRead *read);
 
 #endif

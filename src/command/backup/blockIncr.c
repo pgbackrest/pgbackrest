@@ -321,7 +321,7 @@ blockIncrInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 blockIncrNew(
     const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset,
     const Buffer *const blockMapPrior, const IoFilter *const compress, const IoFilter *const encrypt)
@@ -415,7 +415,7 @@ blockIncrNew(
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 blockIncrNewPack(const Pack *const paramList)
 {
     IoFilter *result = NULL;

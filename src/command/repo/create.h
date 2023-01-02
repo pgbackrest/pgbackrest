@@ -8,6 +8,6 @@ Repository Create Command
 Functions
 ***********************************************************************************************************************************/
 // Create the repository (create path, bucket, etc.)
-FV_EXTERN void cmdRepoCreate(void);
+FN_EXTERN void cmdRepoCreate(void);
 
 #endif

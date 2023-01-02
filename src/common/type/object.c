@@ -6,7 +6,7 @@ Object Helper Macros and Functions
 #include "common/type/object.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN void *
+FN_EXTERN void *
 objMove(THIS_VOID, MemContext *parentNew)
 {
     if (thisVoid != NULL)
@@ -16,7 +16,7 @@ objMove(THIS_VOID, MemContext *parentNew)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void *
+FN_EXTERN void *
 objMoveContext(THIS_VOID, MemContext *parentNew)
 {
     if (thisVoid != NULL)
@@ -26,7 +26,7 @@ objMoveContext(THIS_VOID, MemContext *parentNew)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 objFree(THIS_VOID)
 {
     if (thisVoid != NULL)
@@ -34,7 +34,7 @@ objFree(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 objFreeContext(THIS_VOID)
 {
     if (thisVoid != NULL)

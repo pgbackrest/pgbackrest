@@ -2252,7 +2252,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdBackup(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

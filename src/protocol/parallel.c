@@ -33,7 +33,7 @@ struct ProtocolParallel
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN ProtocolParallel *
+FN_EXTERN ProtocolParallel *
 protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -67,7 +67,7 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -88,7 +88,7 @@ protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN unsigned int
+FN_EXTERN unsigned int
 protocolParallelProcess(ProtocolParallel *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -228,7 +228,7 @@ protocolParallelProcess(ProtocolParallel *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN ProtocolParallelJob *
+FN_EXTERN ProtocolParallelJob *
 protocolParallelResult(ProtocolParallel *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -257,7 +257,7 @@ protocolParallelResult(ProtocolParallel *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 protocolParallelDone(ProtocolParallel *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -275,7 +275,7 @@ protocolParallelDone(ProtocolParallel *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 protocolParallelToLog(const ProtocolParallel *this)
 {
     return strNewFmt(

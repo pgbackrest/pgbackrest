@@ -9,7 +9,7 @@ CIFS Storage Helper
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-FV_EXTERN Storage *storageCifsHelper(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
+FN_EXTERN Storage *storageCifsHelper(unsigned int repoIdx, bool write, StoragePathExpressionCallback pathExpressionCallback);
 
 /***********************************************************************************************************************************
 Storage helper for StorageHelper array passed to storageHelperInit()
