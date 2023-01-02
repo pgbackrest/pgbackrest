@@ -24,7 +24,8 @@ Restore File
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN List *restoreFile(
+FN_EXTERN List *
+restoreFile(
     const String *const repoFile, const unsigned int repoIdx, const CompressType repoFileCompressType, const time_t copyTimeBegin,
     const bool delta, const bool deltaForce, const String *const cipherPass, const StringList *const referenceList,
     List *const fileList)
