@@ -42,7 +42,7 @@ typedef struct RestoreFileResult
     RestoreResult result;                                           // Restore result (e.g. preserve, copy)
 } RestoreFileResult;
 
-FV_EXTERN List *restoreFile(
+FN_EXTERN List *restoreFile(
     const String *repoFile, unsigned int repoIdx, CompressType repoFileCompressType, time_t copyTimeBegin, bool delta,
     bool deltaForce, const String *cipherPass, const List *fileList);
 

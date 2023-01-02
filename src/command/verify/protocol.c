@@ -13,7 +13,7 @@ Verify Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 verifyFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

@@ -35,7 +35,7 @@ typedef struct PageChecksum
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 pageChecksumToLog(const PageChecksum *this)
 {
     return strNewFmt("{valid: %s, align: %s}", cvtBoolToConstZ(this->valid), cvtBoolToConstZ(this->align));
@@ -224,7 +224,7 @@ pageChecksumResult(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTotal, const String *const fileName)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -273,7 +273,7 @@ pageChecksumNew(const unsigned int segmentNo, const unsigned int segmentPageTota
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 pageChecksumNewPack(const Pack *const paramList)
 {
     IoFilter *result = NULL;

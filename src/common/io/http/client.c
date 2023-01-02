@@ -31,7 +31,7 @@ struct HttpClient
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN HttpClient *
+FN_EXTERN HttpClient *
 httpClientNew(IoClient *ioClient, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug)
@@ -65,7 +65,7 @@ httpClientNew(IoClient *ioClient, TimeMSec timeout)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN HttpSession *
+FN_EXTERN HttpSession *
 httpClientOpen(HttpClient *this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -97,7 +97,7 @@ httpClientOpen(HttpClient *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 httpClientReuse(HttpClient *this, HttpSession *session)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -115,7 +115,7 @@ httpClientReuse(HttpClient *this, HttpSession *session)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 httpClientToLog(const HttpClient *this)
 {
     return strNewFmt(

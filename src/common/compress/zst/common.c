@@ -16,7 +16,7 @@ ZST Common
 #include "common/debug.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN size_t
+FN_EXTERN size_t
 zstError(size_t error)
 {
     FUNCTION_TEST_BEGIN();

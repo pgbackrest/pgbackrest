@@ -80,7 +80,7 @@ typedef struct HttpRequestNewParam
 #define httpRequestNewP(client, verb, path, ...)                                                                                   \
     httpRequestNew(client, verb, path, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
+FN_EXTERN HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -125,10 +125,10 @@ httpRequestVerb(const HttpRequest *const this)
 Functions
 ***********************************************************************************************************************************/
 // Wait for a response from the request
-FV_EXTERN HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
+FN_EXTERN HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
 
 // Throw an error if the request failed
-FV_EXTERN FN_NO_RETURN void httpRequestError(const HttpRequest *this, HttpResponse *response);
+FN_EXTERN FN_NO_RETURN void httpRequestError(const HttpRequest *this, HttpResponse *response);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS HttpRequest *
@@ -149,7 +149,7 @@ httpRequestFree(HttpRequest *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *httpRequestToLog(const HttpRequest *this);
+FN_EXTERN String *httpRequestToLog(const HttpRequest *this);
 
 #define FUNCTION_LOG_HTTP_REQUEST_TYPE                                                                                            \
     HttpRequest *

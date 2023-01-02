@@ -62,7 +62,7 @@ ioClientFree(IoClient *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *ioClientToLog(const IoClient *this);
+FN_EXTERN String *ioClientToLog(const IoClient *this);
 
 #define FUNCTION_LOG_IO_CLIENT_TYPE                                                                                                \
     IoClient *

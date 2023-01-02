@@ -31,7 +31,7 @@ strLstInsertInternal(StringList *const this, const unsigned int listIdx, String 
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StringList *
+FN_EXTERN StringList *
 strLstNewSplitZ(const String *string, const char *delimiter)
 {
     FUNCTION_TEST_BEGIN();
@@ -76,7 +76,7 @@ strLstNewSplitZ(const String *string, const char *delimiter)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StringList *
+FN_EXTERN StringList *
 strLstNewVarLst(const VariantList *sourceList)
 {
     FUNCTION_TEST_BEGIN();
@@ -103,7 +103,7 @@ strLstNewVarLst(const VariantList *sourceList)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StringList *
+FN_EXTERN StringList *
 strLstDup(const StringList *sourceList)
 {
     FUNCTION_TEST_BEGIN();
@@ -130,7 +130,7 @@ strLstDup(const StringList *sourceList)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strLstAdd(StringList *this, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -151,7 +151,7 @@ strLstAdd(StringList *this, const String *string)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-FV_EXTERN String *
+FN_EXTERN String *
 strLstAddSubN(StringList *const this, const String *const string, const size_t offset, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -175,7 +175,7 @@ strLstAddSubN(StringList *const this, const String *const string, const size_t o
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-FV_EXTERN String *
+FN_EXTERN String *
 strLstAddFmt(StringList *const this, const char *const format, ...)
 {
     FUNCTION_TEST_BEGIN();
@@ -211,7 +211,7 @@ strLstAddFmt(StringList *const this, const char *const format, ...)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-FV_EXTERN String *
+FN_EXTERN String *
 strLstAddIfMissing(StringList *this, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -229,7 +229,7 @@ strLstAddIfMissing(StringList *this, const String *string)
     FUNCTION_TEST_RETURN(STRING, *result);
 }
 
-FV_EXTERN String *
+FN_EXTERN String *
 strLstAddZ(StringList *this, const char *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -250,7 +250,7 @@ strLstAddZ(StringList *this, const char *string)
     FUNCTION_TEST_RETURN(STRING, result);
 }
 
-FV_EXTERN String *
+FN_EXTERN String *
 strLstAddZSubN(StringList *const this, const char *const string, const size_t offset, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -275,7 +275,7 @@ strLstAddZSubN(StringList *const this, const char *const string, const size_t of
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN unsigned int
+FN_EXTERN unsigned int
 strLstFindIdx(const StringList *const this, const String *const string, const StrLstFindIdxParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -296,7 +296,7 @@ strLstFindIdx(const StringList *const this, const String *const string, const St
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strLstInsert(StringList *this, unsigned int listIdx, const String *string)
 {
     FUNCTION_TEST_BEGIN();
@@ -319,7 +319,7 @@ strLstInsert(StringList *this, unsigned int listIdx, const String *string)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strLstJoinQuote(const StringList *this, const char *separator, const char *quote)
 {
     FUNCTION_TEST_BEGIN();
@@ -349,7 +349,7 @@ strLstJoinQuote(const StringList *this, const char *separator, const char *quote
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StringList *
+FN_EXTERN StringList *
 strLstMergeAnti(const StringList *this, const StringList *anti)
 {
     FUNCTION_TEST_BEGIN();
@@ -410,7 +410,7 @@ strLstMergeAnti(const StringList *this, const StringList *anti)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char **
+FN_EXTERN const char **
 strLstPtr(const StringList *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -435,7 +435,7 @@ strLstPtr(const StringList *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strLstToLog(const StringList *this)
 {
     return strNewFmt("{[%s]}", strZ(strLstJoinQuote(this, ", ", "\"")));

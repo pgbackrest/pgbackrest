@@ -21,6 +21,6 @@ typedef struct StorageReadInterface
     IoReadInterface ioInterface;
 } StorageReadInterface;
 
-FV_EXTERN StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
+FN_EXTERN StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
 
 #endif

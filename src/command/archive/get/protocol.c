@@ -14,7 +14,7 @@ Archive Get Protocol Handler
 #include "storage/write.intern.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

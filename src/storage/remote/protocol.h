@@ -11,16 +11,16 @@ Remote Storage Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process storage protocol requests
-FV_EXTERN void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemoteOpenReadProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
-FV_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteFeatureProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteInfoProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteLinkCreateProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteListProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteOpenReadProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteOpenWriteProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathCreateProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathRemoveProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemotePathSyncProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN void storageRemoteRemoveProtocol(PackRead *param, ProtocolServer *server);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
@@ -61,6 +61,6 @@ typedef struct StorageRemoteFilterHandler
     StorageRemoteFilterHandlerNoParam handlerNoParam;               // Handler with no parameters
 } StorageRemoteFilterHandler;
 
-FV_EXTERN void storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *filterHandler, unsigned int filterHandlerSize);
+FN_EXTERN void storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *filterHandler, unsigned int filterHandlerSize);
 
 #endif

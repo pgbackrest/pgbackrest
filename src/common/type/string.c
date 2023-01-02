@@ -69,7 +69,7 @@ struct String
 };
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strNew(void)
 {
     FUNCTION_TEST_VOID();
@@ -150,7 +150,7 @@ strNewFixed(const size_t size)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strNewZ(const char *const string)
 {
     FUNCTION_TEST_BEGIN();
@@ -170,7 +170,7 @@ strNewZ(const char *const string)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *strNewDbl(double value)
+FN_EXTERN String *strNewDbl(double value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(DOUBLE, value);
@@ -184,7 +184,7 @@ FV_EXTERN String *strNewDbl(double value)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strNewBuf(const Buffer *buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -206,7 +206,7 @@ strNewBuf(const Buffer *buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strNewEncode(const EncodingType type, const Buffer *const buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -232,7 +232,7 @@ strNewEncode(const EncodingType type, const Buffer *const buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strNewFmt(const char *format, ...)
 {
     FUNCTION_TEST_BEGIN();
@@ -256,7 +256,7 @@ strNewFmt(const char *format, ...)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strNewZN(const char *string, size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -277,7 +277,7 @@ strNewZN(const char *string, size_t size)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strBase(const String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -289,7 +289,7 @@ strBase(const String *this)
     FUNCTION_TEST_RETURN(STRING, strNewZ(strBaseZ(this)));
 }
 
-FV_EXTERN const char *
+FN_EXTERN const char *
 strBaseZ(const String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -307,7 +307,7 @@ strBaseZ(const String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 strBeginsWith(const String *this, const String *beginsWith)
 {
     FUNCTION_TEST_BEGIN();
@@ -321,7 +321,7 @@ strBeginsWith(const String *this, const String *beginsWith)
     FUNCTION_TEST_RETURN(BOOL, strBeginsWithZ(this, strZ(beginsWith)));
 }
 
-FV_EXTERN bool
+FN_EXTERN bool
 strBeginsWithZ(const String *this, const char *beginsWith)
 {
     FUNCTION_TEST_BEGIN();
@@ -381,7 +381,7 @@ strResize(String *this, size_t requested)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strCat(String *this, const String *cat)
 {
     FUNCTION_TEST_BEGIN();
@@ -395,7 +395,7 @@ strCat(String *this, const String *cat)
     FUNCTION_TEST_RETURN(STRING, strCatZN(this, strZ(cat), strSize(cat)));
 }
 
-FV_EXTERN String *
+FN_EXTERN String *
 strCatZ(String *this, const char *cat)
 {
     FUNCTION_TEST_BEGIN();
@@ -423,7 +423,7 @@ strCatZ(String *this, const char *cat)
     FUNCTION_TEST_RETURN(STRING, this);
 }
 
-FV_EXTERN String *
+FN_EXTERN String *
 strCatZN(String *this, const char *cat, size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -454,7 +454,7 @@ strCatZN(String *this, const char *cat, size_t size)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strCatBuf(String *const this, const Buffer *const buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -469,7 +469,7 @@ strCatBuf(String *const this, const Buffer *const buffer)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strCatChr(String *this, char cat)
 {
     FUNCTION_TEST_BEGIN();
@@ -492,7 +492,7 @@ strCatChr(String *this, char cat)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strCatEncode(String *const this, const EncodingType type, const Buffer *const buffer)
 {
     FUNCTION_TEST_BEGIN();
@@ -523,7 +523,7 @@ strCatEncode(String *const this, const EncodingType type, const Buffer *const bu
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strCatFmt(String *this, const char *format, ...)
 {
     FUNCTION_TEST_BEGIN();
@@ -558,7 +558,7 @@ strCatFmt(String *this, const char *format, ...)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 strCmp(const String *this, const String *compare)
 {
     FUNCTION_TEST_BEGIN();
@@ -579,7 +579,7 @@ strCmp(const String *this, const String *compare)
     FUNCTION_TEST_RETURN(INT, 1);
 }
 
-FV_EXTERN int
+FN_EXTERN int
 strCmpZ(const String *this, const char *compare)
 {
     FUNCTION_TEST_BEGIN();
@@ -591,7 +591,7 @@ strCmpZ(const String *this, const char *compare)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strDup(const String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -607,7 +607,7 @@ strDup(const String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 strEmpty(const String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -618,7 +618,7 @@ strEmpty(const String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 strEndsWith(const String *this, const String *endsWith)
 {
     FUNCTION_TEST_BEGIN();
@@ -632,7 +632,7 @@ strEndsWith(const String *this, const String *endsWith)
     FUNCTION_TEST_RETURN(BOOL, strEndsWithZ(this, strZ(endsWith)));
 }
 
-FV_EXTERN bool
+FN_EXTERN bool
 strEndsWithZ(const String *this, const char *endsWith)
 {
     FUNCTION_TEST_BEGIN();
@@ -656,7 +656,7 @@ strEndsWithZ(const String *this, const char *endsWith)
 There are two separate implementations because string objects can get the size very efficiently whereas the zero-terminated strings
 would need a call to strlen().
 ***********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 strEq(const String *this, const String *compare)
 {
     FUNCTION_TEST_BEGIN();
@@ -677,7 +677,7 @@ strEq(const String *this, const String *compare)
     FUNCTION_TEST_RETURN(BOOL, result);
 }
 
-FV_EXTERN bool
+FN_EXTERN bool
 strEqZ(const String *this, const char *compare)
 {
     FUNCTION_TEST_BEGIN();
@@ -692,7 +692,7 @@ strEqZ(const String *this, const char *compare)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strFirstUpper(String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -708,7 +708,7 @@ strFirstUpper(String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strFirstLower(String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -724,7 +724,7 @@ strFirstLower(String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strLower(String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -740,7 +740,7 @@ strLower(String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strPath(const String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -762,7 +762,7 @@ strPath(const String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strPathAbsolute(const String *this, const String *base)
 {
     FUNCTION_TEST_BEGIN();
@@ -846,7 +846,7 @@ strPathAbsolute(const String *this, const String *base)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 strZNull(const String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -857,7 +857,7 @@ strZNull(const String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strReplaceChr(String *this, char find, char replace)
 {
     FUNCTION_TEST_BEGIN();
@@ -878,7 +878,7 @@ strReplaceChr(String *this, char find, char replace)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strSub(const String *this, size_t start)
 {
     FUNCTION_TEST_BEGIN();
@@ -893,7 +893,7 @@ strSub(const String *this, size_t start)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strSubN(const String *this, size_t start, size_t size)
 {
     FUNCTION_TEST_BEGIN();
@@ -910,7 +910,7 @@ strSubN(const String *this, size_t start, size_t size)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strTrim(String *this)
 {
     FUNCTION_TEST_BEGIN();
@@ -953,7 +953,7 @@ strTrim(String *this)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 strChr(const String *this, char chr)
 {
     FUNCTION_TEST_BEGIN();
@@ -977,7 +977,7 @@ strChr(const String *this, char chr)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strTruncIdx(String *this, int idx)
 {
     FUNCTION_TEST_BEGIN();
@@ -1001,7 +1001,7 @@ strTruncIdx(String *this, int idx)
 /***********************************************************************************************************************************
 Convert an object to a zero-terminated string for logging
 ***********************************************************************************************************************************/
-FV_EXTERN size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize)
+FN_EXTERN size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize)
 {
     size_t result = 0;
 
@@ -1015,14 +1015,14 @@ FV_EXTERN size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, c
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strToLog(const String *this)
 {
     return this == NULL ? strDup(NULL_STR) : strNewFmt("{\"%s\"}", strZ(this));
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 strSizeFormat(const uint64_t size)
 {
     FUNCTION_TEST_BEGIN();

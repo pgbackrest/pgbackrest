@@ -10,16 +10,16 @@ Common Command Routines
 Functions
 ***********************************************************************************************************************************/
 // Capture time at the very start of main so total time is more accurate
-FV_EXTERN void cmdInit(void);
+FN_EXTERN void cmdInit(void);
 
 // Begin the command
-FV_EXTERN void cmdBegin(void);
+FN_EXTERN void cmdBegin(void);
 
 // Get the command options as a string. This is output in cmdBegin() if the log level is high enough but can also be used for
 // debugging or error reporting later on.
-FV_EXTERN const String *cmdOption(void);
+FN_EXTERN const String *cmdOption(void);
 
 // End the command
-FV_EXTERN void cmdEnd(int code, const String *errorMessage);
+FN_EXTERN void cmdEnd(int code, const String *errorMessage);
 
 #endif

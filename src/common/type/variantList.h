@@ -23,10 +23,10 @@ varLstNew(void)
 }
 
 // Create VariantList from StringList
-FV_EXTERN VariantList *varLstNewStrLst(const StringList *stringList);
+FN_EXTERN VariantList *varLstNewStrLst(const StringList *stringList);
 
 // Duplicate a variant list
-FV_EXTERN VariantList *varLstDup(const VariantList *source);
+FN_EXTERN VariantList *varLstDup(const VariantList *source);
 
 /***********************************************************************************************************************************
 Getters/Setters

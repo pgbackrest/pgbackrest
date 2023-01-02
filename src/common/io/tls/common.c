@@ -15,7 +15,7 @@ TLS Common
 #include "storage/posix/storage.h"
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 tlsAsn1ToStr(ASN1_STRING *const nameAsn1)
 {
     FUNCTION_TEST_BEGIN();
@@ -38,7 +38,7 @@ tlsAsn1ToStr(ASN1_STRING *const nameAsn1)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 tlsCertNameVerify(const String *const name)
 {
     FUNCTION_TEST_BEGIN();
@@ -53,7 +53,7 @@ tlsCertNameVerify(const String *const name)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 tlsCertCommonName(X509 *const certificate)                                                                          // {vm_covered}
 {
     FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
@@ -88,7 +88,7 @@ tlsCertPwd(char *buffer, const int size, const int rwFlag, void *const userData)
     return 0;
 }
 
-FV_EXTERN void
+FN_EXTERN void
 tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const String *const keyFile)
 {
     FUNCTION_TEST_BEGIN();
@@ -156,7 +156,7 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN SSL_CTX *
+FN_EXTERN SSL_CTX *
 tlsContext(void)
 {
     FUNCTION_TEST_VOID();

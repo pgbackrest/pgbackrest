@@ -51,7 +51,7 @@ typedef struct CipherBlock
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 cipherBlockToLog(const CipherBlock *this)
 {
     return strNewFmt(
@@ -387,7 +387,7 @@ cipherBlockInputSame(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, CipherBlockNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -473,7 +473,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
     FUNCTION_LOG_RETURN(IO_FILTER, this);
 }
 
-FV_EXTERN IoFilter *
+FN_EXTERN IoFilter *
 cipherBlockNewPack(const Pack *const paramList)
 {
     IoFilter *result = NULL;
@@ -495,7 +495,7 @@ cipherBlockNewPack(const Pack *const paramList)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN IoFilterGroup *
+FN_EXTERN IoFilterGroup *
 cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

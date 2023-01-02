@@ -28,7 +28,7 @@ typedef struct StorageS3RequestAsyncParam
 #define storageS3RequestAsyncP(this, verb, path, ...)                                                                              \
     storageS3RequestAsync(this, verb, path, (StorageS3RequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param);
+FN_EXTERN HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param);
 
 // Get async response
 typedef struct StorageS3ResponseParam
@@ -41,7 +41,7 @@ typedef struct StorageS3ResponseParam
 #define storageS3ResponseP(request, ...)                                                                                           \
     storageS3Response(request, (StorageS3ResponseParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam param);
+FN_EXTERN HttpResponse *storageS3Response(HttpRequest *request, StorageS3ResponseParam param);
 
 // Perform sync request
 typedef struct StorageS3RequestParam
@@ -58,7 +58,7 @@ typedef struct StorageS3RequestParam
 #define storageS3RequestP(this, verb, path, ...)                                                                                   \
     storageS3Request(this, verb, path, (StorageS3RequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FV_EXTERN HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param);
+FN_EXTERN HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param);
 
 /***********************************************************************************************************************************
 Macros for function logging

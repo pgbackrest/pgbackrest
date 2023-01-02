@@ -14,7 +14,7 @@ typedef struct StoragePosix StoragePosix;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN Storage *storagePosixNewInternal(
+FN_EXTERN Storage *storagePosixNewInternal(
     StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
     StoragePathExpressionCallback pathExpressionFunction, bool pathSync);
 

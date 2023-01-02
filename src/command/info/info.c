@@ -1614,7 +1614,7 @@ infoRender(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cmdInfo(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);

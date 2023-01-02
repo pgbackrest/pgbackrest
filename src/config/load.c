@@ -62,7 +62,7 @@ cfgLoadLogSetting(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cfgLoadUpdateOption(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
@@ -383,7 +383,7 @@ cfgLoadUpdateOption(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN String *
+FN_EXTERN String *
 cfgLoadLogFileName(const ConfigCommandRole commandRole)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -419,7 +419,7 @@ cfgLoadLogFileName(const ConfigCommandRole commandRole)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cfgLoadLogFile(void)
 {
     if (cfgLogFile() && !cfgCommandHelp())
@@ -435,7 +435,7 @@ cfgLoadLogFile(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 cfgLoad(unsigned int argListSize, const char *argList[])
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

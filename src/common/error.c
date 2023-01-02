@@ -26,7 +26,7 @@ struct ErrorType
 
 // Macro for defining new error types
 #define ERROR_DEFINE(code, name, fatal, parentType)                                                                                \
-    VR_EXTERN const ErrorType name = {code, fatal, #name, &parentType}
+    VR_EXTERN_DEFINE const ErrorType name = {code, fatal, #name, &parentType}
 
 // Define test error
 #ifdef DEBUG
@@ -99,7 +99,7 @@ static char messageBufferTemp[ERROR_MESSAGE_BUFFER_SIZE];
 static char stackTraceBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 
 /**********************************************************************************************************************************/
-FV_EXTERN void errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
+FN_EXTERN void errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
 {
     assert(total == 0 || list != NULL);
 
@@ -108,21 +108,21 @@ FV_EXTERN void errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 errorTypeCode(const ErrorType *errorType)
 {
     return errorType->code;
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 errorTypeFatal(const ErrorType *const errorType)
 {
     return errorType->fatal;
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const ErrorType *
+FN_EXTERN const ErrorType *
 errorTypeFromCode(int code)
 {
     // Search for error type by code
@@ -145,27 +145,27 @@ errorTypeFromCode(int code)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 errorTypeName(const ErrorType *errorType)
 {
     return errorType->name;
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const ErrorType *
+FN_EXTERN const ErrorType *
 errorTypeParent(const ErrorType *errorType)
 {
     return errorType->parentType;
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN unsigned int errorTryDepth(void)
+FN_EXTERN unsigned int errorTryDepth(void)
 {
     return (unsigned int)errorContext.tryTotal;
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 errorTypeExtends(const ErrorType *child, const ErrorType *parent)
 {
     const ErrorType *find = child;
@@ -185,7 +185,7 @@ errorTypeExtends(const ErrorType *child, const ErrorType *parent)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const ErrorType *
+FN_EXTERN const ErrorType *
 errorType(void)
 {
     assert(errorContext.error.errorType != NULL);
@@ -194,21 +194,21 @@ errorType(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 errorCode(void)
 {
     return errorTypeCode(errorType());
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 errorFatal(void)
 {
     return errorTypeFatal(errorType());
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 errorFileName(void)
 {
     assert(errorContext.error.fileName != NULL);
@@ -217,7 +217,7 @@ errorFileName(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 errorFunctionName(void)
 {
     assert(errorContext.error.functionName != NULL);
@@ -226,7 +226,7 @@ errorFunctionName(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN int
+FN_EXTERN int
 errorFileLine(void)
 {
     assert(errorContext.error.fileLine != 0);
@@ -235,7 +235,7 @@ errorFileLine(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 errorMessage(void)
 {
     assert(errorContext.error.message != NULL);
@@ -244,14 +244,14 @@ errorMessage(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 errorName(void)
 {
     return errorTypeName(errorType());
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN const char *
+FN_EXTERN const char *
 errorStackTrace(void)
 {
     assert(errorContext.error.stackTrace != NULL);
@@ -260,7 +260,7 @@ errorStackTrace(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 errorInstanceOf(const ErrorType *errorTypeTest)
 {
     return errorType() == errorTypeTest || errorTypeExtends(errorType(), errorTypeTest);
@@ -276,7 +276,7 @@ errorInternalState(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 errorInternalTryBegin(const char *const fileName, const char *const functionName, const int fileLine)
 {
     // If try total has been exceeded then throw an error
@@ -292,14 +292,14 @@ errorInternalTryBegin(const char *const fileName, const char *const functionName
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN jmp_buf *
+FN_EXTERN jmp_buf *
 errorInternalJump(void)
 {
     return &errorContext.jumpList[errorContext.tryTotal - 1];
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN bool
+FN_EXTERN bool
 errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
 {
     assert(fatalCatch || !errorTypeFatal(errorTypeCatch));
@@ -325,7 +325,7 @@ errorInternalCatch(const ErrorType *const errorTypeCatch, const bool fatalCatch)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 errorInternalPropagate(void)
 {
     assert(errorType() != NULL);
@@ -346,7 +346,7 @@ errorInternalPropagate(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 errorInternalTryEnd(void)
 {
     // Any catch blocks have been processed and none of them called RETHROW() so clear the error
@@ -362,7 +362,7 @@ errorInternalTryEnd(void)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 errorInternalThrow(
     const ErrorType *const errorType, const char *const fileName, const char *const functionName, const int fileLine,
     const char *const message, const char *const stackTrace)
@@ -403,7 +403,7 @@ errorInternalThrow(
     errorInternalPropagate();
 }
 
-FV_EXTERN void
+FN_EXTERN void
 errorInternalThrowFmt(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
 {
@@ -417,7 +417,7 @@ errorInternalThrowFmt(
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN void
+FN_EXTERN void
 errorInternalThrowSys(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
 {
@@ -434,7 +434,7 @@ errorInternalThrowSys(
 }
 
 #ifdef DEBUG_COVERAGE
-FV_EXTERN void
+FN_EXTERN void
 errorInternalThrowOnSys(
     bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
     const char *message)
@@ -444,7 +444,7 @@ errorInternalThrowOnSys(
 }
 #endif
 
-FV_EXTERN void
+FN_EXTERN void
 errorInternalThrowSysFmt(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
 {
@@ -462,7 +462,7 @@ errorInternalThrowSysFmt(
 }
 
 #ifdef DEBUG_COVERAGE
-FV_EXTERN void
+FN_EXTERN void
 errorInternalThrowOnSysFmt(
     bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
     const char *format, ...)

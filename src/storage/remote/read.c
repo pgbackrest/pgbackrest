@@ -282,7 +282,7 @@ storageReadRemoteClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FV_EXTERN StorageRead *
+FN_EXTERN StorageRead *
 storageReadRemoteNew(
     StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool ignoreMissing,
     const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit)

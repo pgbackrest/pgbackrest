@@ -29,7 +29,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FV_EXTERN ProtocolParallelJob *protocolParallelJobNew(const Variant *key, ProtocolCommand *command);
+FN_EXTERN ProtocolParallelJob *protocolParallelJobNew(const Variant *key, ProtocolCommand *command);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -65,7 +65,7 @@ protocolParallelJobErrorMessage(const ProtocolParallelJob *const this)
     return THIS_PUB(ProtocolParallelJob)->message;
 }
 
-FV_EXTERN void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message);
+FN_EXTERN void protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message);
 
 // Job key
 FN_INLINE_ALWAYS const Variant *
@@ -81,7 +81,7 @@ protocolParallelJobProcessId(const ProtocolParallelJob *const this)
     return THIS_PUB(ProtocolParallelJob)->processId;
 }
 
-FV_EXTERN void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
+FN_EXTERN void protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId);
 
 // Job result
 FN_INLINE_ALWAYS PackRead *
@@ -90,7 +90,7 @@ protocolParallelJobResult(const ProtocolParallelJob *const this)
     return THIS_PUB(ProtocolParallelJob)->result;
 }
 
-FV_EXTERN void protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result);
+FN_EXTERN void protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const result);
 
 // Job state
 FN_INLINE_ALWAYS ProtocolParallelJobState
@@ -99,7 +99,7 @@ protocolParallelJobState(const ProtocolParallelJob *const this)
     return THIS_PUB(ProtocolParallelJob)->state;
 }
 
-FV_EXTERN void protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state);
+FN_EXTERN void protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state);
 
 /***********************************************************************************************************************************
 Functions
@@ -123,7 +123,7 @@ protocolParallelJobFree(ProtocolParallelJob *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FV_EXTERN String *protocolParallelJobToLog(const ProtocolParallelJob *this);
+FN_EXTERN String *protocolParallelJobToLog(const ProtocolParallelJob *this);
 
 #define FUNCTION_LOG_PROTOCOL_PARALLEL_JOB_TYPE                                                                                    \
     ProtocolParallelJob *
