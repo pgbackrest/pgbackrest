@@ -263,6 +263,16 @@ stackTraceFmt(char *buffer, size_t bufferSize, size_t bufferUsed, const char *fo
     return (size_t)result;
 }
 
+/***********************************************************************************************************************************
+Helper to trim off extra path before the src path
+***********************************************************************************************************************************/
+static const char *
+stackTraceTrimSrc(const char *const fileName)
+{
+    const char *const src = strstr(fileName, "src/");
+    return src == NULL ? fileName : src + 4;
+}
+
 /**********************************************************************************************************************************/
 #ifdef HAVE_LIBBACKTRACE
 
@@ -275,14 +285,6 @@ typedef struct StackTraceBackData
     char *const buffer;
     const size_t bufferSize;
 } StackTraceBackData;
-
-// Helper to trim off extra path before the src path
-static const char *
-stackTraceTrimSrc(const char *const fileName)
-{
-    const char *const src = strstr(fileName, "src/");
-    return src == NULL ? fileName : src + 4;
-}
 
 // Callback to add backtrace data when available
 static int
