@@ -26,7 +26,7 @@ struct ErrorType
 
 // Macro for defining new error types
 #define ERROR_DEFINE(code, name, fatal, parentType)                                                                                \
-    VR_EXTERN const ErrorType name = {code, fatal, #name, &parentType}
+    VR_EXTERN_DEFINE const ErrorType name = {code, fatal, #name, &parentType}
 
 // Define test error
 #ifdef DEBUG

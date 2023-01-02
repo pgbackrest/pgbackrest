@@ -48,7 +48,7 @@ typedef struct ErrorType ErrorType;
 
 // Macro for declaring new error types
 #define ERROR_DECLARE(name)                                                                                                        \
-    FN_EXTERN const ErrorType name
+    VR_EXTERN_DECLARE const ErrorType name
 
 // Include error type declarations
 #include "common/error.auto.h"

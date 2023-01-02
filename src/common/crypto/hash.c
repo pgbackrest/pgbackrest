@@ -22,7 +22,7 @@ Hashes for zero-length files (i.e., seed value)
 ***********************************************************************************************************************************/
 static uint8_t hashTypeSha1Zero[HASH_TYPE_SHA1_SIZE] =
     {0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d, 0x32, 0x55, 0xbf, 0xef, 0x95, 0x60, 0x18, 0x90, 0xaf, 0xd8, 0x07, 0x09};
-VR_EXTERN const Buffer *const HASH_TYPE_SHA1_ZERO_BUF = BUF(hashTypeSha1Zero, sizeof(hashTypeSha1Zero));
+VR_EXTERN_DEFINE const Buffer *const HASH_TYPE_SHA1_ZERO_BUF = BUF(hashTypeSha1Zero, sizeof(hashTypeSha1Zero));
 
 STRING_EXTERN(HASH_TYPE_SHA256_ZERO_STR,                            HASH_TYPE_SHA256_ZERO);
 

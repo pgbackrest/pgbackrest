@@ -231,7 +231,7 @@ By convention all string constant identifiers are appended with _STR.
 
 // Used to declare String constants that will be externed using STRING_DECLARE().  Must be used in a .c file.
 #define STRING_EXTERN(name, buffer)                                                                                                \
-    VR_EXTERN const String *const name = STRDEF(buffer)
+    VR_EXTERN_DEFINE const String *const name = STRDEF(buffer)
 
 // Used to declare String constants that will be local to the .c file.  Must be used in a .c file.
 #define STRING_STATIC(name, buffer)                                                                                                \
@@ -239,7 +239,7 @@ By convention all string constant identifiers are appended with _STR.
 
 // Used to extern String constants declared with STRING_EXTERN().  Must be used in a .h file.
 #define STRING_DECLARE(name)                                                                                                       \
-    FN_EXTERN const String *const name
+    VR_EXTERN_DECLARE const String *const name
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful

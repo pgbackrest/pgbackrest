@@ -21,7 +21,7 @@ Constant variants that are generally useful
 ***********************************************************************************************************************************/
 // Used to declare Bool Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
 #define VARIANT_BOOL_EXTERN(name, dataParam)                                                                                       \
-    VR_EXTERN const Variant *const name = ((const Variant *)&(const VariantBoolPub){.type = varTypeBool, .data = dataParam})
+    VR_EXTERN_DEFINE const Variant *const name = ((const Variant *)&(const VariantBoolPub){.type = varTypeBool, .data = dataParam})
 
 VARIANT_BOOL_EXTERN(BOOL_FALSE_VAR,                                 false);
 VARIANT_BOOL_EXTERN(BOOL_TRUE_VAR,                                  true);

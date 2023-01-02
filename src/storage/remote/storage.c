@@ -10,7 +10,6 @@ Remote Storage
 #include "common/type/pack.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
-#include "storage/remote/storage.intern.h"
 #include "storage/remote/write.h"
 
 /***********************************************************************************************************************************

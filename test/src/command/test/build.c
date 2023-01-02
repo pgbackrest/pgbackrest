@@ -350,7 +350,8 @@ testBldUnit(TestBuild *const this)
             "configure_file(output: 'build.auto.h', configuration: configuration)\n"
             "\n"
             "add_global_arguments('-DFN_EXTERN=extern', language : 'c')\n"
-            "add_global_arguments('-DVR_EXTERN=', language : 'c')\n"
+            "add_global_arguments('-DVR_EXTERN_DECLARE=extern', language : 'c')\n"
+            "add_global_arguments('-DVR_EXTERN_DEFINE=', language : 'c')\n"
             "add_global_arguments('-DERROR_MESSAGE_BUFFER_SIZE=131072', language : 'c')\n");
 
         // Configure features
@@ -503,7 +504,6 @@ testBldUnit(TestBuild *const this)
             "        lib_yaml,\n"
             "        lib_z,\n"
             "        lib_zstd,\n"
-            "        lib_ssh2,\n"
             "    ],\n"
             ")\n",
             strZ(pathRepoRel), strZ(pathRepoRel));
@@ -612,7 +612,6 @@ testBldUnit(TestBuild *const this)
         strReplace(testC, STRDEF("{[C_TEST_GROUP]}"), groupName());
         strReplace(testC, STRDEF("{[C_TEST_GROUP_ID]}"), strNewFmt("%u", groupId()));
         strReplace(testC, STRDEF("{[C_TEST_USER]}"), userName());
-        strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", strSize(userName())));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), strNewFmt("%u", userId()));
 
         // Test id

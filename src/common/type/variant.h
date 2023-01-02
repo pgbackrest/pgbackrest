@@ -193,7 +193,7 @@ By convention all variant constant identifiers are appended with _VAR.
 
 // Used to declare String Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
 #define VARIANT_STRDEF_EXTERN(name, dataParam)                                                                                     \
-    VR_EXTERN const Variant *const name = VARSTRDEF(dataParam)
+    VR_EXTERN_DEFINE const Variant *const name = VARSTRDEF(dataParam)
 
 // Used to declare String Variant constants that will be local to the .c file.  Must be used in a .c file.
 #define VARIANT_STRDEF_STATIC(name, dataParam)                                                                                     \
@@ -209,7 +209,7 @@ By convention all variant constant identifiers are appended with _VAR.
 
 // Used to extern String Variant constants declared with VARIANT_STRDEF_EXTERN/STATIC().  Must be used in a .h file.
 #define VARIANT_DECLARE(name)                                                                                                      \
-    FN_EXTERN const Variant *const name
+    VR_EXTERN_DECLARE const Variant *const name
 
 /***********************************************************************************************************************************
 Constant variants that are generally useful
