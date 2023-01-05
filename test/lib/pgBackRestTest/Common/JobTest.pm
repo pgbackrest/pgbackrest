@@ -382,19 +382,8 @@ sub end
         # Output error
         if ($iExitStatus != 0 || (defined($oExecDone->{strErrorLog}) && $oExecDone->{strErrorLog} ne ''))
         {
-            # Get stdout
+            # Get stdout (no need to get stderr since stderr is redirected to stdout)
             my $strOutput = trim($oExecDone->{strOutLog}) ? "STDOUT:\n" . trim($oExecDone->{strOutLog}) : '';
-
-            # Get stderr
-            if (defined($oExecDone->{strErrorLog}) && trim($oExecDone->{strErrorLog}) ne '')
-            {
-                if ($strOutput ne '')
-                {
-                    $strOutput .= "\n";
-                }
-
-                $strOutput .= "STDERR:\n" . trim($oExecDone->{strErrorLog});
-            }
 
             # If no stdout or stderr output something rather than a blank line
             if ($strOutput eq '')
