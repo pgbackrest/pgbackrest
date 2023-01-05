@@ -62,4 +62,12 @@ Checks are used in production builds to test very important conditions.  Be sure
     }                                                                                                                              \
     while (0)
 
+#define CHECK_FMT(type, condition, message, ...)                                                                                   \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (!(condition))                                                                                                          \
+            THROW_FMT(type, message, __VA_ARGS__);                                                                                 \
+    }                                                                                                                              \
+    while (0)
+
 #endif
