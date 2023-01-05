@@ -47,8 +47,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                 // Check if next is db for integration tests
                 bool pgRequired = false;
 
-                if (type == testDefTypeIntegration && yamlEventPeek(yaml).type == yamlEventTypeScalar &&
-                    strEqZ(yamlEventPeek(yaml).value, "db"))
+                if (type == testDefTypeIntegration && strEqZ(yamlEventPeek(yaml).value, "db"))
                 {
                     yamlScalarNextCheckZ(yaml, "db");
                     pgRequired = yamlBoolParse(yamlScalarNext(yaml));
@@ -99,8 +98,8 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                         {
                                             testDefCoverage.coverable = true;
                                         }
-                                        else if (!strEqZ(type, "noCode"))
-                                            THROW_FMT(FormatError, "invalid coverage type '%s'", strZ(type));
+                                        else
+                                            CHECK_FMT(AssertError, strEqZ(type, "noCode"), "invalid coverage type %s", strZ(type));
                                     }
                                     YAML_MAP_END();
                                 }
@@ -204,15 +203,14 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                         {
                             testDefModule.name = strNewFmt("%s/%s", strZ(moduleName), strZ(yamlScalarNext(yaml).value));
                         }
-                        else if (strEqZ(subModuleDef.value, "total"))
-                        {
-                            testDefModule.total = cvtZToUInt(strZ(yamlScalarNext(yaml).value));
-                        }
                         else
                         {
-                            THROW_FMT(
-                                FormatError, "unexpected scalar '%s' at line %zu, column %zu", strZ(subModuleDef.value),
-                                subModuleDef.line, subModuleDef.column);
+                            CHECK_FMT(
+                                FormatError, strEqZ(subModuleDef.value, "total"),
+                                "unexpected keyword '%s' at line %zu, column %zu",
+                                strZ(subModuleDef.value), subModuleDef.line, subModuleDef.column);
+
+                            testDefModule.total = cvtZToUInt(strZ(yamlScalarNext(yaml).value));
                         }
                     }
                     YAML_MAP_END();
@@ -224,11 +222,8 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                     {
                         const String *const depend = strLstGet(globalDependList, dependIdx);
 
-                        if ((coverageList == NULL || !lstExists(coverageList, &depend)) &&
-                            (includeList == NULL || !strLstExists(includeList, depend)))
-                        {
+                        if (!lstExists(coverageList, &depend) && !strLstExists(includeList, depend))
                             strLstAdd(dependList, depend);
-                        }
                     }
 
                     // Add test module

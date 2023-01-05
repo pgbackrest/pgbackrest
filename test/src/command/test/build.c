@@ -129,9 +129,13 @@ testBldShim(const String *const shimC, const StringList *const functionList)
                     {
                         strCatChr(result, ' ');
                         strCat(result, in);
+                        unsigned int scanIdx = inIdx + 1;
 
-                        for (unsigned int scanIdx = inIdx + 1; scanIdx < strLstSize(inList); scanIdx++)
+                        while (true)
                         {
+                            // In a properly formatted C file the end of the list can never be reached
+                            ASSERT(scanIdx < strLstSize(inList));
+
                             const String *const scan = strLstGet(inList, scanIdx);
 
                             if (strEqZ(scan, "{"))
@@ -141,6 +145,7 @@ testBldShim(const String *const shimC, const StringList *const functionList)
                                 strCatChr(result, ' ');
 
                             strCat(result, strTrim(strDup(scan)));
+                            scanIdx++;
                         }
 
                         strCatZ(result, "; ");
@@ -198,8 +203,30 @@ testBldWrite(const Storage *const storage, StringList *const fileList, const cha
 
 /***********************************************************************************************************************************
 Generate a relative path from the compare path to the base path
+***********************************************************************************************************************************/
+static String *
+cmdBldPathModule(const String *const moduleName)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, moduleName);
+    FUNCTION_LOG_END();
 
-??? This function has not been hardened for edge cases, e.g. paths are equal. Probably this should he moved to the storage module.
+    String *const result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        if (strBeginsWithZ(moduleName, "test/"))
+            strCatFmt(result, "test/src%s", strZ(strSub(moduleName, 4)));
+        else
+            strCatFmt(result, "src/%s", strZ(moduleName));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
+Generate a relative path from the compare path to the base path
 ***********************************************************************************************************************************/
 static String *
 cmdBldPathRelative(const String *const base, const String *const compare)
@@ -211,6 +238,7 @@ cmdBldPathRelative(const String *const base, const String *const compare)
 
     ASSERT(base != NULL);
     ASSERT(compare != NULL);
+    ASSERT(!strEq(base, compare));
 
     String *const result = strNew();
 
@@ -243,7 +271,16 @@ cmdBldPathRelative(const String *const base, const String *const compare)
 
         // Add remaining path
         for (unsigned int pathIdx = compareIdx; pathIdx < strLstSize(compareList); pathIdx++)
-            strCatFmt(result, "/%s", strZ(strLstGet(compareList, pathIdx)));
+        {
+            // If first is still set then compare must be a subpath of base (i.e. there were no .. parts)
+            if (!first)
+            {
+                strCatChr(result, '/');
+                first = false;
+            }
+
+            strCat(result, strLstGet(compareList, pathIdx));
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -279,7 +316,7 @@ testBldUnit(TestBuild *const this)
         for (unsigned int shimIdx = 0; shimIdx < lstSize(module->shimList); shimIdx++)
         {
             const TestDefShim *const shim = lstGet(module->shimList, shimIdx);
-            const String *const shimFile = strNewFmt("src/%s.c", strZ(shim->name));
+            const String *const shimFile = strNewFmt("%s.c", strZ(cmdBldPathModule(shim->name)));
 
             String *const shimC = strCatBuf(
                 strNew(),
@@ -309,8 +346,8 @@ testBldUnit(TestBuild *const this)
                     const String *const include = strLstGet(harness->includeList, includeIdx);
 
                     strCatFmt(
-                        includeReplace, "%s#include \"%s/src/%s.c\"", includeIdx == 0 ? "" : "\n",
-                        lstExists(module->shimList, &include) ? strZ(pathUnit) : strZ(pathRepo), strZ(include));
+                        includeReplace, "%s#include \"%s/%s.c\"", includeIdx == 0 ? "" : "\n",
+                        lstExists(module->shimList, &include) ? strZ(pathUnit) : strZ(pathRepo), strZ(cmdBldPathModule(include)));
 
                     strLstAdd(harnessIncludeList, include);
                 }
@@ -396,7 +433,7 @@ testBldUnit(TestBuild *const this)
             if (strLstExists(harnessIncludeList, depend))
                 continue;
 
-            strCatFmt(mesonBuild, "    '%s/src/%s.c',\n", strZ(pathRepoRel), strZ(depend));
+            strCatFmt(mesonBuild, "    '%s/%s.c',\n", strZ(pathRepoRel), strZ(cmdBldPathModule(depend)));
         }
 
         // Add harnesses
@@ -524,24 +561,19 @@ testBldUnit(TestBuild *const this)
         // Files to test/include
         StringList *const testIncludeFileList = strLstNew();
 
-        if (module->coverageList != NULL)
+        for (unsigned int coverageIdx = 0; coverageIdx < lstSize(module->coverageList); coverageIdx++)
         {
-            for (unsigned int coverageIdx = 0; coverageIdx < lstSize(module->coverageList); coverageIdx++)
-            {
-                const TestDefCoverage *const coverage = lstGet(module->coverageList, coverageIdx);
+            const TestDefCoverage *const coverage = lstGet(module->coverageList, coverageIdx);
 
-                if (coverage->coverable && !coverage->included)
-                    strLstAdd(testIncludeFileList, coverage->name);
-            }
+            if (coverage->coverable && !coverage->included)
+                strLstAdd(testIncludeFileList, coverage->name);
         }
 
-        if (module->includeList != NULL)
-        {
-            for (unsigned int includeIdx = 0; includeIdx < strLstSize(module->includeList); includeIdx++)
-                strLstAdd(testIncludeFileList, strLstGet(module->includeList, includeIdx));
-        }
+        for (unsigned int includeIdx = 0; includeIdx < strLstSize(module->includeList); includeIdx++)
+            strLstAdd(testIncludeFileList, strLstGet(module->includeList, includeIdx));
 
-        String *const testIncludeFile = strNew();
+        StringList *const testIncludeFile = strLstNew();
+        StringList *const harnessIncluded = strLstNew();
 
         for (unsigned int testIncludeFileIdx = 0; testIncludeFileIdx < strLstSize(testIncludeFileList); testIncludeFileIdx++)
         {
@@ -556,16 +588,19 @@ testBldUnit(TestBuild *const this)
                     break;
             }
 
-            if (testIncludeFileIdx != 0)
-                strCatChr(testIncludeFile, '\n');
-
             if (harnessIdx != lstSize(module->harnessList))
-                strCatFmt(testIncludeFile, "#include \"%s\"", strZ(strLstGet(harnessList, harnessIdx)));
+            {
+                if (!strLstExists(harnessIncluded, strLstGet(harnessList, harnessIdx)))
+                {
+                    strLstAddFmt(testIncludeFile, "#include \"%s\"", strZ(strLstGet(harnessList, harnessIdx)));
+                    strLstAdd(harnessIncluded, strLstGet(harnessList, harnessIdx));
+                }
+            }
             else
-                strCatFmt(testIncludeFile, "#include \"%s/src/%s.c\"", strZ(pathRepoRel), strZ(include));
+                strLstAddFmt(testIncludeFile, "#include \"%s/%s.c\"", strZ(pathRepoRel), strZ(cmdBldPathModule(include)));
         }
 
-        strReplace(testC, STRDEF("{[C_INCLUDE]}"), testIncludeFile);
+        strReplace(testC, STRDEF("{[C_INCLUDE]}"), strLstJoin(testIncludeFile, "\n"));
 
         // Test path
         strReplace(testC, STRDEF("{[C_TEST_PATH]}"), storagePathP(storageTestId, NULL));

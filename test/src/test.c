@@ -30,6 +30,7 @@ The test code is included directly so it can freely interact with the included C
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
