@@ -321,12 +321,9 @@ int libssh2_sftp_stat_ex(
     LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, int stat_type, LIBSSH2_SFTP_ATTRIBUTES *attrs)
 {
     // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun as parameter will vary depending on where tests are being run.
+    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
     // Could we utilize test.c/build.c to calculate/define this and other length params?
-    if (path_len)
-    {
-        // do nothing
-    }
+   (void)path_len;
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_STAT_EX,
@@ -363,26 +360,14 @@ unsigned long libssh2_sftp_last_error(LIBSSH2_SFTP *sftp)
 
 /***********************************************************************************************************************************
 Shim for libssh2_sftp_symlink_ex
-    LIBSSH2_SFTP_SYMLINK
-        path is file to link to, target is symlink to create
-    LIBSSH2_SFTP_READLINK
-    LIBSSH2_SFTP_REALPATH
-        path is file to retrive data from, target is populated with the data
 ***********************************************************************************************************************************/
 int libssh2_sftp_symlink_ex(
     LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, char *target, unsigned int target_len, int link_type)
 {
     // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun as parameter will vary depending on where tests are being run.
-    if (path_len)
-    {
-        // do nothing
-    }
-
-    if (target_len)
-    {
-        // do nothing
-    }
+    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    (void)path_len;
+    (void)target_len;
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_SYMLINK_EX,
@@ -395,27 +380,12 @@ int libssh2_sftp_symlink_ex(
         (HrnLibSsh2 *)sftp);
 
     int rc = 0;
-    /* from the doc page https://www.libssh2.org/libssh2_sftp_symlink_ex.html
-     *
-     * !!! the driver is using LIBSSH2_SFTP_READLINK to resolve linkDestination, should it use LIBSSH2_SFTP_REALPATH, see below
-     *
-    target - a pointer to a buffer. The buffer has different uses depending what the link_type argument is set to.
-    LIBSSH2_SFTP_SYMLINK: Remote filesystem object to link to.
-    LIBSSH2_SFTP_READLINK: Pre-allocated buffer to resolve symlink target into.
-    LIBSSH2_SFTP_REALPATH: Pre-allocated buffer to resolve realpath target into.
-    ...snip...
-    libssh2_sftp_symlink(3) : Create a symbolic link between two filesystem objects.
-    libssh2_sftp_readlink(3) : Resolve a symbolic link filesystem object to its next target.
-    libssh2_sftp_realpath(3) : Resolve a complex, relative, or symlinked filepath to its effective target.
 
-    */
-    /*
-    LIBSSH2_SFTP_SYMLINK 0
-        path is file to link to, target is symlink to create
-    LIBSSH2_SFTP_READLINK 1
-    LIBSSH2_SFTP_REALPATH 2
-        path is file to retrive data from, target is populated with the data
-    */
+    // LIBSSH2_SFTP_READLINK
+    // LIBSSH2_SFTP_REALPATH
+    //     path is file to retrive data from, target is populated with the data
+    // LIBSSH2_SFTP_SYMLINK
+    //     path is file to link to, target is symlink to create
 
     switch (link_type)
     {
@@ -426,7 +396,7 @@ int libssh2_sftp_symlink_ex(
                 if (strSize(hrnLibSsh2->symlinkExTarget) < PATH_MAX)
                     strncpy(target, strZ(hrnLibSsh2->symlinkExTarget), strSize(hrnLibSsh2->symlinkExTarget));
                 else
-                    THROW_FMT(AssertError, "hrnLibSsh2.c %s ERROR: symlinkExTarget too large for target buffer", __FUNCTION__);
+                    THROW_FMT(AssertError, "symlinkExTarget too large for target buffer");
             }
 
             rc = hrnLibSsh2->resultInt != 0 ? hrnLibSsh2->resultInt : (int)strSize(hrnLibSsh2->symlinkExTarget);
@@ -438,14 +408,14 @@ int libssh2_sftp_symlink_ex(
                 if (strSize(hrnLibSsh2->symlinkExTarget) < PATH_MAX)
                     strncpy(target, strZ(hrnLibSsh2->symlinkExTarget), strSize(hrnLibSsh2->symlinkExTarget));
                 else
-                    THROW_FMT(AssertError, "hrnLibSsh2.c %s ERROR: symlinkExTarget too large for target buffer", __FUNCTION__);
+                    THROW_FMT(AssertError, "symlinkExTarget too large for target buffer");
             }
 
             rc = hrnLibSsh2->resultInt;
             break;
 
         default:
-            THROW_FMT(AssertError, "hrnLibSsh2.c %s ERROR: UNKNOWN link_type", __FUNCTION__);
+            THROW_FMT(AssertError, "UNKNOWN link_type");
             break;
     }
 
@@ -459,11 +429,8 @@ LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
     LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len, unsigned long flags, long mode, int open_type)
 {
     // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun as parameter will vary depending on where tests are being run.
-    if (filename_len)
-    {
-        // do nothing
-    }
+    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    (void)filename_len;
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_OPEN_EX,
@@ -488,7 +455,7 @@ int libssh2_sftp_readdir_ex(
     LIBSSH2_SFTP_ATTRIBUTES *attrs)
 {
     if (attrs == NULL)
-        THROW_FMT(AssertError, "%s attrs is NULL", __FUNCTION__);
+        THROW_FMT(AssertError, "attrs is NULL");
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_READDIR_EX,
@@ -513,8 +480,7 @@ Shim for libssh2_session_last_errno
 ***********************************************************************************************************************************/
 int libssh2_session_last_errno(LIBSSH2_SESSION *session)
 {
-    return hrnLibSsh2ScriptRun(
-            HRNLIBSSH2_SESSION_LAST_ERRNO, NULL, (HrnLibSsh2 *)session)->resultInt;
+    return hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_LAST_ERRNO, NULL, (HrnLibSsh2 *)session)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -523,7 +489,7 @@ Shim for libssh2_sftp_fstat_ex
 int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *attrs, int setstat)
 {
     if (attrs == NULL)
-        THROW_FMT(AssertError, "%s attrs is NULL", __FUNCTION__);
+        THROW_FMT(AssertError, "attrs is NULL");
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_FSTAT_EX, varLstAdd(varLstNew(), varNewInt(setstat)), (HrnLibSsh2 *)handle);
@@ -557,11 +523,8 @@ Shim for libssh2_sftp_mkdir_ex
 int libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, long mode)
 {
     // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun as parameter will vary depending on where tests are being run.
-    if (path_len)
-    {
-        // do nothing
-    }
+    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    (void)path_len;
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_MKDIR_EX,
@@ -603,16 +566,9 @@ int libssh2_sftp_rename_ex(
     unsigned int dest_filename_len, long flags)
 {
     // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun as parameter will vary depending on where tests are being run.
-    if (source_filename_len)
-    {
-        // do nothing
-    }
-
-    if (dest_filename_len)
-    {
-        // do nothing
-    }
+    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    (void)source_filename_len;
+    (void)dest_filename_len;
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_RENAME_EX,
@@ -633,11 +589,8 @@ Shim for libssh2_sftp_rmdir_ex
 int libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len)
 {
     // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun as parameter will vary depending on where tests are being run.
-    if (path_len)
-    {
-        // do nothing
-    }
+    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    (void)path_len;
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_RMDIR_EX,
@@ -659,11 +612,7 @@ void libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
             varLstNew(), varNewUInt64(offset)),
         (HrnLibSsh2 *)handle);
 
-    // to avoid compiler complaining of unused hrnLibSsh2 var
-    if (hrnLibSsh2->offset)
-    {
-        // do nothing
-    }
+    (void)hrnLibSsh2;
 
     return;
 }
@@ -674,11 +623,8 @@ Shim for libssh2_sftp_unlink_ex
 int libssh2_sftp_unlink_ex(LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len)
 {
     // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun as parameter will vary depending on where tests are being run.
-    if (filename_len)
-    {
-        // do nothing
-    }
+    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    (void)filename_len;
 
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_UNLINK_EX,
@@ -696,16 +642,13 @@ ssize_t libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size
 {
     // We don't pass buffer to hrnLibSsh2ScriptRun. The first call for each invocation passes buffer with random data, which is
     // an issue for sftpTest.c.
+    (void)buffer;
+
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SFTP_WRITE,
         varLstAdd(
             varLstNew(), varNewUInt64(count)),
         (HrnLibSsh2 *)handle);
-
-    if (buffer)
-    {
-        // do nothing
-    }
 
     // return number of bytes written
     return hrnLibSsh2->resultInt;
