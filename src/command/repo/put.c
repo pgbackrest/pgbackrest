@@ -21,7 +21,7 @@ Write source IO to destination file
 static void
 storagePutProcess(IoRead *source)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, source);
     FUNCTION_LOG_END();
 

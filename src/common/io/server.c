@@ -20,7 +20,7 @@ struct IoServer
 FN_EXTERN IoServer *
 ioServerNew(void *const driver, const IoServerInterface *const interface)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_SERVER_INTERFACE, interface);
     FUNCTION_LOG_END();

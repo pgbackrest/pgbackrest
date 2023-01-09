@@ -19,29 +19,24 @@ level is set to debug or trace.
     FUNCTION_LOG_logLevel
 
 #ifdef DEBUG_TEST_TRACE
-    #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
-        LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
-                                                                                                                                   \
-        {                                                                                                                          \
-            stackTraceParamLog();                                                                                                  \
-            stackTraceTestStop();
-
-    #define FUNCTION_LOG_END_BASE()                                                                                                \
-            stackTraceTestStart();                                                                                                 \
-            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
-        }
+    #define STACK_TRACE_TEST_START()                                stackTraceTestStart()
+    #define STACK_TRACE_TEST_STOP()                                 stackTraceTestStop()
 #else
-    #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
-        LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
-                                                                                                                                   \
-        if (logAny(FUNCTION_LOG_LEVEL()))                                                                                          \
-        {                                                                                                                          \
-            stackTraceParamLog();
-
-    #define FUNCTION_LOG_END_BASE()                                                                                                \
-            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
-        }
+    #define STACK_TRACE_TEST_START()
+    #define STACK_TRACE_TEST_STOP()
 #endif
+
+#define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                          \
+    LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                    \
+                                                                                                                                   \
+    {                                                                                                                              \
+        stackTraceParamLog();                                                                                                      \
+        STACK_TRACE_TEST_STOP()
+
+#define FUNCTION_LOG_END_BASE()                                                                                                    \
+        STACK_TRACE_TEST_START();                                                                                                  \
+        LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
+    }
 
 /***********************************************************************************************************************************
 General purpose function debugging macros

@@ -114,7 +114,7 @@ execFreeResource(THIS_VOID)
 FN_EXTERN Exec *
 execNew(const String *command, const StringList *param, const String *name, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(STRING_LIST, param);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -301,7 +301,7 @@ execFdRead(const THIS_VOID)
 FN_EXTERN void
 execOpen(Exec *this)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(EXEC, this);
     FUNCTION_LOG_END();
 

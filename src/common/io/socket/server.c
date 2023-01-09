@@ -144,7 +144,7 @@ static const IoServerInterface sckServerInterface =
 FN_EXTERN IoServer *
 sckServerNew(const String *const address, const unsigned int port, const TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, address);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
