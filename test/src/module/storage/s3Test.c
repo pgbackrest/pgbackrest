@@ -308,7 +308,8 @@ testRun(void)
         httpQueryAdd(query, STRDEF("list-type"), STRDEF("2"));
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -321,7 +322,8 @@ testRun(void)
         const Buffer *lastSigningKey = driver->signingKey;
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -335,7 +337,8 @@ testRun(void)
         TEST_TITLE("change date to generate new signing key");
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -371,7 +374,8 @@ testRun(void)
         TEST_TITLE("auth with token");
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),

@@ -28,12 +28,11 @@ cmdTestExec(const String *const command)
 
     if (system(zNewFmt("%s > %s 2>&1", strZ(command), strZ(cmdTestExecLog))) != 0)
     {
-        const Buffer *const buffer = storageGetP(
-            storageNewReadP(storagePosixNewP(FSLASH_STR), cmdTestExecLog, .ignoreMissing = true));
+        const Buffer *const buffer = storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), cmdTestExecLog));
 
         THROW_FMT(
-            ExecuteError, "unable to execute: %s > %s 2>&1:%s", strZ(command), strZ(cmdTestExecLog),
-            buffer == NULL || bufEmpty(buffer) ? " no log output" : zNewFmt("\n%s", strZ(strNewBuf(buffer))));
+            ExecuteError, "unable to execute: %s > %s 2>&1:\n%s", strZ(command), strZ(cmdTestExecLog),
+            zNewFmt("\n%s", strZ(strTrim(strNewBuf(buffer)))));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -73,15 +72,15 @@ cmdTestPathCreate(const Storage *const storage, const String *const path)
 void
 cmdTest(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
-    const StringList *moduleFilterList, const unsigned int test, const uint64_t scale, const LogLevel logLevel,
-    const bool logTime, const String *const timeZone, const bool coverage, const bool profile, const bool optimize)
+    const String *moduleName, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
+    const String *const timeZone, const bool coverage, const bool profile, const bool optimize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
         FUNCTION_LOG_PARAM(STRING, pathTest);
         FUNCTION_LOG_PARAM(STRING, vm);
         FUNCTION_LOG_PARAM(UINT, vmId);
-        FUNCTION_LOG_PARAM(STRING_LIST, moduleFilterList);
+        FUNCTION_LOG_PARAM(STRING, moduleName);
         FUNCTION_LOG_PARAM(UINT, test);
         FUNCTION_LOG_PARAM(UINT64, scale);
         FUNCTION_LOG_PARAM(ENUM, logLevel);
@@ -98,14 +97,12 @@ cmdTest(
         cmdTestExecLog = strNewFmt("%s/exec-%u.log", strZ(pathTest), vmId);
 
         // Find test
-        ASSERT(!strLstEmpty(moduleFilterList));
+        ASSERT(moduleName != NULL);
 
         const TestDef testDef = testDefParse(storagePosixNewP(pathRepo));
-        const String *const moduleName = strLstGet(moduleFilterList, 0);
         const TestDefModule *const module = lstFind(testDef.moduleList, &moduleName);
 
-        if (module == NULL)
-            THROW_FMT(ParamInvalidError, "'%s' is not a valid test", strZ(moduleName));
+        CHECK_FMT(ParamInvalidError, module != NULL, "'%s' is not a valid test", strZ(moduleName));
 
         // Build test
         bool buildRetry = false;
