@@ -956,10 +956,10 @@
                         <summary>SFTP repository hostkey hash.</summary>
 
                         <text>
-                            <p>SFTP repository hostkey hash. Declares the hash type to be used to compute the digest of the remote system's hostkey on startup. Newer versions of libssh2 support sha256-ssh2-hostkey-hash in addition to md5-ssh2-hostkey-hash and sha1-ssh2-hostkey-hash.</p>
+                            <p>SFTP repository hostkey hash type. Declares the hash type to be used to compute the digest of the remote system's hostkey on startup. Newer versions of libssh2 support sha256 in addition to md5 and sha1.</p>
                         </text>
 
-                        <example>sha256-ssh2-hostkey-hash</example>
+                        <example>sha256</example>
                     </config-key>
 
                     <config-key id="repo-sftp-host-port" name="SFTP Repository Host Port">

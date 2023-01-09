@@ -2245,9 +2245,9 @@ option:
     group: repo
     type: string-id
     allow-list:
-      - md5-ssh2-hostkey-hash
-      - sha1-ssh2-hostkey-hash
-      - sha256-ssh2-hostkey-hash
+      - md5
+      - sha1
+      - sha256
     command: repo-type
     depend:
       option: repo-type
@@ -2256,6 +2256,7 @@ option:
 
   repo-sftp-host-port:
     section: global
+    group: repo
     type: integer
     default: 22
     allow-range: [1, 65535]
