@@ -20,17 +20,16 @@ typedef struct StorageReadSftp
     StorageReadInterface interface;                                 // Interface
     StorageSftp *storage;                                           // Storage that created this object
 
-    IoSession *ioSession;
-    LIBSSH2_SESSION *session;
-    LIBSSH2_SFTP *sftpSession;
-    LIBSSH2_SFTP_HANDLE *sftpHandle;
-    LIBSSH2_SFTP_ATTRIBUTES *attr;
+    IoSession *ioSession;                                           // IoSession (socket) connection to SFTP server
+    LIBSSH2_SESSION *session;                                       // LibSsh2 session
+    LIBSSH2_SFTP *sftpSession;                                      // LibSsh2 session sftp session
+    LIBSSH2_SFTP_HANDLE *sftpHandle;                                // LibSsh2 session sftp handle
+    LIBSSH2_SFTP_ATTRIBUTES *attr;                                  // LibSsh2 file attributes
     uint64_t current;                                               // Current bytes read from file
     uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
-    bool eof;
-    TimeMSec timeoutSession;
-    TimeMSec timeoutConnect;
-    Wait *wait;
+    bool eof;                                                       // Did we reach end of file
+    TimeMSec timeoutSession;                                        // Socket session timeout
+    TimeMSec timeoutConnect;                                        // Socket connection timeout
 } StorageReadSftp;
 
 /***********************************************************************************************************************************
@@ -56,7 +55,7 @@ storageReadSftpOpen(THIS_VOID)
     ASSERT(this != NULL);
 
     // Open the file
-    this->wait = waitNew(this->timeoutConnect);
+    Wait *wait = waitNew(this->timeoutConnect);
 
     do
     {
@@ -64,7 +63,7 @@ storageReadSftpOpen(THIS_VOID)
             this->sftpSession, strZ(this->interface.name), (unsigned int)strSize(this->interface.name), LIBSSH2_FXF_READ, 0,
             LIBSSH2_SFTP_OPENFILE);
     }
-    while (this->sftpHandle == NULL && waitMore(this->wait));
+    while (this->sftpHandle == NULL && waitMore(wait));
 
     if (this->sftpHandle == NULL)
     {
@@ -121,7 +120,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
             expectedBytes = (size_t)(this->limit - this->current);
         bufLimitSet(buffer, expectedBytes);
 
-        this->wait = waitNew(this->timeoutConnect);
+        Wait *wait = waitNew(this->timeoutConnect);
 
         ssize_t rc = 0;
 
@@ -132,7 +131,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
             {
                 rc = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer), bufRemains(buffer));
             }
-            while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+            while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
             // Break on EOF or error
             if (rc <= 0)
@@ -142,7 +141,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
             bufUsedInc(buffer, (size_t)rc);
 
             // Reset timeout
-            this->wait = waitNew(this->timeoutConnect);
+            wait = waitNew(this->timeoutConnect);
         }
         while (!bufFull(buffer));
 
@@ -195,14 +194,14 @@ storageReadSftpClose(THIS_VOID)
     if (this->sftpHandle != NULL)
     {
         int rc = 0;
-        this->wait = waitNew(this->timeoutConnect);
+        Wait *wait = waitNew(this->timeoutConnect);
 
         // Close the libssh2 sftpHandle
         do
         {
             rc = libssh2_sftp_close(this->sftpHandle);
         }
-        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(this->wait));
+        while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 
         if (rc)
         {

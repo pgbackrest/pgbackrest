@@ -139,7 +139,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("json", 0x73e6a0),                                                                                           // val/strid
     STRID5("lsn", 0x3a6c0),                                                                                             // val/strid
     STRID6("lz4", 0x2068c1),                                                                                            // val/strid
-    STRID5("md5-ssh2-hostkey-hash", 0x9bd1be2273df48d4),                                                                // val/strid
+    STRID5("md5", 0x748d0),                                                                                             // val/strid
     STRID5("name", 0x2b42e0),                                                                                           // val/strid
     STRID5("none", 0x2b9ee0),                                                                                           // val/strid
     STRID5("off", 0x18cf0),                                                                                             // val/strid
@@ -154,8 +154,8 @@ static const StringId parseRuleValueStrId[] =
     STRID5("sas", 0x4c330),                                                                                             // val/strid
     STRID5("service", 0x1469b48b30),                                                                                    // val/strid
     STRID5("sftp", 0x850d30),                                                                                           // val/strid
-    STRID6("sha1-ssh2-hostkey-hash", 0x6de2134db7412135),                                                               // val/strid
-    STRID5("sha256-ssh2-hostkey-hash", 0xdf1139efdde05134),                                                             // val/strid
+    STRID6("sha1", 0x7412131),                                                                                          // val/strid
+    STRID5("sha256", 0x3dde05130),                                                                                      // val/strid
     STRID5("shared", 0x85905130),                                                                                       // val/strid
     STRID5("shutdown", 0x75de4a55130),                                                                                  // val/strid
     STRID5("ssh", 0x22730),                                                                                             // val/strid
@@ -196,7 +196,7 @@ typedef enum
     parseRuleValStrIdJson,                                                                                         // val/strid/enum
     parseRuleValStrIdLsn,                                                                                          // val/strid/enum
     parseRuleValStrIdLz4,                                                                                          // val/strid/enum
-    parseRuleValStrIdMd5Ssh2HostkeyHash,                                                                           // val/strid/enum
+    parseRuleValStrIdMd5,                                                                                          // val/strid/enum
     parseRuleValStrIdName,                                                                                         // val/strid/enum
     parseRuleValStrIdNone,                                                                                         // val/strid/enum
     parseRuleValStrIdOff,                                                                                          // val/strid/enum
@@ -211,8 +211,8 @@ typedef enum
     parseRuleValStrIdSas,                                                                                          // val/strid/enum
     parseRuleValStrIdService,                                                                                      // val/strid/enum
     parseRuleValStrIdSftp,                                                                                         // val/strid/enum
-    parseRuleValStrIdSha1Ssh2HostkeyHash,                                                                          // val/strid/enum
-    parseRuleValStrIdSha256Ssh2HostkeyHash,                                                                        // val/strid/enum
+    parseRuleValStrIdSha1,                                                                                         // val/strid/enum
+    parseRuleValStrIdSha256,                                                                                       // val/strid/enum
     parseRuleValStrIdShared,                                                                                       // val/strid/enum
     parseRuleValStrIdShutdown,                                                                                     // val/strid/enum
     parseRuleValStrIdSsh,                                                                                          // val/strid/enum
@@ -7525,6 +7525,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_RESET(true),                                                                    // opt/repo-sftp-host-port
         PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/repo-sftp-host-port
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                      // opt/repo-sftp-host-port
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                             // opt/repo-sftp-host-port
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                        // opt/repo-sftp-host-port
                                                                                                           // opt/repo-sftp-host-port
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-sftp-host-port
         (                                                                                                 // opt/repo-sftp-host-port
@@ -7683,9 +7685,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                        // opt/repo-sftp-hostkey-hash
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                         // opt/repo-sftp-hostkey-hash
                 (                                                                                      // opt/repo-sftp-hostkey-hash
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdMd5Ssh2HostkeyHash),                         // opt/repo-sftp-hostkey-hash
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSha1Ssh2HostkeyHash),                        // opt/repo-sftp-hostkey-hash
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSha256Ssh2HostkeyHash),                      // opt/repo-sftp-hostkey-hash
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdMd5),                                        // opt/repo-sftp-hostkey-hash
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSha1),                                       // opt/repo-sftp-hostkey-hash
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSha256),                                     // opt/repo-sftp-hostkey-hash
                 ),                                                                                     // opt/repo-sftp-hostkey-hash
             ),                                                                                         // opt/repo-sftp-hostkey-hash
         ),                                                                                             // opt/repo-sftp-hostkey-hash
