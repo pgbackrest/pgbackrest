@@ -367,9 +367,9 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
     char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName,
     const unsigned int fileLine)
 {
+    size_t result = 0;
     const char *param = "test build required for parameters";
     int stackIdx = stackTraceLocal.stackSize - 1;
-    size_t result = 0;
 
     // If the current function passed in is the same as the top function on the stack then use the parameters for that function
     fileName = stackTraceTrimSrc(fileName);
@@ -394,13 +394,12 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
         // Output the rest of the stack
         for (; stackIdx >= 0; stackIdx--)
         {
-            const StackTraceData *const traceData = &stackTraceLocal.stack[stackIdx];
+            const StackTraceData *const data = &stackTraceLocal.stack[stackIdx];
 
-            result += stackTraceFmt(
-                buffer, bufferSize, result, "\n%s:%s", stackTraceTrimSrc(traceData->fileName), traceData->functionName);
+            result += stackTraceFmt(buffer, bufferSize, result, "\n%s:%s", stackTraceTrimSrc(data->fileName), data->functionName);
 
-            if (traceData->fileLine > 0)
-                result += stackTraceFmt(buffer, bufferSize, result, ":%u", traceData->fileLine);
+            if (data->fileLine > 0)
+                result += stackTraceFmt(buffer, bufferSize, result, ":%u", data->fileLine);
 
             result += stackTraceFmt(buffer, bufferSize, result, ":(%s)", stackTraceParamIdx(stackIdx));
         }
