@@ -819,7 +819,7 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
         if (handshakeStatus != 0)
             THROW_FMT(ServiceError, "libssh2 handshake failed");
 
-        HashType hashType = hashTypeSha1;
+        int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
 
         switch (param.hostkeyHash)
         {
