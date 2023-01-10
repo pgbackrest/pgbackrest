@@ -188,7 +188,8 @@ eval
     {
         # Build list of packages that need to be installed
         my $strPackage =
-            "make gcc ccache meson python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config";
+            "make gcc ccache meson python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config" .
+                " libssh2-1-dev";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))
@@ -199,7 +200,7 @@ eval
         # Extra packages required when testing without containers
         if ($strVm eq VM_NONE)
         {
-            $strPackage .= " valgrind liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev libssh2-1-dev";
+            $strPackage .= " valgrind liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev";
         }
         # Else packages needed for integration tests on containers
         else
