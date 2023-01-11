@@ -19,7 +19,7 @@ struct IoClient
 FN_EXTERN IoClient *
 ioClientNew(void *driver, const IoClientInterface *interface)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_CLIENT_INTERFACE, interface);
     FUNCTION_LOG_END();

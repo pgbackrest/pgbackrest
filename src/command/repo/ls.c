@@ -80,7 +80,7 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
 static void
 storageListRender(IoWrite *write)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_WRITE, write);
     FUNCTION_LOG_END();
 

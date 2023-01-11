@@ -1181,7 +1181,13 @@ jsonReadVarRecurse(JsonRead *const this)
         }
 
         case jsonTypeString:
-            FUNCTION_TEST_RETURN(VARIANT, varNewStr(jsonReadStr(this)));
+        {
+            String *const string = jsonReadStr(this);
+            Variant *const result = varNewStr(string);
+            strFree(string);
+
+            FUNCTION_TEST_RETURN(VARIANT, result);
+        }
 
         case jsonTypeArrayBegin:
         {

@@ -19,7 +19,7 @@ struct IoSession
 FN_EXTERN IoSession *
 ioSessionNew(void *driver, const IoSessionInterface *interface)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_SESSION_INTERFACE, interface);
     FUNCTION_LOG_END();

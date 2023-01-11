@@ -24,7 +24,7 @@ Write source file to destination IO
 static int
 storageGetProcess(IoWrite *destination)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, destination);
     FUNCTION_LOG_END();
 

@@ -352,7 +352,7 @@ static const IoSessionInterface tlsSessionInterface =
 FN_EXTERN IoSession *
 tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM_P(VOID, session);
         FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
