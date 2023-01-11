@@ -73,10 +73,6 @@ main(int argListSize, const char *argList[])
 
     storageHelperInit(storageHelperList);
 
-#ifdef WITH_BACKTRACE
-    stackTraceInit(argList[0]);
-#endif
-
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);

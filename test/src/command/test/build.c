@@ -533,6 +533,7 @@ testBldUnit(TestBuild *const this)
             "            '%s/test/src',\n"
             "        ),\n"
             "    dependencies: [\n"
+            "        lib_backtrace,\n"
             "        lib_bz2,\n"
             "        lib_openssl,\n"
             "        lib_lz4,\n"
