@@ -47,9 +47,13 @@ ioClientNew(void *driver, const IoClientInterface *interface)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-ioClientToLog(const IoClient *this)
+FN_EXTERN void
+ioClientToLog(const IoClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, driver: %s}", strZ(strIdToStr(this->pub.interface->type)), strZ(this->pub.interface->toLog(this->pub.driver)));
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->pub.interface->type, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", driver: ");
+    this->pub.interface->toLog(this->pub.driver, debugLog);
+    strStcCatChr(debugLog, '}');
 }

@@ -139,11 +139,11 @@ Macros for function logging
 #define FUNCTION_LOG_YAML_TYPE                                                                                                     \
     Yaml *
 #define FUNCTION_LOG_YAML_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Yaml", buffer, bufferSize)
+    objNameToLog(value, "Yaml", buffer, bufferSize)
 
 #define FUNCTION_LOG_YAML_EVENT_TYPE                                                                                               \
     YamlEvent
 #define FUNCTION_LOG_YAML_EVENT_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(&value, "YamlEvent", buffer, bufferSize)
+    objNameToLog(&value, "YamlEvent", buffer, bufferSize)
 
 #endif

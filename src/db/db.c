@@ -851,10 +851,17 @@ dbWalSwitch(Db *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-dbToLog(const Db *this)
+FN_EXTERN void
+dbToLog(const Db *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{client: %s, remoteClient: %s}", this->client == NULL ? NULL_Z : strZ(pgClientToLog(this->client)),
-        this->remoteClient == NULL ? NULL_Z : strZ(protocolClientToLog(this->remoteClient)));
+    strStcCat(debugLog, "{client: ");
+    strStcResultSizeInc(
+        debugLog, FUNCTION_LOG_OBJECT_FORMAT(this->client, pgClientToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", remoteClient: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(
+            this->remoteClient, protocolClientToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

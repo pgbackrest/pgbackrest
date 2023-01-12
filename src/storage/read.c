@@ -23,7 +23,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_INTERFACE_TYPE                                                                                   \
     StorageReadInterface
 #define FUNCTION_LOG_STORAGE_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                      \
-    objToLog(&value, "StorageReadInterface", buffer, bufferSize)
+    objNameToLog(&value, "StorageReadInterface", buffer, bufferSize)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
@@ -56,10 +56,11 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageReadToLog(const StorageRead *this)
+FN_EXTERN void
+storageReadToLog(const StorageRead *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, name: %s, ignoreMissing: %s}", strZ(strIdToStr(storageReadType(this))), strZ(strToLog(storageReadName(this))),
-        cvtBoolToConstZ(storageReadIgnoreMissing(this)));
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(storageReadType(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(
+        debugLog, ", name: %s, ignoreMissing: %s}", strZ(storageReadName(this)), cvtBoolToConstZ(storageReadIgnoreMissing(this)));
 }

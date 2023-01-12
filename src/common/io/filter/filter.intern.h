@@ -125,6 +125,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FILTER_INTERFACE_TYPE                                                                                      \
     IoFilterInterface *
 #define FUNCTION_LOG_IO_FILTER_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "IoFilterInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoFilterInterface", buffer, bufferSize)
 
 #endif

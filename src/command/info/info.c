@@ -121,7 +121,7 @@ typedef struct InfoRepoData
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
     InfoRepoData *
 #define FUNCTION_LOG_INFO_REPO_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "InfoRepoData", buffer, bufferSize)
+    objNameToLog(value, "InfoRepoData", buffer, bufferSize)
 
 // Stanza with repository list of information for each repository
 typedef struct InfoStanzaRepo
@@ -138,7 +138,7 @@ typedef struct InfoStanzaRepo
 #define FUNCTION_LOG_INFO_STANZA_REPO_TYPE                                                                                         \
     InfoStanzaRepo *
 #define FUNCTION_LOG_INFO_STANZA_REPO_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "InfoStanzaRepo", buffer, bufferSize)
+    objNameToLog(value, "InfoStanzaRepo", buffer, bufferSize)
 
 // Group all databases with the same system-id and version together regardless of db-id or repo
 typedef struct DbGroup
@@ -154,7 +154,7 @@ typedef struct DbGroup
 #define FUNCTION_LOG_DB_GROUP_TYPE                                                                                                 \
     DbGroup *
 #define FUNCTION_LOG_DB_GROUP_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "DbGroup", buffer, bufferSize)
+    objNameToLog(value, "DbGroup", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Helper function for reporting errors

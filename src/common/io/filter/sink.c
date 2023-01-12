@@ -23,7 +23,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_SINK_TYPE                                                                                                  \
     IoSink *
 #define FUNCTION_LOG_IO_SINK_FORMAT(value, buffer, bufferSize)                                                                     \
-    objToLog(value, "IoSink", buffer, bufferSize)
+    objNameToLog(value, "IoSink", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Discard all input

@@ -29,18 +29,18 @@ typedef struct Bz2Decompress
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-bz2DecompressToLog(const Bz2Decompress *this)
+static void
+bz2DecompressToLog(const Bz2Decompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
         this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_BZ2_DECOMPRESS_TYPE                                                                                            \
     Bz2Decompress *
 #define FUNCTION_LOG_BZ2_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bz2DecompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, bz2DecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free inflate stream

@@ -1242,11 +1242,11 @@ pckReadEnd(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pckReadToLog(const PackRead *this)
+FN_EXTERN void
+pckReadToLog(const PackRead *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
+    strStcFmt(
+        debugLog, "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
         this->tagStack.top->idLast, this->tagNextId, this->tagNextTypeMap, this->tagNextValue);
 }
 
@@ -1946,8 +1946,9 @@ pckWriteResult(PackWrite *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pckWriteToLog(const PackWrite *this)
+FN_EXTERN void
+pckWriteToLog(const PackWrite *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
+    strStcFmt(
+        debugLog, "{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
 }

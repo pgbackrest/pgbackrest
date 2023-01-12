@@ -456,10 +456,10 @@ infoPgCurrentDataId(const InfoPg *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-infoPgDataToLog(const InfoPgData *this)
+FN_EXTERN void
+infoPgDataToLog(const InfoPgData *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %u}", this->id, this->version, this->systemId,
+    strStcFmt(
+        debugLog, "{id: %u, version: %u, systemId: %" PRIu64 ", catalogVersion: %u}", this->id, this->version, this->systemId,
         this->catalogVersion);
 }

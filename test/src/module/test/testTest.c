@@ -166,6 +166,7 @@ testRun(void)
             "          - common/error.inc: included\n"
             "        depend:\n"
             "          - common/stackTrace\n"
+            "          - common/type/stringStatic\n"
             "\n"
             "      - name: stack-trace\n"
             "        total: 4\n"
@@ -178,6 +179,7 @@ testRun(void)
             "                - stackTraceBackCallback\n"
             "        coverage:\n"
             "          - common/stackTrace\n"
+            "          - common/type/stringStatic\n"
             "        depend:\n"
             "          - common/debug\n"
             "\n"
@@ -240,6 +242,8 @@ testRun(void)
             "src/common/stackTrace.h",
             "src/common/type/convert.h",
             "src/common/type/param.h",
+            "src/common/type/stringStatic.h",
+            "src/common/type/stringStatic.c",
             "src/common/type/stringZ.h",
             "test/src/common/harnessDebug.h",
             "test/src/common/harnessLog.h",
@@ -341,6 +345,11 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/none/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("// No timezone specified"));
 
+                strReplace(
+                    testCDup, STRDEF("{[C_INCLUDE]}"),
+                    STRDEF(
+                        "#include \"test/src/common/harnessStackTrace.c\"\n"
+                        "#include \"../../../repo/src/common/type/stringStatic.c\""));
                 strReplace(testCDup, STRDEF("{[C_INCLUDE]}"), STRDEF("#include \"test/src/common/harnessStackTrace.c\""));
                 strReplace(
                     testCDup, STRDEF("{[C_TEST_INCLUDE]}"),
@@ -400,6 +409,7 @@ testRun(void)
                         MESON_COMMENT_BLOCK "\n"
                         "src_unit = files(\n"
                         "    '../../../repo/src/common/stackTrace.c',\n"
+                        "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/test/src/common/harnessTest.c',\n"
                         "    'test.c',\n"
                         ")\n"
@@ -596,6 +606,7 @@ testRun(void)
                         "# Unit test\n"
                         MESON_COMMENT_BLOCK "\n"
                         "src_unit = files(\n"
+                        "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/src/common/debug.c',\n"
                         "    'test/src/common/harnessStackTrace.c',\n"
                         "    '../../../repo/test/src/common/harnessNoShim.c',\n"
@@ -760,6 +771,7 @@ testRun(void)
                         "# Unit test\n"
                         MESON_COMMENT_BLOCK "\n"
                         "src_unit = files(\n"
+                        "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/src/common/debug.c',\n"
                         "    'test/src/common/harnessError.c',\n"
                         "    'test/src/common/harnessStackTrace.c',\n"

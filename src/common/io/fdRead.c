@@ -29,7 +29,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FD_READ_TYPE                                                                                               \
     IoFdRead *
 #define FUNCTION_LOG_IO_FD_READ_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "IoFdRead", buffer, bufferSize)
+    objNameToLog(value, "IoFdRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Are there bytes ready to read immediately?

@@ -28,16 +28,16 @@ typedef struct IoBuffer
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-ioBufferToLog(const IoBuffer *this)
+static void
+ioBufferToLog(const IoBuffer *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{inputSame: %s, inputPos: %zu}", cvtBoolToConstZ(this->inputSame), this->inputPos);
+    strStcFmt(debugLog, "{inputSame: %s, inputPos: %zu}", cvtBoolToConstZ(this->inputSame), this->inputPos);
 }
 
 #define FUNCTION_LOG_IO_BUFFER_TYPE                                                                                                \
     IoBuffer *
 #define FUNCTION_LOG_IO_BUFFER_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioBufferToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioBufferToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Move data from the input buffer to the output buffer

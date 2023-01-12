@@ -850,8 +850,8 @@ infoBackupSaveFile(
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-infoBackupDataToLog(const InfoBackupData *this)
+FN_EXTERN void
+infoBackupDataToLog(const InfoBackupData *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{label: %s, pgId: %u}", strZ(this->backupLabel), this->backupPgId);
+    strStcFmt(debugLog, "{label: %s, pgId: %u}", strZ(this->backupLabel), this->backupPgId);
 }

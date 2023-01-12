@@ -49,7 +49,7 @@ Macros for function logging
 #define FUNCTION_LOG_CRYPTO_HASH_TYPE                                                                                              \
     CryptoHash *
 #define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "CryptoHash", buffer, bufferSize)
+    objNameToLog(value, "CryptoHash", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free hash context

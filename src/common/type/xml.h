@@ -113,16 +113,16 @@ Macros for function logging
 #define FUNCTION_LOG_XML_DOCUMENT_TYPE                                                                                             \
     XmlDocument *
 #define FUNCTION_LOG_XML_DOCUMENT_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "XmlDocument", buffer, bufferSize)
+    objNameToLog(value, "XmlDocument", buffer, bufferSize)
 
 #define FUNCTION_LOG_XML_NODE_TYPE                                                                                                 \
     XmlNode *
 #define FUNCTION_LOG_XML_NODE_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "XmlNode", buffer, bufferSize)
+    objNameToLog(value, "XmlNode", buffer, bufferSize)
 
 #define FUNCTION_LOG_XML_NODE_LIST_TYPE                                                                                            \
     XmlNodeList *
 #define FUNCTION_LOG_XML_NODE_LIST_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "XmlNodeList", buffer, bufferSize)
+    objNameToLog(value, "XmlNodeList", buffer, bufferSize)
 
 #endif

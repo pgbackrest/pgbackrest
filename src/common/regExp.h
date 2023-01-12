@@ -49,6 +49,6 @@ Macros for function logging
 #define FUNCTION_LOG_REGEXP_TYPE                                                                                                   \
     RegExp *
 #define FUNCTION_LOG_REGEXP_FORMAT(value, buffer, bufferSize)                                                                      \
-    objToLog(value, "RegExp", buffer, bufferSize)
+    objNameToLog(value, "RegExp", buffer, bufferSize)
 
 #endif

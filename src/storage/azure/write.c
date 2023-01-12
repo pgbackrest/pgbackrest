@@ -53,7 +53,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_AZURE_TYPE                                                                                      \
     StorageWriteAzure *
 #define FUNCTION_LOG_STORAGE_WRITE_AZURE_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageWriteAzure", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteAzure", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file

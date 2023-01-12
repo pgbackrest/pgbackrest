@@ -7,6 +7,7 @@ Debug Routines
 #include "common/assert.h"
 #include "common/stackTrace.h"
 #include "common/type/convert.h"
+#include "common/type/stringStatic.h"
 #include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
@@ -98,7 +99,15 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
 Functions and macros to render various data types
 ***********************************************************************************************************************************/
 // Convert object to a zero-terminated string for logging
-FN_EXTERN size_t objToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize);
+typedef void (*ObjToLogFormat)(const void *object, StringStatic *debugLog);
+
+FN_EXTERN size_t objToLog(const void *object, ObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
+
+#define FUNCTION_LOG_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                  \
+    objToLog(object, (ObjToLogFormat)formatFunc, buffer, bufferSize)
+
+// Convert object name to a zero-terminated string for logging
+FN_EXTERN size_t objNameToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize);
 
 // Convert pointer to a zero-terminated string for logging
 FN_EXTERN size_t ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize);

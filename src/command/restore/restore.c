@@ -197,7 +197,7 @@ typedef struct RestoreBackupData
 #define FUNCTION_LOG_RESTORE_BACKUP_DATA_TYPE                                                                                      \
     RestoreBackupData
 #define FUNCTION_LOG_RESTORE_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "RestoreBackupData", buffer, bufferSize)
+    objNameToLog(&value, "RestoreBackupData", buffer, bufferSize)
 
 // Helper function for restoreBackupSet
 static RestoreBackupData

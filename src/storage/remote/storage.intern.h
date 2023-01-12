@@ -17,6 +17,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_REMOTE_TYPE                                                                                           \
     StorageRemote *
 #define FUNCTION_LOG_STORAGE_REMOTE_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "StorageRemote", buffer, bufferSize)
+    objNameToLog(value, "StorageRemote", buffer, bufferSize)
 
 #endif

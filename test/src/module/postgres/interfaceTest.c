@@ -236,6 +236,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("pgControlToLog()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         PgControl pgControl =
         {
             .version = PG_VERSION_11,
@@ -244,21 +246,24 @@ testRun(void)
             .pageChecksum = true
         };
 
-        TEST_RESULT_STR_Z(
-            pgControlToLog(&pgControl), "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksum: true}",
-            "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(&pgControl, pgControlToLog, logBuf, sizeof(logBuf)), "pgControlToLog");
+        TEST_RESULT_Z(
+            logBuf, "{version: 110000, systemId: 1030522662895, walSegmentSize: 16777216, pageChecksum: true}", "check log");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("pgWalToLog()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         PgWal pgWal =
         {
             .version = PG_VERSION_10,
             .systemId = 0xFEFEFEFEFE
         };
 
-        TEST_RESULT_STR_Z(pgWalToLog(&pgWal), "{version: 100000, systemId: 1095199817470}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(&pgWal, pgWalToLog, logBuf, sizeof(logBuf)), "pgWalToLog");
+        TEST_RESULT_Z(logBuf, "{version: 100000, systemId: 1095199817470}", "check log");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

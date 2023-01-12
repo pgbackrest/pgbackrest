@@ -41,20 +41,23 @@ typedef struct TlsClient
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-tlsClientToLog(const THIS_VOID)
+static void
+tlsClientToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const TlsClient);
 
-    return strNewFmt(
-        "{ioClient: %s, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 ", verifyPeer: %s}",
-        strZ(ioClientToLog(this->ioClient)), this->timeoutConnect, this->timeoutSession, cvtBoolToConstZ(this->verifyPeer));
+    strStcCat(debugLog, "{ioClient: ");
+    ioClientToLog(this->ioClient, debugLog);
+
+    strStcFmt(
+        debugLog, ", timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 ", verifyPeer: %s}", this->timeoutConnect,
+        this->timeoutSession, cvtBoolToConstZ(this->verifyPeer));
 }
 
 #define FUNCTION_LOG_TLS_CLIENT_TYPE                                                                                               \
     TlsClient *
 #define FUNCTION_LOG_TLS_CLIENT_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tlsClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, tlsClientToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection

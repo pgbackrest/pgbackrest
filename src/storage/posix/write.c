@@ -35,7 +35,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_TYPE                                                                                      \
     StorageWritePosix *
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageWritePosix", buffer, bufferSize)
+    objNameToLog(value, "StorageWritePosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 File open constants

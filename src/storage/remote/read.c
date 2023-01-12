@@ -42,7 +42,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_REMOTE_TYPE                                                                                      \
     StorageReadRemote *
 #define FUNCTION_LOG_STORAGE_READ_REMOTE_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageReadRemote", buffer, bufferSize)
+    objNameToLog(value, "StorageReadRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Clear protocol if the entire file is not read or an error occurs before the read is complete. This is required to clear the

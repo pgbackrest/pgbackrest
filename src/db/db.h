@@ -159,11 +159,11 @@ dbFree(Db *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *dbToLog(const Db *this);
+FN_EXTERN void dbToLog(const Db *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_DB_TYPE                                                                                                       \
     Db *
 #define FUNCTION_LOG_DB_FORMAT(value, buffer, bufferSize)                                                                          \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, dbToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, dbToLog, buffer, bufferSize)
 
 #endif

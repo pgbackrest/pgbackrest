@@ -57,11 +57,11 @@ protocolParallelFree(ProtocolParallel *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *protocolParallelToLog(const ProtocolParallel *this);
+FN_EXTERN void protocolParallelToLog(const ProtocolParallel *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PROTOCOL_PARALLEL_TYPE                                                                                        \
     ProtocolParallel *
 #define FUNCTION_LOG_PROTOCOL_PARALLEL_FORMAT(value, buffer, bufferSize)                                                           \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolParallelToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolParallelToLog, buffer, bufferSize)
 
 #endif

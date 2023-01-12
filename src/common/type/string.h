@@ -23,6 +23,8 @@ old context and then back. Below is a simplified example:
 
 #include <stdint.h>
 
+#include "common/debug.h"
+
 /***********************************************************************************************************************************
 Minimum number of extra bytes to allocate for strings that are growing or are likely to grow
 ***********************************************************************************************************************************/
@@ -259,23 +261,13 @@ STRING_DECLARE(Y_STR);
 STRING_DECLARE(ZERO_STR);
 
 /***********************************************************************************************************************************
-Helper function/macro for object logging
-***********************************************************************************************************************************/
-typedef String *(*StrObjToLogFormat)(const void *object);
-
-FN_EXTERN size_t strObjToLog(const void *object, StrObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
-
-#define FUNCTION_LOG_STRING_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                  \
-    strObjToLog(object, (StrObjToLogFormat)formatFunc, buffer, bufferSize)
-
-/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *strToLog(const String *this);
+FN_EXTERN void strToLog(const String *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STRING_TYPE                                                                                                   \
     String *
 #define FUNCTION_LOG_STRING_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, strToLog, buffer, bufferSize)
 
 #endif

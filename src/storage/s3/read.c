@@ -30,7 +30,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_S3_TYPE                                                                                          \
     StorageReadS3 *
 #define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "StorageReadS3", buffer, bufferSize)
+    objNameToLog(value, "StorageReadS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file

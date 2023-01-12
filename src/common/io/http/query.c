@@ -288,28 +288,25 @@ httpQueryRender(const HttpQuery *this, HttpQueryRenderParam param)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-httpQueryToLog(const HttpQuery *this)
+FN_EXTERN void
+httpQueryToLog(const HttpQuery *const this, StringStatic *const debugLog)
 {
-    String *result = strCatZ(strNew(), "{");
-    const StringList *keyList = httpQueryList(this);
+    const VariantList *const keyList = kvKeyList(this->kv);
 
-    for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+    strStcCatChr(debugLog, '{');
+
+    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
     {
-        const String *key = strLstGet(keyList, keyIdx);
+        const String *const key = varStr(varLstGet(keyList, keyIdx));
 
-        if (strSize(result) != 1)
-            strCatZ(result, ", ");
-
-        strCatFmt(result, "%s: ", strZ(key));
+        if (keyIdx != 0)
+            strStcCat(debugLog, ", ");
 
         if (httpQueryRedact(this, key))
-            strCatZ(result, "<redacted>");
+            strStcFmt(debugLog, "%s: <redacted>", strZ(key));
         else
-            strCatFmt(result, "'%s'", strZ(httpQueryGet(this, key)));
+            strStcFmt(debugLog, "%s: '%s'", strZ(key), strZ(httpQueryGet(this, key)));
     }
 
-    strCatZ(result, "}");
-
-    return result;
+    strStcCatChr(debugLog, '}');
 }

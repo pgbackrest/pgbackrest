@@ -345,12 +345,10 @@ bufUsedZero(Buffer *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-bufToLog(const Buffer *this)
+FN_EXTERN void
+bufToLog(const Buffer *const this, StringStatic *const debugLog)
 {
-    String *result = strNewFmt(
-        "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this),
-        bufSizeLimit(this) ? zNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this)) : "}");
-
-    return result;
+    strStcFmt(
+        debugLog, "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this), bufSizeLimit(this) ? zNewFmt(", sizeAlloc: %zu}",
+        bufSizeAlloc(this)) : "}");
 }

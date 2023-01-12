@@ -377,10 +377,22 @@ pgClientClose(PgClient *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pgClientToLog(const PgClient *this)
+FN_EXTERN void
+pgClientToLog(const PgClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{host: %s, port: %u, database: %s, user: %s, queryTimeout %" PRIu64 "}", strZ(strToLog(pgClientHost(this))),
-        pgClientPort(this), strZ(strToLog(pgClientDatabase(this))), strZ(strToLog(pgClientUser(this))), pgClientTimeout(this));
+    strStcCat(debugLog, "{host: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(pgClientHost(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", database: ");
+    strToLog(pgClientDatabase(this), debugLog);
+
+    strStcCat(debugLog, ", user: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(pgClientUser(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcFmt(
+        debugLog, ", port: %u, queryTimeout %" PRIu64 "}", pgClientPort(this), pgClientTimeout(this));
 }

@@ -31,18 +31,19 @@ typedef struct SocketSession
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-sckSessionToLog(const THIS_VOID)
+static void
+sckSessionToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const SocketSession);
 
-    return strNewFmt("{fd %d, host: %s, port: %u, timeout: %" PRIu64 "}", this->fd, strZ(this->host), this->port, this->timeout);
+    strStcFmt(
+        debugLog, "{host: %s, port: %u, fd: %d, timeout: %" PRIu64 "}", strZ(this->host), this->port, this->fd, this->timeout);
 }
 
 #define FUNCTION_LOG_SOCKET_SESSION_TYPE                                                                                           \
     SocketSession *
 #define FUNCTION_LOG_SOCKET_SESSION_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckSessionToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, sckSessionToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection

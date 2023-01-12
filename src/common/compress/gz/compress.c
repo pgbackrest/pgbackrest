@@ -30,18 +30,18 @@ typedef struct GzCompress
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-gzCompressToLog(const GzCompress *this)
+static void
+gzCompressToLog(const GzCompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->flushing), this->stream.avail_in);
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, flushing: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame),
+        cvtBoolToConstZ(this->done), cvtBoolToConstZ(this->flushing), this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_GZ_COMPRESS_TYPE                                                                                              \
     GzCompress *
 #define FUNCTION_LOG_GZ_COMPRESS_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzCompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, gzCompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Compression constants

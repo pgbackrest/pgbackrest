@@ -30,7 +30,7 @@ typedef struct IoFilterData
 #define FUNCTION_LOG_IO_FILTER_DATA_TYPE                                                                                           \
     IoFilterData *
 #define FUNCTION_LOG_IO_FILTER_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "IoFilterData", buffer, bufferSize)
+    objNameToLog(value, "IoFilterData", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Filter results
@@ -544,10 +544,11 @@ ioFilterGroupResultAllSet(IoFilterGroup *const this, const Pack *const filterRes
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-ioFilterGroupToLog(const IoFilterGroup *this)
+FN_EXTERN void
+ioFilterGroupToLog(const IoFilterGroup *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
+    strStcFmt(
+        debugLog,
         "{inputSame: %s, done: %s"
 #ifdef DEBUG
             ", opened %s, flushing %s, closed %s"

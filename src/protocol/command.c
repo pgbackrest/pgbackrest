@@ -102,8 +102,10 @@ protocolCommandParam(ProtocolCommand *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-protocolCommandToLog(const ProtocolCommand *this)
+FN_EXTERN void
+protocolCommandToLog(const ProtocolCommand *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{command: %s}", strZ(strIdToStr(this->command)));
+    strStcFmt(debugLog, "{name: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->command, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

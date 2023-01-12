@@ -23,7 +23,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_INTERFACE_TYPE                                                                                  \
     StorageWriteInterface
 #define FUNCTION_LOG_STORAGE_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                     \
-    objToLog(&value, "StorageWriteInterface", buffer, bufferSize)
+    objNameToLog(&value, "StorageWriteInterface", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 This object expects its context to be created in advance.  This is so the calling function can add whatever data it wants without
@@ -57,12 +57,15 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageWriteToLog(const StorageWrite *this)
+FN_EXTERN void
+storageWriteToLog(const StorageWrite *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, name: %s, modeFile: %04o, modePath: %04o, createPath: %s, syncFile: %s, syncPath: %s, atomic: %s}",
-        strZ(strIdToStr(storageWriteType(this))), strZ(strToLog(storageWriteName(this))), storageWriteModeFile(this),
-        storageWriteModePath(this), cvtBoolToConstZ(storageWriteCreatePath(this)), cvtBoolToConstZ(storageWriteSyncFile(this)),
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(storageWriteType(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcFmt(
+        debugLog, ", name: %s, modeFile: %04o, modePath: %04o, createPath: %s, syncFile: %s, syncPath: %s, atomic: %s}",
+        strZ(storageWriteName(this)), storageWriteModeFile(this), storageWriteModePath(this),
+        cvtBoolToConstZ(storageWriteCreatePath(this)), cvtBoolToConstZ(storageWriteSyncFile(this)),
         cvtBoolToConstZ(storageWriteSyncPath(this)), cvtBoolToConstZ(storageWriteAtomic(this)));
 }

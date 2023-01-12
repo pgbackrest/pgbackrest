@@ -140,7 +140,7 @@ Get the postgres database and storage objects
 #define FUNCTION_LOG_BACKUP_DATA_TYPE                                                                                              \
     BackupData *
 #define FUNCTION_LOG_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "BackupData", buffer, bufferSize)
+    objNameToLog(value, "BackupData", buffer, bufferSize)
 
 typedef struct BackupData
 {

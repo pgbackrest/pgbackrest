@@ -42,12 +42,12 @@ Data Types and Structures
 #define FUNCTION_LOG_VERIFY_ARCHIVE_RESULT_TYPE                                                                                    \
     VerifyArchiveResult
 #define FUNCTION_LOG_VERIFY_ARCHIVE_RESULT_FORMAT(value, buffer, bufferSize)                                                       \
-    objToLog(&value, "VerifyArchiveResult", buffer, bufferSize)
+    objNameToLog(&value, "VerifyArchiveResult", buffer, bufferSize)
 
 #define FUNCTION_LOG_VERIFY_BACKUP_RESULT_TYPE                                                                                     \
     VerifyBackupResult
 #define FUNCTION_LOG_VERIFY_BACKUP_RESULT_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(&value, "VerifyBackupResult", buffer, bufferSize)
+    objNameToLog(&value, "VerifyBackupResult", buffer, bufferSize)
 
 // Structure for verifying repository info files
 typedef struct VerifyInfoFile

@@ -302,11 +302,19 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-httpRequestToLog(const HttpRequest *this)
+FN_EXTERN void
+httpRequestToLog(const HttpRequest *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{verb: %s, path: %s, query: %s, header: %s, contentSize: %zu}", strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)),
-        httpRequestQuery(this) == NULL ? "null" : strZ(httpQueryToLog(httpRequestQuery(this))),
-        strZ(httpHeaderToLog(httpRequestHeader(this))), this->content == NULL ? 0 : bufUsed(this->content));
+    strStcFmt(
+        debugLog, "{verb: %s, path: %s, contentSize: %zu, query: ", strZ(httpRequestVerb(this)),
+        strZ(httpRequestPath(this)), this->content == NULL ? 0 : bufUsed(this->content));
+
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(
+            httpRequestQuery(this), httpQueryToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", header: "),
+    httpHeaderToLog(httpRequestHeader(this), debugLog);
+    strStcCatChr(debugLog, '}');
 }

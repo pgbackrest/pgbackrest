@@ -28,7 +28,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_FD_WRITE_TYPE                                                                                              \
     IoFdWrite *
 #define FUNCTION_LOG_IO_FD_WRITE_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "IoFdWrite", buffer, bufferSize)
+    objNameToLog(value, "IoFdWrite", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 // Can bytes be written immediately?

@@ -294,7 +294,7 @@ Macros for function logging
 #define FUNCTION_LOG_MEM_CONTEXT_TYPE                                                                                              \
     MemContext *
 #define FUNCTION_LOG_MEM_CONTEXT_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "MemContext", buffer, bufferSize)
+    objNameToLog(value, "MemContext", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Internal functions

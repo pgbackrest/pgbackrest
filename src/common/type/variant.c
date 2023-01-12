@@ -1017,40 +1017,43 @@ varVarLst(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-varToLog(const Variant *this)
+FN_EXTERN void
+varToLog(const Variant *const this, StringStatic *const debugLog)
 {
-    String *result = NULL;
-
-    if (this == NULL)
-        result = strDup(NULL_STR);
-    else
+    switch (varType(this))
     {
-        switch (varType(this))
-        {
-            case varTypeString:
-                result = strToLog(varStr(this));
-                break;
+        case varTypeString:
+            strStcResultSizeInc(
+                debugLog,
+                FUNCTION_LOG_OBJECT_FORMAT(varStr(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+            break;
 
-            case varTypeKeyValue:
-                result = strNewZ("{KeyValue}");
-                break;
+        case varTypeKeyValue:
+            strStcCat(debugLog, "{KeyValue}");
+            break;
 
-            case varTypeVariantList:
-                result = strNewZ("{VariantList}");
-                break;
+        case varTypeVariantList:
+            strStcCat(debugLog, "{VariantList}");
+            break;
 
-            case varTypeBool:
-            case varTypeInt:
-            case varTypeInt64:
-            case varTypeUInt:
-            case varTypeUInt64:
-            {
-                result = strNewFmt("{%s}", strZ(varStrForce(this)));
-                break;
-            }
-        }
+        case varTypeBool:
+            strStcFmt(debugLog, "{%s}", cvtBoolToConstZ(varBool(this)));
+            break;
+
+        case varTypeInt:
+            strStcFmt(debugLog, "{%d}", varInt(this));
+            break;
+
+        case varTypeInt64:
+            strStcFmt(debugLog, "{%" PRId64 "}", varInt64(this));
+            break;
+
+        case varTypeUInt:
+            strStcFmt(debugLog, "{%u}", varUInt(this));
+            break;
+
+        case varTypeUInt64:
+            strStcFmt(debugLog, "{%" PRIu64 "}", varUInt64(this));
+            break;
     }
-
-    return result;
 }

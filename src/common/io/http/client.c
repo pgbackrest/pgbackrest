@@ -115,10 +115,10 @@ httpClientReuse(HttpClient *this, HttpSession *session)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-httpClientToLog(const HttpClient *this)
+FN_EXTERN void
+httpClientToLog(const HttpClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{ioClient: %s, reusable: %u, timeout: %" PRIu64"}", strZ(ioClientToLog(this->ioClient)), lstSize(this->sessionReuseList),
-        httpClientTimeout(this));
+    strStcCat(debugLog, "{ioClient: ");
+    ioClientToLog(this->ioClient, debugLog);
+    strStcFmt(debugLog, ", reusable: %u, timeout: %" PRIu64 "}", lstSize(this->sessionReuseList), httpClientTimeout(this));
 }

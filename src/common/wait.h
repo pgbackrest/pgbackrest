@@ -53,6 +53,6 @@ Macros for function logging
 #define FUNCTION_LOG_WAIT_TYPE                                                                                                     \
     Wait *
 #define FUNCTION_LOG_WAIT_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Wait", buffer, bufferSize)
+    objNameToLog(value, "Wait", buffer, bufferSize)
 
 #endif

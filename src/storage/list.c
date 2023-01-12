@@ -208,8 +208,8 @@ storageLstGet(StorageList *const this, const unsigned int idx)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageLstToLog(const StorageList *const this)
+FN_EXTERN void
+storageLstToLog(const StorageList *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %u}", lstSize(this->pub.list));
+    strStcFmt(debugLog, "{size: %u}", lstSize(this->pub.list));
 }

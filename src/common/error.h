@@ -355,6 +355,6 @@ Macros for function logging
 #define FUNCTION_LOG_ERROR_TYPE_TYPE                                                                                               \
     ErrorType *
 #define FUNCTION_LOG_ERROR_TYPE_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "ErrorType", buffer, bufferSize)
+    objNameToLog(value, "ErrorType", buffer, bufferSize)
 
 #endif

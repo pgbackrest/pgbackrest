@@ -26,7 +26,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_BUFFER_READ_TYPE                                                                                           \
     IoBufferRead *
 #define FUNCTION_LOG_IO_BUFFER_READ_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "IoBufferRead", buffer, bufferSize)
+    objNameToLog(value, "IoBufferRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Read data from the buffer

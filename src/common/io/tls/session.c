@@ -34,20 +34,20 @@ typedef struct TlsSession
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-tlsSessionToLog(const THIS_VOID)
+static void
+tlsSessionToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const TlsSession);
 
-    return strNewFmt(
-        "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}", strZ(ioSessionToLog(this->ioSession)), this->timeout,
-        cvtBoolToConstZ(this->shutdownOnClose));
+    strStcCat(debugLog, "{ioSession: ");
+    ioSessionToLog(this->ioSession, debugLog);
+    strStcFmt(debugLog, ", timeout: %" PRIu64", shutdownOnClose: %s}", this->timeout, cvtBoolToConstZ(this->shutdownOnClose));
 }
 
 #define FUNCTION_LOG_TLS_SESSION_TYPE                                                                                              \
     TlsSession *
 #define FUNCTION_LOG_TLS_SESSION_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tlsSessionToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, tlsSessionToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection

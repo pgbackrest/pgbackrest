@@ -84,11 +84,11 @@ protocolServerFree(ProtocolServer *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *protocolServerToLog(const ProtocolServer *this);
+FN_EXTERN void protocolServerToLog(const ProtocolServer *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PROTOCOL_SERVER_TYPE                                                                                          \
     ProtocolServer *
 #define FUNCTION_LOG_PROTOCOL_SERVER_FORMAT(value, buffer, bufferSize)                                                             \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolServerToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolServerToLog, buffer, bufferSize)
 
 #endif

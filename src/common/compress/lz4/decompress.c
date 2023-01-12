@@ -32,18 +32,18 @@ typedef struct Lz4Decompress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-lz4DecompressToLog(const Lz4Decompress *this)
+static void
+lz4DecompressToLog(const Lz4Decompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputOffset,
-        cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
+    strStcFmt(
+        debugLog, "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame),
+        this->inputOffset, cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_LZ4_DECOMPRESS_TYPE                                                                                           \
     Lz4Decompress *
 #define FUNCTION_LOG_LZ4_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lz4DecompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, lz4DecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free decompression context

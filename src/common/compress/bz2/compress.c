@@ -30,18 +30,18 @@ typedef struct Bz2Compress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-bz2CompressToLog(const Bz2Compress *this)
+static void
+bz2CompressToLog(const Bz2Compress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, flushing: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->flushing), this->stream.avail_in);
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, flushing: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame),
+        cvtBoolToConstZ(this->done), cvtBoolToConstZ(this->flushing), this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_BZ2_COMPRESS_TYPE                                                                                             \
     Bz2Compress *
 #define FUNCTION_LOG_BZ2_COMPRESS_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bz2CompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, bz2CompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free compression stream

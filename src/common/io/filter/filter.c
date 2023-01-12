@@ -154,8 +154,10 @@ ioFilterResult(const IoFilter *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-ioFilterToLog(const IoFilter *this)
+FN_EXTERN void
+ioFilterToLog(const IoFilter *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{type: %s}", strZ(strIdToStr(ioFilterType(this))));
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(ioFilterType(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

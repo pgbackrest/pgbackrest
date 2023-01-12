@@ -403,8 +403,10 @@ protocolClientNoOp(ProtocolClient *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-protocolClientToLog(const ProtocolClient *this)
+FN_EXTERN void
+protocolClientToLog(const ProtocolClient *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{name: %s, state: %s}", strZ(this->name), strZ(strIdToStr(this->state)));
+    strStcFmt(debugLog, "{name: %s, state: ", strZ(this->name));
+    strStcResultSizeInc(debugLog, strIdToLog(this->state, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

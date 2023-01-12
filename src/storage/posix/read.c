@@ -33,7 +33,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_POSIX_TYPE                                                                                       \
     StorageReadPosix *
 #define FUNCTION_LOG_STORAGE_READ_POSIX_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "StorageReadPosix", buffer, bufferSize)
+    objNameToLog(value, "StorageReadPosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Close file descriptor

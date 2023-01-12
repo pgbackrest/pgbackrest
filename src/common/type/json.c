@@ -1301,10 +1301,10 @@ jsonValidate(const String *const json)
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
-FN_EXTERN String *
-jsonReadToLog(const JsonRead *const this)
+FN_EXTERN void
+jsonReadToLog(const JsonRead *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{json: %s}", this->json);
+    strStcFmt(debugLog, "{json: %s}", this->json);
 }
 
 #endif // DEBUG
@@ -2053,10 +2053,10 @@ jsonFromVar(const Variant *const value)
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
-FN_EXTERN String *
-jsonWriteToLog(const JsonWrite *const this)
+FN_EXTERN void
+jsonWriteToLog(const JsonWrite *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %zu}", strSize(this->json));
+    strStcFmt(debugLog, "{size: %zu}", strSize(this->json));
 }
 
 #endif // DEBUG

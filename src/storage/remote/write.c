@@ -34,7 +34,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_REMOTE_TYPE                                                                                     \
     StorageWriteRemote *
 #define FUNCTION_LOG_STORAGE_WRITE_REMOTE_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(value, "StorageWriteRemote", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Close file on the remote

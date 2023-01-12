@@ -40,20 +40,20 @@ typedef struct SocketClient
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-sckClientToLog(const THIS_VOID)
+static void
+sckClientToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const SocketClient);
 
-    return strNewFmt(
-        "{host: %s, port: %u, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 "}", strZ(this->host), this->port,
+    strStcFmt(
+        debugLog, "{host: %s, port: %u, timeoutConnect: %" PRIu64 ", timeoutSession: %" PRIu64 "}", strZ(this->host), this->port,
         this->timeoutConnect, this->timeoutSession);
 }
 
 #define FUNCTION_LOG_SOCKET_CLIENT_TYPE                                                                                            \
     SocketClient *
 #define FUNCTION_LOG_SOCKET_CLIENT_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, sckClientToLog, buffer, bufferSize)
 
 /**********************************************************************************************************************************/
 static IoSession *

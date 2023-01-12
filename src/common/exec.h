@@ -75,6 +75,6 @@ Macros for function logging
 #define FUNCTION_LOG_EXEC_TYPE                                                                                                     \
     Exec *
 #define FUNCTION_LOG_EXEC_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Exec", buffer, bufferSize)
+    objNameToLog(value, "Exec", buffer, bufferSize)
 
 #endif

@@ -208,10 +208,11 @@ testRun(void)
         pgDataTest.version = (unsigned int)4294967295;
         pgDataTest.systemId = 18446744073709551615U;
         pgDataTest.catalogVersion = 200101011;
+        char logBuf[STACK_TRACE_PARAM_MAX];
 
-        TEST_RESULT_STR_Z(
-            infoPgDataToLog(&pgDataTest),
-            "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615, catalogVersion: 200101011}",
-            "    check max format");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(&pgDataTest, infoPgDataToLog, logBuf, sizeof(logBuf)), "infoPgDataToLog");
+        TEST_RESULT_Z(
+            logBuf, "{id: 4294967295, version: 4294967295, systemId: 18446744073709551615, catalogVersion: 200101011}",
+            "check log");
     }
 }

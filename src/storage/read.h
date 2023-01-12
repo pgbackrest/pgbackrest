@@ -87,11 +87,11 @@ storageReadFree(StorageRead *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *storageReadToLog(const StorageRead *this);
+FN_EXTERN void storageReadToLog(const StorageRead *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_READ_TYPE                                                                                             \
     StorageRead *
 #define FUNCTION_LOG_STORAGE_READ_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageReadToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageReadToLog, buffer, bufferSize)
 
 #endif

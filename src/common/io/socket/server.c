@@ -40,18 +40,18 @@ typedef struct SocketServer
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-sckServerToLog(const THIS_VOID)
+static void
+sckServerToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const SocketServer);
 
-    return strNewFmt("{address: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->address), this->port, this->timeout);
+    strStcFmt(debugLog, "{address: %s, port: %u, timeout: %" PRIu64 "}", strZ(this->address), this->port, this->timeout);
 }
 
 #define FUNCTION_LOG_SOCKET_SERVER_TYPE                                                                                            \
     SocketServer *
 #define FUNCTION_LOG_SOCKET_SERVER_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, sckServerToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, sckServerToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection

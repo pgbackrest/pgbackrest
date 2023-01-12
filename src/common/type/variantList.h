@@ -85,6 +85,6 @@ Macros for function logging
 #define FUNCTION_LOG_VARIANT_LIST_TYPE                                                                                             \
     VariantList *
 #define FUNCTION_LOG_VARIANT_LIST_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "VariantList", buffer, bufferSize)
+    objNameToLog(value, "VariantList", buffer, bufferSize)
 
 #endif

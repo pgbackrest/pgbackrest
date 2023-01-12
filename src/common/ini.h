@@ -76,6 +76,6 @@ Macros for function logging
 #define FUNCTION_LOG_INI_TYPE                                                                                                      \
     Ini *
 #define FUNCTION_LOG_INI_FORMAT(value, buffer, bufferSize)                                                                         \
-    objToLog(value, "Ini", buffer, bufferSize)
+    objNameToLog(value, "Ini", buffer, bufferSize)
 
 #endif

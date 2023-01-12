@@ -756,10 +756,10 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageToLog(const Storage *this)
+FN_EXTERN void
+storageToLog(const Storage *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, path: %s, write: %s}", strZ(strIdToStr(storageType(this))), strZ(strToLog(this->path)),
-        cvtBoolToConstZ(this->write));
+    strStcCat(debugLog, "{type: "),
+    strStcResultSizeInc(debugLog, strIdToLog(storageType(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(debugLog, ", path: %s, write: %s}", strZ(this->path), cvtBoolToConstZ(this->write));
 }

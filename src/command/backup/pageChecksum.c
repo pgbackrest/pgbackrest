@@ -35,16 +35,16 @@ typedef struct PageChecksum
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *
-pageChecksumToLog(const PageChecksum *this)
+FN_EXTERN void
+pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{valid: %s, align: %s}", cvtBoolToConstZ(this->valid), cvtBoolToConstZ(this->align));
+    strStcFmt(debugLog, "{valid: %s, align: %s}", cvtBoolToConstZ(this->valid), cvtBoolToConstZ(this->align));
 }
 
 #define FUNCTION_LOG_PAGE_CHECKSUM_TYPE                                                                                            \
     PageChecksum *
 #define FUNCTION_LOG_PAGE_CHECKSUM_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pageChecksumToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pageChecksumToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Count bytes in the input

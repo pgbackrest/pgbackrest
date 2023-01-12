@@ -31,18 +31,18 @@ typedef struct ZstDecompress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-zstDecompressToLog(const ZstDecompress *this)
+static void
+zstDecompressToLog(const ZstDecompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputOffset,
+    strStcFmt(
+        debugLog, "{inputSame: %s, inputOffset: %zu, frameDone %s, done: %s}", cvtBoolToConstZ(this->inputSame), this->inputOffset,
         cvtBoolToConstZ(this->frameDone), cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_ZST_DECOMPRESS_TYPE                                                                                           \
     ZstDecompress *
 #define FUNCTION_LOG_ZST_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                              \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, zstDecompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, zstDecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free decompression context

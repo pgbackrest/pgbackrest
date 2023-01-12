@@ -51,17 +51,16 @@ typedef struct CipherBlock
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *
-cipherBlockToLog(const CipherBlock *this)
+FN_EXTERN void
+cipherBlockToLog(const CipherBlock *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
+    strStcFmt(debugLog, "{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));
 }
 
 #define FUNCTION_LOG_CIPHER_BLOCK_TYPE                                                                                             \
     CipherBlock *
 #define FUNCTION_LOG_CIPHER_BLOCK_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, cipherBlockToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, cipherBlockToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free cipher context

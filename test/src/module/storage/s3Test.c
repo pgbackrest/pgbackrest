@@ -275,6 +275,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageS3DateTime() and storageS3Auth()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         TEST_RESULT_STR_Z(storageS3DateTime(1491267845), "20170404T010405Z", "static date");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -291,9 +293,10 @@ testRun(void)
         TEST_RESULT_STR(driver->accessKey, accessKey, "check access key");
         TEST_RESULT_STR(driver->secretAccessKey, secretAccessKey, "check secret access key");
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
-        TEST_RESULT_STR(
-            httpClientToLog(driver->httpClient),
-            strNewFmt(
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_Z(logBuf,
+            zNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
                     ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
                     ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
@@ -361,9 +364,10 @@ testRun(void)
         driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
 
         TEST_RESULT_STR(driver->securityToken, securityToken, "check security token");
-        TEST_RESULT_STR(
-            httpClientToLog(driver->httpClient),
-            strNewFmt(
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_Z(logBuf,
+            zNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
                     ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
                     ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",

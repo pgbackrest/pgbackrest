@@ -383,8 +383,8 @@ protocolServerDataEndPut(ProtocolServer *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-protocolServerToLog(const ProtocolServer *this)
+FN_EXTERN void
+protocolServerToLog(const ProtocolServer *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{name: %s}", strZ(this->name));
+    strStcFmt(debugLog, "{name: %s}", strZ(this->name));
 }
