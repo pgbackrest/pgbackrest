@@ -206,14 +206,18 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("gzDecompressToLog() and gzCompressToLog()");
 
+        char buffer[STACK_TRACE_PARAM_MAX];
+
         GzDecompress *decompress = (GzDecompress *)ioFilterDriver(gzDecompressNew());
 
-        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: false, done: false, availIn: 0}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, gzDecompressToLog, buffer, sizeof(buffer)), "gzDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: false, done: false, availIn: 0}", "check log");
 
         decompress->inputSame = true;
         decompress->done = true;
 
-        TEST_RESULT_STR_Z(gzDecompressToLog(decompress), "{inputSame: true, done: true, availIn: 0}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, gzDecompressToLog, buffer, sizeof(buffer)), "gzDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, done: true, availIn: 0}", "check log");
     }
 
     // *****************************************************************************************************************************
@@ -251,19 +255,22 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
 
+        char buffer[STACK_TRACE_PARAM_MAX];
+
         Bz2Compress *compress = (Bz2Compress *)ioFilterDriver(bz2CompressNew(1));
 
         compress->stream.avail_in = 999;
 
-        TEST_RESULT_STR_Z(
-            bz2CompressToLog(compress), "{inputSame: false, done: false, flushing: false, avail_in: 999}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, bz2CompressToLog, buffer, sizeof(buffer)), "bz2CompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: false, done: false, flushing: false, avail_in: 999}", "check log");
 
         Bz2Decompress *decompress = (Bz2Decompress *)ioFilterDriver(bz2DecompressNew());
 
         decompress->inputSame = true;
         decompress->done = true;
 
-        TEST_RESULT_STR_Z(bz2DecompressToLog(decompress), "{inputSame: true, done: true, avail_in: 0}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, bz2DecompressToLog, buffer, sizeof(buffer)), "bz2DecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, done: true, avail_in: 0}", "check log");
     }
 
     // *****************************************************************************************************************************
@@ -289,13 +296,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lz4DecompressToLog() and lz4CompressToLog()");
 
+        char buffer[STACK_TRACE_PARAM_MAX];
+
         Lz4Compress *compress = (Lz4Compress *)ioFilterDriver(lz4CompressNew(7));
 
         compress->inputSame = true;
         compress->flushing = true;
 
-        TEST_RESULT_STR_Z(
-            lz4CompressToLog(compress), "{level: 7, first: true, inputSame: true, flushing: true}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, lz4CompressToLog, buffer, sizeof(buffer)), "lz4CompressToLog");
+        TEST_RESULT_Z(buffer, "{level: 7, first: true, inputSame: true, flushing: true}", "check log");
 
         Lz4Decompress *decompress = (Lz4Decompress *)ioFilterDriver(lz4DecompressNew());
 
@@ -303,9 +312,8 @@ testRun(void)
         decompress->done = true;
         decompress->inputOffset = 999;
 
-        TEST_RESULT_STR_Z(
-            lz4DecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
-            "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, lz4DecompressToLog, buffer, sizeof(buffer)), "lz4DecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
         TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not compiled with lz4 support");
 #endif // HAVE_LIBLZ4
@@ -334,14 +342,16 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("zstDecompressToLog() and zstCompressToLog()");
 
+        char buffer[STACK_TRACE_PARAM_MAX];
+
         ZstCompress *compress = (ZstCompress *)ioFilterDriver(zstCompressNew(14));
 
         compress->inputSame = true;
         compress->inputOffset = 49;
         compress->flushing = true;
 
-        TEST_RESULT_STR_Z(
-            zstCompressToLog(compress), "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(compress, zstCompressToLog, buffer, sizeof(buffer)), "zstCompressToLog");
+        TEST_RESULT_Z(buffer, "{level: 14, inputSame: true, inputOffset: 49, flushing: true}", "check log");
 
         ZstDecompress *decompress = (ZstDecompress *)ioFilterDriver(zstDecompressNew());
 
@@ -349,9 +359,8 @@ testRun(void)
         decompress->done = true;
         decompress->inputOffset = 999;
 
-        TEST_RESULT_STR_Z(
-            zstDecompressToLog(decompress), "{inputSame: true, inputOffset: 999, frameDone false, done: true}",
-            "format object");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, zstDecompressToLog, buffer, sizeof(buffer)), "zstDecompressToLog");
+        TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
         TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not compiled with zst support");
 #endif // HAVE_LIBZST

@@ -121,7 +121,7 @@ typedef struct InfoRepoData
 #define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
     InfoRepoData *
 #define FUNCTION_LOG_INFO_REPO_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "InfoRepoData", buffer, bufferSize)
+    objNameToLog(value, "InfoRepoData", buffer, bufferSize)
 
 // Stanza with repository list of information for each repository
 typedef struct InfoStanzaRepo
@@ -138,7 +138,7 @@ typedef struct InfoStanzaRepo
 #define FUNCTION_LOG_INFO_STANZA_REPO_TYPE                                                                                         \
     InfoStanzaRepo *
 #define FUNCTION_LOG_INFO_STANZA_REPO_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "InfoStanzaRepo", buffer, bufferSize)
+    objNameToLog(value, "InfoStanzaRepo", buffer, bufferSize)
 
 // Group all databases with the same system-id and version together regardless of db-id or repo
 typedef struct DbGroup
@@ -154,7 +154,7 @@ typedef struct DbGroup
 #define FUNCTION_LOG_DB_GROUP_TYPE                                                                                                 \
     DbGroup *
 #define FUNCTION_LOG_DB_GROUP_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "DbGroup", buffer, bufferSize)
+    objNameToLog(value, "DbGroup", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Helper function for reporting errors
@@ -306,6 +306,8 @@ archiveDbList(
         FUNCTION_TEST_PARAM(UINT, repoKey);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(stanza != NULL);
     ASSERT(pgData != NULL);
     ASSERT(archiveSection != NULL);
@@ -396,6 +398,8 @@ backupListAdd(
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
         FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);              // The repo data where this backup is located
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(backupSection != NULL);
     ASSERT(backupData != NULL);
@@ -586,6 +590,8 @@ backupList(
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index of the last repo to check
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(backupSection != NULL);
     ASSERT(stanzaData != NULL);
 
@@ -657,6 +663,8 @@ stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, const unsi
         FUNCTION_TEST_PARAM(UINT, repoIdxMin);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(stanzaRepoList != NULL);
 
@@ -803,6 +811,8 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         FUNCTION_TEST_PARAM(DB_GROUP, dbGroup);
         FUNCTION_TEST_PARAM(STRING, resultStr);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(dbGroup != NULL);
 
@@ -1002,6 +1012,8 @@ formatTextDb(
         FUNCTION_TEST_PARAM(UINT64, currentPgSystemId);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(stanzaInfo != NULL);
     ASSERT(currentPgVersion != NULL);
 
@@ -1161,6 +1173,8 @@ infoUpdateStanza(
         FUNCTION_TEST_PARAM(BOOL, stanzaExists);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(storage != NULL);
     ASSERT(stanzaRepo != NULL);

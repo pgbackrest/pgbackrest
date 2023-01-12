@@ -91,6 +91,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_WRITE_TYPE                                                                                                 \
     IoWrite *
 #define FUNCTION_LOG_IO_WRITE_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "IoWrite", buffer, bufferSize)
+    objNameToLog(value, "IoWrite", buffer, bufferSize)
 
 #endif

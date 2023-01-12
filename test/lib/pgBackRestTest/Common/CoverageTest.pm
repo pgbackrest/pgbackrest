@@ -39,7 +39,7 @@ sub coverageLCovConfigGenerate
     my $bCoverageSummary = shift;
 
     my $strBranchFilter =
-        'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|CHECK|assert|switch\s)\(|\{\+{0,1}' .
+        'OBJECT_DEFINE_[A-Z0-9_]+\(|\s{4}[A-Z][A-Z0-9_]+\([^\?]*\)|\s{4}(ASSERT|CHECK|CHECK_FMT|assert|switch\s)\(|\{\+{0,1}' .
         ($bCoverageSummary ? 'uncoverable_branch' : 'uncover(ed|able)_branch');
     my $strLineFilter =
         '\{\+{0,1}' . ($bCoverageSummary ? 'uncoverable' : '(uncover(ed|able)' . ($bContainer ? '' : '|vm_covered') . ')') . '[^_]';
@@ -124,6 +124,12 @@ sub coverageExtract
     foreach my $strCoveredModule (@stryCoveredModule)
     {
         my $strModuleName = testRunName($strCoveredModule, false);
+
+        if ($strModuleName =~ /^test/mg)
+        {
+            $strModuleName =~ s/^test/src/mg;
+        }
+
         my $strModuleOutName = $strModuleName;
         my $bTest = false;
 
@@ -134,10 +140,21 @@ sub coverageExtract
         }
 
         # Generate lcov reports
-        my $strModulePath =
-            "${strWorkPath}/repo/" .
-            (${strModuleOutName} =~ /^test\// ?
-                'test/src/module/' . substr(${strModuleOutName}, 5) : "src/${strModuleOutName}");
+        my $strModulePath = "${strWorkPath}/repo/";
+
+        if (${strModuleOutName} =~ /^src\//)
+        {
+            $strModulePath .= 'test/src/' . substr(${strModuleOutName}, 4);
+        }
+        elsif (${strModuleOutName} =~ /^test\//)
+        {
+            $strModulePath .= 'test/src/module/' . substr(${strModuleOutName}, 5);
+        }
+        else
+        {
+            $strModulePath .= "src/${strModuleOutName}";
+        }
+
         my $strLCovFile = "${strTestResultCoveragePath}/raw/${strModuleOutName}.lcov";
         my $strLCovTotal = "${strWorkTmpPath}/all.lcov";
         my $bInc = $strModuleName =~ '\.vendor$' || $strModuleName =~ '\.auto$';
@@ -297,6 +314,7 @@ sub coverageValidateAndGenerate
         foreach my $strCodeModule (sort(keys(%{$hCoverageActual})))
         {
             my $strCoverageFile = $strCodeModule;
+            $strCoverageFile =~ s/^test/src/mg;
             $strCoverageFile =~ s/^module/test/mg;
             $strCoverageFile = "${strTestResultCoveragePath}/raw/${strCoverageFile}.lcov";
 

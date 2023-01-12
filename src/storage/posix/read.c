@@ -33,7 +33,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_POSIX_TYPE                                                                                       \
     StorageReadPosix *
 #define FUNCTION_LOG_STORAGE_READ_POSIX_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "StorageReadPosix", buffer, bufferSize)
+    objNameToLog(value, "StorageReadPosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Close file descriptor
@@ -224,7 +224,7 @@ storageReadPosixNew(
 
     OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageReadPosix *driver = OBJ_NEW_ALLOC();
+        StorageReadPosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadPosix);
 
         *driver = (StorageReadPosix)
         {

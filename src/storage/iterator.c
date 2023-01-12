@@ -274,8 +274,10 @@ FN_EXTERN StorageInfo storageItrNext(StorageIterator *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageItrToLog(const StorageIterator *const this)
+FN_EXTERN void
+storageItrToLog(const StorageIterator *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{stack: %s}", strZ(lstToLog(this->stack)));
+    strStcCat(debugLog, "{stack: ");
+    lstToLog(this->stack, debugLog);
+    strStcCatChr(debugLog, '}');
 }

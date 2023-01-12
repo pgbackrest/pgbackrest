@@ -117,11 +117,11 @@ ioSessionFree(IoSession *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *ioSessionToLog(const IoSession *this);
+FN_EXTERN void ioSessionToLog(const IoSession *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_SESSION_TYPE                                                                                               \
     IoSession *
 #define FUNCTION_LOG_IO_SESSION_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioSessionToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioSessionToLog, buffer, bufferSize)
 
 #endif

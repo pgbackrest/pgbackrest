@@ -44,6 +44,8 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(data != NULL);
     ASSERT(read != NULL);
     ASSERT(info != NULL);
@@ -125,6 +127,8 @@ storageRemoteInfo(THIS_VOID, const String *file, StorageInfoLevel level, Storage
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
 
@@ -486,7 +490,7 @@ storageRemoteNew(
 
     OBJ_NEW_BEGIN(StorageRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageRemote *driver = OBJ_NEW_ALLOC();
+        StorageRemote *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageRemote);
 
         *driver = (StorageRemote)
         {

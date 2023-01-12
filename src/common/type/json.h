@@ -184,19 +184,19 @@ Macros for function logging
 ***********************************************************************************************************************************/
 #ifdef DEBUG
 
-FN_EXTERN String *jsonReadToLog(const JsonRead *this);
+FN_EXTERN void jsonReadToLog(const JsonRead *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_JSON_READ_TYPE                                                                                                \
     JsonRead *
 #define FUNCTION_LOG_JSON_READ_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, jsonReadToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, jsonReadToLog, buffer, bufferSize)
 
-FN_EXTERN String *jsonWriteToLog(const JsonWrite *this);
+FN_EXTERN void jsonWriteToLog(const JsonWrite *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_JSON_WRITE_TYPE                                                                                               \
     JsonWrite *
 #define FUNCTION_LOG_JSON_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, jsonWriteToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, jsonWriteToLog, buffer, bufferSize)
 
 #endif // DEBUG
 

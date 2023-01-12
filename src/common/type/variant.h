@@ -220,11 +220,11 @@ VARIANT_DECLARE(BOOL_TRUE_VAR);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *varToLog(const Variant *this);
+FN_EXTERN void varToLog(const Variant *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_VARIANT_TYPE                                                                                                  \
     Variant *
 #define FUNCTION_LOG_VARIANT_FORMAT(value, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, varToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, varToLog, buffer, bufferSize)
 
 #endif

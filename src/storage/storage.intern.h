@@ -355,6 +355,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_INTERFACE_TYPE                                                                                        \
     StorageInterface
 #define FUNCTION_LOG_STORAGE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(&value, "StorageInterface", buffer, bufferSize)
+    objNameToLog(&value, "StorageInterface", buffer, bufferSize)
 
 #endif

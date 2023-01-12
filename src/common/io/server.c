@@ -20,7 +20,7 @@ struct IoServer
 FN_EXTERN IoServer *
 ioServerNew(void *const driver, const IoServerInterface *const interface)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_SERVER_INTERFACE, interface);
     FUNCTION_LOG_END();
@@ -48,9 +48,13 @@ ioServerNew(void *const driver, const IoServerInterface *const interface)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-ioServerToLog(const IoServer *const this)
+FN_EXTERN void
+ioServerToLog(const IoServer *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, driver: %s}", strZ(strIdToStr(this->pub.interface->type)), strZ(this->pub.interface->toLog(this->pub.driver)));
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->pub.interface->type, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", driver: ");
+    this->pub.interface->toLog(this->pub.driver, debugLog);
+    strStcCatChr(debugLog, '}');
 }

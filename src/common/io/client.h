@@ -62,11 +62,11 @@ ioClientFree(IoClient *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *ioClientToLog(const IoClient *this);
+FN_EXTERN void ioClientToLog(const IoClient *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_CLIENT_TYPE                                                                                                \
     IoClient *
 #define FUNCTION_LOG_IO_CLIENT_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioClientToLog, buffer, bufferSize)
 
 #endif

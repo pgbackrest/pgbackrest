@@ -275,10 +275,10 @@ protocolParallelDone(ProtocolParallel *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-protocolParallelToLog(const ProtocolParallel *this)
+FN_EXTERN void
+protocolParallelToLog(const ProtocolParallel *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{state: %s, clientTotal: %u, jobTotal: %u}", strZ(strIdToStr(this->state)), lstSize(this->clientList),
-        lstSize(this->jobList));
+    strStcCat(debugLog, "{state: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->state, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(debugLog, ", clientTotal: %u, jobTotal: %u}", lstSize(this->clientList), lstSize(this->jobList));
 }

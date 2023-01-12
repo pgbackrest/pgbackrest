@@ -210,11 +210,11 @@ BUFFER_DECLARE(QUOTED_BUF);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *bufToLog(const Buffer *this);
+FN_EXTERN void bufToLog(const Buffer *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_BUFFER_TYPE                                                                                                   \
     Buffer *
 #define FUNCTION_LOG_BUFFER_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, bufToLog, buffer, bufferSize)
 
 #endif

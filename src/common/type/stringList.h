@@ -21,7 +21,7 @@ Constructors
 FN_INLINE_ALWAYS StringList *
 strLstNew(void)
 {
-    return (StringList *)lstNewP(sizeof(String *), .comparator = lstComparatorStr);
+    return (StringList *)OBJ_NAME(lstNewP(sizeof(String *), .comparator = lstComparatorStr), StringList::List);
 }
 
 // Split a string into a string list based on a delimiter
@@ -174,11 +174,11 @@ strLstFree(StringList *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *strLstToLog(const StringList *this);
+FN_EXTERN void strLstToLog(const StringList *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STRING_LIST_TYPE                                                                                              \
     StringList *
 #define FUNCTION_LOG_STRING_LIST_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, strLstToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, strLstToLog, buffer, bufferSize)
 
 #endif

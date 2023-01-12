@@ -49,7 +49,7 @@ Macros for function logging
 #define FUNCTION_LOG_CRYPTO_HASH_TYPE                                                                                              \
     CryptoHash *
 #define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "CryptoHash", buffer, bufferSize)
+    objNameToLog(value, "CryptoHash", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free hash context
@@ -184,7 +184,7 @@ cryptoHashNew(const HashType type)
 
     OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CryptoHash *driver = OBJ_NEW_ALLOC();
+        CryptoHash *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::CryptoHash);
         *driver = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid

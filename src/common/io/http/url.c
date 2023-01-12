@@ -197,15 +197,15 @@ httpUrlNewParse(const String *const url, HttpUrlNewParseParam param)
 /**********************************************************************************************************************************/
 #ifdef DEBUG
 
-FN_EXTERN String *
-httpUrlToLog(const HttpUrl *this)
+FN_EXTERN void
+httpUrlToLog(const HttpUrl *const this, StringStatic *const debugLog)
 {
     // Is IPv6 address?
     bool ipv6 = strChr(this->pub.host, ':') != -1;
 
-    return strNewFmt(
-        "{%s://%s%s%s:%u%s}", strZ(httpProtocolTypeStr(this->pub.type)), ipv6 ? "[" : "", strZ(this->pub.host), ipv6 ? "]" : "",
-        this->pub.port, strZ(this->pub.path));
+    strStcFmt(
+        debugLog, "{%s://%s%s%s:%u%s}", strZ(httpProtocolTypeStr(this->pub.type)), ipv6 ? "[" : "", strZ(this->pub.host),
+        ipv6 ? "]" : "", this->pub.port, strZ(this->pub.path));
 }
 
 #endif // DEBUG

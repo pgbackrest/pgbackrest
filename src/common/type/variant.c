@@ -211,7 +211,7 @@ varNewBool(bool data)
 
     OBJ_NEW_BEGIN(VariantBool)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantBool);
 
         *this = (VariantBool)
         {
@@ -320,7 +320,7 @@ varNewInt(int data)
 
     OBJ_NEW_BEGIN(VariantInt)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantInt);
 
         *this = (VariantInt)
         {
@@ -436,7 +436,7 @@ varNewInt64(int64_t data)
 
     OBJ_NEW_BEGIN(VariantInt64)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantInt64);
 
         *this = (VariantInt64)
         {
@@ -536,7 +536,7 @@ varNewUInt(unsigned int data)
 
     OBJ_NEW_BEGIN(VariantUInt)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantUInt);
 
         *this = (VariantUInt)
         {
@@ -661,7 +661,7 @@ varNewUInt64(uint64_t data)
 
     OBJ_NEW_BEGIN(VariantUInt64)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantUInt64);
 
         *this = (VariantUInt64)
         {
@@ -773,7 +773,7 @@ varNewKv(KeyValue *data)
 
     OBJ_NEW_BEGIN(VariantKeyValue, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantKeyValue);
 
         *this = (VariantKeyValue)
         {
@@ -826,7 +826,7 @@ varNewStr(const String *data)
 
         OBJ_NEW_BEGIN(VariantString, .childQty = 1)
         {
-            this = OBJ_NEW_ALLOC();
+            this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantString);
 
             *this = (VariantString)
             {
@@ -844,7 +844,7 @@ varNewStr(const String *data)
 
     OBJ_NEW_EXTRA_BEGIN(VariantString, (uint16_t)(allocExtra))
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantString);
 
         *this = (VariantString)
         {
@@ -982,7 +982,7 @@ varNewVarLst(const VariantList *data)
 
     OBJ_NEW_BEGIN(VariantVariantList, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantVariantList);
 
         *this = (VariantVariantList)
         {
@@ -1017,40 +1017,43 @@ varVarLst(const Variant *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-varToLog(const Variant *this)
+FN_EXTERN void
+varToLog(const Variant *const this, StringStatic *const debugLog)
 {
-    String *result = NULL;
-
-    if (this == NULL)
-        result = strDup(NULL_STR);
-    else
+    switch (varType(this))
     {
-        switch (varType(this))
-        {
-            case varTypeString:
-                result = strToLog(varStr(this));
-                break;
+        case varTypeString:
+            strStcResultSizeInc(
+                debugLog,
+                FUNCTION_LOG_OBJECT_FORMAT(varStr(this), strToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+            break;
 
-            case varTypeKeyValue:
-                result = strNewZ("{KeyValue}");
-                break;
+        case varTypeKeyValue:
+            strStcCat(debugLog, "{KeyValue}");
+            break;
 
-            case varTypeVariantList:
-                result = strNewZ("{VariantList}");
-                break;
+        case varTypeVariantList:
+            strStcCat(debugLog, "{VariantList}");
+            break;
 
-            case varTypeBool:
-            case varTypeInt:
-            case varTypeInt64:
-            case varTypeUInt:
-            case varTypeUInt64:
-            {
-                result = strNewFmt("{%s}", strZ(varStrForce(this)));
-                break;
-            }
-        }
+        case varTypeBool:
+            strStcFmt(debugLog, "{%s}", cvtBoolToConstZ(varBool(this)));
+            break;
+
+        case varTypeInt:
+            strStcFmt(debugLog, "{%d}", varInt(this));
+            break;
+
+        case varTypeInt64:
+            strStcFmt(debugLog, "{%" PRId64 "}", varInt64(this));
+            break;
+
+        case varTypeUInt:
+            strStcFmt(debugLog, "{%u}", varUInt(this));
+            break;
+
+        case varTypeUInt64:
+            strStcFmt(debugLog, "{%" PRIu64 "}", varUInt64(this));
+            break;
     }
-
-    return result;
 }

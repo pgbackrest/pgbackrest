@@ -48,11 +48,11 @@ storageItrFree(StorageIterator *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *storageItrToLog(const StorageIterator *this);
+FN_EXTERN void storageItrToLog(const StorageIterator *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_ITERATOR_TYPE                                                                                         \
     StorageIterator *
 #define FUNCTION_LOG_STORAGE_ITERATOR_FORMAT(value, buffer, bufferSize)                                                            \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageItrToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageItrToLog, buffer, bufferSize)
 
 #endif

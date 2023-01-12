@@ -45,11 +45,11 @@ ioFilterFree(IoFilter *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *ioFilterToLog(const IoFilter *this);
+FN_EXTERN void ioFilterToLog(const IoFilter *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_FILTER_TYPE                                                                                                \
     IoFilter *
 #define FUNCTION_LOG_IO_FILTER_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioFilterToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioFilterToLog, buffer, bufferSize)
 
 #endif

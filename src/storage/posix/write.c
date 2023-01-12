@@ -35,7 +35,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_TYPE                                                                                      \
     StorageWritePosix *
 #define FUNCTION_LOG_STORAGE_WRITE_POSIX_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageWritePosix", buffer, bufferSize)
+    objNameToLog(value, "StorageWritePosix", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 File open constants
@@ -249,7 +249,7 @@ storageWritePosixNew(
 
     OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageWritePosix *driver = OBJ_NEW_ALLOC();
+        StorageWritePosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWritePosix);
 
         *driver = (StorageWritePosix)
         {

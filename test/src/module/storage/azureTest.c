@@ -382,6 +382,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageAzureAuth()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         StorageAzure *storage = NULL;
         HttpHeader *header = NULL;
         const String *dateTime = STRDEF("Sun, 21 Jun 2020 12:46:19 GMT");
@@ -401,10 +403,11 @@ testRun(void)
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header),
-            "{authorization: 'SharedKey account:edqgT7EhsiIN3q6Al2HCZlpXr2D5cJFavr2ZCkhG9R8=', content-length: '0'"
-                ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            "{content-length: '0', host: 'account.blob.core.windows.net', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
+                ", x-ms-version: '2019-02-02', authorization: 'SharedKey account:edqgT7EhsiIN3q6Al2HCZlpXr2D5cJFavr2ZCkhG9R8='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -416,11 +419,12 @@ testRun(void)
         HttpQuery *query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header),
-            "{authorization: 'SharedKey account:5qAnroLtbY8IWqObx8+UVwIUysXujsfWZZav7PrBON0=', content-length: '44'"
-                ", content-md5: 'b64f49553d5c441652e95697a2c5949e', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
-                ", host: 'account.blob.core.windows.net', x-ms-version: '2019-02-02'}",
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            "{content-length: '44', content-md5: 'b64f49553d5c441652e95697a2c5949e', host: 'account.blob.core.windows.net'"
+                ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2019-02-02'"
+                ", authorization: 'SharedKey account:5qAnroLtbY8IWqObx8+UVwIUysXujsfWZZav7PrBON0='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -438,8 +442,8 @@ testRun(void)
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("66"));
 
         TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
-        TEST_RESULT_STR_Z(
-            httpHeaderToLog(header), "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
+        TEST_RESULT_Z(logBuf, "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
     }
 

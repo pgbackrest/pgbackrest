@@ -79,7 +79,7 @@ static XmlNodeList *
 xmlNodeLstNew(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(XML_NODE_LIST, (XmlNodeList *)lstNewP(sizeof(XmlNode *)));
+    FUNCTION_TEST_RETURN(XML_NODE_LIST, (XmlNodeList *)OBJ_NAME(lstNewP(sizeof(XmlNode *)), XmlNodeList::List));
 }
 
 /**********************************************************************************************************************************/

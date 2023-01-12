@@ -345,7 +345,6 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
         }
         else
         {
-
             // Else allow list is inherited
             CHECK(AssertError, optList != NULL, "option list is NULL");
             yamlEventCheck(allowListVal, yamlEventTypeScalar);

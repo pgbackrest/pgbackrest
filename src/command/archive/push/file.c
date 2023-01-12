@@ -109,6 +109,8 @@ archivePushFile(
         FUNCTION_LOG_PARAM(STRING_LIST, priorErrorList);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(walSource != NULL);
     ASSERT(archiveFile != NULL);
     ASSERT(repoList != NULL);

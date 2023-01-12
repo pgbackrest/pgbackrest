@@ -23,7 +23,7 @@ typedef struct IoServerInterface
     IoSession *(*accept)(void *driver, IoSession *session);
 
     // Driver log function
-    String *(*toLog)(const void *driver);
+    void (*toLog)(const void *driver, StringStatic *debugLog);
 } IoServerInterface;
 
 /***********************************************************************************************************************************
@@ -37,6 +37,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_SERVER_INTERFACE_TYPE                                                                                      \
     IoServerInterface *
 #define FUNCTION_LOG_IO_SERVER_INTERFACE_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "IoServerInterface", buffer, bufferSize)
+    objNameToLog(&value, "IoServerInterface", buffer, bufferSize)
 
 #endif

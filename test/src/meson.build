@@ -64,6 +64,7 @@ executable(
         arg_unity,
     ],
     dependencies: [
+        lib_backtrace,
         lib_bz2,
         lib_yaml,
     ],

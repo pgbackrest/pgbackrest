@@ -32,18 +32,18 @@ typedef struct ZstCompress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-zstCompressToLog(const ZstCompress *this)
+static void
+zstCompressToLog(const ZstCompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{level: %d, inputSame: %s, inputOffset: %zu, flushing: %s}", this->level, cvtBoolToConstZ(this->inputSame),
+    strStcFmt(
+        debugLog, "{level: %d, inputSame: %s, inputOffset: %zu, flushing: %s}", this->level, cvtBoolToConstZ(this->inputSame),
         this->inputOffset, cvtBoolToConstZ(this->flushing));
 }
 
 #define FUNCTION_LOG_ZST_COMPRESS_TYPE                                                                                             \
     ZstCompress *
 #define FUNCTION_LOG_ZST_COMPRESS_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, zstCompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, zstCompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free compression context
@@ -176,7 +176,7 @@ zstCompressNew(int level)
 
     OBJ_NEW_BEGIN(ZstCompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        ZstCompress *driver = OBJ_NEW_ALLOC();
+        ZstCompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::ZstCompress);
 
         *driver = (ZstCompress)
         {

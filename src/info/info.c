@@ -131,6 +131,8 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_CALLBACK();
+
     ASSERT(read != NULL);
     ASSERT(callbackFunction != NULL);
     ASSERT(callbackData != NULL);
@@ -290,6 +292,8 @@ infoSaveValue(InfoSave *const infoSaveData, const char *const section, const cha
         FUNCTION_TEST_PARAM(STRING, jsonValue);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_CALLBACK();
+
     ASSERT(infoSaveData != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
@@ -403,6 +407,8 @@ infoCipherPassSet(Info *this, const String *cipherPass)
         FUNCTION_TEST_PARAM(INFO, this);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_IF(memContextCurrent() != objMemContext(this));  // Do not audit calls from within the object
 
     ASSERT(this != NULL);
 

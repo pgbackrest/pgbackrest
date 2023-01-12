@@ -29,18 +29,18 @@ typedef struct GzDecompress
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-gzDecompressToLog(const GzDecompress *this)
+static void
+gzDecompressToLog(const GzDecompress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, availIn: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
         this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_GZ_DECOMPRESS_TYPE                                                                                            \
     GzDecompress *
 #define FUNCTION_LOG_GZ_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, gzDecompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, gzDecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free inflate stream
@@ -153,7 +153,7 @@ gzDecompressNew(void)
     OBJ_NEW_BEGIN(GzDecompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         // Allocate state and set context
-        GzDecompress *driver = OBJ_NEW_ALLOC();
+        GzDecompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::GzDecompress);
 
         *driver = (GzDecompress)
         {

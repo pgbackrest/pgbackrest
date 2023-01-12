@@ -101,11 +101,11 @@ httpResponseFree(HttpResponse *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *httpResponseToLog(const HttpResponse *this);
+FN_EXTERN void httpResponseToLog(const HttpResponse *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_HTTP_RESPONSE_TYPE                                                                                            \
     HttpResponse *
 #define FUNCTION_LOG_HTTP_RESPONSE_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpResponseToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, httpResponseToLog, buffer, bufferSize)
 
 #endif

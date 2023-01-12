@@ -84,9 +84,7 @@ testLogResult(const char *logFile, const char *expected)
     char actual[32768];
     testLogLoad(logFile, actual, sizeof(actual));
 
-    if (strcmp(actual, expected) != 0)                                                          // {uncoverable_branch}
-        THROW_FMT(                                                                              // {+uncovered}
-            AssertError, "\n\nexpected log:\n\n%s\n\nbut actual log was:\n\n%s\n\n", expected, actual);
+    TEST_RESULT_Z(actual, expected, "check log");
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -254,6 +252,29 @@ testRun(void)
         TEST_RESULT_BOOL(logFileSet("/" BOGUS_STR), false, "attempt to open bogus file");
         TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error goes to stderr when stderr is not in range but stdout is");
+
+        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelWarn, logLevelOff, false, 0, 99, false), "init");
+        TEST_RESULT_VOID(
+            logInternal(logLevelError, logLevelDebug, LOG_LEVEL_MAX, 99, "test.c", "test_func", 1, "error to stderr"), "log error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error goes to stderr when stdout is not in range but stderr is");
+
+        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelDebug, logLevelOff, false, 0, 99, false), "init");
+        TEST_RESULT_VOID(
+            logInternal(logLevelError, logLevelDebug, LOG_LEVEL_MAX, 99, "test.c", "test_func", 1, "error to stderr 2"),
+            "log error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error goes nowhere when stdout and stderr are out of rance");
+
+        TEST_RESULT_VOID(logInit(logLevelWarn, logLevelDebug, logLevelOff, false, 0, 99, false), "init");
+        TEST_RESULT_VOID(
+            logInternal(logLevelError, logLevelTrace, LOG_LEVEL_MAX, 99, "test.c", "test_func", 1, "error to stderr 2"),
+            "log error");
+
         // Get the error message from above to use for the expect log test
         int testFdFile = open("/" BOGUS_STR, O_CREAT | O_APPEND, 0640);
         const char *testErrorFile = strerror(errno);
@@ -288,7 +309,9 @@ testRun(void)
             "INFO: [DRY-RUN] info message\n"
             "INFO: [DRY-RUN] info message 2\n"
             "WARN: [DRY-RUN] unable to open log file '/BOGUS': %s\n"
-            "      NOTE: process will continue without log file.",
+            "      NOTE: process will continue without log file.\n"
+            "ERROR: [001]: error to stderr\n"
+            "ERROR: [001]: error to stderr 2",
             testErrorFile);
 
         testLogResult(stderrFile, buffer);

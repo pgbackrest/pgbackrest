@@ -195,6 +195,8 @@ protocolLocalExec(
         FUNCTION_TEST_PARAM(UINT, processId);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(helper != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -442,8 +444,9 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             // Ack the config command
             protocolServerDataEndPut(result);
 
-            ioSessionMove(tlsSession, memContextPrior());
+            // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
+            ioSessionMove(tlsSession, objMemContext(result));
         }
         // Else the client can only detect that the server is alive
         else
@@ -669,6 +672,8 @@ protocolRemoteExec(
         FUNCTION_TEST_PARAM(UINT, hostIdx);
         FUNCTION_TEST_PARAM(UINT, processId);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(helper != NULL);
 

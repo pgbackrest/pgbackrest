@@ -93,6 +93,8 @@ lockReadFileData(const String *const lockFile, const int fd)
         FUNCTION_LOG_PARAM(INT, fd);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(lockFile != NULL);
     ASSERT(fd != -1);
 
@@ -142,6 +144,8 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
         FUNCTION_LOG_PARAM(STRING, lockFile);
         FUNCTION_LOG_PARAM(BOOL, param.remove);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(lockFile != NULL);
 
@@ -203,6 +207,8 @@ lockRead(const String *const lockPath, const String *const stanza, const LockTyp
         FUNCTION_LOG_PARAM(STRING, stanza);
         FUNCTION_LOG_PARAM(ENUM, lockType);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     LockReadResult result = {0};
 

@@ -48,6 +48,8 @@ storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageI
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
@@ -166,6 +168,8 @@ storagePosixListEntry(
         FUNCTION_TEST_PARAM(STRINGZ, name);
         FUNCTION_TEST_PARAM(ENUM, level);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(this != NULL);
     ASSERT(list != NULL);
@@ -612,7 +616,7 @@ storagePosixNewInternal(
 
     OBJ_NEW_BEGIN(StoragePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StoragePosix *driver = OBJ_NEW_ALLOC();
+        StoragePosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StoragePosix);
 
         *driver = (StoragePosix)
         {

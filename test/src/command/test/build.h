@@ -172,6 +172,6 @@ Macros for function logging
 #define FUNCTION_LOG_TEST_BUILD_TYPE                                                                                               \
     TestBuild *
 #define FUNCTION_LOG_TEST_BUILD_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "TestBuild", buffer, bufferSize)
+    objNameToLog(value, "TestBuild", buffer, bufferSize)
 
 #endif
