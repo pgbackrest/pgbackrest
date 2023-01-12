@@ -177,17 +177,17 @@ FN_EXTERN const String *pgXactPath(unsigned int pgVersion);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *pgControlToLog(const PgControl *pgControl);
-FN_EXTERN String *pgWalToLog(const PgWal *pgWal);
+FN_EXTERN void pgControlToLog(const PgControl *pgControl, StringStatic *debugLog);
+FN_EXTERN void pgWalToLog(const PgWal *pgWal, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PG_CONTROL_TYPE                                                                                               \
     PgControl
 #define FUNCTION_LOG_PG_CONTROL_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, pgControlToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(&value, pgControlToLog, buffer, bufferSize)
 
 #define FUNCTION_LOG_PG_WAL_TYPE                                                                                                   \
     PgWal
 #define FUNCTION_LOG_PG_WAL_FORMAT(value, buffer, bufferSize)                                                                      \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, pgWalToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(&value, pgWalToLog, buffer, bufferSize)
 
 #endif

@@ -435,8 +435,23 @@ strLstPtr(const StringList *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-strLstToLog(const StringList *this)
+FN_EXTERN void
+strLstToLog(const StringList *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{[%s]}", strZ(strLstJoinQuote(this, ", ", "\"")));
+    strStcCat(debugLog, "{[");
+
+    for (unsigned int strLstIdx = 0; strLstIdx < strLstSize(this); strLstIdx++)
+    {
+        const String *const value = strLstGet(this, strLstIdx);
+
+        if (strLstIdx != 0)
+            strStcCat(debugLog, ", ");
+
+        if (value == NULL)
+            strStcCat(debugLog, NULL_Z);
+        else
+            strStcFmt(debugLog, "\"%s\"", strZ(value));
+    }
+
+    strStcCat(debugLog, "]}");
 }

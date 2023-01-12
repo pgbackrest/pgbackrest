@@ -197,7 +197,7 @@ typedef struct RestoreBackupData
 #define FUNCTION_LOG_RESTORE_BACKUP_DATA_TYPE                                                                                      \
     RestoreBackupData
 #define FUNCTION_LOG_RESTORE_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(&value, "RestoreBackupData", buffer, bufferSize)
+    objNameToLog(&value, "RestoreBackupData", buffer, bufferSize)
 
 // Helper function for restoreBackupSet
 static RestoreBackupData
@@ -223,6 +223,8 @@ static RestoreBackupData
 restoreBackupSet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
+
+    FUNCTION_AUDIT_STRUCT();
 
     RestoreBackupData result = {0};
 
@@ -740,6 +742,8 @@ restoreManifestOwner(const Manifest *const manifest, const String **const rootRe
         FUNCTION_LOG_PARAM_P(VOID, rootReplaceUser);
         FUNCTION_LOG_PARAM_P(VOID, rootReplaceGroup);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(manifest != NULL);
 
@@ -2008,6 +2012,8 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(LIST, queueList);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(manifest != NULL);
 

@@ -7,7 +7,56 @@ Debug Routines
 #include "common/assert.h"
 #include "common/stackTrace.h"
 #include "common/type/convert.h"
+#include "common/type/stringStatic.h"
 #include "common/type/stringZ.h"
+
+/***********************************************************************************************************************************
+These functions allow auditing of child mem contexts and allocations that are left in the calling context when a function exits.
+This helps find leaks, i.e. child mem contexts or allocations created in the calling context (and not freed) accidentally.
+
+The FUNCTION_AUDIT_*() macros can be used to annotate functions that do that follow the default behavior, i.e. that a single value
+is returned and that is the only value created in the calling context.
+***********************************************************************************************************************************/
+#if defined(DEBUG_MEM) && defined(DEBUG_TEST_TRACE)
+    #include "common/macro.h"
+    #include "common/memContext.h"
+
+    // Begin the audit
+    #define FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN()                                                                                \
+        MemContextAuditState MEM_CONTEXT_AUDIT_param = {.memContext = memContextCurrent()};                                        \
+        memContextAuditBegin(&MEM_CONTEXT_AUDIT_param)
+
+    // End the audit
+    #define FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(returnType)                                                                        \
+        memContextAuditEnd(&MEM_CONTEXT_AUDIT_param, returnType)
+
+    // Allow any new mem contexts or allocations in the calling context. These should be fixed and this macro eventually removed.
+    #define FUNCTION_AUDIT_IF(condition)                                                                                           \
+        do                                                                                                                         \
+        {                                                                                                                          \
+            if (!(condition))                                                                                                      \
+                MEM_CONTEXT_AUDIT_param.returnTypeAny = true;                                                                      \
+        }                                                                                                                          \
+        while (0)
+
+    // Callbacks are difficult to audit so ignore them. Eventually they should all be removed.
+    #define FUNCTION_AUDIT_CALLBACK()                               MEM_CONTEXT_AUDIT_param.returnTypeAny = true
+
+    // Helper function that creates new mem contexts or allocations in the calling context. These functions should be static (except
+    // for interface helpers) but it is not clear that anything else needs to be done.
+    #define FUNCTION_AUDIT_HELPER()                                 MEM_CONTEXT_AUDIT_param.returnTypeAny = true
+
+    // Function returns a struct that has new mem contexts or allocations in the calling context. Find a way to fix these.
+    #define FUNCTION_AUDIT_STRUCT()                                 MEM_CONTEXT_AUDIT_param.returnTypeAny = true
+#else
+    #define FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN()
+    #define FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(returnType)
+
+    #define FUNCTION_AUDIT_IF(condition)
+    #define FUNCTION_AUDIT_CALLBACK()
+    #define FUNCTION_AUDIT_HELPER()
+    #define FUNCTION_AUDIT_STRUCT()
+#endif // DEBUG_TEST_TRACE_MACRO
 
 /***********************************************************************************************************************************
 Base function debugging macros
@@ -21,10 +70,11 @@ level is set to debug or trace.
 #ifdef DEBUG_TEST_TRACE
     #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
         LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
+        FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                   \
                                                                                                                                    \
         {                                                                                                                          \
             stackTraceParamLog();                                                                                                  \
-            stackTraceTestStop();
+            stackTraceTestStop()
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
             stackTraceTestStart();                                                                                                 \
@@ -33,10 +83,11 @@ level is set to debug or trace.
 #else
     #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
         LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
+        FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                   \
                                                                                                                                    \
         if (logAny(FUNCTION_LOG_LEVEL()))                                                                                          \
         {                                                                                                                          \
-            stackTraceParamLog();
+            stackTraceParamLog()
 
     #define FUNCTION_LOG_END_BASE()                                                                                                \
             LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
@@ -98,7 +149,15 @@ FUNCTION_LOG_VOID() is provided as a shortcut for functions that have no paramet
 Functions and macros to render various data types
 ***********************************************************************************************************************************/
 // Convert object to a zero-terminated string for logging
-FN_EXTERN size_t objToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize);
+typedef void (*ObjToLogFormat)(const void *object, StringStatic *debugLog);
+
+FN_EXTERN size_t objToLog(const void *object, ObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
+
+#define FUNCTION_LOG_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                  \
+    objToLog(object, (ObjToLogFormat)formatFunc, buffer, bufferSize)
+
+// Convert object name to a zero-terminated string for logging
+FN_EXTERN size_t objNameToLog(const void *object, const char *objectName, char *buffer, size_t bufferSize);
 
 // Convert pointer to a zero-terminated string for logging
 FN_EXTERN size_t ptrToLog(const void *pointer, const char *pointerName, char *buffer, size_t bufferSize);
@@ -219,6 +278,7 @@ Macros to return function results (or void)
     {                                                                                                                              \
         typePre FUNCTION_LOG_##typeMacroPrefix##_TYPE typePost FUNCTION_LOG_RETURN_result = __VA_ARGS__;                           \
                                                                                                                                    \
+        FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(STRINGIFY(FUNCTION_LOG_##typeMacroPrefix##_TYPE));                                     \
         STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
         IF_LOG_ANY(FUNCTION_LOG_LEVEL())                                                                                           \
@@ -254,6 +314,7 @@ Macros to return function results (or void)
 #define FUNCTION_LOG_RETURN_STRUCT(...)                                                                                            \
     do                                                                                                                             \
     {                                                                                                                              \
+        FUNCTION_TEST_MEM_CONTEXT_AUDIT_END("struct");                                                                             \
         STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
         IF_LOG_ANY(FUNCTION_LOG_LEVEL())                                                                                           \
@@ -291,6 +352,8 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
 
 #ifdef DEBUG_TEST_TRACE_MACRO
     #define FUNCTION_TEST_BEGIN()                                                                                                  \
+        FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                   \
+                                                                                                                                   \
         /* Ensure that FUNCTION_LOG_BEGIN() and FUNCTION_TEST_BEGIN() are not both used in a single function by declaring the */   \
         /* same variable that FUNCTION_LOG_BEGIN() uses to track logging */                                                        \
         LogLevel FUNCTION_LOG_LEVEL();                                                                                             \
@@ -335,6 +398,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
             typePre type typePost FUNCTION_TEST_result = __VA_ARGS__;                                                              \
                                                                                                                                    \
             STACK_TRACE_POP(true);                                                                                                 \
+            FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(STRINGIFY(type));                                                                  \
                                                                                                                                    \
             return FUNCTION_TEST_result;                                                                                           \
         }                                                                                                                          \
@@ -376,6 +440,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
             (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
                                                                                                                                    \
             STACK_TRACE_POP(true);                                                                                                 \
+            FUNCTION_TEST_MEM_CONTEXT_AUDIT_END("void");                                                                           \
             return;                                                                                                                \
         }                                                                                                                          \
         while (0)

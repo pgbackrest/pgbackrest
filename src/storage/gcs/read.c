@@ -33,7 +33,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_GCS_TYPE                                                                                         \
     StorageReadGcs *
 #define FUNCTION_LOG_STORAGE_READ_GCS_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "StorageReadGcs", buffer, bufferSize)
+    objNameToLog(value, "StorageReadGcs", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -134,7 +134,7 @@ storageReadGcsNew(
 
     OBJ_NEW_BEGIN(StorageReadGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadGcs *driver = OBJ_NEW_ALLOC();
+        StorageReadGcs *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadGcs);
 
         *driver = (StorageReadGcs)
         {

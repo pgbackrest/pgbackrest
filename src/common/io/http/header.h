@@ -60,11 +60,11 @@ httpHeaderFree(HttpHeader *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *httpHeaderToLog(const HttpHeader *this);
+FN_EXTERN void httpHeaderToLog(const HttpHeader *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_HTTP_HEADER_TYPE                                                                                              \
     HttpHeader *
 #define FUNCTION_LOG_HTTP_HEADER_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpHeaderToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, httpHeaderToLog, buffer, bufferSize)
 
 #endif

@@ -19,7 +19,7 @@ Constructors
 FN_INLINE_ALWAYS VariantList *
 varLstNew(void)
 {
-    return (VariantList *)lstNewP(sizeof(Variant *));
+    return (VariantList *)OBJ_NAME(lstNewP(sizeof(Variant *)), VariantList::List);
 }
 
 // Create VariantList from StringList
@@ -85,6 +85,6 @@ Macros for function logging
 #define FUNCTION_LOG_VARIANT_LIST_TYPE                                                                                             \
     VariantList *
 #define FUNCTION_LOG_VARIANT_LIST_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "VariantList", buffer, bufferSize)
+    objNameToLog(value, "VariantList", buffer, bufferSize)
 
 #endif

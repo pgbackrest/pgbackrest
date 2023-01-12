@@ -47,6 +47,8 @@ infoBackupNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
+    FUNCTION_AUDIT_HELPER();
+
     InfoBackup *this = OBJ_NEW_ALLOC();
 
     *this = (InfoBackup)
@@ -261,6 +263,8 @@ infoBackupSaveCallback(void *const data, const String *const sectionNext, InfoSa
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(data != NULL);
     ASSERT(infoSaveData != NULL);
@@ -885,8 +889,8 @@ infoBackupSaveFile(
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-infoBackupDataToLog(const InfoBackupData *this)
+FN_EXTERN void
+infoBackupDataToLog(const InfoBackupData *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{label: %s, pgId: %u}", strZ(this->backupLabel), this->backupPgId);
+    strStcFmt(debugLog, "{label: %s, pgId: %u}", strZ(this->backupLabel), this->backupPgId);
 }

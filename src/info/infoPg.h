@@ -113,17 +113,17 @@ FN_EXTERN InfoPg *infoPgSet(
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *infoPgDataToLog(const InfoPgData *this);
+FN_EXTERN void infoPgDataToLog(const InfoPgData *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_INFO_PG_TYPE                                                                                                  \
     InfoPg *
 #define FUNCTION_LOG_INFO_PG_FORMAT(value, buffer, bufferSize)                                                                     \
-    objToLog(value, "InfoPg", buffer, bufferSize)
+    objNameToLog(value, "InfoPg", buffer, bufferSize)
 
 #define FUNCTION_LOG_INFO_PG_DATA_TYPE                                                                                             \
     InfoPgData
 #define FUNCTION_LOG_INFO_PG_DATA_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, infoPgDataToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(&value, infoPgDataToLog, buffer, bufferSize)
 
 
 #endif

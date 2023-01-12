@@ -357,5 +357,5 @@ backupFile(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_STRUCT(result);
+    FUNCTION_LOG_RETURN(LIST, result);
 }

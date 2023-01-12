@@ -103,6 +103,6 @@ Macros for function logging
 #define FUNCTION_LOG_IO_READ_TYPE                                                                                                  \
     IoRead *
 #define FUNCTION_LOG_IO_READ_FORMAT(value, buffer, bufferSize)                                                                     \
-    objToLog(value, "IoRead", buffer, bufferSize)
+    objNameToLog(value, "IoRead", buffer, bufferSize)
 
 #endif

@@ -59,7 +59,7 @@ Process the request
 static HttpResponse *
 httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
         FUNCTION_LOG_PARAM(BOOL, waitForResponse);
         FUNCTION_LOG_PARAM(BOOL, contentCache);
@@ -178,7 +178,7 @@ httpRequestProcess(HttpRequest *this, bool waitForResponse, bool contentCache)
 FN_EXTERN HttpRequest *
 httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_CLIENT, client);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -222,7 +222,7 @@ httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpR
 FN_EXTERN HttpResponse *
 httpRequestResponse(HttpRequest *this, bool contentCache)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
         FUNCTION_LOG_PARAM(BOOL, contentCache);
     FUNCTION_LOG_END();
@@ -236,7 +236,7 @@ httpRequestResponse(HttpRequest *this, bool contentCache)
 FN_EXTERN void
 httpRequestError(const HttpRequest *this, HttpResponse *response)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, this);
         FUNCTION_LOG_PARAM(HTTP_RESPONSE, response);
     FUNCTION_LOG_END();
@@ -302,11 +302,19 @@ httpRequestError(const HttpRequest *this, HttpResponse *response)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-httpRequestToLog(const HttpRequest *this)
+FN_EXTERN void
+httpRequestToLog(const HttpRequest *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{verb: %s, path: %s, query: %s, header: %s, contentSize: %zu}", strZ(httpRequestVerb(this)), strZ(httpRequestPath(this)),
-        httpRequestQuery(this) == NULL ? "null" : strZ(httpQueryToLog(httpRequestQuery(this))),
-        strZ(httpHeaderToLog(httpRequestHeader(this))), this->content == NULL ? 0 : bufUsed(this->content));
+    strStcFmt(
+        debugLog, "{verb: %s, path: %s, contentSize: %zu, query: ", strZ(httpRequestVerb(this)),
+        strZ(httpRequestPath(this)), this->content == NULL ? 0 : bufUsed(this->content));
+
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(
+            httpRequestQuery(this), httpQueryToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", header: "),
+    httpHeaderToLog(httpRequestHeader(this), debugLog);
+    strStcCatChr(debugLog, '}');
 }

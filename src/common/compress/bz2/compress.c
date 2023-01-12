@@ -30,18 +30,18 @@ typedef struct Bz2Compress
 /***********************************************************************************************************************************
 Render as string for logging
 ***********************************************************************************************************************************/
-static String *
-bz2CompressToLog(const Bz2Compress *this)
+static void
+bz2CompressToLog(const Bz2Compress *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{inputSame: %s, done: %s, flushing: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done),
-        cvtBoolToConstZ(this->flushing), this->stream.avail_in);
+    strStcFmt(
+        debugLog, "{inputSame: %s, done: %s, flushing: %s, avail_in: %u}", cvtBoolToConstZ(this->inputSame),
+        cvtBoolToConstZ(this->done), cvtBoolToConstZ(this->flushing), this->stream.avail_in);
 }
 
 #define FUNCTION_LOG_BZ2_COMPRESS_TYPE                                                                                             \
     Bz2Compress *
 #define FUNCTION_LOG_BZ2_COMPRESS_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, bz2CompressToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, bz2CompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free compression stream
@@ -169,7 +169,7 @@ bz2CompressNew(int level)
 
     OBJ_NEW_BEGIN(Bz2Compress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Bz2Compress *driver = OBJ_NEW_ALLOC();
+        Bz2Compress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::Bz2Compress);
 
         *driver = (Bz2Compress)
         {

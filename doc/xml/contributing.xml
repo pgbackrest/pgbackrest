@@ -214,7 +214,7 @@ myObjFree(MyObj *const this)
 #define FUNCTION_LOG_MY_OBJ_TYPE                                            \
     MyObj *
 #define FUNCTION_LOG_MY_OBJ_FORMAT(value, buffer, bufferSize)               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, myObjToLog, buffer, bufferSize)
 
 /*
  * C FILE - see db.c for a more complete and actual implementation example

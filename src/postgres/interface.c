@@ -556,16 +556,16 @@ pgVersionToStr(unsigned int version)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pgControlToLog(const PgControl *pgControl)
+FN_EXTERN void
+pgControlToLog(const PgControl *const pgControl, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version, pgControl->systemId,
-        pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
+    strStcFmt(
+        debugLog, "{version: %u, systemId: %" PRIu64 ", walSegmentSize: %u, pageChecksum: %s}", pgControl->version,
+        pgControl->systemId, pgControl->walSegmentSize, cvtBoolToConstZ(pgControl->pageChecksum));
 }
 
-FN_EXTERN String *
-pgWalToLog(const PgWal *pgWal)
+FN_EXTERN void
+pgWalToLog(const PgWal *const pgWal, StringStatic *const debugLog)
 {
-    return strNewFmt("{version: %u, systemId: %" PRIu64 "}", pgWal->version, pgWal->systemId);
+    strStcFmt(debugLog, "{version: %u, systemId: %" PRIu64 "}", pgWal->version, pgWal->systemId);
 }

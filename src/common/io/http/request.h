@@ -149,11 +149,11 @@ httpRequestFree(HttpRequest *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *httpRequestToLog(const HttpRequest *this);
+FN_EXTERN void httpRequestToLog(const HttpRequest *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_HTTP_REQUEST_TYPE                                                                                            \
     HttpRequest *
 #define FUNCTION_LOG_HTTP_REQUEST_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpRequestToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, httpRequestToLog, buffer, bufferSize)
 
 #endif

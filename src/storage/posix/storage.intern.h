@@ -24,6 +24,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_POSIX_TYPE                                                                                            \
     StoragePosix *
 #define FUNCTION_LOG_STORAGE_POSIX_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "StoragePosix *", buffer, bufferSize)
+    objNameToLog(value, "StoragePosix *", buffer, bufferSize)
 
 #endif

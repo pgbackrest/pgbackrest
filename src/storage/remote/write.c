@@ -34,7 +34,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_REMOTE_TYPE                                                                                     \
     StorageWriteRemote *
 #define FUNCTION_LOG_STORAGE_WRITE_REMOTE_FORMAT(value, buffer, bufferSize)                                                        \
-    objToLog(value, "StorageWriteRemote", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteRemote", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Close file on the remote
@@ -213,7 +213,7 @@ storageWriteRemoteNew(
 
     OBJ_NEW_BEGIN(StorageWriteRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteRemote);
 
         *this = (StorageWriteRemote)
         {

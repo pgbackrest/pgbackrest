@@ -47,7 +47,7 @@ iniNew(void)
 Internal function to get an ini value
 ***********************************************************************************************************************************/
 static const Variant *
-iniGetInternal(const Ini *this, const String *section, const String *key, bool required)
+iniGetInternal(const Ini *const this, const String *const section, const String *const key, const bool required)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
@@ -63,7 +63,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key, bool r
     const Variant *result = NULL;
 
     // Get the section
-    KeyValue *sectionKv = varKv(kvGet(this->store, VARSTR(section)));
+    const KeyValue *const sectionKv = varKv(kvGet(this->store, VARSTR(section)));
 
     // Section must exist to get the value
     if (sectionKv != NULL)
@@ -78,7 +78,7 @@ iniGetInternal(const Ini *this, const String *section, const String *key, bool r
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-iniGet(const Ini *this, const String *section, const String *key)
+iniGet(const Ini *const this, const String *const section, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
@@ -89,8 +89,9 @@ iniGet(const Ini *this, const String *section, const String *key)
     FUNCTION_TEST_RETURN_CONST(STRING, varStr(iniGetInternal(this, section, key, true)));
 }
 
+/**********************************************************************************************************************************/
 FN_EXTERN StringList *
-iniGetList(const Ini *this, const String *section, const String *key)
+iniGetList(const Ini *const this, const String *const section, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
@@ -99,14 +100,14 @@ iniGetList(const Ini *this, const String *section, const String *key)
     FUNCTION_TEST_END();
 
     // Get the value
-    const Variant *result = iniGetInternal(this, section, key, false);
+    const Variant *const result = iniGetInternal(this, section, key, false);
 
     FUNCTION_TEST_RETURN(STRING_LIST, result == NULL ? NULL : strLstNewVarLst(varVarLst(result)));
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-iniSectionKeyIsList(const Ini *this, const String *section, const String *key)
+iniSectionKeyIsList(const Ini *const this, const String *const section, const String *const key)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
@@ -115,14 +116,14 @@ iniSectionKeyIsList(const Ini *this, const String *section, const String *key)
     FUNCTION_TEST_END();
 
     // Get the value
-    const Variant *result = iniGetInternal(this, section, key, true);
+    const Variant *const result = iniGetInternal(this, section, key, true);
 
     FUNCTION_TEST_RETURN(BOOL, varType(result) == varTypeVariantList);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-iniSectionKeyList(const Ini *this, const String *section)
+iniSectionKeyList(const Ini *const this, const String *const section)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INI, this);
@@ -137,11 +138,13 @@ iniSectionKeyList(const Ini *this, const String *section)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the section
-        KeyValue *sectionKv = varKv(kvGet(this->store, VARSTR(section)));
+        const KeyValue *const sectionKv = varKv(kvGet(this->store, VARSTR(section)));
 
         // Return key list if the section exists
         if (sectionKv != NULL)
+        {
             result = strLstNewVarLst(kvKeyList(sectionKv));
+        }
         // Otherwise return an empty list
         else
             result = strLstNew();

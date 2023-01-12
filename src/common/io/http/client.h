@@ -70,11 +70,11 @@ FN_EXTERN void httpClientReuse(HttpClient *this, HttpSession *session);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *httpClientToLog(const HttpClient *this);
+FN_EXTERN void httpClientToLog(const HttpClient *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_HTTP_CLIENT_TYPE                                                                                              \
     HttpClient *
 #define FUNCTION_LOG_HTTP_CLIENT_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, httpClientToLog, buffer, bufferSize)
 
 #endif

@@ -89,11 +89,11 @@ Macros for function logging
 #define FUNCTION_LOG_INFO_TYPE                                                                                                     \
     Info *
 #define FUNCTION_LOG_INFO_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Info", buffer, bufferSize)
+    objNameToLog(value, "Info", buffer, bufferSize)
 
 #define FUNCTION_LOG_INFO_SAVE_TYPE                                                                                                \
     InfoSave *
 #define FUNCTION_LOG_INFO_SAVE_FORMAT(value, buffer, bufferSize)                                                                   \
-    objToLog(value, "InfoSave", buffer, bufferSize)
+    objNameToLog(value, "InfoSave", buffer, bufferSize)
 
 #endif

@@ -186,15 +186,15 @@ FN_EXTERN void infoBackupSaveFile(
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *infoBackupDataToLog(const InfoBackupData *this);
+FN_EXTERN void infoBackupDataToLog(const InfoBackupData *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_INFO_BACKUP_TYPE                                                                                              \
     InfoBackup *
 #define FUNCTION_LOG_INFO_BACKUP_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "InfoBackup", buffer, bufferSize)
+    objNameToLog(value, "InfoBackup", buffer, bufferSize)
 #define FUNCTION_LOG_INFO_BACKUP_DATA_TYPE                                                                                         \
     InfoBackupData
 #define FUNCTION_LOG_INFO_BACKUP_DATA_FORMAT(value, buffer, bufferSize)                                                            \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(&value, infoBackupDataToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(&value, infoBackupDataToLog, buffer, bufferSize)
 
 #endif

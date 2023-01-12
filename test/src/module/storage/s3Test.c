@@ -275,6 +275,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("storageS3DateTime() and storageS3Auth()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         TEST_RESULT_STR_Z(storageS3DateTime(1491267845), "20170404T010405Z", "static date");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -291,9 +293,10 @@ testRun(void)
         TEST_RESULT_STR(driver->accessKey, accessKey, "check access key");
         TEST_RESULT_STR(driver->secretAccessKey, secretAccessKey, "check secret access key");
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
-        TEST_RESULT_STR(
-            httpClientToLog(driver->httpClient),
-            strNewFmt(
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_Z(logBuf,
+            zNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
                     ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
                     ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
@@ -308,7 +311,8 @@ testRun(void)
         httpQueryAdd(query, STRDEF("list-type"), STRDEF("2"));
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -321,7 +325,8 @@ testRun(void)
         const Buffer *lastSigningKey = driver->signingKey;
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -335,7 +340,8 @@ testRun(void)
         TEST_TITLE("change date to generate new signing key");
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -358,9 +364,10 @@ testRun(void)
         driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
 
         TEST_RESULT_STR(driver->securityToken, securityToken, "check security token");
-        TEST_RESULT_STR(
-            httpClientToLog(driver->httpClient),
-            strNewFmt(
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_Z(logBuf,
+            zNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
                     ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
                     ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
@@ -371,7 +378,8 @@ testRun(void)
         TEST_TITLE("auth with token");
 
         TEST_RESULT_VOID(
-            storageS3Auth(driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, HASH_TYPE_SHA256_ZERO_STR),
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),

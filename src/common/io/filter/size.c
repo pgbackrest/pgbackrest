@@ -23,16 +23,16 @@ typedef struct IoSize
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-ioSizeToLog(const IoSize *this)
+static void
+ioSizeToLog(const IoSize *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %" PRIu64 "}", this->size);
+    strStcFmt(debugLog, "{size: %" PRIu64 "}", this->size);
 }
 
 #define FUNCTION_LOG_IO_SIZE_TYPE                                                                                                  \
     IoSize *
 #define FUNCTION_LOG_IO_SIZE_FORMAT(value, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioSizeToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioSizeToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Count bytes in the input
@@ -95,7 +95,7 @@ ioSizeNew(void)
 
     OBJ_NEW_BEGIN(IoSize, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoSize *driver = OBJ_NEW_ALLOC();
+        IoSize *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::IoSize);
         *driver = (IoSize){0};
 
         this = ioFilterNewP(SIZE_FILTER_TYPE, driver, NULL, .in = ioSizeProcess, .result = ioSizeResult);

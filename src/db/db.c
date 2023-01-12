@@ -128,9 +128,11 @@ dbQuery(Db *this, const PgClientQueryResult resultType, const String *const quer
             pckWriteStrIdP(param, resultType);
             pckWriteStrP(param, query);
 
+            PackRead *const read = protocolClientExecute(this->remoteClient, command, true);
+
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = pckReadPackP(protocolClientExecute(this->remoteClient, command, true));
+                result = pckReadPackP(read);
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -176,7 +178,11 @@ dbQueryColumn(Db *const this, const String *const query)
     ASSERT(this != NULL);
     ASSERT(query != NULL);
 
-    FUNCTION_LOG_RETURN(PACK_READ, pckReadNew(dbQuery(this, pgClientQueryResultColumn, query)));
+    Pack *const pack = dbQuery(this, pgClientQueryResultColumn, query);
+    PackRead *const result = pckReadNew(pack);
+    pckMove(pack, objMemContext(result));
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
 }
 
 /***********************************************************************************************************************************
@@ -193,7 +199,11 @@ dbQueryRow(Db *const this, const String *const query)
     ASSERT(this != NULL);
     ASSERT(query != NULL);
 
-    FUNCTION_LOG_RETURN(PACK_READ, pckReadNew(dbQuery(this, pgClientQueryResultRow, query)));
+    Pack *const pack = dbQuery(this, pgClientQueryResultRow, query);
+    PackRead *const result = pckReadNew(pack);
+    pckMove(pack, objMemContext(result));
+
+    FUNCTION_LOG_RETURN(PACK_READ, result);
 }
 
 /***********************************************************************************************************************************
@@ -208,7 +218,15 @@ dbIsInRecovery(Db *const this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(BOOL, pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()"))));
+    bool result;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_recovery()")));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
@@ -358,6 +376,8 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         FUNCTION_LOG_PARAM(BOOL, stopAuto);
         FUNCTION_LOG_PARAM(BOOL, archiveCheck);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
 
@@ -522,6 +542,8 @@ dbBackupStop(Db *this)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
 
@@ -833,10 +855,17 @@ dbWalSwitch(Db *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-dbToLog(const Db *this)
+FN_EXTERN void
+dbToLog(const Db *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{client: %s, remoteClient: %s}", this->client == NULL ? NULL_Z : strZ(pgClientToLog(this->client)),
-        this->remoteClient == NULL ? NULL_Z : strZ(protocolClientToLog(this->remoteClient)));
+    strStcCat(debugLog, "{client: ");
+    strStcResultSizeInc(
+        debugLog, FUNCTION_LOG_OBJECT_FORMAT(this->client, pgClientToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", remoteClient: ");
+    strStcResultSizeInc(
+        debugLog,
+        FUNCTION_LOG_OBJECT_FORMAT(
+            this->remoteClient, protocolClientToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcCatChr(debugLog, '}');
 }

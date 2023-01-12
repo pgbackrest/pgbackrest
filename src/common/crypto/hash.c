@@ -20,11 +20,12 @@ Cryptographic Hash
 /***********************************************************************************************************************************
 Hashes for zero-length files (i.e., seed value)
 ***********************************************************************************************************************************/
-static uint8_t hashTypeSha1Zero[HASH_TYPE_SHA1_SIZE] =
-    {0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d, 0x32, 0x55, 0xbf, 0xef, 0x95, 0x60, 0x18, 0x90, 0xaf, 0xd8, 0x07, 0x09};
-VR_EXTERN_DEFINE const Buffer *const HASH_TYPE_SHA1_ZERO_BUF = BUF(hashTypeSha1Zero, sizeof(hashTypeSha1Zero));
-
-STRING_EXTERN(HASH_TYPE_SHA256_ZERO_STR,                            HASH_TYPE_SHA256_ZERO);
+BUFFER_EXTERN(
+    HASH_TYPE_SHA1_ZERO_BUF, 0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d, 0x32, 0x55, 0xbf, 0xef, 0x95, 0x60, 0x18, 0x90, 0xaf,
+    0xd8, 0x07, 0x09);
+BUFFER_EXTERN(
+    HASH_TYPE_SHA256_ZERO_BUF, 0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27,
+    0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55);
 
 /***********************************************************************************************************************************
 Include local MD5 code
@@ -48,7 +49,7 @@ Macros for function logging
 #define FUNCTION_LOG_CRYPTO_HASH_TYPE                                                                                              \
     CryptoHash *
 #define FUNCTION_LOG_CRYPTO_HASH_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "CryptoHash", buffer, bufferSize)
+    objNameToLog(value, "CryptoHash", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free hash context
@@ -183,7 +184,7 @@ cryptoHashNew(const HashType type)
 
     OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CryptoHash *driver = OBJ_NEW_ALLOC();
+        CryptoHash *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::CryptoHash);
         *driver = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid

@@ -53,6 +53,6 @@ Macros for function logging
 #define FUNCTION_LOG_BLOB_TYPE                                                                                                     \
     Blob *
 #define FUNCTION_LOG_BLOB_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Blob", buffer, bufferSize)
+    objNameToLog(value, "Blob", buffer, bufferSize)
 
 #endif

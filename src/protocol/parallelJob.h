@@ -123,11 +123,11 @@ protocolParallelJobFree(ProtocolParallelJob *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *protocolParallelJobToLog(const ProtocolParallelJob *this);
+FN_EXTERN void protocolParallelJobToLog(const ProtocolParallelJob *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PROTOCOL_PARALLEL_JOB_TYPE                                                                                    \
     ProtocolParallelJob *
 #define FUNCTION_LOG_PROTOCOL_PARALLEL_JOB_FORMAT(value, buffer, bufferSize)                                                       \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolParallelJobToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolParallelJobToLog, buffer, bufferSize)
 
 #endif

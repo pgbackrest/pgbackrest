@@ -113,11 +113,11 @@ pgClientFree(PgClient *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *pgClientToLog(const PgClient *this);
+FN_EXTERN void pgClientToLog(const PgClient *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PG_CLIENT_TYPE                                                                                                \
     PgClient *
 #define FUNCTION_LOG_PG_CLIENT_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pgClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pgClientToLog, buffer, bufferSize)
 
 #endif

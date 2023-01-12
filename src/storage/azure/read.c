@@ -27,7 +27,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_AZURE_TYPE                                                                                       \
     StorageReadAzure *
 #define FUNCTION_LOG_STORAGE_READ_AZURE_FORMAT(value, buffer, bufferSize)                                                          \
-    objToLog(value, "StorageReadAzure", buffer, bufferSize)
+    objNameToLog(value, "StorageReadAzure", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -127,7 +127,7 @@ storageReadAzureNew(
 
     OBJ_NEW_BEGIN(StorageReadAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadAzure *driver = OBJ_NEW_ALLOC();
+        StorageReadAzure *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadAzure);
 
         *driver = (StorageReadAzure)
         {

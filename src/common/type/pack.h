@@ -137,7 +137,7 @@ Pack Functions
 FN_INLINE_ALWAYS Pack *
 pckDup(const Pack *const this)
 {
-    return (Pack *)bufDup((const Buffer *)this);
+    return (Pack *)OBJ_NAME(bufDup((const Buffer *)this), Pack::Buffer);
 }
 
 // Cast Buffer to Pack
@@ -661,20 +661,20 @@ Macros for function logging
 #define FUNCTION_LOG_PACK_TYPE                                                                                                     \
     Pack *
 #define FUNCTION_LOG_PACK_FORMAT(value, buffer, bufferSize)                                                                        \
-    objToLog(value, "Pack", buffer, bufferSize)
+    objNameToLog(value, "Pack", buffer, bufferSize)
 
-FN_EXTERN String *pckReadToLog(const PackRead *this);
+FN_EXTERN void pckReadToLog(const PackRead *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PACK_READ_TYPE                                                                                                \
     PackRead *
 #define FUNCTION_LOG_PACK_READ_FORMAT(value, buffer, bufferSize)                                                                   \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckReadToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pckReadToLog, buffer, bufferSize)
 
-FN_EXTERN String *pckWriteToLog(const PackWrite *this);
+FN_EXTERN void pckWriteToLog(const PackWrite *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PACK_WRITE_TYPE                                                                                               \
     PackWrite *
 #define FUNCTION_LOG_PACK_WRITE_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, pckWriteToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, pckWriteToLog, buffer, bufferSize)
 
 #endif

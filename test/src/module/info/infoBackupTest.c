@@ -255,8 +255,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoBackupDataToLog()");
 
-        TEST_RESULT_STR_Z(
-            infoBackupDataToLog(&backupData), "{label: 20161219-212741F_20161219-212918I, pgId: 1}", "check log format");
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(&backupData, infoBackupDataToLog, logBuf, sizeof(logBuf)), "infoBackupDataToLog");
+        TEST_RESULT_Z(logBuf, "{label: 20161219-212741F_20161219-212918I, pgId: 1}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoBackupDataAdd - full backup");

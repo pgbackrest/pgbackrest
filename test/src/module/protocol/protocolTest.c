@@ -888,6 +888,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolParallel and ProtocolParallelJob"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("job state transitions");
 
@@ -974,7 +976,9 @@ testRun(void)
                 TestParallelJobCallback data = {.jobList = lstNewP(sizeof(ProtocolParallelJob *))};
                 ProtocolParallel *parallel = NULL;
                 TEST_ASSIGN(parallel, protocolParallelNew(2000, testParallelJobCallback, &data), "create parallel");
-                TEST_RESULT_STR_Z(protocolParallelToLog(parallel), "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(parallel, protocolParallelToLog, logBuf, sizeof(logBuf)), "protocolParallelToLog");
+                TEST_RESULT_Z(logBuf, "{state: pending, clientTotal: 0, jobTotal: 0}", "check log");
 
                 // Add client
                 ProtocolClient *client[HRN_FORK_CHILD_MAX];

@@ -121,11 +121,11 @@ protocolClientFree(ProtocolClient *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *protocolClientToLog(const ProtocolClient *this);
+FN_EXTERN void protocolClientToLog(const ProtocolClient *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_PROTOCOL_CLIENT_TYPE                                                                                          \
     ProtocolClient *
 #define FUNCTION_LOG_PROTOCOL_CLIENT_FORMAT(value, buffer, bufferSize)                                                             \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, protocolClientToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolClientToLog, buffer, bufferSize)
 
 #endif

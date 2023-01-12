@@ -47,7 +47,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                         \
     StorageWriteS3 *
 #define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
-    objToLog(value, "StorageWriteS3", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -280,7 +280,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
     OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteS3 *driver = OBJ_NEW_ALLOC();
+        StorageWriteS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteS3);
 
         *driver = (StorageWriteS3)
         {

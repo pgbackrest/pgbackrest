@@ -209,7 +209,7 @@ httpResponseEof(THIS_VOID)
 FN_EXTERN HttpResponse *
 httpResponseNew(HttpSession *session, const String *verb, bool contentCache)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_SESSION, session);
         FUNCTION_LOG_PARAM(STRING, verb);
         FUNCTION_LOG_PARAM(BOOL, contentCache);
@@ -399,13 +399,18 @@ httpResponseContent(HttpResponse *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-httpResponseToLog(const HttpResponse *this)
+FN_EXTERN void
+httpResponseToLog(const HttpResponse *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{code: %u, reason: %s, header: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64
-            ", closeOnContentEof: %s, contentExists: %s, contentEof: %s, contentCached: %s}",
-        httpResponseCode(this), strZ(httpResponseReason(this)), strZ(httpHeaderToLog(httpResponseHeader(this))),
-        cvtBoolToConstZ(this->contentChunked), this->contentSize, this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof),
-        cvtBoolToConstZ(this->contentExists), cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
+    strStcFmt(
+        debugLog,
+        "{code: %u, reason: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64 ", closeOnContentEof: %s"
+            ", contentExists: %s, contentEof: %s, contentCached: %s}",
+        httpResponseCode(this), strZ(httpResponseReason(this)), cvtBoolToConstZ(this->contentChunked), this->contentSize,
+        this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof), cvtBoolToConstZ(this->contentExists),
+        cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));
+
+    strStcCat(debugLog, ", header: "),
+    httpHeaderToLog(httpResponseHeader(this), debugLog);
+    strStcCatChr(debugLog, '}');
 }

@@ -30,6 +30,7 @@ The test code is included directly so it can freely interact with the included C
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #ifdef HRN_FEATURE_ERROR
     #include "common/error.h"
@@ -149,9 +150,6 @@ main(int argListSize, const char *argList[])
         fflush(stderr);
         exit(25);
     }
-
-    // Initialize stack trace for the harness
-    FUNCTION_HARNESS_INIT(argList[0]);
 
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, argListSize);

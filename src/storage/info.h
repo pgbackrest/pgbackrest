@@ -74,6 +74,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_INFO_TYPE                                                                                             \
     StorageInfo
 #define FUNCTION_LOG_STORAGE_INFO_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(&value, "StorageInfo", buffer, bufferSize)
+    objNameToLog(&value, "StorageInfo", buffer, bufferSize)
 
 #endif

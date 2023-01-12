@@ -430,8 +430,8 @@ lstComparatorSet(List *this, ListComparator *comparator)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-lstToLog(const List *this)
+FN_EXTERN void
+lstToLog(const List *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{size: %u}", lstSize(this));
+    strStcFmt(debugLog, "{size: %u}", lstSize(this));
 }
