@@ -29,6 +29,7 @@ The block map is terminated by a varint-128 encoded zero stop byte.
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/log.h"
 #include "command/backup/blockMap.h"
 
 /**********************************************************************************************************************************/
@@ -61,9 +62,9 @@ lstComparatorBlockMapRef(const void *const blockMapRef1, const void *const block
 FN_EXTERN BlockMap *
 blockMapNewRead(IoRead *const map)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(IO_READ, map);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_READ, map);
+    FUNCTION_LOG_END();
 
     BlockMap *const this = blockMapNew();
     List *const refList = lstNewP(sizeof(BlockMapRef), .comparator = lstComparatorBlockMapRef);
@@ -141,17 +142,17 @@ blockMapNewRead(IoRead *const map)
     lstFree(refList);
     bufFree(checksum);
 
-    FUNCTION_TEST_RETURN(BLOCK_MAP, this);
+    FUNCTION_LOG_RETURN(BLOCK_MAP, this);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
 blockMapWrite(const BlockMap *const this, IoWrite *const output)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BLOCK_MAP, this);
-        FUNCTION_TEST_PARAM(IO_WRITE, output);
-    FUNCTION_TEST_END();
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BLOCK_MAP, this);
+        FUNCTION_LOG_PARAM(IO_WRITE, output);
+    FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(blockMapSize(this) > 0);
@@ -232,5 +233,5 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
 
     lstFree(refList);
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_LOG_RETURN_VOID();
 }
