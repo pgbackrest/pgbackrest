@@ -233,7 +233,6 @@ my $oyVm =
         [
             PG_VERSION_95,
             PG_VERSION_96,
-            PG_VERSION_10,
             PG_VERSION_15,
         ],
     },
@@ -267,6 +266,7 @@ my $oyVm =
         [
             PG_VERSION_95,
             PG_VERSION_96,
+            PG_VERSION_10,
             PG_VERSION_15,
         ],
     },
