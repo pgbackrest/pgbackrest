@@ -777,10 +777,10 @@ cfgParseOptionalRule(
         // Initialize optional rules
         if (optionalRules->pack == NULL)
         {
-            PackRead *const groupList = pckReadNewC(parseRuleOption[optionId].pack, parseRuleOption[optionId].packSize);
-
             MEM_CONTEXT_TEMP_BEGIN()
             {
+                PackRead *const groupList = pckReadNewC(parseRuleOption[optionId].pack, parseRuleOption[optionId].packSize);
+
                 // Seach for a matching group
                 do
                 {
@@ -1100,11 +1100,11 @@ cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
     // If the option is in a group then construct the name
     if (parseRuleOption[optionId].group)
     {
-        String *name = strNewFmt(
+        FUNCTION_TEST_RETURN_CONST(
+            STRINGZ,
+            zNewFmt(
             "%s%u%s", parseRuleOptionGroup[parseRuleOption[optionId].groupId].name, keyIdx + 1,
-            parseRuleOption[optionId].name + strlen(parseRuleOptionGroup[parseRuleOption[optionId].groupId].name));
-
-        FUNCTION_TEST_RETURN_CONST(STRINGZ, strZ(name));
+                parseRuleOption[optionId].name + strlen(parseRuleOptionGroup[parseRuleOption[optionId].groupId].name)));
     }
 
     // Else return the stored name
