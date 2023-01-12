@@ -65,6 +65,12 @@ unit:
       - name: stack-trace
         total: 4
         feature: stackTrace
+        harness:
+          name: stackTrace
+          shim:
+            common/stackTrace:
+              function:
+                - stackTraceBackCallback
 
         coverage:
           - common/stackTrace

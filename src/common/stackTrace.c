@@ -291,12 +291,8 @@ static int
 stackTraceBackCallback(
     void *const dataVoid, const uintptr_t pc, const char *fileName, const int fileLine, const char *const functionName)
 {
-    (void)(pc);
+    (void)pc;
     StackTraceBackData *const data = dataVoid;
-
-    // Stop if the stack has been exhausted
-    if (data->stackIdx < 0)
-        return true;
 
     // Catch any unset parameters which indicates the debug data is not available
     if (fileName == NULL || fileLine == 0 || functionName == NULL)
@@ -314,13 +310,12 @@ stackTraceBackCallback(
     data->firstCall = false;
 
     // If the function name matches combine backtrace data with stack data
-    const StackTraceData *const traceData = &stackTraceLocal.stack[data->stackIdx];
-
-    if (strcmp(functionName, traceData->functionName) == 0)
+    if (data->stackIdx >= 0 && strcmp(functionName, stackTraceLocal.stack[data->stackIdx].functionName) == 0)
     {
         data->result += stackTraceFmt(
             data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(%s)", data->firstLine ? "" : "\n",
-            stackTraceTrimSrc(traceData->fileName), functionName, fileLine, stackTraceParamIdx(data->stackIdx));
+            stackTraceTrimSrc(stackTraceLocal.stack[data->stackIdx].fileName), functionName, fileLine,
+            stackTraceParamIdx(data->stackIdx));
 
         data->stackIdx--;
     }

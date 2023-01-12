@@ -3,6 +3,8 @@ Test Stack Trace Handler
 ***********************************************************************************************************************************/
 #include <assert.h>
 
+#include "common/harnessStackTrace.h"
+
 #ifdef HAVE_LIBBACKTRACE
 
 FN_NO_RETURN void
@@ -98,12 +100,23 @@ testRun(void)
         {
             TRY_BEGIN()
             {
+                char buffer[4096];
+                snprintf(buffer, sizeof(buffer), "%s", errorStackTrace());
+
+                if (strstr(buffer, ":testRun:") != NULL)
+                    memcpy(strstr(buffer, ":testRun:") + 9, "XX", 2);
+
+                if (strstr(buffer, ":main:") != NULL)
+                    memcpy(strstr(buffer, ":main:") + 6, "XXX", 3);
+
                 TEST_RESULT_Z(
-                    errorStackTrace(),
-                "module/common/stackTraceTest.c:testStackTraceError3:12:(trace log level required for parameters)\n"
-                "module/common/stackTraceTest.c:testStackTraceError2:18:(no parameters available)\n"
-                "file1.c:testStackTraceError1:25:(debug log level required for parameters)",
-                "check stack trace");
+                    buffer,
+                    "module/common/stackTraceTest.c:testStackTraceError3:14:(trace log level required for parameters)\n"
+                    "module/common/stackTraceTest.c:testStackTraceError2:20:(no parameters available)\n"
+                    "file1.c:testStackTraceError1:27:(debug log level required for parameters)\n"
+                    "module/common/stackTraceTest.c:testRun:XX:(no parameters available)\n"
+                    "../test.c:main:XXX:(no parameters available)",
+                    "check stack trace");
             }
             CATCH(TestError)
             {
@@ -117,9 +130,9 @@ testRun(void)
                 {
                     TEST_RESULT_Z(
                         errorStackTrace(),
-                    "module/common/stackTraceTest.c:testStackTraceError3:12:(trace log level required for parameters)\n"
-                    "file1.c:testStackTraceError1:(debug log level required for parameters)",
-                    "check stack trace");
+                        "module/common/stackTraceTest.c:testStackTraceError3:14:(trace log level required for parameters)\n"
+                        "file1.c:testStackTraceError1:(debug log level required for parameters)",
+                        "check stack trace");
                 }
                 TRY_END();
             }
@@ -135,11 +148,22 @@ testRun(void)
         {
             TRY_BEGIN()
             {
+                char buffer[4096];
+                snprintf(buffer, sizeof(buffer), "%s", errorStackTrace());
+
+                if (strstr(buffer, ":testRun:") != NULL)
+                    memcpy(strstr(buffer, ":testRun:") + 9, "XXX", 3);
+
+                if (strstr(buffer, ":main:") != NULL)
+                    memcpy(strstr(buffer, ":main:") + 6, "XXX", 3);
+
                 TEST_RESULT_Z(
-                    errorStackTrace(),
-                "module/common/stackTraceTest.c:testStackTraceError5:31:(no parameters available)\n"
-                "file4.c:testStackTraceError4:38:(trace log level required for parameters)",
-                "check stack trace");
+                    buffer,
+                    "module/common/stackTraceTest.c:testStackTraceError5:33:(no parameters available)\n"
+                    "file4.c:testStackTraceError4:40:(trace log level required for parameters)\n"
+                    "module/common/stackTraceTest.c:testRun:XXX:(no parameters available)\n"
+                    "../test.c:main:XXX:(no parameters available)",
+                    "check stack trace");
             }
             CATCH(TestError)
             {
@@ -153,16 +177,26 @@ testRun(void)
                 {
                     TEST_RESULT_Z(
                         errorStackTrace(),
-                    "module/common/stackTraceTest.c:testStackTraceError5:31:(test build required for parameters)\n"
-                    "    ... function(s) omitted ...\n"
-                    "file4.c:testStackTraceError4:(trace log level required for parameters)",
-                    "check stack trace");
+                        "module/common/stackTraceTest.c:testStackTraceError5:33:(test build required for parameters)\n"
+                        "    ... function(s) omitted ...\n"
+                        "file4.c:testStackTraceError4:(trace log level required for parameters)",
+                        "check stack trace");
                 }
                 TRY_END();
             }
             TRY_END();
         }
         TRY_END();
+
+        // *************************************************************************************************************************
+        TEST_TITLE("disable backtrace to make sure default code is called");
+
+        hrnStackTraceBackShimInstall();
+
+        char buffer[4096];
+        stackTraceToZ(buffer, sizeof(buffer), "file", "function", 1);
+
+        hrnStackTraceBackShimUninstall();
 #endif
     }
 
