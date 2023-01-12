@@ -26,7 +26,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_CHUNKED_READ_TYPE                                                                                           \
     IoChunkedRead *
 #define FUNCTION_LOG_IO_CHUNKED_READ_FORMAT(value, buffer, bufferSize)                                                              \
-    objToLog(value, "IoChunkedRead", buffer, bufferSize)
+    objNameToLog(value, "IoChunkedRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Read data from the buffer
@@ -124,7 +124,7 @@ ioChunkedReadNew(IoRead *const read)
 
     OBJ_NEW_BEGIN(IoChunkedRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoChunkedRead *driver = OBJ_NEW_ALLOC();
+        IoChunkedRead *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoRead::IoChunkedRead);
 
         *driver = (IoChunkedRead)
         {

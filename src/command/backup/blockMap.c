@@ -136,7 +136,10 @@ blockMapNewRead(IoRead *const map)
             lstAdd((List *)this, &blockMapItem);
         }
     }
-    while (1);
+    while (true);
+
+    lstFree(refList);
+    bufFree(checksum);
 
     FUNCTION_TEST_RETURN(BLOCK_MAP, this);
 }
@@ -226,6 +229,8 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
 
     // Write map end
     ioWriteVarIntU64(output, 0);
+
+    lstFree(refList);
 
     FUNCTION_TEST_RETURN_VOID();
 }

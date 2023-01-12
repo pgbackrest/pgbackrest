@@ -54,16 +54,16 @@ typedef struct BlockIncr
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-blockIncrToLog(const BlockIncr *this)
+static void
+blockIncrToLog(const BlockIncr *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{blockSize: %zu}", this->blockSize);
+    strStcFmt(debugLog, "{blockSize: %zu}", this->blockSize);
 }
 
 #define FUNCTION_LOG_BLOCK_INCR_TYPE                                                                                               \
     BlockIncr *
 #define FUNCTION_LOG_BLOCK_INCR_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, blockIncrToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, blockIncrToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Count bytes in the input
@@ -340,7 +340,7 @@ blockIncrNew(
 
     OBJ_NEW_BEGIN(BlockIncr, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        BlockIncr *const driver = OBJ_NEW_ALLOC();
+        BlockIncr *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::BlockIncr);
 
         *driver = (BlockIncr)
         {

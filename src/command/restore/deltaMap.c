@@ -29,7 +29,7 @@ Macros for function logging
 #define FUNCTION_LOG_DELTA_MAP_TYPE                                                                                                \
     DeltaMap *
 #define FUNCTION_LOG_DELTA_MAP_FORMAT(value, buffer, bufferSize)                                                                   \
-    objToLog(value, "DeltaMap", buffer, bufferSize)
+    objNameToLog(value, "DeltaMap", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Process delta
@@ -140,7 +140,7 @@ deltaMapNew(const size_t blockSize)
 
     OBJ_NEW_BEGIN(DeltaMap, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        DeltaMap *const driver = OBJ_NEW_ALLOC();
+        DeltaMap *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::DeltaMap);
 
         *driver = (DeltaMap)
         {

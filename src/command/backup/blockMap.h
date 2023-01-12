@@ -33,7 +33,7 @@ Constructors
 FN_INLINE_ALWAYS BlockMap *
 blockMapNew(void)
 {
-    return (BlockMap *)lstNewP(sizeof(BlockMapItem));
+    return (BlockMap *)OBJ_NAME(lstNewP(sizeof(BlockMapItem)), BlockMap::List);
 }
 
 // New block map from IO
@@ -87,6 +87,6 @@ Macros for function logging
 #define FUNCTION_LOG_BLOCK_MAP_TYPE                                                                                                \
     BlockMap *
 #define FUNCTION_LOG_BLOCK_MAP_FORMAT(value, buffer, bufferSize)                                                                   \
-    objToLog(value, "BlockMap", buffer, bufferSize)
+    objNameToLog(value, "BlockMap", buffer, bufferSize)
 
 #endif

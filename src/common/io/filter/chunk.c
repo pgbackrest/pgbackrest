@@ -29,7 +29,7 @@ Macros for function logging
 #define FUNCTION_LOG_IO_CHUNK_TYPE                                                                                                 \
     IoChunk *
 #define FUNCTION_LOG_IO_CHUNK_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "IoChunk", buffer, bufferSize)
+    objNameToLog(value, "IoChunk", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Should the same input be provided again?
@@ -155,7 +155,7 @@ ioChunkNew(void)
 
     OBJ_NEW_BEGIN(IoChunk, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoChunk *const driver = OBJ_NEW_ALLOC();
+        IoChunk *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::IoChunk);
 
         *driver = (IoChunk)
         {
