@@ -538,11 +538,11 @@ testBldUnit(TestBuild *const this)
             "        lib_openssl,\n"
             "        lib_lz4,\n"
             "        lib_pq,\n"
+            "        lib_ssh2,\n"
             "        lib_xml,\n"
             "        lib_yaml,\n"
             "        lib_z,\n"
             "        lib_zstd,\n"
-            "        lib_ssh2,\n"
             "    ],\n"
             ")\n",
             strZ(pathRepoRel), strZ(pathRepoRel));

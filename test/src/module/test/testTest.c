@@ -142,6 +142,7 @@ testRun(void)
         strReplace(testC, STRDEF("{[C_TEST_USER]}"), STRDEF(TEST_USER));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), STRDEF(TEST_USER_ID_Z));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID_Z]}"), STRDEF("\"" TEST_USER_ID_Z "\""));
+        strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), STRDEF("7"));
 
         // Test definition
         // -------------------------------------------------------------------------------------------------------------------------
@@ -314,6 +315,7 @@ testRun(void)
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
                         "        lib_pq,\n"
+                        "        lib_ssh2,\n"
                         "        lib_xml,\n"
                         "        lib_yaml,\n"
                         "        lib_z,\n"
@@ -429,6 +431,7 @@ testRun(void)
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
                         "        lib_pq,\n"
+                        "        lib_ssh2,\n"
                         "        lib_xml,\n"
                         "        lib_yaml,\n"
                         "        lib_z,\n"
@@ -639,6 +642,7 @@ testRun(void)
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
                         "        lib_pq,\n"
+                        "        lib_ssh2,\n"
                         "        lib_xml,\n"
                         "        lib_yaml,\n"
                         "        lib_z,\n"
@@ -806,6 +810,7 @@ testRun(void)
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
                         "        lib_pq,\n"
+                        "        lib_ssh2,\n"
                         "        lib_xml,\n"
                         "        lib_yaml,\n"
                         "        lib_z,\n"
