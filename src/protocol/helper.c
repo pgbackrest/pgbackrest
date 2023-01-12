@@ -442,8 +442,9 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             // Ack the config command
             protocolServerDataEndPut(result);
 
-            ioSessionMove(tlsSession, memContextPrior());
+            // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
+            ioSessionMove(tlsSession, objMemContext(result));
         }
         // Else the client can only detect that the server is alive
         else
