@@ -1066,7 +1066,7 @@ pckReadPack(PackRead *const this, PckReadPackParam param)
     pckReadTag(this, &param.id, pckTypeMapPack, false);
 
     // Get the pack size
-    Buffer *result = bufNew(this->tagNextSize);
+    Buffer *const result = OBJ_NAME(bufNew(this->tagNextSize), Pack::Buffer);
 
     // Read the pack out in chunks
     while (bufUsed(result) < bufSize(result))
@@ -1242,11 +1242,11 @@ pckReadEnd(PackRead *this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pckReadToLog(const PackRead *this)
+FN_EXTERN void
+pckReadToLog(const PackRead *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
+    strStcFmt(
+        debugLog, "{depth: %u, idLast: %u, tagNextId: %u, tagNextType: %u, tagNextValue %" PRIu64 "}", this->tagStack.depth,
         this->tagStack.top->idLast, this->tagNextId, this->tagNextTypeMap, this->tagNextValue);
 }
 
@@ -1939,15 +1939,16 @@ pckWriteResult(PackWrite *const this)
     {
         ASSERT(this->tagStack.top == NULL);
 
-        result = (Pack *)this->buffer;
+        result = (Pack *)OBJ_NAME(this->buffer, Pack::Buffer);
     }
 
     FUNCTION_TEST_RETURN(PACK, result);
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-pckWriteToLog(const PackWrite *this)
+FN_EXTERN void
+pckWriteToLog(const PackWrite *const this, StringStatic *const debugLog)
 {
-    return strNewFmt("{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
+    strStcFmt(
+        debugLog, "{depth: %u, idLast: %u}", this->tagStack.depth, this->tagStack.top == NULL ? 0 : this->tagStack.top->idLast);
 }

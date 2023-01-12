@@ -34,20 +34,20 @@ typedef struct TlsSession
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-static String *
-tlsSessionToLog(const THIS_VOID)
+static void
+tlsSessionToLog(const THIS_VOID, StringStatic *const debugLog)
 {
     THIS(const TlsSession);
 
-    return strNewFmt(
-        "{ioSession: %s, timeout: %" PRIu64", shutdownOnClose: %s}", strZ(ioSessionToLog(this->ioSession)), this->timeout,
-        cvtBoolToConstZ(this->shutdownOnClose));
+    strStcCat(debugLog, "{ioSession: ");
+    ioSessionToLog(this->ioSession, debugLog);
+    strStcFmt(debugLog, ", timeout: %" PRIu64", shutdownOnClose: %s}", this->timeout, cvtBoolToConstZ(this->shutdownOnClose));
 }
 
 #define FUNCTION_LOG_TLS_SESSION_TYPE                                                                                              \
     TlsSession *
 #define FUNCTION_LOG_TLS_SESSION_FORMAT(value, buffer, bufferSize)                                                                 \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, tlsSessionToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, tlsSessionToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Free connection
@@ -352,7 +352,7 @@ static const IoSessionInterface tlsSessionInterface =
 FN_EXTERN IoSession *
 tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug)
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM_P(VOID, session);
         FUNCTION_LOG_PARAM(IO_SESSION, ioSession);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -365,7 +365,7 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 
     OBJ_NEW_BEGIN(TlsSession, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        TlsSession *driver = OBJ_NEW_ALLOC();
+        TlsSession *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoSession::TlsSession);
 
         *driver = (TlsSession)
         {

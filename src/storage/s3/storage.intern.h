@@ -66,6 +66,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_S3_TYPE                                                                                               \
     StorageS3 *
 #define FUNCTION_LOG_STORAGE_S3_FORMAT(value, buffer, bufferSize)                                                                  \
-    objToLog(value, "StorageS3", buffer, bufferSize)
+    objNameToLog(value, "StorageS3", buffer, bufferSize)
 
 #endif

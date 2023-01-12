@@ -95,11 +95,11 @@ httpQueryFree(HttpQuery *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *httpQueryToLog(const HttpQuery *this);
+FN_EXTERN void httpQueryToLog(const HttpQuery *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_HTTP_QUERY_TYPE                                                                                               \
     HttpQuery *
 #define FUNCTION_LOG_HTTP_QUERY_FORMAT(value, buffer, bufferSize)                                                                  \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, httpQueryToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, httpQueryToLog, buffer, bufferSize)
 
 #endif

@@ -499,6 +499,8 @@ manifestNewInternal(void)
 {
     FUNCTION_TEST_VOID();
 
+    FUNCTION_AUDIT_HELPER();
+
     Manifest *this = OBJ_NEW_ALLOC();
 
     *this = (Manifest)
@@ -546,6 +548,7 @@ static ManifestLinkCheck
 manifestLinkCheckInit(void)
 {
     FUNCTION_TEST_VOID();
+    FUNCTION_AUDIT_STRUCT();
     FUNCTION_TEST_RETURN_TYPE(
         ManifestLinkCheck, (ManifestLinkCheck){.linkList = lstNewP(sizeof(ManifestLinkCheckItem), .comparator = lstComparatorStr)});
 }
@@ -753,6 +756,8 @@ manifestBuildInfo(
         FUNCTION_TEST_PARAM(BOOL, dbPath);
         FUNCTION_TEST_PARAM(STORAGE_INFO, *info);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(buildData != NULL);
     ASSERT(manifestParentName != NULL);
@@ -1817,6 +1822,8 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_CALLBACK();
+
     ASSERT(callbackData != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
@@ -2306,6 +2313,8 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(callbackData != NULL);
     ASSERT(infoSaveData != NULL);

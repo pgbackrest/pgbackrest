@@ -68,6 +68,8 @@ cfgLoadUpdateOption(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
+    FUNCTION_AUDIT_HELPER();
+
     // Make sure the repo option is set for the stanza-delete command when more than one repo is configured or the first configured
     // repo is not key 1.
     if (!cfgCommandHelp() && cfgOptionValid(cfgOptRepo) && cfgCommand() == cfgCmdStanzaDelete &&

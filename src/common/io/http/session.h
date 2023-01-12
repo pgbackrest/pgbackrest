@@ -68,6 +68,6 @@ Macros for function logging
 #define FUNCTION_LOG_HTTP_SESSION_TYPE                                                                                             \
     HttpSession *
 #define FUNCTION_LOG_HTTP_SESSION_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "HttpSession", buffer, bufferSize)
+    objNameToLog(value, "HttpSession", buffer, bufferSize)
 
 #endif

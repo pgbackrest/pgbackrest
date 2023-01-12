@@ -7,7 +7,7 @@ Stack Trace Handler
 #include <stdio.h>
 #include <string.h>
 
-#ifdef WITH_BACKTRACE
+#ifdef HAVE_LIBBACKTRACE
     #include <backtrace.h>
     #include <backtrace-supported.h>
 #endif
@@ -45,46 +45,11 @@ static struct StackTraceLocal
     int stackSize;                                                  // Stack size
     StackTraceData stack[STACK_TRACE_MAX];                          // Stack data
     char functionParamBuffer[32 * 1024];                            // Buffer to hold function parameters
-} stackTraceLocal;
 
-/**********************************************************************************************************************************/
-#ifdef WITH_BACKTRACE
-
-static struct StackTraceBackLocal
-{
+#ifdef HAVE_LIBBACKTRACE
     struct backtrace_state *backTraceState;                         // Backtrace state struct
-} stackTraceBackLocal;
-
-FN_EXTERN void
-stackTraceInit(const char *exe)
-{
-    if (stackTraceBackLocal.backTraceState == NULL)
-        stackTraceBackLocal.backTraceState = backtrace_create_state(exe, false, NULL, NULL);
-}
-
-static int
-backTraceCallback(void *data, uintptr_t pc, const char *filename, int lineno, const char *function)
-{
-    (void)(data);
-    (void)(pc);
-    (void)(filename);
-    (void)(function);
-
-    if (stackTraceLocal.stackSize > 0)
-        stackTraceLocal.stack[stackTraceLocal.stackSize - 1].fileLine = (unsigned int)lineno;
-
-    return 1;
-}
-
-static void
-backTraceCallbackError(void *data, const char *msg, int errnum)
-{
-    (void)data;
-    (void)msg;
-    (void)errnum;
-}
-
 #endif
+} stackTraceLocal;
 
 /**********************************************************************************************************************************/
 #ifdef DEBUG
@@ -127,11 +92,6 @@ FN_EXTERN LogLevel
 stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel)
 {
     ASSERT(stackTraceLocal.stackSize < STACK_TRACE_MAX - 1);
-
-    // Get line number from backtrace if available
-#ifdef WITH_BACKTRACE
-    backtrace_full(stackTraceBackLocal.backTraceState, 2, backTraceCallback, backTraceCallbackError, NULL);
-#endif
 
     // Set function info
     StackTraceData *data = &stackTraceLocal.stack[stackTraceLocal.stackSize];
@@ -303,16 +263,113 @@ stackTraceFmt(char *buffer, size_t bufferSize, size_t bufferUsed, const char *fo
     return (size_t)result;
 }
 
+/***********************************************************************************************************************************
+Helper to trim off extra path before the src path
+***********************************************************************************************************************************/
+static const char *
+stackTraceTrimSrc(const char *const fileName)
+{
+    const char *const src = strstr(fileName, "src/");
+    return src == NULL ? fileName : src + 4;
+}
+
 /**********************************************************************************************************************************/
-FN_EXTERN size_t
-stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char *functionName, unsigned int fileLine)
+#ifdef HAVE_LIBBACKTRACE
+
+typedef struct StackTraceBackData
+{
+    bool firstCall;
+    bool firstLine;
+    int stackIdx;
+    size_t result;
+    char *const buffer;
+    const size_t bufferSize;
+} StackTraceBackData;
+
+// Callback to add backtrace data when available
+static int
+stackTraceBackCallback(
+    void *const dataVoid, const uintptr_t pc, const char *fileName, const int fileLine, const char *const functionName)
+{
+    (void)pc;
+    StackTraceBackData *const data = dataVoid;
+
+    // Catch any unset parameters which indicates the debug data is not available
+    if (fileName == NULL || fileLine == 0 || functionName == NULL)
+    {
+        // If this is the first call then stop because the top of the backtrace must be one of our functions
+        if (data->firstCall)
+            return true;
+
+        // Else return but do not stop
+        data->firstCall = false;
+        return false;
+    }
+
+    // Reset first call
+    data->firstCall = false;
+
+    // If the function name matches combine backtrace data with stack data
+    if (data->stackIdx >= 0 && strcmp(functionName, stackTraceLocal.stack[data->stackIdx].functionName) == 0)
+    {
+        data->result += stackTraceFmt(
+            data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(%s)", data->firstLine ? "" : "\n",
+            stackTraceTrimSrc(stackTraceLocal.stack[data->stackIdx].fileName), functionName, fileLine,
+            stackTraceParamIdx(data->stackIdx));
+
+        data->stackIdx--;
+    }
+    // Else just use stack data. Skip any functions in the error module since they are not useful for the user
+    else
+    {
+        fileName = stackTraceTrimSrc(fileName);
+
+        if (strcmp(fileName, "common/error.c") == 0)
+            return false;
+
+        data->result += stackTraceFmt(
+            data->buffer, data->bufferSize, data->result, "%s%s:%s:%d:(no parameters available)", data->firstLine ? "" : "\n",
+            fileName, functionName, fileLine);
+    }
+
+    // Reset first line
+    data->firstLine = false;
+
+    // Stop when the main function has been processed
+    return strcmp(functionName, "main") == 0;
+}
+
+// Dummy error callback. If there is an error just generate the default stack trace.
+static void
+stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
+{
+    (void)data;
+    (void)msg;
+    (void)errnum;
+}
+
+#endif
+
+// Helper to build stack trace when backtrace is not available
+#ifdef HAVE_LIBBACKTRACE
+    static size_t
+        stackTraceToZDefault(
+#else
+    FN_EXTERN size_t
+        stackTraceToZ(
+#endif // HAVE_LIBBACKTRACE
+
+    char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName,
+    const unsigned int fileLine)
 {
     size_t result = 0;
     const char *param = "test build required for parameters";
     int stackIdx = stackTraceLocal.stackSize - 1;
 
     // If the current function passed in is the same as the top function on the stack then use the parameters for that function
-    if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceLocal.stack[stackIdx].fileName) == 0 &&
+    fileName = stackTraceTrimSrc(fileName);
+
+    if (stackTraceLocal.stackSize > 0 && strcmp(fileName, stackTraceTrimSrc(stackTraceLocal.stack[stackIdx].fileName)) == 0 &&
         strcmp(functionName, stackTraceLocal.stack[stackIdx].functionName) == 0)
     {
         param = stackTraceParamIdx(stackTraceLocal.stackSize - 1);
@@ -332,9 +389,9 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
         // Output the rest of the stack
         for (; stackIdx >= 0; stackIdx--)
         {
-            StackTraceData *data = &stackTraceLocal.stack[stackIdx];
+            const StackTraceData *const data = &stackTraceLocal.stack[stackIdx];
 
-            result += stackTraceFmt(buffer, bufferSize, result, "\n%s:%s", data->fileName, data->functionName);
+            result += stackTraceFmt(buffer, bufferSize, result, "\n%s:%s", stackTraceTrimSrc(data->fileName), data->functionName);
 
             if (data->fileLine > 0)
                 result += stackTraceFmt(buffer, bufferSize, result, ":%u", data->fileLine);
@@ -345,6 +402,38 @@ stackTraceToZ(char *buffer, size_t bufferSize, const char *fileName, const char 
 
     return result;
 }
+
+#ifdef HAVE_LIBBACKTRACE
+
+FN_EXTERN size_t
+stackTraceToZ(
+    char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
+    const unsigned int fileLine)
+{
+    // Attempt to use backtrace data
+    StackTraceBackData data =
+    {
+        .firstCall = true,
+        .firstLine = true,
+        .stackIdx = stackTraceLocal.stackSize - 1,
+        .result = 0,
+        .buffer = buffer,
+        .bufferSize = bufferSize,
+    };
+
+    if (stackTraceLocal.backTraceState == NULL)
+        stackTraceLocal.backTraceState = backtrace_create_state(NULL, false, NULL, NULL);
+
+    backtrace_full(stackTraceLocal.backTraceState, 2, stackTraceBackCallback, stackTraceBackErrorCallback, &data);
+
+    // If the backtrace was not available generate default stack trace
+    if (data.result == 0)
+        return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
+
+    return data.result;
+}
+
+#endif // HAVE_LIBBACKTRACE
 
 /**********************************************************************************************************************************/
 FN_EXTERN void

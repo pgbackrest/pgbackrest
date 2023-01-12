@@ -15,7 +15,7 @@
 
         <!-- Base PostgreSQL versions -->
         <variable key="os-debian-pg-version">12</variable>
-        <variable key="os-rhel-pg-version">10</variable>
+        <variable key="os-rhel-pg-version">11</variable>
 
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
@@ -74,7 +74,7 @@
         <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
 
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">14</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">11</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">12</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>

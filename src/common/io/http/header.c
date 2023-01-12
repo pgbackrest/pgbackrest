@@ -202,26 +202,25 @@ httpHeaderRedact(const HttpHeader *this, const String *key)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-httpHeaderToLog(const HttpHeader *this)
+FN_EXTERN void
+httpHeaderToLog(const HttpHeader *const this, StringStatic *const debugLog)
 {
-    String *result = strCatZ(strNew(), "{");
-    const StringList *keyList = httpHeaderList(this);
+    const VariantList *const keyList = kvKeyList(this->kv);
 
-    for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+    strStcCatChr(debugLog, '{');
+
+    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
     {
-        const String *key = strLstGet(keyList, keyIdx);
+        const String *const key = varStr(varLstGet(keyList, keyIdx));
 
-        if (strSize(result) != 1)
-            strCatZ(result, ", ");
+        if (keyIdx != 0)
+            strStcCat(debugLog, ", ");
 
         if (httpHeaderRedact(this, key))
-            strCatFmt(result, "%s: <redacted>", strZ(key));
+            strStcFmt(debugLog, "%s: <redacted>", strZ(key));
         else
-            strCatFmt(result, "%s: '%s'", strZ(key), strZ(httpHeaderGet(this, key)));
+            strStcFmt(debugLog, "%s: '%s'", strZ(key), strZ(httpHeaderGet(this, key)));
     }
 
-    strCatZ(result, "}");
-
-    return result;
+    strStcCatChr(debugLog, '}');
 }

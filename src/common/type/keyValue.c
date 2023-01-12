@@ -131,6 +131,8 @@ kvPutInternal(KeyValue *this, const Variant *key, Variant *value)
     ASSERT(this != NULL);
     ASSERT(key != NULL);
 
+    FUNCTION_AUDIT_HELPER();
+
     // Find the key
     unsigned int listIdx = kvGetIdx(this, key);
 

@@ -32,6 +32,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lstNew*(), lstMemContext(), lstToLog(), and lstFree()"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
         List *list = lstNewP(sizeof(void *));
 
         TEST_RESULT_UINT(list->itemSize, sizeof(void *), "item size");
@@ -42,10 +43,12 @@ testRun(void)
 
         void *ptr = NULL;
         TEST_RESULT_VOID(lstAdd(list, &ptr), "add item");
-        TEST_RESULT_STR_Z(lstToLog(list), "{size: 1}", "check log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, lstToLog, logBuf, sizeof(logBuf)), "bufToLog");
+        TEST_RESULT_Z(logBuf, "{size: 1}", "check log");
 
         TEST_RESULT_VOID(lstClear(list), "clear list");
-        TEST_RESULT_STR_Z(lstToLog(list), "{size: 0}", "check log after clear");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, lstToLog, logBuf, sizeof(logBuf)), "bufToLog");
+        TEST_RESULT_Z(logBuf, "{size: 0}", "check log");
 
         TEST_RESULT_VOID(lstFree(list), "free list");
         TEST_RESULT_VOID(lstFree(lstNewP(1)), "free empty list");

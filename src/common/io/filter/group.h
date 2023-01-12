@@ -122,11 +122,11 @@ ioFilterGroupFree(IoFilterGroup *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *ioFilterGroupToLog(const IoFilterGroup *this);
+FN_EXTERN void ioFilterGroupToLog(const IoFilterGroup *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_IO_FILTER_GROUP_TYPE                                                                                          \
     IoFilterGroup *
 #define FUNCTION_LOG_IO_FILTER_GROUP_FORMAT(value, buffer, bufferSize)                                                             \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, ioFilterGroupToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, ioFilterGroupToLog, buffer, bufferSize)
 
 #endif

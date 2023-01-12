@@ -191,11 +191,11 @@ By convention all variant constant identifiers are appended with _VAR.
 #define VARSTR(dataParam)                                                                                                          \
     ((const Variant *)&(const VariantStringPub){.type = varTypeString, .data = (String *)(dataParam)})
 
-// Used to declare String Variant constants that will be externed using VARIANT_DECLARE().  Must be used in a .c file.
+// Used to define String Variant constants that will be externed using VARIANT_DECLARE(). Must be used in a .c file.
 #define VARIANT_STRDEF_EXTERN(name, dataParam)                                                                                     \
     VR_EXTERN_DEFINE const Variant *const name = VARSTRDEF(dataParam)
 
-// Used to declare String Variant constants that will be local to the .c file.  Must be used in a .c file.
+// Used to define String Variant constants that will be local to the .c file. Must be used in a .c file.
 #define VARIANT_STRDEF_STATIC(name, dataParam)                                                                                     \
     static const Variant *const name = VARSTRDEF(dataParam)
 
@@ -207,7 +207,7 @@ By convention all variant constant identifiers are appended with _VAR.
 #define VARUINT64(dataParam)                                                                                                       \
     ((const Variant *)&(const VariantUInt64Pub){.type = varTypeUInt64, .data = dataParam})
 
-// Used to extern String Variant constants declared with VARIANT_STRDEF_EXTERN/STATIC().  Must be used in a .h file.
+// Used to declare externed String Variant constants defined with VARIANT*EXTERN(). Must be used in a .h file.
 #define VARIANT_DECLARE(name)                                                                                                      \
     VR_EXTERN_DECLARE const Variant *const name
 
@@ -220,11 +220,11 @@ VARIANT_DECLARE(BOOL_TRUE_VAR);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *varToLog(const Variant *this);
+FN_EXTERN void varToLog(const Variant *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_VARIANT_TYPE                                                                                                  \
     Variant *
 #define FUNCTION_LOG_VARIANT_FORMAT(value, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, varToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, varToLog, buffer, bufferSize)
 
 #endif

@@ -56,6 +56,8 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
         FUNCTION_LOG_PARAM(BOOL, standbyRequired);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(!(primaryOnly && standbyRequired));
 
     DbGetResult result = {0};

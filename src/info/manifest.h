@@ -457,31 +457,31 @@ Macros for function logging
 #define FUNCTION_LOG_MANIFEST_TYPE                                                                                                 \
     Manifest *
 #define FUNCTION_LOG_MANIFEST_FORMAT(value, buffer, bufferSize)                                                                    \
-    objToLog(value, "Manifest", buffer, bufferSize)
+    objNameToLog(value, "Manifest", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_DB_TYPE                                                                                              \
     ManifestDb *
 #define FUNCTION_LOG_MANIFEST_DB_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "ManifestDb", buffer, bufferSize)
+    objNameToLog(value, "ManifestDb", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_FILE_TYPE                                                                                            \
     ManifestFile *
 #define FUNCTION_LOG_MANIFEST_FILE_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestFile", buffer, bufferSize)
+    objNameToLog(value, "ManifestFile", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_LINK_TYPE                                                                                            \
     ManifestLink *
 #define FUNCTION_LOG_MANIFEST_LINK_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestLink", buffer, bufferSize)
+    objNameToLog(value, "ManifestLink", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_PATH_TYPE                                                                                            \
     ManifestPath *
 #define FUNCTION_LOG_MANIFEST_PATH_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "ManifestPath", buffer, bufferSize)
+    objNameToLog(value, "ManifestPath", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_TARGET_TYPE                                                                                          \
     ManifestTarget *
 #define FUNCTION_LOG_MANIFEST_TARGET_FORMAT(value, buffer, bufferSize)                                                             \
-    objToLog(value, "ManifestTarget", buffer, bufferSize)
+    objNameToLog(value, "ManifestTarget", buffer, bufferSize)
 
 #endif

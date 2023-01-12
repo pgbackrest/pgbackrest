@@ -93,7 +93,7 @@ FN_EXTERN size_t strIdToZ(const StringId strId, char *const buffer);
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN size_t strIdToLog(const StringId strId, char *const buffer, const size_t bufferSize);
+FN_EXTERN size_t strIdToLog(StringId strId, char *buffer, size_t bufferSize);
 
 #define FUNCTION_LOG_STRING_ID_TYPE                                                                                                \
     StringId

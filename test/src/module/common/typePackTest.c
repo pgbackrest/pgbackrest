@@ -17,6 +17,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PackWrite and PackRead"))
     {
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
         TEST_TITLE("type size");
 
         TEST_RESULT_UINT(sizeof(PackType), 4, "PackType");
@@ -37,9 +39,11 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 0, idLast: 0}", "log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(packWrite, pckWriteToLog, logBuf, sizeof(logBuf)), "pckWriteToLog");
+        TEST_RESULT_Z(logBuf, "{depth: 0, idLast: 0}", "check log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0750), "write mode");
-        TEST_RESULT_STR_Z(pckWriteToLog(packWrite), "{depth: 0, idLast: 1}", "log");
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(packWrite, pckWriteToLog, logBuf, sizeof(logBuf)), "pckWriteToLog");
+        TEST_RESULT_Z(logBuf, "{depth: 0, idLast: 1}", "check log");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1911246845), "write timestamp");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 0xFFFFFFFFFFFFFFFF, .id = 7), "write max u64");
         TEST_RESULT_VOID(pckWriteU64P(packWrite, 1, .id = 10), "write 1");

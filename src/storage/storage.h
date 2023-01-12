@@ -292,11 +292,11 @@ storageType(const Storage *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *storageToLog(const Storage *this);
+FN_EXTERN void storageToLog(const Storage *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_TYPE                                                                                                  \
     Storage *
 #define FUNCTION_LOG_STORAGE_FORMAT(value, buffer, bufferSize)                                                                     \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageToLog, buffer, bufferSize)
 
 #endif

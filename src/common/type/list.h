@@ -158,11 +158,11 @@ lstFree(List *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *lstToLog(const List *this);
+FN_EXTERN void lstToLog(const List *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_LIST_TYPE                                                                                                     \
     List *
 #define FUNCTION_LOG_LIST_FORMAT(value, buffer, bufferSize)                                                                        \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, lstToLog, buffer, bufferSize)
 
 #endif

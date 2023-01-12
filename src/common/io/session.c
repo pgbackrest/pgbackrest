@@ -19,7 +19,7 @@ struct IoSession
 FN_EXTERN IoSession *
 ioSessionNew(void *driver, const IoSessionInterface *interface)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace)
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(IO_SESSION_INTERFACE, interface);
     FUNCTION_LOG_END();
@@ -94,10 +94,16 @@ ioSessionPeerNameSet(IoSession *const this, const String *const peerName)       
 }                                                                                                                   // {vm_covered}
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-ioSessionToLog(const IoSession *this)
+FN_EXTERN void
+ioSessionToLog(const IoSession *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, role: %s, driver: %s}", strZ(strIdToStr(this->pub.interface->type)), strZ(strIdToStr(ioSessionRole(this))),
-         strZ(this->pub.interface->toLog(this->pub.driver)));
+    strStcCat(debugLog, "{type: ");
+    strStcResultSizeInc(debugLog, strIdToLog(this->pub.interface->type, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", role: ");
+    strStcResultSizeInc(debugLog, strIdToLog(ioSessionRole(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+
+    strStcCat(debugLog, ", driver: ");
+    this->pub.interface->toLog(this->pub.driver, debugLog);
+    strStcCatChr(debugLog, '}');
 }

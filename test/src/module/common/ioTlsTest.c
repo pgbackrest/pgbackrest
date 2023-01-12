@@ -333,8 +333,18 @@ testRun(void)
 
                 // Wait for connection. Use port 1 to avoid port conflicts later.
                 IoServer *server = sckServerNew(STRDEF("127.0.0.1"), hrnServerPort(1), 5000);
-                HRN_FORK_CHILD_NOTIFY_PUT();
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("ioServerToLog()");
+
+                char buffer[STACK_TRACE_PARAM_MAX];
+
+                TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(server, ioServerToLog, buffer, sizeof(buffer)), "ioServerToLog");
+                TEST_RESULT_Z(
+                    buffer, zNewFmt("{type: socket, driver: {address: 127.0.0.1, port: %u, timeout: 5000}}", hrnServerPort(1)),
+                    "check log");
+
+                HRN_FORK_CHILD_NOTIFY_PUT();
                 TEST_RESULT_PTR(ioServerAccept(server, NULL), NULL, "connection interrupted");
             }
             HRN_FORK_CHILD_END();
@@ -814,6 +824,30 @@ testRun(void)
                 TlsSession *tlsSession = (TlsSession *)session->pub.driver;
 
                 TEST_RESULT_INT(ioSessionFd(session), -1, "no fd for tls session");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("ioClientToLog() and ioSessionToLog()");
+
+                char buffer[STACK_TRACE_PARAM_MAX];
+
+                TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(client, ioClientToLog, buffer, sizeof(buffer)), "ioClientToLog");
+                TEST_RESULT_Z(
+                    buffer,
+                    zNewFmt(
+                        "{type: tls, driver: {ioClient: {type: socket, driver: {host: %s, port: %u, timeoutConnect: 5000"
+                            ", timeoutSession: 5000}}, timeoutConnect: 0, timeoutSession: 0, verifyPeer: %s}}",
+                        strZ(hrnServerHost()), hrnServerPort(0), cvtBoolToConstZ(TEST_IN_CONTAINER)),
+                    "check log");
+
+                TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(session, ioSessionToLog, buffer, sizeof(buffer)), "ioSessionToLog");
+                TEST_RESULT_Z(
+                    buffer,
+                    zNewFmt(
+                        "{type: tls, role: client, driver: {ioSession: {type: socket, role: client, driver: {host: %s, port: %u"
+                            ", fd: %d, timeout: 5000}}, timeout: 0, shutdownOnClose: true}}",
+                        strZ(hrnServerHost()), hrnServerPort(0),
+                        ((SocketSession *)((TlsSession *)session->pub.driver)->ioSession->pub.driver)->fd),
+                    "check log");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("uncovered errors");

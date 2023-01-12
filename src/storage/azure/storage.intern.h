@@ -75,6 +75,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_AZURE_TYPE                                                                                            \
     StorageAzure *
 #define FUNCTION_LOG_STORAGE_AZURE_FORMAT(value, buffer, bufferSize)                                                               \
-    objToLog(value, "StorageAzure", buffer, bufferSize)
+    objNameToLog(value, "StorageAzure", buffer, bufferSize)
 
 #endif

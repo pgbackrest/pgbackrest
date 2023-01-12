@@ -46,6 +46,8 @@ storageNew(
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(type != 0);
     ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
     ASSERT(driver != NULL);
@@ -242,6 +244,8 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
         FUNCTION_LOG_PARAM(BOOL, param.noPathEnforce);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
     ASSERT(this->pub.interface.info != NULL);
@@ -756,10 +760,10 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-storageToLog(const Storage *this)
+FN_EXTERN void
+storageToLog(const Storage *const this, StringStatic *const debugLog)
 {
-    return strNewFmt(
-        "{type: %s, path: %s, write: %s}", strZ(strIdToStr(storageType(this))), strZ(strToLog(this->path)),
-        cvtBoolToConstZ(this->write));
+    strStcCat(debugLog, "{type: "),
+    strStcResultSizeInc(debugLog, strIdToLog(storageType(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
+    strStcFmt(debugLog, ", path: %s, write: %s}", strZ(this->path), cvtBoolToConstZ(this->write));
 }

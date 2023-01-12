@@ -89,11 +89,11 @@ storageLstFree(StorageList *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *storageLstToLog(const StorageList *this);
+FN_EXTERN void storageLstToLog(const StorageList *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_LIST_TYPE                                                                                             \
     StorageList *
 #define FUNCTION_LOG_STORAGE_LIST_FORMAT(value, buffer, bufferSize)                                                                \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageLstToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageLstToLog, buffer, bufferSize)
 
 #endif

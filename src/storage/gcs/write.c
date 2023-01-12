@@ -42,7 +42,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_GCS_TYPE                                                                                        \
     StorageWriteGcs *
 #define FUNCTION_LOG_STORAGE_WRITE_GCS_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(value, "StorageWriteGcs", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteGcs", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -335,7 +335,7 @@ storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize)
 
     OBJ_NEW_BEGIN(StorageWriteGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteGcs *driver = OBJ_NEW_ALLOC();
+        StorageWriteGcs *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteGcs);
 
         *driver = (StorageWriteGcs)
         {

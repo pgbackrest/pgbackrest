@@ -119,11 +119,11 @@ storageWriteFree(StorageWrite *const this)
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN String *storageWriteToLog(const StorageWrite *this);
+FN_EXTERN void storageWriteToLog(const StorageWrite *this, StringStatic *debugLog);
 
 #define FUNCTION_LOG_STORAGE_WRITE_TYPE                                                                                            \
     StorageWrite *
 #define FUNCTION_LOG_STORAGE_WRITE_FORMAT(value, buffer, bufferSize)                                                               \
-    FUNCTION_LOG_STRING_OBJECT_FORMAT(value, storageWriteToLog, buffer, bufferSize)
+    FUNCTION_LOG_OBJECT_FORMAT(value, storageWriteToLog, buffer, bufferSize)
 
 #endif

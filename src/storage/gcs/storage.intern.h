@@ -101,6 +101,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_GCS_TYPE                                                                                              \
     StorageGcs *
 #define FUNCTION_LOG_STORAGE_GCS_FORMAT(value, buffer, bufferSize)                                                                 \
-    objToLog(value, "StorageGcs", buffer, bufferSize)
+    objNameToLog(value, "StorageGcs", buffer, bufferSize)
 
 #endif

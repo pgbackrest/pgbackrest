@@ -531,8 +531,10 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
         // Generate authorization header
         storageS3Auth(
             this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
-            param.content == NULL || bufEmpty(param.content) ?
-                HASH_TYPE_SHA256_ZERO_STR : strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, param.content)));
+            strNewEncode(
+                encodingHex,
+                param.content == NULL || bufEmpty(param.content) ?
+                    HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content)));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -619,6 +621,8 @@ storageS3ListInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
@@ -1129,7 +1133,7 @@ storageS3New(
 
     OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageS3 *driver = OBJ_NEW_ALLOC();
+        StorageS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageS3);
 
         *driver = (StorageS3)
         {
