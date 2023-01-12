@@ -158,7 +158,7 @@ ioFdReadNew(const String *name, int fd, TimeMSec timeout)
 
     OBJ_NEW_BEGIN(IoFdRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoFdRead *driver = OBJ_NEW_ALLOC();
+        IoFdRead *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoRead::IoFdRead);
 
         *driver = (IoFdRead)
         {

@@ -43,6 +43,8 @@ infoPgNewInternal(InfoPgType type)
         FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     InfoPg *this = OBJ_NEW_ALLOC();
 
     *this = (InfoPg)
@@ -105,6 +107,8 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(data != NULL);
     ASSERT(section != NULL);
@@ -284,6 +288,8 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
         FUNCTION_TEST_PARAM(STRING, sectionNext);
         FUNCTION_TEST_PARAM(INFO_SAVE, infoSaveData);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(data != NULL);
     ASSERT(infoSaveData != NULL);

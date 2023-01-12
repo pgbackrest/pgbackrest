@@ -1066,7 +1066,7 @@ pckReadPack(PackRead *const this, PckReadPackParam param)
     pckReadTag(this, &param.id, pckTypeMapPack, false);
 
     // Get the pack size
-    Buffer *result = bufNew(this->tagNextSize);
+    Buffer *const result = OBJ_NAME(bufNew(this->tagNextSize), Pack::Buffer);
 
     // Read the pack out in chunks
     while (bufUsed(result) < bufSize(result))
@@ -1939,7 +1939,7 @@ pckWriteResult(PackWrite *const this)
     {
         ASSERT(this->tagStack.top == NULL);
 
-        result = (Pack *)this->buffer;
+        result = (Pack *)OBJ_NAME(this->buffer, Pack::Buffer);
     }
 
     FUNCTION_TEST_RETURN(PACK, result);

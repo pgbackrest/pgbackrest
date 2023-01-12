@@ -174,7 +174,7 @@ sckClientNew(const String *const host, const unsigned int port, const TimeMSec t
 
     OBJ_NEW_BEGIN(SocketClient, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        SocketClient *driver = OBJ_NEW_ALLOC();
+        SocketClient *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoClient::SocketClient);
 
         *driver = (SocketClient)
         {

@@ -113,6 +113,8 @@ protocolServerCommandGet(ProtocolServer *const this)
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ProtocolServerCommandGetResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()

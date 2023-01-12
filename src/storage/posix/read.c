@@ -224,7 +224,7 @@ storageReadPosixNew(
 
     OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageReadPosix *driver = OBJ_NEW_ALLOC();
+        StorageReadPosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadPosix);
 
         *driver = (StorageReadPosix)
         {

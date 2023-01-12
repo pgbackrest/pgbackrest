@@ -96,7 +96,7 @@ ioBufferReadNew(const Buffer *buffer)
 
     OBJ_NEW_BEGIN(IoBufferRead, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoBufferRead *driver = OBJ_NEW_ALLOC();
+        IoBufferRead *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoRead::IoBufferRead);
 
         *driver = (IoBufferRead)
         {

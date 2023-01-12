@@ -23,6 +23,8 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
         FUNCTION_LOG_PARAM(LIST, moduleList);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     // Global lists to be copied to next test
     StringList *const globalDependList = strLstNew();
     StringList *const globalFeatureList = strLstNew();
@@ -312,6 +314,8 @@ testDefParse(const Storage *const storageRepo)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     // Module list
     List *const moduleList = lstNewP(sizeof(TestDefModule), .comparator = lstComparatorStr);

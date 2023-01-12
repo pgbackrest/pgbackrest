@@ -157,7 +157,7 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
 
     OBJ_NEW_BEGIN(SocketServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        SocketServer *const driver = OBJ_NEW_ALLOC();
+        SocketServer *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoServer::SocketServer);
 
         *driver = (SocketServer)
         {

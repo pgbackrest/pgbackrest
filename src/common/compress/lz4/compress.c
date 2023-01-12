@@ -255,7 +255,7 @@ lz4CompressNew(int level)
 
     OBJ_NEW_BEGIN(Lz4Compress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Lz4Compress *driver = OBJ_NEW_ALLOC();
+        Lz4Compress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::Lz4Compress);
 
         *driver = (Lz4Compress)
         {

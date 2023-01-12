@@ -34,6 +34,8 @@ storageReadNew(void *driver, const StorageReadInterface *interface)
         FUNCTION_LOG_PARAM_P(STORAGE_READ_INTERFACE, interface);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 

@@ -60,7 +60,7 @@ ioBufferWriteNew(Buffer *buffer)
 
     OBJ_NEW_BEGIN(IoBufferWrite, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoBufferWrite *driver = OBJ_NEW_ALLOC();
+        IoBufferWrite *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoWrite::IoBufferWrite);
 
         *driver = (IoBufferWrite)
         {

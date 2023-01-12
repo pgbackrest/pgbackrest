@@ -249,7 +249,7 @@ storageWritePosixNew(
 
     OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageWritePosix *driver = OBJ_NEW_ALLOC();
+        StorageWritePosix *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWritePosix);
 
         *driver = (StorageWritePosix)
         {

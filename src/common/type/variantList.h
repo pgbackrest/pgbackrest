@@ -19,7 +19,7 @@ Constructors
 FN_INLINE_ALWAYS VariantList *
 varLstNew(void)
 {
-    return (VariantList *)lstNewP(sizeof(Variant *));
+    return (VariantList *)OBJ_NAME(lstNewP(sizeof(Variant *)), VariantList::List);
 }
 
 // Create VariantList from StringList

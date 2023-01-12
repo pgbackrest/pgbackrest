@@ -46,6 +46,8 @@ storageNew(
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(type != 0);
     ASSERT(strSize(path) >= 1 && strZ(path)[0] == '/');
     ASSERT(driver != NULL);
@@ -242,6 +244,8 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
         FUNCTION_LOG_PARAM(BOOL, param.noPathEnforce);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
     ASSERT(this->pub.interface.info != NULL);

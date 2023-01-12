@@ -114,7 +114,7 @@ ioFdWriteNew(const String *name, int fd, TimeMSec timeout)
 
     OBJ_NEW_BEGIN(IoFdWrite, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        IoFdWrite *driver = OBJ_NEW_ALLOC();
+        IoFdWrite *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoWrite::IoFdWrite);
 
         *driver = (IoFdWrite)
         {

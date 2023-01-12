@@ -211,7 +211,7 @@ varNewBool(bool data)
 
     OBJ_NEW_BEGIN(VariantBool)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantBool);
 
         *this = (VariantBool)
         {
@@ -320,7 +320,7 @@ varNewInt(int data)
 
     OBJ_NEW_BEGIN(VariantInt)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantInt);
 
         *this = (VariantInt)
         {
@@ -436,7 +436,7 @@ varNewInt64(int64_t data)
 
     OBJ_NEW_BEGIN(VariantInt64)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantInt64);
 
         *this = (VariantInt64)
         {
@@ -536,7 +536,7 @@ varNewUInt(unsigned int data)
 
     OBJ_NEW_BEGIN(VariantUInt)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantUInt);
 
         *this = (VariantUInt)
         {
@@ -661,7 +661,7 @@ varNewUInt64(uint64_t data)
 
     OBJ_NEW_BEGIN(VariantUInt64)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantUInt64);
 
         *this = (VariantUInt64)
         {
@@ -773,7 +773,7 @@ varNewKv(KeyValue *data)
 
     OBJ_NEW_BEGIN(VariantKeyValue, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantKeyValue);
 
         *this = (VariantKeyValue)
         {
@@ -826,7 +826,7 @@ varNewStr(const String *data)
 
         OBJ_NEW_BEGIN(VariantString, .childQty = 1)
         {
-            this = OBJ_NEW_ALLOC();
+            this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantString);
 
             *this = (VariantString)
             {
@@ -844,7 +844,7 @@ varNewStr(const String *data)
 
     OBJ_NEW_EXTRA_BEGIN(VariantString, (uint16_t)(allocExtra))
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantString);
 
         *this = (VariantString)
         {
@@ -982,7 +982,7 @@ varNewVarLst(const VariantList *data)
 
     OBJ_NEW_BEGIN(VariantVariantList, .childQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), Variant::VariantVariantList);
 
         *this = (VariantVariantList)
         {

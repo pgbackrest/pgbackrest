@@ -47,6 +47,8 @@ cmdTestPathCreate(const Storage *const storage, const String *const path)
         FUNCTION_LOG_PARAM(STRING, path);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(storage != NULL);
 
     TRY_BEGIN()

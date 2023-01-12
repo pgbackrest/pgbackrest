@@ -306,7 +306,7 @@ storageReadRemoteNew(
 
     OBJ_NEW_BEGIN(StorageReadRemote, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        this = OBJ_NEW_ALLOC();
+        this = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadRemote);
 
         *this = (StorageReadRemote)
         {

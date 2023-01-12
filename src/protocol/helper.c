@@ -195,6 +195,8 @@ protocolLocalExec(
         FUNCTION_TEST_PARAM(UINT, processId);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(helper != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -670,6 +672,8 @@ protocolRemoteExec(
         FUNCTION_TEST_PARAM(UINT, hostIdx);
         FUNCTION_TEST_PARAM(UINT, processId);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(helper != NULL);
 

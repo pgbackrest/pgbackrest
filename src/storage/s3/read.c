@@ -130,7 +130,7 @@ storageReadS3New(
 
     OBJ_NEW_BEGIN(StorageReadS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadS3 *driver = OBJ_NEW_ALLOC();
+        StorageReadS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadS3);
 
         *driver = (StorageReadS3)
         {

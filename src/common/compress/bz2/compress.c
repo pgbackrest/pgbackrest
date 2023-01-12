@@ -169,7 +169,7 @@ bz2CompressNew(int level)
 
     OBJ_NEW_BEGIN(Bz2Compress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Bz2Compress *driver = OBJ_NEW_ALLOC();
+        Bz2Compress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::Bz2Compress);
 
         *driver = (Bz2Compress)
         {

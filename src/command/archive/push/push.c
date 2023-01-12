@@ -218,6 +218,8 @@ archivePushCheck(bool pgPathSet)
         FUNCTION_LOG_PARAM(BOOL, pgPathSet);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ArchivePushCheckResult result = {.repoList = lstNewP(sizeof(ArchivePushFileRepoData)), .errorList = strLstNew()};
 
     MEM_CONTEXT_TEMP_BEGIN()

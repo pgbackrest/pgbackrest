@@ -201,6 +201,8 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to open file if encrypted
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(pathFileName != NULL);
 
     VerifyInfoFile result = {.errorCode = 0};
@@ -542,6 +544,8 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
         FUNCTION_TEST_PARAM(STRING_LIST, walFileList);                  // Sorted (ascending) list of WAL files in a timeline
         FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                     // Pointer to the overall job error total
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(archiveIdResult != NULL);
     ASSERT(walFileList != NULL);
@@ -1321,6 +1325,8 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
         FUNCTION_TEST_PARAM(LIST, backupResultList);                // Result list for all backups in the repo
         FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested?
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(archiveIdResultList != NULL);
     ASSERT(backupResultList != NULL);

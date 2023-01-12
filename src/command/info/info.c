@@ -306,6 +306,8 @@ archiveDbList(
         FUNCTION_TEST_PARAM(UINT, repoKey);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(stanza != NULL);
     ASSERT(pgData != NULL);
     ASSERT(archiveSection != NULL);
@@ -396,6 +398,8 @@ backupListAdd(
         FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup label to filter if requested by the user
         FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoData);              // The repo data where this backup is located
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(backupSection != NULL);
     ASSERT(backupData != NULL);
@@ -586,6 +590,8 @@ backupList(
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);                      // The index of the last repo to check
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(backupSection != NULL);
     ASSERT(stanzaData != NULL);
 
@@ -657,6 +663,8 @@ stanzaInfoList(List *stanzaRepoList, const String *const backupLabel, const unsi
         FUNCTION_TEST_PARAM(UINT, repoIdxMin);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(stanzaRepoList != NULL);
 
@@ -803,6 +811,8 @@ formatTextBackup(const DbGroup *dbGroup, String *resultStr)
         FUNCTION_TEST_PARAM(DB_GROUP, dbGroup);
         FUNCTION_TEST_PARAM(STRING, resultStr);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(dbGroup != NULL);
 
@@ -1002,6 +1012,8 @@ formatTextDb(
         FUNCTION_TEST_PARAM(UINT64, currentPgSystemId);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(stanzaInfo != NULL);
     ASSERT(currentPgVersion != NULL);
 
@@ -1161,6 +1173,8 @@ infoUpdateStanza(
         FUNCTION_TEST_PARAM(BOOL, stanzaExists);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(storage != NULL);
     ASSERT(stanzaRepo != NULL);

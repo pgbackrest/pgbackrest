@@ -429,7 +429,7 @@ cipherBlockNew(CipherMode mode, CipherType cipherType, const Buffer *pass, Ciphe
 
     OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CipherBlock *driver = OBJ_NEW_ALLOC();
+        CipherBlock *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::CipherBlock);
 
         *driver = (CipherBlock)
         {

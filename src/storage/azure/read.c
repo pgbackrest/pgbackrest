@@ -127,7 +127,7 @@ storageReadAzureNew(
 
     OBJ_NEW_BEGIN(StorageReadAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadAzure *driver = OBJ_NEW_ALLOC();
+        StorageReadAzure *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadAzure);
 
         *driver = (StorageReadAzure)
         {

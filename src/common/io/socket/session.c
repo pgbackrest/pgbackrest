@@ -181,7 +181,7 @@ sckSessionNew(IoSessionRole role, int fd, const String *host, unsigned int port,
 
     OBJ_NEW_BEGIN(SocketSession, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        SocketSession *driver = OBJ_NEW_ALLOC();
+        SocketSession *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoSession::SocketSession);
 
         String *name = strNewFmt("%s:%u", strZ(host), port);
 

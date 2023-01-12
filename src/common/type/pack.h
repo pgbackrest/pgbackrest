@@ -137,7 +137,7 @@ Pack Functions
 FN_INLINE_ALWAYS Pack *
 pckDup(const Pack *const this)
 {
-    return (Pack *)bufDup((const Buffer *)this);
+    return (Pack *)OBJ_NAME(bufDup((const Buffer *)this), Pack::Buffer);
 }
 
 // Cast Buffer to Pack

@@ -363,6 +363,8 @@ archiveGetCheck(const StringList *archiveRequestList)
         FUNCTION_LOG_PARAM(STRING_LIST, archiveRequestList);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(archiveRequestList != NULL);
     ASSERT(!strLstEmpty(archiveRequestList));
 

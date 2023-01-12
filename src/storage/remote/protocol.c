@@ -132,6 +132,8 @@ storageRemoteFeatureProtocol(PackRead *const param, ProtocolServer *const server
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(param == NULL);
     ASSERT(server != NULL);
 
@@ -193,6 +195,8 @@ storageRemoteInfoProtocolPut(
         FUNCTION_TEST_PARAM(PACK_WRITE, write);
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(data != NULL);
     ASSERT(write != NULL);

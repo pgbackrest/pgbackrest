@@ -164,7 +164,7 @@ zstDecompressNew(void)
 
     OBJ_NEW_BEGIN(ZstDecompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        ZstDecompress *driver = OBJ_NEW_ALLOC();
+        ZstDecompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::ZstDecompress);
 
         *driver = (ZstDecompress)
         {

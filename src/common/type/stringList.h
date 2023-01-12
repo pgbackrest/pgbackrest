@@ -21,7 +21,7 @@ Constructors
 FN_INLINE_ALWAYS StringList *
 strLstNew(void)
 {
-    return (StringList *)lstNewP(sizeof(String *), .comparator = lstComparatorStr);
+    return (StringList *)OBJ_NAME(lstNewP(sizeof(String *), .comparator = lstComparatorStr), StringList::List);
 }
 
 // Split a string into a string list based on a delimiter

@@ -315,6 +315,8 @@ storageAzureListInternal(
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_CALLBACK();
+
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
@@ -734,7 +736,7 @@ storageAzureNew(
 
     OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageAzure *driver = OBJ_NEW_ALLOC();
+        StorageAzure *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageAzure);
 
         *driver = (StorageAzure)
         {

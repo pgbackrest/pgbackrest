@@ -165,7 +165,7 @@ lz4DecompressNew(void)
 
     OBJ_NEW_BEGIN(Lz4Decompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        Lz4Decompress *driver = OBJ_NEW_ALLOC();
+        Lz4Decompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::Lz4Decompress);
         *driver = (Lz4Decompress){0};
 
         // Create lz4 context

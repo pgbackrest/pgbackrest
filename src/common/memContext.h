@@ -39,6 +39,33 @@ Space is reserved for this many allocations when a context is created.  When mor
 #define MEM_CONTEXT_ALLOC_INITIAL_SIZE                              4
 
 /***********************************************************************************************************************************
+Functions and macros to audit a mem context by detecting new child contexts/allocations that were created begin the begin/end but
+are not the expected return type.
+***********************************************************************************************************************************/
+#if defined(DEBUG)
+    typedef struct MemContextAuditState
+    {
+        MemContext *memContext;                                     // Mem context to audit
+
+        bool returnTypeAny;                                         // Skip auditing for this mem context
+        uint64_t sequenceContextNew;                                // Max sequence for new contexts at beginning
+    } MemContextAuditState;
+
+    // Begin the audit
+    FN_EXTERN void memContextAuditBegin(MemContextAuditState *state);
+
+    // End the audit and make sure the return type is as expected
+    FN_EXTERN void memContextAuditEnd(const MemContextAuditState *state, const char *returnTypeDefault);
+
+    // Rename a mem context using the extra allocation pointer
+    #define MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)          memContextAuditAllocExtraName(this, #name)
+
+    FN_EXTERN void *memContextAuditAllocExtraName(void *allocExtra, const char *name);
+#else
+    #define MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)          this
+#endif
+
+/***********************************************************************************************************************************
 Memory management functions
 
 All these functions operate in the current memory context, including memResize() and memFree().

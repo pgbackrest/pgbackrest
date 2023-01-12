@@ -169,6 +169,8 @@ backupInit(const InfoBackup *infoBackup)
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(infoBackup != NULL);
 
     // Initialize for offline backup
@@ -817,6 +819,8 @@ backupStart(BackupData *backupData)
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     BackupStartResult result = {.lsn = NULL};
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -1011,6 +1015,8 @@ backupStop(BackupData *backupData, Manifest *manifest)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     BackupStopResult result = {.lsn = NULL};
 
     if (cfgOptionBool(cfgOptOnline))
@@ -1059,6 +1065,8 @@ backupJobResultPageChecksumOut(VariantList *const result, const unsigned int pag
         FUNCTION_TEST_PARAM(UINT, pageEnd);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     // Output a single page
     if (pageBegin == pageEnd)
     {
@@ -1082,6 +1090,8 @@ backupJobResultPageChecksum(PackRead *const checksumPageResult)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, checksumPageResult);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     VariantList *result = NULL;
 
@@ -1508,6 +1518,8 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(VOID, jobData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(manifest != NULL);
 

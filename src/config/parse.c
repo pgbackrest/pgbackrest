@@ -765,6 +765,8 @@ cfgParseOptionalRule(
         FUNCTION_TEST_PARAM(ENUM, optionId);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(optionalRuleType != 0);
     ASSERT(commandId < CFG_COMMAND_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
@@ -1103,7 +1105,7 @@ cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx)
         FUNCTION_TEST_RETURN_CONST(
             STRINGZ,
             zNewFmt(
-            "%s%u%s", parseRuleOptionGroup[parseRuleOption[optionId].groupId].name, keyIdx + 1,
+                "%s%u%s", parseRuleOptionGroup[parseRuleOption[optionId].groupId].name, keyIdx + 1,
                 parseRuleOption[optionId].name + strlen(parseRuleOptionGroup[parseRuleOption[optionId].groupId].name)));
     }
 
@@ -1222,6 +1224,8 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
         FUNCTION_LOG_PARAM(BUFFER, configPart);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     if (configPart != NULL)
     {
         String *configPartStr = strNewBuf(configPart);
@@ -1264,6 +1268,8 @@ cfgFileLoad(                                                        // NOTE: Pas
         FUNCTION_LOG_PARAM(STRING, optConfigIncludePathDefault);
         FUNCTION_LOG_PARAM(STRING, origConfigDefault);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(optionList != NULL);
     ASSERT(optConfigDefault != NULL);

@@ -184,7 +184,7 @@ cryptoHashNew(const HashType type)
 
     OBJ_NEW_BEGIN(CryptoHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        CryptoHash *driver = OBJ_NEW_ALLOC();
+        CryptoHash *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::CryptoHash);
         *driver = (CryptoHash){0};
 
         // Use local MD5 implementation since FIPS-enabled systems do not allow MD5. This is a bit misguided since there are valid

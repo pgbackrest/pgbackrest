@@ -28,6 +28,8 @@ archiveGetFile(
         FUNCTION_LOG_PARAM(STRING, walDestination);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(request != NULL);
     ASSERT(actualList != NULL && !lstEmpty(actualList));
     ASSERT(walDestination != NULL);

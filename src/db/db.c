@@ -377,6 +377,8 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
         FUNCTION_LOG_PARAM(BOOL, archiveCheck);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(this != NULL);
 
     DbBackupStartResult result = {.lsn = NULL};
@@ -540,6 +542,8 @@ dbBackupStop(Db *this)
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
 

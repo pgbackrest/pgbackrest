@@ -365,7 +365,7 @@ tlsSessionNew(SSL *session, IoSession *ioSession, TimeMSec timeout)
 
     OBJ_NEW_BEGIN(TlsSession, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        TlsSession *driver = OBJ_NEW_ALLOC();
+        TlsSession *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoSession::TlsSession);
 
         *driver = (TlsSession)
         {

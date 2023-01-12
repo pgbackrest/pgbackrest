@@ -296,7 +296,7 @@ tlsServerNew(
 
     OBJ_NEW_BEGIN(TlsServer, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        TlsServer *const driver = OBJ_NEW_ALLOC();
+        TlsServer *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoServer::TlsServer);
 
         *driver = (TlsServer)
         {

@@ -280,7 +280,7 @@ storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize)
 
     OBJ_NEW_BEGIN(StorageWriteS3, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteS3 *driver = OBJ_NEW_ALLOC();
+        StorageWriteS3 *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteS3);
 
         *driver = (StorageWriteS3)
         {

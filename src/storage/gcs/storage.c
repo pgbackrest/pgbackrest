@@ -118,6 +118,8 @@ storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin)
         FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     StorageGcsAuthTokenResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -246,6 +248,8 @@ storageGcsAuthService(StorageGcs *this, time_t timeBegin)
         FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(this != NULL);
     ASSERT(timeBegin > 0);
 
@@ -288,6 +292,8 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
         FUNCTION_TEST_PARAM(TIME, timeBegin);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_STRUCT();
 
     ASSERT(this != NULL);
     ASSERT(timeBegin > 0);
@@ -542,6 +548,8 @@ storageGcsListInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
@@ -965,7 +973,7 @@ storageGcsNew(
 
     OBJ_NEW_BEGIN(StorageGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageGcs *driver = OBJ_NEW_ALLOC();
+        StorageGcs *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageGcs);
 
         *driver = (StorageGcs)
         {

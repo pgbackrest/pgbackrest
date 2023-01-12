@@ -224,6 +224,8 @@ restoreBackupSet(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
+    FUNCTION_AUDIT_STRUCT();
+
     RestoreBackupData result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -740,6 +742,8 @@ restoreManifestOwner(const Manifest *const manifest, const String **const rootRe
         FUNCTION_LOG_PARAM_P(VOID, rootReplaceUser);
         FUNCTION_LOG_PARAM_P(VOID, rootReplaceGroup);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(manifest != NULL);
 
@@ -2008,6 +2012,8 @@ restoreProcessQueue(Manifest *manifest, List **queueList)
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM_P(LIST, queueList);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
 
     ASSERT(manifest != NULL);
 

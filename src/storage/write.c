@@ -37,6 +37,8 @@ storageWriteNew(void *driver, const StorageWriteInterface *interface)
         FUNCTION_LOG_PARAM_P(STORAGE_WRITE_INTERFACE, interface);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
 

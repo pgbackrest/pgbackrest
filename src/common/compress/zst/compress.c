@@ -176,7 +176,7 @@ zstCompressNew(int level)
 
     OBJ_NEW_BEGIN(ZstCompress, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        ZstCompress *driver = OBJ_NEW_ALLOC();
+        ZstCompress *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::ZstCompress);
 
         *driver = (ZstCompress)
         {

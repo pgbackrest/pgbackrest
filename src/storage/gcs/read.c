@@ -134,7 +134,7 @@ storageReadGcsNew(
 
     OBJ_NEW_BEGIN(StorageReadGcs, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadGcs *driver = OBJ_NEW_ALLOC();
+        StorageReadGcs *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadGcs);
 
         *driver = (StorageReadGcs)
         {
