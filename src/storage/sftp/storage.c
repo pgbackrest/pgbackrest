@@ -72,6 +72,8 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
@@ -168,6 +170,8 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
             }
         }
     }
+
+    waitFree(wait);
 
     FUNCTION_LOG_RETURN(STORAGE_INFO, result);
 }
@@ -333,6 +337,8 @@ storageSftpListEntry(
         FUNCTION_TEST_PARAM(ENUM, level);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_HELPER();
+
     ASSERT(this != NULL);
     ASSERT(list != NULL);
     ASSERT(path != NULL);
@@ -360,6 +366,8 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
         FUNCTION_LOG_PARAM(ENUM, level);
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();                                        // !!! Fix this -- the harness is leaking
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
@@ -462,6 +470,8 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
         }
         TRY_END();
     }
+
+    waitFree(wait);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
@@ -786,7 +796,7 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
 
     OBJ_NEW_BEGIN(StorageSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        StorageSftp *driver = OBJ_NEW_ALLOC();
+        StorageSftp *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), Storage::StorageSftp);
 
         *driver = (StorageSftp)
         {

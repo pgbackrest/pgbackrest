@@ -36,7 +36,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_WRITE_SFTP_TYPE                                                                                      \
     StorageWriteSftp *
 #define FUNCTION_LOG_STORAGE_WRITE_SFTP_FORMAT(value, buffer, bufferSize)                                                         \
-    objToLog(value, "StorageWriteSftp", buffer, bufferSize)
+    objNameToLog(value, "StorageWriteSftp", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 File open constants
@@ -423,7 +423,7 @@ storageWriteSftpNew(
 
     OBJ_NEW_BEGIN(StorageWriteSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageWriteSftp *driver = OBJ_NEW_ALLOC();
+        StorageWriteSftp *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageWrite::StorageWriteSftp);
 
         *driver = (StorageWriteSftp)
         {

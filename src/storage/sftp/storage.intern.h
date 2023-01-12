@@ -34,6 +34,6 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_SFTP_TYPE                                                                                             \
     StorageSftp *
 #define FUNCTION_LOG_STORAGE_SFTP_FORMAT(value, buffer, bufferSize)                                                                \
-    objToLog(value, "StorageSftp *", buffer, bufferSize)
+    objNameToLog(value, "StorageSftp *", buffer, bufferSize)
 
 #endif

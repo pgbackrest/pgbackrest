@@ -38,7 +38,7 @@ Macros for function logging
 #define FUNCTION_LOG_STORAGE_READ_SFTP_TYPE                                                                                        \
     StorageReadSftp *
 #define FUNCTION_LOG_STORAGE_READ_SFTP_FORMAT(value, buffer, bufferSize)                                                           \
-    objToLog(value, "StorageReadSftp", buffer, bufferSize)
+    objNameToLog(value, "StorageReadSftp", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -51,6 +51,8 @@ storageReadSftpOpen(THIS_VOID)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_SFTP, this);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();                                        // !!! Fix this -- the harness is leaking
 
     ASSERT(this != NULL);
 
@@ -88,6 +90,8 @@ storageReadSftpOpen(THIS_VOID)
             libssh2_sftp_seek64(this->sftpHandle, this->interface.offset);
     }
 
+    waitFree(wait);
+
     FUNCTION_LOG_RETURN(BOOL, this->sftpHandle != NULL);
 }
 
@@ -104,6 +108,8 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
         FUNCTION_LOG_PARAM(BUFFER, buffer);
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();                                        // !!! Fix this -- the harness is leaking
 
     ASSERT(this != NULL && this->sftpHandle != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
@@ -172,6 +178,8 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
         // not concerned with files that are growing.  Just read up to the point where the file is being extended.
         if ((size_t)actualBytes != expectedBytes || this->current == this->limit)
             this->eof = true;
+
+        waitFree(wait);
     }
 
     FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
@@ -261,7 +269,7 @@ storageReadSftpNew(
 
     OBJ_NEW_BEGIN(StorageReadSftp, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
-        StorageReadSftp *driver = OBJ_NEW_ALLOC();
+        StorageReadSftp *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), StorageRead::StorageReadSftp);
 
         *driver = (StorageReadSftp)
         {
