@@ -232,8 +232,14 @@ Shim for libssh2_hostkey_hash
 ***********************************************************************************************************************************/
 const char *libssh2_hostkey_hash(LIBSSH2_SESSION *session, int hash_type)
 {
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_HOSTKEY_HASH, varLstAdd(varLstNew(), varNewInt(hash_type)), (HrnLibSsh2 *)session);
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_HOSTKEY_HASH, varLstAdd(varLstNew(), varNewInt(hash_type)), (HrnLibSsh2 *)session);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return hrnLibSsh2->resultNull ? NULL : (const char *)hrnLibSsh2->resultZ;
 }
@@ -245,19 +251,25 @@ int libssh2_userauth_publickey_fromfile_ex(
     LIBSSH2_SESSION *session, const char *username, unsigned int ousername_len, const char *publickey, const char *privatekey,
     const char *passphrase)
 {
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
-        varLstAdd(
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
                         varLstAdd(
-                            varLstNew(), varNewStrZ(username)),
-                    varNewUInt(ousername_len)),
-                varNewStrZ(publickey)),
-            varNewStrZ(privatekey)),
-        varNewStrZ(passphrase)),
-        (HrnLibSsh2 *)session);
+                            varLstAdd(
+                                varLstNew(), varNewStrZ(username)),
+                        varNewUInt(ousername_len)),
+                    varNewStrZ(publickey)),
+                varNewStrZ(privatekey)),
+            varNewStrZ(passphrase)),
+            (HrnLibSsh2 *)session);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return hrnLibSsh2->resultInt;
 }
@@ -293,15 +305,21 @@ Shim for libssh2_session_disconnect_ex
 ***********************************************************************************************************************************/
 int libssh2_session_disconnect_ex(LIBSSH2_SESSION *session, int reason, const char *description, const char *lang)
 {
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SESSION_DISCONNECT_EX,
-        varLstAdd(
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SESSION_DISCONNECT_EX,
             varLstAdd(
                 varLstAdd(
-                    varLstNew(), varNewInt(reason)),
-            varNewStrZ(description)),
-        varNewStrZ(lang)),
-        (HrnLibSsh2 *)session);
+                    varLstAdd(
+                        varLstNew(), varNewInt(reason)),
+                varNewStrZ(description)),
+            varNewStrZ(lang)),
+            (HrnLibSsh2 *)session);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return hrnLibSsh2->resultInt;
 }
@@ -320,18 +338,25 @@ Shim for libssh2_sftp_stat_ex
 int libssh2_sftp_stat_ex(
     LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, int stat_type, LIBSSH2_SFTP_ATTRIBUTES *attrs)
 {
-    // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    // Avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
+    // tests are being run.
+    //
     // Could we utilize test.c/build.c to calculate/define this and other length params?
    (void)path_len;
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_STAT_EX,
-        varLstAdd(
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_STAT_EX,
             varLstAdd(
-                varLstNew(), varNewStrZ(path)),
-        varNewInt(stat_type)),
-        (HrnLibSsh2 *)sftp);
+                varLstAdd(
+                    varLstNew(), varNewStrZ(path)),
+            varNewInt(stat_type)),
+            (HrnLibSsh2 *)sftp);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     if (attrs == NULL)
         THROW(AssertError, "attrs is NULL");
@@ -364,28 +389,28 @@ Shim for libssh2_sftp_symlink_ex
 int libssh2_sftp_symlink_ex(
     LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, char *target, unsigned int target_len, int link_type)
 {
-    // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    // Avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
+    // tests are being run.
     (void)path_len;
     (void)target_len;
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_SYMLINK_EX,
-        varLstAdd(
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_SYMLINK_EX,
             varLstAdd(
                 varLstAdd(
-                    varLstNew(), varNewStrZ(path)),
-            varNewStrZ(target)),
-        varNewInt(link_type)),
-        (HrnLibSsh2 *)sftp);
+                    varLstAdd(
+                        varLstNew(), varNewStrZ(path)),
+                varNewStrZ(target)),
+            varNewInt(link_type)),
+            (HrnLibSsh2 *)sftp);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     int rc = 0;
-
-    // LIBSSH2_SFTP_READLINK
-    // LIBSSH2_SFTP_REALPATH
-    //     path is file to retrive data from, target is populated with the data
-    // LIBSSH2_SFTP_SYMLINK
-    //     path is file to link to, target is symlink to create
 
     switch (link_type)
     {
@@ -428,21 +453,27 @@ Shim for libssh2_sftp_open_ex
 LIBSSH2_SFTP_HANDLE * libssh2_sftp_open_ex(
     LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len, unsigned long flags, long mode, int open_type)
 {
-    // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    // To avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
+    // tests are being run.
     (void)filename_len;
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_OPEN_EX,
-        varLstAdd(
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_OPEN_EX,
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
-                        varLstNew(), varNewStrZ(filename)),
-                varNewUInt64(flags)),
-            varNewInt64(mode)),
-        varNewInt(open_type)),
-        (HrnLibSsh2 *)sftp);
+                        varLstAdd(
+                            varLstNew(), varNewStrZ(filename)),
+                    varNewUInt64(flags)),
+                varNewInt64(mode)),
+            varNewInt(open_type)),
+            (HrnLibSsh2 *)sftp);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return hrnLibSsh2->resultNull ? NULL : (LIBSSH2_SFTP_HANDLE *)hrnLibSsh2;
 }
@@ -457,17 +488,23 @@ int libssh2_sftp_readdir_ex(
     if (attrs == NULL)
         THROW_FMT(AssertError, "attrs is NULL");
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_READDIR_EX,
-        varLstAdd(
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_READDIR_EX,
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
-                        varLstNew(), varNewStrZ(buffer)),
-                varNewUInt64(buffer_maxlen)),
-            varNewStrZ(longentry)),
-        varNewUInt64(longentry_maxlen)),
-        (HrnLibSsh2 *)handle);
+                        varLstAdd(
+                            varLstNew(), varNewStrZ(buffer)),
+                    varNewUInt64(buffer_maxlen)),
+                varNewStrZ(longentry)),
+            varNewUInt64(longentry_maxlen)),
+            (HrnLibSsh2 *)handle);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     if (hrnLibSsh2->fileName != NULL)
         strncpy(buffer, strZ(hrnLibSsh2->fileName), buffer_maxlen);
@@ -491,8 +528,14 @@ int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle, LIBSSH2_SFTP_ATTRIBUTES *
     if (attrs == NULL)
         THROW_FMT(AssertError, "attrs is NULL");
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_FSTAT_EX, varLstAdd(varLstNew(), varNewInt(setstat)), (HrnLibSsh2 *)handle);
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_FSTAT_EX, varLstAdd(varLstNew(), varNewInt(setstat)), (HrnLibSsh2 *)handle);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     // populate attrs
     attrs->flags = 0;
@@ -522,17 +565,23 @@ Shim for libssh2_sftp_mkdir_ex
 ***********************************************************************************************************************************/
 int libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len, long mode)
 {
-    // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    // To avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
+    // tests are being run.
     (void)path_len;
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_MKDIR_EX,
-        varLstAdd(
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_MKDIR_EX,
             varLstAdd(
-                varLstNew(), varNewStrZ(path)),
-        varNewInt64(mode)),
-        (HrnLibSsh2 *)sftp);
+                varLstAdd(
+                    varLstNew(), varNewStrZ(path)),
+            varNewInt64(mode)),
+            (HrnLibSsh2 *)sftp);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return hrnLibSsh2->resultInt;
 }
@@ -544,11 +593,17 @@ ssize_t libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buff
 {
     // We don't pass buffer to hrnLibSsh2ScriptRun. The first call for each invocation passes buffer with random data, which is
     // an issue for sftpTest.c.
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_READ,
-        varLstAdd(
-            varLstNew(), varNewUInt64(buffer_maxlen)),
-        (HrnLibSsh2 *)handle);
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_READ,
+            varLstAdd(
+                varLstNew(), varNewUInt64(buffer_maxlen)),
+            (HrnLibSsh2 *)handle);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     // copy read into buffer
     if (hrnLibSsh2->readBuffer != NULL)
@@ -565,20 +620,26 @@ int libssh2_sftp_rename_ex(
     LIBSSH2_SFTP *sftp, const char *source_filename, unsigned int source_filename_len, const char *dest_filename,
     unsigned int dest_filename_len, long flags)
 {
-    // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    // To avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
+    // tests are being run.
     (void)source_filename_len;
     (void)dest_filename_len;
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_RENAME_EX,
-        varLstAdd(
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_RENAME_EX,
             varLstAdd(
                 varLstAdd(
-                    varLstNew(), varNewStrZ(source_filename)),
-            varNewStrZ(dest_filename)),
-        varNewInt64(flags)),
-        (HrnLibSsh2 *)sftp);
+                    varLstAdd(
+                        varLstNew(), varNewStrZ(source_filename)),
+                varNewStrZ(dest_filename)),
+            varNewInt64(flags)),
+            (HrnLibSsh2 *)sftp);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return hrnLibSsh2->resultInt;
 }
@@ -588,15 +649,21 @@ Shim for libssh2_sftp_rmdir_ex
 ***********************************************************************************************************************************/
 int libssh2_sftp_rmdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_len)
 {
-    // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    // Avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
+    // tests are being run.
     (void)path_len;
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_RMDIR_EX,
-        varLstAdd(
-            varLstNew(), varNewStrZ(path)),
-        (HrnLibSsh2 *)sftp);
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_RMDIR_EX,
+            varLstAdd(
+                varLstNew(), varNewStrZ(path)),
+            (HrnLibSsh2 *)sftp);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return hrnLibSsh2->resultInt;
 }
@@ -606,13 +673,15 @@ Shim for libssh2_sftp_seek64
 ***********************************************************************************************************************************/
 void libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
 {
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_SEEK64,
-        varLstAdd(
-            varLstNew(), varNewUInt64(offset)),
-        (HrnLibSsh2 *)handle);
-
-    (void)hrnLibSsh2;
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_SEEK64,
+            varLstAdd(
+                varLstNew(), varNewUInt64(offset)),
+            (HrnLibSsh2 *)handle);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return;
 }
@@ -622,15 +691,21 @@ Shim for libssh2_sftp_unlink_ex
 ***********************************************************************************************************************************/
 int libssh2_sftp_unlink_ex(LIBSSH2_SFTP *sftp, const char *filename, unsigned int filename_len)
 {
-    // To avoid compiler complaining of unused param.
-    // Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where tests are being run.
+    // Avoid compiler complaining of unused param. Not passing to hrnLibSsh2ScriptRun, as parameter will vary depending on where
+    // tests are being run.
     (void)filename_len;
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_UNLINK_EX,
-        varLstAdd(
-            varLstNew(), varNewStrZ(filename)),
-        (HrnLibSsh2 *)sftp);
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_UNLINK_EX,
+            varLstAdd(
+                varLstNew(), varNewStrZ(filename)),
+            (HrnLibSsh2 *)sftp);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     return hrnLibSsh2->resultInt;
 }
@@ -644,13 +719,19 @@ ssize_t libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size
     // an issue for sftpTest.c.
     (void)buffer;
 
-    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(
-        HRNLIBSSH2_SFTP_WRITE,
-        varLstAdd(
-            varLstNew(), varNewUInt64(count)),
-        (HrnLibSsh2 *)handle);
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
 
-    // return number of bytes written
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_SFTP_WRITE,
+            varLstAdd(
+                varLstNew(), varNewUInt64(count)),
+            (HrnLibSsh2 *)handle);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    // Return number of bytes written
     return hrnLibSsh2->resultInt;
 }
 

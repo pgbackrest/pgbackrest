@@ -52,8 +52,6 @@ storageReadSftpOpen(THIS_VOID)
         FUNCTION_LOG_PARAM(STORAGE_READ_SFTP, this);
     FUNCTION_LOG_END();
 
-    FUNCTION_AUDIT_HELPER();                                        // !!! Fix this -- the harness is leaking
-
     ASSERT(this != NULL);
 
     // Open the file
@@ -66,6 +64,8 @@ storageReadSftpOpen(THIS_VOID)
             LIBSSH2_SFTP_OPENFILE);
     }
     while (this->sftpHandle == NULL && waitMore(wait));
+
+    waitFree(wait);
 
     if (this->sftpHandle == NULL)
     {
@@ -90,8 +90,6 @@ storageReadSftpOpen(THIS_VOID)
             libssh2_sftp_seek64(this->sftpHandle, this->interface.offset);
     }
 
-    waitFree(wait);
-
     FUNCTION_LOG_RETURN(BOOL, this->sftpHandle != NULL);
 }
 
@@ -109,8 +107,6 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    FUNCTION_AUDIT_HELPER();                                        // !!! Fix this -- the harness is leaking
-
     ASSERT(this != NULL && this->sftpHandle != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
@@ -126,18 +122,20 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
             expectedBytes = (size_t)(this->limit - this->current);
         bufLimitSet(buffer, expectedBytes);
 
-        Wait *wait = waitNew(this->timeoutConnect);
-
         ssize_t rc = 0;
 
         // Read until EOF or buffer is full
         do
         {
+            Wait *const wait = waitNew(this->timeoutConnect);
+
             do
             {
                 rc = libssh2_sftp_read(this->sftpHandle, (char *)bufRemainsPtr(buffer), bufRemains(buffer));
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+            waitFree(wait);
 
             // Break on EOF or error
             if (rc <= 0)
@@ -145,9 +143,6 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
 
             // Account/shift for bytes read
             bufUsedInc(buffer, (size_t)rc);
-
-            // Reset timeout
-            wait = waitNew(this->timeoutConnect);
         }
         while (!bufFull(buffer));
 
@@ -178,8 +173,6 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
         // not concerned with files that are growing.  Just read up to the point where the file is being extended.
         if ((size_t)actualBytes != expectedBytes || this->current == this->limit)
             this->eof = true;
-
-        waitFree(wait);
     }
 
     FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
@@ -202,7 +195,7 @@ storageReadSftpClose(THIS_VOID)
     if (this->sftpHandle != NULL)
     {
         int rc = 0;
-        Wait *wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeoutConnect);
 
         // Close the libssh2 sftpHandle
         do
@@ -210,6 +203,8 @@ storageReadSftpClose(THIS_VOID)
             rc = libssh2_sftp_close(this->sftpHandle);
         }
         while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+        waitFree(wait);
 
         if (rc)
         {

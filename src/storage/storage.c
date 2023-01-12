@@ -184,8 +184,6 @@ storageGet(StorageRead *file, StorageGetParam param)
         FUNCTION_LOG_PARAM(SIZE, param.exactSize);
     FUNCTION_LOG_END();
 
-    FUNCTION_AUDIT_HELPER();                                        // !!! Fix this -- the harness is leaking
-
     ASSERT(file != NULL);
 
     Buffer *result = NULL;

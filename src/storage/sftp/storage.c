@@ -367,7 +367,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
-    FUNCTION_AUDIT_HELPER();                                        // !!! Fix this -- the harness is leaking
+    FUNCTION_AUDIT_HELPER(); // !!! WAIT HANDLING HERE IS NOT GOOD -- OBJECT IS LOST AFTER EXCEPTION
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
