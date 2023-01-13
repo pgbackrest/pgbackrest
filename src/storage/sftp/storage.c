@@ -367,8 +367,6 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
-    FUNCTION_AUDIT_HELPER(); // !!! WAIT HANDLING HERE IS NOT GOOD -- OBJECT IS LOST AFTER EXCEPTION
-
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
@@ -377,7 +375,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
     // Open the directory for read
     LIBSSH2_SFTP_HANDLE *sftpHandle;
 
-    Wait *wait = waitNew(this->timeoutConnect);
+    Wait *const wait = waitNew(this->timeoutConnect);
 
     do
     {
@@ -385,6 +383,8 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             this->sftpSession, strZ(path), (unsigned int)strSize(path), 0, 0, LIBSSH2_SFTP_OPENDIR);
     }
     while (sftpHandle == NULL && libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+    waitFree(wait);
 
     // If the directory could not be opened process errors and report missing directories
     if (sftpHandle == NULL)
@@ -409,10 +409,10 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
                 LIBSSH2_SFTP_ATTRIBUTES attr;
-                char filename[PATH_MAX] = {};
+                char filename[PATH_MAX] = {0};
                 int len = 0;
 
-                wait = waitNew(this->timeoutConnect);
+                Wait *wait = waitNew(this->timeoutConnect);
 
                 // read the directory entries
                 do
@@ -440,6 +440,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                             else
                                 storageSftpListEntry(this, result, path, filename, level);
                         }
+
                         // Reset the memory context occasionally so we don't use too much memory or slow down processing
                         MEM_CONTEXT_TEMP_RESET(1000);
 
@@ -455,13 +456,15 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
         {
             int rc = 0;
 
-            wait = waitNew(this->timeoutConnect);
+            Wait *const wait = waitNew(this->timeoutConnect);
 
             do
             {
                 rc = libssh2_sftp_closedir(sftpHandle);
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
+
+            waitFree(wait);
 
             if (rc)
                 THROW_FMT(PathCloseError, "unable to close path '%s' after listing", strZ(path));
@@ -470,8 +473,6 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
         }
         TRY_END();
     }
-
-    waitFree(wait);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
