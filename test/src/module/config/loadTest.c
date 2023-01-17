@@ -128,8 +128,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpAccount, 2, "user2");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 1, "host1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 2, "host2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostkeyHash, 1, "sha1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostkeyHash, 2, "md5");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostkeyHashType, 1, "sha1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostkeyHashType, 2, "md5");
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");

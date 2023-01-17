@@ -2240,7 +2240,7 @@ option:
       list:
         - sftp
 
-  repo-sftp-hostkey-hash:
+  repo-sftp-hostkey-hash-type:
     section: global
     group: repo
     type: string-id
