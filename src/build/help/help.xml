@@ -953,7 +953,7 @@
                     </config-key>
 
                     <config-key id="repo-sftp-hostkey-hash-type" name="SFTP Repository Hostkey Hash Type">
-                        <summary>SFTP repository hostkey hash.</summary>
+                        <summary>SFTP repository hostkey hash type.</summary>
 
                         <text>
                             <p>SFTP repository hostkey hash type. Declares the hash type to be used to compute the digest of the remote system's hostkey on startup. Newer versions of libssh2 support sha256 in addition to md5 and sha1.</p>
