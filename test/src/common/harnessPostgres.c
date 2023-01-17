@@ -216,7 +216,7 @@ hrnPgWalToBuffer(PgWal pgWal, Buffer *walBuffer)
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PG_WAL, pgWal);
         FUNCTION_HARNESS_PARAM(BUFFER, walBuffer);
-    FUNCTION_TEST_END();
+    FUNCTION_HARNESS_END();
 
     ASSERT(walBuffer != NULL);
 

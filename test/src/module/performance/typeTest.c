@@ -44,18 +44,6 @@ testComparator(const void *item1, const void *item2)
 }
 
 /***********************************************************************************************************************************
-Test callback to count ini load results
-***********************************************************************************************************************************/
-static void
-testIniLoadCountCallback(void *const data, const String *const section, const String *const key, const String *const value)
-{
-    (*(unsigned int *)data)++;
-    (void)section;
-    (void)key;
-    (void)value;
-}
-
-/***********************************************************************************************************************************
 Driver to test manifestNewBuild(). Generates files for a valid-looking PostgreSQL cluster that can be scaled to any size.
 ***********************************************************************************************************************************/
 typedef struct
@@ -220,7 +208,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("iniLoad()"))
+    if (testBegin("iniValueNext()"))
     {
         ASSERT(TEST_SCALE <= 10000);
 
@@ -233,11 +221,19 @@ testRun(void)
         TEST_LOG_FMT("ini size = %s, keys = %u", strZ(strSizeFormat(strSize(iniStr))), iniMax);
 
         TimeMSec timeBegin = timeMSec();
-        unsigned int iniTotal = 0;
+        Ini *ini = iniNewP(ioBufferReadNew(BUFSTR(iniStr)), .strict = true);
 
-        TEST_RESULT_VOID(iniLoad(ioBufferReadNew(BUFSTR(iniStr)), testIniLoadCountCallback, &iniTotal), "parse ini");
+        unsigned int iniTotal = 0;
+        const IniValue *value = iniValueNext(ini);
+
+        while (value != NULL)
+        {
+            iniTotal++;
+            value = iniValueNext(ini);
+        }
+
+        TEST_RESULT_INT(iniTotal, iniMax, "check ini value total");
         TEST_LOG_FMT("parse completed in %ums", (unsigned int)(timeMSec() - timeBegin));
-        TEST_RESULT_INT(iniTotal, iniMax, "    check ini total");
     }
 
     // Build/load/save a larger manifest to test performance and memory usage. The default sizing is for a "typical" large cluster

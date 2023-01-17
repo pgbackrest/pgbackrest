@@ -98,6 +98,17 @@
 
                         <p>Add meson unity build and tests.</p>
                     </release-item>
+
+                    <release-item>
+                        <github-pull-request id="1968"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Refactor <id>common/ini</id> module to remove callbacks and duplicated code.</p>
+                    </release-item>
                 </release-development-list>
             </release-core-list>
 
