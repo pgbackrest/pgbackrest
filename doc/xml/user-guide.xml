@@ -169,8 +169,15 @@
         <variable key="s3-key">accessKey1</variable>
         <variable key="s3-key-secret">verySecretKey1</variable>
 
+        <!-- SFTP Settings -->
+        <variable key="sftp-all">n</variable>                        <!-- Build all the documentation with SFTP? -->
+        <variable key="sftp-repo">demo-repo</variable>
+        <variable key="sftp-hostkey-hash-type">sha1</variable>
+        <variable key="sftp-private-keyfile">{[br-home-path]}/.ssh/id_rsa</variable>
+        <variable key="sftp-public-keyfile">{[br-home-path]}/.ssh/id_rsa.pub</variable>
+
         <!-- Is any object store being used to build all the documentation? -->
-        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y')</variable>
+        <variable key="object-any-all">('{[azure-all]}' eq 'y' || '{[gcs-all]}' eq 'y' || '{[s3-all]}' eq 'y' || '{[sftp-all]}' eq 'y')</variable>
 
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
@@ -772,6 +779,26 @@
     </block-define>
 
     <!-- ======================================================================================================================= -->
+    <block-define id="sftp-setup">
+        <p><backrest/> supports locating repositories on <proper>SFTP</proper> stores.</p>
+
+        <backrest-config host="{[sftp-setup-host]}" file="{[backrest-config-demo]}" owner="{[sftp-setup-config-owner]}">
+            <title>Configure <proper>SFTP</proper></title>
+
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-type">sftp</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-path">/{[sftp-repo]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-account">{[br-user]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-host">{[host-repo1]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-hostkey-hash-type">{[sftp-hostkey-hash-type]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-private-keyfile">{[sftp-private-keyfile]}</backrest-config-option>
+            <backrest-config-option section="global" key="repo{[sftp-setup-repo-id]}-sftp-public-keyfile">{[sftp-public-keyfile]}</backrest-config-option>
+            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
+        </backrest-config>
+
+        <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSH then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-keyfile</br-option> is optional.</p>
+    </block-define>
+
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
@@ -1135,6 +1162,18 @@
                 <block-variable-replace key="s3-setup-user">postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">postgres:postgres</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">y</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="sftp-support" if="'{[sftp-all]}' eq 'y'">
+            <title>SFTP Storage Support</title>
+
+            <block id="sftp-setup">
+                <block-variable-replace key="sftp-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
+                <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
             </block>
         </section>
 
@@ -2394,6 +2433,22 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="sftp-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
+        <title>SFTP Support</title>
+
+        <block id="sftp-setup">
+            <block-variable-replace key="sftp-setup-repo-id">5</block-variable-replace>
+            <block-variable-replace key="sftp-setup-host">{[host-pg1]}</block-variable-replace>
+            <block-variable-replace key="sftp-setup-user">postgres</block-variable-replace>
+            <block-variable-replace key="sftp-setup-config-owner">postgres:postgres</block-variable-replace>
+        </block>
+
+        <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <p>SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="delete-stanza" if="!{[object-any-all]}" depend="/quickstart">
         <title>Delete a Stanza</title>
 
@@ -2630,6 +2685,15 @@
                 <block-variable-replace key="s3-setup-user">{[br-user]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
                 <block-variable-replace key="s3-setup-create-bucket">n</block-variable-replace>
+            </block>
+
+            <p if="'{[sftp-all]}' eq 'y'">Configure SFTP storage if required.</p>
+
+            <block id="sftp-setup" if="'{[sftp-all]}' eq 'y'">
+                <block-variable-replace key="sftp-setup-repo-id">1</block-variable-replace>
+                <block-variable-replace key="sftp-setup-host">{[host-repo1]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-user">{[br-user]}</block-variable-replace>
+                <block-variable-replace key="sftp-setup-config-owner">{[br-user]}:{[br-group]}</block-variable-replace>
             </block>
         </section>
 
