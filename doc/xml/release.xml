@@ -132,6 +132,7 @@
                 <release-improvement-list>
                     <release-item>
                         <github-issue id="1770"/>
+                        <github-pull-request id="1980"/>
 
                         <release-item-contributor-list>
                             <release-item-ideator id="vojtech.galda"/>
