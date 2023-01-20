@@ -59,6 +59,22 @@
 
                 <release-development-list>
                     <release-item>
+                        <github-issue id="959"/>
+                        <github-issue id="1806"/>
+                        <github-issue id="1913"/>
+                        <github-pull-request id="1916"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="john.morris"/>
+                        </release-item-contributor-list>
+
+                        <p>Block-level incremental backup.</p>
+                    </release-item>
+
+                    <release-item>
                         <commit subject="Rename EncodeType enum to EncodingType."/>
                         <commit subject="Add hex encode/decoding to decode module."/>
                         <commit subject="Use smaller type for decode tables."/>
