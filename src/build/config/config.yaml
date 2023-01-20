@@ -1822,6 +1822,7 @@ option:
     section: global
     group: repo
     type: boolean
+    internal: true
     default: false
     command:
       backup: {}
