@@ -164,8 +164,8 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
                     // If no content remaining
                     if (this->contentRemaining == 0)
                     {
-                        // If chunked then consume the blank line that follows every chunk.  There might be more chunk data so loop back
-                        // around to check.
+                        // If chunked then consume the blank line that follows every chunk. There might be more chunk data so loop
+                        // back around to check.
                         if (this->contentChunked)
                         {
                             ioReadLine(rawRead);

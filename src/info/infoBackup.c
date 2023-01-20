@@ -202,7 +202,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             // Database id
             info.backupPgId = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_ID));
 
-                // Options
+            // Options
             info.optionArchiveCheck = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK));
             info.optionArchiveCopy = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY));
             info.optionBackupStandby = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY));

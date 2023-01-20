@@ -86,7 +86,7 @@ storageWritePosixOpen(THIS_VOID)
     // Attempt to create the path if it is missing
     if (this->fd == -1 && errno == ENOENT && this->interface.createPath)                                            // {vm_covered}
     {
-         // Create the path
+        // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->interface.modePath);
 
         // Open file again

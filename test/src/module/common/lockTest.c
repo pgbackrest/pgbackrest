@@ -184,7 +184,7 @@ testRun(void)
             "lock is already held by this process");
         TEST_RESULT_VOID(lockRelease(true), "release archive lock");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         lockLocal.execId = STRDEF("2-test");
 
         TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
