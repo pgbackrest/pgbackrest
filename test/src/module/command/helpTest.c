@@ -310,6 +310,7 @@ testRun(void)
             "  --repo-s3-uri-style               S3 URI Style [default=host]\n"
             "  --repo-sftp-account               SFTP repository account\n"
             "  --repo-sftp-host                  SFTP repository host\n"
+            "  --repo-sftp-host-fingerprint      SFTP repository host fingerprint\n"
             "  --repo-sftp-host-port             SFTP repository host port [default=22]\n"
             "  --repo-sftp-hostkey-hash-type     SFTP repository hostkey hash type\n"
             "  --repo-sftp-keyfile-passphrase    SFTP private keyfile passphrase\n"

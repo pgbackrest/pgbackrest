@@ -946,17 +946,27 @@
                         <summary>SFTP repository host.</summary>
 
                         <text>
-                            <p>SFTP repository host.</p>
+                            <p>The SFTP host containing the repository.</p>
                         </text>
 
                         <example>sftprepo.domain</example>
+                    </config-key>
+
+                    <config-key id="repo-sftp-host-fingerprint" name="SFTP Repository Host Fingerprint">
+                        <summary>SFTP repository host fingerprint.</summary>
+
+                        <text>
+                            <p>SFTP repository host fingerprint generation should match the <setting>repo-sftp-hostkey-hash-type</setting>. Generate the fingeprint via <code>awk '{print $2}' ssh_host_xxx_key.pub | base64 -d | (md5sum or sha1sum) -b</code>. The ssh host keys are normally found in the /etc/ssh/ directory.</p>
+                        </text>
+
+                        <example>f84e172dfead7aeeeae6c1fdfb5aa8cf</example>
                     </config-key>
 
                     <config-key id="repo-sftp-hostkey-hash-type" name="SFTP Repository Hostkey Hash Type">
                         <summary>SFTP repository hostkey hash type.</summary>
 
                         <text>
-                            <p>SFTP repository hostkey hash type. Declares the hash type to be used to compute the digest of the remote system's hostkey on startup. Newer versions of libssh2 support sha256 in addition to md5 and sha1.</p>
+                            <p>SFTP repository hostkey hash type. Declares the hash type to be used to compute the digest of the remote system's hostkey on libssh2 startup. Newer versions of libssh2 support sha256 in addition to md5 and sha1.</p>
                         </text>
 
                         <example>sha256</example>
@@ -966,7 +976,7 @@
                         <summary>SFTP repository host port.</summary>
 
                         <text>
-                            <p>SFTP repository host port.</p>
+                            <p>SFTP repository host port. Defaults to 22.</p>
                         </text>
 
                         <example>22</example>

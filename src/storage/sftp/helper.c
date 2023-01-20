@@ -33,7 +33,8 @@ storageSftpHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
         param.keyPub = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyfile, repoIdx));
         param.keyPriv = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyfile, repoIdx));
         param.keyPassphrase = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpKeyfilePassphrase, repoIdx));
-        param.hostkeyHash = cfgOptionIdxStrId(cfgOptRepoSftpHostkeyHashType, repoIdx);
+        param.hostkeyHashType = cfgOptionIdxStrId(cfgOptRepoSftpHostkeyHashType, repoIdx);
+        param.hostFingerprint = strDup(cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx));
         param.modeFile = STORAGE_MODE_FILE_DEFAULT;
         param.modePath = STORAGE_MODE_PATH_DEFAULT;
 

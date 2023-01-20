@@ -365,10 +365,10 @@ storageWriteSftpClose(THIS_VOID)
 
             if (rc)
             {
-                // some/most sftp servers will not rename over an existing file, in testing this returned LIBSSH2_FX_FAILURE
+                // Some/most sftp servers will not rename over an existing file, in testing this returned LIBSSH2_FX_FAILURE
                 if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL && libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
                 {
-                    // remove the existing file and retry the rename
+                    // Remove the existing file and retry the rename
                     storageWriteSftpUnlinkExisting(this);
                     storageWriteSftpRename(this);
                 }

@@ -27,7 +27,8 @@ typedef struct StorageSftpNewParam
     const String *keyPub;
     const String *keyPriv;
     const String *keyPassphrase;
-    StringId hostkeyHash;
+    const String *hostFingerprint;
+    StringId hostkeyHashType;
 } StorageSftpNewParam;
 
 #define storageSftpNewP(path, host, port, timeoutConnect, timeoutSession, ...)                                                     \

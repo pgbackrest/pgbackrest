@@ -7518,6 +7518,84 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                     // opt/repo-sftp-host
     ),                                                                                                         // opt/repo-sftp-host
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                              // opt/repo-sftp-host-fingerprint
+    (                                                                                              // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_NAME("repo-sftp-host-fingerprint"),                                      // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeString),                                                  // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_RESET(true),                                                             // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_REQUIRED(false),                                                         // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                               // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                      // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                 // opt/repo-sftp-host-fingerprint
+                                                                                                   // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                             // opt/repo-sftp-host-fingerprint
+        (                                                                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                              // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                            // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                           // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                 // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdExpire)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                  // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                            // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                               // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                               // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                               // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                         // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                // opt/repo-sftp-host-fingerprint
+        ),                                                                                         // opt/repo-sftp-host-fingerprint
+                                                                                                   // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                            // opt/repo-sftp-host-fingerprint
+        (                                                                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                            // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                           // opt/repo-sftp-host-fingerprint
+        ),                                                                                         // opt/repo-sftp-host-fingerprint
+                                                                                                   // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                            // opt/repo-sftp-host-fingerprint
+        (                                                                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                            // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                           // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                               // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                // opt/repo-sftp-host-fingerprint
+        ),                                                                                         // opt/repo-sftp-host-fingerprint
+                                                                                                   // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                           // opt/repo-sftp-host-fingerprint
+        (                                                                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                              // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                            // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                           // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                 // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                  // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoCreate)                                            // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoGet)                                               // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoPut)                                               // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRepoRm)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                               // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                         // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                // opt/repo-sftp-host-fingerprint
+        ),                                                                                         // opt/repo-sftp-host-fingerprint
+                                                                                                   // opt/repo-sftp-host-fingerprint
+        PARSE_RULE_OPTIONAL                                                                        // opt/repo-sftp-host-fingerprint
+        (                                                                                          // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTIONAL_GROUP                                                              // opt/repo-sftp-host-fingerprint
+            (                                                                                      // opt/repo-sftp-host-fingerprint
+                PARSE_RULE_OPTIONAL_DEPEND                                                         // opt/repo-sftp-host-fingerprint
+                (                                                                                  // opt/repo-sftp-host-fingerprint
+                    PARSE_RULE_VAL_OPT(cfgOptRepoType),                                            // opt/repo-sftp-host-fingerprint
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdSftp),                                   // opt/repo-sftp-host-fingerprint
+                ),                                                                                 // opt/repo-sftp-host-fingerprint
+            ),                                                                                     // opt/repo-sftp-host-fingerprint
+        ),                                                                                         // opt/repo-sftp-host-fingerprint
+    ),                                                                                             // opt/repo-sftp-host-fingerprint
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                     // opt/repo-sftp-host-port
     (                                                                                                     // opt/repo-sftp-host-port
         PARSE_RULE_OPTION_NAME("repo-sftp-host-port"),                                                    // opt/repo-sftp-host-port
@@ -10004,6 +10082,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoS3UriStyle,                                                                                       // opt-resolve-order
     cfgOptRepoSftpAccount,                                                                                      // opt-resolve-order
     cfgOptRepoSftpHost,                                                                                         // opt-resolve-order
+    cfgOptRepoSftpHostFingerprint,                                                                              // opt-resolve-order
     cfgOptRepoSftpHostPort,                                                                                     // opt-resolve-order
     cfgOptRepoSftpHostkeyHashType,                                                                              // opt-resolve-order
     cfgOptRepoSftpKeyfilePassphrase,                                                                            // opt-resolve-order

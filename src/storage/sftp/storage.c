@@ -414,7 +414,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
 
                 Wait *wait = waitNew(this->timeoutConnect);
 
-                // read the directory entries
+                // Read the directory entries
                 do
                 {
                     len = libssh2_sftp_readdir_ex(sftpHandle, filename, PATH_MAX - 1, NULL, 0, &attr);
@@ -779,7 +779,8 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
         FUNCTION_LOG_PARAM(STRING, param.keyPub);
         FUNCTION_LOG_PARAM(STRING, param.keyPriv);
         FUNCTION_LOG_PARAM(STRING, param.keyPassphrase);
-        FUNCTION_LOG_PARAM(STRING_ID, param.hostkeyHash);
+        FUNCTION_LOG_PARAM(STRING, param.hostFingerprint);
+        FUNCTION_LOG_PARAM(STRING_ID, param.hostkeyHashType);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
@@ -831,30 +832,51 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
             THROW_FMT(ServiceError, "libssh2 handshake failed");
 
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
+        size_t hashSize = 0;
 
-        switch (param.hostkeyHash)
+        switch (param.hostkeyHashType)
         {
             case hashTypeMd5:
                 hashType = LIBSSH2_HOSTKEY_HASH_MD5;
+                hashSize = 16;
                 break;
 
             case hashTypeSha1:
                 hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
+                hashSize = 20;
                 break;
 
 #ifdef LIBSSH2_HOSTKEY_HASH_SHA256
             case hashTypeSha256:
                 hashType = LIBSSH2_HOSTKEY_HASH_SHA256;
+                hashSize = 32;
                 break;
 #endif // LIBSSH2_HOSTKEY_HASH_SHA256
 
             default:
-                THROW_FMT(ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(param.hostkeyHash)));
+                THROW_FMT(
+                    ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(param.hostkeyHashType)));
                 break;
         }
 
-        if (libssh2_hostkey_hash(driver->session, hashType) == NULL)
+        const char *binaryFingerprint = libssh2_hostkey_hash(driver->session, hashType);
+
+        if (binaryFingerprint == NULL)
             THROW_FMT(ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(driver->session));
+
+        // Compare fingerprint if provided
+        if (param.hostFingerprint != NULL)
+        {
+            char fingerprint[256];
+
+            encodeToStr(encodingHex, (unsigned char *)binaryFingerprint, hashSize, fingerprint);
+
+            if (strcmp(fingerprint, strZ(param.hostFingerprint)) != 0)
+            {
+                THROW_FMT(
+                    ServiceError, "host [%s] and provided fingerprint [%s] do not match", fingerprint, strZ(param.hostFingerprint));
+            }
+        }
 
         int rc = 0;
 
@@ -867,8 +889,8 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
             do
             {
                 rc = libssh2_userauth_publickey_fromfile(
-                        driver->session, strZ(param.user), strZNull(param.keyPub) == NULL ? NULL : strZ(param.keyPub), strZ(param.keyPriv),
-                        strZNull(param.keyPassphrase) == NULL ? NULL : strZ(param.keyPassphrase));
+                        driver->session, strZ(param.user), strZNull(param.keyPub) == NULL ? NULL : strZ(param.keyPub),
+                        strZ(param.keyPriv), strZNull(param.keyPassphrase) == NULL ? NULL : strZ(param.keyPassphrase));
             }
             while (rc == LIBSSH2_ERROR_EAGAIN && waitMore(wait));
 

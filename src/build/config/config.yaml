@@ -2240,6 +2240,17 @@ option:
       list:
         - sftp
 
+  repo-sftp-host-fingerprint:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
   repo-sftp-hostkey-hash-type:
     section: global
     group: repo
