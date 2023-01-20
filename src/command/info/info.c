@@ -56,11 +56,13 @@ VARIANT_STRDEF_STATIC(KEY_ARCHIVE_VAR,                              "archive");
 VARIANT_STRDEF_STATIC(KEY_CIPHER_VAR,                               "cipher");
 VARIANT_STRDEF_STATIC(KEY_DATABASE_VAR,                             "database");
 VARIANT_STRDEF_STATIC(KEY_DELTA_VAR,                                "delta");
+VARIANT_STRDEF_STATIC(KEY_DELTA_MAP_VAR,                            "delta-map");
 VARIANT_STRDEF_STATIC(KEY_DESTINATION_VAR,                          "destination");
 VARIANT_STRDEF_STATIC(KEY_NAME_VAR,                                 "name");
 VARIANT_STRDEF_STATIC(KEY_OID_VAR,                                  "oid");
 VARIANT_STRDEF_STATIC(KEY_REPO_KEY_VAR,                             "repo-key");
 VARIANT_STRDEF_STATIC(KEY_SIZE_VAR,                                 "size");
+VARIANT_STRDEF_STATIC(KEY_SIZE_MAP_VAR,                             "size-map");
 VARIANT_STRDEF_STATIC(KEY_START_VAR,                                "start");
 VARIANT_STRDEF_STATIC(KEY_STOP_VAR,                                 "stop");
 VARIANT_STRDEF_STATIC(REPO_KEY_KEY_VAR,                             "key");
@@ -453,6 +455,12 @@ backupListAdd(
 
     kvPut(repoInfo, KEY_SIZE_VAR, VARUINT64(backupData->backupInfoRepoSize));
     kvPut(repoInfo, KEY_DELTA_VAR, VARUINT64(backupData->backupInfoRepoSizeDelta));
+
+    if (outputJson && backupData->backupInfoRepoSizeMap != NULL)
+    {
+        kvPut(repoInfo, KEY_SIZE_MAP_VAR, backupData->backupInfoRepoSizeMap);
+        kvPut(repoInfo, KEY_DELTA_MAP_VAR, backupData->backupInfoRepoSizeMapDelta);
+    }
 
     // timestamp section
     KeyValue *timeInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_TIMESTAMP_VAR);

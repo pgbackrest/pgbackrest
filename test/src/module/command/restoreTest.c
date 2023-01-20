@@ -1,12 +1,17 @@
 /***********************************************************************************************************************************
 Test Restore Command
 ***********************************************************************************************************************************/
+#include "command/stanza/create.h"
+#include "command/backup/backup.h"
+#include "command/backup/blockIncr.h"
+#include "command/backup/protocol.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 #include "storage/helper.h"
 
+#include "common/harnessBackup.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
@@ -141,11 +146,58 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // Install local command handler shim
-    static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_RESTORE_LIST};
+    static const ProtocolServerHandler testLocalHandlerList[] =
+        {PROTOCOL_SERVER_HANDLER_BACKUP_LIST PROTOCOL_SERVER_HANDLER_RESTORE_LIST};
     hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+
+    // *****************************************************************************************************************************
+    if (testBegin("DeltaMap"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("too large for one buffer");
+
+        Buffer *output = bufNew(0);
+        IoWrite *write = ioBufferWriteNew(output);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), deltaMapNew(3));
+        ioWriteOpen(write);
+
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABCDEF")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABC")), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), DELTA_MAP_FILTER_TYPE))),
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
+            "6dae29c06c5f04601445c493156d10fe1be23b6d"
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8",
+            "delta map");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("buffer smaller than block and remainder");
+
+        output = bufNew(0);
+        write = ioBufferWriteNew(output);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), deltaMapNew(3));
+        ioWriteOpen(write);
+
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DE")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("FA")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("BC")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("AB")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("CX")), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, pckReadBinP(ioFilterGroupResultP(ioWriteFilterGroup(write), DELTA_MAP_FILTER_TYPE))),
+            "6dae29c06c5f04601445c493156d10fe1be23b6d"
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"
+            "c032adc1ff629c9b66f22749ad667e6beadf144b",
+            "delta map");
+    }
 
     // *****************************************************************************************************************************
     if (testBegin("restoreFile()"))
@@ -191,7 +243,7 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, STRDEF("badpass"), fileList),
+                0, false, false, STRDEF("badpass"), NULL, fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
                 " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -2452,12 +2504,14 @@ testRun(void)
             manifest->pub.data.pgVersion = PG_VERSION_10;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeIncr;
+            manifest->pub.data.blockIncr = true;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
 
             manifest->pub.referenceList = strLstNew();
             strLstAddZ(manifest->pub.referenceList, TEST_LABEL_FULL);
             strLstAddZ(manifest->pub.referenceList, TEST_LABEL_DIFF);
             strLstAddZ(manifest->pub.referenceList, TEST_LABEL_INCR);
+            strLstAddZ(manifest->pub.referenceList, TEST_LABEL);
 
             // Data directory
             manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = pgPath});
@@ -2717,6 +2771,83 @@ testRun(void)
                     .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("401215e092779574988a854d8c7caed7f91dba4b")))});
             HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "pg_hba.conf", "PG_HBA.CONF");
 
+            // Block incremental with no references to a prior backup
+            fileBuffer = bufNew(8192 * 3);
+            memset(bufPtr(fileBuffer), 1, 8192);
+            memset(bufPtr(fileBuffer) + 8192, 2, 8192);
+            memset(bufPtr(fileBuffer) + 16384, 3, 8192);
+            bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
+            IoWrite *write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-no-ref.pgbi")));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 3, 0, 0, NULL, NULL, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
+
+            ioWriteOpen(write);
+            ioWrite(write, fileBuffer);
+            ioWriteClose(write);
+
+            uint64_t blockIncrMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+            uint64_t repoSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/bi-no-ref"), .size = bufUsed(fileBuffer), .sizeRepo = repoSize,
+                    .blockIncrSize = 8192, .blockIncrMapSize = blockIncrMapSize, .timestamp = 1482182860, .mode = 0600,
+                    .group = groupName(), .user = userName(),
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("953cdcc904c5d4135d96fc0833f121bf3033c74c")))});
+
+            // Block incremental with a broken reference to show that unneeded references will not be used
+            Buffer *fileUnused = bufNew(8192 * 6);
+            memset(bufPtr(fileUnused), 1, bufSize(fileUnused));
+            bufUsedSet(fileUnused, bufSize(fileUnused));
+
+            Buffer *fileUnusedMap = bufNew(0);
+            write = ioBufferWriteNew(fileUnusedMap);
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 0, 0, 0, NULL, NULL, NULL));
+
+            ioWriteOpen(write);
+            ioWrite(write, fileUnused);
+            ioWriteClose(write);
+
+            size_t fileUnusedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+
+            Buffer *fileUsed = bufDup(fileUnused);
+            memset(bufPtr(fileUsed), 3, 8192);
+            memset(bufPtr(fileUsed) + (8192 * 2), 3, 24576);
+
+            size_t bufferSizeOld = ioBufferSize();
+            ioBufferSizeSet(777);
+
+            write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-unused-ref.pgbi")));
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(write),
+                blockIncrNew(
+                    8192, 3, 0, 0, BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize),
+                    NULL, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
+
+            ioWriteOpen(write);
+            ioWrite(write, fileUsed);
+            ioWriteClose(write);
+
+            ioBufferSizeSet(bufferSizeOld);
+
+            uint64_t fileUsedMapSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE));
+            uint64_t fileUsedRepoSize = pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), SIZE_FILTER_TYPE));
+
+            manifestFileAdd(
+                manifest,
+                &(ManifestFile){
+                    .name = STRDEF(TEST_PGDATA "base/1/bi-unused-ref"), .size = bufUsed(fileUsed), .sizeRepo = fileUsedRepoSize,
+                    .blockIncrSize = 8192, .blockIncrMapSize = fileUsedMapSize, .timestamp = 1482182860, .mode = 0600,
+                    .group = groupName(), .user = userName(),
+                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("febd680181d4cd315dce942348862c25fbd731f3")))});
+
+            memset(bufPtr(fileUnused) + (8192 * 4), 3, 8192);
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), "base/1", .mode = 0700);
+            HRN_STORAGE_PUT(storagePgWrite(), "base/1/bi-unused-ref", fileUnused, .modeFile = 0600);
+
             // tablespace_map (will be ignored during restore)
             manifestFileAdd(
                 manifest,
@@ -2808,15 +2939,17 @@ testRun(void)
             "P00 DETAIL: remove invalid path '" TEST_PATH "/pg/global/bogus3'\n"
             "P00 DETAIL: remove invalid link '" TEST_PATH "/pg/pg_wal2'\n"
             "P00 DETAIL: remove invalid file '" TEST_PATH "/pg/tablespace_map'\n"
-            "P00 DETAIL: create path '" TEST_PATH "/pg/base'\n"
-            "P00 DETAIL: create path '" TEST_PATH "/pg/base/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/base/16384'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/base/32768'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_xact' to '../xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref (48KB, [PCT]) checksum"
+                " febd680181d4cd315dce942348862c25fbd731f3\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT]) checksum"
                 " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref (24KB, [PCT]) checksum"
+                " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, [PCT]) checksum"
                 " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
@@ -2866,7 +2999,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 21");
+            "P00   INFO: restore size = [SIZE], file total = 23");
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
@@ -2881,6 +3014,8 @@ testRun(void)
             "base/1/30 {s=1, t=1482182860}\n"
             "base/1/31 {s=1, t=1482182860}\n"
             "base/1/PG_VERSION {s=4, t=1482182860}\n"
+            "base/1/bi-no-ref {s=24576, t=1482182860}\n"
+            "base/1/bi-unused-ref {s=49152, t=1482182860}\n"
             "base/16384/\n"
             "base/16384/16385 {s=16384, t=1482182860}\n"
             "base/16384/PG_VERSION {s=4, t=1482182860}\n"
@@ -3004,7 +3139,11 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_wal' to '../wal'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref - exists and matches backup (48KB, [PCT]) checksum"
+                " febd680181d4cd315dce942348862c25fbd731f3\n"
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT])\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref - exists and matches backup (24KB, [PCT]) checksum"
+                " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, [PCT])"
                 " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
@@ -3054,7 +3193,7 @@ testRun(void)
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_10_201707211'\n"
             "P00   INFO: restore global/pg_control (performed last to ensure aborted restores cannot be started)\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 21");
+            "P00   INFO: restore size = [SIZE], file total = 23");
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
@@ -3079,6 +3218,86 @@ testRun(void)
 
         // Free local processes that were not freed because of the error
         protocolFree();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cmdBackup() and cmdRestore()"))
+    {
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
+
+        // Created pg_control
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15, .pageChecksum = false);
+
+        // Create encrypted stanza
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
+
+        // It is better to put as few tests here as possible because cmp/enc makes tests more expensive (especially with valgrind)
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup with block incr");
+
+        // Zeroed file large enough to use block incr
+        Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 2);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation);
+
+        // Add postgresql.auto.conf to contain recovery settings
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF);
+
+        // Backup
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+        hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore with block incr");
+
+        // Remove all files from pg path
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), NULL, .recurse = true);
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(cmdRestore(), "restore");
+
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "base/\n"
+            "base/1/\n"
+            "base/1/2\n"
+            "global/\n"
+            "global/pg_control\n"
+            "postgresql.auto.conf\n"
+            "recovery.signal\n",
+            .level = storageInfoLevelType);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

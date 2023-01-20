@@ -196,9 +196,6 @@ ioWriteStrLine(IoWrite *this, const String *string)
 }
 
 /**********************************************************************************************************************************/
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-
 FN_EXTERN void
 ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 {
@@ -217,8 +214,6 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 
     FUNCTION_LOG_RETURN_VOID();
 }
-
-#pragma GCC diagnostic pop
 
 /**********************************************************************************************************************************/
 FN_EXTERN void

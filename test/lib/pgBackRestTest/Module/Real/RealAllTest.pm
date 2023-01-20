@@ -52,16 +52,16 @@ sub run
 
     foreach my $rhRun
     (
-        {pg => '9.3', dst =>     'backup', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 0},
-        {pg => '9.4', dst => 'db-standby', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 1, bnd => 1},
-        {pg => '9.5', dst =>     'backup', tls => 1, stg =>    S3, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0},
-        {pg => '9.6', dst =>     'backup', tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1},
-        {pg =>  '10', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 1, cmp =>   GZ, rt => 2, bnd => 0},
-        {pg =>  '11', dst =>     'backup', tls => 1, stg => AZURE, enc => 0, cmp =>  ZST, rt => 2, bnd => 1},
-        {pg =>  '12', dst =>     'backup', tls => 0, stg =>    S3, enc => 1, cmp =>  LZ4, rt => 1, bnd => 0},
-        {pg =>  '13', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 0, cmp =>  ZST, rt => 1, bnd => 1},
-        {pg =>  '14', dst =>     'backup', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 2, bnd => 0},
-        {pg =>  '15', dst => 'db-standby', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1},
+        {pg => '9.3', dst =>     'backup', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 0, bi => 0},
+        {pg => '9.4', dst => 'db-standby', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 1, bnd => 1, bi => 0},
+        {pg => '9.5', dst =>     'backup', tls => 1, stg =>    S3, enc => 0, cmp =>  BZ2, rt => 1, bnd => 0, bi => 1},
+        {pg => '9.6', dst =>     'backup', tls => 0, stg => POSIX, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
+        {pg =>  '10', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 1, cmp =>   GZ, rt => 2, bnd => 0, bi => 0},
+        {pg =>  '11', dst =>     'backup', tls => 1, stg => AZURE, enc => 0, cmp =>  ZST, rt => 2, bnd => 1, bi => 0},
+        {pg =>  '12', dst =>     'backup', tls => 0, stg =>    S3, enc => 1, cmp =>  LZ4, rt => 1, bnd => 0, bi => 1},
+        {pg =>  '13', dst => 'db-standby', tls => 1, stg =>   GCS, enc => 0, cmp =>  ZST, rt => 1, bnd => 1, bi => 1},
+        {pg =>  '14', dst =>     'backup', tls => 0, stg => POSIX, enc => 1, cmp =>  LZ4, rt => 2, bnd => 0, bi => 0},
+        {pg =>  '15', dst => 'db-standby', tls => 0, stg => AZURE, enc => 0, cmp => NONE, rt => 2, bnd => 1, bi => 1},
     )
     {
         # Only run tests for this pg version
@@ -76,6 +76,7 @@ sub run
         my $strCompressType = $rhRun->{cmp};
         my $iRepoTotal = $rhRun->{rt};
         my $bBundle = $rhRun->{bnd};
+        my $bBlockIncr = $rhRun->{bi};
 
         # Some tests are not version specific so only run them on a single version of PostgreSQL
         my $bNonVersionSpecific = $self->pgVersion() eq PG_VERSION_96;
@@ -90,7 +91,7 @@ sub run
             false,
             {bHostBackup => $bHostBackup, bStandby => true, bTls => $bTls, strBackupDestination => $strBackupDestination,
                 strCompressType => $strCompressType, bArchiveAsync => false, strStorage => $strStorage,
-                bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal, bBundle => $bBundle});
+                bRepoEncrypt => $bRepoEncrypt, iRepoTotal => $iRepoTotal, bBundle => $bBundle, bBlockIncr => $bBlockIncr});
 
         # Some commands will fail because of the bogus host created when a standby is present. These options reset the bogus host
         # so it won't interfere with commands that won't tolerate a connection failure.

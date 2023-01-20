@@ -51,6 +51,8 @@ typedef struct InfoBackupData
     const String *backupArchiveStop;
     uint64_t backupInfoRepoSize;
     uint64_t backupInfoRepoSizeDelta;
+    const Variant *backupInfoRepoSizeMap;
+    const Variant *backupInfoRepoSizeMapDelta;
     uint64_t backupInfoSize;
     uint64_t backupInfoSizeDelta;
     const String *backupLsnStart;

@@ -54,13 +54,14 @@ testRun(void)
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
-        #define TEST_MANIFEST_HEADER_BUNDLE                                                                                        \
+        #define TEST_MANIFEST_HEADER_BUNDLE_BLOCK                                                                                  \
             "[backup]\n"                                                                                                           \
+            "backup-block-incr=true\n"                                                                                             \
             "backup-bundle=true\n"                                                                                                 \
             "backup-label=null\n"                                                                                                  \
             "backup-reference=\"\"\n"                                                                                              \
             "backup-timestamp-copy-start=0\n"                                                                                      \
-            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-start=1570000000\n"                                                                                  \
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
@@ -294,7 +295,7 @@ testRun(void)
         // Test tablespace error
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), false, false, false, exclusionList,
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, exclusionList,
                 pckWriteResult(tablespaceList)),
             AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
@@ -319,7 +320,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), false, false, false, NULL,
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL,
                 pckWriteResult(tablespaceList)),
             "build manifest");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F")), "backup label set");
@@ -415,7 +416,8 @@ testRun(void)
         // Test manifest - temp tables, unlogged tables, pg_serial and pg_xlog files ignored
         TEST_ASSIGN(
             manifest,
-            manifestNewBuild(storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), true, false, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, true, false, false, false, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -489,7 +491,8 @@ testRun(void)
         THROW_ON_SYS_ERROR(symlink(TEST_PATH "/wal", TEST_PATH "/wal/wal") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), false, false, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, false, false, false, NULL, NULL),
             LinkDestinationError,
             "link 'pg_xlog/wal' (" TEST_PATH "/wal) destination is the same directory as link 'pg_xlog' (" TEST_PATH "/wal)");
 
@@ -544,7 +547,8 @@ testRun(void)
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
         TEST_ASSIGN(
             manifest,
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, true, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -637,7 +641,8 @@ testRun(void)
 
         // Tablespace link errors when correct verion not found
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), false, false, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or"
                 " directory");
@@ -657,7 +662,8 @@ testRun(void)
         // pg_wal contents will be ignored online. pg_clog pgVersion > 10 primary:true, pg_xact pgVersion > 10 primary:false
         TEST_ASSIGN(
             manifest,
-            manifestNewBuild(storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), true, false, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, true, false, false, false, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -725,12 +731,26 @@ testRun(void)
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("run 13, offline");
+        TEST_TITLE("run 13, offline, block incr");
+
+        // Create file that is large enough for block incr
+        Buffer *buffer = bufNew(128 * 1024);
+        memset(bufPtr(buffer), 0, bufSize(buffer));
+        bufUsedSet(buffer, bufSize(buffer));
+
+        HRN_STORAGE_PUT(storagePgWrite, "128k", buffer, .modeFile = 0600, .timeModified = 1570000000);
+
+        // Create file that is large enough for block incr and far enough in the past to get a multiplier
+        HRN_STORAGE_PUT(storagePgWrite, "128k-1week", buffer, .modeFile = 0600, .timeModified = 1570000000 - (7 * 86400));
+
+        // Create file that is large enough for block incr and old enough to not need block incr
+        HRN_STORAGE_PUT(storagePgWrite, "128k-4week", buffer, .modeFile = 0600, .timeModified = 1570000000 - (28 * 86400));
 
         // pg_wal not ignored
         TEST_ASSIGN(
             manifest,
-            manifestNewBuild(storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), false, false, true, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -738,7 +758,7 @@ testRun(void)
         TEST_RESULT_STR(
             strNewBuf(contentSave),
             strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_BUNDLE
+                TEST_MANIFEST_HEADER_BUNDLE_BLOCK
                 TEST_MANIFEST_DB_13
                 TEST_MANIFEST_OPTION_ALL
                 "\n"
@@ -749,6 +769,9 @@ testRun(void)
                 "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
+                "pg_data/128k={\"bis\":16,\"size\":131072,\"timestamp\":1570000000}\n"
+                "pg_data/128k-1week={\"bis\":32,\"size\":131072,\"timestamp\":1569395200}\n"
+                "pg_data/128k-4week={\"size\":131072,\"timestamp\":1567580800}\n"
                 "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
                 "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
                 "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
@@ -800,7 +823,8 @@ testRun(void)
         THROW_ON_SYS_ERROR(symlink(TEST_PATH "/pg/base", TEST_PATH "/pg/link") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
             LinkDestinationError, "link 'link' destination '" TEST_PATH "/pg/base' is in PGDATA");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link") == -1, FileRemoveError, "unable to remove symlink");
@@ -811,7 +835,8 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir", .mode = 0700);
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
         HRN_STORAGE_PATH_REMOVE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir");
@@ -822,7 +847,8 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
         TEST_STORAGE_EXISTS(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile", .remove = true);
@@ -833,7 +859,8 @@ testRun(void)
         THROW_ON_SYS_ERROR(symlink("../bogus-link", TEST_PATH "/pg/link-to-link") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, true, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link': [2] No such file or directory");
 
@@ -849,7 +876,8 @@ testRun(void)
             symlink(TEST_PATH "/linktest", TEST_PATH "/pg/linktolink") == -1, FileOpenError, "unable to create symlink");
 
         TEST_ERROR(
-            manifestNewBuild(storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), false, false, false, NULL, NULL),
+            manifestNewBuild(
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
             LinkDestinationError, "link '" TEST_PATH "/pg/linktolink' cannot reference another link '" TEST_PATH "/linktest'");
 
         #undef TEST_MANIFEST_HEADER
@@ -1310,6 +1338,83 @@ testRun(void)
                 TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
+        manifestPrior->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
+        manifest->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("block incr delta");
+
+        lstClear(manifest->pub.fileList);
+        lstClear(manifestPrior->pub.fileList);
+
+        // Prior file was not block incr but current file is
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add"), .copy = true, .size = 6, .sizeRepo = 6,
+               .blockIncrSize = 8192, .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
+
+        // Prior file was block incr but current file is not
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub"), .copy = true, .size = 6, .sizeRepo = 6,
+               .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub"), .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
+               .blockIncrMapSize = 66, .timestamp = 1482182860,
+               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
+
+        // Prior file has different block incr size
+        manifestFileAdd(
+            manifest,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size"), .copy = true, .size = 6, .sizeRepo = 6,
+               .blockIncrSize = 16384, .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        manifestFileAdd(
+            manifestPrior,
+            &(ManifestFile){
+               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size"), .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
+               .blockIncrMapSize = 31, .timestamp = 1482182860,
+               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
+
+        TEST_RESULT_VOID(
+            manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
+
+        contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+        TEST_RESULT_STR(
+            strNewBuf(contentSave),
+            strNewBuf(harnessInfoChecksumZ(
+                TEST_MANIFEST_HEADER_PRE
+                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                TEST_MANIFEST_HEADER_MID
+                "option-delta=true\n"
+                "option-hardlink=false\n"
+                "option-online=true\n"
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/block-incr-add={\"bis\":1,\"size\":6,\"timestamp\":1482182861}\n"
+                "pg_data/block-incr-keep-size={\"bims\":31,\"bis\":1,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
+                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
+                "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
+                TEST_MANIFEST_FILE_DEFAULT
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                TEST_MANIFEST_PATH_DEFAULT)),
+            "check manifest");
+
         #undef TEST_MANIFEST_HEADER_PRE
         #undef TEST_MANIFEST_HEADER_MID
         #undef TEST_MANIFEST_HEADER_POST
@@ -1409,6 +1514,7 @@ testRun(void)
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
             "backup-archive-stop=\"000000030000028500000089\"\n"                                                                   \
+            "backup-block-incr=true\n"                                                                                             \
             "backup-bundle=true\n"                                                                                                 \
             "backup-label=\"20190818-084502F_20190820-084502D\"\n"                                                                 \
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
@@ -1416,7 +1522,7 @@ testRun(void)
             "backup-prior=\"20190818-084502F\"\n"                                                                                  \
             "backup-reference=\"20190818-084502F_20190819-084506D,20190818-084502F,20190818-084502F_20190820-084502D\"\n"          \
             "backup-timestamp-copy-start=1565282141\n"                                                                             \
-            "backup-timestamp-start=1565282140\n"                                                                                  \
+            "backup-timestamp-start=777\n"                                                                                         \
             "backup-timestamp-stop=1565282142\n"                                                                                   \
             "backup-type=\"full\"\n"                                                                                               \
             "\n"                                                                                                                   \
@@ -1482,8 +1588,8 @@ testRun(void)
                 ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                      \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
-            "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
-                ",\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"                                   \
+            "pg_data/base/32768/33000.32767={\"bims\":96,\"bis\":3,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\","     \
+                "\"checksum-page\":true,\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"             \
             "pg_data/postgresql.conf={\"size\":4457,\"timestamp\":1565282114}\n"                                                   \
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
@@ -1528,6 +1634,7 @@ testRun(void)
                 "[backup]\n"
                 "backup-archive-start=\"000000040000028500000089\"\n"
                 "backup-archive-stop=\"000000040000028500000089\"\n"
+                "backup-block-incr=true\n"
                 "backup-bundle=true\n"
                 "backup-label=\"20190818-084502F_20190820-084502D\"\n"
                 "backup-lsn-start=\"300/89000028\"\n"
@@ -1617,7 +1724,7 @@ testRun(void)
         TEST_TITLE("manifest complete");
 
         TEST_RESULT_VOID(
-            manifestBuildComplete(manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, NULL),
+            manifestBuildComplete(manifest, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, NULL),
             "manifest complete without db");
 
         // Create empty annotations
@@ -1627,7 +1734,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             manifestBuildComplete(
-                manifest, 0, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, annotationKV),
+                manifest, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, false, false, 0, 0, 0, false, 0, false, annotationKV),
             "manifest complete without db and empty annotations");
 
         // Create db list
@@ -1659,9 +1766,9 @@ testRun(void)
 
         TEST_RESULT_VOID(
             manifestBuildComplete(
-                manifest, 1565282140, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142,
-                STRDEF("285/89001F88"), STRDEF("000000030000028500000089"), 1, 1000000000000000094, pckWriteResult(dbList),
-                true, true, 16384, 3, 6, true, 32, false, annotationKV),
+                manifest, STRDEF("285/89000028"), STRDEF("000000030000028500000089"), 1565282142, STRDEF("285/89001F88"),
+                STRDEF("000000030000028500000089"), 1, 1000000000000000094, pckWriteResult(dbList), true, true, 16384, 3, 6, true,
+                32, false, annotationKV),
             "manifest complete with db");
 
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data")), NULL, "check pg_data path");

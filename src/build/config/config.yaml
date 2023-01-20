@@ -1818,6 +1818,22 @@ option:
     default: 2MiB
     allow-range: [8KiB, 1PiB]
 
+  repo-block:
+    section: global
+    group: repo
+    type: boolean
+    internal: true
+    default: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-bundle
+      default: false
+      list:
+        - true
+
   repo-cipher-pass:
     section: global
     type: string

@@ -27,6 +27,9 @@ STRING_EXTERN(BACKUP_MANIFEST_FILE_STR,                             BACKUP_MANIF
 STRING_EXTERN(MANIFEST_TARGET_PGDATA_STR,                           MANIFEST_TARGET_PGDATA);
 STRING_EXTERN(MANIFEST_TARGET_PGTBLSPC_STR,                         MANIFEST_TARGET_PGTBLSPC);
 
+// All block incremental sizes must be divisible by this factor
+#define BLOCK_INCR_SIZE_FACTOR                                      8192
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -98,6 +101,7 @@ typedef enum
     manifestFilePackFlagChecksumRepo,
     manifestFilePackFlagReference,
     manifestFilePackFlagBundle,
+    manifestFilePackFlagBlockIncr,
     manifestFilePackFlagCopy,
     manifestFilePackFlagDelta,
     manifestFilePackFlagResume,
@@ -158,6 +162,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     if (file->bundleId != 0)
         flag |= 1 << manifestFilePackFlagBundle;
+
+    if (file->blockIncrSize != 0)
+        flag |= 1 << manifestFilePackFlagBlockIncr;
 
     if (file->mode != manifest->fileModeDefault)
         flag |= 1 << manifestFilePackFlagMode;
@@ -225,6 +232,15 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     {
         cvtUInt64ToVarInt128(file->bundleId, buffer, &bufferPos, sizeof(buffer));
         cvtUInt64ToVarInt128(file->bundleOffset, buffer, &bufferPos, sizeof(buffer));
+    }
+
+    // Block incremental
+    if (flag & (1 << manifestFilePackFlagBlockIncr))
+    {
+        ASSERT(file->blockIncrSize % BLOCK_INCR_SIZE_FACTOR == 0);
+
+        cvtUInt64ToVarInt128(file->blockIncrSize / BLOCK_INCR_SIZE_FACTOR, buffer, &bufferPos, sizeof(buffer));
+        cvtUInt64ToVarInt128(file->blockIncrMapSize, buffer, &bufferPos, sizeof(buffer));
     }
 
     // Allocate memory for the file pack
@@ -340,6 +356,13 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     {
         result.bundleId = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
         result.bundleOffset = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+    }
+
+    // Block incremental
+    if (flag & (1 << manifestFilePackFlagBlockIncr))
+    {
+        result.blockIncrSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX) * BLOCK_INCR_SIZE_FACTOR;
+        result.blockIncrMapSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     }
 
     // Checksum page error
@@ -726,6 +749,80 @@ manifestLinkCheck(const Manifest *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Calculate block incremental size for a file. The block size is based on the size and age of the file. Larger files get larger block
+sizes to reduce the cost of the map and individual block compression. Older files also get larger block sizes under the assumption
+that they are unlikely to be modified if they have not been modified in a while. Very old and very small files skip block
+incremental entirely.
+
+The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
+***********************************************************************************************************************************/
+// File size to block size map
+static struct ManifestBuildBlockIncrSizeMap
+{
+    uint32_t fileSize;
+    uint32_t blockSize;
+} manifestBuildBlockIncrSizeMap[] =
+{
+    {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
+    {.fileSize =  256 * 1024 * 1024, .blockSize =  768 * 1024},
+    {.fileSize =   64 * 1024 * 1024, .blockSize =  512 * 1024},
+    {.fileSize =   16 * 1024 * 1024, .blockSize =  384 * 1024},
+    {.fileSize =    4 * 1024 * 1024, .blockSize =  256 * 1024},
+    {.fileSize =    2 * 1024 * 1024, .blockSize =  192 * 1024},
+    {.fileSize =         128 * 1024, .blockSize =  128 * 1024},
+};
+
+// File age to block multiplier map
+static struct ManifestBuildBlockIncrTimeMap
+{
+    uint32_t fileAge;
+    uint32_t blockMultiplier;
+} manifestBuildBlockIncrTimeMap[] =
+{
+    {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
+    {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
+    {.fileAge =     7 * 86400, .blockMultiplier = 2},
+};
+
+static uint64_t
+manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TIME, timeStart);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    uint64_t result = 0;
+
+    // Search size map for the appropriate block size
+    for (unsigned int sizeIdx = 0; sizeIdx < LENGTH_OF(manifestBuildBlockIncrSizeMap); sizeIdx++)
+    {
+        if (file->size >= manifestBuildBlockIncrSizeMap[sizeIdx].fileSize)
+        {
+            result = manifestBuildBlockIncrSizeMap[sizeIdx].blockSize;
+            break;
+        }
+    }
+
+    // If block size > 0 then search age map for a multiplier
+    if (result != 0)
+    {
+        const time_t fileAge = timeStart - file->timestamp;
+
+        for (unsigned int timeIdx = 0; timeIdx < LENGTH_OF(manifestBuildBlockIncrTimeMap); timeIdx++)
+        {
+            if (fileAge >= (time_t)manifestBuildBlockIncrTimeMap[timeIdx].fileAge)
+            {
+                result *= manifestBuildBlockIncrTimeMap[timeIdx].blockMultiplier;
+                break;
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN(UINT64, result);
+}
+
 /**********************************************************************************************************************************/
 typedef struct ManifestBuildData
 {
@@ -962,6 +1059,10 @@ manifestBuildInfo(
                 file.checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF);
             }
 
+            // Get block incremental size
+            if (info->size != 0 && buildData->manifest->pub.data.blockIncr)
+                file.blockIncrSize = manifestBuildBlockIncrSize(buildData->manifest->pub.data.backupTimestampStart, &file);
+
             // Determine if this file should be page checksummed
             if (dbPath && buildData->checksumPage)
             {
@@ -1158,16 +1259,19 @@ manifestBuildInfo(
 
 FN_EXTERN Manifest *
 manifestNewBuild(
-    const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const bool online,
-    const bool checksumPage, const bool bundle, const StringList *const excludeList, const Pack *const tablespaceList)
+    const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const time_t timestampStart,
+    const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const StringList *const excludeList,
+    const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
+        FUNCTION_LOG_PARAM(TIME, timestampStart);
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(BOOL, bundle);
+        FUNCTION_LOG_PARAM(BOOL, blockIncr);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(PACK, tablespaceList);
     FUNCTION_LOG_END();
@@ -1184,10 +1288,12 @@ manifestNewBuild(
         this->pub.data.backrestVersion = strNewZ(PROJECT_VERSION);
         this->pub.data.pgVersion = pgVersion;
         this->pub.data.pgCatalogVersion = pgCatalogVersion;
+        this->pub.data.backupTimestampStart = timestampStart;
         this->pub.data.backupType = backupTypeFull;
         this->pub.data.backupOptionOnline = online;
         this->pub.data.backupOptionChecksumPage = varNewBool(checksumPage);
         this->pub.data.bundle = bundle;
+        this->pub.data.blockIncr = blockIncr;
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1542,7 +1648,9 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                if (file.copy && file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))
+                if (file.copy &&
+                    ((filePrior.blockIncrMapSize > 0 && file.blockIncrSize > 0) ||
+                     (file.size == filePrior.size && (delta || file.size == 0 || file.timestamp == filePrior.timestamp))))
                 {
                     file.sizeRepo = filePrior.sizeRepo;
                     file.checksumSha1 = filePrior.checksumSha1;
@@ -1553,6 +1661,15 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     file.checksumPageErrorList = filePrior.checksumPageErrorList;
                     file.bundleId = filePrior.bundleId;
                     file.bundleOffset = filePrior.bundleOffset;
+
+                    // Copy block incr info if the file has a block incr size. It is possible for a file to shrink below the limit
+                    // for block incr and lose the block incr map or block incr could be disabled. The block incr size needs to be
+                    // copied from the prior file because it cannot change within a backup set without invalidating all prior maps.
+                    if (file.blockIncrSize > 0)
+                    {
+                        file.blockIncrSize = filePrior.blockIncrSize;
+                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
+                    }
 
                     // Perform delta if the file size is not zero
                     file.delta = delta && file.size != 0;
@@ -1573,15 +1690,14 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
 /**********************************************************************************************************************************/
 FN_EXTERN void
 manifestBuildComplete(
-    Manifest *const this, const time_t timestampStart, const String *const lsnStart, const String *const archiveStart,
-    const time_t timestampStop, const String *const lsnStop, const String *const archiveStop, const unsigned int pgId,
-    const uint64_t pgSystemId, const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy,
-    const size_t optionBufferSize, const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork,
-    const bool optionHardLink, const unsigned int optionProcessMax, const bool optionStandby, const KeyValue *const annotation)
+    Manifest *const this, const String *const lsnStart, const String *const archiveStart, const time_t timestampStop,
+    const String *const lsnStop, const String *const archiveStop, const unsigned int pgId, const uint64_t pgSystemId,
+    const Pack *const dbList, const bool optionArchiveCheck, const bool optionArchiveCopy, const size_t optionBufferSize,
+    const unsigned int optionCompressLevel, const unsigned int optionCompressLevelNetwork, const bool optionHardLink,
+    const unsigned int optionProcessMax, const bool optionStandby, const KeyValue *const annotation)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(TIME, timestampStart);
         FUNCTION_LOG_PARAM(STRING, lsnStart);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
         FUNCTION_LOG_PARAM(TIME, timestampStop);
@@ -1604,7 +1720,6 @@ manifestBuildComplete(
     MEM_CONTEXT_BEGIN(this->pub.memContext)
     {
         // Save info
-        this->pub.data.backupTimestampStart = timestampStart;
         this->pub.data.lsnStart = strDup(lsnStart);
         this->pub.data.archiveStart = strDup(archiveStart);
         this->pub.data.backupTimestampStop = timestampStop;
@@ -1695,6 +1810,7 @@ manifestBuildComplete(
 #define MANIFEST_KEY_ANNOTATION                                     "annotation"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
+#define MANIFEST_KEY_BACKUP_BLOCK_INCR                              "backup-block-incr"
 #define MANIFEST_KEY_BACKUP_BUNDLE                                  "backup-bundle"
 #define MANIFEST_KEY_BACKUP_LABEL                                   "backup-label"
 #define MANIFEST_KEY_BACKUP_LSN_START                               "backup-lsn-start"
@@ -1705,6 +1821,8 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_START                         "backup-timestamp-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
 #define MANIFEST_KEY_BACKUP_TYPE                                    "backup-type"
+#define MANIFEST_KEY_BLOCK_INCR_SIZE                                STRID5("bis", 0x4d220)
+#define MANIFEST_KEY_BLOCK_INCR_MAP_SIZE                            STRID5("bims", 0x9b5220)
 #define MANIFEST_KEY_BUNDLE_ID                                      STRID5("bni", 0x25c20)
 #define MANIFEST_KEY_BUNDLE_OFFSET                                  STRID5("bno", 0x3dc20)
 #define MANIFEST_KEY_CHECKSUM                                       STRID5("checksum", 0x6d66b195030)
@@ -1838,6 +1956,13 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
+
+        // Block incremental info
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP_SIZE))
+            file.blockIncrMapSize = jsonReadUInt64(json);
+
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_SIZE))
+            file.blockIncrSize = jsonReadUInt64(json) * BLOCK_INCR_SIZE_FACTOR;
 
         // Bundle info
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_ID))
@@ -2099,6 +2224,8 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
                 manifest->pub.data.archiveStart = varStr(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_ARCHIVE_STOP))
                 manifest->pub.data.archiveStop = varStr(jsonToVar(value));
+            else if (strEqZ(key, MANIFEST_KEY_BACKUP_BLOCK_INCR))
+                manifest->pub.data.blockIncr = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
                 manifest->pub.data.bundle = varBool(jsonToVar(value));
             else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
@@ -2339,6 +2466,13 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                 jsonFromVar(VARSTR(manifest->pub.data.archiveStop)));
         }
 
+        if (manifest->pub.data.blockIncr)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BLOCK_INCR,
+                jsonFromVar(VARBOOL(manifest->pub.data.blockIncr)));
+        }
+
         if (manifest->pub.data.bundle)
         {
             infoSaveValue(
@@ -2556,6 +2690,16 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             {
                 const ManifestFile file = manifestFile(manifest, fileIdx);
                 JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+
+                // Block incremental info
+                if (file.blockIncrMapSize != 0)
+                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP_SIZE), file.blockIncrMapSize);
+
+                if (file.blockIncrSize != 0)
+                {
+                    jsonWriteUInt64(
+                        jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_SIZE), file.blockIncrSize / BLOCK_INCR_SIZE_FACTOR);
+                }
 
                 // Bundle info
                 if (file.bundleId != 0)

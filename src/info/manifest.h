@@ -54,6 +54,7 @@ typedef struct ManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
+    bool blockIncr;                                                 // Does the backup perform block incremental?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -113,6 +114,8 @@ typedef struct ManifestFile
     const String *reference;                                        // Reference to a prior backup
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
+    uint64_t blockIncrSize;                                         // Size of incremental blocks
+    uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
@@ -164,8 +167,8 @@ Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
 FN_EXTERN Manifest *manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
-    const StringList *excludeList, const Pack *tablespaceList);
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, time_t timestampStart, bool online,
+    bool checksumPage, bool bundle, bool blockIncr, const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
 FN_EXTERN Manifest *manifestNewLoad(IoRead *read);
@@ -227,11 +230,10 @@ FN_EXTERN void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupTy
 
 // Set remaining values before the final save
 FN_EXTERN void manifestBuildComplete(
-    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby,
-    const KeyValue *annotation);
+    Manifest *this, const String *lsnStart, const String *archiveStart, time_t timestampStop, const String *lsnStop,
+    const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList, bool optionArchiveCheck,
+    bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
+    bool optionHardLink, unsigned int optionProcessMax, bool optionStandby, const KeyValue *annotation);
 
 /***********************************************************************************************************************************
 Functions
