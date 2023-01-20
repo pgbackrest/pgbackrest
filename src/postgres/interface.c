@@ -521,9 +521,9 @@ pgXactPath(unsigned int pgVersion)
 FN_EXTERN unsigned int
 pgVersionFromStr(const String *const version)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, version);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, version);
+    FUNCTION_TEST_END();
 
     ASSERT(version != NULL);
 
@@ -535,24 +535,24 @@ pgVersionFromStr(const String *const version)
     const int idxStart = strChr(version, '.');
 
     if (idxStart == -1)
-        FUNCTION_LOG_RETURN(UINT, cvtZToUInt(strZ(version)) * 10000);
+        FUNCTION_TEST_RETURN(UINT, cvtZToUInt(strZ(version)) * 10000);
 
     // Major and minor version are needed
-    FUNCTION_LOG_RETURN(
+    FUNCTION_TEST_RETURN(
         UINT, cvtZSubNToUInt(strZ(version), 0, (size_t)idxStart) * 10000 + cvtZToUInt(strZ(version) + (size_t)idxStart + 1) * 100);
 }
 
 FN_EXTERN String *
 pgVersionToStr(unsigned int version)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(UINT, version);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, version);
+    FUNCTION_TEST_END();
 
-    String *result = version >= PG_VERSION_10 ?
-        strNewFmt("%u", version / 10000) : strNewFmt("%u.%u", version / 10000, version % 10000 / 100);
-
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(
+        STRING,
+        version >= PG_VERSION_10 ?
+            strNewFmt("%u", version / 10000) : strNewFmt("%u.%u", version / 10000, version % 10000 / 100));
 }
 
 /**********************************************************************************************************************************/

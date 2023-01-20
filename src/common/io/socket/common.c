@@ -156,7 +156,7 @@ sckOptionSet(int fd)
         }
 #endif
 
-    // Set TCP_KEEPINTVL when available
+        // Set TCP_KEEPINTVL when available
 #ifdef TCP_KEEPIDLE
         if (socketLocal.tcpKeepAliveInterval > 0)
         {

@@ -315,11 +315,11 @@ tlsServerNew(
             // Let server set cipher order
             SSL_OP_CIPHER_SERVER_PREFERENCE |
 #ifdef SSL_OP_NO_RENEGOTIATION
-	        // Disable renegotiation, available since 1.1.0h. This affects only TLSv1.2 and older protocol versions as TLSv1.3 has
+            // Disable renegotiation, available since 1.1.0h. This affects only TLSv1.2 and older protocol versions as TLSv1.3 has
             // no support for renegotiation.
 	        SSL_OP_NO_RENEGOTIATION |
 #endif
-        	// Disable session tickets
+            // Disable session tickets
 	        SSL_OP_NO_TICKET);
 
         // Disable session caching

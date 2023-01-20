@@ -12,6 +12,7 @@ Command and Option Parse
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/ini.h"
+#include "common/io/bufferRead.h"
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/memContext.h"
@@ -1228,13 +1229,10 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 
     if (configPart != NULL)
     {
-        String *configPartStr = strNewBuf(configPart);
-
         // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
-        if (strSize(configPartStr) > 0)
+        if (bufUsed(configPart) > 0)
         {
-            Ini *configPartIni = iniNew();
-            iniParse(configPartIni, configPartStr);
+            iniValid(iniNewP(ioBufferReadNew(configPart)));
 
             // Create the result config file
             if (*config == NULL)
@@ -1246,7 +1244,7 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
                 strCat(*config, LF_STR);
 
             // Add the config part to the result config file
-            strCat(*config, configPartStr);
+            strCat(*config, strNewBuf(configPart));
         }
     }
 
@@ -1347,12 +1345,9 @@ cfgFileLoad(                                                        // NOTE: Pas
     // Load *.conf files from the include directory
     if (loadConfigInclude)
     {
-        if (result != NULL)
-    {
         // Validate the file by parsing it as an Ini object. If the file is not properly formed, an error will occur.
-            Ini *ini = iniNew();
-            iniParse(ini, result);
-        }
+        if (result != NULL)
+            iniValid(iniNewP(ioBufferReadNew(BUFSTR(result))));
 
         const String *configIncludePath = NULL;
 
@@ -1761,8 +1756,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
             if (configString != NULL)
             {
-                Ini *ini = iniNew();
-                iniParse(ini, configString);
+                const Ini *const ini = iniNewP(ioBufferReadNew(BUFSTR(configString)), .store = true);
+
                 // Get the stanza name
                 String *stanza = NULL;
 
