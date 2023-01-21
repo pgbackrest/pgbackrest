@@ -680,6 +680,10 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest
         total: 6
+        harness:
+          name: manifest
+          shim:
+            info/manifest: ~
 
         coverage:
           - info/manifest

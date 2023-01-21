@@ -10,6 +10,8 @@ nothing is missing or corrupt.  It is also useful for reporting, e.g. size of ba
 #ifndef INFO_MANIFEST_H
 #define INFO_MANIFEST_H
 
+#include "common/type/string.h"
+
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/

@@ -9,6 +9,7 @@ Test Backup Manifest Handler
 #include "storage/posix/storage.h"
 
 #include "common/harnessInfo.h"
+#include "common/harnessManifest.h"
 #include "common/harnessPostgres.h"
 
 /***********************************************************************************************************************************
@@ -920,9 +921,7 @@ testRun(void)
 
         manifest->pub.data.backupOptionOnline = false;
 
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){.name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .timestamp = 1482182860});
+        HRN_MANIFEST_FILE_ADD(manifest, .name = MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860);
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182860, false), "validate manifest");
         TEST_RESULT_INT(manifest->pub.data.backupTimestampCopyStart, 1482182860, "check copy start");
@@ -999,30 +998,23 @@ testRun(void)
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_96);
             manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
 
-            manifestTargetAdd(manifest, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
-            manifestPathAdd(
+            HRN_MANIFEST_TARGET_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .path = "/pg");
+            HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .group = "test", .user = "test");
+            HRN_MANIFEST_FILE_ADD(
+                manifest, .name = MANIFEST_TARGET_PGDATA "/BOGUS", .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+                .group = "test", .user = "test");
+            HRN_MANIFEST_FILE_ADD(
                 manifest,
-                &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR, .mode = 0700, .group = STRDEF("test"), .user = STRDEF("test")});
-            manifestFileAdd(
+                .name = MANIFEST_TARGET_PGDATA "/FILE3", .copy = true, .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .group = "test", .user = "test");
+            HRN_MANIFEST_FILE_ADD(
                 manifest,
-                &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/BOGUS"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
-                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-            manifestFileAdd(
+                .name = MANIFEST_TARGET_PGDATA "/FILE4", .copy = true, .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
+                .group = "test", .user = "test");
+            HRN_MANIFEST_FILE_ADD(
                 manifest,
-                &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .copy = true, .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-            manifestFileAdd(
-                manifest,
-                &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .copy = true, .size = 55, .sizeRepo = 55, .timestamp = 1482182861,
-                .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-            manifestFileAdd(
-                manifest,
-                &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .copy = true, .size = 4, .sizeRepo = 4,
-                .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+                .name = MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION, .copy = true, .size = 4, .sizeRepo = 4,
+                .timestamp = 1482182860, .group = "test", .user = "test");
         }
         OBJ_NEW_END();
 
@@ -1034,21 +1026,15 @@ testRun(void)
             manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");
             strLstAdd(manifestPrior->pub.referenceList, manifestPrior->pub.data.backupLabel);
 
-            manifestFileAdd(
-                manifestPrior,
-                &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE3"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-                .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("da39a3ee5e6b4b0d3255bfef95601890afd80709")))});
-            manifestFileAdd(
-                manifestPrior,
-                &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE4"), .size = 55, .sizeRepo = 55, .timestamp = 1482182860,
-                .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd")))});
-            manifestFileAdd(
-                manifestPrior,
-                &(ManifestFile){
-                .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-                .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd")))});
+            HRN_MANIFEST_FILE_ADD(
+                manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE3", .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+                .checksumSha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709");
+            HRN_MANIFEST_FILE_ADD(
+                manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE4", .size = 55, .sizeRepo = 55, .timestamp = 1482182860,
+                .checksumSha1 = "ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd");
+            HRN_MANIFEST_FILE_ADD(
+                manifestPrior, .name = MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION, .size = 4, .sizeRepo = 4,
+                .timestamp = 1482182860, .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd");
         }
         OBJ_NEW_END();
 
@@ -1087,49 +1073,30 @@ testRun(void)
         manifest->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
         strLstAddZ(manifestPrior->pub.referenceList, "20190101-010101F_20190202-010101D");
         lstClear(manifest->pub.fileList);
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+            .group = "test", .user = "test");
         // Zero-length file without the copy flag which will appear to come from a bundled backup
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-bundle"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
-               .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE0-bundle", .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+            .group = "test", .user = "test", .checksumSha1 = HASH_TYPE_SHA1_ZERO);
         // Zero-length file with the copy flag which will appear to come from a non-bundled backup (so will get a reference)
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-normal"), .copy = true, .size = 0, .sizeRepo = 0,
-               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
-               .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION), .copy = true, .size = 4, .sizeRepo = 4,
-               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE0-normal", .copy = true, .size = 0, .sizeRepo = 0,
+            .timestamp = 1482182860, .group = "test", .user = "test", .checksumSha1 = HASH_TYPE_SHA1_ZERO);
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION, .copy = true, .size = 4, .sizeRepo = 4,
+            .timestamp = 1482182860, .group = "test", .user = "test");
 
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .reference = STRDEF("20190101-010101F_20190202-010101D"),
-               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd")))});
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-bundle"), .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
-               .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE0-normal"), .size = 0, .sizeRepo = 0,
-               .timestamp = 1482182860, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test"),
-               .checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF)});
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE1", .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+            .reference = "20190101-010101F_20190202-010101D", .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd");
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE0-bundle", .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+            .group = "test", .user = "test", .checksumSha1 = HASH_TYPE_SHA1_ZERO);
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE0-normal", .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
+            .group = "test", .user = "test", .checksumSha1 = HASH_TYPE_SHA1_ZERO);
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
@@ -1168,25 +1135,20 @@ testRun(void)
         manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
         lstClear(manifest->pub.fileList);
 
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
+            .group = "test", .user = "test");
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
         lstClear(manifestPrior->pub.fileList);
 
         VariantList *checksumPageErrorList = varLstNew();
         varLstAdd(checksumPageErrorList, varNewUInt(77));
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .reference = STRDEF("20190101-010101F_20190202-010101D"),
-               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"))),
-               .checksumPage = true, .checksumPageError = true,
-               .checksumPageErrorList = jsonFromVar(varNewVarLst(checksumPageErrorList))});
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+            .reference = "20190101-010101F_20190202-010101D", .checksumSha1 = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd",
+            .checksumPage = true, .checksumPageError = true,
+            .checksumPageErrorList = jsonFromVar(varNewVarLst(checksumPageErrorList)));
 
         TEST_RESULT_VOID(manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, NULL), "incremental manifest");
 
@@ -1224,23 +1186,16 @@ testRun(void)
 
         manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
         lstClear(manifest->pub.fileList);
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
+            .group = "test", .user = "test");
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE2", .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182860,
+            .group = "test", .user = "test");
 
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .reference = STRDEF("20190101-010101F_20190202-010101D"),
-               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE2", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+            .reference = "20190101-010101F_20190202-010101D", .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")),
@@ -1296,18 +1251,14 @@ testRun(void)
 
         manifest->pub.data.backupOptionOnline = BOOL_FALSE_VAR;
         lstClear(manifest->pub.fileList);
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE1"), .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
-               .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 6, .sizeRepo = 6, .timestamp = 1482182861,
+            .group = "test", .user = "test");
 
         manifest->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/FILE2"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE2", .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
@@ -1348,42 +1299,28 @@ testRun(void)
         lstClear(manifestPrior->pub.fileList);
 
         // Prior file was not block incr but current file is
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add"), .copy = true, .size = 6, .sizeRepo = 6,
-               .blockIncrSize = 8192, .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-add"), .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-add", .copy = true, .size = 6, .sizeRepo = 6,
+            .blockIncrSize = 8192, .timestamp = 1482182861, .group = "test", .user = "test");
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-add", .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         // Prior file was block incr but current file is not
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub"), .copy = true, .size = 6, .sizeRepo = 6,
-               .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-sub"), .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-               .blockIncrMapSize = 66, .timestamp = 1482182860,
-               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-sub", .copy = true, .size = 6, .sizeRepo = 6,
+            .timestamp = 1482182861, .group = "test", .user = "test");
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-sub", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
+            .blockIncrMapSize = 66, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         // Prior file has different block incr size
-        manifestFileAdd(
-            manifest,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size"), .copy = true, .size = 6, .sizeRepo = 6,
-               .blockIncrSize = 16384, .timestamp = 1482182861, .mode = 0600, .group = STRDEF("test"), .user = STRDEF("test")});
-        manifestFileAdd(
-            manifestPrior,
-            &(ManifestFile){
-               .name = STRDEF(MANIFEST_TARGET_PGDATA "/block-incr-keep-size"), .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-               .blockIncrMapSize = 31, .timestamp = 1482182860,
-               .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa")))});
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .copy = true, .size = 6, .sizeRepo = 6,
+            .blockIncrSize = 16384, .timestamp = 1482182861, .group = "test", .user = "test");
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
+            .blockIncrMapSize = 31, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
@@ -1797,9 +1734,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to subpath of another link destination (prior ordering)");
 
-        manifestTargetAdd(
-            manifest, &(ManifestTarget){
-               .name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/base-2/")});
+        HRN_MANIFEST_TARGET_ADD(manifest, .name = "pg_data/base/2", .type = manifestTargetTypeLink, .path = "../../base-1/base-2/");
         TEST_ERROR(
             manifestLinkCheck(manifest), LinkDestinationError,
             "link 'base/2' (/pg/base-1/base-2) destination is a subdirectory of link 'base/1' (/pg/base-1)");
@@ -1808,9 +1743,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to subpath of another link destination (subsequent ordering)");
 
-        manifestTargetAdd(
-            manifest, &(ManifestTarget){
-               .name = STRDEF("pg_data/base/pg"), .type = manifestTargetTypeLink, .path = STRDEF("../..")});
+        HRN_MANIFEST_TARGET_ADD(manifest, .name = "pg_data/base/pg", .type = manifestTargetTypeLink, .path = "../..");
         TEST_ERROR(
             manifestLinkCheck(manifest), LinkDestinationError,
             "link 'base/1' (/pg/base-1) destination is a subdirectory of link 'base/pg' (/pg)");
@@ -1819,9 +1752,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to same destination path");
 
-        manifestTargetAdd(
-            manifest,
-            &(ManifestTarget){.name = STRDEF("pg_data/base/2"), .type = manifestTargetTypeLink, .path = STRDEF("../../base-1/")});
+        HRN_MANIFEST_TARGET_ADD(manifest, .name = "pg_data/base/2", .type = manifestTargetTypeLink, .path = "../../base-1/");
         TEST_ERROR(
             manifestLinkCheck(manifest), LinkDestinationError,
             "link 'base/2' (/pg/base-1) destination is the same directory as link 'base/1' (/pg/base-1)");
@@ -1830,11 +1761,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on file link in linked path");
 
-        manifestTargetAdd(
-            manifest,
-            &(ManifestTarget){
-                .name = STRDEF("pg_data/base/1/file"), .type = manifestTargetTypeLink, .path = STRDEF("../../../base-1"),
-                .file = STRDEF("file")});
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_data/base/1/file", .type = manifestTargetTypeLink, .path = "../../../base-1", .file = "file");
         TEST_ERROR(
             manifestLinkCheck(manifest), LinkDestinationError,
             "link 'base/1/file' (/pg/base-1) destination is the same directory as link 'base/1' (/pg/base-1)");
@@ -1843,18 +1771,15 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check that a file link in the parent path of a path link does not conflict");
 
-        manifestTargetAdd(
-            manifest, &(ManifestTarget){
-               .name = STRDEF("pg_data/test.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."), .file = STRDEF("test.sh")});
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_data/test.sh", .type = manifestTargetTypeLink, .path = "..", .file = "test.sh");
         TEST_RESULT_VOID(manifestLinkCheck(manifest), "successful link check");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on two file links with the same name");
 
-        manifestTargetAdd(
-            manifest, &(ManifestTarget){
-               .name = STRDEF("pg_data/test2.sh"), .type = manifestTargetTypeLink, .path = STRDEF(".."),
-               .file = STRDEF("test.sh")});
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_data/test2.sh", .type = manifestTargetTypeLink, .path = "..", .file = "test.sh");
 
         TEST_ERROR(
             manifestLinkCheck(manifest), LinkDestinationError,
