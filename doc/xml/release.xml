@@ -139,6 +139,7 @@
                             <release-item-ideator id="Pluggi"/>
                             <release-item-ideator id="asjonos"/>
                             <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
                         </release-item-contributor-list>
 
                         <p>Add warning about enabling <quote>hierarchical namespace</quote> on Azure storage.</p>
