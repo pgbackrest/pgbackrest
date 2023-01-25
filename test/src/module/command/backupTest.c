@@ -13,6 +13,7 @@ Test Backup Command
 
 #include "common/harnessBackup.h"
 #include "common/harnessConfig.h"
+#include "common/harnessManifest.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
 #include "common/harnessPack.h"
@@ -1978,9 +1979,9 @@ testRun(void)
         }
         OBJ_NEW_END();
 
-        manifestTargetAdd(manifestResume, &(ManifestTarget){.name = MANIFEST_TARGET_PGDATA_STR, .path = STRDEF("/pg")});
-        manifestPathAdd(manifestResume, &(ManifestPath){.name = MANIFEST_TARGET_PGDATA_STR});
-        manifestFileAdd(manifestResume, &(ManifestFile){.name = STRDEF("pg_data/" PG_FILE_PGVERSION)});
+        HRN_MANIFEST_TARGET_ADD(manifestResume, .name = MANIFEST_TARGET_PGDATA, .path = "/pg");
+        HRN_MANIFEST_PATH_ADD(manifestResume, .name = MANIFEST_TARGET_PGDATA);
+        HRN_MANIFEST_FILE_ADD(manifestResume, .name = "pg_data/" PG_FILE_PGVERSION);
 
         manifestSave(
             manifestResume,
@@ -2105,7 +2106,7 @@ testRun(void)
         OBJ_NEW_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
-            manifestFileAdd(manifest, &(ManifestFile){.name = STRDEF("pg_data/test")});
+            HRN_MANIFEST_FILE_ADD(manifest, .name = "pg_data/test");
         }
         OBJ_NEW_END();
 
@@ -2539,30 +2540,25 @@ testRun(void)
             HRN_STORAGE_PUT_Z(storagePgWrite(), "size-mismatch", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/size-mismatch.gz", strZ(resumeLabel)));
-            manifestFileAdd(
-                manifestResume, &(ManifestFile){
-                    .name = STRDEF("pg_data/size-mismatch"),
-                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
-                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
-                    .size = 33});
+            HRN_MANIFEST_FILE_ADD(
+                manifestResume, .name = "pg_data/size-mismatch", .size = 33,
+                .checksumSha1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                .checksumRepoSha1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
             // Time does not match between cluster and resume manifest
             HRN_STORAGE_PUT_Z(storagePgWrite(), "time-mismatch", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch.gz", strZ(resumeLabel)));
-            manifestFileAdd(
-                manifestResume, &(ManifestFile){
-                    .name = STRDEF("pg_data/time-mismatch"),
-                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
-                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
-                    .size = 4, .timestamp = backupTimeStart - 1});
+            HRN_MANIFEST_FILE_ADD(
+                manifestResume, .name = "pg_data/time-mismatch", .size = 4, .timestamp = backupTimeStart - 1,
+                .checksumSha1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                .checksumRepoSha1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
             // Size is zero in cluster and resume manifest. ??? We'd like to remove this requirement after the migration.
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero-size", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/zero-size.gz", strZ(resumeLabel)), "ZERO-SIZE");
-            manifestFileAdd(
-                manifestResume, &(ManifestFile){.name = STRDEF("pg_data/zero-size"), .size = 0, .timestamp = backupTimeStart});
+            HRN_MANIFEST_FILE_ADD(manifestResume, .name = "pg_data/zero-size", .size = 0, .timestamp = backupTimeStart);
 
             // Path is not in manifest
             HRN_STORAGE_PATH_CREATE(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/bogus_path", strZ(resumeLabel)));
@@ -2720,42 +2716,34 @@ testRun(void)
             // Reference in resumed manifest
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "resume-ref", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/resume-ref.gz", strZ(resumeLabel)));
-            manifestFileAdd(
-                manifestResume, &(ManifestFile){.name = STRDEF("pg_data/resume-ref"), .size = 0, .reference = STRDEF("BOGUS")});
+            HRN_MANIFEST_FILE_ADD(manifestResume, .name = "pg_data/resume-ref", .reference = "BOGUS");
 
             // Time does not match between cluster and resume manifest (but resume because time is in future so delta enabled). Note
             // also that the repo file is intentionally corrupt to generate a warning about corruption in the repository.
             HRN_STORAGE_PUT_Z(storagePgWrite(), "time-mismatch2", "TEST", .timeModified = backupTimeStart + 100);
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/time-mismatch2.gz", strZ(resumeLabel)));
-            manifestFileAdd(
-                manifestResume, &(ManifestFile){
-                    .name = STRDEF("pg_data/time-mismatch2"),
-                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
-                    // .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
-                    .size = 4, .timestamp = backupTimeStart});
+            HRN_MANIFEST_FILE_ADD(
+                manifestResume, .name = "pg_data/time-mismatch2", .size = 4, .timestamp = backupTimeStart,
+                .checksumSha1 = "984816fd329622876e14907634264e6f332e9fb3");
 
             // File does not match what is in manifest
             HRN_STORAGE_PUT_Z(storagePgWrite(), "content-mismatch", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/content-mismatch.gz", strZ(resumeLabel)));
-            manifestFileAdd(
-                manifestResume, &(ManifestFile){
-                    .name = STRDEF("pg_data/content-mismatch"),
-                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
-                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
-                    .size = 4, .timestamp = backupTimeStart});
+            HRN_MANIFEST_FILE_ADD(
+                manifestResume, .name = "pg_data/content-mismatch", .size = 4, .timestamp = backupTimeStart,
+                .checksumSha1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                .checksumRepoSha1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
             // Repo size mismatch
             HRN_STORAGE_PUT_Z(storagePgWrite(), "repo-size-mismatch", "TEST", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_EMPTY(
                 storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/repo-size-mismatch.gz", strZ(resumeLabel)));
-            manifestFileAdd(
-                manifestResume, &(ManifestFile){
-                    .name = STRDEF("pg_data/repo-size-mismatch"),
-                    .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("984816fd329622876e14907634264e6f332e9fb3"))),
-                    .checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))),
-                    .size = 4, .sizeRepo = 4, .timestamp = backupTimeStart});
+            HRN_MANIFEST_FILE_ADD(
+                manifestResume, .name = "pg_data/repo-size-mismatch", .size = 4, .sizeRepo = 4, .timestamp = backupTimeStart,
+                .checksumSha1 = "984816fd329622876e14907634264e6f332e9fb3",
+                .checksumRepoSha1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
             // Links are always removed on resume
             THROW_ON_SYS_ERROR(
