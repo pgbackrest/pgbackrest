@@ -834,6 +834,8 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
         int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
         size_t hashSize = 0;
 
+        // Verify that the fingerprint[N] buffer declared below is large enough
+        // when adding a new hashType
         switch (param.hostkeyHashType)
         {
             case hashTypeMd5:
@@ -867,6 +869,9 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
         // Compare fingerprint if provided
         if (param.hostFingerprint != NULL)
         {
+            // 256 bytes is large enough to hold the hex representation of
+            // currently supported hash types. The hex encoded version requires
+            // twice as much space (hashSize * 2) as the raw version.
             char fingerprint[256];
 
             encodeToStr(encodingHex, (unsigned char *)binaryFingerprint, hashSize, fingerprint);
@@ -874,7 +879,8 @@ storageSftpNew(const String *const path, const String *const host, const unsigne
             if (strcmp(fingerprint, strZ(param.hostFingerprint)) != 0)
             {
                 THROW_FMT(
-                    ServiceError, "host [%s] and provided fingerprint [%s] do not match", fingerprint, strZ(param.hostFingerprint));
+                    ServiceError, "host [%s] and configured fingerprint (repo-sftp-host-fingerprint) [%s] do not match",
+                    fingerprint, strZ(param.hostFingerprint));
             }
         }
 
