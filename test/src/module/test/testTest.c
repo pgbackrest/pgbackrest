@@ -260,7 +260,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3,
-                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, false, false, false),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, false, false, false, true),
             "new build");
 
         const Storage *storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/none"));
@@ -379,7 +379,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3,
-                STRDEF("common/error"), 5, 1, logLevelDebug, true, NULL, false, false, false),
+                STRDEF("common/error"), 5, 1, logLevelDebug, true, NULL, false, false, false, true),
             "new build");
 
         fileList = testStorageList(storageUnit);
@@ -568,7 +568,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true),
+                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
             "new build");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/uXX"));
@@ -706,11 +706,15 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true),
+                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
             "new build");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Test performance/type");
+
+        strReplace(
+            mesonBuildRoot, STRDEF("    configuration.set('HAVE_LIBBACKTRACE'"),
+            STRDEF("#    configuration.set('HAVE_LIBBACKTRACE'"));
 
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/test/src/module/performance/typeTest.c",
@@ -731,7 +735,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, true, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, true, false, false),
             "new build");
 
         TEST_RESULT_LOG(
@@ -801,7 +805,6 @@ testRun(void)
                         "            '../../../repo/test/src',\n"
                         "        ),\n"
                         "    dependencies: [\n"
-                        "        lib_backtrace,\n"
                         "        lib_bz2,\n"
                         "        lib_openssl,\n"
                         "        lib_lz4,\n"
@@ -866,7 +869,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false, false),
             "new build");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/uXX"));
@@ -900,7 +903,7 @@ testRun(void)
         TEST_ERROR(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3,
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false, false),
             FileOpenError,
             "build failed for unit performance/type: unable to open file '" TEST_PATH "/repo/meson.build' for read: [13] Permission"
                 " denied");

@@ -21,7 +21,7 @@ Constructors
 TestBuild *testBldNew(
     const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const TestDefModule *module,
     unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone, bool coverage, bool profile,
-    bool optimize);
+    bool optimize, bool backTrace);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -43,6 +43,7 @@ typedef struct TestBuildPub
     bool coverage;                                                  // Generate coverage?
     bool profile;                                                   // Generate profile report?
     bool optimize;                                                  // Optimize code?
+    bool backTrace;                                                 // Run with back trace?
     TestDef tstDef;                                                 // Test definitions
 } TestBuildPub;
 
@@ -150,6 +151,13 @@ FN_INLINE_ALWAYS uint64_t
 testBldScale(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->scale;
+}
+
+// Run with back trace?
+FN_INLINE_ALWAYS bool
+testBldBackTrace(const TestBuild *const this)
+{
+    return THIS_PUB(TestBuild)->backTrace;
 }
 
 /***********************************************************************************************************************************

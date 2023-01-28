@@ -31,7 +31,7 @@ TestBuild *
 testBldNew(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
     const TestDefModule *const module, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
-    const String *const timeZone, const bool coverage, const bool profile, const bool optimize)
+    const String *const timeZone, const bool coverage, const bool profile, const bool optimize, const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -47,6 +47,7 @@ testBldNew(
         FUNCTION_LOG_PARAM(BOOL, coverage);
         FUNCTION_LOG_PARAM(BOOL, profile);
         FUNCTION_LOG_PARAM(BOOL, optimize);
+        FUNCTION_LOG_PARAM(BOOL, backTrace);
     FUNCTION_LOG_END();
 
     ASSERT(pathRepo != NULL);
@@ -79,6 +80,7 @@ testBldNew(
                 .coverage = coverage,
                 .profile = profile,
                 .optimize = optimize,
+                .backTrace = backTrace,
             },
         };
 
@@ -377,6 +379,13 @@ testBldUnit(TestBuild *const this)
         // Comment out subdirs that are not used for testing
         strReplace(mesonBuild, STRDEF("subdir('"), STRDEF("# subdir('"));
 
+        if (!testBldBackTrace(this))
+        {
+            strReplace(
+                mesonBuild, STRDEF("    configuration.set('HAVE_LIBBACKTRACE'"),
+                STRDEF("#    configuration.set('HAVE_LIBBACKTRACE'"));
+        }
+
         // Write build.auto.in
         strCatZ(
             mesonBuild,
@@ -532,8 +541,18 @@ testBldUnit(TestBuild *const this)
             "            '%s/src',\n"
             "            '%s/test/src',\n"
             "        ),\n"
-            "    dependencies: [\n"
-            "        lib_backtrace,\n"
+            "    dependencies: [\n",
+            strZ(pathRepoRel), strZ(pathRepoRel));
+
+        if (testBldBackTrace(this))
+        {
+            strCatZ(
+                mesonBuild,
+                "        lib_backtrace,\n");
+        }
+
+        strCatZ(
+            mesonBuild,
             "        lib_bz2,\n"
             "        lib_openssl,\n"
             "        lib_lz4,\n"
@@ -543,8 +562,7 @@ testBldUnit(TestBuild *const this)
             "        lib_z,\n"
             "        lib_zstd,\n"
             "    ],\n"
-            ")\n",
-            strZ(pathRepoRel), strZ(pathRepoRel));
+            ")\n");
 
         testBldWrite(storageUnit, storageUnitList, "meson.build", BUFSTR(mesonBuild));
 

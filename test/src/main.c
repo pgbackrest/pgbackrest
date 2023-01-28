@@ -76,7 +76,7 @@ main(int argListSize, const char *argList[])
                         cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
                         logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
                         cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
-                        cfgOptionBool(cfgOptOptimize));
+                        cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
 
                     break;
                 }

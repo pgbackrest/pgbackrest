@@ -80,6 +80,7 @@ test.pl [options]
    --min-gen            only run required code generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
    --code-count         generate code counts
+   --no-back-trace      don't run backrace on C unit tests (may be slow with valgrind)
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-coverage-report run coverage but don't generate coverage report (saves time)
@@ -158,6 +159,7 @@ my $bGenCheck = false;
 my $bMinGen = false;
 my $bCodeCount = false;
 my $bProfile = false;
+my $bNoBackTrace = false;
 my $bNoValgrind = false;
 my $bNoOptimize = false;
 my $bNoDebug = false;
@@ -207,6 +209,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'min-gen' => \$bMinGen,
             'code-count' => \$bCodeCount,
             'profile' => \$bProfile,
+            'no-back-trace' => \$bNoBackTrace,
             'no-valgrind' => \$bNoValgrind,
             'no-optimize' => \$bNoOptimize,
             'no-debug', => \$bNoDebug,
@@ -266,6 +269,7 @@ eval
     ################################################################################################################################
     if ($bProfile)
     {
+        $bNoBackTrace = true;
         $bNoValgrind = true;
         $bNoCoverage = true;
     }
@@ -1054,8 +1058,8 @@ eval
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx, $iVmMax,
                         $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, !$bNoLogTimestamp,
-                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize,
-                        $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoBackTrace, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary,
+                        !$bNoOptimize, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
                         $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 

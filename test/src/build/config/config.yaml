@@ -32,6 +32,13 @@ optionGroup:
 option:
   # General options
   #---------------------------------------------------------------------------------------------------------------------------------
+  back-trace:
+    type: boolean
+    default: true
+    negate: true
+    command:
+      test: {}
+
   buffer-size:
     type: size
     internal: true
