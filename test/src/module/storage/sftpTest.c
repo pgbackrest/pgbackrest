@@ -223,8 +223,8 @@ testRun(void)
                 TEST_PATH_STR, STRDEF("localhost"), 22, 1000, 1000, .user = TEST_USER_STR, .keyPriv = KEYPRIV, .keyPub = KEYPUB,
                 .hostkeyHashType = hashTypeSha1, .hostFingerprint = STRDEF("9132333435363738393039383736353433323130")),
             ServiceError,
-            "host [3132333435363738393039383736353433323130] and provided fingerprint [9132333435363738393039383736353433323130] do"
-                " not match");
+            "host [3132333435363738393039383736353433323130] and configured fingerprint (repo-sftp-host-fingerprint)"
+                " [9132333435363738393039383736353433323130] do not match");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("public key from file auth failure, no public key");
