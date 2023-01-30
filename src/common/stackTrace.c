@@ -350,18 +350,31 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 
 #endif
 
-// Helper to build stack trace when backtrace is not available
+FN_EXTERN size_t
+stackTraceToZ(
+    char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName, const unsigned int fileLine)
+{
 #ifdef HAVE_LIBBACKTRACE
-    static size_t
-        stackTraceToZDefault(
-#else
-    FN_EXTERN size_t
-        stackTraceToZ(
+    // Attempt to use backtrace data
+    StackTraceBackData data =
+    {
+        .firstCall = true,
+        .firstLine = true,
+        .stackIdx = stackTraceLocal.stackSize - 1,
+        .result = 0,
+        .buffer = buffer,
+        .bufferSize = bufferSize,
+    };
+
+    if (stackTraceLocal.backTraceState == NULL)
+        stackTraceLocal.backTraceState = backtrace_create_state(NULL, false, NULL, NULL);
+
+    backtrace_full(stackTraceLocal.backTraceState, 2, stackTraceBackCallback, stackTraceBackErrorCallback, &data);
+
+    if (data.result != 0)
+        return data.result;
 #endif // HAVE_LIBBACKTRACE
 
-    char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName,
-    const unsigned int fileLine)
-{
     size_t result = 0;
     const char *param = "test build required for parameters";
     int stackIdx = stackTraceLocal.stackSize - 1;
@@ -402,38 +415,6 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 
     return result;
 }
-
-#ifdef HAVE_LIBBACKTRACE
-
-FN_EXTERN size_t
-stackTraceToZ(
-    char *const buffer, const size_t bufferSize, const char *const fileName, const char *const functionName,
-    const unsigned int fileLine)
-{
-    // Attempt to use backtrace data
-    StackTraceBackData data =
-    {
-        .firstCall = true,
-        .firstLine = true,
-        .stackIdx = stackTraceLocal.stackSize - 1,
-        .result = 0,
-        .buffer = buffer,
-        .bufferSize = bufferSize,
-    };
-
-    if (stackTraceLocal.backTraceState == NULL)
-        stackTraceLocal.backTraceState = backtrace_create_state(NULL, false, NULL, NULL);
-
-    backtrace_full(stackTraceLocal.backTraceState, 2, stackTraceBackCallback, stackTraceBackErrorCallback, &data);
-
-    // If the backtrace was not available generate default stack trace
-    if (data.result == 0)
-        return stackTraceToZDefault(buffer, bufferSize, fileName, functionName, fileLine);
-
-    return data.result;
-}
-
-#endif // HAVE_LIBBACKTRACE
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
