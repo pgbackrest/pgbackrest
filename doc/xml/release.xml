@@ -14,6 +14,9 @@
     </intro>
 
     <release-list>
+        <release date="XXXX-XX-XX" version="2.45dev" title="UNDER DEVELOPMENT">
+        </release>
+
         <release date="2023-01-30" version="2.44" title="Remove PostgreSQL 9.0/9.1/9.2 Support">
             <release-core-list>
                 <release-improvement-list>

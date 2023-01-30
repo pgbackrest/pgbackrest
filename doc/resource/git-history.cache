@@ -1,5 +1,10 @@
 [
     {
+        "commit": "053468bfb156a8ecbd5d0325d35141056c89ec52",
+        "date": "2023-01-30 09:15:44 +0700",
+        "subject": "v2.44: Remove PostgreSQL 9.0/9.1/9.2 Support"
+    },
+    {
         "commit": "a28f3d49c23d7dbd8873d07b7d513b6b7e59345a",
         "date": "2023-01-28 18:55:53 +0700",
         "subject": "Add --no-back-trace option to test.pl.",
