@@ -167,11 +167,35 @@ src/build/aclocal.m4:
   class: build
   type: make
 
+src/build/common/regExp.c:
+  class: build
+  type: c
+
+src/build/common/regExp.h:
+  class: build
+  type: c/h
+
 src/build/common/render.c:
   class: build
   type: c
 
 src/build/common/render.h:
+  class: build
+  type: c/h
+
+src/build/common/string.c:
+  class: build
+  type: c
+
+src/build/common/string.h:
+  class: build
+  type: c/h
+
+src/build/common/xml.c:
+  class: build
+  type: c
+
+src/build/common/xml.h:
   class: build
   type: c/h
 
@@ -355,6 +379,22 @@ src/command/backup/backup.h:
   class: core
   type: c/h
 
+src/command/backup/blockIncr.c:
+  class: core
+  type: c
+
+src/command/backup/blockIncr.h:
+  class: core
+  type: c/h
+
+src/command/backup/blockMap.c:
+  class: core
+  type: c
+
+src/command/backup/blockMap.h:
+  class: core
+  type: c/h
+
 src/command/backup/common.c:
   class: core
   type: c
@@ -532,6 +572,14 @@ src/command/repo/rm.c:
   type: c
 
 src/command/repo/rm.h:
+  class: core
+  type: c/h
+
+src/command/restore/deltaMap.c:
+  class: core
+  type: c
+
+src/command/restore/deltaMap.h:
   class: core
   type: c/h
 
@@ -843,6 +891,14 @@ src/common/io/bufferWrite.h:
   class: core
   type: c/h
 
+src/common/io/chunkedRead.c:
+  class: core
+  type: c
+
+src/common/io/chunkedRead.h:
+  class: core
+  type: c/h
+
 src/common/io/client.c:
   class: core
   type: c
@@ -884,6 +940,14 @@ src/common/io/filter/buffer.c:
   type: c
 
 src/common/io/filter/buffer.h:
+  class: core
+  type: c/h
+
+src/common/io/filter/chunk.c:
+  class: core
+  type: c
+
+src/common/io/filter/chunk.h:
   class: core
   type: c/h
 
@@ -1260,6 +1324,14 @@ src/common/type/stringList.c:
   type: c
 
 src/common/type/stringList.h:
+  class: core
+  type: c/h
+
+src/common/type/stringStatic.c:
+  class: core
+  type: c
+
+src/common/type/stringStatic.h:
   class: core
   type: c/h
 
@@ -2031,6 +2103,14 @@ test/src/command/test/test.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessBackup.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessBackup.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessConfig.c:
   class: test/harness
   type: c
@@ -2068,6 +2148,14 @@ test/src/common/harnessLog.c:
   type: c
 
 test/src/common/harnessLog.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessManifest.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessManifest.h:
   class: test/harness
   type: c/h
 
@@ -2155,11 +2243,27 @@ test/src/common/harnessServer.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessStackTrace.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessStackTrace.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessStorage.c:
   class: test/harness
   type: c
 
 test/src/common/harnessStorage.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessStorageHelper.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessStorageHelper.h:
   class: test/harness
   type: c/h
 
@@ -2508,6 +2612,10 @@ test/src/module/storage/remoteTest.c:
   type: c
 
 test/src/module/storage/s3Test.c:
+  class: test/module
+  type: c
+
+test/src/module/test/testTest.c:
   class: test/module
   type: c
 
