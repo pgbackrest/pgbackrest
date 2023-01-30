@@ -379,14 +379,9 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
-        const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx);
-        unsigned int archiveRetention = cfgOptionIdxTest(
-            cfgOptRepoRetentionArchive, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoIdx) : 0;
-
         // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
         // cfgLoadUpdateOption based on certain rules.
-        if (archiveRetention == 0)
+        if (!cfgOptionIdxTest(cfgOptRepoRetentionArchive, repoIdx))
         {
             String *msg = strNewZ("- archive logs will not be expired");
 
@@ -401,6 +396,10 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
         }
         else
         {
+            // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
+            const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx);
+            unsigned int archiveRetention = cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoIdx);
+
             // Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
             // remaining non-expired backups, from newest to oldest, based on the type.
             StringList *globalBackupRetentionList = NULL;
@@ -609,8 +608,9 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                     };
 
                                     // If this is not the retention backup, then set the stop, otherwise set the expire max to
-                                    // the archive start of the archive to retain
-                                    if (strCmp(backupData->backupLabel, archiveRetentionBackup.backupLabel) != 0)
+                                    // the archive start of the archive to retain, unless archive retention has been set to 0.
+                                    if (strCmp(backupData->backupLabel, archiveRetentionBackup.backupLabel) != 0 ||
+                                        archiveRetention == 0)
                                         archiveRange.stop = strDup(backupData->backupArchiveStop);
                                     else
                                         archiveExpireMax = strDup(archiveRange.start);
@@ -669,9 +669,9 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                     archiveExpire.stop = strDup(walPath);
                                 }
                                 // Else delete individual files instead if the major path is less than or equal to the most recent
-                                // retention backup.  This optimization prevents scanning though major paths that could not possibly
-                                // have anything to expire.
-                                else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
+                                // retention backup. This optimization prevents scanning though major paths that could not possibly
+                                // have anything to expire, unless archive retention has been set to 0.
+                                else if (archiveRetention == 0 || strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
                                 {
                                     // Look for files in the archive directory
                                     StringList *walSubPathList =

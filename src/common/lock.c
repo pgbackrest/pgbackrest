@@ -35,6 +35,7 @@ Constants
 #define LOCK_KEY_EXEC_ID                                            STRID6("execId", 0x12e0c56051)
 #define LOCK_KEY_PERCENT_COMPLETE                                   STRID6("pctCplt", 0x14310a140d01)
 #define LOCK_KEY_PROCESS_ID                                         STRID5("pid", 0x11300)
+#define LOCK_KEY_REPO_IDX                                           STRID6("repoIdx", 0x1812e3d01521)
 
 /***********************************************************************************************************************************
 Lock type names
@@ -43,6 +44,7 @@ static const char *const lockTypeName[] =
 {
     "archive",                                                      // lockTypeArchive
     "backup",                                                       // lockTypeBackup
+    "check",                                                        // lockTypeCheck
 };
 
 /***********************************************************************************************************************************
@@ -122,6 +124,9 @@ lockReadFileData(const String *const lockFile, const int fd)
                     result.percentComplete = varNewUInt(jsonReadUInt(json));
 
                 result.processId = jsonReadInt(jsonReadKeyRequireStrId(json, LOCK_KEY_PROCESS_ID));
+
+                if (jsonReadKeyExpectStrId(json, LOCK_KEY_REPO_IDX))
+                    result.repoIdx = varNewUInt(jsonReadUInt(json));
             }
             MEM_CONTEXT_PRIOR_END();
         }
@@ -236,6 +241,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, lockType);
         FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.repoIdx);
     FUNCTION_LOG_END();
 
     ASSERT(lockType < lockTypeAll);
@@ -254,6 +260,9 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
             jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
 
         jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
+
+        if (param.repoIdx != NULL)
+            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_REPO_IDX), varUInt(param.repoIdx));
 
         jsonWriteObjectEnd(json);
 

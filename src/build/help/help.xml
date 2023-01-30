@@ -813,6 +813,8 @@
                             <p>If this value is not set and <setting>repo-retention-full-type</setting> is <setting>count</setting> (default), then the archive to expire will default to the <setting>repo-retention-full</setting> (or <setting>repo-retention-diff</setting>) value corresponding to the <setting>repo-retention-archive-type</setting> if set to <setting>full</setting> (or <setting>diff</setting>). This will ensure that WAL is only expired for backups that are already expired. If <setting>repo-retention-full-type</setting> is <setting>time</setting>, then this value will default to removing archives that are earlier than the oldest full backup retained after satisfying the <setting>repo-retention-full</setting> setting.</p>
 
                             <p>This option must be set if <setting>repo-retention-archive-type</setting> is set to <setting>incr</setting>. If disk space is at a premium, then this setting, in conjunction with <setting>repo-retention-archive-type</setting>, can be used to aggressively expire WAL segments. However, doing so negates the ability to perform PITR from the backups with expired WAL and is therefore <b>not</b> recommended.</p>
+
+                            <p>If this option is set to 0, the WAL segments will only be pushed while a backup is taken or when the check command is executed. The expire command will also remove all the unnecessary archives. In order to work correctly, this option will need to be set on the repository host and all <postgres/> hosts.</p>
                         </text>
 
                         <example>2</example>

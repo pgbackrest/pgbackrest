@@ -1353,7 +1353,10 @@ backupJobResult(
             if (percentComplete - *currentPercentComplete > 10)
             {
                 *currentPercentComplete = percentComplete;
-                lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(*currentPercentComplete));
+                lockWriteDataP(
+                    lockTypeBackup,
+                    .percentComplete = VARUINT(*currentPercentComplete),
+                    .repoIdx = VARUINT(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1949,7 +1952,9 @@ backupProcess(
 
         // Initialize the percent complete to zero
         unsigned int currentPercentComplete = 0;
-        lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete));
+        lockWriteDataP(
+            lockTypeBackup,
+            .percentComplete = VARUINT(currentPercentComplete), .repoIdx = VARUINT(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
@@ -2284,6 +2289,9 @@ cmdBackup(void)
                 "repo option not specified, defaulting to %s",
                 cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
         }
+
+        // Store the repo idx inside the lock file
+        lockWriteDataP(lockTypeBackup, .repoIdx = VARUINT(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 
         // Load backup.info
         InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
