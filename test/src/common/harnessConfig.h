@@ -60,10 +60,8 @@ variant that works with indexed options and allows the key to be specified, e.g.
 void hrnCfgArgRaw(StringList *argList, ConfigOption optionId, const String *value);
 void hrnCfgArgKeyRaw(StringList *argList, ConfigOption optionId, unsigned optionKey, const String *value);
 
-void hrnCfgArgRawFmt(StringList *argList, ConfigOption optionId, const char *format, ...)
-    __attribute__((format(printf, 3, 4)));
-void hrnCfgArgKeyRawFmt(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *format, ...)
-    __attribute__((format(printf, 4, 5)));
+FN_PRINTF(3, 4) void hrnCfgArgRawFmt(StringList *argList, ConfigOption optionId, const char *format, ...);
+FN_PRINTF(4, 5) void hrnCfgArgKeyRawFmt(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *format, ...);
 
 void hrnCfgArgRawZ(StringList *argList, ConfigOption optionId, const char *value);
 void hrnCfgArgKeyRawZ(StringList *argList, ConfigOption optionId, unsigned optionKey, const char *value);

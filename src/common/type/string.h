@@ -73,7 +73,7 @@ FN_EXTERN String *strNewDbl(double value);
 FN_EXTERN String *strNewEncode(EncodingType type, const Buffer *buffer);
 
 // Create a new fixed length string from a format string with parameters (i.e. sprintf)
-FN_EXTERN String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
+FN_EXTERN FN_PRINTF(1, 2) String *strNewFmt(const char *format, ...);
 
 // Create a new fixed length string from a string
 FN_EXTERN String *strDup(const String *this);
@@ -130,7 +130,7 @@ FN_EXTERN String *strCatChr(String *this, char cat);
 FN_EXTERN String *strCatEncode(String *this, EncodingType type, const Buffer *buffer);
 
 // Append a formatted string
-FN_EXTERN String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FN_EXTERN FN_PRINTF(2, 3) String *strCatFmt(String *this, const char *format, ...);
 
 // Append N characters from a zero-terminated string. Note that the string does not actually need to be zero-terminated as long as
 // N is <= the end of the string being concatenated.

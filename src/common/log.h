@@ -157,8 +157,8 @@ FN_EXTERN void logInternal(
     const char *functionName, int code, const char *message);
 
 // Log function with formatting
-FN_EXTERN void logInternalFmt(
+FN_EXTERN FN_PRINTF(8, 9) void logInternalFmt(
     LogLevel logLevel, LogLevel logRangeMin, LogLevel logRangeMax, unsigned int processId, const char *fileName,
-    const char *functionName, int code, const char *format, ...) __attribute__((format(printf, 8, 9)));
+    const char *functionName, int code, const char *format, ...);
 
 #endif

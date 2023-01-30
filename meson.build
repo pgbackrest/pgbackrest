@@ -194,6 +194,12 @@ configuration.set(
     description: 'Indicate that a function should always be inlined'
 )
 
+# Set FN_PRINTF macro
+configuration.set(
+    'FN_PRINTF(fmt, args)', '__attribute__((format(printf, fmt, args)))',
+    description: 'Indicate that a function is formatted like printf (and provide format and args position)'
+)
+
 ####################################################################################################################################
 # Include subdirs
 ####################################################################################################################################

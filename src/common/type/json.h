@@ -150,7 +150,7 @@ FN_EXTERN JsonWrite *jsonWriteObjectEnd(JsonWrite *this);
 
 // Write string
 FN_EXTERN JsonWrite *jsonWriteStr(JsonWrite *this, const String *value);
-FN_EXTERN JsonWrite *jsonWriteStrFmt(JsonWrite *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FN_EXTERN FN_PRINTF(2, 3) JsonWrite *jsonWriteStrFmt(JsonWrite *this, const char *format, ...);
 FN_EXTERN JsonWrite *jsonWriteStrId(JsonWrite *this, StringId value);
 FN_EXTERN JsonWrite *jsonWriteStrLst(JsonWrite *this, const StringList *value);
 FN_EXTERN JsonWrite *jsonWriteZ(JsonWrite *this, const char *value);
