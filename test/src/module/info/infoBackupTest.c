@@ -109,7 +109,7 @@ testRun(void)
         TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "systemId set");
         TEST_RESULT_UINT(infoPgData.catalogVersion, 201409291, "catalogVersion set");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("object free");
 
         TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
@@ -235,12 +235,12 @@ testRun(void)
             "20161219-212741F\n20161219-212741F_20161219-212803D\n20161219-212741F_20161219-212918I\n",
             "infoBackupDataLabelList with expression");
         TEST_RESULT_STRLST_Z(
-            infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), "20161219-212741F\n", "full=true");
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), "20161219-212741F\n", "full=true");
         TEST_RESULT_STRLST_Z(
-            infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), "20161219-212741F_20161219-212803D\n",
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.differential = true)), "20161219-212741F_20161219-212803D\n",
             "differential=true");
         TEST_RESULT_STRLST_Z(
-            infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), "20161219-212741F_20161219-212918I\n",
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental = true)), "20161219-212741F_20161219-212918I\n",
             "incremental=true");
 
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F_20161219-212918I")), "delete a backup");

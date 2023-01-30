@@ -177,8 +177,9 @@ static MemContextCallbackOne *
 memContextCallbackOne(MemContext *const memContext)
 {
     return
-        (MemContextCallbackOne *)((unsigned char *)(memContext + 1) +
-            memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
+        (MemContextCallbackOne *)
+        ((unsigned char *)(memContext + 1) +
+         memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
 }
 
 /***********************************************************************************************************************************

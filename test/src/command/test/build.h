@@ -89,7 +89,6 @@ testBldVmId(const TestBuild *const this)
     return THIS_PUB(TestBuild)->vmId;
 }
 
-
 // Test Definition
 FN_INLINE_ALWAYS const TestDefModule *
 testBldModule(const TestBuild *const this)

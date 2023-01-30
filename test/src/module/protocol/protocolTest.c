@@ -1,13 +1,13 @@
 /***********************************************************************************************************************************
 Test Protocol
 ***********************************************************************************************************************************/
-#include "common/io/fdRead.h"
-#include "common/io/fdWrite.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/fdRead.h"
+#include "common/io/fdWrite.h"
 #include "common/regExp.h"
-#include "storage/storage.h"
 #include "storage/posix/storage.h"
+#include "storage/storage.h"
 #include "version.h"
 
 #include "common/harnessConfig.h"
@@ -162,7 +162,8 @@ typedef struct TestParallelJobCallback
     bool clientSeen[2];                                             // Make sure the client idx was seen
 } TestParallelJobCallback;
 
-static ProtocolParallelJob *testParallelJobCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+testParallelJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);

@@ -295,7 +295,8 @@ testRun(void)
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_Z(logBuf,
+        TEST_RESULT_Z(
+            logBuf,
             zNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
                     ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
@@ -366,7 +367,8 @@ testRun(void)
         TEST_RESULT_STR(driver->securityToken, securityToken, "check security token");
         TEST_RESULT_VOID(
             FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_Z(logBuf,
+        TEST_RESULT_Z(
+            logBuf,
             zNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
                     ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
@@ -1015,7 +1017,8 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 testResponseP(service, .code = 344);
 
-                TEST_ERROR(storageListP(s3, STRDEF("/")), ProtocolError,
+                TEST_ERROR(
+                    storageListP(s3, STRDEF("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
                     "*** Path/Query ***:\n"
                     "GET /?delimiter=%2F&list-type=2\n"
@@ -1039,7 +1042,8 @@ testRun(void)
                         "<Code>SomeOtherCode</Code>"
                         "</Error>");
 
-                TEST_ERROR(storageListP(s3, STRDEF("/")), ProtocolError,
+                TEST_ERROR(
+                    storageListP(s3, STRDEF("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
                     "*** Path/Query ***:\n"
                     "GET /?delimiter=%2F&list-type=2\n"

@@ -156,7 +156,7 @@ archiveGetFind(
                                 strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
                                 .expression = strNewFmt(
                                     "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(archiveFileRequest, 0, 24)),
-                                        walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""));
+                                    walIsPartial(archiveFileRequest) ? WAL_SEGMENT_PARTIAL_EXT : ""));
                         }
                         // Else multiple files will be requested so cache list results
                         else
@@ -218,9 +218,10 @@ archiveGetFind(
                         }
                     }
                     // Else if not a WAL segment, see if it exists in the archiveId path
-                    else if (storageExistsP(
-                        storageRepoIdx(cacheRepo->repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId),
-                        strZ(archiveFileRequest))))
+                    else if (
+                        storageExistsP(
+                            storageRepoIdx(cacheRepo->repoIdx),
+                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest))))
                     {
                         MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                         {
@@ -264,7 +265,6 @@ archiveGetFind(
                 getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
             }
             MEM_CONTEXT_END();
-
         }
         // Else if a file was found
         else if (!lstEmpty(matchList))

@@ -3,8 +3,8 @@ BZ2 Compress
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdio.h>
 #include <bzlib.h>
+#include <stdio.h>
 
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/compress.h"

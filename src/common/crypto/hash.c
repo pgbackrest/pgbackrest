@@ -5,17 +5,17 @@ Cryptographic Hash
 
 #include <string.h>
 
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
-#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Hashes for zero-length files (i.e., seed value)

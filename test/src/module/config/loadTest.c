@@ -706,7 +706,6 @@ testRun(void)
         TEST_RESULT_INT(umask(0111), 0000, "umask was reset");
         TEST_RESULT_UINT(ioTimeoutMs(), 95500, "check io timeout");
 
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("umask is reset, neutral-umask=n");
 
@@ -732,7 +731,6 @@ testRun(void)
         strLstAddZ(argList, PROJECT_BIN);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "no command");
-
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command only");

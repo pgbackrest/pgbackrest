@@ -84,5 +84,4 @@ blbAdd(Blob *const this, const void *const data, const size_t size)
     MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN_P(VOID, result);
-
 }

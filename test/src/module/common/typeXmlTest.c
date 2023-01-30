@@ -43,7 +43,7 @@ testRun(void)
                     "        <StorageClass>STANDARD-IA</StorageClass>\n"
                     "    </Contents>\n"
                     "</ListBucketResult>")),
-        "valid xml");
+            "valid xml");
 
         XmlNode *rootNode = NULL;
         TEST_ASSIGN(rootNode, xmlDocumentRoot(xmlDocument), "get root node");

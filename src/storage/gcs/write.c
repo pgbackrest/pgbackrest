@@ -256,7 +256,6 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
     }
     while (bytesTotal != bufUsed(buffer));
 
-
     FUNCTION_LOG_RETURN_VOID();
 }
 

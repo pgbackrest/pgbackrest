@@ -14,7 +14,8 @@ Harness for Creating Test Backups
 #include "common/harnessTest.h"
 
 /**********************************************************************************************************************************/
-void hrnCmdBackup(void)
+void
+hrnCmdBackup(void)
 {
     FUNCTION_HARNESS_VOID();
 

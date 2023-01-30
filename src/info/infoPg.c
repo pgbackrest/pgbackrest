@@ -6,8 +6,8 @@ PostgreSQL Info Handler
 #include <limits.h>
 #include <stdarg.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "common/debug.h"
@@ -140,7 +140,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
 
         // System id
         infoPgData.systemId = jsonReadUInt64(
-                jsonReadKeyRequireZ(json, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID : INFO_KEY_DB_SYSTEM_ID));
+            jsonReadKeyRequireZ(json, loadData->infoPg->type == infoPgArchive ? INFO_KEY_DB_ID : INFO_KEY_DB_SYSTEM_ID));
 
         // PostgreSQL version
         infoPgData.version = pgVersionFromStr(jsonReadStr(jsonReadKeyRequireZ(json, INFO_KEY_DB_VERSION)));

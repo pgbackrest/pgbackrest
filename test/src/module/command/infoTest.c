@@ -7,8 +7,8 @@ Test Info Command
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
 #include "common/harnessFork.h"
+#include "common/harnessInfo.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -34,7 +34,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no stanzas have been created");
 
         TEST_RESULT_STR_Z(infoRender(), "[]", "json - repo but no stanzas");
@@ -42,7 +42,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argListText);
         TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text - no stanzas");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo is still empty but stanza option is specified");
 
         StringList *argListStanzaOpt = strLstDup(argList);
@@ -85,7 +85,7 @@ testRun(void)
             "    status: error (missing stanza path)\n",
             "text - empty repo, stanza option specified");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza path exists but is empty");
 
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_ARCHIVE, .comment = "create repo stanza archive path");
@@ -127,7 +127,7 @@ testRun(void)
             "]",
             "json - missing stanza data");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info file exists, but archive.info does not");
 
         // Put backup info to file
@@ -203,7 +203,7 @@ testRun(void)
             "    cipher: none\n",
             "text - other error, single repo");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info files exist with mismatched db-ids and no current backups - lock detected");
 
         // Only the current db information from the db:history will be processed.
@@ -319,7 +319,7 @@ testRun(void)
         }
         HRN_FORK_END();
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - stanza missing on specified repo");
 
         StringList *argList2 = strLstDup(argListTextStanzaOpt);
@@ -333,7 +333,7 @@ testRun(void)
             "    status: error (missing stanza path)\n",
             "text - multi-repo, requested stanza missing on selected repo");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - WAL segment on repo1");
 
         argList2 = strLstDup(argListTextStanzaOpt);
@@ -357,7 +357,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000030000000000000001/000000030000000000000001\n",
             "text - multi-repo, single stanza, one wal segment");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("coverage for stanzaStatus branches && percent complete null");
 
         // Db1 and Db3 (from above) have same system-id and db-version so consider them the same for WAL reporting
@@ -617,7 +617,7 @@ testRun(void)
 
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mixed multi-repo, percent complete non-null");
 
         HRN_INFO_PUT(
@@ -1565,7 +1565,7 @@ testRun(void)
         }
         HRN_FORK_END();
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: stanza exists but requested backup does not");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -1621,7 +1621,7 @@ testRun(void)
             "]",
             "json, multi-repo, backup not found");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: backup set requested on single repo, with 1 checksum error");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -1765,7 +1765,7 @@ testRun(void)
             "]",
             "json - backup set requested");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: filter by backup type");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -1807,7 +1807,7 @@ testRun(void)
             "            error(s) detected during backup\n",
             "text - multi-repo, filter by backup type");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: read encrypted manifest and confirm requested database found without setting --repo");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -1845,134 +1845,134 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
-           infoRender(),
-           "["
-               "{"
-                   "\"archive\":["
-                       "{"
-                           "\"database\":{"
-                               "\"id\":1,"
-                               "\"repo-key\":1"
-                           "},"
-                           "\"id\":\"9.4-1\","
-                           "\"max\":\"000000020000000000000003\","
-                           "\"min\":\"000000010000000000000002\""
-                       "},"
-                       "{"
-                           "\"database\":{"
-                               "\"id\":2,"
-                               "\"repo-key\":1"
-                           "},"
-                           "\"id\":\"9.5-2\","
-                           "\"max\":\"000000010000000000000005\","
-                           "\"min\":\"000000010000000000000002\""
-                       "},"
-                       "{"
-                           "\"database\":{"
-                               "\"id\":1,"
-                               "\"repo-key\":2"
-                           "},"
-                           "\"id\":\"9.5-1\","
-                           "\"max\":\"000000010000000000000004\","
-                           "\"min\":\"000000010000000000000003\""
-                       "}"
-                   "],"
-                   "\"backup\":["
-                       "{"
-                           "\"archive\":{"
-                               "\"start\":\"000000010000000000000004\","
-                               "\"stop\":\"000000010000000000000004\""
-                           "},"
-                           "\"backrest\":{"
-                               "\"format\":5,"
-                               "\"version\":\"2.30\""
-                           "},"
-                           "\"database\":{"
-                               "\"id\":1,"
-                               "\"repo-key\":2"
-                           "},"
-                           "\"database-ref\":["
-                               "{\"name\":\"mail\",\"oid\":16456},"
-                               "{\"name\":\"postgres\",\"oid\":12173}"
-                           "],"
-                           "\"error\":true,"
-                           "\"error-list\":[\"base/16384/17000\"],"
-                           "\"info\":{"
-                               "\"delta\":26897020,"
-                               "\"repository\":{"
-                                   "\"delta\":3100,"
-                                   "\"size\":3159000"
-                               "},"
-                               "\"size\":26897000"
-                           "},"
-                           "\"label\":\"20201116-200000F\","
-                           "\"link\":["
-                               "{\"destination\":\"../pg_config/pg_hba.conf\",\"name\":\"pg_hba.conf\"},"
-                               "{\"destination\":\"../pg_stat\",\"name\":\"pg_stat\"}"
-                           "],"
-                           "\"prior\":null,"
-                           "\"reference\":null,"
-                           "\"tablespace\":["
-                               "{\"destination\":\"/tblspc/ts1\",\"name\":\"ts1\",\"oid\":1},"
-                               "{\"destination\":\"/tblspc/ts12\",\"name\":\"ts12\",\"oid\":12}"
-                           "],"
-                           "\"timestamp\":{"
-                               "\"start\":1605556800,"
-                               "\"stop\":1605556805"
-                           "},"
-                           "\"type\":\"full\""
-                       "}"
-                   "],"
-                   "\"cipher\":\"mixed\","
-                   "\"db\":["
-                       "{"
-                           "\"id\":1,"
-                           "\"repo-key\":1,"
-                           "\"system-id\":6625592122879095702,"
-                           "\"version\":\"9.4\""
-                       "},"
-                       "{"
-                           "\"id\":2,"
-                           "\"repo-key\":1,"
-                           "\"system-id\":6626363367545678089,"
-                           "\"version\":\"9.5\""
-                       "},"
-                       "{"
-                           "\"id\":1,"
-                           "\"repo-key\":2,"
-                           "\"system-id\":6626363367545678089,"
-                           "\"version\":\"9.5\""
-                       "}"
-                   "],"
-                   "\"name\":\"stanza1\","
-                   "\"repo\":["
-                       "{"
-                           "\"cipher\":\"none\","
-                           "\"key\":1,"
-                           "\"status\":{"
-                               "\"code\":0,"
-                               "\"message\":\"ok\""
-                           "}"
-                       "},"
-                       "{"
-                           "\"cipher\":\"aes-256-cbc\","
-                           "\"key\":2,"
-                           "\"status\":{"
-                               "\"code\":0,"
-                               "\"message\":\"ok\""
-                           "}"
-                       "}"
-                   "],"
-                   "\"status\":{"
-                       "\"code\":0,"
-                       "\"lock\":{\"backup\":{\"held\":false}},"
-                       "\"message\":\"ok\""
-                   "}"
-               "}"
-           "]",
-           "json - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
+            infoRender(),
+            "["
+                "{"
+                    "\"archive\":["
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"id\":\"9.4-1\","
+                            "\"max\":\"000000020000000000000003\","
+                            "\"min\":\"000000010000000000000002\""
+                        "},"
+                        "{"
+                            "\"database\":{"
+                                "\"id\":2,"
+                                "\"repo-key\":1"
+                            "},"
+                            "\"id\":\"9.5-2\","
+                            "\"max\":\"000000010000000000000005\","
+                            "\"min\":\"000000010000000000000002\""
+                        "},"
+                        "{"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":2"
+                            "},"
+                            "\"id\":\"9.5-1\","
+                            "\"max\":\"000000010000000000000004\","
+                            "\"min\":\"000000010000000000000003\""
+                        "}"
+                    "],"
+                    "\"backup\":["
+                        "{"
+                            "\"archive\":{"
+                                "\"start\":\"000000010000000000000004\","
+                                "\"stop\":\"000000010000000000000004\""
+                            "},"
+                            "\"backrest\":{"
+                                "\"format\":5,"
+                                "\"version\":\"2.30\""
+                            "},"
+                            "\"database\":{"
+                                "\"id\":1,"
+                                "\"repo-key\":2"
+                            "},"
+                            "\"database-ref\":["
+                                "{\"name\":\"mail\",\"oid\":16456},"
+                                "{\"name\":\"postgres\",\"oid\":12173}"
+                            "],"
+                            "\"error\":true,"
+                            "\"error-list\":[\"base/16384/17000\"],"
+                            "\"info\":{"
+                                "\"delta\":26897020,"
+                                "\"repository\":{"
+                                    "\"delta\":3100,"
+                                    "\"size\":3159000"
+                                "},"
+                                "\"size\":26897000"
+                            "},"
+                            "\"label\":\"20201116-200000F\","
+                            "\"link\":["
+                                "{\"destination\":\"../pg_config/pg_hba.conf\",\"name\":\"pg_hba.conf\"},"
+                                "{\"destination\":\"../pg_stat\",\"name\":\"pg_stat\"}"
+                            "],"
+                            "\"prior\":null,"
+                            "\"reference\":null,"
+                            "\"tablespace\":["
+                                "{\"destination\":\"/tblspc/ts1\",\"name\":\"ts1\",\"oid\":1},"
+                                "{\"destination\":\"/tblspc/ts12\",\"name\":\"ts12\",\"oid\":12}"
+                            "],"
+                            "\"timestamp\":{"
+                                "\"start\":1605556800,"
+                                "\"stop\":1605556805"
+                            "},"
+                            "\"type\":\"full\""
+                        "}"
+                    "],"
+                    "\"cipher\":\"mixed\","
+                    "\"db\":["
+                        "{"
+                            "\"id\":1,"
+                            "\"repo-key\":1,"
+                            "\"system-id\":6625592122879095702,"
+                            "\"version\":\"9.4\""
+                        "},"
+                        "{"
+                            "\"id\":2,"
+                            "\"repo-key\":1,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.5\""
+                        "},"
+                        "{"
+                            "\"id\":1,"
+                            "\"repo-key\":2,"
+                            "\"system-id\":6626363367545678089,"
+                            "\"version\":\"9.5\""
+                        "}"
+                    "],"
+                    "\"name\":\"stanza1\","
+                    "\"repo\":["
+                        "{"
+                            "\"cipher\":\"none\","
+                            "\"key\":1,"
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"cipher\":\"aes-256-cbc\","
+                            "\"key\":2,"
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "],"
+                    "\"status\":{"
+                        "\"code\":0,"
+                        "\"lock\":{\"backup\":{\"held\":false}},"
+                        "\"message\":\"ok\""
+                    "}"
+                "}"
+            "]",
+            "json - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup set requested but no links, multiple checksum errors");
 
         // Remove the environment variable so config system will only count one repo
@@ -2006,7 +2006,7 @@ testRun(void)
         "pg_data/special={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"
 
         HRN_INFO_PUT(
-             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F_20181119-152155I/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET_NO_LINK
             TEST_MANIFEST_DB
@@ -2143,7 +2143,7 @@ testRun(void)
             "]",
             "json - backup set requested, no links");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup set requested but no databases, no checksum error");
 
         // Using the same configuration from previous test
@@ -2308,7 +2308,7 @@ testRun(void)
             "]",
             "json - backup set requested, no db and no checksum error");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup set requested with missing backup lsn stop location");
 
         argList2 = strLstDup(argListTextStanzaOpt);
@@ -2350,7 +2350,7 @@ testRun(void)
             "                source: this is another annotation\n",
             "text - backup set requested, no lsn start/stop location");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: stanza found");
 
         // Reconfigure environment variable for repo2
@@ -2430,7 +2430,7 @@ testRun(void)
             "text - multiple stanzas - selected found, repo1");
 
         // Remove backups from repo2 for stanza1 so multi-repos are scanned but backups are on only 1 repo
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, backups only on one");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -2506,7 +2506,7 @@ testRun(void)
             "text - multi-repo, valid backups only on repo1");
 
         // Remove archives for prior backup so archiveMin prior DB == NULL but backupList > 0 (edge case)
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, prior backup: no archives but backups (code coverage)");
 
         HRN_STORAGE_PATH_REMOVE(
@@ -2562,7 +2562,7 @@ testRun(void)
             "            backup reference list: 20201116-155000F\n",
             "text - multi-repo, prior backup: no archives but backups (code coverage)");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Annotation assert not null value");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -2619,7 +2619,7 @@ testRun(void)
 
         TEST_ERROR(infoRender(), AssertError, "assertion 'value != NULL' failed");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, stanza requested does not exist, but other stanzas do");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -2633,7 +2633,7 @@ testRun(void)
             "multi-repo, stanza requested does not exist, but other stanzas do");
 
         // Add stanza3 to repo1 but with a current PG that is different than repo2
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, current database different across repos");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -2908,7 +2908,7 @@ testRun(void)
             "json - multi-repo, database mismatch, repo2 stanza-upgrade needed");
 
         // Crypto error
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("encryption error");
 
         // Change repo1 to have the same cipher type as repo2 even though on disk it does not
@@ -2983,7 +2983,7 @@ testRun(void)
             "text - multi-repo, multi-stanza cipher error");
 
         // Backup label not found, one repo in error
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup label exists on one repo, other repo in error");
 
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza3");
@@ -3010,7 +3010,7 @@ testRun(void)
             "backup label not found, one repo in error");
 
         // Crypto error
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("WAL read error");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -3040,7 +3040,7 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
     }
 
-    //******************************************************************************************************************************
+    // *****************************************************************************************************************************
     if (testBegin("database mismatch - special cases"))
     {
         // These tests cover branches not covered in other tests
@@ -3166,7 +3166,7 @@ testRun(void)
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
             "text - db mismatch, diff system-id across repos, repo1 considered current db since read first");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo, database mismatch, pg version only");
 
         HRN_INFO_PUT(
@@ -3232,7 +3232,7 @@ testRun(void)
             "text - db mismatch, diff version across repos, repo1 considered current db since read first");
     }
 
-    //******************************************************************************************************************************
+    // *****************************************************************************************************************************
     if (testBegin("cmdInfo()"))
     {
         StringList *argList = strLstNew();
@@ -3242,7 +3242,7 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_ARCHIVE, .comment = "create repo archive path");
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP, .comment = "create repo backup path");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no stanza exist");
 
         // Redirect stdout to a file
@@ -3260,14 +3260,14 @@ testRun(void)
         // Check output of info command stored in file
         TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "No stanzas exist in the repository.\n", .remove = true);
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("set option invalid without stanza option");
 
         hrnCfgArgRawZ(argList, cfgOptSet, "bogus");
 
         TEST_ERROR(hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo-level error");
 
         HRN_STORAGE_PATH_CREATE(storageTest, TEST_PATH "/repo2", .mode = 0200, .comment = "repo directory with bad permissions");

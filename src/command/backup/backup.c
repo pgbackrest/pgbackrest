@@ -9,15 +9,15 @@ Backup Command
 #include <unistd.h>
 
 #include "command/archive/common.h"
-#include "command/control/common.h"
 #include "command/backup/backup.h"
 #include "command/backup/common.h"
 #include "command/backup/file.h"
 #include "command/backup/protocol.h"
 #include "command/check/common.h"
+#include "command/control/common.h"
 #include "command/stanza/common.h"
-#include "common/crypto/cipherBlock.h"
 #include "common/compress/helper.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
 #include "common/lock.h"
@@ -257,8 +257,8 @@ backupInit(const InfoBackup *infoBackup)
     if (cfgOptionBool(cfgOptArchiveCheck))
     {
         result->archiveInfo = infoArchiveLoadFile(
-                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-                cfgOptionStrNull(cfgOptRepoCipherPass));
+            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
+            cfgOptionStrNull(cfgOptRepoCipherPass));
         result->archiveId = infoArchiveId(result->archiveInfo);
     }
 
@@ -343,7 +343,7 @@ backupBuildIncrPrior(const InfoBackup *infoBackup)
 
             for (unsigned int backupIdx = backupTotal - 1; backupIdx < backupTotal; backupIdx--)
             {
-                 InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
+                InfoBackupData backupPrior = infoBackupData(infoBackup, backupIdx);
 
                 // The prior backup for a diff must be full
                 if (type == backupTypeDiff && backupPrior.backupType != backupTypeFull)
@@ -1625,7 +1625,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
                 FileMissingError,
                 PG_FILE_PGCONTROL " must be present in all online backups\n"
                 "HINT: is something wrong with the clock or filesystem timestamps?");
-         }
+        }
 
         // If there are no files to backup then we'll exit with an error.  This could happen if the database is down and backup is
         // called with --no-online twice in a row.
@@ -1671,7 +1671,8 @@ backupJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTotal
 }
 
 // Callback to fetch backup jobs for the parallel executor
-static ProtocolParallelJob *backupJobCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+backupJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -2212,17 +2213,17 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // encryption in order to be efficient. Compression will always be gz for compatibility and since it is always available.
         // -------------------------------------------------------------------------------------------------------------------------
         StorageRead *manifestRead = storageNewReadP(
-                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
+            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
         cipherBlockFilterGroupAdd(
             ioReadFilterGroup(storageReadIo(manifestRead)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
             infoPgCipherPass(infoBackupPg(infoBackup)));
 
         StorageWrite *manifestWrite = storageNewWriteP(
-                storageRepoWrite(),
-                strNewFmt(
-                    STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strZ(strSubN(backupLabel, 0, 4)),
-                    strZ(backupLabel), strZ(compressExtStr(compressTypeGz))));
+            storageRepoWrite(),
+            strNewFmt(
+                STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s/%s.manifest%s", strZ(strSubN(backupLabel, 0, 4)),
+                strZ(backupLabel), strZ(compressExtStr(compressTypeGz))));
 
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilter(compressTypeGz, 9));
 

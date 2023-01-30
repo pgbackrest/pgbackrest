@@ -687,7 +687,6 @@ testRun(void)
             FileOpenError,
             "raised from remote-0 shim protocol: unable to create hardlink '" TEST_PATH "/repo128/latest' to"
                 " '" TEST_PATH "/repo128/20181119-152138F': [1] Operation not permitted");
-
     }
 
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be

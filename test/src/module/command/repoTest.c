@@ -238,7 +238,7 @@ testRun(void)
         // Close the fd to make sure the error gets caught
         close(STDOUT_FILENO);
 
-        // // Not in a test wrapper to avoid writing to stdout
+        // Not in a test wrapper to avoid writing to stdout
         cmdStorageList();
 
         // Restore normal stdout

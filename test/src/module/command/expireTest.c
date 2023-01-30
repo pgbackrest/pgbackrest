@@ -3,8 +3,8 @@ Test Expire Command
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
-#include "common/io/bufferRead.h"
 #include "command/backup/common.h"
+#include "common/io/bufferRead.h"
 #include "storage/posix/storage.h"
 
 #include "common/harnessConfig.h"
@@ -156,7 +156,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("expireBackup()"))
     {
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest file removal");
 
         // Create backup.info
@@ -177,7 +177,8 @@ testRun(void)
 
         // Expire 20181119-152138F - only manifest files removed (extra file remains)
         TEST_RESULT_VOID(expireBackup(infoBackup, STRDEF("20181119-152138F"), 0), "expire backup with both manifest files");
-        TEST_STORAGE_LIST(storageRepo(), STORAGE_REPO_BACKUP "/20181119-152138F", BOGUS_STR "\n",
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP "/20181119-152138F", BOGUS_STR "\n",
             .comment = "file in backup remains - only manifest files removed");
 
         TEST_RESULT_VOID(
@@ -196,7 +197,7 @@ testRun(void)
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full not set - nothing expired");
 
         // Load Parameters
@@ -210,7 +211,7 @@ testRun(void)
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
                 " maximum.");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - full backup no dependencies expired");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
@@ -225,7 +226,7 @@ testRun(void)
             "remaining backups correct");
         TEST_RESULT_LOG("P00   INFO: repo1: expire full backup 20181119-152138F");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - full backup with dependencies expired");
 
         argList = strLstDup(argListBase);
@@ -241,7 +242,7 @@ testRun(void)
             "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D,"
                 " 20181119-152800F_20181119-152155I");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - no backups expired");
 
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 0, "retention-full=1 - not enough backups to expire any");
@@ -257,7 +258,7 @@ testRun(void)
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff not set - nothing expired");
 
         // Load Parameters
@@ -267,7 +268,7 @@ testRun(void)
         TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff not set - nothing expired");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff set - nothing yet to expire");
 
         // Add retention-diff
@@ -278,7 +279,7 @@ testRun(void)
         TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff set - too soon to expire");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 6, "current backups not expired");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff set - diff and dependent incr expired");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "2");
@@ -296,7 +297,7 @@ testRun(void)
         TEST_RESULT_UINT(expireDiffBackup(infoBackup, 0), 0, "retention-diff=2 but no more to expire");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 4, "current backups not reduced");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff set - diff with no dependents expired");
 
         // Create backup.info with two diff - oldest to be expired - no "set:"
@@ -358,7 +359,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("removeExpiredBackup()"))
     {
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove expired backup from disk - backup not in current backup");
 
         // Load Parameters
@@ -419,7 +420,7 @@ testRun(void)
             BOGUS_STR "/\n"
             "backup.info\n");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove expired backup from disk - no current backups");
 
         // Create backup.info without current backups
@@ -461,7 +462,7 @@ testRun(void)
 
         TEST_ERROR(cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check stop file");
 
         argList = strLstDup(argListAvoidWarn);
@@ -475,7 +476,7 @@ testRun(void)
         // Remove the stop file
         HRN_STORAGE_REMOVE(storagePosixNewP(HRN_PATH_STR, .write = true), strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))));
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive not set");
 
         // Load Parameters
@@ -511,7 +512,7 @@ testRun(void)
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true, 0), "archive retention not set - retention-full-type=time");
         TEST_RESULT_LOG("P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - no current backups");
 
         // Set archive retention, archive retention type default but no current backups - code path test
@@ -526,7 +527,7 @@ testRun(void)
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
                 " maximum.");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - no archive on disk");
 
         // Create backup.info with current backups spread over different timelines
@@ -620,7 +621,7 @@ testRun(void)
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true, 0), "no archive on disk");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - remove archives across timelines");
 
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000100000000");
@@ -647,7 +648,7 @@ testRun(void)
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00   INFO: repo1: 10-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000002");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - latest archive not expired");
 
         argList = strLstDup(argListAvoidWarn);
@@ -671,7 +672,7 @@ testRun(void)
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000003, stop = 000000020000000000000001\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set to lowest - keep PITR for each archiveId");
 
         argList = strLstDup(argListAvoidWarn);
@@ -695,7 +696,7 @@ testRun(void)
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive, retention-archive-type=diff, retention-diff set");
 
         argList = strLstDup(argListAvoidWarn);
@@ -727,7 +728,7 @@ testRun(void)
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive, retention-archive-type=incr");
 
         argList = strLstDup(argListAvoidWarn);
@@ -759,7 +760,7 @@ testRun(void)
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000006, stop = 000000020000000000000006\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - dry run");
 
         // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk
@@ -794,7 +795,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire via backup command");
 
         // Copy the repo to another repo
@@ -846,7 +847,7 @@ testRun(void)
             "P00   INFO: repo2: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: repo2: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - no dry run");
 
         // Add to previous list and specify repo
@@ -865,7 +866,7 @@ testRun(void)
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo errors, continue to next repo after error");
 
         argList = strLstDup(argListAvoidWarn);
@@ -925,7 +926,7 @@ testRun(void)
         // Restore saved archive.info file
         HRN_STORAGE_MOVE(storageTest, "repo2/archive/db/" INFO_ARCHIVE_FILE ".save", "repo2/archive/db/" INFO_ARCHIVE_FILE);
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, continue to next repo after error");
 
         TEST_ERROR(
@@ -957,7 +958,7 @@ testRun(void)
             storageTest, TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save",
             TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT);
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, dry run: archive and backups not removed");
 
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) - log expired backups and archive path to remove");
@@ -1023,7 +1024,7 @@ testRun(void)
             "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo2: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, archive and backups removed");
 
         // Rerun previous test without dry-run
@@ -1086,7 +1087,7 @@ testRun(void)
 
         harnessLogLevelReset();
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, adhoc");
 
         // With multi-repo config from previous test, adhoc expire on backup that doesn't exist
@@ -1136,7 +1137,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList);
         TEST_ERROR(cmdExpire(), OptionInvalidValueError, "'" BOGUS_STR "' is not a valid backup label format");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - archive removed");
 
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 1, "9.4-1", "0000000100000000");
@@ -1150,7 +1151,7 @@ testRun(void)
             "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00   INFO: repo1: 10-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE,
             "[backup:current]\n"
@@ -1196,7 +1197,7 @@ testRun(void)
 
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 5, "9.4-1", "0000000100000000");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention backup no archive-start");
 
         argList = strLstDup(argListAvoidWarn);
@@ -1210,7 +1211,7 @@ testRun(void)
             storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(1, 5, "0000000100000000"),
             .comment = "nothing removed from 9.4-1/0000000100000000");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("prior backup has no archive-start");
 
         argList = strLstDup(argListAvoidWarn);
@@ -1228,7 +1229,7 @@ testRun(void)
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000003, stop = 000000010000000000000003");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire history files - dry run");
 
         // Create backup.info and archives spread over different timelines
@@ -1289,7 +1290,7 @@ testRun(void)
             "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
             "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
 
-        HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", .recurse=true);
+        HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", .recurse = true);
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 2, 2, "9.4-1", "0000000100000000");
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 6, 10, "10-2", "0000000300000000");
 
@@ -1312,7 +1313,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 remove history file 00000002.history");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire history files - no dry run");
 
         // Load Parameters
@@ -1332,7 +1333,7 @@ testRun(void)
             "P00   INFO: repo1: 10-2 no archive to remove\n"
             "P00   INFO: repo1: 10-2 remove history file 00000002.history");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire history files via backup command");
 
         // Load Parameters
@@ -1358,7 +1359,7 @@ testRun(void)
 
         harnessLogLevelReset();
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup history manifests older than 20 days - dry run");
 
         // Get number of days since latest unexpired backup 20181119-152138F
@@ -1416,7 +1417,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup history manifests older than 20 days");
 
         // Load config with the backup command to be sure repo-retention-history is valid
@@ -1448,7 +1449,7 @@ testRun(void)
             "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F_20181104-152138I.manifest.gz\n"
             "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup history manifests older than 20 days using backup config");
 
         // Add 21 day-old full backup
@@ -1484,7 +1485,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("info files mismatch"))
     {
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info has only current db with different db history id as backup.info");
 
         // Load Parameters
@@ -1568,7 +1569,7 @@ testRun(void)
             storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(1, 7, "0000000100000000"),
             .comment = "none removed from 10-2/0000000100000000");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info old history db system id not the same as backup.info");
 
         HRN_INFO_PUT(
@@ -1588,7 +1589,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info old history db version not the same as backup.info");
 
         HRN_INFO_PUT(
@@ -1608,7 +1609,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00  ERROR: [029]: repo1: archive expiration cannot continue - archive and backup history lists do not match");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive.info has only current db with same db history id as backup.info");
 
         HRN_INFO_PUT(
@@ -1859,7 +1860,7 @@ testRun(void)
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000200000000");
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "12-2", "0000000100000000");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire backup and dependent");
 
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152800F_20181119-152152D");
@@ -1888,8 +1889,9 @@ testRun(void)
             "backup.info.copy\n"
             "latest>\n",
             .comment = "only adhoc and dependents removed - resumable and all other backups remain");
-        TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
-            STRDEF("20181119-152900F"), "latest link not updated");
+        TEST_RESULT_STR(
+            storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination, STRDEF("20181119-152900F"),
+            "latest link not updated");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire adhoc backup set 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
@@ -1904,7 +1906,7 @@ testRun(void)
             "P00   INFO: repo1: 12-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00   INFO: repo1: 12-2 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire full and archive (no dependents)");
 
         argList = strLstDup(argListAvoidWarn);
@@ -1939,7 +1941,7 @@ testRun(void)
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152900F, start = 000000010000000000000006\n"
             "P00   INFO: repo1: 12-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire latest and resumable");
 
         argList = strLstDup(argListAvoidWarn);
@@ -1972,14 +1974,15 @@ testRun(void)
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 12-2 no archive to remove");
-        TEST_RESULT_STR(storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
-            STRDEF("20181119-152850F"), "latest link updated");
+        TEST_RESULT_STR(
+            storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination, STRDEF("20181119-152850F"),
+            "latest link updated");
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE "/12-2/0000000100000000",
             zNewFmt("%s%s", archiveExpectList(2, 4, "0000000100000000"), archiveExpectList(6, 10, "0000000100000000")),
             .comment = "no archives removed from latest except what was already removed");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on expire last full backup in current db-id");
 
         argList = strLstDup(argListAvoidWarn);
@@ -1993,7 +1996,7 @@ testRun(void)
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
                 " this repo");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("allow adhoc expire on last full backup in prior db-id");
 
         argList = strLstDup(argListAvoidWarn);
@@ -2018,7 +2021,7 @@ testRun(void)
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 12-2 no archive to remove");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on expire last full backup on disk");
 
         argList = strLstDup(argListAvoidWarn);
@@ -2031,7 +2034,7 @@ testRun(void)
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
                 " this repo");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("adhoc dry-run");
 
         // Create backup.info
@@ -2093,7 +2096,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152850F_20181119-152252D");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("resumable possibly based on adhoc expire backup, multi-repo, encryption");
 
         argList = strLstDup(argListAvoidWarn);
@@ -2147,52 +2150,52 @@ testRun(void)
 
         // Adhoc backup and resumable backup manifests
         const String *manifestContent = STRDEF(
-                "[backup]\n"
-                "backup-archive-start=\"000000010000000000000009\"\n"
-                "backup-label=null\n"
-                "backup-prior=\"20181119-152850F\"\n"
-                "backup-timestamp-copy-start=0\n"
-                "backup-timestamp-start=0\n"
-                "backup-timestamp-stop=0\n"
-                "backup-type=\"diff\"\n"
-                "\n"
-                "[backup:db]\n"
-                "db-catalog-version=201909212\n"
-                "db-control-version=1201\n"
-                "db-id=2\n"
-                "db-system-id=6626363367545678089\n"
-                "db-version=\"12\"\n"
-                "\n"
-                "[backup:option]\n"
-                "option-archive-check=false\n"
-                "option-archive-copy=false\n"
-                "option-checksum-page=false\n"
-                "option-compress=false\n"
-                "option-compress-type=\"none\"\n"
-                "option-hardlink=false\n"
-                "option-online=false\n"
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
-                "\n"
-                "[db]\n"
-                "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
-                "\n"
-                "[target:file:default]\n"
-                "group=\"postgres\"\n"
-                "mode=\"0600\"\n"
-                "user=\"postgres\"\n"
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "\n"
-                "[target:path:default]\n"
-                "group=\"postgres\"\n"
-                "mode=\"0700\"\n"
-                "user=\"postgres\"\n");
+            "[backup]\n"
+            "backup-archive-start=\"000000010000000000000009\"\n"
+            "backup-label=null\n"
+            "backup-prior=\"20181119-152850F\"\n"
+            "backup-timestamp-copy-start=0\n"
+            "backup-timestamp-start=0\n"
+            "backup-timestamp-stop=0\n"
+            "backup-type=\"diff\"\n"
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201909212\n"
+            "db-control-version=1201\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[backup:option]\n"
+            "option-archive-check=false\n"
+            "option-archive-copy=false\n"
+            "option-checksum-page=false\n"
+            "option-compress=false\n"
+            "option-compress-type=\"none\"\n"
+            "option-hardlink=false\n"
+            "option-online=false\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
+            "\n"
+            "[db]\n"
+            "postgres={\"db-id\":12980,\"db-last-system-id\":12979}\n"
+            "\n"
+            "[target:file]\n"
+            "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
+            "\n"
+            "[target:file:default]\n"
+            "group=\"postgres\"\n"
+            "mode=\"0600\"\n"
+            "user=\"postgres\"\n"
+            "\n"
+            "[target:path]\n"
+            "pg_data={}\n"
+            "\n"
+            "[target:path:default]\n"
+            "group=\"postgres\"\n"
+            "mode=\"0700\"\n"
+            "user=\"postgres\"\n");
 
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152850F_20181119-152252D/" BACKUP_MANIFEST_FILE,
@@ -2268,8 +2271,9 @@ testRun(void)
             "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
             "P00   INFO: repo2: 12-2 no archive to remove");
 
-        TEST_RESULT_STR(storageInfoP(storageRepoIdx(1), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
-            STRDEF("20181119-152850F"), "latest link updated, repo2");
+        TEST_RESULT_STR(
+            storageInfoP(storageRepoIdx(1), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination, STRDEF("20181119-152850F"),
+            "latest link updated, repo2");
 
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
@@ -2279,25 +2283,30 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("expireTimeBasedBackup()"))
     {
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no current backups");
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
-            "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
-            "db-id=1\n"
-            "db-system-id=6625592122879095702\n"
-            "db-version=\"9.4\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}"))), "empty backup.info");
+        TEST_ASSIGN(
+            infoBackup,
+            infoBackupNewLoad(
+                ioBufferReadNew(
+                    harnessInfoChecksumZ(
+                        "[db]\n"
+                        "db-catalog-version=201409291\n"
+                        "db-control-version=942\n"
+                        "db-id=1\n"
+                        "db-system-id=6625592122879095702\n"
+                        "db-version=\"9.4\"\n"
+                        "\n"
+                        "[db:history]\n"
+                        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+                        ",\"db-version\":\"9.4\"}"))),
+            "empty backup.info");
 
         TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * SEC_PER_DAY)), 0), 0, "no backups to expire");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("oldest backup not expired");
 
         // Set up
@@ -2365,7 +2374,7 @@ testRun(void)
             "20181119-152900F\n20181119-152900F_20181119-152600D\n", "no backups expired");
         TEST_RESULT_LOG("P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("oldest backup expired");
 
         argList = strLstDup(argListTime);
@@ -2406,7 +2415,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000008, stop = 000000010000000000000008");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo1-retention-archive-type=diff");
 
         argList = strLstDup(argListTime);
@@ -2438,7 +2447,7 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000008, stop = 000000010000000000000008\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000010, stop = 000000010000000000000010");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire oldest full");
 
         argList = strLstDup(argListTime);
@@ -2457,7 +2466,7 @@ testRun(void)
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("newest backup - retention met but must keep one");
 
         argList = strLstDup(argListTime);
@@ -2474,7 +2483,7 @@ testRun(void)
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000004, stop = 000000010000000000000008");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add repo2 to ensure options are applied correctly");
 
         argList = strLstDup(argListTime);

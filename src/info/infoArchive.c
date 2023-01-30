@@ -3,17 +3,17 @@ Archive Info Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
+#include "common/log.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"

@@ -16,8 +16,8 @@ Block Incremental Filter
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
-#include "common/type/pack.h"
 #include "common/type/object.h"
+#include "common/type/pack.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -374,7 +374,7 @@ blockIncrNew(
 
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    driver->blockMapPrior =  blockMapNewRead(read);
+                    driver->blockMapPrior = blockMapNewRead(read);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }

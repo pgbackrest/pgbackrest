@@ -1252,9 +1252,10 @@ cfgFileLoadPart(String **config, const Buffer *configPart)
 }
 
 static String *
-cfgFileLoad(                                                        // NOTE: Passing defaults to enable more complete test coverage
+cfgFileLoad(
     const Storage *storage,                                         // Storage to load configs
     const ParseOption *optionList,                                  // All options and their current settings
+    // NOTE: Passing defaults to enable more complete test coverage
     const String *optConfigDefault,                                 // Current default for --config option
     const String *optConfigIncludePathDefault,                      // Current default for --config-include-path option
     const String *origConfigDefault)                                // Original --config option default (/etc/pgbackrest.conf)
@@ -2056,7 +2057,7 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                     // Is the value set for this option?
                     bool optionSet =
-                            parseOptionValue->found && (optionType == cfgOptTypeBoolean || !parseOptionValue->negate) &&
+                        parseOptionValue->found && (optionType == cfgOptTypeBoolean || !parseOptionValue->negate) &&
                         !parseOptionValue->reset;
 
                     // Initialize option value and set negate and reset flag

@@ -119,7 +119,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
         if (okFileExists || errorFileExists)
         {
             // Get the status file content
-            const String *statusFile = okFileExists ? okFile: errorFile;
+            const String *statusFile = okFileExists ? okFile : errorFile;
 
             String *content = strNewBuf(
                 storageGetP(storageNewReadP(storageSpool(), strNewFmt("%s/%s", strZ(spoolQueue), strZ(statusFile)))));
@@ -265,7 +265,7 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 
         // Execute the binary.  This statement will not return if it is successful.
         THROW_ON_SYS_ERROR_FMT(
-            execvp(strZ(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+            execvp(strZ(strLstGet(commandExec, 0)), (char **const)strLstPtr(commandExec)) == -1, ExecuteError,
             "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
     }
 
@@ -301,7 +301,7 @@ archiveIdComparator(const void *item1, const void *item2)
     int int1 = atoi(strZ(strLstGet(archiveSort1, 1)));
     int int2 = atoi(strZ(strLstGet(archiveSort2, 1)));
 
-    return (int1 - int2);
+    return int1 - int2;
 }
 
 /**********************************************************************************************************************************/
@@ -434,7 +434,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
                 storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(strSubN(walSegment, 0, 16))),
                 .expression = strNewFmt(
                     "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
-                        walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
+                    walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
                 .nullOnMissing = true);
 
             // If there are results

@@ -28,9 +28,9 @@ The block map is terminated by a varint-128 encoded zero stop byte.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/backup/blockMap.h"
 #include "common/debug.h"
 #include "common/log.h"
-#include "command/backup/blockMap.h"
 
 /**********************************************************************************************************************************/
 typedef struct BlockMapRef

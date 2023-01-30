@@ -1329,27 +1329,28 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_PRE
-                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
-                TEST_MANIFEST_HEADER_MID
-                "option-delta=true\n"
-                "option-hardlink=false\n"
-                "option-online=true\n"
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/block-incr-add={\"bis\":1,\"size\":6,\"timestamp\":1482182861}\n"
-                "pg_data/block-incr-keep-size={\"bims\":31,\"bis\":1,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER_PRE
+                    "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                    TEST_MANIFEST_HEADER_MID
+                    "option-delta=true\n"
+                    "option-hardlink=false\n"
+                    "option-online=true\n"
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/block-incr-add={\"bis\":1,\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-keep-size={\"bims\":31,\"bis\":1,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
                     ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
-                "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
-                TEST_MANIFEST_FILE_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+                    "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
+                    TEST_MANIFEST_FILE_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         #undef TEST_MANIFEST_HEADER_PRE

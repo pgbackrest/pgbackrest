@@ -11,8 +11,8 @@ C Test Harness
 #include <unistd.h>
 
 #include "common/harnessDebug.h"
-#include "common/harnessTest.h"
 #include "common/harnessLog.h"
+#include "common/harnessTest.h"
 
 #define TEST_LIST_SIZE                                              64
 
@@ -351,14 +351,14 @@ hrnTestLogPrefix(const int lineNo)
 
         // Print elapsed time size the beginning of the test run
         printf(
-            "%03" PRIu64 ".%03" PRIu64"s", ((currentTime - testTimeMSecBegin()) / 1000),
+            "%03" PRIu64 ".%03" PRIu64 "s", ((currentTime - testTimeMSecBegin()) / 1000),
             ((currentTime - testTimeMSecBegin()) % 1000));
 
         // Print delta time since the last log message
         if (harnessTestLocal.logLastBeginTime != 0)
         {
             printf(
-                " %03" PRIu64 ".%03" PRIu64"s ", ((currentTime - harnessTestLocal.logLastBeginTime) / 1000),
+                " %03" PRIu64 ".%03" PRIu64 "s ", ((currentTime - harnessTestLocal.logLastBeginTime) / 1000),
                 ((currentTime - harnessTestLocal.logLastBeginTime) % 1000));
         }
         else
@@ -442,7 +442,8 @@ hrnTestResultEnd(void)
 }
 
 /**********************************************************************************************************************************/
-static void hrnTestResultDiff(const char *actual, const char *expected)
+static void
+hrnTestResultDiff(const char *actual, const char *expected)
 {
     if (actual != NULL && expected != NULL && (strstr(actual, "\n") != NULL || strstr(expected, "\n") != NULL))
     {

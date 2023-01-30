@@ -57,7 +57,9 @@ STRING_STATIC(TEST_MANIFEST_PATH_USER_STR,                          "test");
 static StorageInfo
 storageTestManifestNewBuildInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
-    (void)thisVoid; (void)level; (void)param;
+    (void)thisVoid;
+    (void)level;
+    (void)param;
 
     StorageInfo result =
     {
@@ -85,7 +87,10 @@ static StorageList *
 storageTestManifestNewBuildList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
     THIS(StorageTestManifestNewBuild);
-    (void)path; (void)level; (void)param;
+
+    (void)path;
+    (void)level;
+    (void)param;
 
     StorageList *const result = storageLstNew(storageInfoLevelDetail);
 

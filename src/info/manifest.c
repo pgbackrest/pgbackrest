@@ -1528,7 +1528,8 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType
                 {
                     LOG_WARN_FMT(
                         "file '%s' has timestamp (%" PRId64 ") in the future (relative to copy start %" PRId64 "), enabling delta"
-                            " checksum", strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, (int64_t)copyStart);
+                            " checksum",
+                        strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, (int64_t)copyStart);
 
                     this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
                     break;
@@ -1744,7 +1745,6 @@ manifestBuildComplete(
                 pckReadArrayEndP(read);
 
                 manifestDbAdd(this, &(ManifestDb){.id = id, .name = name, .lastSystemId = lastSystemId});
-
             }
 
             lstSort(this->pub.dbList, sortOrderAsc);
@@ -2051,7 +2051,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         manifestFileAdd(manifest, &file);
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_PATH))
     {
@@ -2082,7 +2081,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         lstAdd(loadData->pathFoundList, &valueFound);
         manifestPathAdd(manifest, &path);
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_LINK))
     {
@@ -2112,7 +2110,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         lstAdd(loadData->linkFoundList, &valueFound);
         manifestLinkAdd(manifest, &link);
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT))
     {
@@ -2127,7 +2124,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         }
         MEM_CONTEXT_END();
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_PATH_DEFAULT))
     {
@@ -2142,7 +2138,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         }
         MEM_CONTEXT_END();
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_LINK_DEFAULT))
     {
@@ -2155,7 +2150,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         }
         MEM_CONTEXT_END();
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_BACKUP_TARGET))
     {
@@ -2186,7 +2180,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         manifestTargetAdd(manifest, &target);
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_DB))
     {
@@ -2203,7 +2196,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 
         manifestDbAdd(manifest, &db);
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_METADATA))
     {
@@ -2214,7 +2206,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         }
         MEM_CONTEXT_END();
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_BACKUP))
     {
@@ -2257,7 +2248,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         }
         MEM_CONTEXT_END();
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_BACKUP_DB))
     {
@@ -2270,7 +2260,6 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         else if (strEqZ(key, MANIFEST_KEY_DB_VERSION))
             manifest->pub.data.pgVersion = pgVersionFromStr(varStr(jsonToVar(value)));
     }
-
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_BACKUP_OPTION))
     {
@@ -2485,7 +2474,8 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
         if (manifest->pub.data.lsnStart != NULL)
         {
             infoSaveValue(
-            infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_LSN_START, jsonFromVar(VARSTR(manifest->pub.data.lsnStart)));
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_LSN_START,
+                jsonFromVar(VARSTR(manifest->pub.data.lsnStart)));
         }
 
         if (manifest->pub.data.lsnStop != NULL)

@@ -6,10 +6,10 @@ Expire Command
 #include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "command/control/common.h"
-#include "common/time.h"
-#include "common/type/list.h"
 #include "common/debug.h"
 #include "common/regExp.h"
+#include "common/time.h"
+#include "common/type/list.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -497,7 +497,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                         // this archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
                         // localBackupRetentionList will have 1F, 2F, 3F, 4F (assuming they all have same history id)
                         for (unsigned int retentionIdx = strLstSize(globalBackupRetentionList) - 1;
-                             (int)retentionIdx >=0; retentionIdx--)
+                             (int)retentionIdx >= 0; retentionIdx--)
                         {
                             for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
                             {
@@ -717,6 +717,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                             // Track that this archive was removed
                                             archiveExpire.total++;
                                             archiveExpire.stop = strDup(strSubN(walSubPath, 0, 24));
+
                                             if (archiveExpire.start == NULL)
                                                 archiveExpire.start = strDup(strSubN(walSubPath, 0, 24));
                                         }
@@ -746,7 +747,6 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                         .expression = WAL_TIMELINE_HISTORY_REGEXP_STR),
                                     sortOrderAsc);
 
-
                             for (unsigned int historyFileIdx = 0; historyFileIdx < strLstSize(historyFilesList); historyFileIdx++)
                             {
                                 String *historyFile = strLstGet(historyFilesList, historyFileIdx);
@@ -767,7 +767,6 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                         strZ(archiveId), strZ(historyFile));
                                 }
                             }
-
                         }
                     }
                 }

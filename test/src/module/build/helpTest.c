@@ -35,25 +35,29 @@ testRun(void)
         TEST_TITLE("xml to text");
 
         TEST_RESULT_STR_Z(
-            bldHlpRenderXml(xmlDocumentRoot(xmlDocumentNewBuf(BUFSTRDEF(
-                "<doc>"
-                "<p><backrest/> <postgres/> {[dash]} "
-                    "<b><br-option><cmd><code><exe><file><host><i><id><link><path><pg-setting><proper><setting>"
-                    "<!-- COMMENT -->"
-                    "info"
-                    "</setting></proper></pg-setting></path></link></id></i></host></file></exe></code></cmd></br-option></b></p>\n"
-                "\n"
-                "<admonition>think <quote>about</quote> it</admonition>\n"
-                "\n"
-                "<p>List:</p>\n"
-                "\n"
-                "<list>\n"
-                  "<list-item>item1</list-item>\n"
-                  "<list-item>item2</list-item>\n"
-                "</list>\n"
-                "\n"
-                "<p>last para</p>"
-                "</doc>")))),
+            bldHlpRenderXml(
+                xmlDocumentRoot(
+                    xmlDocumentNewBuf(
+                        BUFSTRDEF(
+                            "<doc>"
+                            "<p><backrest/> <postgres/> {[dash]} "
+                            "<b><br-option><cmd><code><exe><file><host><i><id><link><path><pg-setting><proper><setting>"
+                            "<!-- COMMENT -->"
+                            "info"
+                            "</setting></proper></pg-setting></path></link></id></i></host></file></exe></code></cmd>"
+                            "</br-option></b></p>\n"
+                            "\n"
+                            "<admonition>think <quote>about</quote> it</admonition>\n"
+                            "\n"
+                            "<p>List:</p>\n"
+                            "\n"
+                            "<list>\n"
+                            "<list-item>item1</list-item>\n"
+                            "<list-item>item2</list-item>\n"
+                            "</list>\n"
+                            "\n"
+                            "<p>last para</p>"
+                            "</doc>")))),
             "pgBackRest PostgreSQL - info\n"
             "\n"
             "NOTE: think \"about\" it\n"

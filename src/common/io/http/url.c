@@ -5,8 +5,8 @@ HTTP URL
 
 #include "common/debug.h"
 #include "common/io/http/url.h"
-#include "common/type/stringList.h"
 #include "common/regExp.h"
+#include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
 Regular expression for URLs. This is not intended to be completely comprehensive, e.g. it is still possible to enter bad hostnames.

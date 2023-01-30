@@ -8,8 +8,8 @@ Stack Trace Handler
 #include <string.h>
 
 #ifdef HAVE_LIBBACKTRACE
-    #include <backtrace.h>
     #include <backtrace-supported.h>
+    #include <backtrace.h>
 #endif
 
 #include "common/assert.h"

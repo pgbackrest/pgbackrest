@@ -1,15 +1,15 @@
 /***********************************************************************************************************************************
 Test Restore Command
 ***********************************************************************************************************************************/
-#include "command/stanza/create.h"
 #include "command/backup/backup.h"
 #include "command/backup/blockIncr.h"
 #include "command/backup/protocol.h"
+#include "command/stanza/create.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "postgres/version.h"
-#include "storage/posix/storage.h"
 #include "storage/helper.h"
+#include "storage/posix/storage.h"
 
 #include "common/harnessBackup.h"
 #include "common/harnessConfig.h"
@@ -469,7 +469,7 @@ testRun(void)
         TEST_TITLE("target time, multi repo");
 
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
         hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
@@ -509,7 +509,7 @@ testRun(void)
 
         // Switch paths so newest on repo1
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath2);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
@@ -523,7 +523,7 @@ testRun(void)
             "unable to find backup set with stop time less than '2016-12-19 16:27:30-0500'");
 
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
         hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
@@ -542,7 +542,7 @@ testRun(void)
         TEST_TITLE("target time, multi repo, no candidates found");
 
         argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza ,"test1");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath2);
         hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pgPath);
@@ -2104,8 +2104,7 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteP(storageRepoIdxWrite(0),
-                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+                storageNewWriteP(storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         // Read the manifest, set a cipher passphrase and store it to the encrypted repo
         Manifest *manifestEncrypted = manifestLoadFile(
@@ -2268,8 +2267,7 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteP(storageRepoWrite(),
-                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+                storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         #undef TEST_LABEL
         #undef TEST_PGDATA
@@ -2733,8 +2731,7 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteP(storageRepoWrite(),
-                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+                storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         // Add a few bogus paths/files/links to be removed in delta
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "bogus1/bogus2");
@@ -2938,8 +2935,7 @@ testRun(void)
         manifestSave(
             manifest,
             storageWriteIo(
-                storageNewWriteP(storageRepoWrite(),
-                STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
+                storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 

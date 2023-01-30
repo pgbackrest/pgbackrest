@@ -8,10 +8,10 @@ casts to queries to output one of these types.
 #ifndef POSTGRES_QUERY_H
 #define POSTGRES_QUERY_H
 
+#include "common/time.h"
 #include "common/type/object.h"
 #include "common/type/pack.h"
 #include "common/type/string.h"
-#include "common/time.h"
 
 /***********************************************************************************************************************************
 Query result types

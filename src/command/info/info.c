@@ -532,8 +532,9 @@ backupListAdd(
                 {
                     kvPut(varKv(link), KEY_NAME_VAR, varNewStr(target->file));
                     kvPut(
-                        varKv(link), KEY_DESTINATION_VAR, varNewStr(strNewFmt("%s/%s", strZ(target->path),
-                        strZ(target->file))));
+                        varKv(link), KEY_DESTINATION_VAR,
+                        varNewStr(strNewFmt("%s/%s", strZ(target->path), strZ(target->file))));
+
                     varLstAdd(linkSection, link);
                 }
                 else
@@ -1552,7 +1553,6 @@ infoRender(void)
                                     }
                                     else
                                     {
-
                                         strCatFmt(
                                             resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
                                             strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));

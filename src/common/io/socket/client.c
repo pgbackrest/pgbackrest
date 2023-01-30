@@ -4,16 +4,16 @@ Socket Client
 #include "build.auto.h"
 
 #include <netinet/in.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/io/client.h"
 #include "common/io/socket/client.h"
 #include "common/io/socket/common.h"
 #include "common/io/socket/session.h"
+#include "common/log.h"
 #include "common/stat.h"
 #include "common/type/object.h"
 #include "common/wait.h"

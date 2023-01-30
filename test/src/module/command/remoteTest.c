@@ -83,7 +83,8 @@ testRun(void)
                 ProtocolClient *client = NULL;
                 TEST_ASSIGN(
                     client,
-                    protocolClientNew(STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
+                    protocolClientNew(
+                        STRDEF("test"), PROTOCOL_SERVICE_REMOTE_STR,
                         ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 2000),
                         ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 2000)),
                     "create client");

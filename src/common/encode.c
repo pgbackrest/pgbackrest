@@ -6,8 +6,8 @@ Binary to String Encode/Decode
 #include <stdbool.h>
 #include <string.h>
 
-#include "common/encode.h"
 #include "common/debug.h"
+#include "common/encode.h"
 #include "common/error.h"
 
 /***********************************************************************************************************************************
@@ -181,14 +181,16 @@ decodeToBinBase64(const char *source, unsigned char *destination)
         // Second character is optional
         if (source[sourceIdx + 2] != 0x3d)
         {
-            destination[destinationIdx++] = (unsigned char)
-                (decodeBase64Lookup[(int)source[sourceIdx + 1]] << 4 | decodeBase64Lookup[(int)source[sourceIdx + 2]] >> 2);
+            destination[destinationIdx++] =
+                (unsigned char)
+                ((decodeBase64Lookup[(int)source[sourceIdx + 1]] << 4) | (decodeBase64Lookup[(int)source[sourceIdx + 2]] >> 2));
         }
 
         // Third character is optional
         if (source[sourceIdx + 3] != 0x3d)
         {
-            destination[destinationIdx++] = (unsigned char)
+            destination[destinationIdx++] =
+                (unsigned char)
                 (((decodeBase64Lookup[(int)source[sourceIdx + 2]] << 6) & 0xc0) | decodeBase64Lookup[(int)source[sourceIdx + 3]]);
         }
     }

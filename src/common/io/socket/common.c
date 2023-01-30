@@ -121,7 +121,7 @@ sckOptionSet(int fd)
     // Automatically close the socket (in the child process) on a successful execve() call. Connections are never shared between
     // processes so there is no reason to leave them open.
 #ifdef F_SETFD
-	THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable to set FD_CLOEXEC");
+    THROW_ON_SYS_ERROR(fcntl(fd, F_SETFD, FD_CLOEXEC) == -1, ProtocolError, "unable to set FD_CLOEXEC");
 #endif
 
     // Enable TCP keepalives

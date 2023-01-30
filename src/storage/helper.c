@@ -11,9 +11,9 @@ Storage Helper
 #include "common/regExp.h"
 #include "config/config.h"
 #include "protocol/helper.h"
+#include "storage/helper.h"
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
-#include "storage/helper.h"
 
 /***********************************************************************************************************************************
 Storage path constants
@@ -84,7 +84,8 @@ storageHelperContextInit(void)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void storageHelperInit(const StorageHelper *const helperList)
+FN_EXTERN void
+storageHelperInit(const StorageHelper *const helperList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, helperList);

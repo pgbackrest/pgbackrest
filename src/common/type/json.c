@@ -572,7 +572,7 @@ jsonReadKeyZN(JsonRead *const this)
             THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
         this->json++;
-    };
+    }
 
     // Set key size
     result.size = (size_t)(this->json - result.buffer);
@@ -845,7 +845,7 @@ jsonReadSkipStr(JsonRead *const this)
             THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
         this->json++;
-    };
+    }
 
     // Advance the character array pointer to the next element after the string
     this->json++;

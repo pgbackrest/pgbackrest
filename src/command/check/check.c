@@ -154,9 +154,12 @@ checkPrimary(const DbGetResult dbGroup)
                 storageRepo, repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
-                "WAL segment %s successfully archived to '%s' on %s", strZ(walSegment),
-                strZ(storagePathP(storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]),
-                strZ(walSegmentFile)))), cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
+                "WAL segment %s successfully archived to '%s' on %s",
+                strZ(walSegment),
+                strZ(
+                    storagePathP(
+                        storageRepo, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoArchiveId[repoIdx]), strZ(walSegmentFile)))),
+                cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
         }
 
         dbFree(dbGroup.primary);

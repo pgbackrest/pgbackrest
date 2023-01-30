@@ -43,7 +43,8 @@ messages need to be accumulated and then returned together.
 
 This empty function is required because without it libxml2 will dump errors to stdout.  Really.
 ***********************************************************************************************************************************/
-static void xmlErrorHandler(void *ctx, const char *format, ...)
+static void
+xmlErrorHandler(void *ctx, const char *format, ...)
 {
     (void)ctx;
     (void)format;

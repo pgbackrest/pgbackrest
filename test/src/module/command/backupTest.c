@@ -14,9 +14,9 @@ Test Backup Command
 #include "common/harnessBackup.h"
 #include "common/harnessConfig.h"
 #include "common/harnessManifest.h"
+#include "common/harnessPack.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessPq.h"
-#include "common/harnessPack.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
 
@@ -764,7 +764,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     }
     else
         THROW_FMT(AssertError, "unsupported test version %u", pgVersion);           // {uncoverable - no invalid versions in tests}
-};
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -2117,8 +2117,9 @@ testRun(void)
             lockAcquire(TEST_PATH_STR, cfgOptionStr(cfgOptStanza), cfgOptionStr(cfgOptExecId), lockTypeBackup, 0, true),
             "acquire backup lock");
         TEST_RESULT_VOID(
-            backupJobResult(manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress,
-            &currentPercentComplete), "log noop result");
+            backupJobResult(
+                manifest, STRDEF("host"), storageTest, strLstNew(), job, false, 0, &sizeProgress, &currentPercentComplete),
+            "log noop result");
         TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");

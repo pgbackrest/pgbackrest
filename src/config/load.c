@@ -10,19 +10,19 @@ Configuration Load
 #include "command/command.h"
 #include "common/compress/helper.intern.h"
 #include "common/crypto/common.h"
-#include "common/memContext.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/socket/common.h"
 #include "common/lock.h"
 #include "common/log.h"
+#include "common/memContext.h"
 #include "config/config.intern.h"
 #include "config/load.h"
 #include "config/parse.h"
 #include "info/infoBackup.h"
 #include "storage/cifs/storage.h"
-#include "storage/posix/storage.h"
 #include "storage/helper.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Load log settings
@@ -219,11 +219,11 @@ cfgLoadUpdateOption(void)
                 {
                     case backupTypeFull:
                     {
-                        if (cfgOptionIdxStrId(cfgOptRepoRetentionFullType, optionIdx) ==
-                                CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT &&
+                        if (cfgOptionIdxStrId(cfgOptRepoRetentionFullType, optionIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT &&
                             cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx))
                         {
-                            cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
+                            cfgOptionIdxSet(
+                                cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
                                 VARINT64(cfgOptionIdxInt64(cfgOptRepoRetentionFull, optionIdx)));
                         }
 
@@ -235,7 +235,8 @@ cfgLoadUpdateOption(void)
                         // if repo-retention-diff is set then user must have set it
                         if (cfgOptionIdxTest(cfgOptRepoRetentionDiff, optionIdx))
                         {
-                            cfgOptionIdxSet(cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
+                            cfgOptionIdxSet(
+                                cfgOptRepoRetentionArchive, optionIdx, cfgSourceDefault,
                                 VARINT64(cfgOptionIdxInt64(cfgOptRepoRetentionDiff, optionIdx)));
                         }
                         else
@@ -396,7 +397,7 @@ cfgLoadLogFileName(const ConfigCommandRole commandRole)
     String *const result = strCatFmt(
         strNew(),
         "%s/%s-%s", strZ(cfgOptionStr(cfgOptLogPath)),
-        cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)): "all", cfgCommandName());
+        cfgOptionTest(cfgOptStanza) ? strZ(cfgOptionStr(cfgOptStanza)) : "all", cfgCommandName());
 
     // ??? Append async for local/remote archive async commands. It would be good to find a more generic way to do this in case the
     // async role is added to more commands.

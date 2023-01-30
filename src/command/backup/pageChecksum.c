@@ -3,9 +3,9 @@ Page Checksum Filter
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/backup/pageChecksum.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
-#include "command/backup/pageChecksum.h"
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/type/json.h"

@@ -99,7 +99,8 @@ static char messageBufferTemp[ERROR_MESSAGE_BUFFER_SIZE];
 static char stackTraceBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 
 /**********************************************************************************************************************************/
-FN_EXTERN void errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
+FN_EXTERN void
+errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
 {
     assert(total == 0 || list != NULL);
 
@@ -159,7 +160,8 @@ errorTypeParent(const ErrorType *errorType)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN unsigned int errorTryDepth(void)
+FN_EXTERN unsigned int
+errorTryDepth(void)
 {
     return (unsigned int)errorContext.tryTotal;
 }
@@ -434,6 +436,7 @@ errorInternalThrowSys(
 }
 
 #ifdef DEBUG_COVERAGE
+
 FN_EXTERN void
 errorInternalThrowOnSys(
     bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
@@ -442,6 +445,7 @@ errorInternalThrowOnSys(
     if (error)
         errorInternalThrowSys(errNo, errorType, fileName, functionName, fileLine, message);
 }
+
 #endif
 
 FN_EXTERN void
@@ -462,6 +466,7 @@ errorInternalThrowSysFmt(
 }
 
 #ifdef DEBUG_COVERAGE
+
 FN_EXTERN void
 errorInternalThrowOnSysFmt(
     bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
@@ -485,4 +490,5 @@ errorInternalThrowOnSysFmt(
         errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
     }
 }
+
 #endif

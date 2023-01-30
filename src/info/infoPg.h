@@ -125,5 +125,4 @@ FN_EXTERN void infoPgDataToLog(const InfoPgData *this, StringStatic *debugLog);
 #define FUNCTION_LOG_INFO_PG_DATA_FORMAT(value, buffer, bufferSize)                                                                \
     FUNCTION_LOG_OBJECT_FORMAT(&value, infoPgDataToLog, buffer, bufferSize)
 
-
 #endif

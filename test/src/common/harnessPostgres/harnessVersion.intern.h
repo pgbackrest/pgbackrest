@@ -6,7 +6,6 @@ Macros to create harness functions per PostgreSQL version.
 #ifndef TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 #define TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 
-#include "postgres/version.h"
 #include "postgres/interface/version.vendor.h"
 
 #include "common/harnessPostgres.h"

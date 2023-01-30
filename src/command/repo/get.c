@@ -121,8 +121,11 @@ storageGetProcess(IoWrite *destination)
                                     !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                                 {
                                     const Manifest *manifest = manifestLoadFile(
-                                        storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza),
-                                        strZ(strLstGet(filePathSplitLst, 2)), BACKUP_MANIFEST_FILE), repoCipherType, cipherPass);
+                                        storageRepo(),
+                                        strNewFmt(
+                                            STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
+                                            BACKUP_MANIFEST_FILE),
+                                        repoCipherType, cipherPass);
                                     cipherPass = manifestCipherSubPass(manifest);
                                 }
                             }

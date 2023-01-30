@@ -42,7 +42,8 @@ testFunction1(
     FUNCTION_LOG_RETURN(INT, 1);
 }
 
-static void testObjToLog(const char *const object, StringStatic *const debugLog)
+static void
+testObjToLog(const char *const object, StringStatic *const debugLog)
 {
     strStcFmt(debugLog, "{%s}", object);
 }

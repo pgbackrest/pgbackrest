@@ -618,7 +618,6 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-
         // Standby checkpoint before the backup started must be <= the target LSN. If not, it indicates that the standby was ahead
         // of the primary and cannot be following it.
         if (dbPgControl(this).checkpoint > pgLsnFromStr(targetLsn))

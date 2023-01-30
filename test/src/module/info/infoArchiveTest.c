@@ -130,10 +130,12 @@ testRun(void)
 
         TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702), "9.4-1", "partial match found");
 
-        TEST_ERROR(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095799), ArchiveMismatchError,
+        TEST_ERROR(
+            infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095799), ArchiveMismatchError,
             "unable to retrieve the archive id for database version '9.4' and system-id '6625592122879095799'");
 
-        TEST_ERROR(infoArchiveIdHistoryMatch(info, 2, 90400, 6626363367545678089), ArchiveMismatchError,
+        TEST_ERROR(
+            infoArchiveIdHistoryMatch(info, 2, 90400, 6626363367545678089), ArchiveMismatchError,
             "unable to retrieve the archive id for database version '9.4' and system-id '6626363367545678089'");
     }
 

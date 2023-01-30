@@ -11,15 +11,15 @@ stress testing as needed.
 #include "common/harnessFork.h"
 #include "common/harnessStorage.h"
 
-#include "common/crypto/hash.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/lz4/compress.h"
-#include "common/io/filter/filter.h"
-#include "common/io/filter/sink.h"
+#include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/filter/filter.h"
+#include "common/io/filter/sink.h"
 #include "common/io/io.h"
 #include "common/type/object.h"
 #include "protocol/client.h"
@@ -40,7 +40,10 @@ static StorageList *
 storageTestPerfList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
     THIS(StorageTestPerfList);
-    (void)path; (void)level; (void)param;
+
+    (void)path;
+    (void)level;
+    (void)param;
 
     StorageList *result = NULL;
 

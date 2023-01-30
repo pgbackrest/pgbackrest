@@ -13,9 +13,9 @@ Remote Storage Read
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "common/type/object.h"
+#include "storage/read.intern.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
-#include "storage/read.intern.h"
 
 /***********************************************************************************************************************************
 Object type

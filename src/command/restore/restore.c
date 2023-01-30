@@ -347,7 +347,8 @@ restoreBackupSet(void)
 
                     if (latestBackup.backupPgId < backupInfoPg.id)
                     {
-                        THROW_FMT(BackupSetInvalidError,
+                        THROW_FMT(
+                            BackupSetInvalidError,
                             "the latest backup set found '%s' is from a prior version of " PG_NAME "\n"
                             "HINT: was a backup created after the stanza-upgrade?\n"
                             "HINT: specify --" CFGOPT_SET " or --" CFGOPT_TYPE "=time/lsn to restore from a prior version of "
@@ -1353,7 +1354,7 @@ restoreSelectiveExpression(Manifest *manifest)
             const String *tablespaceId = pgTablespaceId(
                 manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
             RegExp *tablespaceRegExp = regExpNew(
-                    strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
+                strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
 
             // Generate a list of databases in base or in a tablespace and get all standard system databases, even in cases where
             // users have recreated them
@@ -2193,7 +2194,6 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                     }
                 }
 
-
                 // Add bundle info
                 strCatZ(log, " (");
 
@@ -2269,7 +2269,8 @@ restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTota
 }
 
 // Callback to fetch restore jobs for the parallel executor
-static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+restoreJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);

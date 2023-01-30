@@ -18,8 +18,8 @@ Harness for Loading Test Configurations
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
 #include "common/harnessLog.h"
-#include "common/harnessTest.h"
 #include "common/harnessStorageHelper.h"
+#include "common/harnessTest.h"
 
 /**********************************************************************************************************************************/
 void

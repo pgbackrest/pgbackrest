@@ -245,11 +245,10 @@ backupFile(
 
                         // Add block incremental filter
                         ioFilterGroupAdd(
-                            ioReadFilterGroup(
-                                storageReadIo(read)),
-                                blockIncrNew(
-                                    (size_t)file->blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap, compress,
-                                    encrypt));
+                            ioReadFilterGroup(storageReadIo(read)),
+                            blockIncrNew(
+                                (size_t)file->blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap, compress,
+                                encrypt));
 
                         repoChecksum = true;
                     }

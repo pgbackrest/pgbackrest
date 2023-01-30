@@ -349,6 +349,6 @@ FN_EXTERN void
 bufToLog(const Buffer *const this, StringStatic *const debugLog)
 {
     strStcFmt(
-        debugLog, "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this), bufSizeLimit(this) ? zNewFmt(", sizeAlloc: %zu}",
-        bufSizeAlloc(this)) : "}");
+        debugLog, "{used: %zu, size: %zu%s", bufUsed(this), bufSize(this),
+        bufSizeLimit(this) ? zNewFmt(", sizeAlloc: %zu}", bufSizeAlloc(this)) : "}");
 }

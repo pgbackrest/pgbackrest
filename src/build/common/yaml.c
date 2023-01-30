@@ -165,7 +165,6 @@ yamlEventPeek(Yaml *const this)
     FUNCTION_TEST_RETURN_TYPE(YamlEvent, this->eventNext);
 }
 
-
 YamlEvent
 yamlEventNext(Yaml *this)
 {

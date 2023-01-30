@@ -10,12 +10,12 @@ Annotate Command
 
 #include "command/annotate/annotate.h"
 #include "command/backup/backup.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "config/config.h"
-#include "common/crypto/cipherBlock.h"
 #include "info/infoBackup.h"
 #include "storage/helper.h"
 

@@ -12,8 +12,8 @@ Yaml object
 typedef struct Yaml Yaml;
 
 #include "common/memContext.h"
-#include "common/type/object.h"
 #include "common/type/buffer.h"
+#include "common/type/object.h"
 #include "common/type/stringId.h"
 
 /***********************************************************************************************************************************

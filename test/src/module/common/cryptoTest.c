@@ -76,9 +76,8 @@ testRun(void)
         TEST_ERROR(
             cipherBlockNewP(cipherModeEncrypt, cipherTypeNone, BUFSTRZ(TEST_PASS)), AssertError, "unable to load cipher 'none'");
         TEST_ERROR(
-            cipherBlockNewP(
-                cipherModeEncrypt, cipherTypeAes256Cbc, testPass, .digest = STRDEF(BOGUS_STR)), AssertError,
-                "unable to load digest 'BOGUS'");
+            cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, testPass, .digest = STRDEF(BOGUS_STR)), AssertError,
+            "unable to load digest 'BOGUS'");
 
         // Initialization of object
         // -------------------------------------------------------------------------------------------------------------------------
@@ -359,7 +358,7 @@ testRun(void)
                 BUFSTRZ(
                     "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
                     "12345678901234567890123456789012345678901234567890")),
-                "add 160 bytes");
+            "add 160 bytes");
         TEST_RESULT_VOID(
             ioFilterProcessIn(hash, BUFSTRZ("12345678901234567890123456789001234567890012345678901234")), "add 58 bytes");
 

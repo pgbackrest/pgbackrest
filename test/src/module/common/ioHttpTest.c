@@ -5,8 +5,8 @@ Test HTTP
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
-#include "common/io/tls/client.h"
 #include "common/io/socket/client.h"
+#include "common/io/tls/client.h"
 
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
@@ -473,8 +473,8 @@ testRun(void)
 
                 hrnServerScriptAccept(http);
 
-                hrnServerScriptExpectZ(http,
-                    "GET /?name=%2Fpath%2FA%20Z.txt&type=test HTTP/1.1\r\n" TEST_USER_AGENT "host:myhost.com\r\n\r\n");
+                hrnServerScriptExpectZ(
+                    http, "GET /?name=%2Fpath%2FA%20Z.txt&type=test HTTP/1.1\r\n" TEST_USER_AGENT "host:myhost.com\r\n\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 500 Internal Error\r\nConnection:close\r\n\r\n");
 
                 hrnServerScriptClose(http);
@@ -707,7 +707,8 @@ testRun(void)
                 hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(
-                    http, "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "content-length:30\r\n\r\n"
+                    http,
+                    "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "content-length:30\r\n\r\n"
                         "012345678901234567890123456789");
                 hrnServerScriptReplyZ(
                     http,

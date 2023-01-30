@@ -165,8 +165,10 @@ storageAzureAuth(
 
             // Generate authorization header
             httpHeaderPut(
-                httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("SharedKey %s:%s", strZ(this->account),
-                strZ(strNewEncode(encodingBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
+                httpHeader, HTTP_HEADER_AUTHORIZATION_STR,
+                strNewFmt(
+                    "SharedKey %s:%s", strZ(this->account),
+                    strZ(strNewEncode(encodingBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
         }
         // SAS authentication
         else

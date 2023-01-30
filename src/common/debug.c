@@ -8,7 +8,8 @@ Debug Routines
 #include "common/debug.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN size_t objToLog(const void *const object, ObjToLogFormat formatFunc, char *const buffer, const size_t bufferSize)
+FN_EXTERN size_t
+objToLog(const void *const object, ObjToLogFormat formatFunc, char *const buffer, const size_t bufferSize)
 {
     StringStatic debugLog = strStcInit(buffer, bufferSize);
 

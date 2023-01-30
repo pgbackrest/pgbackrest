@@ -6,8 +6,8 @@ GCS Storage
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"

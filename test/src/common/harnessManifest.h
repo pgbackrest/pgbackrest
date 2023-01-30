@@ -4,8 +4,8 @@ Harness for Manifest Testing
 #ifndef TEST_COMMON_HARNESS_MANIFEST_H
 #define TEST_COMMON_HARNESS_MANIFEST_H
 
-#include "info/manifest.h"
 #include "common/user.h"
+#include "info/manifest.h"
 
 /***********************************************************************************************************************************
 Add db to manifest

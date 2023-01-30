@@ -26,37 +26,63 @@ Dummy functions and interface for constructing test storage drivers
 static StorageInfo
 storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
 {
-    (void)thisVoid; (void)file; (void)level; (void)param; return (StorageInfo){.exists = false};
+    (void)thisVoid;
+    (void)file;
+    (void)level;
+    (void)param;
+
+    return (StorageInfo){.exists = false};
 }
 
 static StorageList *
 storageTestDummyList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
 {
-    (void)thisVoid; (void)path; (void)level; (void)param; return false;
+    (void)thisVoid;
+    (void)path;
+    (void)level;
+    (void)param;
+
+    return false;
 }
 
 static StorageRead *
 storageTestDummyNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
 {
-    (void)thisVoid; (void)file; (void)ignoreMissing; (void)param; return NULL;
+    (void)thisVoid;
+    (void)file;
+    (void)ignoreMissing;
+    (void)param;
+
+    return NULL;
 }
 
 static StorageWrite *
 storageTestDummyNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
 {
-    (void)thisVoid; (void)file; (void)param; return NULL;
+    (void)thisVoid;
+    (void)file;
+    (void)param;
+
+    return NULL;
 }
 
 static bool
 storageTestDummyPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
 {
-    (void)thisVoid; (void)path; (void)recurse; (void)param; return false;
+    (void)thisVoid;
+    (void)path;
+    (void)recurse;
+    (void)param;
+
+    return false;
 }
 
 static void
 storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
 {
-    (void)thisVoid; (void)file; (void)param;
+    (void)thisVoid;
+    (void)file;
+    (void)param;
 }
 
 const StorageInterface storageInterfaceTestDummy =
@@ -157,7 +183,7 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
     ASSERT(!featurePath || storagePathExistsP(storage, path == NULL ? NULL : STR(path)));
 
     const String *const pathFull = storagePathP(storage, path == NULL ? NULL : STR(path));
-    printf("list%s contents of '%s'", param.remove ? "/remove": "", strZ(pathFull));
+    printf("list%s contents of '%s'", param.remove ? "/remove" : "", strZ(pathFull));
     hrnTestResultComment(param.comment);
 
     // Generate a list of files/paths/etc
