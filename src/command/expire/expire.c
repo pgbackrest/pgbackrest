@@ -448,13 +448,12 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
                 // globalBackupRetentionList is ordered newest to oldest backup, so create globalBackupArchiveRetentionList of the
                 // newest backups whose archives will be retained
-                for (unsigned int idx = 0;
-                     idx < (archiveRetention < strLstSize(globalBackupRetentionList) ?
-                        archiveRetention : strLstSize(globalBackupRetentionList));
-                     idx++)
-                {
-                    strLstAdd(globalBackupArchiveRetentionList, strLstGet(globalBackupRetentionList, idx));
-                }
+                const unsigned int retentionSize =
+                    archiveRetention < strLstSize(globalBackupRetentionList) ?
+                        archiveRetention : strLstSize(globalBackupRetentionList);
+
+                for (unsigned int retentionIdx = 0; retentionIdx < retentionSize; retentionIdx++)
+                    strLstAdd(globalBackupArchiveRetentionList, strLstGet(globalBackupRetentionList, retentionIdx));
 
                 // From newest to oldest, confirm the pgVersion and pgSystemId from the archive.info history id match that of the
                 // same history id of the backup.info and if not, there is a mismatch between the info files so do not continue.
