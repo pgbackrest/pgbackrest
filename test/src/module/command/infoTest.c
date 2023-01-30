@@ -50,6 +50,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argListStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
@@ -74,6 +75,7 @@ testRun(void)
                         "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - empty repo, stanza option specified");
 
         StringList *argListTextStanzaOpt = strLstDup(argListText);
@@ -101,6 +103,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList);
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
@@ -125,6 +128,7 @@ testRun(void)
                         "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - missing stanza data");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -148,6 +152,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
@@ -183,6 +188,7 @@ testRun(void)
                         "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - other error, single repo");
 
         HRN_CFG_LOAD(cfgCmdInfo, argListTextStanzaOpt);
@@ -252,6 +258,7 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
                 TEST_RESULT_STR_Z(
                     infoRender(),
+                    // {uncrustify_off - indentation}
                     "["
                         "{"
                             "\"archive\":["
@@ -299,6 +306,7 @@ testRun(void)
                             "}"
                         "}"
                     "]",
+                    // {uncrustify_on}
                     "json - single stanza, no valid backups, backup/expire lock detected");
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListText);
@@ -444,6 +452,7 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
                 TEST_RESULT_STR_Z(
                     infoRender(),
+                    // {uncrustify_off - indentation}
                     "["
                         "{"
                              "\"archive\":["
@@ -576,6 +585,7 @@ testRun(void)
                             "}"
                         "}"
                     "]",
+                    // {uncrustify_on}
                     "json - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListText);
@@ -1038,6 +1048,7 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoJson);
                 TEST_RESULT_STR_Z(
                     infoRender(),
+                    // {uncrustify_off - indentation}
                     "["
                         "{"
                              "\"archive\":["
@@ -1441,6 +1452,7 @@ testRun(void)
                             "}"
                         "}"
                     "]",
+                    // {uncrustify_on}
                     "json - multiple stanzas, some with valid backups, archives in latest DB, backup lock held on one stanza");
 
                 // Notify child to release lock
@@ -1587,6 +1599,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
@@ -1619,6 +1632,7 @@ testRun(void)
                     "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json, multi-repo, backup not found");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1661,6 +1675,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":["
@@ -1763,6 +1778,7 @@ testRun(void)
                     "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - backup set requested");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1846,6 +1862,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":["
@@ -1970,6 +1987,7 @@ testRun(void)
                     "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2043,6 +2061,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":["
@@ -2141,6 +2160,7 @@ testRun(void)
                     "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - backup set requested, no links");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2212,6 +2232,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":["
@@ -2306,6 +2327,7 @@ testRun(void)
                     "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - backup set requested, no db and no checksum error");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2361,6 +2383,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                      "\"archive\":["
@@ -2410,6 +2433,7 @@ testRun(void)
                     "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - multiple stanzas - selected found, repo1");
 
         argList2 = strLstDup(argListMultiRepo);
@@ -2735,6 +2759,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                      "\"archive\":["
@@ -2905,6 +2930,7 @@ testRun(void)
                     "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - multi-repo, database mismatch, repo2 stanza-upgrade needed");
 
         // Crypto error
@@ -3289,6 +3315,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             infoRender(),
+            // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
@@ -3314,6 +3341,7 @@ testRun(void)
                         "}"
                 "}"
             "]",
+            // {uncrustify_on}
             "json - invalid stanza");
 
         argList = strLstNew();

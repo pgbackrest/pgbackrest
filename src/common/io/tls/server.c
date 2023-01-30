@@ -83,6 +83,7 @@ https://en.wikipedia.org/wiki/Logjam_(computer_security).
 // Hardcoded DH parameters, used in ephemeral DH keying. This is the 2048-bit DH parameter from RFC 3526. The generation of the
 // prime is specified in RFC 2412 Appendix E, which also discusses the design choice of the generator. Note that when loaded with
 // OpenSSL this causes DH_check() to fail on DH_NOT_SUITABLE_GENERATOR, where leaking a bit is preferred.
+// {uncrustify_off - comment inside string}
 #define DH_2048                                                                                                                    \
     "-----BEGIN DH PARAMETERS-----\n"                                                                                              \
     "MIIBCAKCAQEA///////////JD9qiIWjCNMTGYouA3BzRKQJOCIpnzHQCC76mOxOb\n"                                                           \
@@ -92,6 +93,7 @@ https://en.wikipedia.org/wiki/Logjam_(computer_security).
     "fDKQXkYuNs474553LBgOhgObJ4Oi7Aeij7XFXfBvTFLJ3ivL9pVYFxg5lUl86pVq\n"                                                           \
     "5RXSJhiY+gUQFXKOWoqsqmj//////////wIBAg==\n"                                                                                   \
     "-----END DH PARAMETERS-----"
+// {uncrustify_on}
 
 static void
 tlsServerDh(SSL_CTX *const context)

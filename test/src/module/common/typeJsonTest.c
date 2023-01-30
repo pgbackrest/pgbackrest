@@ -271,6 +271,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             jsonWriteResult(write),
+            // {uncrustify_off - indentation}
             "["
                 "true,"
                 "55,"
@@ -291,6 +292,7 @@ testRun(void)
                 "null,"
                 "null"
             "]",
+            // {uncrustify_on}
             "json result");
 
         TEST_RESULT_VOID(jsonWriteFree(write), "free");

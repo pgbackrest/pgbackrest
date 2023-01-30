@@ -354,12 +354,14 @@ testRun(void)
 
         // Check block that errors
         TEST_ERROR(
+            // {uncrustify_off - indentation}
             MEM_CONTEXT_BEGIN(memContext)
             {
                 TEST_RESULT_Z(memContextCurrent()->name, "test-block", "context is now test-block");
                 THROW(AssertError, "error in test block");
             }
             MEM_CONTEXT_END(),
+            // {uncrustify_on}
             AssertError, "error in test block");
 
         TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context is now top");

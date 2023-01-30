@@ -892,6 +892,7 @@ testRun(void)
                 #define TEST_SERVICE_URI                                                                                           \
                     "/?Action=AssumeRoleWithWebIdentity&RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole"               \
                         "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=" TEST_SERVICE_TOKEN
+                // {uncrustify_off - comment inside string}
                 #define TEST_SERVICE_RESPONSE                                                                                      \
                     "<AssumeRoleWithWebIdentityResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\">\n"                    \
                     "  <AssumeRoleWithWebIdentityResult>\n"                                                                        \
@@ -903,6 +904,7 @@ testRun(void)
                     "    </Credentials>\n"                                                                                         \
                     "  </AssumeRoleWithWebIdentityResult>\n"                                                                       \
                     "</AssumeRoleWithWebIdentityResponse>"
+                // {uncrustify_on}
 
                 HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
 

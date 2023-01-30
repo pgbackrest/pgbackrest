@@ -103,8 +103,9 @@ typedef struct MemContextCallbackOne
 } MemContextCallbackOne;
 
 /***********************************************************************************************************************************
-Possible sizes for the manifest based on options. Formatting has been compressed to save space.
+Possible sizes for the manifest based on options
 ***********************************************************************************************************************************/
+// {uncrustify_off - formatting compressed to save space}
 static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQtyOne + 1] =
 {
     // child none
@@ -137,6 +138,7 @@ static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQ
      {/* callback none */ sizeof(MemContextChildMany) + sizeof(MemContextAllocMany),
       /* callback one */ sizeof(MemContextChildMany) + sizeof(MemContextAllocMany) + sizeof(MemContextCallbackOne)}},
 };
+// {uncrustify_on}
 
 /***********************************************************************************************************************************
 Get pointers to optional parts of the manifest

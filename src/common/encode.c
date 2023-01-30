@@ -360,6 +360,7 @@ encodeToStrSizeHex(const size_t sourceSize)
 }
 
 /**********************************************************************************************************************************/
+// {uncrustify_off - array alignment}
 static const int8_t decodeHexLookup[256] =
 {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -379,6 +380,7 @@ static const int8_t decodeHexLookup[256] =
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
+// {uncrustify_on}
 
 static void
 decodeToBinValidateHex(const char *const source)

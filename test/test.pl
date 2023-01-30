@@ -91,6 +91,10 @@ test.pl [options]
    --tz                 test with the specified timezone
    --debug-test-trace   test stack trace for low-level functions (slow, esp w/valgrind, may cause timeouts)
 
+ Code Format Options:
+   --code-format        format code to project standards -- this may overwrite files!
+   --code-format-check  check that code is formatted to project standards
+
  Report Options:
    --coverage-summary   generate a coverage summary report for the documentation
    --coverage-only      only run coverage tests (as a subset of selected tests) for the documentation
@@ -133,6 +137,8 @@ my @iyModuleTestRun;
 my $iVmMax = 1;
 my $iVmId = undef;
 my $bDryRun = false;
+my $bCodeFormat = false;
+my $bCodeFormatCheck = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
 my $strTestPath;
@@ -208,6 +214,8 @@ GetOptions ('q|quiet' => \$bQuiet,
             'gen-check' => \$bGenCheck,
             'min-gen' => \$bMinGen,
             'code-count' => \$bCodeCount,
+            'code-format' => \$bCodeFormat,
+            'code-format-check' => \$bCodeFormatCheck,
             'profile' => \$bProfile,
             'no-back-trace' => \$bNoBackTrace,
             'no-valgrind' => \$bNoValgrind,
@@ -608,6 +616,44 @@ eval
                 # This option is not supported on MacOS. The eventual plan is to remove the need for it.
                 (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
                 " ${strBackRestBase}/ ${strRepoCachePath}");
+
+        # Format code with uncrustify
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($bCodeFormat || $bCodeFormatCheck)
+        {
+            &log(INFO, 'code format' . ($bCodeFormatCheck ? ' check' : ''));
+
+            my $hManifest = $oStorageTest->manifest($strRepoCachePath);
+            my $strCommand =
+                "uncrustify -c ${strBackRestBase}/test/uncrustify.cfg" .
+                ($bCodeFormatCheck ? ' --check' : ' --replace --no-backup');
+
+            foreach my $strFile (sort(keys(%{$hManifest})))
+            {
+                # Skip non-C files
+                next if $hManifest->{$strFile}{type} ne 'f' || ($strFile !~ /\.c$/ && $strFile !~ /\.h$/);
+
+                # Check mode
+                if ($hManifest->{$strFile}{mode} ne '0644')
+                {
+                    confess &log(ERROR, "expected mode '0644' for '$strFile' but found '" . $hManifest->{$strFile}{mode} . "'");
+                }
+
+                # Skip specific file
+                next if
+                    # Does not format correctly because it is a template
+                    $strFile eq 'test/src/test.c' ||
+                    # Contains code copied directly from PostgreSQL
+                    $strFile eq 'src/postgres/interface/static.vendor.h' ||
+                    $strFile eq 'src/postgres/interface/version.vendor.h';
+
+                $strCommand .= " ${strBackRestBase}/${strFile}";
+            }
+
+            executeTest($strCommand . " 2>&1");
+
+            exit 0;
+        }
 
         # Generate code counts
         #---------------------------------------------------------------------------------------------------------------------------

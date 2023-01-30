@@ -343,6 +343,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackReadToStr(pckReadNew(pckWriteResult(bldHlpRenderHelpAutoCPack(bldCfg, bldHlpParse(storageTest, bldCfg))))),
+            // {uncrustify_off - indentation}
             "1:array:"
             "["
                 // backup command
@@ -400,6 +401,7 @@ testRun(void)
                     ", 2:str:stanza2"
                 "]"
             "]",
+            // {uncrustify_on}
             "parse and render");
 
         // -------------------------------------------------------------------------------------------------------------------------

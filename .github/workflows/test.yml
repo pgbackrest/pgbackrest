@@ -127,6 +127,20 @@ jobs:
         run: |
           diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
 
+  # Check that code is correctly formatted
+  code-format:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          path: pgbackrest
+
+      - name: Check
+        run: |
+          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=none --param=code-format-check
+
   codeql:
     runs-on: ubuntu-latest
 

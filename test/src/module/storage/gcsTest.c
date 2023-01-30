@@ -25,6 +25,7 @@ STRING_STATIC(TEST_KEY_FILE_STR,                                    TEST_KEY_FIL
 #define TEST_TOKEN                                                  "X X"
 STRING_STATIC(TEST_TOKEN_STR,                                       TEST_TOKEN);
 
+// {uncrustify_off - comment inside string}
 #define TEST_KEY                                                                                                                   \
     "{\n"                                                                                                                          \
     "\"type\": \"service_account\",\n"                                                                                             \
@@ -60,6 +61,7 @@ STRING_STATIC(TEST_TOKEN_STR,                                       TEST_TOKEN);
     "\"client_email\": \"service@project.iam.gserviceaccount.com\",\n"                                                             \
     "\"token_uri\": \"https://%s:%u/token\"\n"                                                                                     \
     "}\n"
+// {uncrustify_on}
 
 /***********************************************************************************************************************************
 Helper to build test requests
