@@ -255,9 +255,9 @@ testRun(void)
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
-                " for read\n"
-            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.3, system-id "
-                HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
+            " for read\n"
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.3, system-id"
+            " " HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun test with db-system-id invalid and no main");
@@ -291,8 +291,8 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
-            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not in the "
-                "backup.info history, skipping");
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not in the"
+            " backup.info history, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun copy test with db-id invalid");
@@ -325,8 +325,8 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
-            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 0, version 9.4, system-id "
-                HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 0, version 9.4, system-id"
+            " " HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing main manifest, errored copy");
@@ -341,8 +341,8 @@ testRun(void)
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
-            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-                "<REPO:BACKUP>/20181119-152138F/backup.manifest.copy");
+            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
+            " <REPO:BACKUP>/20181119-152138F/backup.manifest.copy");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("current backup true");
@@ -355,10 +355,10 @@ testRun(void)
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
-            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-                "<REPO:BACKUP>/20181119-152138F/backup.manifest\n"
-            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-                "<REPO:BACKUP>/20181119-152138F/backup.manifest.copy");
+            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
+            " <REPO:BACKUP>/20181119-152138F/backup.manifest\n"
+            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
+            " <REPO:BACKUP>/20181119-152138F/backup.manifest.copy");
 
         // Write a valid manifest with a manifest copy that is invalid
         HRN_INFO_PUT(
@@ -476,14 +476,18 @@ testRun(void)
         // Create archive.info - history mismatch
         InfoArchive *archiveInfo = NULL;
         TEST_ASSIGN(
-            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
-                "db-version=\"11\"\n"
-                "\n"
-                "[db:history]\n"
-                "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))), "archive.info missing history");
+            archiveInfo,
+            infoArchiveNewLoad(
+                ioBufferReadNew(
+                    harnessInfoChecksumZ(
+                        "[db]\n"
+                        "db-id=2\n"
+                        "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
+                        "db-version=\"11\"\n"
+                        "\n"
+                        "[db:history]\n"
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+            "archive.info missing history");
 
         TEST_ERROR(
             verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
@@ -493,15 +497,19 @@ testRun(void)
         TEST_TITLE("history mismatch - system id");
 
         TEST_ASSIGN(
-            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
-                "db-version=\"11\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":6625592122879095777,\"db-version\":\"9.4\"}\n"
-                "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))), "archive.info history system id mismatch");
+            archiveInfo,
+            infoArchiveNewLoad(
+                ioBufferReadNew(
+                    harnessInfoChecksumZ(
+                        "[db]\n"
+                        "db-id=2\n"
+                        "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
+                        "db-version=\"11\"\n"
+                        "\n"
+                        "[db:history]\n"
+                        "1={\"db-id\":6625592122879095777,\"db-version\":\"9.4\"}\n"
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+            "archive.info history system id mismatch");
 
         TEST_ERROR(
             verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
@@ -511,15 +519,19 @@ testRun(void)
         TEST_TITLE("history mismatch - version");
 
         TEST_ASSIGN(
-            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
-                "db-version=\"11\"\n"
-                "\n"
-                "[db:history]\n"
-                "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.5\"}\n"
-                "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))), "archive.info history version mismatch");
+            archiveInfo,
+            infoArchiveNewLoad(
+                ioBufferReadNew(
+                    harnessInfoChecksumZ(
+                        "[db]\n"
+                        "db-id=2\n"
+                        "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
+                        "db-version=\"11\"\n"
+                        "\n"
+                        "[db:history]\n"
+                        "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.5\"}\n"
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+            "archive.info history version mismatch");
 
         TEST_ERROR(
             verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
@@ -529,15 +541,19 @@ testRun(void)
         TEST_TITLE("history mismatch - id");
 
         TEST_ASSIGN(
-            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
-                "[db]\n"
-                "db-id=2\n"
-                "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
-                "db-version=\"11\"\n"
-                "\n"
-                "[db:history]\n"
-                "3={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n"
-                "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))), "archive.info history id mismatch");
+            archiveInfo,
+            infoArchiveNewLoad(
+                ioBufferReadNew(
+                    harnessInfoChecksumZ(
+                        "[db]\n"
+                        "db-id=2\n"
+                        "db-system-id=" HRN_PG_SYSTEMID_11_Z "\n"
+                        "db-version=\"11\"\n"
+                        "\n"
+                        "[db:history]\n"
+                        "3={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n"
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+            "archive.info history id mismatch");
 
         TEST_ERROR(
             verifyPgHistory(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FormatError,
@@ -683,8 +699,8 @@ testRun(void)
         // Check output of verify command stored in file
         TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
-            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' "
-                "<REPO:BACKUP>/backup.info\n"
+            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
+            " <REPO:BACKUP>/backup.info\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info.copy' for read\n"
@@ -727,10 +743,10 @@ testRun(void)
         TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
             "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
-                " <REPO:BACKUP>/backup.info\n"
+            " <REPO:BACKUP>/backup.info\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\n"
             "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
-                " <REPO:ARCHIVE>/archive.info.copy\n"
+            " <REPO:ARCHIVE>/archive.info.copy\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
             "              No usable archive.info file");
@@ -762,7 +778,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: backup.info.copy does not match backup.info\n"
             "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
-                " <REPO:ARCHIVE>/archive.info\n"
+            " <REPO:ARCHIVE>/archive.info\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
             "            backup info file and archive info file do not match\n"
@@ -988,10 +1004,10 @@ testRun(void)
             "P00 DETAIL: no backups exist in the repo\n"
             "P00 DETAIL: archive path '9.4-1' is empty\n"
             "P00 DETAIL: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
-            "P01   INFO: invalid checksum "
-                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-            "P01   INFO: invalid size "
-                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
+            "P01   INFO: invalid checksum"
+            " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01   INFO: invalid size"
+            " '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000");
 
         harnessLogLevelReset();
@@ -1013,10 +1029,10 @@ testRun(void)
             "  backup: none found",
             "verbose, with failures");
         TEST_RESULT_LOG(
-            "P01   INFO: invalid checksum "
-                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-            "P01   INFO: invalid size "
-                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
+            "P01   INFO: invalid checksum"
+            " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01   INFO: invalid size"
+            " '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("text output, verbose, with verify failures");
@@ -1034,10 +1050,10 @@ testRun(void)
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
             "  backup: none found", "verify text output, verbose, with verify failures");
         TEST_RESULT_LOG(
-            "P01   INFO: invalid checksum "
-                "'11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
-            "P01   INFO: invalid size "
-                "'11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
+            "P01   INFO: invalid checksum"
+            " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01   INFO: invalid size"
+            " '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, start next timeline");
@@ -1454,7 +1470,7 @@ testRun(void)
             "              backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 0\n"
             "                checksum invalid: 1\n"
             "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1,"
-                " total valid files: 0\n"
+            " total valid files: 0\n"
             "                checksum invalid: 1");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1501,7 +1517,7 @@ testRun(void)
             "\n"
             "[target:file]\n"
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20181119-152900F\""
-                ",\"size\":4,\"timestamp\":1565282114}\n"
+            ",\"size\":4,\"timestamp\":1565282114}\n"
             TEST_MANIFEST_FILE_DEFAULT
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
@@ -1582,7 +1598,7 @@ testRun(void)
             "              backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 0\n"
             "                missing: 1, checksum invalid: 1, size invalid: 1\n"
             "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1,"
-                " total valid files: 0\n"
+            " total valid files: 0\n"
             "                checksum invalid: 1");
     }
 
@@ -1724,7 +1740,7 @@ testRun(void)
             "              backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 0\n"
             "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
             "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1,"
-                " total valid files: 0\n"
+            " total valid files: 0\n"
             "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0");
     }
 

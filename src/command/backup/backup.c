@@ -507,8 +507,8 @@ backupResumeClean(
                 continue;
 
             // Build the name used to lookup files in the manifest
-            const String *manifestName = manifestParentName != NULL ?
-                strNewFmt("%s/%s", strZ(manifestParentName), strZ(info.name)) : info.name;
+            const String *manifestName =
+                manifestParentName != NULL ? strNewFmt("%s/%s", strZ(manifestParentName), strZ(info.name)) : info.name;
 
             // Build the backup path used to remove files/links/paths that are invalid
             const String *const backupPath = strNewFmt("%s/%s", strZ(backupParentPath), strZ(info.name));
@@ -720,7 +720,7 @@ backupResumeFind(const Manifest *manifest, const String *cipherPassBackup)
                             // Check compression. Compression can't be changed between backups so resume won't work either.
                             else if (
                                 manifestResumeData->backupOptionCompressType !=
-                                    compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))
+                                compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))
                             {
                                 reason = strNewFmt(
                                     "new compression '%s' does not match resumable compression '%s'",
@@ -844,7 +844,7 @@ backupStart(BackupData *backupData)
                     THROW(
                         PgRunningError,
                         "--no-" CFGOPT_ONLINE " passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut"
-                            " down " PG_NAME " and try again, or use --force.");
+                        " down " PG_NAME " and try again, or use --force.");
                 }
             }
         }
@@ -1181,8 +1181,8 @@ backupJobResult(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             const unsigned int processId = protocolParallelJobProcessId(job);
-            const uint64_t bundleId = varType(protocolParallelJobKey(job)) == varTypeUInt64 ?
-                varUInt64(protocolParallelJobKey(job)) : 0;
+            const uint64_t bundleId =
+                varType(protocolParallelJobKey(job)) == varTypeUInt64 ? varUInt64(protocolParallelJobKey(job)) : 0;
             PackRead *const jobResult = protocolParallelJobResult(job);
             unsigned int percentComplete = 0;
 
@@ -1218,8 +1218,8 @@ backupJobResult(
                     logProgress, "%s, %u.%02u%%", strZ(strSizeFormat(copySize)), percentComplete / 100, percentComplete % 100);
 
                 // Format log checksum
-                const String *const logChecksum = copySize != 0 ?
-                    strNewFmt(" checksum %s", strZ(strNewEncode(encodingHex, copyChecksum))) : EMPTY_STR;
+                const String *const logChecksum =
+                    copySize != 0 ? strNewFmt(" checksum %s", strZ(strNewEncode(encodingHex, copyChecksum))) : EMPTY_STR;
 
                 // If the file is in a prior backup and nothing changed, just log it
                 if (copyResult == backupCopyResultNoOp)
@@ -1339,8 +1339,8 @@ backupJobResult(
                     file.checksumRepoSha1 = repoChecksum != NULL ? bufPtrConst(repoChecksum) : NULL;
                     file.reference = NULL;
                     file.checksumPageError = checksumPageError;
-                    file.checksumPageErrorList = checksumPageErrorList != NULL ?
-                        jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL;
+                    file.checksumPageErrorList =
+                        checksumPageErrorList != NULL ? jsonFromVar(varNewVarLst(checksumPageErrorList)) : NULL;
                     file.bundleId = bundleId;
                     file.bundleOffset = bundleOffset;
                     file.blockIncrMapSize = blockIncrMapSize;
@@ -1691,8 +1691,8 @@ backupJobCallback(void *data, unsigned int clientIdx)
         // Determine where to begin scanning the queue (we'll stop when we get back here).  When copying from the primary during
         // backup from standby only queue 0 will be used.
         unsigned int queueOffset = jobData->backupStandby && clientIdx > 0 ? 1 : 0;
-        int queueIdx = jobData->backupStandby && clientIdx == 0 ?
-            0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
+        int queueIdx =
+            jobData->backupStandby && clientIdx == 0 ? 0 : (int)(clientIdx % (lstSize(jobData->queueList) - queueOffset));
         int queueEnd = queueIdx;
 
         // Create backup job
@@ -1869,8 +1869,8 @@ backupProcess(
             // Build expression to identify files that can be copied from the standby when standby backup is supported
             .standbyExp = regExpNew(
                 strNewFmt(
-                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))|"
-                        MANIFEST_TARGET_PGTBLSPC ")/",
+                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))"
+                    "|" MANIFEST_TARGET_PGTBLSPC ")/",
                     strZ(pgXactPath(backupData->version)))),
         };
 

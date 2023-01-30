@@ -214,13 +214,13 @@ testRun(void)
         TEST_ERROR(
             walPath(STRDEF("relative/path"), pgPathLink, STRDEF("test")), OptionInvalidValueError,
             "PostgreSQL working directory '/' is not the same as option pg1-path '" TEST_PATH "/pg-link'\n"
-                "HINT: is the PostgreSQL data_directory configured the same as the pg1-path option?");
+            "HINT: is the PostgreSQL data_directory configured the same as the pg1-path option?");
 
         TEST_ERROR(
             walPath(STRDEF("relative/path"), NULL, STRDEF("test")), OptionRequiredError,
             "option 'pg1-path' must be specified when relative wal paths are used\n"
-                "HINT: is %f passed to test instead of %p?\n"
-                "HINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
+            "HINT: is %f passed to test instead of %p?\n"
+            "HINT: PostgreSQL may pass relative paths even with %p depending on the environment.");
     }
 
     // *****************************************************************************************************************************
@@ -284,9 +284,9 @@ testRun(void)
             walSegmentFind(storageRepo(), STRDEF("9.6-2"), STRDEF("123456781234567812345678"), 0),
             ArchiveDuplicateError,
             "duplicates found in archive for WAL segment 123456781234567812345678:"
-                " 123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz"
-                "\nHINT: are multiple primaries archiving to this stanza?");
+            " 123456781234567812345678-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            ", 123456781234567812345678-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.gz\n"
+            "HINT: are multiple primaries archiving to this stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("partial not found");

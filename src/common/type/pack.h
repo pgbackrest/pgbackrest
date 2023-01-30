@@ -94,7 +94,7 @@ cumulative field ID. At the end of a container the numbering will continue from 
 Minimum number of extra bytes to allocate for packs that are growing or are likely to grow
 ***********************************************************************************************************************************/
 #ifndef PACK_EXTRA_MIN
-    #define PACK_EXTRA_MIN                                          128
+#define PACK_EXTRA_MIN                                              128
 #endif
 
 /***********************************************************************************************************************************

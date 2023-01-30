@@ -23,7 +23,7 @@ Developed against version r131 using the documentation in https://github.com/lz4
 Older versions of lz4 do not define the max header size.  This seems to be the max for any version.
 ***********************************************************************************************************************************/
 #ifndef LZ4F_HEADER_SIZE_MAX
-    #define LZ4F_HEADER_SIZE_MAX                                    19
+#define LZ4F_HEADER_SIZE_MAX                                        19
 #endif
 
 /***********************************************************************************************************************************

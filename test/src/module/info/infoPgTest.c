@@ -122,8 +122,8 @@ testRun(void)
         TEST_RESULT_STR_Z(
             callbackContent,
             "[backup:current] 20161219-212741F={}\n"
-                "[db:backup] key=\"value\"\n"
-                "[later] key=\"value\"\n",
+            "[db:backup] key=\"value\"\n"
+            "[later] key=\"value\"\n",
             "    check callback content");
         TEST_RESULT_INT(lstSize(infoPg->pub.history), 1, "    history record added");
 

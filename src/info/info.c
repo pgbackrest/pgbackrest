@@ -278,7 +278,7 @@ infoSaveSection(InfoSave *const infoSaveData, const char *const section, const S
     FUNCTION_TEST_RETURN(
         BOOL,
         (infoSaveData->sectionLast == NULL || strCmpZ(infoSaveData->sectionLast, section) < 0) &&
-            (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
+        (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
 }
 
 /**********************************************************************************************************************************/

@@ -99,9 +99,9 @@ testRun(void)
             strNewBuf(xmlDocumentBuf(xmlDocument)),
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<CompleteMultipartUpload>"
-                "<Part><PartNumber>1</PartNumber><ETag>E1</ETag></Part>"
-                "<Part><PartNumber>2</PartNumber><ETag>E2</ETag></Part>"
-                "</CompleteMultipartUpload>\n",
+            "<Part><PartNumber>1</PartNumber><ETag>E1</ETag></Part>"
+            "<Part><PartNumber>2</PartNumber><ETag>E2</ETag></Part>"
+            "</CompleteMultipartUpload>\n",
             "get xml");
     }
 

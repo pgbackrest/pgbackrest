@@ -178,8 +178,10 @@ storageWriteAzure(THIS_VOID, const Buffer *buffer)
     do
     {
         // Copy as many bytes as possible into the block buffer
-        size_t bytesNext = bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
+        const size_t bytesNext =
+            bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->blockBuffer);
+
         bufCatSub(this->blockBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 

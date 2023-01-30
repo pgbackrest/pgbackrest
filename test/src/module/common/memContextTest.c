@@ -259,9 +259,9 @@ testRun(void)
         TEST_ERROR(
             memFree(NULL), AssertError,
             "assertion 'alloc != NULL && "
-                "(uintptr_t)alloc != (uintptr_t)-sizeof(MemContextAlloc) && "
-                "alloc->allocIdx < memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->listSize && "
-                "memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->list[alloc->allocIdx]' failed");
+            "(uintptr_t)alloc != (uintptr_t)-sizeof(MemContextAlloc) &&"
+            " alloc->allocIdx < memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->listSize &&"
+            " memContextAllocMany(memContextStack[memContextCurrentStackIdx].memContext)->list[alloc->allocIdx]' failed");
         memFree(buffer);
 
         memContextSwitch(memContextTop());

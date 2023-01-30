@@ -30,7 +30,7 @@ struct ErrorType
 
 // Define test error
 #ifdef DEBUG
-    ERROR_DEFINE(1, TestError, false, RuntimeError);
+ERROR_DEFINE(1, TestError, false, RuntimeError);
 #endif
 
 // Include error type definitions
@@ -91,7 +91,7 @@ situations.
 The temp buffer is required because the error message being passed might be the error already stored in the message buffer.
 ***********************************************************************************************************************************/
 #ifndef ERROR_MESSAGE_BUFFER_SIZE
-    #define ERROR_MESSAGE_BUFFER_SIZE                                   8192
+#define ERROR_MESSAGE_BUFFER_SIZE                                   8192
 #endif
 
 static char messageBuffer[ERROR_MESSAGE_BUFFER_SIZE];

@@ -57,8 +57,8 @@ static struct HarnessTestLocal
 Extern functions
 ***********************************************************************************************************************************/
 #ifdef HRN_FEATURE_LOG
-    void harnessLogInit(void);
-    void harnessLogFinal(void);
+void harnessLogInit(void);
+void harnessLogFinal(void);
 #endif
 
 /***********************************************************************************************************************************
@@ -388,9 +388,13 @@ hrnTestResultBegin(const char *const statement, const bool result)
     FUNCTION_HARNESS_STACK_TRACE_LINE_SET(harnessTestLocal.logLastLineNo);
 
     // Set info to report if an error is thrown
-    harnessTestLocal.result =
-        (struct HarnessTestResult){
-            .running = true, .statement = statement, .lineNo = harnessTestLocal.logLastLineNo, .result = result};
+    harnessTestLocal.result = (struct HarnessTestResult)
+    {
+        .running = true,
+        .statement = statement,
+        .lineNo = harnessTestLocal.logLastLineNo,
+        .result = result,
+    };
 
     // Reset line number so it is not used by another test
     harnessTestLocal.logLastLineNo = 0;

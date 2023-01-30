@@ -46,7 +46,7 @@ typedef enum
 Standard config file name and old default path and name
 ***********************************************************************************************************************************/
 #define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PROJECT_CONFIG_FILE
-    STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,             PGBACKREST_CONFIG_ORIG_PATH_FILE);
+STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,                 PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
 /***********************************************************************************************************************************
 Prefix for environment variables
@@ -63,13 +63,13 @@ Define how a command is parsed
 typedef struct ParseRuleCommand
 {
     const char *name;                                               // Name
-    unsigned int commandRoleValid:CFG_COMMAND_ROLE_TOTAL;           // Valid for the command role?
-    bool lockRequired:1;                                            // Is an immediate lock required?
-    bool lockRemoteRequired:1;                                      // Is a lock required on the remote?
-    unsigned int lockType:2;                                        // Lock type required
-    bool logFile:1;                                                 // Will the command log to a file?
-    unsigned int logLevelDefault:4;                                 // Default log level
-    bool parameterAllowed:1;                                        // Command-line parameters are allowed
+    unsigned int commandRoleValid : CFG_COMMAND_ROLE_TOTAL;         // Valid for the command role?
+    bool lockRequired : 1;                                          // Is an immediate lock required?
+    bool lockRemoteRequired : 1;                                    // Is a lock required on the remote?
+    unsigned int lockType : 2;                                      // Lock type required
+    bool logFile : 1;                                               // Will the command log to a file?
+    unsigned int logLevelDefault : 4;                               // Default log level
+    bool parameterAllowed : 1;                                      // Command-line parameters are allowed
 } ParseRuleCommand;
 
 // Macros used to define parse rules in parse.auto.c.inc in a format that diffs well
@@ -124,17 +124,17 @@ Define how an option is parsed and interacts with other options
 typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
-    unsigned int type:4;                                            // e.g. string, int, boolean
-    bool negate:1;                                                  // Can the option be negated on the command line?
-    bool reset:1;                                                   // Can the option be reset on the command line?
-    bool required:1;                                                // Is the option required?
-    unsigned int section:2;                                         // e.g. global, stanza, cmd-line
-    bool secure:1;                                                  // Needs to be redacted in logs and cmd-line?
-    bool multi:1;                                                   // Can be specified multiple times?
-    bool group:1;                                                   // In a group?
-    unsigned int groupId:1;                                         // Id if in a group
-    bool deprecateMatch:1;                                          // Does a deprecated name exactly match the option name?
-    unsigned int packSize:7;                                        // Size of optional data in pack format
+    unsigned int type : 4;                                          // e.g. string, int, boolean
+    bool negate : 1;                                                // Can the option be negated on the command line?
+    bool reset : 1;                                                 // Can the option be reset on the command line?
+    bool required : 1;                                              // Is the option required?
+    unsigned int section : 2;                                       // e.g. global, stanza, cmd-line
+    bool secure : 1;                                                // Needs to be redacted in logs and cmd-line?
+    bool multi : 1;                                                 // Can be specified multiple times?
+    bool group : 1;                                                 // In a group?
+    unsigned int groupId : 1;                                       // Id if in a group
+    bool deprecateMatch : 1;                                        // Does a deprecated name exactly match the option name?
+    unsigned int packSize : 7;                                      // Size of optional data in pack format
     uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
     const unsigned char *pack;                                      // Optional data in pack format
@@ -273,10 +273,10 @@ Struct to hold options parsed from the command line
 ***********************************************************************************************************************************/
 typedef struct ParseOptionValue
 {
-    bool found:1;                                                   // Was the option found?
-    bool negate:1;                                                  // Was the option negated on the command line?
-    bool reset:1;                                                   // Was the option reset on the command line?
-    unsigned int source:2;                                          // Where was the option found?
+    bool found : 1;                                                 // Was the option found?
+    bool negate : 1;                                                // Was the option negated on the command line?
+    bool reset : 1;                                                 // Was the option reset on the command line?
+    unsigned int source : 2;                                        // Where was the option found?
     StringList *valueList;                                          // List of values found
 } ParseOptionValue;
 
@@ -2049,8 +2049,9 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     unsigned optionKeyIdx = optionGroup ? config->optionGroup[optionGroupId].indexMap[optionListIdx] : 0;
 
                     // Get the parsed value using the key index. Provide a default structure when the value was not found.
-                    ParseOptionValue *parseOptionValue = optionKeyIdx < parseOptionList[optionId].indexListTotal ?
-                        &parseOptionList[optionId].indexList[optionKeyIdx] : &(ParseOptionValue){0};
+                    ParseOptionValue *parseOptionValue =
+                        optionKeyIdx < parseOptionList[optionId].indexListTotal ?
+                            &parseOptionList[optionId].indexList[optionKeyIdx] : &(ParseOptionValue){0};
 
                     // Get the location where the value will be stored in the configuration
                     ConfigOptionValue *configOptionValue = &config->option[optionId].index[optionListIdx];
@@ -2371,8 +2372,9 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                             // Else error if option is required and help was not requested
                             else
                             {
-                                const bool required = cfgParseOptionalRule(
-                                    &optionalRules, parseRuleOptionalTypeRequired, config->command, optionId) ?
+                                const bool required =
+                                    cfgParseOptionalRule(
+                                        &optionalRules, parseRuleOptionalTypeRequired, config->command, optionId) ?
                                         optionalRules.required : parseRuleOption[optionId].required;
 
                                 if (required && !config->help)

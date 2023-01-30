@@ -141,7 +141,7 @@ testRun(void)
             pgLsnRangeToWalSegmentList(
                 2, pgLsnFromStr(STRDEF("A/800")), pgLsnFromStr(STRDEF("B/C0000000")), 1024 * 1024 * 1024),
             "000000020000000A00000000\n000000020000000A00000001\n000000020000000A00000002\n000000020000000A00000003\n"
-                "000000020000000B00000000\n000000020000000B00000001\n000000020000000B00000002\n000000020000000B00000003\n",
+            "000000020000000B00000000\n000000020000000B00000001\n000000020000000B00000002\n000000020000000B00000003\n",
             "get range >= 11/1GB");
         TEST_RESULT_STRLST_Z(
             pgLsnRangeToWalSegmentList(
@@ -201,7 +201,7 @@ testRun(void)
         TEST_ERROR(
             pgWalFromBuffer(result), VersionNotSupportedError,
             "unexpected WAL magic 777\n"
-                "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));

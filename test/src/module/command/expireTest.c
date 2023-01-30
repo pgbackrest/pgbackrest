@@ -141,8 +141,8 @@ testRun(void)
         "db-version=\"9.4\"\n"
         "\n"
         "[db:history]\n"
-        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-            "\"db-version\":\"9.4\"}", timeNow - (41 * SEC_PER_DAY), timeNow - (40 * SEC_PER_DAY), timeNow - (30 * SEC_PER_DAY),
+        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+        ",\"db-version\":\"9.4\"}", timeNow - (41 * SEC_PER_DAY), timeNow - (40 * SEC_PER_DAY), timeNow - (30 * SEC_PER_DAY),
         timeNow - (30 * SEC_PER_DAY), timeNow - (25 * SEC_PER_DAY), timeNow - (25 * SEC_PER_DAY), timeNow - (20 * SEC_PER_DAY),
         timeNow - (20 * SEC_PER_DAY), timeNow - (10 * SEC_PER_DAY), timeNow - (10 * SEC_PER_DAY), timeNow - (5 * SEC_PER_DAY),
         timeNow - (5 * SEC_PER_DAY));
@@ -207,9 +207,9 @@ testRun(void)
         TEST_RESULT_UINT(expireFullBackup(infoBackup, 0), 0, "retention-full not set");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.");
+            " maximum.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - full backup no dependencies expired");
@@ -222,7 +222,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
             "20181119-152800F\n20181119-152800F_20181119-152152D\n20181119-152800F_20181119-152155I\n20181119-152900F\n"
-                "20181119-152900F_20181119-152600D\n",
+            "20181119-152900F_20181119-152600D\n",
             "remaining backups correct");
         TEST_RESULT_LOG("P00   INFO: repo1: expire full backup 20181119-152138F");
 
@@ -239,8 +239,8 @@ testRun(void)
             infoBackupDataLabelList(infoBackup, NULL), "20181119-152900F\n20181119-152900F_20181119-152600D\n",
             "remaining backups correct");
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D,"
-                " 20181119-152800F_20181119-152155I");
+            "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D"
+            ", 20181119-152800F_20181119-152155I");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full set - no backups expired");
@@ -301,8 +301,7 @@ testRun(void)
         TEST_TITLE("retention-diff set - diff with no dependents expired");
 
         // Create backup.info with two diff - oldest to be expired - no "set:"
-        const Buffer *backupInfoContent = harnessInfoChecksumZ
-        (
+        const Buffer *backupInfoContent = harnessInfoChecksumZ(
             "[backup:current]\n"
             "20181119-152800F={"
             "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
@@ -337,9 +336,8 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}"
-        );
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}");
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
 
@@ -388,8 +386,8 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}");
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
@@ -424,8 +422,7 @@ testRun(void)
         TEST_TITLE("remove expired backup from disk - no current backups");
 
         // Create backup.info without current backups
-        const Buffer *backupInfoContent = harnessInfoChecksumZ
-        (
+        const Buffer *backupInfoContent = harnessInfoChecksumZ(
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -434,9 +431,8 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}"
-        );
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}");
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
 
@@ -484,8 +480,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Create backup.info without current backups
-        const Buffer *backupInfoContent = harnessInfoChecksumZ
-        (
+        const Buffer *backupInfoContent = harnessInfoChecksumZ(
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -494,9 +489,8 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}"
-        );
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}");
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
@@ -504,9 +498,9 @@ testRun(void)
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "archive retention not set");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.\n"
+            " maximum.\n"
             "P00   INFO: option 'repo1-retention-archive' is not set - archive logs will not be expired");
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, true, 0), "archive retention not set - retention-full-type=time");
@@ -523,9 +517,9 @@ testRun(void)
             removeExpiredArchive(infoBackup, false, 0), "archive retention set, retention type default, no current backups");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.");
+            " maximum.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-archive set - no archive on disk");
@@ -600,10 +594,10 @@ testRun(void)
             "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"10\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
@@ -687,8 +681,9 @@ testRun(void)
             .comment = "only 9.4-1/0000000100000000/000000010000000000000002 remains in major wal 1");
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000", archiveExpectList(2, 10, "0000000200000000"),
-            .comment = "nothing removed from 9.4-1/0000000200000000 major wal 2 - each archiveId must have one backup to play"
-            " through PITR");
+            .comment =
+                "nothing removed from 9.4-1/0000000200000000 major wal 2 - each archiveId must have one backup to play"
+                " through PITR");
         TEST_STORAGE_LIST(
             storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(3, 10, "0000000100000000"),
             .comment = "none removed from 10-2/0000000100000000");
@@ -902,26 +897,26 @@ testRun(void)
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 2 error(s), check the log file for details");
         TEST_RESULT_LOG(
-            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/repo/backup/db/backup.info' or '"
-                         TEST_PATH "/repo/backup/db/backup.info.copy':\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/repo/backup/db/backup.info' or"
+            " '" TEST_PATH "/repo/backup/db/backup.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info' for read\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
-            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
-                " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D"
+            ", 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/repo2/archive/db/archive.info' or '"
-                         TEST_PATH "/repo2/archive/db/archive.info.copy':\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/repo2/archive/db/archive.info' or"
+            " '" TEST_PATH "/repo2/archive/db/archive.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/archive.info' for read\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/archive.info.copy'"
-                " for read\n"
+            " for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
-                         " archiving scheme.");
+            " archiving scheme.");
 
         // Restore saved archive.info file
         HRN_STORAGE_MOVE(storageTest, "repo2/archive/db/" INFO_ARCHIVE_FILE ".save", "repo2/archive/db/" INFO_ARCHIVE_FILE);
@@ -932,22 +927,22 @@ testRun(void)
         TEST_ERROR(
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         TEST_RESULT_LOG(
-            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/repo/backup/db/backup.info' or '"
-                         TEST_PATH "/repo/backup/db/backup.info.copy':\n"
+            "P00  ERROR: [055]: [DRY-RUN] repo1: unable to load info file '" TEST_PATH "/repo/backup/db/backup.info' or"
+            " '" TEST_PATH "/repo/backup/db/backup.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info' for read\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
-            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
-                " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D"
+            ", 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002,"
-                " stop = 000000020000000000000002\n"
-            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
-                " start = 000000020000000000000009\n"
-            "P00   INFO: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004,"
-                " stop = 000000020000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002"
+            ", stop = 000000020000000000000002\n"
+            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D"
+            ", start = 000000020000000000000009\n"
+            "P00   INFO: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004"
+            ", stop = 000000020000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo2: 10-2 no archive to remove");
 
@@ -1002,8 +997,8 @@ testRun(void)
             "backup.info.copy\n", .noRecurse = true, .comment = "repo2: backups not removed");
 
         TEST_RESULT_LOG(
-            "P00   INFO: [DRY-RUN] repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D, "
-                "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: [DRY-RUN] repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D"
+            ", 20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
@@ -1011,16 +1006,16 @@ testRun(void)
             "P00   INFO: [DRY-RUN] repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00 DETAIL: [DRY-RUN] repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove\n"
-            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
-                " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D"
+            ", 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002,"
-                " stop = 000000020000000000000002\n"
-            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
-                " start = 000000020000000000000009\n"
-            "P00   INFO: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004,"
-                " stop = 000000020000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002"
+            ", stop = 000000020000000000000002\n"
+            "P00 DETAIL: [DRY-RUN] repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D"
+            ", start = 000000020000000000000009\n"
+            "P00   INFO: [DRY-RUN] repo2: 9.4-1 remove archive, start = 000000020000000000000004"
+            ", stop = 000000020000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo2: 10-2 no archive to remove");
 
@@ -1047,8 +1042,8 @@ testRun(void)
             .comment = "repo2: 9.4-1 only archives not meeting retention for archive-retention-type=diff are removed");
 
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D, "
-                "20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
+            "P00   INFO: repo1: expire full backup set 20181119-152800F, 20181119-152800F_20181119-152152D"
+            ", 20181119-152800F_20181119-152155I, 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
@@ -1056,14 +1051,14 @@ testRun(void)
             "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
             "P00 DETAIL: repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: repo1: 10-2 no archive to remove\n"
-            "P00   INFO: repo2: expire diff backup set 20181119-152800F_20181119-152152D,"
-                " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: repo2: expire diff backup set 20181119-152800F_20181119-152152D"
+            ", 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002,"
-                " stop = 000000020000000000000002\n"
-            "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
-                " start = 000000020000000000000009\n"
+            "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002"
+            ", stop = 000000020000000000000002\n"
+            "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D"
+            ", start = 000000020000000000000009\n"
             "P00   INFO: repo2: 9.4-1 remove archive, start = 000000020000000000000004, stop = 000000020000000000000007\n"
             "P00 DETAIL: repo2: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: repo2: 10-2 no archive to remove");
@@ -1123,9 +1118,9 @@ testRun(void)
         TEST_RESULT_VOID(cmdExpire(), "label format OK and expired on specified repo");
         TEST_RESULT_LOG(
             "P00   WARN: [DRY-RUN] repo1: expiring latest backup 20181119-152900F_20181119-152500I - the ability to perform"
-                " point-in-time-recovery (PITR) may be affected\n"
+            " point-in-time-recovery (PITR) may be affected\n"
             "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
-                " expires) can cause gaps in the WAL.\n"
+            " expires) can cause gaps in the WAL.\n"
             "P00   INFO: [DRY-RUN] repo1: expire adhoc backup 20181119-152900F_20181119-152500I\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152900F_20181119-152500I\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove");
@@ -1187,10 +1182,10 @@ testRun(void)
             "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"10\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
@@ -1223,8 +1218,8 @@ testRun(void)
         TEST_RESULT_VOID(
             removeExpiredArchive(infoBackup, false, 0), "backup earlier than selected for retention does not have archive-start");
         TEST_RESULT_LOG(
-            "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002,"
-                " stop = 000000010000000000000002\n"
+            "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000010000000000000002"
+            ", stop = 000000010000000000000002\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000004\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000003, stop = 000000010000000000000003");
@@ -1269,10 +1264,10 @@ testRun(void)
             "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"10\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
@@ -1529,10 +1524,10 @@ testRun(void)
             "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"10\"}\n"
-            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"10\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"10\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"10\"}\n");
 
         // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk and removeExpiredBackup
         // will find backup directories to remove
@@ -1648,10 +1643,10 @@ testRun(void)
             "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"10\"}\n"
-            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"10\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":1002,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"10\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"10\"}\n");
 
         // Write backup.manifest so infoBackup reconstruct produces same results as backup.info on disk and removeExpiredBackup
         // will find backup directories to remove
@@ -1769,10 +1764,10 @@ testRun(void)
             "db-version=\"12\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"
-                    "\"db-version\":\"12\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"12\"}\n");
 
         // Add backup directories with manifest file including a resumable backup dependent on last backup
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
@@ -1896,12 +1891,12 @@ testRun(void)
             "P00   INFO: repo1: expire adhoc backup set 20181119-152800F_20181119-152152D, 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
-            "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000020000000000000001,"
-                " stop = 000000020000000000000001\n"
+            "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152138F, start = 000000020000000000000001"
+            ", stop = 000000020000000000000001\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002\n"
             "P00   INFO: repo1: 9.4-1 no archive to remove\n"
-            "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002,"
-                " stop = 000000010000000000000004\n"
+            "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002"
+            ", stop = 000000010000000000000004\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152900F, start = 000000010000000000000006\n"
             "P00   INFO: repo1: 12-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000001\n"
             "P00   INFO: repo1: 12-2 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005");
@@ -1936,8 +1931,8 @@ testRun(void)
             "P00   INFO: repo1: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002\n"
             "P00   INFO: repo1: 9.4-1 remove archive, start = 000000020000000000000001, stop = 000000020000000000000001\n"
-            "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002,"
-                " stop = 000000010000000000000004\n"
+            "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002"
+            ", stop = 000000010000000000000004\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152900F, start = 000000010000000000000006\n"
             "P00   INFO: repo1: 12-2 no archive to remove");
 
@@ -1964,9 +1959,9 @@ testRun(void)
             .comment = "latest backup and resumable removed");
         TEST_RESULT_LOG(
             "P00   WARN: repo1: expiring latest backup 20181119-152900F - the ability to perform point-in-time-recovery (PITR) may"
-                " be affected\n"
+            " be affected\n"
             "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
-                " expires) can cause gaps in the WAL.\n"
+            " expires) can cause gaps in the WAL.\n"
             "P00   INFO: repo1: expire adhoc backup 20181119-152900F\n"
             "P00   INFO: repo1: remove expired backup 20181119-152900F_20181119-153000I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152900F\n"
@@ -1994,7 +1989,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
-                " this repo");
+            " this repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("allow adhoc expire on last full backup in prior db-id");
@@ -2032,7 +2027,7 @@ testRun(void)
             cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         TEST_RESULT_LOG(
             "P00  ERROR: [075]: repo1: full backup 20181119-152850F cannot be expired until another full backup has been created on"
-                " this repo");
+            " this repo");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("adhoc dry-run");
@@ -2066,10 +2061,10 @@ testRun(void)
             "db-version=\"12\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"12\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"12\"}\n");
 
         // Load the backup info. Do not store a manifest file for the adhoc backup for code coverage
         TEST_ASSIGN(
@@ -2090,9 +2085,9 @@ testRun(void)
             removeExpiredBackup(infoBackup, adhocBackupLabel, 0), "code coverage: removeExpireBackup with no manifests");
         TEST_RESULT_LOG(
             "P00   WARN: [DRY-RUN] repo1: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform"
-                " point-in-time-recovery (PITR) may be affected\n"
+            " point-in-time-recovery (PITR) may be affected\n"
             "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
-                " expires) can cause gaps in the WAL.\n"
+            " expires) can cause gaps in the WAL.\n"
             "P00   INFO: [DRY-RUN] repo1: expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152850F_20181119-152252D");
 
@@ -2137,10 +2132,10 @@ testRun(void)
             "db-version=\"12\"\n"                                                                                                  \
             "\n"                                                                                                                   \
             "[db:history]\n"                                                                                                       \
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"                 \
-                "\"db-version\":\"9.4\"}\n"                                                                                        \
-            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089,"                \
-                "\"db-version\":\"12\"}\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"                  \
+            ",\"db-version\":\"9.4\"}\n"                                                                                           \
+            "2={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6626363367545678089"                 \
+            ",\"db-version\":\"12\"}\n"
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE,
@@ -2255,17 +2250,17 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: repo1: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform"
-                " point-in-time-recovery (PITR) may be affected\n"
+            " point-in-time-recovery (PITR) may be affected\n"
             "            HINT: non-default settings for 'repo1-retention-archive'/'repo1-retention-archive-type' (even in prior"
-                " expires) can cause gaps in the WAL.\n"
+            " expires) can cause gaps in the WAL.\n"
             "P00   INFO: repo1: expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152850F_20181119-152252D\n"
             "P00 DETAIL: repo1: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
             "P00   INFO: repo1: 12-2 no archive to remove\n"
             "P00   WARN: repo2: expiring latest backup 20181119-152850F_20181119-152252D - the ability to perform"
-                " point-in-time-recovery (PITR) may be affected\n"
+            " point-in-time-recovery (PITR) may be affected\n"
             "            HINT: non-default settings for 'repo2-retention-archive'/'repo2-retention-archive-type' (even in prior"
-                " expires) can cause gaps in the WAL.\n"
+            " expires) can cause gaps in the WAL.\n"
             "P00   INFO: repo2: expire adhoc backup 20181119-152850F_20181119-152252D\n"
             "P00   INFO: repo2: remove expired backup 20181119-152850F_20181119-152252D\n"
             "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
@@ -2344,9 +2339,9 @@ testRun(void)
         TEST_RESULT_VOID(cmdExpire(), "repo-retention-full not set for time-based");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=time', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.\n"
+            " maximum.\n"
             "P00   INFO: repo1: time-based archive retention not met - archive logs will not be expired");
 
         // Stop time equals retention time
@@ -2404,12 +2399,12 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
-            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004,"
-                " stop = 000000010000000000000004\n"
-            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152152D,"
-                " start = 000000010000000000000006, stop = 000000010000000000000006\n"
-            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152155I,"
-                " start = 000000010000000000000007, stop = 000000010000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004"
+            ", stop = 000000010000000000000004\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152152D"
+            ", start = 000000010000000000000006, stop = 000000010000000000000006\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152155I"
+            ", start = 000000010000000000000007, stop = 000000010000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
@@ -2429,19 +2424,19 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: [DRY-RUN] option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
-                " to the maximum.\n"
+            " to the maximum.\n"
             "P00   INFO: [DRY-RUN] repo1: expire time-based backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
-            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004,"
-                " stop = 000000010000000000000004\n"
-            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152152D,"
-                " start = 000000010000000000000006, stop = 000000010000000000000006\n"
-            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152155I,"
-                " start = 000000010000000000000007, stop = 000000010000000000000007\n"
-            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009,"
-                " stop = 000000010000000000000009\n"
-            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F_20181119-152600D,"
-                " start = 000000010000000000000011\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004"
+            ", stop = 000000010000000000000004\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152152D"
+            ", start = 000000010000000000000006, stop = 000000010000000000000006\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152155I"
+            ", start = 000000010000000000000007, stop = 000000010000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009"
+            ", stop = 000000010000000000000009\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F_20181119-152600D"
+            ", start = 000000010000000000000011\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000008, stop = 000000010000000000000008\n"
@@ -2475,8 +2470,8 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdExpire(), "expire all but newest");
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: expire time-based backup set 20181119-152800F, 20181119-152800F_20181119-152152D,"
-                " 20181119-152800F_20181119-152155I\n"
+            "P00   INFO: repo1: expire time-based backup set 20181119-152800F, 20181119-152800F_20181119-152152D"
+            ", 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152155I\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00   INFO: repo1: remove expired backup 20181119-152800F\n"

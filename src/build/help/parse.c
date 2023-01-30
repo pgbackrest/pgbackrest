@@ -31,15 +31,15 @@ bldHlpParseOption(XmlNodeList *const xmlOptList, List *const optList, const Stri
         // Add option to list
         MEM_CONTEXT_BEGIN(lstMemContext(optList))
         {
-            lstAdd(
-                optList,
-                &(BldHlpOption)
-                {
-                    .name = xmlNodeAttribute(xmlOpt, STRDEF("id")),
-                    .section = strDup(section),
-                    .summary = xmlNodeChild(xmlOpt, STRDEF("summary"), true),
-                    .description = xmlNodeChild(xmlOpt, STRDEF("text"), true),
-                });
+            const BldHlpOption bldHlpOption =
+            {
+                .name = xmlNodeAttribute(xmlOpt, STRDEF("id")),
+                .section = strDup(section),
+                .summary = xmlNodeChild(xmlOpt, STRDEF("summary"), true),
+                .description = xmlNodeChild(xmlOpt, STRDEF("text"), true),
+            };
+
+            lstAdd(optList, &bldHlpOption);
         }
         MEM_CONTEXT_END();
     }
@@ -106,15 +106,15 @@ bldHlpParseCommandList(XmlNode *const xml)
         // Add command to list
         MEM_CONTEXT_BEGIN(lstMemContext(result))
         {
-            lstAdd(
-                result,
-                &(BldHlpCommand)
-                {
-                    .name = xmlNodeAttribute(xmlCmd, STRDEF("id")),
-                    .summary = xmlNodeChild(xmlCmd, STRDEF("summary"), true),
-                    .description = xmlNodeChild(xmlCmd, STRDEF("text"), true),
-                    .optList = lstMove(cmdOptList, memContextCurrent()),
-                });
+            const BldHlpCommand bldHlpCommand =
+            {
+                .name = xmlNodeAttribute(xmlCmd, STRDEF("id")),
+                .summary = xmlNodeChild(xmlCmd, STRDEF("summary"), true),
+                .description = xmlNodeChild(xmlCmd, STRDEF("text"), true),
+                .optList = lstMove(cmdOptList, memContextCurrent()),
+            };
+
+            lstAdd(result, &bldHlpCommand);
         }
         MEM_CONTEXT_END();
     }

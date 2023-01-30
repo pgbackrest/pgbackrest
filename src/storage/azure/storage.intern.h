@@ -16,11 +16,11 @@ typedef struct StorageAzure StorageAzure;
 Azure query tokens
 ***********************************************************************************************************************************/
 #define AZURE_QUERY_COMP                                            "comp"
-    STRING_DECLARE(AZURE_QUERY_COMP_STR);
+STRING_DECLARE(AZURE_QUERY_COMP_STR);
 #define AZURE_QUERY_RESTYPE                                         "restype"
-    STRING_DECLARE(AZURE_QUERY_RESTYPE_STR);
+STRING_DECLARE(AZURE_QUERY_RESTYPE_STR);
 #define AZURE_QUERY_VALUE_CONTAINER                                 "container"
-    STRING_DECLARE(AZURE_QUERY_VALUE_CONTAINER_STR);
+STRING_DECLARE(AZURE_QUERY_VALUE_CONTAINER_STR);
 
 /***********************************************************************************************************************************
 Perform an Azure Request

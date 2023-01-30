@@ -17,15 +17,15 @@ Constants
 ***********************************************************************************************************************************/
 #define BACKUP_MANIFEST_EXT                                         ".manifest"
 #define BACKUP_MANIFEST_FILE                                        "backup" BACKUP_MANIFEST_EXT
-    STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
+STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
 
 #define MANIFEST_PATH_BUNDLE                                        "bundle"
-    STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
+STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
 
 #define MANIFEST_TARGET_PGDATA                                      "pg_data"
-    STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
+STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
-    STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
+STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
 
 /***********************************************************************************************************************************
 Object type
@@ -102,11 +102,11 @@ File type
 typedef struct ManifestFile
 {
     const String *name;                                             // File name (must be first member in struct)
-    bool copy:1;                                                    // Should the file be copied (backup only)?
-    bool delta:1;                                                   // Verify checksum in PGDATA before copying (backup only)?
-    bool resume:1;                                                  // Is the file being resumed (backup only)?
-    bool checksumPage:1;                                            // Does this file have page checksums?
-    bool checksumPageError:1;                                       // Is there an error in the page checksum?
+    bool copy : 1;                                                  // Should the file be copied (backup only)?
+    bool delta : 1;                                                 // Verify checksum in PGDATA before copying (backup only)?
+    bool resume : 1;                                                // Is the file being resumed (backup only)?
+    bool checksumPage : 1;                                          // Does this file have page checksums?
+    bool checksumPageError : 1;                                     // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
     const uint8_t *checksumSha1;                                    // SHA1 checksum
     const uint8_t *checksumRepoSha1;                                // SHA1 checksum as stored in repo (including compression, etc.)

@@ -215,7 +215,7 @@ testRun(void)
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file"), testInfoLoadCallback, &testInfoLoad), ChecksumError,
             "unable to load info file:\n"
-                "ChecksumError: checksum error");
+            "ChecksumError: checksum error");
 
         // Two errors (same error)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -224,8 +224,8 @@ testRun(void)
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FormatError,
             "unable to load info file(s):\n"
-                "FormatError: format error\n"
-                "FormatError: format error");
+            "FormatError: format error\n"
+            "FormatError: format error");
 
         // Four errors (mixed)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -234,11 +234,11 @@ testRun(void)
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FileOpenError,
             "unable to load info file(s):\n"
-                "FileMissingError: file missing error\n"
-                "ChecksumError: checksum error\n"
-                "HINT: have you checked the thing?\n"
-                "FormatError: format error\n"
-                "FileMissingError: file missing error");
+            "FileMissingError: file missing error\n"
+            "ChecksumError: checksum error\n"
+            "HINT: have you checked the thing?\n"
+            "FormatError: format error\n"
+            "FileMissingError: file missing error");
 
         // Success
         // -------------------------------------------------------------------------------------------------------------------------

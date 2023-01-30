@@ -426,7 +426,7 @@ verifyManifestFile(
                     result = verifyManifestInfoCopy.manifest;
                 }
                 else if (verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError) &&
-                    verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
+                         verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
                 {
                     backupResult->status = backupMissingManifest;
 
@@ -465,7 +465,7 @@ verifyManifestFile(
             {
                 LOG_INFO_FMT(
                     "'%s' may not be recoverable - PG data (id %u, version %s, system-id %" PRIu64 ") is not in the backup.info"
-                        " history, skipping",
+                    " history, skipping",
                     strZ(backupResult->backupLabel), manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId);
 
                 manifestFree(result);

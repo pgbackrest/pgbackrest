@@ -709,7 +709,7 @@ testRun(void)
                 hrnServerScriptExpectZ(
                     http,
                     "GET /path/file%201.txt HTTP/1.1\r\n" TEST_USER_AGENT "content-length:30\r\n\r\n"
-                        "012345678901234567890123456789");
+                    "012345678901234567890123456789");
                 hrnServerScriptReplyZ(
                     http,
                     "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:application/xml\r\n\r\n01234567890123456789012345678901");

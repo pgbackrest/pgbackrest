@@ -14,7 +14,9 @@ Convert the time using the format specified in https://tools.ietf.org/html/rfc72
 only version we support).
 ***********************************************************************************************************************************/
 static const char *const httpCommonMonthList[] =
-    {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+{
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
 static const char *const httpCommonDayList[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 FN_EXTERN time_t

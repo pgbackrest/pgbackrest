@@ -213,12 +213,15 @@ backupFile(
                     }
 
                     // Compress filter
-                    IoFilter *const compress = repoFileCompressType != compressTypeNone ?
-                        compressFilter(repoFileCompressType, repoFileCompressLevel) : NULL;
+                    IoFilter *const compress =
+                        repoFileCompressType != compressTypeNone ?
+                            compressFilter(repoFileCompressType, repoFileCompressLevel) : NULL;
 
                     // Encrypt filter
-                    IoFilter *const encrypt = cipherType != cipherTypeNone ?
-                        cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = file->blockIncrSize != 0) : NULL;
+                    IoFilter *const encrypt =
+                        cipherType != cipherTypeNone ?
+                            cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = file->blockIncrSize != 0) :
+                            NULL;
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
                     // compressed/encrypted separately

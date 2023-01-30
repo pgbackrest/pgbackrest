@@ -192,8 +192,8 @@ hrnPgControlToBuffer(PgControl pgControl)
     // Set defaults if values are not passed
     pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
     pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
-    pgControl.catalogVersion = pgControl.catalogVersion == 0 ?
-        hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
+    pgControl.catalogVersion =
+        pgControl.catalogVersion == 0 ? hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
     pgControl.systemId = pgControl.systemId < 100 ? hrnPgSystemId(pgControl.version) + pgControl.systemId : pgControl.systemId;
     pgControl.checkpoint = pgControl.checkpoint == 0 ? 1 : pgControl.checkpoint;
     pgControl.timeline = pgControl.timeline == 0 ? 1 : pgControl.timeline;

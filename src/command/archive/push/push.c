@@ -275,15 +275,15 @@ archivePushCheck(bool pgPathSet)
                     result.pgVersion = archiveInfo.version;
                     result.pgSystemId = archiveInfo.systemId;
 
-                    lstAdd(
-                        result.repoList,
-                        &(ArchivePushFileRepoData)
-                        {
-                            .repoIdx = repoIdx,
-                            .archiveId = strDup(archiveId),
-                            .cipherType = repoCipherType,
-                            .cipherPass = strDup(infoArchiveCipherPass(info)),
-                        });
+                    const ArchivePushFileRepoData archivePushFileRepoData =
+                    {
+                        .repoIdx = repoIdx,
+                        .archiveId = strDup(archiveId),
+                        .cipherType = repoCipherType,
+                        .cipherPass = strDup(infoArchiveCipherPass(info)),
+                    };
+
+                    lstAdd(result.repoList, &archivePushFileRepoData);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }

@@ -1037,16 +1037,15 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             for (unsigned int deprecateIdx = 0; deprecateIdx < lstSize(opt->deprecateList); deprecateIdx++)
             {
                 const BldCfgOptionDeprecate *const deprecate = lstGet(opt->deprecateList, deprecateIdx);
+                const BldCfgRenderOptionDeprecate bldCfgRenderOptionDeprecate =
+                {
+                    .name = deprecate->name,
+                    .option = opt,
+                    .indexed = deprecate->indexed,
+                    .unindexed = deprecate->unindexed,
+                };
 
-                lstAdd(
-                    deprecateCombineList,
-                    &(BldCfgRenderOptionDeprecate)
-                    {
-                        .name = deprecate->name,
-                        .option = opt,
-                        .indexed = deprecate->indexed,
-                        .unindexed = deprecate->unindexed,
-                    });
+                lstAdd(deprecateCombineList, &bldCfgRenderOptionDeprecate);
             }
         }
     }

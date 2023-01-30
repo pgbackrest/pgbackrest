@@ -118,7 +118,7 @@ testRun(void)
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
             "version '9.6' and path '/pgdata' queried from cluster do not match version '9.6' and '" TEST_PATH "/pg' read from"
-                " '" TEST_PATH "/pg/global/pg_control'\n"
+            " '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -143,7 +143,7 @@ testRun(void)
         TEST_ERROR(
             cmdCheck(), FileMissingError,
             "unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or '" TEST_PATH
-                "/repo/archive/test1/archive.info.copy':\n"
+            "/repo/archive/test1/archive.info.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info.copy' for read\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
@@ -183,8 +183,8 @@ testRun(void)
 
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
-            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "' queried from cluster do not match version '" PG_VERSION_15_STR
-                "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
+            "version '" PG_VERSION_15_STR "' and path '" TEST_PATH "' queried from cluster do not match version"
+            " '" PG_VERSION_15_STR "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -213,8 +213,8 @@ testRun(void)
             "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":202209061,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z ","
-                "\"db-version\":\"15\"}\n");
+            "1={\"db-catalog-version\":202209061,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            ",\"db-version\":\"15\"}\n");
 
         // Single repo config - error when checking archive mode setting on database
         harnessPqScriptSet((HarnessPq [])
@@ -257,7 +257,7 @@ testRun(void)
         TEST_ERROR_FMT(
             cmdCheck(), FileMissingError,
             "unable to load info file '" TEST_PATH "/repo2/archive/test1/archive.info' or"
-                " '" TEST_PATH "/repo2/archive/test1/archive.info.copy':\n"
+            " '" TEST_PATH "/repo2/archive/test1/archive.info.copy':\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "FileMissingError: " STORAGE_ERROR_READ_MISSING "\n"
             "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
@@ -300,8 +300,8 @@ testRun(void)
             "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":202209061,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z ","
-                "\"db-version\":\"15\"}\n");
+            "1={\"db-catalog-version\":202209061,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            ",\"db-version\":\"15\"}\n");
 
         // Error when WAL segment not found
         harnessPqScriptSet((HarnessPq [])
@@ -354,11 +354,11 @@ testRun(void)
             "P00   INFO: check repo1 configuration (primary)\n"
             "P00   INFO: check repo2 configuration (primary)\n"
             "P00   INFO: check repo1 archive for WAL (primary)\n"
-            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/15-1/"
-                "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/15-1"
+            "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
             "P00   INFO: check repo2 archive for WAL (primary)\n"
-            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/15-1/"
-                "0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2");
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/15-1"
+            "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Primary == NULL (for test coverage)");
@@ -431,7 +431,7 @@ testRun(void)
         TEST_ERROR_FMT(
             checkDbConfig(PG_VERSION_11, db.standbyIdx, db.standby, true), DbMismatchError,
             "version '" PG_VERSION_11_STR "' and path '%s' queried from cluster do not match version '" PG_VERSION_11_STR "' and"
-                " '" TEST_PATH "/pg8' read from '" TEST_PATH "/pg8/global/pg_control'\n"
+            " '" TEST_PATH "/pg8' read from '" TEST_PATH "/pg8/global/pg_control'\n"
             "HINT: the pg8-path and pg8-port settings likely reference different clusters.",
             strZ(dbPgDataPath(db.standby)));
 

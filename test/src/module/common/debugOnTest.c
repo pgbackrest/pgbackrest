@@ -189,7 +189,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
-                " paramBoolP: null, paramBoolPP: null, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
+            " paramBoolP: null, paramBoolPP: null, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");
@@ -204,7 +204,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
-                " paramBoolP: *true, paramBoolPP: **true, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
+            " paramBoolP: *true, paramBoolPP: **true, paramVoidP: null, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");
@@ -216,7 +216,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
-                " paramBoolP: null, paramBoolPP: *null, paramVoidP: *void, paramDouble: 1.17, paramMode: 0755)\n"
+            " paramBoolP: null, paramBoolPP: *null, paramVoidP: *void, paramDouble: 1.17, paramMode: 0755)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
             "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
             "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");

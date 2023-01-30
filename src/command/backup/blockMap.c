@@ -188,10 +188,14 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
                 ioWriteVarIntU64(output, blockMapItem->offset);
 
                 // Add reference to list
-                blockMapRef = lstAdd(
-                    refList,
-                    &(BlockMapRef){
-                        .reference = blockMapItem->reference, .bundleId = blockMapItem->bundleId, .offset = blockMapItem->offset});
+                const BlockMapRef blockMapRefAdd =
+                {
+                    .reference = blockMapItem->reference,
+                    .bundleId = blockMapItem->bundleId,
+                    .offset = blockMapItem->offset,
+                };
+
+                blockMapRef = lstAdd(refList, &blockMapRefAdd);
             }
             else
             {

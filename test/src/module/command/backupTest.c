@@ -956,35 +956,69 @@ testRun(void)
         BlockMap *blockMap = NULL;
         TEST_ASSIGN(blockMap, blockMapNew(), "new");
 
-        BlockMapItem blockMapItem1 = {
-            .reference = 128, .size = 3,
-            .checksum = {255, 128, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        BlockMapItem blockMapItem1 =
+        {
+            .reference = 128,
+            .size = 3,
+            .checksum = {255, 128, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem1)->reference, 128, "add");
         TEST_RESULT_UINT(blockMapGet(blockMap, 0)->reference, 128, "get");
 
-        BlockMapItem blockMapItem2 = {
-            .reference = 0, .bundleId = 56, .offset = 200000000, .size = 127,
-            .checksum = {255, 0, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        BlockMapItem blockMapItem2 =
+        {
+            .reference = 0,
+            .bundleId = 56,
+            .offset = 200000000,
+            .size = 127,
+            .checksum = {255, 0, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem2)->reference, blockMapItem2.reference, "add");
 
-        BlockMapItem blockMapItem5 = {
-            .reference = 1024, .bundleId = 1024, .offset = 1024, .size = 1024,
-            .checksum = {255, 102, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        BlockMapItem blockMapItem5 =
+        {
+            .reference = 1024,
+            .bundleId = 1024,
+            .offset = 1024,
+            .size = 1024,
+            .checksum = {255, 102, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem5)->reference, blockMapItem5.reference, "add");
 
-        BlockMapItem blockMapItem3 = {
-            .reference = blockMapItem1.reference, .bundleId = blockMapItem1.bundleId, .offset = blockMapItem1.offset + 129,
-            .size = 9, .checksum = {255, 129, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        BlockMapItem blockMapItem3 =
+        {
+            .reference = blockMapItem1.reference,
+            .bundleId = blockMapItem1.bundleId,
+            .offset = blockMapItem1.offset + 129,
+            .size = 9,
+            .checksum = {255, 129, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem3)->reference, blockMapItem3.reference, "add");
 
-        BlockMapItem blockMapItem4 = {
-            .reference = blockMapItem2.reference, .bundleId = blockMapItem2.bundleId, .offset = blockMapItem2.offset + 129,
-            .size = 10, .checksum = {255, 1, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        BlockMapItem blockMapItem4 =
+        {
+            .reference = blockMapItem2.reference,
+            .bundleId = blockMapItem2.bundleId,
+            .offset = blockMapItem2.offset + 129,
+            .size = 10,
+            .checksum = {255, 1, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem4)->reference, blockMapItem4.reference, "add");
 
-        BlockMapItem blockMapItem6 = {
-            .reference = blockMapItem4.reference, .bundleId = blockMapItem4.bundleId, .offset = blockMapItem4.offset + 10,
-            .size = 11, .checksum = {255, 2, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255}};
+        BlockMapItem blockMapItem6 =
+        {
+            .reference = blockMapItem4.reference,
+            .bundleId = blockMapItem4.bundleId,
+            .offset = blockMapItem4.offset + 10,
+            .size = 11,
+            .checksum = {255, 2, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem6)->reference, blockMapItem6.reference, "add");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1752,13 +1786,13 @@ testRun(void)
             backupInit(infoBackupNew(PG_VERSION_11, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
             BackupMismatchError,
             "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 11, system-id"
-                " " HRN_PG_SYSTEMID_11_Z "\n"
+            " " HRN_PG_SYSTEMID_11_Z "\n"
             "HINT: is this the correct stanza?");
         TEST_ERROR(
             backupInit(infoBackupNew(PG_VERSION_10, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_10), NULL)),
             BackupMismatchError,
             "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 10, system-id"
-                " " HRN_PG_SYSTEMID_11_Z "\n"
+            " " HRN_PG_SYSTEMID_11_Z "\n"
             "HINT: is this the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1962,7 +1996,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed: unable to read"
-                " <REPO:BACKUP>/20191003-105320F/backup.manifest.copy");
+            " <REPO:BACKUP>/20191003-105320F/backup.manifest.copy");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when pgBackRest version has changed");
@@ -1993,7 +2027,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
-                " new pgBackRest version 'BOGUS' does not match resumable pgBackRest version '" PROJECT_VERSION "'");
+            " new pgBackRest version 'BOGUS' does not match resumable pgBackRest version '" PROJECT_VERSION "'");
 
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
@@ -2015,7 +2049,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
-                " new prior backup label '<undef>' does not match resumable prior backup label '20191003-105320F'");
+            " new prior backup label '<undef>' does not match resumable prior backup label '20191003-105320F'");
 
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
@@ -2037,7 +2071,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
-                " new prior backup label '20191003-105320F' does not match resumable prior backup label '<undef>'");
+            " new prior backup label '20191003-105320F' does not match resumable prior backup label '<undef>'");
 
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
@@ -2058,7 +2092,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
-                " new compression 'none' does not match resumable compression 'gz'");
+            " new compression 'none' does not match resumable compression 'gz'");
 
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
@@ -2167,7 +2201,7 @@ testRun(void)
         TEST_ERROR(
             hrnCmdBackup(), PgRunningError,
             "--no-online passed but " PG_FILE_POSTMTRPID " exists - looks like " PG_NAME " is running. Shut down " PG_NAME " and"
-                " try again, or use --force.");
+            " try again, or use --force.");
 
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, incr backup has been changed to full");
 
@@ -2191,10 +2225,10 @@ testRun(void)
         TEST_RESULT_LOG_FMT(
             "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
             "P00   WARN: --no-online passed and " PG_FILE_POSTMTRPID " exists but --force was passed so backup will continue though"
-                " it looks like " PG_NAME " is running and the backup will probably not be consistent\n"
+            " it looks like " PG_NAME " is running and the backup will probably not be consistent\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, 99.86%%) checksum %s\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, 100.00%%) checksum"
-                " e3db315c260e79211b7b52587123b7aa060f30ab\n"
+            " e3db315c260e79211b7b52587123b7aa060f30ab\n"
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
@@ -2457,7 +2491,7 @@ testRun(void)
                 "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
                 "P00   WARN: resumable backup 20191002-070640F of same type exists -- invalid files will be removed then the backup"
-                    " will resume\n"
+                " will resume\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/PG_VERSION (3B, [PCT]) checksum [SHA1]\n"
@@ -2481,10 +2515,10 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"size\":3"
-                    ",\"timestamp\":1570000000}\n"
+                ",\"timestamp\":1570000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570000000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
-                    ",\"timestamp\":1570000000}\n"
+                ",\"timestamp\":1570000000}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -2598,23 +2632,23 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
                 "P00   INFO: check archive for prior segment 0000000105D95D2F000000FF\n"
                 "P00   WARN: resumable backup 20191003-105320F of same type exists -- invalid files will be removed then the backup"
-                    " will resume\n"
+                " will resume\n"
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/bogus_path' from resumed"
-                    " backup\n"
+                " backup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/global/bogus' from resumed"
-                    " backup (mismatched compression type)\n"
+                " backup (mismatched compression type)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/global/bogus.gz' from resumed"
-                    " backup (missing in manifest)\n"
+                " backup (missing in manifest)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/global/pg_control.gz' from"
-                    " resumed backup (no checksum in resumed manifest)\n"
+                " resumed backup (no checksum in resumed manifest)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/not-in-resume.gz' from resumed"
-                    " backup (missing in resumed manifest)\n"
+                " backup (missing in resumed manifest)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/size-mismatch.gz' from resumed"
-                    " backup (mismatched size)\n"
+                " backup (mismatched size)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/time-mismatch.gz' from resumed"
-                    " backup (mismatched timestamp)\n"
+                " backup (mismatched timestamp)\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F/pg_data/zero-size.gz' from resumed"
-                    " backup (zero size)\n"
+                " backup (zero size)\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch (4B, [PCT]) checksum [SHA1]\n"
@@ -2649,17 +2683,17 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"size\":3"
-                    ",\"timestamp\":1570000000}\n"
+                ",\"timestamp\":1570000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570100000}\n"
                 "pg_data/not-in-resume={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
-                    ",\"timestamp\":1570100000}\n"
+                ",\"timestamp\":1570100000}\n"
                 "pg_data/pg_xlog/0000000105D95D3000000000={\"size\":16777216,\"timestamp\":1570100002}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
-                    ",\"timestamp\":1570000000}\n"
+                ",\"timestamp\":1570000000}\n"
                 "pg_data/size-mismatch={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
-                    ",\"timestamp\":1570100000}\n"
+                ",\"timestamp\":1570100000}\n"
                 "pg_data/time-mismatch={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
-                    ",\"timestamp\":1570100000}\n"
+                ",\"timestamp\":1570100000}\n"
                 "pg_data/zero-size={\"size\":0,\"timestamp\":1570100000}\n"
                 "\n"
                 "[target:path]\n"
@@ -2778,25 +2812,25 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
                 "P00   INFO: check archive for prior segment 0000000105D9758F000000FF\n"
                 "P00   WARN: file 'time-mismatch2' has timestamp (1570200100) in the future (relative to copy start 1570200000),"
-                    " enabling delta checksum\n"
+                " enabling delta checksum\n"
                 "P00   WARN: resumable backup 20191003-105320F_20191004-144000D of same type exists -- invalid files will be"
-                    " removed then the backup will resume\n"
+                " removed then the backup will resume\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/PG_VERSION.gz'"
-                    " from resumed backup (reference in manifest)\n"
+                " from resumed backup (reference in manifest)\n"
                 "P00   WARN: remove special file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/pipe'"
-                    " from resumed backup\n"
+                " from resumed backup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191003-105320F_20191004-144000D/pg_data/resume-ref.gz'"
-                    " from resumed backup (reference in resumed manifest)\n"
+                " from resumed backup (reference in resumed manifest)\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/time-mismatch2 does not have expected checksum"
-                    " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
-                    " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
+                " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
+                " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/repo-size-mismatch does not have expected checksum"
-                    " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
-                    " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
+                " 984816fd329622876e14907634264e6f332e9fb3. The file will be recopied and backup will continue but this may be"
+                " an issue unless the resumed backup path in the repository is known to be corrupted.\n"
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/repo-size-mismatch (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/content-mismatch (4B, [PCT]) checksum [SHA1]\n"
@@ -2806,7 +2840,7 @@ testRun(void)
                 "P00 DETAIL: hardlink pg_data/postgresql.conf to 20191003-105320F\n"
                 "P00   INFO: execute exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
-                    "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
+                "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
                 "P00   INFO: new backup label = 20191003-105320F_20191004-144000D\n"
                 "P00   INFO: diff backup size = [SIZE], file total = 7");
 
@@ -2830,17 +2864,17 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\",\"reference\":\"20191003-105320F\""
-                    ",\"size\":3,\"timestamp\":1570000000}\n"
+                ",\"size\":3,\"timestamp\":1570000000}\n"
                 "pg_data/content-mismatch={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
-                    ",\"timestamp\":1570200000}\n"
+                ",\"timestamp\":1570200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1570200000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
-                    ",\"reference\":\"20191003-105320F\",\"size\":11,\"timestamp\":1570000000}\n"
+                ",\"reference\":\"20191003-105320F\",\"size\":11,\"timestamp\":1570000000}\n"
                 "pg_data/repo-size-mismatch={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
-                    ",\"timestamp\":1570200000}\n"
+                ",\"timestamp\":1570200000}\n"
                 "pg_data/resume-ref={\"size\":0,\"timestamp\":1570200000}\n"
                 "pg_data/time-mismatch2={\"checksum\":\"984816fd329622876e14907634264e6f332e9fb3\",\"size\":4"
-                    ",\"timestamp\":1570200100}\n"
+                ",\"timestamp\":1570200100}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -2989,16 +3023,16 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"f5b7e6d36dc0113f61b36c700817d42b96f7b037\",\"size\":3"
-                    ",\"timestamp\":1571200000}\n"
+                ",\"timestamp\":1571200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1571200002}\n"
+                ",\"timestamp\":1571200002}\n"
                 "pg_data/base/1/1={\"size\":0,\"timestamp\":1571200000}\n"
                 "pg_data/base/1/2={\"checksum\":\"54ceb91256e8190e474aa752a6e0650a2df5ba37\",\"size\":2,\"timestamp\":1571200000}\n"
                 "pg_data/base/1/3={\"checksum\":\"3c01bdbb26f358bab27f267924aa2c9a03fcfdb8\",\"size\":3,\"timestamp\":1571200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1571200000}\n"
                 "pg_data/pg_xlog/0000000105DA69C000000000={\"size\":16777216,\"timestamp\":1571200002}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
-                    ",\"timestamp\":1570000000}\n"
+                ",\"timestamp\":1570000000}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -3141,7 +3175,7 @@ testRun(void)
                 "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/4 at page 1\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (8.5KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/2: file size 8704 is not divisible by page size"
-                    " 8192\n"
+                " 8192\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
@@ -3188,28 +3222,28 @@ testRun(void)
                     "[backup:target]\n"
                     "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                     "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
-                        ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                    ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                     "\n"
                     "[target:file]\n"
                     "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
-                        ",\"timestamp\":1572200000}\n"
+                    ",\"timestamp\":1572200000}\n"
                     "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                        ",\"timestamp\":1572200002}\n"
+                    ",\"timestamp\":1572200002}\n"
                     "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
-                        ",\"size\":8192,\"timestamp\":1572200000}\n"
+                    ",\"size\":8192,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/2={\"checksum\":\"%s\",\"checksum-page\":false,\"size\":8704,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/3={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[0,[2,4]]"
-                        ",\"size\":40960,\"timestamp\":1572200000}\n"
+                    ",\"size\":40960,\"timestamp\":1572200000}\n"
                     "pg_data/base/1/4={\"checksum\":\"%s\",\"checksum-page\":false,\"checksum-page-error\":[1],\"size\":24576"
-                        ",\"timestamp\":1572200000}\n"
+                    ",\"timestamp\":1572200000}\n"
                     "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572200000}\n"
                     "pg_data/pg_wal/0000000105DB5DE000000000={\"size\":1048576,\"timestamp\":1572200002}\n"
                     "pg_data/pg_wal/0000000105DB5DE000000001={\"size\":1048576,\"timestamp\":1572200002}\n"
                     "pg_data/pg_wal/0000000105DB5DE000000002={\"size\":1048576,\"timestamp\":1572200002}\n"
                     "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
-                        ",\"timestamp\":1570000000}\n"
+                    ",\"timestamp\":1570000000}\n"
                     "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                        ",\"timestamp\":1572200002}\n"
+                    ",\"timestamp\":1572200002}\n"
                     "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"size\":0,\"timestamp\":1572200000}\n"
                     "\n"
                     "[target:link]\n"
@@ -3343,22 +3377,22 @@ testRun(void)
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
-                    ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191027-181320F\""
-                    ",\"size\":2,\"timestamp\":1572200000}\n"
+                ",\"size\":2,\"timestamp\":1572200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1572400002}\n"
+                ",\"timestamp\":1572400002}\n"
                 "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true"
-                    ",\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
+                ",\"reference\":\"20191027-181320F\",\"size\":8192,\"timestamp\":1572200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\""
-                    ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
+                ",\"reference\":\"20191027-181320F\",\"size\":11,\"timestamp\":1570000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                    ",\"timestamp\":1572400002}\n"
+                ",\"timestamp\":1572400002}\n"
                 "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"reference\":\"20191027-181320F\",\"size\":0"
-                    ",\"timestamp\":1572200000}\n"
+                ",\"timestamp\":1572200000}\n"
                 "\n"
                 "[target:link]\n"
                 "pg_data/pg_tblspc/32768={\"destination\":\"../../pg1-tblspc/32768\"}\n"
@@ -3476,33 +3510,33 @@ testRun(void)
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n"
                 "pg_tblspc/32768={\"path\":\"../../pg1-tblspc/32768\",\"tablespace-id\":\"32768\""
-                    ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
+                ",\"tablespace-name\":\"tblspc32768\",\"type\":\"link\"}\n"
                 "\n"
                 "[metadata]\n"
                 "annotation={\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
-                    ",\"timestamp\":1572200000}\n"
+                ",\"timestamp\":1572200000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1572400002}\n"
+                ",\"timestamp\":1572400002}\n"
                 "pg_data/base/1/1={\"checksum\":\"0631457264ff7f8d5fb1edc2c0211992a67c73e6\",\"checksum-page\":true,\"size\":8192"
-                    ",\"timestamp\":1572200000}\n"
+                ",\"timestamp\":1572200000}\n"
                 "pg_data/base/1/2={\"checksum\":\"ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7\",\"checksum-page\":true,\"size\":24576"
-                    ",\"timestamp\":1572400000}\n"
+                ",\"timestamp\":1572400000}\n"
                 "pg_data/bigish.dat={\"checksum\":\"3e5175386be683d2f231f3fa3eab892a799082f7\",\"size\":8191"
-                    ",\"timestamp\":1500000001}\n"
+                ",\"timestamp\":1500000001}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572400000}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000000={\"size\":1048576,\"timestamp\":1572400002}\n"
                 "pg_data/pg_wal/0000000105DB8EB000000001={\"size\":1048576,\"timestamp\":1572400002}\n"
                 "pg_data/postgresql.auto.conf={\"checksum\":\"e873a5cb5a67e48761e7b619c531311404facdce\",\"size\":12"
-                    ",\"timestamp\":1500000000}\n"
+                ",\"timestamp\":1500000000}\n"
                 "pg_data/postgresql.conf={\"checksum\":\"e3db315c260e79211b7b52587123b7aa060f30ab\",\"size\":11"
-                    ",\"timestamp\":1570000000}\n"
+                ",\"timestamp\":1570000000}\n"
                 "pg_data/stuff.conf={\"checksum\":\"55a9d0d18b77789c7722abe72aa905e2dc85bb5d\",\"size\":12"
-                    ",\"timestamp\":1500000000}\n"
+                ",\"timestamp\":1500000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                    ",\"timestamp\":1572400002}\n"
+                ",\"timestamp\":1572400002}\n"
                 "pg_data/zero={\"size\":0,\"timestamp\":1572400000}\n"
                 "pg_tblspc/32768/PG_11_201809051/1/5={\"checksum-page\":true,\"size\":0,\"timestamp\":1572200000}\n"
                 "\n"
@@ -3590,12 +3624,12 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191030-014640F\""
-                    ",\"size\":2,\"timestamp\":1572600000}\n"
+                ",\"size\":2,\"timestamp\":1572600000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1572600002}\n"
+                ",\"timestamp\":1572600002}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572600000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                    ",\"timestamp\":1572600002}\n"
+                ",\"timestamp\":1572600002}\n"
                 "pg_data/zero={\"size\":0,\"timestamp\":1572600000}\n"
                 "\n"
                 "[target:path]\n"
@@ -3692,18 +3726,18 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
-                    ",\"timestamp\":1572800000}\n"
+                ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1572800002}\n"
+                ",\"timestamp\":1572800002}\n"
                 "pg_data/block-incr-grow={\"bims\":70,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
-                    ",\"size\":393216,\"timestamp\":1572800000}\n"
+                ",\"size\":393216,\"timestamp\":1572800000}\n"
                 "pg_data/block-incr-shrink={\"bims\":53,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
-                    ",\"size\":131073,\"timestamp\":1572800000}\n"
+                ",\"size\":131073,\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572800000}\n"
                 "pg_data/grow-to-block-incr={\"checksum\":\"f24ce50110bed53703bac93d9705d1e101c7cfeb\",\"size\":131071"
-                    ",\"timestamp\":1572800000}\n"
+                ",\"timestamp\":1572800000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                    ",\"timestamp\":1572800002}\n"
+                ",\"timestamp\":1572800002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -3800,20 +3834,20 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191103-165320F\""
-                    ",\"size\":2,\"timestamp\":1572800000}\n"
+                ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1573000002}\n"
+                ",\"timestamp\":1573000002}\n"
                 "pg_data/block-incr-grow={\"bims\":347,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
-                    ",\"size\":2097152,\"timestamp\":1573000000}\n"
+                ",\"size\":2097152,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-larger={\"bims\":240,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
-                    ",\"size\":2097152,\"timestamp\":1573000000}\n"
+                ",\"size\":2097152,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"checksum\":\"a8a85be0079c68c5c5a6ee743c44d853d6be12bb\",\"size\":131071"
-                    ",\"timestamp\":1573000000}\n"
+                ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"
                 "pg_data/grow-to-block-incr={\"bims\":51,\"bis\":16,\"checksum\":\"b616afbe703280742f9c6125b738d85c80fde971\""
-                    ",\"size\":131073,\"timestamp\":1573000000}\n"
+                ",\"size\":131073,\"timestamp\":1573000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                    ",\"timestamp\":1573000002}\n"
+                ",\"timestamp\":1573000002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -3909,14 +3943,14 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"size\":2"
-                    ",\"timestamp\":1572800000}\n"
+                ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1573200002}\n"
+                ",\"timestamp\":1573200002}\n"
                 "pg_data/block-incr-grow={\"bims\":40,\"bis\":16,\"checksum\":\"67dfd19f3eb3649d6f3f6631e44d0bd36b8d8d19\""
-                    ",\"size\":131072,\"timestamp\":1573200000}\n"
+                ",\"size\":131072,\"timestamp\":1573200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                    ",\"timestamp\":1573200002}\n"
+                ",\"timestamp\":1573200002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"
@@ -3990,14 +4024,14 @@ testRun(void)
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"17ba0791499db908433b80f37c5fbc89b870084b\",\"reference\":\"20191108-080000F\""
-                    ",\"size\":2,\"timestamp\":1572800000}\n"
+                ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
-                    ",\"timestamp\":1573400002}\n"
-                "pg_data/block-incr-grow={\"bims\":72,\"bis\":16,\"checksum\":\"2e000fa7e85759c7f4c254d4d9c33ef481e459a7\","
-                    "\"size\":262144,\"timestamp\":1573400000}\n"
+                ",\"timestamp\":1573400002}\n"
+                "pg_data/block-incr-grow={\"bims\":72,\"bis\":16,\"checksum\":\"2e000fa7e85759c7f4c254d4d9c33ef481e459a7\""
+                ",\"size\":262144,\"timestamp\":1573400000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573400000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
-                    ",\"timestamp\":1573400002}\n"
+                ",\"timestamp\":1573400002}\n"
                 "\n"
                 "[target:path]\n"
                 "pg_data={}\n"

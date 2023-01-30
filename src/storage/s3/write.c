@@ -178,8 +178,10 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
     do
     {
         // Copy as many bytes as possible into the part buffer
-        size_t bytesNext = bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+        const size_t bytesNext =
+            bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+
         bufCatSub(this->partBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 

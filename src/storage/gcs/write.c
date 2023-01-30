@@ -249,8 +249,10 @@ storageWriteGcs(THIS_VOID, const Buffer *buffer)
         }
 
         // Copy as many bytes as possible into the chunk buffer
-        size_t bytesNext = bufRemains(this->chunkBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->chunkBuffer);
+        const size_t bytesNext =
+            bufRemains(this->chunkBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->chunkBuffer);
+
         bufCatSub(this->chunkBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
     }

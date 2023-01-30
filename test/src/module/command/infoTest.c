@@ -141,10 +141,10 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666,"
-                "\"db-version\":\"9.3\"}\n"
-            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666"
+            ",\"db-version\":\"9.3\"}\n"
+            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.4\"}\n");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -190,11 +190,11 @@ testRun(void)
             infoRender(),
             "stanza: stanza1\n"
             "    status: error (other)\n"
-            "            [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/stanza1/archive.info' or '"
-                         TEST_PATH "/repo/archive/stanza1/archive.info.copy':\n"
+            "            [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/stanza1/archive.info' or"
+            " '" TEST_PATH "/repo/archive/stanza1/archive.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/stanza1/archive.info' for read\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/stanza1/archive.info.copy'"
-                         " for read\n"
+            " for read\n"
             "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
             "            HINT: is archive_command configured correctly in postgresql.conf?\n"
             "            HINT: has a stanza-create been performed?\n"
@@ -409,12 +409,12 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666,"
-                "\"db-version\":\"9.3\"}\n"
-            "3={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666"
+            ",\"db-version\":\"9.3\"}\n"
+            "3={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.4\"}\n");
 
         // Execute while a backup lock is held
         HRN_FORK_BEGIN()
@@ -690,10 +690,10 @@ testRun(void)
             "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n",
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.5\"}\n",
             .comment = "put backup info to file - stanza1, repo1");
 
         // Manifest with all features
@@ -833,8 +833,8 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625633699176220261,"
-                "\"db-version\":\"9.4\"}\n",
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625633699176220261"
+            ",\"db-version\":\"9.4\"}\n",
             .comment = "put backup info to file - stanza2, repo1");
 
         // Write encrypted info files to encrypted repo2
@@ -875,8 +875,8 @@ testRun(void)
             "cipher-pass=\"somepass\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n",
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.5\"}\n",
             .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
             .comment = "write encrypted backup.info, stanza1, repo2");
 
@@ -988,8 +988,8 @@ testRun(void)
             "cipher-pass=\"somepass\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.4\"}\n",
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.4\"}\n",
             .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
             .comment = "write encrypted backup.info, repo2, stanza3");
 
@@ -2450,8 +2450,8 @@ testRun(void)
             "cipher-pass=\"somepass\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n",
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.5\"}\n",
             .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
             .comment = "backup.info without current, repo2, stanza1");
 
@@ -2611,10 +2611,10 @@ testRun(void)
             "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n",
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.5\"}\n",
             .comment = "put backup info to file - stanza1, repo1");
 
         TEST_ERROR(infoRender(), AssertError, "assertion 'value != NULL' failed");
@@ -2678,10 +2678,10 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678888,"
-                "\"db-version\":\"9.5\"}\n",
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678888"
+            ",\"db-version\":\"9.5\"}\n",
             .comment = "put backup info to file - stanza3, repo1 stanza upgraded");
 
         // Create stanza3 db1 WAL, repo1
@@ -2924,12 +2924,12 @@ testRun(void)
             "stanza: stanza1\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza1/backup.info' or '"
-                            TEST_PATH "/repo/backup/stanza1/backup.info.copy':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza1/backup.info' or"
+            " '" TEST_PATH "/repo/backup/stanza1/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
             "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza1/backup.info.copy'"
-                            " for read\n"
+            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2943,12 +2943,12 @@ testRun(void)
             "stanza: stanza2\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza2/backup.info' or '"
-                            TEST_PATH "/repo/backup/stanza2/backup.info.copy':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza2/backup.info' or"
+            " '" TEST_PATH "/repo/backup/stanza2/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
             "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza2/backup.info.copy'"
-                            " for read\n"
+            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2959,12 +2959,12 @@ testRun(void)
             "stanza: stanza3\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza3/backup.info' or '"
-                            TEST_PATH "/repo/backup/stanza3/backup.info.copy':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza3/backup.info' or"
+            " '" TEST_PATH "/repo/backup/stanza3/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
             "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza3/backup.info.copy'"
-                            " for read\n"
+            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -2995,12 +2995,12 @@ testRun(void)
             "stanza: stanza3\n"
             "    status: mixed\n"
             "        repo1: error (other)\n"
-            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza3/backup.info' or '"
-                            TEST_PATH "/repo/backup/stanza3/backup.info.copy':\n"
+            "               [CryptoError] unable to load info file '" TEST_PATH "/repo/backup/stanza3/backup.info' or"
+            " '" TEST_PATH "/repo/backup/stanza3/backup.info.copy':\n"
             "               CryptoError: cipher header invalid\n"
             "               HINT: is or was the repo encrypted?\n"
             "               FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/stanza3/backup.info.copy'"
-                            " for read\n"
+            " for read\n"
             "               HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "               HINT: has a stanza-create been performed?\n"
             "               HINT: use option --stanza if encryption settings are different for the stanza than the global"
@@ -3072,8 +3072,8 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n",
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.4\"}\n",
             .comment = "put backup info to file, repo1");
 
         HRN_INFO_PUT(
@@ -3115,8 +3115,8 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.5\"}\n",
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.5\"}\n",
             .comment = "put backup info to file, repo2, same system-id, different version");
 
         HRN_INFO_PUT(
@@ -3189,8 +3189,8 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665888,"
-                "\"db-version\":\"9.4\"}\n",
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665888"
+            ",\"db-version\":\"9.4\"}\n",
             .comment = "put backup info to file, repo2, different system-id, same version");
 
         HRN_INFO_PUT(
@@ -3338,7 +3338,7 @@ testRun(void)
             "    status: mixed\n"
             "        repo1: error (other)\n"
             "               [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup':"
-                " [13] Permission denied\n"
+            " [13] Permission denied\n"
             "        repo2: error (missing stanza path)\n"
             "    cipher: none\n",
             "text - stanza repo structure exists");

@@ -154,8 +154,9 @@ cmdTest(
                 }
 
                 // Remove old coverage data. Note that coverage can be in different paths depending on the meson version.
-                const String *const pathCoverage = storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
-                    STRDEF("test-unit.p") : STRDEF("test-unit@exe");
+                const String *const pathCoverage =
+                    storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
+                        STRDEF("test-unit.p") : STRDEF("test-unit@exe");
 
                 StorageIterator *const storageItr = storageNewItrP(
                     storageUnitBuild, pathCoverage, .expression = STRDEF("\\.gcda$"));

@@ -62,13 +62,13 @@ bldPgVersionList(Yaml *const yaml)
                 // Add to list
                 MEM_CONTEXT_BEGIN(lstMemContext(result))
                 {
-                    lstAdd(
-                        result,
-                        &(BldPgVersion)
-                        {
-                            .version = strDup(pgRaw.version),
-                            .release = pgRaw.release,
-                        });
+                    const BldPgVersion bldPgVersion =
+                    {
+                        .version = strDup(pgRaw.version),
+                        .release = pgRaw.release
+                    };
+
+                    lstAdd(result, &bldPgVersion);
                 }
                 MEM_CONTEXT_END();
 

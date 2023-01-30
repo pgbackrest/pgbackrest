@@ -14,7 +14,7 @@ Log Handler
 Max size allowed for a single log message including header
 ***********************************************************************************************************************************/
 #ifndef LOG_BUFFER_SIZE
-    #define LOG_BUFFER_SIZE                                         ((size_t)(32 * 1024))
+#define LOG_BUFFER_SIZE                                             ((size_t)(32 * 1024))
 #endif
 
 /***********************************************************************************************************************************
@@ -52,10 +52,10 @@ be used directly. They are included for completeness and future usage.
 // Define a macro to test logAny() that can be removed when performing coverage testing.  Checking logAny() saves a function call
 // for logging calls that won't be output anywhere, but since the macro contains a branch it causes coverage problems.
 #ifdef DEBUG_COVERAGE
-    #define IF_LOG_ANY(logLevel)
+#define IF_LOG_ANY(logLevel)
 #else
-    #define IF_LOG_ANY(logLevel)                                                                                                   \
-        if (logAny(logLevel))
+#define IF_LOG_ANY(logLevel)                                                                                                       \
+    if (logAny(logLevel))
 #endif
 
 #define LOG_INTERNAL(logLevel, logRangeMin, logRangeMax, processId, code, message)                                                 \

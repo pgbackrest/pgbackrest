@@ -331,60 +331,62 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_LABEL
-                TEST_MANIFEST_DB_93
-                TEST_MANIFEST_OPTION_ALL
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
-                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog/archive_status={\"path\":\"../../archivestatus\",\"type\":\"link\"}\n"
-                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"tblspc1\",\"type\":\"link\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
-                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
-                "pg_data/pg_xlog/BOGUS={\"size\":0,\"timestamp\":1565282108}\n"
-                "pg_data/pg_xlog/archive_status/BOGUS={\"size\":8,\"timestamp\":1565282120}\n"
-                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                "pg_tblspc/1/PG_9.3_201306121/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
-                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
-                "\n"
-                "[target:link]\n"
-                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
-                "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
-                "pg_data/pg_xlog/archive_status={\"destination\":\"../../archivestatus\"}\n"
-                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
-                TEST_MANIFEST_LINK_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
-                "pg_data/global={}\n"
-                "pg_data/pg_dynshmem={}\n"
-                "pg_data/pg_notify={}\n"
-                "pg_data/pg_replslot={}\n"
-                "pg_data/pg_serial={}\n"
-                "pg_data/pg_snapshots={}\n"
-                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
-                "pg_data/pg_subtrans={}\n"
-                "pg_data/pg_tblspc={}\n"
-                "pg_data/pg_xlog={}\n"
-                "pg_data/pg_xlog/archive_status={\"mode\":\"0777\"}\n"
-                "pg_tblspc={}\n"
-                "pg_tblspc/1={}\n"
-                "pg_tblspc/1/PG_9.3_201306121={}\n"
-                "pg_tblspc/1/PG_9.3_201306121/1={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER_LABEL
+                    TEST_MANIFEST_DB_93
+                    TEST_MANIFEST_OPTION_ALL
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
+                    "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "pg_data/pg_xlog/archive_status={\"path\":\"../../archivestatus\",\"type\":\"link\"}\n"
+                    "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"tblspc1\""
+                    ",\"type\":\"link\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                    "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                    "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
+                    "pg_data/pg_xlog/BOGUS={\"size\":0,\"timestamp\":1565282108}\n"
+                    "pg_data/pg_xlog/archive_status/BOGUS={\"size\":8,\"timestamp\":1565282120}\n"
+                    "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                    "pg_tblspc/1/PG_9.3_201306121/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
+                    TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                    "\n"
+                    "[target:link]\n"
+                    "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                    "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
+                    "pg_data/pg_xlog/archive_status={\"destination\":\"../../archivestatus\"}\n"
+                    "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                    TEST_MANIFEST_LINK_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    "pg_data/base={}\n"
+                    "pg_data/base/1={}\n"
+                    "pg_data/global={}\n"
+                    "pg_data/pg_dynshmem={}\n"
+                    "pg_data/pg_notify={}\n"
+                    "pg_data/pg_replslot={}\n"
+                    "pg_data/pg_serial={}\n"
+                    "pg_data/pg_snapshots={}\n"
+                    "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                    "pg_data/pg_subtrans={}\n"
+                    "pg_data/pg_tblspc={}\n"
+                    "pg_data/pg_xlog={}\n"
+                    "pg_data/pg_xlog/archive_status={\"mode\":\"0777\"}\n"
+                    "pg_tblspc={}\n"
+                    "pg_tblspc/1={}\n"
+                    "pg_tblspc/1/PG_9.3_201306121={}\n"
+                    "pg_tblspc/1/PG_9.3_201306121/1={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         TEST_RESULT_LOG(
@@ -425,57 +427,58 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER
-                TEST_MANIFEST_DB_93
-                TEST_MANIFEST_OPTION_ARCHIVE
-                TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE
-                TEST_MANIFEST_OPTION_ONLINE_TRUE
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
-                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog/archive_status={\"path\":\"../../archivestatus\",\"type\":\"link\"}\n"
-                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
-                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
-                "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
-                "pg_data/postgresql.auto.conf.tmp={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
-                "\n"
-                "[target:link]\n"
-                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
-                "pg_data/pg_xlog/archive_status={\"destination\":\"../../archivestatus\"}\n"
-                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
-                TEST_MANIFEST_LINK_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
-                "pg_data/global={}\n"
-                "pg_data/pg_dynshmem={}\n"
-                "pg_data/pg_notify={}\n"
-                "pg_data/pg_replslot={}\n"
-                "pg_data/pg_serial={}\n"
-                "pg_data/pg_snapshots={}\n"
-                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
-                "pg_data/pg_subtrans={}\n"
-                "pg_data/pg_tblspc={}\n"
-                "pg_data/pg_wal={}\n"
-                "pg_data/pg_xlog={}\n"
-                "pg_data/pg_xlog/archive_status={\"mode\":\"0777\"}\n"
-                "pg_data/pg_xlog/somepath={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER
+                    TEST_MANIFEST_DB_93
+                    TEST_MANIFEST_OPTION_ARCHIVE
+                    TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE
+                    TEST_MANIFEST_OPTION_ONLINE_TRUE
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
+                    "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "pg_data/pg_xlog/archive_status={\"path\":\"../../archivestatus\",\"type\":\"link\"}\n"
+                    "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                    "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                    "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
+                    "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
+                    "pg_data/postgresql.auto.conf.tmp={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                    TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                    "\n"
+                    "[target:link]\n"
+                    "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                    "pg_data/pg_xlog/archive_status={\"destination\":\"../../archivestatus\"}\n"
+                    "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                    TEST_MANIFEST_LINK_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    "pg_data/base={}\n"
+                    "pg_data/base/1={}\n"
+                    "pg_data/global={}\n"
+                    "pg_data/pg_dynshmem={}\n"
+                    "pg_data/pg_notify={}\n"
+                    "pg_data/pg_replslot={}\n"
+                    "pg_data/pg_serial={}\n"
+                    "pg_data/pg_snapshots={}\n"
+                    "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                    "pg_data/pg_subtrans={}\n"
+                    "pg_data/pg_tblspc={}\n"
+                    "pg_data/pg_wal={}\n"
+                    "pg_data/pg_xlog={}\n"
+                    "pg_data/pg_xlog/archive_status={\"mode\":\"0777\"}\n"
+                    "pg_data/pg_xlog/somepath={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // Remove pg_xlog and the directory that archive_status link pointed to
@@ -556,78 +559,79 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER
-                TEST_MANIFEST_DB_94
-                TEST_MANIFEST_OPTION_ARCHIVE
-                TEST_MANIFEST_OPTION_CHECKSUM_PAGE_TRUE
-                TEST_MANIFEST_OPTION_ONLINE_FALSE
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
-                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
-                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
-                "pg_tblspc/2={\"path\":\"../../ts/2\",\"tablespace-id\":\"2\",\"tablespace-name\":\"ts2\",\"type\":\"link\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
-                "pg_data/backup_label={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/base/1/555_init={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/global/pg_internal.init.allow={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
-                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
-                "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
-                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                "pg_data/recovery.signal={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/standby.signal={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_tblspc/1/PG_9.4_201409291/1/16384={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
-                "pg_tblspc/1/PG_9.4_201409291/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_tblspc/2/PG_9.4_201409291/1/16385={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
-                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
-                "\n"
-                "[target:link]\n"
-                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
-                "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
-                "pg_data/pg_tblspc/2={\"destination\":\"../../ts/2\"}\n"
-                "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
-                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
-                TEST_MANIFEST_LINK_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
-                "pg_data/global={}\n"
-                "pg_data/pg_clog={}\n"
-                "pg_data/pg_dynshmem={}\n"
-                "pg_data/pg_multixact={}\n"
-                "pg_data/pg_notify={}\n"
-                "pg_data/pg_replslot={}\n"
-                "pg_data/pg_serial={}\n"
-                "pg_data/pg_snapshots={}\n"
-                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
-                "pg_data/pg_subtrans={}\n"
-                "pg_data/pg_tblspc={}\n"
-                "pg_data/pg_wal={}\n"
-                "pg_data/pg_xact={}\n"
-                "pg_data/pg_xlog={}\n"
-                "pg_tblspc={}\n"
-                "pg_tblspc/1={}\n"
-                "pg_tblspc/1/PG_9.4_201409291={}\n"
-                "pg_tblspc/1/PG_9.4_201409291/1={}\n"
-                "pg_tblspc/2={}\n"
-                "pg_tblspc/2/PG_9.4_201409291={}\n"
-                "pg_tblspc/2/PG_9.4_201409291/1={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER
+                    TEST_MANIFEST_DB_94
+                    TEST_MANIFEST_OPTION_ARCHIVE
+                    TEST_MANIFEST_OPTION_CHECKSUM_PAGE_TRUE
+                    TEST_MANIFEST_OPTION_ONLINE_FALSE
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
+                    "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
+                    "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "pg_tblspc/1={\"path\":\"../../ts/1\",\"tablespace-id\":\"1\",\"tablespace-name\":\"ts1\",\"type\":\"link\"}\n"
+                    "pg_tblspc/2={\"path\":\"../../ts/2\",\"tablespace-id\":\"2\",\"tablespace-name\":\"ts2\",\"type\":\"link\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/PG_VERSION={\"size\":4,\"timestamp\":1565282100}\n"
+                    "pg_data/backup_label={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/base/1/555_init={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_init.1={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_vm.1_vm={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
+                    "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
+                    "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/global/pg_internal.init.allow={\"checksum-page\":true,\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
+                    "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                    "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
+                    "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
+                    "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                    "pg_data/recovery.signal={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/standby.signal={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_tblspc/1/PG_9.4_201409291/1/16384={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
+                    "pg_tblspc/1/PG_9.4_201409291/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
+                    "pg_tblspc/2/PG_9.4_201409291/1/16385={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
+                    TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
+                    "\n"
+                    "[target:link]\n"
+                    "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                    "pg_data/pg_tblspc/1={\"destination\":\"../../ts/1\"}\n"
+                    "pg_data/pg_tblspc/2={\"destination\":\"../../ts/2\"}\n"
+                    "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
+                    "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                    TEST_MANIFEST_LINK_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    "pg_data/base={}\n"
+                    "pg_data/base/1={}\n"
+                    "pg_data/global={}\n"
+                    "pg_data/pg_clog={}\n"
+                    "pg_data/pg_dynshmem={}\n"
+                    "pg_data/pg_multixact={}\n"
+                    "pg_data/pg_notify={}\n"
+                    "pg_data/pg_replslot={}\n"
+                    "pg_data/pg_serial={}\n"
+                    "pg_data/pg_snapshots={}\n"
+                    "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                    "pg_data/pg_subtrans={}\n"
+                    "pg_data/pg_tblspc={}\n"
+                    "pg_data/pg_wal={}\n"
+                    "pg_data/pg_xact={}\n"
+                    "pg_data/pg_xlog={}\n"
+                    "pg_tblspc={}\n"
+                    "pg_tblspc/1={}\n"
+                    "pg_tblspc/1/PG_9.4_201409291={}\n"
+                    "pg_tblspc/1/PG_9.4_201409291/1={}\n"
+                    "pg_tblspc/2={}\n"
+                    "pg_tblspc/2/PG_9.4_201409291={}\n"
+                    "pg_tblspc/2/PG_9.4_201409291/1={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("pg/pg_tblspc/2"), .errorOnMissing = true), "error if link removed");
@@ -646,7 +650,7 @@ testRun(void)
                 storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or"
-                " directory");
+            " directory");
 
         // Remove the link inside pg/pg_tblspc
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
@@ -671,64 +675,65 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER
-                TEST_MANIFEST_DB_12
-                TEST_MANIFEST_OPTION_ARCHIVE
-                TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE
-                TEST_MANIFEST_OPTION_ONLINE_TRUE
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
-                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
-                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
-                "pg_data/backup_manifest={\"size\":8,\"timestamp\":1565282198}\n"
-                "pg_data/backup_manifest.tmp={\"size\":8,\"timestamp\":1565282199}\n"
-                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
-                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
-                "pg_data/pg_xlog/000000020000000000000002={\"size\":6,\"timestamp\":1565282100}\n"
-                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                "pg_data/recovery.conf={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/recovery.done={\"size\":0,\"timestamp\":1565282101}\n"
-                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
-                "\n"
-                "[target:link]\n"
-                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
-                "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
-                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
-                TEST_MANIFEST_LINK_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
-                "pg_data/global={}\n"
-                "pg_data/pg_clog={}\n"
-                "pg_data/pg_dynshmem={}\n"
-                "pg_data/pg_multixact={}\n"
-                "pg_data/pg_notify={}\n"
-                "pg_data/pg_replslot={}\n"
-                "pg_data/pg_serial={}\n"
-                "pg_data/pg_snapshots={}\n"
-                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
-                "pg_data/pg_subtrans={}\n"
-                "pg_data/pg_tblspc={}\n"
-                "pg_data/pg_wal={}\n"
-                "pg_data/pg_xact={}\n"
-                "pg_data/pg_xlog={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER
+                    TEST_MANIFEST_DB_12
+                    TEST_MANIFEST_OPTION_ARCHIVE
+                    TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE
+                    TEST_MANIFEST_OPTION_ONLINE_TRUE
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
+                    "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
+                    "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
+                    "pg_data/backup_manifest={\"size\":8,\"timestamp\":1565282198}\n"
+                    "pg_data/backup_manifest.tmp={\"size\":8,\"timestamp\":1565282199}\n"
+                    "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
+                    "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
+                    "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
+                    "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                    "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
+                    "pg_data/pg_xlog/000000020000000000000002={\"size\":6,\"timestamp\":1565282100}\n"
+                    "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                    "pg_data/recovery.conf={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/recovery.done={\"size\":0,\"timestamp\":1565282101}\n"
+                    TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                    "\n"
+                    "[target:link]\n"
+                    "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                    "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
+                    "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                    TEST_MANIFEST_LINK_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    "pg_data/base={}\n"
+                    "pg_data/base/1={}\n"
+                    "pg_data/global={}\n"
+                    "pg_data/pg_clog={}\n"
+                    "pg_data/pg_dynshmem={}\n"
+                    "pg_data/pg_multixact={}\n"
+                    "pg_data/pg_notify={}\n"
+                    "pg_data/pg_replslot={}\n"
+                    "pg_data/pg_serial={}\n"
+                    "pg_data/pg_snapshots={}\n"
+                    "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                    "pg_data/pg_subtrans={}\n"
+                    "pg_data/pg_tblspc={}\n"
+                    "pg_data/pg_wal={}\n"
+                    "pg_data/pg_xact={}\n"
+                    "pg_data/pg_xlog={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -758,64 +763,65 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_BUNDLE_BLOCK
-                TEST_MANIFEST_DB_13
-                TEST_MANIFEST_OPTION_ALL
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
-                "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
-                "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/128k={\"bis\":16,\"size\":131072,\"timestamp\":1570000000}\n"
-                "pg_data/128k-1week={\"bis\":32,\"size\":131072,\"timestamp\":1569395200}\n"
-                "pg_data/128k-4week={\"size\":131072,\"timestamp\":1567580800}\n"
-                "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
-                "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
-                "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
-                "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
-                "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
-                "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
-                "pg_data/pg_xlog/000000020000000000000002={\"size\":6,\"timestamp\":1565282100}\n"
-                "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                "pg_data/recovery.conf={\"size\":0,\"timestamp\":1565282101}\n"
-                "pg_data/recovery.done={\"size\":0,\"timestamp\":1565282101}\n"
-                TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
-                "\n"
-                "[target:link]\n"
-                "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
-                "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
-                "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
-                TEST_MANIFEST_LINK_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                "pg_data/base={}\n"
-                "pg_data/base/1={}\n"
-                "pg_data/global={}\n"
-                "pg_data/pg_clog={}\n"
-                "pg_data/pg_dynshmem={}\n"
-                "pg_data/pg_multixact={}\n"
-                "pg_data/pg_notify={}\n"
-                "pg_data/pg_replslot={}\n"
-                "pg_data/pg_serial={}\n"
-                "pg_data/pg_snapshots={}\n"
-                "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
-                "pg_data/pg_subtrans={}\n"
-                "pg_data/pg_tblspc={}\n"
-                "pg_data/pg_wal={}\n"
-                "pg_data/pg_xact={}\n"
-                "pg_data/pg_xlog={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER_BUNDLE_BLOCK
+                    TEST_MANIFEST_DB_13
+                    TEST_MANIFEST_OPTION_ALL
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"" TEST_PATH "/pg\",\"type\":\"path\"}\n"
+                    "pg_data/pg_hba.conf={\"file\":\"pg_hba.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "pg_data/pg_xlog={\"path\":\"" TEST_PATH "/wal\",\"type\":\"link\"}\n"
+                    "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/128k={\"bis\":16,\"size\":131072,\"timestamp\":1570000000}\n"
+                    "pg_data/128k-1week={\"bis\":32,\"size\":131072,\"timestamp\":1569395200}\n"
+                    "pg_data/128k-4week={\"size\":131072,\"timestamp\":1567580800}\n"
+                    "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
+                    "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
+                    "pg_data/base/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
+                    "pg_data/base/1/pg_filenode.map={\"size\":0,\"timestamp\":1565282120}\n"
+                    "pg_data/global/pg_control={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/pg_clog/BOGUS={\"size\":0,\"timestamp\":1565282121}\n"
+                    "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
+                    "pg_data/pg_multixact/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
+                    "pg_data/pg_xact/BOGUS={\"size\":0,\"timestamp\":1565282122}\n"
+                    "pg_data/pg_xlog/000000020000000000000002={\"size\":6,\"timestamp\":1565282100}\n"
+                    "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
+                    "pg_data/recovery.conf={\"size\":0,\"timestamp\":1565282101}\n"
+                    "pg_data/recovery.done={\"size\":0,\"timestamp\":1565282101}\n"
+                    TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
+                    "\n"
+                    "[target:link]\n"
+                    "pg_data/pg_hba.conf={\"destination\":\"../config/pg_hba.conf\"}\n"
+                    "pg_data/pg_xlog={\"destination\":\"" TEST_PATH "/wal\"}\n"
+                    "pg_data/postgresql.conf={\"destination\":\"../config/postgresql.conf\"}\n"
+                    TEST_MANIFEST_LINK_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    "pg_data/base={}\n"
+                    "pg_data/base/1={}\n"
+                    "pg_data/global={}\n"
+                    "pg_data/pg_clog={}\n"
+                    "pg_data/pg_dynshmem={}\n"
+                    "pg_data/pg_multixact={}\n"
+                    "pg_data/pg_notify={}\n"
+                    "pg_data/pg_replslot={}\n"
+                    "pg_data/pg_serial={}\n"
+                    "pg_data/pg_snapshots={}\n"
+                    "pg_data/pg_stat_tmp={\"mode\":\"0750\"}\n"
+                    "pg_data/pg_subtrans={}\n"
+                    "pg_data/pg_tblspc={}\n"
+                    "pg_data/pg_wal={}\n"
+                    "pg_data/pg_xact={}\n"
+                    "pg_data/pg_xlog={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -937,7 +943,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: file 'PG_VERSION' has timestamp (1482182860) in the future (relative to copy start 1482182859), enabling"
-                " delta checksum");
+            " delta checksum");
     }
 
     // *****************************************************************************************************************************
@@ -1044,27 +1050,28 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_PRE
-                "backup-reference=\"20190101-010101F\"\n"
-                TEST_MANIFEST_HEADER_MID
-                "option-delta=false\n"
-                TEST_MANIFEST_HEADER_POST
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
-                "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
-                "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
-                "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"reference\":\"20190101-010101F\","
-                    "\"size\":4,\"timestamp\":1482182860}\n"
-                TEST_MANIFEST_FILE_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER_PRE
+                    "backup-reference=\"20190101-010101F\"\n"
+                    TEST_MANIFEST_HEADER_MID
+                    "option-delta=false\n"
+                    TEST_MANIFEST_HEADER_POST
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
+                    "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
+                    "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
+                    "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
+                    ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
+                    TEST_MANIFEST_FILE_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1104,28 +1111,29 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_PRE
-                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
-                TEST_MANIFEST_HEADER_MID
-                "option-delta=true\n"
-                TEST_MANIFEST_HEADER_POST
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/FILE0-bundle={\"size\":0,\"timestamp\":1482182860}\n"
-                "pg_data/FILE0-normal={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
-                "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\","
-                    "\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,\"timestamp\":1482182860}\n"
-                "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"reference\":\"20190101-010101F\","
-                    "\"size\":4,\"timestamp\":1482182860}\n"
-                TEST_MANIFEST_FILE_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER_PRE
+                    "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                    TEST_MANIFEST_HEADER_MID
+                    "option-delta=true\n"
+                    TEST_MANIFEST_HEADER_POST
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/FILE0-bundle={\"size\":0,\"timestamp\":1482182860}\n"
+                    "pg_data/FILE0-normal={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
+                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
+                    ",\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,\"timestamp\":1482182860}\n"
+                    "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
+                    ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
+                    TEST_MANIFEST_FILE_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1154,31 +1162,32 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: file 'FILE1' has timestamp earlier than prior backup (prior 1482182860, current 1482182859), enabling"
-                " delta checksum");
+            " delta checksum");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_PRE
-                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
-                TEST_MANIFEST_HEADER_MID
-                "option-delta=true\n"
-                TEST_MANIFEST_HEADER_POST
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false,"
-                    "\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4,"
-                    "\"timestamp\":1482182859}\n"
-                TEST_MANIFEST_FILE_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER_PRE
+                    "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                    TEST_MANIFEST_HEADER_MID
+                    "option-delta=true\n"
+                    TEST_MANIFEST_HEADER_POST
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
+                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4"
+                    ",\"timestamp\":1482182859}\n"
+                    TEST_MANIFEST_FILE_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1203,30 +1212,31 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: file 'FILE2' has same timestamp (1482182860) as prior but different size (prior 4, current 6), enabling"
-                " delta checksum");
+            " delta checksum");
 
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_PRE
-                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
-                TEST_MANIFEST_HEADER_MID
-                "option-delta=true\n"
-                TEST_MANIFEST_HEADER_POST
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
-                "pg_data/FILE2={\"size\":6,\"timestamp\":1482182860}\n"
-                TEST_MANIFEST_FILE_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER_PRE
+                    "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                    TEST_MANIFEST_HEADER_MID
+                    "option-delta=true\n"
+                    TEST_MANIFEST_HEADER_POST
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE2={\"size\":6,\"timestamp\":1482182860}\n"
+                    TEST_MANIFEST_FILE_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1269,24 +1279,25 @@ testRun(void)
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(
             strNewBuf(contentSave),
-            strNewBuf(harnessInfoChecksumZ(
-                TEST_MANIFEST_HEADER_PRE
-                "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
-                TEST_MANIFEST_HEADER_MID
-                "option-delta=true\n"
-                "option-hardlink=false\n"
-                "option-online=true\n"
-                "\n"
-                "[backup:target]\n"
-                "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
-                "\n"
-                "[target:file]\n"
-                "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
-                TEST_MANIFEST_FILE_DEFAULT
-                "\n"
-                "[target:path]\n"
-                "pg_data={}\n"
-                TEST_MANIFEST_PATH_DEFAULT)),
+            strNewBuf(
+                harnessInfoChecksumZ(
+                    TEST_MANIFEST_HEADER_PRE
+                    "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
+                    TEST_MANIFEST_HEADER_MID
+                    "option-delta=true\n"
+                    "option-hardlink=false\n"
+                    "option-online=true\n"
+                    "\n"
+                    "[backup:target]\n"
+                    "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
+                    "\n"
+                    "[target:file]\n"
+                    "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
+                    TEST_MANIFEST_FILE_DEFAULT
+                    "\n"
+                    "[target:path]\n"
+                    "pg_data={}\n"
+                    TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
         manifestPrior->pub.data.backupOptionOnline = BOOL_TRUE_VAR;
@@ -1366,8 +1377,7 @@ testRun(void)
         Manifest *manifest = NULL;
 
         // Manifest with minimal features
-        const Buffer *contentLoad = harnessInfoChecksumZ
-        (
+        const Buffer *contentLoad = harnessInfoChecksumZ(
             "[backup]\n"
             "backup-label=\"20190808-163540F\"\n"
             "backup-reference=\"20190808-163540F\"\n"
@@ -1399,7 +1409,7 @@ testRun(void)
             "\n"
             "[target:file]\n"
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20190808-163540F\""
-                ",\"size\":4,\"timestamp\":1565282114}\n"
+            ",\"size\":4,\"timestamp\":1565282114}\n"
             "\n"
             "[target:file:default]\n"
             "group=\"group1\"\n"
@@ -1412,8 +1422,7 @@ testRun(void)
             "[target:path:default]\n"
             "group=\"group1\"\n"
             "mode=\"0700\"\n"
-            "user=\"user1\"\n"
-        );
+            "user=\"user1\"\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest move");
@@ -1568,55 +1577,57 @@ testRun(void)
 
         TEST_ASSIGN(
             manifest,
-            manifestNewLoad(ioBufferReadNew(harnessInfoChecksumZ(
-                "[backup]\n"
-                "backup-archive-start=\"000000040000028500000089\"\n"
-                "backup-archive-stop=\"000000040000028500000089\"\n"
-                "backup-block-incr=true\n"
-                "backup-bundle=true\n"
-                "backup-label=\"20190818-084502F_20190820-084502D\"\n"
-                "backup-lsn-start=\"300/89000028\"\n"
-                "backup-lsn-stop=\"300/89001F88\"\n"
-                "backup-prior=\"20190818-084502F\"\n"
-                "backup-timestamp-copy-start=1565282141\n"
-                "backup-timestamp-start=777\n"
-                "backup-timestamp-stop=777\n"
-                "backup-type=\"full\"\n"
-                "\n"
-                "[backup:db]\n"
-                "db-catalog-version=201409291\n"
-                "db-control-version=942\n"
-                "db-id=2\n"
-                "db-system-id=2000000000000000094\n"
-                "db-version=\"9.4\"\n"
-                "\n"
-                "[backup:option]\n"
-                "option-archive-check=false\n"
-                "option-archive-copy=false\n"
-                "option-backup-standby=true\n"
-                "option-buffer-size=16384\n"
-                "option-checksum-page=false\n"
-                "option-compress=true\n"
-                "option-compress-level=33\n"
-                "option-compress-level-network=66\n"
-                "option-delta=false\n"
-                "option-hardlink=false\n"
-                "option-online=false\n"
-                "option-process-max=99\n"
-                TEST_MANIFEST_TARGET
-                "\n"
-                "[db]\n"
-                " mail\t={\"db-id\":16456,\"db-last-system-id\":99999}\n"
-                "#={\"db-id\":16453,\"db-last-system-id\":99999}\n"
-                "=={\"db-id\":16455,\"db-last-system-id\":99999}\n"
-                "[={\"db-id\":16454,\"db-last-system-id\":99999}\n"
-                "postgres={\"db-id\":12173,\"db-last-system-id\":99999}\n"
-                TEST_MANIFEST_FILE
-                TEST_MANIFEST_FILE_DEFAULT
-                TEST_MANIFEST_LINK
-                TEST_MANIFEST_LINK_DEFAULT
-                TEST_MANIFEST_PATH
-                TEST_MANIFEST_PATH_DEFAULT))),
+            manifestNewLoad(
+                ioBufferReadNew(
+                    harnessInfoChecksumZ(
+                        "[backup]\n"
+                        "backup-archive-start=\"000000040000028500000089\"\n"
+                        "backup-archive-stop=\"000000040000028500000089\"\n"
+                        "backup-block-incr=true\n"
+                        "backup-bundle=true\n"
+                        "backup-label=\"20190818-084502F_20190820-084502D\"\n"
+                        "backup-lsn-start=\"300/89000028\"\n"
+                        "backup-lsn-stop=\"300/89001F88\"\n"
+                        "backup-prior=\"20190818-084502F\"\n"
+                        "backup-timestamp-copy-start=1565282141\n"
+                        "backup-timestamp-start=777\n"
+                        "backup-timestamp-stop=777\n"
+                        "backup-type=\"full\"\n"
+                        "\n"
+                        "[backup:db]\n"
+                        "db-catalog-version=201409291\n"
+                        "db-control-version=942\n"
+                        "db-id=2\n"
+                        "db-system-id=2000000000000000094\n"
+                        "db-version=\"9.4\"\n"
+                        "\n"
+                        "[backup:option]\n"
+                        "option-archive-check=false\n"
+                        "option-archive-copy=false\n"
+                        "option-backup-standby=true\n"
+                        "option-buffer-size=16384\n"
+                        "option-checksum-page=false\n"
+                        "option-compress=true\n"
+                        "option-compress-level=33\n"
+                        "option-compress-level-network=66\n"
+                        "option-delta=false\n"
+                        "option-hardlink=false\n"
+                        "option-online=false\n"
+                        "option-process-max=99\n"
+                        TEST_MANIFEST_TARGET
+                        "\n"
+                        "[db]\n"
+                        " mail\t={\"db-id\":16456,\"db-last-system-id\":99999}\n"
+                        "#={\"db-id\":16453,\"db-last-system-id\":99999}\n"
+                        "=={\"db-id\":16455,\"db-last-system-id\":99999}\n"
+                        "[={\"db-id\":16454,\"db-last-system-id\":99999}\n"
+                        "postgres={\"db-id\":12173,\"db-last-system-id\":99999}\n"
+                        TEST_MANIFEST_FILE
+                        TEST_MANIFEST_FILE_DEFAULT
+                        TEST_MANIFEST_LINK
+                        TEST_MANIFEST_LINK_DEFAULT
+                        TEST_MANIFEST_PATH
+                        TEST_MANIFEST_PATH_DEFAULT))),
             "load manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1866,8 +1877,7 @@ testRun(void)
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
 
-        Buffer *contentCompare = harnessInfoChecksumZ
-        (
+        Buffer *contentCompare = harnessInfoChecksumZ(
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET
             "\n"
@@ -1880,8 +1890,7 @@ testRun(void)
             TEST_MANIFEST_LINK
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
-            TEST_MANIFEST_PATH_DEFAULT
-        );
+            TEST_MANIFEST_PATH_DEFAULT);
 
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentCompare), "check save");
 

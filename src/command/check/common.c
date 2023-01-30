@@ -154,8 +154,8 @@ checkStanzaInfoPg(
             THROW(
                 FileInvalidError,
                 "backup and archive info files exist but do not match the database\n"
-                    "HINT: is this the correct stanza?\n"
-                    "HINT: did an error occur during stanza-upgrade?");
+                "HINT: is this the correct stanza?\n"
+                "HINT: did an error occur during stanza-upgrade?");
         }
     }
     MEM_CONTEXT_TEMP_END();

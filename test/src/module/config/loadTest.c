@@ -218,7 +218,7 @@ testRun(void)
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdCheck, argList), OptionInvalidValueError,
             "'50.5' is not valid for 'protocol-timeout' option\n"
-                "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
+            "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("very small protocol-timeout triggers db-timeout special handling");
@@ -280,9 +280,9 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.");
+            " maximum.");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
@@ -296,9 +296,9 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdExpire, argList, .comment = "multi-repo, load config for retention warning");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo2-retention-full' is not set for 'repo2-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo2-retention-full' to the"
-                " maximum.");
+            " maximum.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full warning, retention-archive-type incr - expire command");
@@ -311,11 +311,11 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.\n"
+            " maximum.\n"
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=incr' but option"
-                " 'repo1-retention-archive' is not set");
+            " 'repo1-retention-archive' is not set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -329,11 +329,11 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.\n"
+            " maximum.\n"
             "P00   WARN: WAL segments will not be expired: option 'repo1-retention-archive-type=diff' but neither option"
-                " 'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
+            " 'repo1-retention-archive' nor option 'repo1-retention-diff' is set");
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptRepoRetentionArchive), false, "repo1-retention-archive not set");
 
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionDiff, "2");
@@ -341,9 +341,9 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=count', the repository may run out"
-                " of space\n"
+            " of space\n"
             "            HINT: to retain full backups indefinitely (without warning), set option 'repo1-retention-full' to the"
-                " maximum.");
+            " maximum.");
         TEST_RESULT_INT(cfgOptionInt(cfgOptRepoRetentionArchive), 2, "repo1-retention-archive set to retention-diff");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -360,7 +360,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-diff' is not set for 'repo1-retention-archive-type=diff'\n"
             "            HINT: to retain differential backups indefinitely (without warning), set option 'repo1-retention-diff'"
-                " to the maximum.");
+            " to the maximum.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no warning - expire command");
@@ -445,10 +445,10 @@ testRun(void)
 
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidValueError,
-            "'bogus.bucket' is not valid for option 'repo111-s3-bucket'"
-                "\nHINT: RFC-2818 forbids dots in wildcard matches."
-                "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
-                "\nHINT: remove dots from the bucket name.");
+            "'bogus.bucket' is not valid for option 'repo111-s3-bucket'\n"
+            "HINT: RFC-2818 forbids dots in wildcard matches.\n"
+            "HINT: TLS/SSL verification cannot proceed with this bucket name.\n"
+            "HINT: remove dots from the bucket name.");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 111);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 111);

@@ -146,7 +146,11 @@ testRun(void)
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] =
-        {PROTOCOL_SERVER_HANDLER_BACKUP_LIST PROTOCOL_SERVER_HANDLER_RESTORE_LIST};
+    {
+        PROTOCOL_SERVER_HANDLER_BACKUP_LIST
+        PROTOCOL_SERVER_HANDLER_RESTORE_LIST
+    };
+
     hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     // Create default storage object for testing
@@ -245,7 +249,7 @@ testRun(void)
                 0, false, false, STRDEF("badpass"), NULL, fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
-                " 'ffffffffffffffffffffffffffffffffffffffff'");
+            " 'ffffffffffffffffffffffffffffffffffffffff'");
     }
 
     // *****************************************************************************************************************************
@@ -287,8 +291,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "--delta set to false");
         TEST_RESULT_LOG(
             "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
-                " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                " exist in the destination directories the restore will be aborted.");
+            " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+            " exist in the destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "backup.manifest");
@@ -309,8 +313,8 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), false, "--force set to false");
         TEST_RESULT_LOG(
             "P00   WARN: --delta or --force specified but unable to find 'PG_VERSION' or 'backup.manifest' in '" TEST_PATH "/pg' to"
-                " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                " exist in the destination directories the restore will be aborted.");
+            " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+            " exist in the destination directories the restore will be aborted.");
 
         HRN_CFG_LOAD(cfgCmdRestore, argList);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_PGVERSION);
@@ -351,7 +355,7 @@ testRun(void)
             getEpoch(STRDEF("Tue, 15 Nov 1994 12:45:26")), FormatError,
             "automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26'\n"
             "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM) - if"
-                " timezone is omitted, local time is assumed (for UTC use +00)");
+            " timezone is omitted, local time is assumed (for UTC use +00)");
 
         setenv("TZ", "UTC", true);
     }
@@ -408,10 +412,10 @@ testRun(void)
             "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"10\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"10\"}\n");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -536,7 +540,7 @@ testRun(void)
             restoreBackupSet(), FormatError,
             "automatic backup set selection cannot be performed with provided time 'Tue, 15 Nov 1994 12:45:26'\n"
             "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM) - if"
-                " timezone is omitted, local time is assumed (for UTC use +00)");
+            " timezone is omitted, local time is assumed (for UTC use +00)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("target time, multi repo, no candidates found");
@@ -619,7 +623,7 @@ testRun(void)
             restoreBackupSet(), BackupSetInvalidError, "unable to find backup set with lsn less than or equal to '0/1C000101'");
         TEST_RESULT_LOG(
             "P00   WARN: repo1 reached backup from prior version missing required LSN info before finding a match -- backup"
-                " auto-select has been disabled for this repo\n"
+            " auto-select has been disabled for this repo\n"
             "            HINT: you may specify a backup to restore using the --set option.\n"
             "P00   WARN: repo2: [BackupSetInvalidError] no backup sets to restore");
 
@@ -643,7 +647,7 @@ testRun(void)
         TEST_RESULT_UINT(backupData.repoIdx, 1, "backup set found, repo2");
         TEST_RESULT_LOG(
             "P00   WARN: repo1 reached backup from prior version missing required LSN info before finding a match -- backup"
-                " auto-select has been disabled for this repo\n"
+            " auto-select has been disabled for this repo\n"
             "            HINT: you may specify a backup to restore using the --set option.");
 
         // No backups to search for qualifying backup set
@@ -1188,7 +1192,7 @@ testRun(void)
         TEST_ERROR(
             restoreCleanBuild(manifest, NULL, NULL), PathNotEmptyError,
             "unable to restore to path '" TEST_PATH "/pg' because it contains files\n"
-                "HINT: try using --delta if this is what you intended.");
+            "HINT: try using --delta if this is what you intended.");
 
         TEST_RESULT_LOG("P00 DETAIL: check '" TEST_PATH "/pg' exists");
 
@@ -1501,7 +1505,7 @@ testRun(void)
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
             "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.4_201409291/32768/)|(^pg_data/base/65536/)"
-                "|(^pg_tblspc/16387/PG_9.4_201409291/65536/)",
+            "|(^pg_tblspc/16387/PG_9.4_201409291/65536/)",
             "check expression");
 
         TEST_RESULT_LOG(
@@ -1627,7 +1631,7 @@ testRun(void)
             "a_setting = 'a'\n"
             "b_setting = 'b'\n"
             "restore_command = '" TEST_PROJECT_EXE " --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
-                " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
+            " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
             "check recovery options");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1641,7 +1645,7 @@ testRun(void)
             restoreRecoveryConf(PG_VERSION_94, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = '/usr/local/bin/pg_wrapper.sh --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH " --pg1-path=/pg"
-                " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
+            " --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
             "restore_command invokes /usr/local/bin/pg_wrapper.sh per --cmd option");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1826,7 +1830,7 @@ testRun(void)
         TEST_ERROR(
             restoreRecoveryConf(PG_VERSION_94, restoreLabel), OptionInvalidError,
             "option 'archive-mode' is not supported on PostgreSQL < 12\n"
-                "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
+            "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recovery type = standby with recovery GUCs and archive-mode=off");
@@ -2143,8 +2147,8 @@ testRun(void)
                 "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
                 "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
                 "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
-                "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100.00%%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1"
-                    "\n"
+                "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100.00%%) checksum"
+                " 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
                 "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
                 "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
                 "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
@@ -2287,16 +2291,16 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, 44.12%)"
-                " checksum 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
+            " checksum 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 73.53%) checksum"
-                " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
+            " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
-                " (4B, 85.29%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            " (4B, 85.29%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88.24%) checksum"
-                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 88.24%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100.00%)"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
@@ -2360,15 +2364,15 @@ testRun(void)
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_9.4_201409291'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, [PCT]) checksum"
-                " 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
+            " 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, [PCT]) checksum"
-                " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
+            " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, [PCT]) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, [PCT]) checksum"
-                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
@@ -2768,44 +2772,44 @@ testRun(void)
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/postgresql.conf' to '../config/postgresql.conf'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref (48KB, [PCT]) checksum"
-                " febd680181d4cd315dce942348862c25fbd731f3\n"
+            " febd680181d4cd315dce942348862c25fbd731f3\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT]) checksum"
-                " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
+            " a40f0986acb1531ce0cc75a23dcf8aa406ae9081\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref (24KB, [PCT]) checksum"
-                " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
+            " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 (16KB, [PCT]) checksum"
-                " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
+            " d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
-                " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
+            " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, [PCT]) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (15B, [PCT]) checksum"
-                " 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
+            " 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf (11B, [PCT]) checksum"
-                " 401215e092779574988a854d8c7caed7f91dba4b\n"
+            " 401215e092779574988a854d8c7caed7f91dba4b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (bundle 20161219-212741F/1/1, 8KB, [PCT])"
-                " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
+            " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (bundle 1/0, 4B, [PCT]) checksum"
-                " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
+            " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 4B, [PCT]) checksum"
-                " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
+            " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
-                " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
+            " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx (bundle 1/11, 5B, [PCT]) checksum"
-                " 9addbf544119efa4a64223b649750a510f0d463f\n"
+            " 9addbf544119efa4a64223b649750a510f0d463f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/zz (bundle 1/17, 2B, [PCT]) checksum"
-                " d7dacae2c968388960bf8970080a980ed5c5dcb7\n"
+            " d7dacae2c968388960bf8970080a980ed5c5dcb7\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/20 (bundle 20161219-212741F_20161219-212800D/2/1, 1B, [PCT]) checksum"
-                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/21 (bundle 20161219-212741F_20161219-212800D/2/2, 1B, [PCT]) checksum"
-                " e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
+            " e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/30 (bundle 20161219-212741F_20161219-212900I/2/1, 1B, [PCT]) checksum"
-                " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/31 (bundle 20161219-212741F_20161219-212900I/2/2, 1B, [PCT]) checksum"
-                " e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
+            " e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/888 (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/zero-length (bundle 1/16, 0B, [PCT])\n"
@@ -2962,43 +2966,43 @@ testRun(void)
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_xact'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_hba.conf' to '../config/pg_hba.conf'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-unused-ref - exists and matches backup (48KB, [PCT]) checksum"
-                " febd680181d4cd315dce942348862c25fbd731f3\n"
+            " febd680181d4cd315dce942348862c25fbd731f3\n"
             "P01 DETAIL: restore zeroed file " TEST_PATH "/pg/base/32768/32769 (32KB, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/bi-no-ref - exists and matches backup (24KB, [PCT]) checksum"
-                " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
+            " 953cdcc904c5d4135d96fc0833f121bf3033c74c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/16385 - exists and matches backup (16KB, [PCT])"
-                " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
+            " checksum d74e5f7ebe52a3ed468ba08c5b6aefaccd1ca88f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/pg_control.pgbackrest.tmp (8KB, [PCT])"
-                " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
+            " checksum 5e2b96c19c4f5c63a5afa2de504d29fe64a4c908\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/2 (8KB, [PCT]) checksum 4d7b2a36c5387decf799352a3751883b7ceb96aa\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf - exists and matches backup (15B, [PCT])"
-                " checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
+            " checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf - exists and matches backup (11B, [PCT])"
-                " checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
+            " checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION - exists and matches backup (4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (4B, [PCT])"
-                " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
+            " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (bundle 20161219-212741F/1/1, 8KB,"
-                " [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
+            " [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (bundle 1/0, 4B, [PCT])"
-                " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
+            " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 4B, [PCT])"
-                " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
+            " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
-                " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
+            " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx - exists and matches backup (bundle 1/11, 5B, [PCT]) checksum"
-                " 9addbf544119efa4a64223b649750a510f0d463f\n"
+            " 9addbf544119efa4a64223b649750a510f0d463f\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/zz - exists and matches backup (bundle 1/17, 2B, [PCT]) checksum"
-                " d7dacae2c968388960bf8970080a980ed5c5dcb7\n"
+            " d7dacae2c968388960bf8970080a980ed5c5dcb7\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/20 - exists and matches backup (bundle"
-                " 20161219-212741F_20161219-212800D/2/1, 1B, [PCT]) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            " 20161219-212741F_20161219-212800D/2/1, 1B, [PCT]) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/21 - exists and matches backup (bundle"
-                " 20161219-212741F_20161219-212800D/2/2, 1B, [PCT]) checksum e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
+            " 20161219-212741F_20161219-212800D/2/2, 1B, [PCT]) checksum e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/30 - exists and matches backup (bundle"
-                " 20161219-212741F_20161219-212900I/2/1, 1B, [PCT]) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
+            " 20161219-212741F_20161219-212900I/2/1, 1B, [PCT]) checksum c032adc1ff629c9b66f22749ad667e6beadf144b\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/31 - exists and matches backup (bundle"
-                " 20161219-212741F_20161219-212900I/2/2, 1B, [PCT]) checksum e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
+            " 20161219-212741F_20161219-212900I/2/2, 1B, [PCT]) checksum e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/999 - exists and is zero size (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/global/888 - exists and is zero size (0B, [PCT])\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/zero-length - exists and is zero size (bundle 1/16, 0B, [PCT])\n"
@@ -3035,7 +3039,7 @@ testRun(void)
         TEST_ERROR(
             cmdRestore(), FileMissingError,
             "raised from local-1 shim protocol: unable to open missing file"
-                " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read\n"
+            " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read\n"
             "[FileMissingError] on retry after 0ms");
 
         // Free local processes that were not freed because of the error

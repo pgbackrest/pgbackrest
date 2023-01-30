@@ -247,8 +247,9 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     const size_t nameSize = strSize(file->name) + 1;
 
     uint8_t *const result = memNew(
-        sizeof(StringPub) + nameSize + bufferPos + (file->checksumPageErrorList != NULL ?
-            ALIGN_OFFSET(StringPub, nameSize + bufferPos) + sizeof(StringPub) + strSize(file->checksumPageErrorList) + 1 : 0));
+        sizeof(StringPub) + nameSize + bufferPos +
+        (file->checksumPageErrorList != NULL ?
+             ALIGN_OFFSET(StringPub, nameSize + bufferPos) + sizeof(StringPub) + strSize(file->checksumPageErrorList) + 1 : 0));
 
     // Create string object for the file name
     *(StringPub *)result = (StringPub){.size = (unsigned int)strSize(file->name), .buffer = (char *)result + sizeof(StringPub)};
@@ -266,9 +267,12 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
         resultPos += bufferPos + ALIGN_OFFSET(StringPub, nameSize + bufferPos);
 
         *(StringPub *)(result + resultPos) = (StringPub)
-            {.size = (unsigned int)strSize(file->checksumPageErrorList), .buffer = (char *)result + resultPos + sizeof(StringPub)};
-        resultPos += sizeof(StringPub);
+        {
+            .size = (unsigned int)strSize(file->checksumPageErrorList),
+            .buffer = (char *)result + resultPos + sizeof(StringPub),
+        };
 
+        resultPos += sizeof(StringPub);
         memcpy(result + resultPos, (uint8_t *)strZ(file->checksumPageErrorList), strSize(file->checksumPageErrorList) + 1);
     }
 
@@ -765,12 +769,12 @@ static struct ManifestBuildBlockIncrSizeMap
 } manifestBuildBlockIncrSizeMap[] =
 {
     {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
-    {.fileSize =  256 * 1024 * 1024, .blockSize =  768 * 1024},
-    {.fileSize =   64 * 1024 * 1024, .blockSize =  512 * 1024},
-    {.fileSize =   16 * 1024 * 1024, .blockSize =  384 * 1024},
-    {.fileSize =    4 * 1024 * 1024, .blockSize =  256 * 1024},
-    {.fileSize =    2 * 1024 * 1024, .blockSize =  192 * 1024},
-    {.fileSize =         128 * 1024, .blockSize =  128 * 1024},
+    {.fileSize = 256 * 1024 * 1024, .blockSize = 768 * 1024},
+    {.fileSize = 64 * 1024 * 1024, .blockSize = 512 * 1024},
+    {.fileSize = 16 * 1024 * 1024, .blockSize = 384 * 1024},
+    {.fileSize = 4 * 1024 * 1024, .blockSize = 256 * 1024},
+    {.fileSize = 2 * 1024 * 1024, .blockSize = 192 * 1024},
+    {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
 };
 
 // File age to block multiplier map
@@ -782,7 +786,7 @@ static struct ManifestBuildBlockIncrTimeMap
 {
     {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
     {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
-    {.fileAge =     7 * 86400, .blockMultiplier = 2},
+    {.fileAge = 7 * 86400, .blockMultiplier = 2},
 };
 
 static uint64_t
@@ -999,7 +1003,7 @@ manifestBuildInfo(
             // the likelihood of needing the regexp should be very small.
             if (dbPath && strBeginsWithZ(info->name, PG_FILE_PGINTERNALINIT) &&
                 (strSize(info->name) == sizeof(PG_FILE_PGINTERNALINIT) - 1 ||
-                    regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
+                 regExpMatchOne(STRDEF("\\.[0-9]+"), strSub(info->name, sizeof(PG_FILE_PGINTERNALINIT) - 1))))
             {
                 FUNCTION_TEST_RETURN_VOID();
             }
@@ -1009,9 +1013,9 @@ manifestBuildInfo(
             {
                 // Skip recovery files
                 if (((strEqZ(info->name, PG_FILE_RECOVERYSIGNAL) || strEqZ(info->name, PG_FILE_STANDBYSIGNAL)) &&
-                        pgVersion >= PG_VERSION_12) ||
+                     pgVersion >= PG_VERSION_12) ||
                     ((strEqZ(info->name, PG_FILE_RECOVERYCONF) || strEqZ(info->name, PG_FILE_RECOVERYDONE)) &&
-                        pgVersion < PG_VERSION_12) ||
+                     pgVersion < PG_VERSION_12) ||
                     // Skip temp file for safely writing postgresql.auto.conf
                     (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP) && pgVersion >= PG_VERSION_94) ||
                     // Skip backup_label in versions where non-exclusive backup is supported
@@ -1020,7 +1024,7 @@ manifestBuildInfo(
                     strEqZ(info->name, PG_FILE_BACKUPLABELOLD) ||
                     // Skip backup_manifest/tmp in versions where it is created
                     ((strEqZ(info->name, PG_FILE_BACKUPMANIFEST) || strEqZ(info->name, PG_FILE_BACKUPMANIFEST_TMP)) &&
-                        pgVersion >= PG_VERSION_13) ||
+                     pgVersion >= PG_VERSION_13) ||
                     // Skip running process options
                     strEqZ(info->name, PG_FILE_POSTMTROPTS) ||
                     // Skip process id file to avoid confusing postgres after restore
@@ -1528,7 +1532,7 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType
                 {
                     LOG_WARN_FMT(
                         "file '%s' has timestamp (%" PRId64 ") in the future (relative to copy start %" PRId64 "), enabling delta"
-                            " checksum",
+                        " checksum",
                         strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, (int64_t)copyStart);
 
                     this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
@@ -1613,7 +1617,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     {
                         LOG_WARN_FMT(
                             "file '%s' has timestamp earlier than prior backup (prior %" PRId64 ", current %" PRId64 "), enabling"
-                                " delta checksum",
+                            " delta checksum",
                             strZ(manifestPathPg(file.name)), (int64_t)filePrior.timestamp, (int64_t)file.timestamp);
 
                         this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
@@ -1625,7 +1629,7 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
                     {
                         LOG_WARN_FMT(
                             "file '%s' has same timestamp (%" PRId64 ") as prior but different size (prior %" PRIu64 ", current"
-                                " %" PRIu64 "), enabling delta checksum",
+                            " %" PRIu64 "), enabling delta checksum",
                             strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, filePrior.size, file.size);
 
                         this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
@@ -1866,9 +1870,9 @@ manifestBuildComplete(
 // multiple structs since most of the fields are the same and the size shouldn't be more than 4/8 bytes.
 typedef struct ManifestLoadFound
 {
-    bool group:1;
-    bool mode:1;
-    bool user:1;
+    bool group : 1;
+    bool mode : 1;
+    bool user : 1;
 } ManifestLoadFound;
 
 typedef struct ManifestLoadData

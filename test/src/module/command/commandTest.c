@@ -36,7 +36,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameter");
         TEST_RESULT_LOG(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1] --archive-async --archive-timeout=10"
-                " --exec-id=1-test --pg1-path=/pg1 --stanza=test");
+            " --exec-id=1-test --pg1-path=/pg1 --stanza=test");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple parameters");
@@ -52,7 +52,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdBegin(), "command begin with command parameters");
         TEST_RESULT_LOG(
             "P00   INFO: archive-get command begin " PROJECT_VERSION ": [param1, \"param 2\"] --archive-async --exec-id=1-test"
-                " --pg1-path=/pg1 --stanza=test");
+            " --pg1-path=/pg1 --stanza=test");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reset, negate, list, hash options");

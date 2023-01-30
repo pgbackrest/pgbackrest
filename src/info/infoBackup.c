@@ -469,8 +469,8 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .optionArchiveCheck = manData->backupOptionArchiveCheck,
                 .optionArchiveCopy = manData->backupOptionArchiveCopy,
                 .optionBackupStandby = manData->backupOptionStandby != NULL ? varBool(manData->backupOptionStandby) : false,
-                .optionChecksumPage = manData->backupOptionChecksumPage != NULL ?
-                    varBool(manData->backupOptionChecksumPage) : false,
+                .optionChecksumPage =
+                    manData->backupOptionChecksumPage != NULL ? varBool(manData->backupOptionChecksumPage) : false,
                 .optionCompress = manData->backupOptionCompressType != compressTypeNone,
                 .optionHardlink = manData->backupOptionHardLink,
                 .optionOnline = manData->backupOptionOnline,

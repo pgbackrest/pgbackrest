@@ -740,7 +740,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: build failed for unit performance/type -- will retry: unable to list file info for path '" TEST_PATH
-                "/test/unit-3/uXX/build': [13] Permission denied");
+            "/test/unit-3/uXX/build': [13] Permission denied");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/uXX"));
         fileList = testStorageList(storageUnit);
@@ -906,11 +906,11 @@ testRun(void)
                 STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false, false),
             FileOpenError,
             "build failed for unit performance/type: unable to open file '" TEST_PATH "/repo/meson.build' for read: [13] Permission"
-                " denied");
+            " denied");
 
         TEST_RESULT_LOG(
             "P00   WARN: build failed for unit performance/type -- will retry: unable to open file '" TEST_PATH "/repo/meson.build'"
-                " for read: [13] Permission denied");
+            " for read: [13] Permission denied");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

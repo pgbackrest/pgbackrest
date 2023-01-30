@@ -43,26 +43,28 @@ Functions and macros to audit a mem context by detecting new child contexts/allo
 are not the expected return type.
 ***********************************************************************************************************************************/
 #if defined(DEBUG)
-    typedef struct MemContextAuditState
-    {
-        MemContext *memContext;                                     // Mem context to audit
 
-        bool returnTypeAny;                                         // Skip auditing for this mem context
-        uint64_t sequenceContextNew;                                // Max sequence for new contexts at beginning
-    } MemContextAuditState;
+typedef struct MemContextAuditState
+{
+    MemContext *memContext;                                         // Mem context to audit
 
-    // Begin the audit
-    FN_EXTERN void memContextAuditBegin(MemContextAuditState *state);
+    bool returnTypeAny;                                             // Skip auditing for this mem context
+    uint64_t sequenceContextNew;                                    // Max sequence for new contexts at beginning
+} MemContextAuditState;
 
-    // End the audit and make sure the return type is as expected
-    FN_EXTERN void memContextAuditEnd(const MemContextAuditState *state, const char *returnTypeDefault);
+// Begin the audit
+FN_EXTERN void memContextAuditBegin(MemContextAuditState *state);
 
-    // Rename a mem context using the extra allocation pointer
-    #define MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)          memContextAuditAllocExtraName(this, #name)
+// End the audit and make sure the return type is as expected
+FN_EXTERN void memContextAuditEnd(const MemContextAuditState *state, const char *returnTypeDefault);
 
-    FN_EXTERN void *memContextAuditAllocExtraName(void *allocExtra, const char *name);
+// Rename a mem context using the extra allocation pointer
+#define MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)              memContextAuditAllocExtraName(this, #name)
+
+FN_EXTERN void *memContextAuditAllocExtraName(void *allocExtra, const char *name);
+
 #else
-    #define MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)          this
+#define MEM_CONTEXT_AUDIT_ALLOC_EXTRA_NAME(this, name)              this
 #endif
 
 /***********************************************************************************************************************************
@@ -97,12 +99,10 @@ MEM_CONTEXT_END();
 #define MEM_CONTEXT_BEGIN(memContext)                                                                                              \
     do                                                                                                                             \
     {                                                                                                                              \
-        /* Switch to the new memory context */                                                                                     \
-        memContextSwitch(memContext);
+        memContextSwitch(memContext); /* Switch to the new memory context */
 
 #define MEM_CONTEXT_END()                                                                                                          \
-        /* Switch back to the prior context */                                                                                     \
-        memContextSwitchBack();                                                                                                    \
+        memContextSwitchBack(); /* Switch back to the prior context */                                                             \
     }                                                                                                                              \
     while (0)
 
@@ -245,11 +245,11 @@ typedef struct MemContextNewParam
 #define MEM_CONTEXT_QTY_MAX                                         UINT8_MAX
 
 #ifdef DEBUG
-    #define memContextNewP(name, ...)                                                                                              \
-        memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define memContextNewP(name, ...)                                                                                                  \
+    memContextNew(name, (MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 #else
-    #define memContextNewP(name, ...)                                                                                              \
-        memContextNew((MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define memContextNewP(name, ...)                                                                                                  \
+    memContextNew((MemContextNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 #endif
 
 FN_EXTERN MemContext *memContextNew(
@@ -312,7 +312,7 @@ FN_EXTERN MemContext *memContextTop(void);
 
 // Get total size of mem context and all children
 #ifdef DEBUG
-    FN_EXTERN size_t memContextSize(const MemContext *this);
+FN_EXTERN size_t memContextSize(const MemContext *this);
 #endif // DEBUG
 
 /***********************************************************************************************************************************

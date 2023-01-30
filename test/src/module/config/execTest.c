@@ -37,14 +37,14 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, NULL, false, true),
             "--archive-async\n--buffer-size=64KiB\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
-                "--pg1-path=\"" TEST_PATH "/db path\"\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\n"
-                "archive-get:async\n",
+            "--pg1-path=\"" TEST_PATH "/db path\"\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\n"
+            "archive-get:async\n",
             "exec archive-get -> archive-get:async");
 
         TEST_RESULT_STRLST_Z(
             cfgExecParam(cfgCmdBackup, cfgCmdRoleMain, NULL, false, false),
             "--archive-timeout=5\n--buffer-size=64KiB\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
-                "--pg1-path=" TEST_PATH "/db path\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\nbackup\n",
+            "--pg1-path=" TEST_PATH "/db path\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\nbackup\n",
             "exec archive-get -> backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             cfgExecParam(cfgCmdRestore, cfgCmdRoleMain, optionReplace, true, false),
             "--db-include=1\n--db-include=2\n--exec-id=1-test\n--log-path=/log\n--pg1-path=" TEST_PATH "/db path\n"
-                "--recovery-option=a=b\n--recovery-option=c=d\n--repo1-path=/replace/path\nrestore\n",
+            "--recovery-option=a=b\n--recovery-option=c=d\n--repo1-path=/replace/path\nrestore\n",
             "exec restore -> restore");
     }
 

@@ -14,16 +14,16 @@ Test GCS Storage
 Constants
 ***********************************************************************************************************************************/
 #define TEST_ENDPOINT                                               "storage.googleapis.com"
-    STRING_STATIC(TEST_ENDPOINT_STR,                                TEST_ENDPOINT);
+STRING_STATIC(TEST_ENDPOINT_STR,                                    TEST_ENDPOINT);
 #define TEST_PORT                                                   ((unsigned int)443)
 #define TEST_TIMEOUT                                                5000
 #define TEST_CHUNK_SIZE                                             16
 #define TEST_BUCKET                                                 "bucket"
-    STRING_STATIC(TEST_BUCKET_STR,                                  TEST_BUCKET);
+STRING_STATIC(TEST_BUCKET_STR,                                      TEST_BUCKET);
 #define TEST_KEY_FILE                                               TEST_PATH "/key.json"
-    STRING_STATIC(TEST_KEY_FILE_STR,                                TEST_KEY_FILE);
+STRING_STATIC(TEST_KEY_FILE_STR,                                    TEST_KEY_FILE);
 #define TEST_TOKEN                                                  "X X"
-    STRING_STATIC(TEST_TOKEN_STR,                                   TEST_TOKEN);
+STRING_STATIC(TEST_TOKEN_STR,                                       TEST_TOKEN);
 
 #define TEST_KEY                                                                                                                   \
     "{\n"                                                                                                                          \
@@ -173,8 +173,8 @@ testResponse(IoWrite *write, TestResponseParam param)
         strCatFmt(
             response,
             "content-length:%zu\r\n"
-                "\r\n"
-                "%s",
+            "\r\n"
+            "%s",
             strlen(param.content), param.content);
     }
     else

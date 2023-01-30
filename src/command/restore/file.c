@@ -140,12 +140,15 @@ restoreFile(
                                     // after restore.
                                     if (info.timeModified != file->timeModified)
                                     {
+                                        const struct utimbuf uTimeBuf =
+                                        {
+                                            .actime = file->timeModified,
+                                            .modtime = file->timeModified,
+                                        };
+
                                         THROW_ON_SYS_ERROR_FMT(
-                                            utime(
-                                                fileName,
-                                                &((struct utimbuf){
-                                                    .actime = file->timeModified, .modtime = file->timeModified})) == -1,
-                                            FileInfoError, "unable to set time for '%s'", fileName);
+                                            utime(fileName, &uTimeBuf) == -1, FileInfoError, "unable to set time for '%s'",
+                                            fileName);
                                     }
 
                                     fileResult->result = restoreResultPreserve;
@@ -292,8 +295,8 @@ restoreFile(
 
                         // Size of delta map. If there is no delta map because the pg file does not exist then set to zero, which
                         // will force all blocks to be updated.
-                        const unsigned int deltaMapSize = file->deltaMap == NULL ?
-                            0 : (unsigned int)(bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE);
+                        const unsigned int deltaMapSize =
+                            file->deltaMap == NULL ? 0 : (unsigned int)(bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE);
 
                         // Find and write updated blocks
                         bool updateFound = false;                   // Is there a block list to be updated?
@@ -344,8 +347,8 @@ restoreFile(
                                          !bufEq(
                                              BUF(blockMapItemNext->checksum, HASH_TYPE_SHA1_SIZE),
                                              BUF(
-                                                bufPtrConst(file->deltaMap) + (blockMapIdx + 1) * HASH_TYPE_SHA1_SIZE,
-                                                HASH_TYPE_SHA1_SIZE))))
+                                                 bufPtrConst(file->deltaMap) + (blockMapIdx + 1) * HASH_TYPE_SHA1_SIZE,
+                                                 HASH_TYPE_SHA1_SIZE))))
                                     {
                                         continue;
                                     }

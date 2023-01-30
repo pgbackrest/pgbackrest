@@ -16,9 +16,10 @@ Test Database
 /***********************************************************************************************************************************
 Macro to check that replay is making progress -- this does not seem useful enough to be included in the pq harness header
 ***********************************************************************************************************************************/
-#define HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                \
-    sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,              \
-    replayProgressParam, sleepParam)                                                                                               \
+#define                                                                                                                            \
+    HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                    \
+        sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,          \
+        replayProgressParam, sleepParam)                                                                                           \
     {.session = sessionParam,                                                                                                      \
         .function = HRNPQ_SENDQUERY,                                                                                               \
         .param =                                                                                                                   \
@@ -42,8 +43,9 @@ Macro to check that replay is making progress -- this does not seem useful enoug
     {.session = sessionParam, .function = HRNPQ_CLEAR},                                                                            \
     {.session = sessionParam, .function = HRNPQ_GETRESULT, .resultNull = true}
 
-#define HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                          \
-    sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam)         \
+#define                                                                                                                            \
+    HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                              \
+        sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam)     \
     HRNPQ_MACRO_REPLAY_TARGET_REACHED_PROGRESS(                                                                                    \
         sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam,   \
         sleepParam)
@@ -221,13 +223,17 @@ testRun(void)
             HRNPQ_MACRO_SET_CLIENT_ENCODING(1),
 
             // Return NULL for a row in pg_settings
-            {.session = 1, .function = HRNPQ_SENDQUERY, .param =
-                "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
+            {
+                .session = 1,
+                .function = HRNPQ_SENDQUERY,
+                .param =
+                    "[\"select (select setting from pg_catalog.pg_settings where name = 'server_version_num')::int4,"
                     " (select setting from pg_catalog.pg_settings where name = 'data_directory')::text,"
                     " (select setting from pg_catalog.pg_settings where name = 'archive_mode')::text,"
                     " (select setting from pg_catalog.pg_settings where name = 'archive_command')::text,"
                     " (select setting from pg_catalog.pg_settings where name = 'checkpoint_timeout')::int4\"]",
-                .resultInt = 1},
+                .resultInt = 1,
+            },
             {.session = 1, .function = HRNPQ_CONSUMEINPUT},
             {.session = 1, .function = HRNPQ_ISBUSY},
             {.session = 1, .function = HRNPQ_GETRESULT},
@@ -358,7 +364,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: the cluster is already in backup mode but no pgBackRest backup process is running."
-                " pg_stop_backup() will be called so a new backup can be started.");
+            " pg_stop_backup() will be called so a new backup can be started.");
 
         TEST_RESULT_STR_Z(dbBackupStop(db.primary).lsn, "2/6", "stop backup");
 
@@ -517,13 +523,15 @@ testRun(void)
             HRNPQ_MACRO_WAL_SWITCH(1, "wal", "000000050000000500000005"),
 
             // Standby returns NULL lsn
-            {.session = 2,
+            {
+                .session = 2,
                 .function = HRNPQ_SENDQUERY,
                 .param =
                     "[\"select replayLsn::text,\\n"
                     "       (replayLsn > '5/5')::bool as targetReached\\n"
                     "  from pg_catalog.pg_last_wal_replay_lsn() as replayLsn\"]",
-                .resultInt = 1},
+                .resultInt = 1,
+            },
             {.session = 2, .function = HRNPQ_CONSUMEINPUT},
             {.session = 2, .function = HRNPQ_ISBUSY},
             {.session = 2, .function = HRNPQ_GETRESULT},
@@ -651,7 +659,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: start-fast is disabled and db-timeout (299s) is smaller than the PostgreSQL checkpoint_timeout (300s) -"
-                " timeout may occur before the backup starts");
+            " timeout may occur before the backup starts");
 
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
@@ -734,7 +742,7 @@ testRun(void)
             "HINT: are all available clusters in recovery?");
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
-                " error");
+            " error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("only available cluster is a standby");
@@ -906,7 +914,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg4: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error\n"
             "P00   WARN: unable to check pg5: [DbConnectError] raised from remote-0 ssh protocol on 'localhost':"
-                " unable to connect to 'dbname='postgres' port=5432': [PG ERROR]");
+            " unable to connect to 'dbname='postgres' port=5432': [PG ERROR]");
 
         TEST_RESULT_INT(result.primaryIdx, 3, "check primary idx");
         TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");

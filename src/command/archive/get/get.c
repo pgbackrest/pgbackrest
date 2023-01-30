@@ -171,17 +171,17 @@ archiveGetFind(
                             {
                                 MEM_CONTEXT_BEGIN(lstMemContext(cacheArchive->pathList))
                                 {
-                                    cachePath = lstAdd(
-                                        cacheArchive->pathList,
-                                        &(ArchiveGetFindCachePath)
-                                        {
-                                            .path = strDup(path),
-                                            .fileList = storageListP(
-                                                storageRepoIdx(cacheRepo->repoIdx),
-                                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
-                                                .expression = strNewFmt(
-                                                    "^%s[0-F]{8}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(path))),
-                                        });
+                                    const ArchiveGetFindCachePath archiveGetFindCachePath =
+                                    {
+                                        .path = strDup(path),
+                                        .fileList = storageListP(
+                                            storageRepoIdx(cacheRepo->repoIdx),
+                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(cacheArchive->archiveId), strZ(path)),
+                                            .expression = strNewFmt(
+                                                "^%s[0-F]{8}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(path))),
+                                    };
+
+                                    cachePath = lstAdd(cacheArchive->pathList, &archiveGetFindCachePath);
                                 }
                                 MEM_CONTEXT_END();
                             }
@@ -201,18 +201,18 @@ archiveGetFind(
                         {
                             MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                             {
-                                lstAdd(
-                                    matchList,
-                                    &(ArchiveGetFile)
-                                    {
-                                        .file = strNewFmt(
-                                            "%s/%s/%s", strZ(cacheArchive->archiveId), strZ(path),
-                                            strZ(strLstGet(segmentList, segmentIdx))),
-                                        .repoIdx = cacheRepo->repoIdx,
-                                        .archiveId = cacheArchive->archiveId,
-                                        .cipherType = cacheRepo->cipherType,
-                                        .cipherPassArchive = cacheRepo->cipherPassArchive,
-                                    });
+                                const ArchiveGetFile archiveGetFile =
+                                {
+                                    .file = strNewFmt(
+                                        "%s/%s/%s", strZ(cacheArchive->archiveId), strZ(path),
+                                        strZ(strLstGet(segmentList, segmentIdx))),
+                                    .repoIdx = cacheRepo->repoIdx,
+                                    .archiveId = cacheArchive->archiveId,
+                                    .cipherType = cacheRepo->cipherType,
+                                    .cipherPassArchive = cacheRepo->cipherPassArchive,
+                                };
+
+                                lstAdd(matchList, &archiveGetFile);
                             }
                             MEM_CONTEXT_END();
                         }
@@ -225,16 +225,16 @@ archiveGetFind(
                     {
                         MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                         {
-                            lstAdd(
-                                matchList,
-                                &(ArchiveGetFile)
-                                {
-                                    .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
-                                    .repoIdx = cacheRepo->repoIdx,
-                                    .archiveId = cacheArchive->archiveId,
-                                    .cipherType = cacheRepo->cipherType,
-                                    .cipherPassArchive = cacheRepo->cipherPassArchive,
-                                });
+                            const ArchiveGetFile archiveGetFile =
+                            {
+                                .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
+                                .repoIdx = cacheRepo->repoIdx,
+                                .archiveId = cacheArchive->archiveId,
+                                .cipherType = cacheRepo->cipherType,
+                                .cipherPassArchive = cacheRepo->cipherPassArchive,
+                            };
+
+                            lstAdd(matchList, &archiveGetFile);
                         }
                         MEM_CONTEXT_END();
                     }
@@ -318,7 +318,7 @@ archiveGetFind(
                         getCheckResult->errorFile = strDup(archiveFileRequest);
                         getCheckResult->errorMessage = strNewFmt(
                             "duplicates found for WAL segment %s:%s\n"
-                                "HINT: are multiple primaries archiving to this stanza?",
+                            "HINT: are multiple primaries archiving to this stanza?",
                             strZ(archiveFileRequest), strZ(message));
                         getCheckResult->warnList = strLstMove(fileWarnList, memContextCurrent());
                     }

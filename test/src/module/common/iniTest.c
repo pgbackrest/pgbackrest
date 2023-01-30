@@ -126,8 +126,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("store and retrieve values");
 
-        const Buffer *iniBuf = BUFSTRDEF
-        (
+        const Buffer *iniBuf = BUFSTRDEF(
             "# Comment\n"
             "[global] \n"
             "compress=y \n"
@@ -135,8 +134,7 @@ testRun(void)
             "repeat=2\n"
             "\n"
             " [db]\n"
-            "pg1-path = /path/to/pg"
-        );
+            "pg1-path = /path/to/pg");
 
         Ini *ini = NULL;
         TEST_ASSIGN(ini, iniNewP(ioBufferReadNew(iniBuf), .store = true), "new ini");

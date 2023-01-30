@@ -14,13 +14,13 @@ Test Azure Storage
 Constants
 ***********************************************************************************************************************************/
 #define TEST_ACCOUNT                                                "account"
-    STRING_STATIC(TEST_ACCOUNT_STR,                                 TEST_ACCOUNT);
+STRING_STATIC(TEST_ACCOUNT_STR,                                     TEST_ACCOUNT);
 #define TEST_CONTAINER                                              "container"
-    STRING_STATIC(TEST_CONTAINER_STR,                               TEST_CONTAINER);
+STRING_STATIC(TEST_CONTAINER_STR,                                   TEST_CONTAINER);
 #define TEST_KEY_SAS                                                "?sig=key"
-    STRING_STATIC(TEST_KEY_SAS_STR,                                 TEST_KEY_SAS);
+STRING_STATIC(TEST_KEY_SAS_STR,                                     TEST_KEY_SAS);
 #define TEST_KEY_SHARED                                             "YXpLZXk="
-    STRING_STATIC(TEST_KEY_SHARED_STR,                              TEST_KEY_SHARED);
+STRING_STATIC(TEST_KEY_SHARED_STR,                                  TEST_KEY_SHARED);
 
 /***********************************************************************************************************************************
 Helper to build test requests
@@ -156,8 +156,8 @@ testResponse(IoWrite *write, TestResponseParam param)
         strCatFmt(
             response,
             "content-length:%zu\r\n"
-                "\r\n"
-                "%s",
+            "\r\n"
+            "%s",
             strlen(param.content), param.content);
     }
     else
@@ -407,7 +407,7 @@ testRun(void)
         TEST_RESULT_Z(
             logBuf,
             "{content-length: '0', host: 'account.blob.core.windows.net', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
-                ", x-ms-version: '2019-02-02', authorization: 'SharedKey account:edqgT7EhsiIN3q6Al2HCZlpXr2D5cJFavr2ZCkhG9R8='}",
+            ", x-ms-version: '2019-02-02', authorization: 'SharedKey account:edqgT7EhsiIN3q6Al2HCZlpXr2D5cJFavr2ZCkhG9R8='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -423,8 +423,8 @@ testRun(void)
         TEST_RESULT_Z(
             logBuf,
             "{content-length: '44', content-md5: 'b64f49553d5c441652e95697a2c5949e', host: 'account.blob.core.windows.net'"
-                ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2019-02-02'"
-                ", authorization: 'SharedKey account:5qAnroLtbY8IWqObx8+UVwIUysXujsfWZZav7PrBON0='}",
+            ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2019-02-02'"
+            ", authorization: 'SharedKey account:5qAnroLtbY8IWqObx8+UVwIUysXujsfWZZav7PrBON0='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------

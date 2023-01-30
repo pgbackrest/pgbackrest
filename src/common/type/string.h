@@ -29,7 +29,7 @@ old context and then back. Below is a simplified example:
 Minimum number of extra bytes to allocate for strings that are growing or are likely to grow
 ***********************************************************************************************************************************/
 #ifndef STRING_EXTRA_MIN
-    #define STRING_EXTRA_MIN                                            64
+#define STRING_EXTRA_MIN                                            64
 #endif
 
 /***********************************************************************************************************************************
@@ -83,8 +83,8 @@ Getters/setters
 ***********************************************************************************************************************************/
 typedef struct StringPub
 {
-    uint64_t size:32;                                               // Actual size of the string
-    uint64_t extra:32;                                              // Extra space allocated for expansion
+    uint64_t size : 32;                                             // Actual size of the string
+    uint64_t extra : 32;                                            // Extra space allocated for expansion
     char *buffer;                                                   // String buffer
 } StringPub;
 

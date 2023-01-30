@@ -68,8 +68,8 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089,"
-                "\"db-version\":\"9.5\"}\n",
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.5\"}\n",
             .comment = "write backup info - stanza1, repo1");
 
         // Add backup manifest

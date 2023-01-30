@@ -56,7 +56,7 @@ STRING_STATIC(S3_XML_TAG_IS_TRUNCATED_STR,                          "IsTruncated
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
 #define S3_XML_TAG_NEXT_CONTINUATION_TOKEN                          "NextContinuationToken"
-    STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,           S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
+STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
@@ -66,10 +66,10 @@ STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 AWS authentication v4 constants
 ***********************************************************************************************************************************/
 #define S3                                                          "s3"
-    BUFFER_STRDEF_STATIC(S3_BUF,                                    S3);
+BUFFER_STRDEF_STATIC(S3_BUF,                                        S3);
 #define AWS4                                                        "AWS4"
 #define AWS4_REQUEST                                                "aws4_request"
-    BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                          AWS4_REQUEST);
+BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                              AWS4_REQUEST);
 #define AWS4_HMAC_SHA256                                            "AWS4-HMAC-SHA256"
 
 /***********************************************************************************************************************************
@@ -315,7 +315,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
                 THROW(
                     ProtocolError,
                     "role to retrieve temporary credentials not found\n"
-                        "HINT: is a valid IAM role associated with this instance?");
+                    "HINT: is a valid IAM role associated with this instance?");
             }
             // Else an error that we can't handle
             else if (!httpResponseCodeOk(response))
@@ -340,7 +340,7 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
             THROW_FMT(
                 ProtocolError,
                 "role '%s' not found\n"
-                    "HINT: is '%s' a valid IAM role associated with this instance?",
+                "HINT: is '%s' a valid IAM role associated with this instance?",
                 strZ(this->credRole), strZ(this->credRole));
         }
         // Else an error that we can't handle
@@ -463,8 +463,8 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        HttpHeader *requestHeader = param.header == NULL ?
-            httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+        HttpHeader *requestHeader =
+            param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Set content length
         httpHeaderAdd(
@@ -1145,8 +1145,8 @@ storageS3New(
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
-            .bucketEndpoint = uriStyle == storageS3UriStyleHost ?
-                strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
+            .bucketEndpoint =
+                uriStyle == storageS3UriStyleHost ? strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
 
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,

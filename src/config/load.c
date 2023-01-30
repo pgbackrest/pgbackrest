@@ -149,7 +149,7 @@ cfgLoadUpdateOption(void)
             THROW_FMT(
                 OptionInvalidValueError,
                 "'%s' is not valid for '" CFGOPT_PROTOCOL_TIMEOUT "' option\nHINT '" CFGOPT_PROTOCOL_TIMEOUT "' option (%s)"
-                    " should be greater than '" CFGOPT_DB_TIMEOUT "' option (%s).",
+                " should be greater than '" CFGOPT_DB_TIMEOUT "' option (%s).",
                 strZ(cfgOptionDisplay(cfgOptProtocolTimeout)), strZ(cfgOptionDisplay(cfgOptProtocolTimeout)),
                 strZ(cfgOptionDisplay(cfgOptDbTimeout)));
         }
@@ -283,10 +283,10 @@ cfgLoadUpdateOption(void)
         {
             THROW_FMT(
                 OptionInvalidValueError,
-                "'%s' is not valid for option '%s'"
-                    "\nHINT: RFC-2818 forbids dots in wildcard matches."
-                    "\nHINT: TLS/SSL verification cannot proceed with this bucket name."
-                    "\nHINT: remove dots from the bucket name.",
+                "'%s' is not valid for option '%s'\n"
+                "HINT: RFC-2818 forbids dots in wildcard matches.\n"
+                "HINT: TLS/SSL verification cannot proceed with this bucket name.\n"
+                "HINT: remove dots from the bucket name.",
                 strZ(cfgOptionIdxDisplay(cfgOptRepoS3Bucket, repoIdx)), cfgOptionIdxName(cfgOptRepoS3Bucket, repoIdx));
         }
     }

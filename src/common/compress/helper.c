@@ -42,9 +42,9 @@ static const struct CompressHelperLocal
     IoFilter *(*compressNew)(int);                                  // Function to create new compression filter
     StringId decompressType;                                        // Type of the decompression filter
     IoFilter *(*decompressNew)(void);                               // Function to create new decompression filter
-    int levelDefault:8;                                             // Default compression level
-    int levelMin:8;                                                 // Minimum compression level
-    int levelMax:8;                                                 // Maximum compression level
+    int levelDefault : 8;                                           // Default compression level
+    int levelMin : 8;                                               // Minimum compression level
+    int levelMax : 8;                                               // Maximum compression level
 } compressHelperLocal[] =
 {
     {

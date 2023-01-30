@@ -28,11 +28,11 @@ Add file to manifest
 typedef struct HrnManifestFile
 {
     const char *name;                                               // See ManifestFile for comments
-    bool copy:1;
-    bool delta:1;
-    bool resume:1;
-    bool checksumPage:1;
-    bool checksumPageError:1;
+    bool copy : 1;
+    bool delta : 1;
+    bool resume : 1;
+    bool checksumPage : 1;
+    bool checksumPageError : 1;
     mode_t mode;
     const char *checksumSha1;
     const char *checksumRepoSha1;
