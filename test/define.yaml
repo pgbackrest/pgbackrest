@@ -826,6 +826,7 @@ unit:
 
         coverage:
           - command/backup/backup
+          - command/backup/blockDelta
           - command/backup/blockIncr
           - command/backup/blockMap
           - command/backup/common

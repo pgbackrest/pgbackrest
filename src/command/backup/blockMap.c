@@ -139,7 +139,7 @@ blockMapNewRead(IoRead *const map)
             blockMapRef->offset += blockMapItem.size;
 
             // Read first block no (it can never be zero)
-            uint64_t blockLast = blockEqual ? 0: ioReadVarIntU64(map);
+            uint64_t blockLast = blockEqual ? 0 : ioReadVarIntU64(map);
             blockMapItem.block = blockLast;
 
             do

@@ -21,6 +21,44 @@ Test Backup Command
 #include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
+Test block delta
+***********************************************************************************************************************************/
+static String *
+testBlockDelta(const BlockDelta *const blockDelta)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM_P(VOID, blockDelta);
+    FUNCTION_HARNESS_END();
+
+    String *const result = strNew();
+
+    for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
+    {
+        const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
+
+        strCatFmt(
+            result, "read {reference: %u, bundleId: %" PRIu64 ", offset: %" PRIu64 ", size: %" PRIu64 "}\n", read->reference,
+            read->bundleId, read->offset, read->size);
+
+        for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)
+        {
+            const BlockDeltaSuperBlock *const superBlock = lstGet(read->superBlockList, superBlockIdx);
+
+            strCatFmt(result, "  super block {size: %" PRIu64 "}\n", superBlock->size);
+
+            for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlock->blockList); blockIdx++)
+            {
+                const BlockDeltaBlock *const block = lstGet(superBlock->blockList, blockIdx);
+
+                strCatFmt(result, "    block {offset: %" PRIu64 "}\n", block->offset);
+            }
+        }
+    }
+
+    FUNCTION_HARNESS_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
 ***********************************************************************************************************************************/
 static String *
@@ -164,66 +202,87 @@ testBackupValidateList(
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(read));
                         IoFilter *const checksumFilter = cryptoHashNew(hashTypeSha1);
 
-                        // Check blocks
+                        // Build map log
                         String *const mapLog = strNew();
 
                         for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
                         {
-                            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
-                            const String *const blockName = backupFileRepoPathP(
-                                strLstGet(manifestReferenceList(manifest), blockMapItem->reference), .manifestName = file.name,
-                                .bundleId = blockMapItem->bundleId, .blockIncr = true);
-
-                            IoRead *blockRead = storageReadIo(
-                                storageNewReadP(
-                                    storage, blockName, .offset = blockMapItem->offset, .limit = VARUINT64(blockMapItem->size)));
-                            ioReadOpen(blockRead);
-
-                            IoRead *chunkRead = ioChunkedReadNew(blockRead);
-
-                            if (cipherType != cipherTypeNone)
-                            {
-                                ioFilterGroupAdd(
-                                    ioReadFilterGroup(chunkRead),
-                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
-                            }
-
-                            if (manifestData->backupOptionCompressType != compressTypeNone)
-                            {
-                                ioFilterGroupAdd(
-                                    ioReadFilterGroup(chunkRead), decompressFilter(manifestData->backupOptionCompressType));
-                            }
-
-                            ioReadOpen(chunkRead);
-                            ioReadVarIntU64(chunkRead);
-
-                            Buffer *block = bufNew(file.size);
-                            IoWrite *blockWrite = ioBufferWriteNewOpen(block);
-
-                            ioCopyP(chunkRead, blockWrite);
-                            ioWriteClose(blockWrite);
-
-                            // Add reference to log
                             if (!strEmpty(mapLog))
                                 strCatChr(mapLog, ',');
 
-                            strCatFmt(mapLog, "%u", blockMapItem->reference);
+                            strCatFmt(mapLog, "%u", blockMapGet(blockMap, blockMapIdx)->reference);
+                        }
 
-                            // Check block checksum
-                            const String *const blockChecksum = strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, block));
-                            const String *const mapChecksum = strNewEncode(
-                                encodingHex, BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE));
+                        // Check blocks
+                        const BlockDelta *const blockDelta = blockDeltaNew(blockMap, file.blockIncrSize);
 
-                            if (!strEq(blockChecksum, mapChecksum))
+                        for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
+                        {
+                            const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
+                            const String *const blockName = backupFileRepoPathP(
+                                strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
+                                .bundleId = read->bundleId, .blockIncr = true);
+
+                            IoRead *blockRead = storageReadIo(
+                                storageNewReadP(
+                                    storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
+                            ioReadOpen(blockRead);
+
+                            for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)
                             {
-                                THROW_FMT(
-                                    AssertError, "'%s' block %u checksum (%s) does not match block incr map (%s)",
-                                    strZ(file.name), blockMapIdx, strZ(blockChecksum), strZ(mapChecksum));
-                            }
+                                const BlockDeltaSuperBlock *const superBlockData = lstGet(read->superBlockList, superBlockIdx);
 
-                            // Update size and checksum
-                            size += bufUsed(block);
-                            ioFilterProcessIn(checksumFilter, block);
+                                IoRead *chunkRead = ioChunkedReadNew(blockRead);
+
+                                if (cipherType != cipherTypeNone)
+                                {
+                                    ioFilterGroupAdd(
+                                        ioReadFilterGroup(chunkRead),
+                                        cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                                }
+
+                                if (manifestData->backupOptionCompressType != compressTypeNone)
+                                {
+                                    ioFilterGroupAdd(
+                                        ioReadFilterGroup(chunkRead), decompressFilter(manifestData->backupOptionCompressType));
+                                }
+
+                                ioReadOpen(chunkRead);
+                                ioReadVarIntU64(chunkRead);
+
+                                Buffer *const superBlock = bufNew(file.size);
+                                IoWrite *const superBlockWrite = ioBufferWriteNewOpen(superBlock);
+
+                                ioCopyP(chunkRead, superBlockWrite);
+                                ioWriteClose(superBlockWrite);
+
+                                // Check block checksum
+                                for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlockData->blockList); blockIdx++)
+                                {
+                                    const BlockDeltaBlock *const blockData = lstGet(superBlockData->blockList, blockIdx);
+                                    const size_t offset = blockData->offset * file.blockIncrSize;
+                                    const Buffer *const block = BUF(
+                                        bufPtr(superBlock) + offset,
+                                        bufUsed(superBlock) >= blockData->offset + file.blockIncrSize ?
+                                            file.blockIncrSize : bufUsed(superBlock) - offset);
+
+                                    const String *const blockChecksum =
+                                        strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, block));
+                                    const String *const mapChecksum = strNewEncode(
+                                        encodingHex, BUF(blockData->checksum, HASH_TYPE_SHA1_SIZE));
+
+                                    if (!strEq(blockChecksum, mapChecksum))
+                                    {
+                                        THROW_FMT(
+                                            AssertError, "'%s' block %u/%u checksum (%s) does not match block incr map (%s)",
+                                            strZ(file.name), superBlockIdx, blockIdx, strZ(blockChecksum), strZ(mapChecksum));
+                                    }
+
+                                    // Update size and checksum
+                                    size += bufUsed(block);
+                                    ioFilterProcessIn(checksumFilter, block);
+                                }
+                            }
                         }
 
                         strCatFmt(result, ", m={%s}", strZ(mapLog));
@@ -1081,6 +1140,30 @@ testRun(void)
         TEST_RESULT_STR(strNewEncode(encodingHex, bufferCompare), strNewEncode(encodingHex, buffer), "compare");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("equal block delta");
+
+        TEST_RESULT_STR_Z(
+            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8)),
+            "read {reference: 1024, bundleId: 1024, offset: 1024, size: 1024}\n"
+            "  super block {size: 1024}\n"
+            "    block {offset: 0}\n"
+            "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
+            "  super block {size: 3}\n"
+            "    block {offset: 0}\n"
+            "read {reference: 128, bundleId: 0, offset: 129, size: 9}\n"
+            "  super block {size: 9}\n"
+            "    block {offset: 0}\n"
+            "read {reference: 0, bundleId: 56, offset: 200000000, size: 127}\n"
+            "  super block {size: 127}\n"
+            "    block {offset: 0}\n"
+            "read {reference: 0, bundleId: 56, offset: 200000129, size: 21}\n"
+            "  super block {size: 10}\n"
+            "    block {offset: 0}\n"
+            "  super block {size: 11}\n"
+            "    block {offset: 0}\n",
+            "check delta");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build unequal block map");
 
         TEST_ASSIGN(blockMap, blockMapNew(), "new");
@@ -1129,6 +1212,18 @@ testRun(void)
 
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item4)->reference, 0, "add");
 
+        BlockMapItem blockMap2Item5 =
+        {
+            .reference = 0,
+            .bundleId = 56,
+            .offset = 200000127,
+            .size = 44,
+            .block = 5,
+            .checksum = {255, 8, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item5)->reference, 0, "add");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write unequal block map");
 
@@ -1161,6 +1256,8 @@ testRun(void)
             "a601"                                      // delta size 44
             "01"                                        // block 1
             "ff070e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "09"                                        // block 5
+            "ff080e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
             "00"                                        // block end
             "00"                                        // reference end
 
@@ -1176,6 +1273,23 @@ testRun(void)
         ioWriteClose(write);
 
         TEST_RESULT_STR(strNewEncode(encodingHex, bufferCompare), strNewEncode(encodingHex, buffer), "compare");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unequal block delta");
+
+        TEST_RESULT_STR_Z(
+            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8)),
+            "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
+            "  super block {size: 3}\n"
+            "    block {offset: 0}\n"
+            "    block {offset: 8}\n"
+            "read {reference: 0, bundleId: 56, offset: 200000000, size: 171}\n"
+            "  super block {size: 127}\n"
+            "    block {offset: 40}\n"
+            "  super block {size: 44}\n"
+            "    block {offset: 8}\n"
+            "    block {offset: 40}\n",
+            "check delta");
     }
 
     // *****************************************************************************************************************************
