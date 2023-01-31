@@ -239,7 +239,7 @@
                         <summary>Network compression level.</summary>
 
                         <text>
-                            <p>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository. Compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>. When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once. SSH compression is always disabled.</p>
+                            <p>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository. Compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>. When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.</p>
                         </text>
 
                         <allow>0-9</allow>
@@ -620,11 +620,9 @@
                     </config-key>
 
                     <config-key id="repo-host" name="Repository Host">
-                        <summary>Repository host when operating remotely via SSH.</summary>
+                        <summary>Repository host when operating remotely.</summary>
 
                         <text>
-                            <p>Make sure that trusted SSH authentication is configured between the <postgres/> host and the repository host.</p>
-
                             <p>When backing up and archiving to a locally mounted filesystem this setting is not required.</p>
                         </text>
 
@@ -726,7 +724,7 @@
                         <summary>Repository host port when <setting>repo-host</setting> is set.</summary>
 
                         <text>
-                            <p>Use this option to specify a non-default port for the repository host protocol. Currently only SSH is supported.</p>
+                            <p>Use this option to specify a non-default port for the repository host protocol.</p>
                         </text>
 
                         <example>25</example>
@@ -1549,7 +1547,7 @@
                     </config-key>
 
                     <config-key id="pg-host" name="PostgreSQL Host">
-                        <summary><postgres/> host for operating remotely via SSH.</summary>
+                        <summary><postgres/> host for operating remotely.</summary>
 
                         <text>
                             <p>Used for backups where the <postgres/> host is different from the repository host.</p>
@@ -1691,7 +1689,7 @@
                         <summary><postgres/> host port when <setting>pg-host</setting> is set.</summary>
 
                         <text>
-                            <p>Use this option to specify a non-default port for the <postgres/> host protocol. Currently only SSH is supported.</p>
+                            <p>Use this option to specify a non-default port for the <postgres/> host protocol.</p>
                         </text>
 
                         <example>25</example>
