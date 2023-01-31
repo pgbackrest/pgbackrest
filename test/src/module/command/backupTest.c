@@ -951,7 +951,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("BlockMap"))
     {
-        TEST_TITLE("build map");
+        TEST_TITLE("build equal block map");
 
         BlockMap *blockMap = NULL;
         TEST_ASSIGN(blockMap, blockMapNew(), "new");
@@ -1022,15 +1022,16 @@ testRun(void)
         TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem6)->reference, blockMapItem6.reference, "add");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("write map");
+        TEST_TITLE("write equal block map");
 
         Buffer *buffer = bufNew(256);
         IoWrite *write = ioBufferWriteNewOpen(buffer);
-        TEST_RESULT_VOID(blockMapWrite(blockMap, write), "save");
+        TEST_RESULT_VOID(blockMapWrite(blockMap, write, true), "save");
         ioWriteClose(write);
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, buffer),
+            "01"                                        // Blocks are equal
             "8101"                                      // reference 128
             "00"                                        // bundle id 0
             "00"                                        // offset 0
@@ -1070,11 +1071,108 @@ testRun(void)
             "compare");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read map");
+        TEST_TITLE("read equal block map");
 
         Buffer *bufferCompare = bufNew(256);
         write = ioBufferWriteNewOpen(bufferCompare);
-        TEST_RESULT_VOID(blockMapWrite(blockMapNewRead(ioBufferReadNewOpen(buffer)), write), "read and save");
+        TEST_RESULT_VOID(blockMapWrite(blockMapNewRead(ioBufferReadNewOpen(buffer)), write, true), "read and save");
+        ioWriteClose(write);
+
+        TEST_RESULT_STR(strNewEncode(encodingHex, bufferCompare), strNewEncode(encodingHex, buffer), "compare");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("build unequal block map");
+
+        TEST_ASSIGN(blockMap, blockMapNew(), "new");
+
+        BlockMapItem blockMap2Item1 =
+        {
+            .reference = 128,
+            .size = 3,
+            .block = 0,
+            .checksum = {255, 128, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item1)->reference, 128, "add");
+
+        BlockMapItem blockMap2Item2 =
+        {
+            .reference = 128,
+            .size = 3,
+            .block = 1,
+            .checksum = {255, 1, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item2)->reference, 128, "add");
+
+        BlockMapItem blockMap2Item3 =
+        {
+            .reference = 0,
+            .bundleId = 56,
+            .offset = 200000000,
+            .size = 127,
+            .block = 5,
+            .checksum = {255, 0, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item3)->reference, 0, "add");
+
+        BlockMapItem blockMap2Item4 =
+        {
+            .reference = 0,
+            .bundleId = 56,
+            .offset = 200000127,
+            .size = 44,
+            .block = 1,
+            .checksum = {255, 7, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+        };
+
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item4)->reference, 0, "add");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write unequal block map");
+
+        buffer = bufNew(256);
+        write = ioBufferWriteNewOpen(buffer);
+        TEST_RESULT_VOID(blockMapWrite(blockMap, write, false), "save");
+        ioWriteClose(write);
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, buffer),
+            "00"                                        // Blocks are unequal
+            "8101"                                      // reference 128
+            "00"                                        // bundle id 0
+            "00"                                        // offset 0
+            "03"                                        // size 3
+            "00"                                        // block 0
+            "ff800e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "03"                                        // block delta 1
+            "ff010e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "00"                                        // block end
+            "00"                                        // reference end
+
+            "01"                                        // reference 0
+            "38"                                        // bundle id 56
+            "8084af5f"                                  // offset 200000000
+            "f901"                                      // delta size 127
+            "05"                                        // block 5
+            "ff000e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "00"                                        // block end
+            "a601"                                      // delta size 44
+            "01"                                        // block 1
+            "ff070e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
+            "00"                                        // block end
+            "00"                                        // reference end
+
+            "00",                                       // map end
+            "compare");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read unequal block map");
+
+        bufferCompare = bufNew(256);
+        write = ioBufferWriteNewOpen(bufferCompare);
+        TEST_RESULT_VOID(blockMapWrite(blockMapNewRead(ioBufferReadNewOpen(buffer)), write, false), "read and save");
         ioWriteClose(write);
 
         TEST_RESULT_STR(strNewEncode(encodingHex, bufferCompare), strNewEncode(encodingHex, buffer), "compare");
@@ -1113,7 +1211,7 @@ testRun(void)
 
         uint64_t mapSize;
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 26, "map size");
+        TEST_RESULT_UINT(mapSize, 27, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1124,6 +1222,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, map),
+            "01"                                        // Blocks are equal
             "01"                                        // reference
             "00"                                        // bundle id
             "00"                                        // offset
@@ -1150,7 +1249,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 68, "map size");
+        TEST_RESULT_UINT(mapSize, 69, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1163,6 +1262,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, map),
+            "01"                                        // Blocks are equal
             "03"                                        // reference
             "04"                                        // bundle id
             "05"                                        // offset
@@ -1197,7 +1297,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 96, "map size");
+        TEST_RESULT_UINT(mapSize, 97, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1209,6 +1309,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, map),
+            "01"                                        // Blocks are equal
             "04"                                        // reference
             "00"                                        // bundle id
             "00"                                        // offset
@@ -3699,7 +3800,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 128.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131071, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139263, 128KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/270397, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/270398, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3729,9 +3830,9 @@ testRun(void)
                 ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1572800002}\n"
-                "pg_data/block-incr-grow={\"bims\":70,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
+                "pg_data/block-incr-grow={\"bims\":71,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
                 ",\"size\":393216,\"timestamp\":1572800000}\n"
-                "pg_data/block-incr-shrink={\"bims\":53,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
+                "pg_data/block-incr-shrink={\"bims\":54,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
                 ",\"size\":131073,\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572800000}\n"
                 "pg_data/grow-to-block-incr={\"checksum\":\"f24ce50110bed53703bac93d9705d1e101c7cfeb\",\"size\":131071"
@@ -3805,8 +3906,8 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (2MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (2MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 128KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131132, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139324, 128.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131133, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139325, 128.0KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
@@ -3837,14 +3938,14 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573000002}\n"
-                "pg_data/block-incr-grow={\"bims\":347,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-grow={\"bims\":348,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
-                "pg_data/block-incr-larger={\"bims\":240,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-larger={\"bims\":241,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"checksum\":\"a8a85be0079c68c5c5a6ee743c44d853d6be12bb\",\"size\":131071"
                 ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"
-                "pg_data/grow-to-block-incr={\"bims\":51,\"bis\":16,\"checksum\":\"b616afbe703280742f9c6125b738d85c80fde971\""
+                "pg_data/grow-to-block-incr={\"bims\":52,\"bis\":16,\"checksum\":\"b616afbe703280742f9c6125b738d85c80fde971\""
                 ",\"size\":131073,\"timestamp\":1573000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573000002}\n"

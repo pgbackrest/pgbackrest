@@ -22,8 +22,9 @@ typedef struct BlockMapItem
     unsigned int reference;                                         // Reference to backup where the block is stored
     unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
     uint64_t bundleId;                                              // Bundle where the block is stored (0 if not bundled)
-    uint64_t offset;                                                // Offset into the bundle
-    uint64_t size;                                                  // Size of the block (including compression, etc.)
+    uint64_t offset;                                                // Offset of super block into the bundle
+    uint64_t size;                                                  // Size of the super block (including compression, etc.)
+    uint64_t block;                                                 // Block no inside of super block
 } BlockMapItem;
 
 /***********************************************************************************************************************************
@@ -53,7 +54,7 @@ blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
 }
 
 // Write map to IO
-FN_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output);
+FN_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output, bool blockEqual);
 
 /***********************************************************************************************************************************
 Getters/Setters

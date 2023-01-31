@@ -1,7 +1,10 @@
 /***********************************************************************************************************************************
 Block Incremental Map
 
-The block map is stored as a series of block info that are abbreviated when sequential blocks are from the same reference:
+The block map is stored as a flag and a series of block info that are abbreviated when sequential blocks are from the same
+reference:
+
+- Varint-128 that contains info about the map (e.g. are the super blocks and block equal size).
 
 - Each block logically contains all fields in BlockMapItem but not all fields are encoded for each block and some are encoded as
   deltas:
@@ -12,17 +15,21 @@ The block map is stored as a series of block info that are abbreviated when sequ
   - If this is the first time the reference appears it will be followed by a bundle id (0 if no bundle). The bundle id is always the
     same for a reference so it does not need to be encoded more than once.
 
-  - Offset where the block is located. For the first block after the reference, the offset is varint-128 encoded. After that it is a
-    delta of the prior offset for the reference. The offset is not encoded if the block is sequential to the prior block in the
-    reference. In this case the offset can be calculated by adding the prior size to the prior offset.
+  - Offset where the super block is located. For the first super block after the reference, the offset is varint-128 encoded. After
+    that it is a delta of the prior offset for the reference. The offset is not encoded if the super block is sequential to the
+    prior super block in the reference. In this case the offset can be calculated by adding the prior size to the prior offset.
 
-  - Block size. For the first block this is the varint-128 encoded size. Afterwards it is a delta of the previous block using the
-    following formula: cvtInt64ToZigZag(blockSize - blockSizeLast) + 1. Adding one is required so the size delta is never zero,
-    which is used as the stop byte.
+  - Super block size. For the first super block this is the varint-128 encoded size. Afterwards it is a delta of the previous super
+    block using the following formula: cvtInt64ToZigZag(blockSize - blockSizeLast) + 1. Adding one is required so the size delta is
+    never zero, which is used as the stop byte.
+
+  - Block no within the super block.
 
   - SHA1 checksum of the block.
 
-  - If the next block is from a different reference then a varint-128 encoded zero stop byte is added.
+  - If the next block is from a different super block then a varint-128 encoded zero stop byte is added.
+
+  - If the next super block is from a different reference then a varint-128 encoded zero stop byte is added.
 
 The block map is terminated by a varint-128 encoded zero stop byte.
 ***********************************************************************************************************************************/
@@ -71,6 +78,8 @@ blockMapNewRead(IoRead *const map)
     Buffer *const checksum = bufNew(HASH_TYPE_SHA1_SIZE);
     BlockMapRef *blockMapRef = NULL;
     uint64_t sizeLast = 0;
+
+    const bool blockEqual = ioReadVarIntU64(map);
 
     do
     {
@@ -129,12 +138,33 @@ blockMapNewRead(IoRead *const map)
             // Add size to offset
             blockMapRef->offset += blockMapItem.size;
 
-            bufUsedZero(checksum);
-            ioRead(map, checksum);
-            memcpy(blockMapItem.checksum, bufPtr(checksum), bufUsed(checksum));
+            // Read first block no (it can never be zero)
+            uint64_t blockLast = blockEqual ? 0: ioReadVarIntU64(map);
+            blockMapItem.block = blockLast;
 
-            // Add to list
-            lstAdd((List *)this, &blockMapItem);
+            do
+            {
+                // Read checksum
+                bufUsedZero(checksum);
+                ioRead(map, checksum);
+                memcpy(blockMapItem.checksum, bufPtr(checksum), bufUsed(checksum));
+
+                // Add to list
+                lstAdd((List *)this, &blockMapItem);
+
+                // Read next block delta
+                if (blockEqual)
+                    break;
+
+                const uint64_t block = ioReadVarIntU64(map);
+
+                if (block == 0)
+                    break;
+
+                blockMapItem.block = (uint64_t)(cvtInt64FromZigZag(block - 1) + (int64_t)blockLast);
+                blockLast = block;
+            }
+            while (1);
         }
     }
     while (true);
@@ -147,11 +177,12 @@ blockMapNewRead(IoRead *const map)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-blockMapWrite(const BlockMap *const this, IoWrite *const output)
+blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BLOCK_MAP, this);
         FUNCTION_LOG_PARAM(IO_WRITE, output);
+        FUNCTION_LOG_PARAM(BOOL, blockEqual);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -161,16 +192,29 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
     List *const refList = lstNewP(sizeof(BlockMapRef), .comparator = lstComparatorBlockMapRef);
     BlockMapRef *blockMapRef = NULL;
 
+    // !!! Add a flag var to indicate when super block size == block size to save some bytes
+    ioWriteVarIntU64(output, blockEqual ? 1 : 0);
+
     // Write all block items into a packed format
     unsigned int referenceLast = UINT_MAX;
+    uint64_t offsetLast = UINT64_MAX;
     uint64_t sizeLast = 0;
+    uint64_t blockLast = 0;
 
     for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(this); blockMapIdx++)
     {
         const BlockMapItem *const blockMapItem = blockMapGet(this, blockMapIdx);
 
+        // If the reference has changed
         if (referenceLast != blockMapItem->reference)
         {
+            // Terminate last offset
+            if (!blockEqual && offsetLast != UINT64_MAX)
+            {
+                ioWriteVarIntU64(output, 0);
+                offsetLast = UINT64_MAX;
+            }
+
             // Terminate last reference
             if (referenceLast != UINT_MAX)
                 ioWriteVarIntU64(output, 0);
@@ -213,27 +257,59 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output)
             referenceLast = blockMapItem->reference;
         }
 
-        // The first size is stored directly and then each subsequent size is a delta of the previous size. Add one to the delta
-        // so it can be distinguished from the stop byte.
-        if (sizeLast == 0)
-            ioWriteVarIntU64(output, blockMapItem->size);
+        // If super block offset has changed (or a reference change reset it)
+        if (blockEqual || offsetLast != blockMapItem->offset)
+        {
+            // Terminate last offset
+            if (!blockEqual)
+            {
+                if (offsetLast != UINT64_MAX)
+                    ioWriteVarIntU64(output, 0);
+
+                offsetLast = blockMapItem->offset;
+            }
+
+            // The first size is stored directly and then each subsequent size is a delta of the previous size. Add one to the
+            // delta so it can be distinguished from the stop byte.
+            if (sizeLast == 0)
+                ioWriteVarIntU64(output, blockMapItem->size);
+            else
+                ioWriteVarIntU64(output, cvtInt64ToZigZag((int64_t)blockMapItem->size - (int64_t)sizeLast) + 1);
+
+            sizeLast = blockMapItem->size;
+
+            // Add size to offset
+            blockMapRef->offset += blockMapItem->size;
+
+            // Write block no
+            if (!blockEqual)
+            {
+                ioWriteVarIntU64(output, blockMapItem->block);
+                blockLast = blockMapItem->block;
+            }
+        }
+        // Else write block no delta
         else
-            ioWriteVarIntU64(output, cvtInt64ToZigZag((int64_t)blockMapItem->size - (int64_t)sizeLast) + 1);
+        {
+            ioWriteVarIntU64(output, cvtInt64ToZigZag((int64_t)blockMapItem->block - (int64_t)blockLast) + 1);
+            blockLast = blockMapItem->block;
+        }
 
-        sizeLast = blockMapItem->size;
-
-        // Add size to offset
-        blockMapRef->offset += blockMapItem->size;
-
-        // Add checksum
+        // Write checksum
         ioWrite(output, BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE));
     }
+
+    // Write block end
+    if (!blockEqual)
+        ioWriteVarIntU64(output, 0);
 
     // Write reference end
     ioWriteVarIntU64(output, 0);
 
     // Write map end
     ioWriteVarIntU64(output, 0);
+
+    // !!!MAYBE CHECKSUM??? OR IS THIS COVERED BY VERIFY???
 
     lstFree(refList);
 

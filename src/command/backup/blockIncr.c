@@ -214,7 +214,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
                         // Write the map
                         ioWriteOpen(write);
-                        blockMapWrite(this->blockMapOut, write);
+                        blockMapWrite(this->blockMapOut, write, true);
                         ioWriteClose(write);
 
                         // Get total bytes written for the map
