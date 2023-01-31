@@ -66,7 +66,7 @@ ioChunkDone(const THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Count bytes in the input
+Split data into chunks
 ***********************************************************************************************************************************/
 static void
 ioChunkProcess(THIS_VOID, const Buffer *const input, Buffer *const output)

@@ -32,7 +32,7 @@ Macros for function logging
     objNameToLog(value, "DeltaMap", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Process delta
+Generate delta map
 ***********************************************************************************************************************************/
 static void
 deltaMapProcess(THIS_VOID, const Buffer *const input)

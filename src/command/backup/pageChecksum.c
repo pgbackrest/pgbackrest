@@ -47,7 +47,7 @@ pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
     FUNCTION_LOG_OBJECT_FORMAT(value, pageChecksumToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Count bytes in the input
+Verify page checksums
 ***********************************************************************************************************************************/
 static void
 pageChecksumProcess(THIS_VOID, const Buffer *input)

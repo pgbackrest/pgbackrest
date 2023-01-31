@@ -66,7 +66,7 @@ blockIncrToLog(const BlockIncr *const this, StringStatic *const debugLog)
     FUNCTION_LOG_OBJECT_FORMAT(value, blockIncrToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Count bytes in the input
+Generate block incremental
 ***********************************************************************************************************************************/
 static void
 blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
