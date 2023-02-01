@@ -617,13 +617,14 @@ eval
                 (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
                 " ${strBackRestBase}/ ${strRepoCachePath}");
 
-        # Format code with uncrustify
+        # Format code with uncrustify and check permissions
         #---------------------------------------------------------------------------------------------------------------------------
         if ($bCodeFormat || $bCodeFormatCheck)
         {
             &log(INFO, 'code format' . ($bCodeFormatCheck ? ' check' : ''));
 
-            my $hManifest = $oStorageTest->manifest($strRepoCachePath);
+            my $hRepoManifest = $oStorageTest->manifest($strRepoCachePath);
+            my $hManifest = $oStorageBackRest->manifest('');
             my $strCommand =
                 "uncrustify -c ${strBackRestBase}/test/uncrustify.cfg" .
                 ($bCodeFormatCheck ? ' --check' : ' --replace --no-backup');
@@ -633,11 +634,8 @@ eval
                 # Skip non-C files
                 next if $hManifest->{$strFile}{type} ne 'f' || ($strFile !~ /\.c$/ && $strFile !~ /\.h$/);
 
-                # Check mode
-                if ($hManifest->{$strFile}{mode} ne '0644')
-                {
-                    confess &log(ERROR, "expected mode '0644' for '$strFile' but found '" . $hManifest->{$strFile}{mode} . "'");
-                }
+                # Skip files that do are not version controlled
+                next if !defined($hRepoManifest->{$strFile});
 
                 # Skip specific file
                 next if
@@ -651,6 +649,32 @@ eval
             }
 
             executeTest($strCommand . " 2>&1");
+
+            # Check execute permissions to make sure nothing got munged
+            foreach my $strFile (sort(keys(%{$hManifest})))
+            {
+                next if ($strFile eq '.') || !defined($hRepoManifest->{$strFile});
+
+                my $strExpectedMode = sprintf('%04o', oct($hManifest->{$strFile}{mode}) & 0666);
+
+                if ($strFile eq 'doc/doc.pl' ||
+                    $strFile eq 'doc/release.pl' ||
+                    $strFile eq 'src/build/install-sh' ||
+                    $strFile eq 'src/configure' ||
+                    $strFile eq 'test/ci.pl' ||
+                    $strFile eq 'test/test.pl' ||
+                    $hManifest->{$strFile}{type} eq 'd')
+                {
+                    $strExpectedMode = sprintf('%04o', oct($hManifest->{$strFile}{mode}) & 0777);
+                }
+
+                if ($hManifest->{$strFile}{mode} ne $strExpectedMode)
+                {
+                    confess &log(
+                        ERROR,
+                        "expected mode for '${strExpectedMode}' for '${strFile}' but found '" . $hManifest->{$strFile}{mode} . "'");
+                }
+            }
 
             exit 0;
         }
