@@ -117,6 +117,7 @@ typedef struct ManifestFile
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
     uint64_t blockIncrSize;                                         // Size of incremental blocks
+    uint64_t blockIncrSuperSize;                                    // Size of incremental super blocks
     uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
