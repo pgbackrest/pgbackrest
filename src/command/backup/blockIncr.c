@@ -58,7 +58,7 @@ Macros for function logging
 static void
 blockIncrToLog(const BlockIncr *const this, StringStatic *const debugLog)
 {
-    strStcFmt(debugLog, "{blockSize: %zu}", this->blockSize);
+    strStcFmt(debugLog, "{superBlockSize, %" PRIu64 ", blockSize: %" PRIu64 "}", this->superBlockSize, this->blockSize);
 }
 
 #define FUNCTION_LOG_BLOCK_INCR_TYPE                                                                                               \
