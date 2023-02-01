@@ -32,11 +32,12 @@ typedef struct BlockDeltaReference
 } BlockDeltaReference;
 
 FN_EXTERN BlockDelta *
-blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize)
+blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize, const Buffer *const deltaMap)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_MAP, blockMap);
         FUNCTION_TEST_PARAM(SIZE, blockSize);
+        FUNCTION_TEST_PARAM(BUFFER, deltaMap);
     FUNCTION_TEST_END();
 
     BlockDelta *const this = OBJ_NAME(lstNewP(sizeof(BlockDeltaRead)), BlockDelta::List);
@@ -45,21 +46,32 @@ blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build reference list (!!! will need to be filtered for restore)
+        const unsigned int deltaMapSize = deltaMap == NULL ? 0 : (unsigned int)(bufUsed(deltaMap) / HASH_TYPE_SHA1_SIZE);
         List *const referenceList = lstNewP(sizeof(BlockDeltaReference), .comparator = lstComparatorUInt);
 
         for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
         {
-            const unsigned int reference = blockMapGet(blockMap, blockMapIdx)->reference;
-            BlockDeltaReference *const referenceData = lstFind(referenceList, &reference);
+            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-            if (referenceData == NULL)
+            // The block must be updated if it beyond the blocks that exist in the delta map or when the checksum stored in the
+            // repository is different from the delta map
+            if (blockMapIdx >= deltaMapSize ||
+                !bufEq(
+                    BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
+                    BUF(bufPtrConst(deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
             {
-                BlockDeltaReference *referenceData = lstAdd(
-                    referenceList, &(BlockDeltaReference){.reference = reference, .blockList = lstNewP(sizeof(unsigned int))});
-                lstAdd(referenceData->blockList, &blockMapIdx);
+                const unsigned int reference = blockMapItem->reference;
+                BlockDeltaReference *const referenceData = lstFind(referenceList, &reference);
+
+                if (referenceData == NULL)
+                {
+                    BlockDeltaReference *referenceData = lstAdd(
+                        referenceList, &(BlockDeltaReference){.reference = reference, .blockList = lstNewP(sizeof(unsigned int))});
+                    lstAdd(referenceData->blockList, &blockMapIdx);
+                }
+                else
+                    lstAdd(referenceData->blockList, &blockMapIdx);
             }
-            else
-                lstAdd(referenceData->blockList, &blockMapIdx);
         }
 
         lstSort(referenceList, sortOrderDesc);
@@ -74,8 +86,8 @@ blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize)
 
             for (unsigned int blockIdx = 0; blockIdx < lstSize(referenceData->blockList); blockIdx++)
             {
-                const BlockMapItem *const blockMapItem = blockMapGet(
-                    blockMap, *(unsigned int *)lstGet(referenceData->blockList, blockIdx));
+                const unsigned int blockMapIdx = *(unsigned int *)lstGet(referenceData->blockList, blockIdx);
+                const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
                 // Add read when it has changed
                 if (blockMapItemPrior == NULL ||
@@ -115,7 +127,11 @@ blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize)
                 }
 
                 // Add block
-                BlockDeltaBlock blockDeltaBlockNew = {.offset = blockMapItem->block * blockSize};
+                BlockDeltaBlock blockDeltaBlockNew =
+                {
+                    .offsetSuperBlock = blockMapItem->block * blockSize,
+                    .offsetOriginal = blockMapIdx * blockSize,
+                };
 
                 memcpy(blockDeltaBlockNew.checksum, blockMapItem->checksum, SIZE_OF_STRUCT_MEMBER(BlockDeltaBlock, checksum));
                 lstAdd(blockDeltaSuperBlock->blockList, &blockDeltaBlockNew);

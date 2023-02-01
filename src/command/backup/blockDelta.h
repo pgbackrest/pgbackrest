@@ -6,6 +6,8 @@ Block Delta
 #ifndef COMMAND_BACKUP_BLOCKDELTA_H
 #define COMMAND_BACKUP_BLOCKDELTA_H
 
+#include "command/backup/blockMap.h"
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
@@ -28,16 +30,15 @@ typedef struct BlockDeltaSuperBlock
 
 typedef struct BlockDeltaBlock
 {
-    uint64_t offset;                                                // Offset of block into super block
+    uint64_t offsetSuperBlock;                                      // Offset of block into super block
+    uint64_t offsetOriginal;                                        // Offset into original file
     unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
 } BlockDeltaBlock;
-
-#include "command/backup/blockMap.h"
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_INLINE_ALWAYS BlockDelta *blockDeltaNew(const BlockMap *blockMap, size_t blockSize);
+FN_EXTERN BlockDelta *blockDeltaNew(const BlockMap *blockMap, size_t blockSize, const Buffer *deltaMap);
 
 /***********************************************************************************************************************************
 Getters/Setters

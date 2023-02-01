@@ -50,7 +50,9 @@ testBlockDelta(const BlockDelta *const blockDelta)
             {
                 const BlockDeltaBlock *const block = lstGet(superBlock->blockList, blockIdx);
 
-                strCatFmt(result, "    block {offset: %" PRIu64 "}\n", block->offset);
+                strCatFmt(
+                    result, "    block {offsetSuperBlock: %" PRIu64 ", offsetOriginal: %" PRIu64 "}\n",
+                    block->offsetSuperBlock, block->offsetOriginal);
             }
         }
     }
@@ -214,7 +216,7 @@ testBackupValidateList(
                         }
 
                         // Check blocks
-                        const BlockDelta *const blockDelta = blockDeltaNew(blockMap, file.blockIncrSize);
+                        const BlockDelta *const blockDelta = blockDeltaNew(blockMap, file.blockIncrSize, NULL);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
@@ -260,10 +262,10 @@ testBackupValidateList(
                                 for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlockData->blockList); blockIdx++)
                                 {
                                     const BlockDeltaBlock *const blockData = lstGet(superBlockData->blockList, blockIdx);
-                                    const size_t offset = blockData->offset * file.blockIncrSize;
+                                    const size_t offset = blockData->offsetSuperBlock * file.blockIncrSize;
                                     const Buffer *const block = BUF(
                                         bufPtr(superBlock) + offset,
-                                        bufUsed(superBlock) >= blockData->offset + file.blockIncrSize ?
+                                        bufUsed(superBlock) >= blockData->offsetSuperBlock + file.blockIncrSize ?
                                             file.blockIncrSize : bufUsed(superBlock) - offset);
 
                                     const String *const blockChecksum =
@@ -1143,24 +1145,24 @@ testRun(void)
         TEST_TITLE("equal block delta");
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8)),
+            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
             "read {reference: 1024, bundleId: 1024, offset: 1024, size: 1024}\n"
             "  super block {size: 1024}\n"
-            "    block {offset: 0}\n"
+            "    block {offsetSuperBlock: 0, offsetOriginal: 16}\n"
             "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
             "  super block {size: 3}\n"
-            "    block {offset: 0}\n"
+            "    block {offsetSuperBlock: 0, offsetOriginal: 0}\n"
             "read {reference: 128, bundleId: 0, offset: 129, size: 9}\n"
             "  super block {size: 9}\n"
-            "    block {offset: 0}\n"
+            "    block {offsetSuperBlock: 0, offsetOriginal: 24}\n"
             "read {reference: 0, bundleId: 56, offset: 200000000, size: 127}\n"
             "  super block {size: 127}\n"
-            "    block {offset: 0}\n"
+            "    block {offsetSuperBlock: 0, offsetOriginal: 8}\n"
             "read {reference: 0, bundleId: 56, offset: 200000129, size: 21}\n"
             "  super block {size: 10}\n"
-            "    block {offset: 0}\n"
+            "    block {offsetSuperBlock: 0, offsetOriginal: 32}\n"
             "  super block {size: 11}\n"
-            "    block {offset: 0}\n",
+            "    block {offsetSuperBlock: 0, offsetOriginal: 40}\n",
             "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1278,17 +1280,17 @@ testRun(void)
         TEST_TITLE("unequal block delta");
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8)),
+            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
             "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
             "  super block {size: 3}\n"
-            "    block {offset: 0}\n"
-            "    block {offset: 8}\n"
+            "    block {offsetSuperBlock: 0, offsetOriginal: 0}\n"
+            "    block {offsetSuperBlock: 8, offsetOriginal: 8}\n"
             "read {reference: 0, bundleId: 56, offset: 200000000, size: 171}\n"
             "  super block {size: 127}\n"
-            "    block {offset: 40}\n"
+            "    block {offsetSuperBlock: 40, offsetOriginal: 16}\n"
             "  super block {size: 44}\n"
-            "    block {offset: 8}\n"
-            "    block {offset: 40}\n",
+            "    block {offsetSuperBlock: 8, offsetOriginal: 24}\n"
+            "    block {offsetSuperBlock: 40, offsetOriginal: 32}\n",
             "check delta");
     }
 

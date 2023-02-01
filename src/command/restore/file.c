@@ -7,6 +7,7 @@ Restore File
 #include <unistd.h>
 #include <utime.h>
 
+#include "command/backup/blockDelta.h"
 #include "command/backup/blockMap.h"
 #include "command/restore/deltaMap.h"
 #include "command/restore/file.h"
@@ -293,137 +294,77 @@ restoreFile(
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));
 
-                        // Size of delta map. If there is no delta map because the pg file does not exist then set to zero, which
-                        // will force all blocks to be updated.
-                        const unsigned int deltaMapSize =
-                            file->deltaMap == NULL ? 0 : (unsigned int)(bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE);
-
-                        // Find and write updated blocks
-                        bool updateFound = false;                   // Is there a block list to be updated?
-                        unsigned int blockMapMinIdx = 0;            // Min block in the list
-                        unsigned int blockMapMaxIdx = 0;            // Max block in the list
-                        uint64_t blockListOffset = 0;               // Offset to start of block list
-                        uint64_t blockListSize = 0;                 // Size of all blocks in list
-
+                        // !!!
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 
-                        for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
+                        // Apply delta
+                        const BlockDelta *const blockDelta = blockDeltaNew(blockMap, file->blockIncrSize, file->deltaMap);
+
+                        for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
-                            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
+                            const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
 
-                            // The block must be updated if it beyond the blocks that exist in the delta map or when the checksum
-                            // stored in the repository is different from the delta map
-                            if (blockMapIdx >= deltaMapSize ||
-                                !bufEq(
-                                    BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
-                                    BUF(bufPtrConst(file->deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
+                            // Open the super block list for read. Using one read for all super blocks is cheaper than reading from
+                            // the file multiple times, which is especially noticeable on object stores.
+                            StorageRead *const superBlockRead = storageNewReadP(
+                                storageRepo(),
+                                backupFileRepoPathP(
+                                    strLstGet(referenceList, read->reference), .manifestName = file->manifestFile,
+                                    .bundleId = read->bundleId, .blockIncr = true),
+                                .offset = read->offset, .limit = VARUINT64(read->size));
+                            ioReadOpen(storageReadIo(superBlockRead));
+
+                            for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)
                             {
-                                // If no block list is currently being built then start a new one
-                                if (!updateFound)
+                                const BlockDeltaSuperBlock *const superBlock = lstGet(read->superBlockList, superBlockIdx);
+                                ASSERT(lstSize(superBlock->blockList) == 1); // !!! TEMPORARY
+
+                                // Read the super block in chunked format
+                                IoRead *const chunkedRead = ioChunkedReadNew(storageReadIo(superBlockRead));
+
+                                // Add decryption filter
+                                if (cipherPass != NULL)
                                 {
-                                    updateFound = true;
-                                    blockMapMinIdx = blockMapIdx;
-                                    blockMapMaxIdx = blockMapIdx;
-                                    blockListOffset = blockMapItem->offset;
-                                    blockListSize = blockMapItem->size;
-                                }
-                                // Else add to the current block list
-                                else
-                                {
-                                    blockMapMaxIdx = blockMapIdx;
-                                    blockListSize += blockMapItem->size;
+                                    ioFilterGroupAdd(
+                                        ioReadFilterGroup(chunkedRead),
+                                        cipherBlockNewP(
+                                            cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
                                 }
 
-                                // Check if the next block should be part of this list. If so, continue so the block will be added
-                                // to the list on the next iteration. Otherwise, write out the current block list below.
-                                if (blockMapIdx < blockMapSize(blockMap) - 1)
+                                // Add decompression filter
+                                if (repoFileCompressType != compressTypeNone)
                                 {
-                                    const BlockMapItem *const blockMapItemNext = blockMapGet(blockMap, blockMapIdx + 1);
-
-                                    // Similar to the check above, but also make sure the reference is the same. For blocks to be
-                                    // in a common list they must be contiguous and from the same reference.
-                                    if (blockMapItem->reference == blockMapItemNext->reference &&
-                                        (blockMapIdx + 1 >= deltaMapSize ||
-                                         !bufEq(
-                                             BUF(blockMapItemNext->checksum, HASH_TYPE_SHA1_SIZE),
-                                             BUF(
-                                                 bufPtrConst(file->deltaMap) + (blockMapIdx + 1) * HASH_TYPE_SHA1_SIZE,
-                                                 HASH_TYPE_SHA1_SIZE))))
-                                    {
-                                        continue;
-                                    }
+                                    ioFilterGroupAdd(
+                                        ioReadFilterGroup(chunkedRead), decompressFilter(repoFileCompressType));
                                 }
-                            }
 
-                            // Update blocks in the list when found
-                            if (updateFound)
-                            {
-                                // Use a per-block-list mem context to reduce memory usage
-                                MEM_CONTEXT_TEMP_BEGIN()
+                                // Open chunked read
+                                ioReadOpen(chunkedRead);
+
+                                // Read and discard the block no since we already know it
+                                // !!! WILL NEED TO FIX WHEN WE FIGURE OUT WHAT TO DO WITH BLOCK NOS
+                                ioReadVarIntU64(chunkedRead);
+
+                                for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlock->blockList); blockIdx++)
                                 {
+                                    const BlockDeltaBlock *const block = lstGet(superBlock->blockList, blockIdx);
+                                    ASSERT(block->offsetSuperBlock == 0); // !!! TEMPORARY
+
                                     // Seek to the min block offset. It is possible we are already at the correct position but it
                                     // is easier and safer to let lseek() figure this out.
                                     THROW_ON_SYS_ERROR_FMT(
-                                        lseek(
-                                            ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)(blockMapMinIdx * file->blockIncrSize),
-                                            SEEK_SET) == -1,
-                                        FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)(blockMapMinIdx * file->blockIncrSize),
+                                        lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)block->offsetOriginal, SEEK_SET) == -1,
+                                        FileOpenError, STORAGE_ERROR_READ_SEEK, block->offsetOriginal,
                                         strZ(storagePathP(storagePg(), file->name)));
 
-                                    // Open the block list for read. Using one read for all blocks is cheaper than reading from the
-                                    // file multiple times, which is especially noticeable on object stores. Use the last block in
-                                    // the list to construct the name of the repo file where the blocks are stored since it is
-                                    // available and must have the same reference and bundle id as the other blocks.
-                                    StorageRead *const blockRead = storageNewReadP(
-                                        storageRepo(),
-                                        backupFileRepoPathP(
-                                            strLstGet(referenceList, blockMapItem->reference), .manifestName = file->manifestFile,
-                                            .bundleId = blockMapItem->bundleId, .blockIncr = true),
-                                        .offset = blockListOffset, .limit = VARUINT64(blockListSize));
-                                    ioReadOpen(storageReadIo(blockRead));
+                                    // !!! THERE WILL NEED TO BE AN ioReadSeek() HERE
 
-                                    for (unsigned int blockMapIdx = blockMapMinIdx; blockMapIdx <= blockMapMaxIdx; blockMapIdx++)
-                                    {
-                                        // Use a per-block mem context to reduce memory usage
-                                        MEM_CONTEXT_TEMP_BEGIN()
-                                        {
-                                            // Read the block in chunked format
-                                            IoRead *const chunkedRead = ioChunkedReadNew(storageReadIo(blockRead));
+                                    // Copy chunked block
+                                    ioCopyP(chunkedRead, storageWriteIo(pgFileWrite));
 
-                                            // Add decryption filter
-                                            if (cipherPass != NULL)
-                                            {
-                                                ioFilterGroupAdd(
-                                                    ioReadFilterGroup(chunkedRead),
-                                                    cipherBlockNewP(
-                                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
-                                            }
-
-                                            // Add decompression filter
-                                            if (repoFileCompressType != compressTypeNone)
-                                            {
-                                                ioFilterGroupAdd(
-                                                    ioReadFilterGroup(chunkedRead), decompressFilter(repoFileCompressType));
-                                            }
-
-                                            // Open chunked read
-                                            ioReadOpen(chunkedRead);
-
-                                            // Read and discard the block no since we already know it
-                                            ioReadVarIntU64(chunkedRead);
-
-                                            // Copy chunked block
-                                            ioCopyP(chunkedRead, storageWriteIo(pgFileWrite));
-
-                                            // Flush writes since we may seek to a new location for the next block list
-                                            ioWriteFlush(storageWriteIo(pgFileWrite));
-                                        }
-                                        MEM_CONTEXT_TEMP_END();
-                                    }
+                                    // Flush writes since we may seek to a new location for the next block
+                                    ioWriteFlush(storageWriteIo(pgFileWrite));
                                 }
-                                MEM_CONTEXT_TEMP_END();
-
-                                updateFound = false;
                             }
                         }
 
