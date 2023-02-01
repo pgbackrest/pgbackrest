@@ -250,8 +250,8 @@ backupFile(
                         ioFilterGroupAdd(
                             ioReadFilterGroup(storageReadIo(read)),
                             blockIncrNew(
-                                file->blockIncrSize, file->blockIncrSize, blockIncrReference, bundleId,
-                                bundleOffset, blockMap, compress, encrypt));
+                                file->blockIncrSuperSize, file->blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap,
+                                compress, encrypt));
 
                         repoChecksum = true;
                     }

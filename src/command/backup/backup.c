@@ -1768,6 +1768,7 @@ backupJobCallback(void *data, unsigned int clientIdx)
                 if (blockIncr)
                 {
                     pckWriteU64P(param, file.blockIncrSize);
+                    pckWriteU64P(param, file.blockIncrSize); // !!! SHOULD BE SUPER BLOCK
 
                     if (file.blockIncrMapSize != 0)
                     {
