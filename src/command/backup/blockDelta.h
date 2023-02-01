@@ -38,7 +38,7 @@ typedef struct BlockDeltaBlock
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN BlockDelta *blockDeltaNew(const BlockMap *blockMap, size_t blockSize, const Buffer *deltaMap);
+FN_EXTERN BlockDelta *blockDeltaNew(const BlockMap *blockMap, uint64_t blockSize, const Buffer *deltaMap);
 
 /***********************************************************************************************************************************
 Getters/Setters

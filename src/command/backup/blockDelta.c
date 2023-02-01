@@ -32,11 +32,11 @@ typedef struct BlockDeltaReference
 } BlockDeltaReference;
 
 FN_EXTERN BlockDelta *
-blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize, const Buffer *const deltaMap)
+blockDeltaNew(const BlockMap *const blockMap, const uint64_t blockSize, const Buffer *const deltaMap)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_MAP, blockMap);
-        FUNCTION_TEST_PARAM(SIZE, blockSize);
+        FUNCTION_TEST_PARAM(UINT64, blockSize);
         FUNCTION_TEST_PARAM(BUFFER, deltaMap);
     FUNCTION_TEST_END();
 
