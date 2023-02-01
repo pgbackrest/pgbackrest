@@ -36,6 +36,7 @@ typedef struct BlockIncr
     unsigned int blockNo;                                           // Block number
     unsigned int blockNoLast;                                       // Last block no
     uint64_t blockOffset;                                           // Block offset
+    size_t superBlockSize;                                          // Super block
     size_t blockSize;                                               // Block size
     Buffer *block;                                                  // Block buffer
 
@@ -323,11 +324,12 @@ blockIncrInputSame(const THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
 blockIncrNew(
-    const size_t blockSize, const unsigned int reference, const uint64_t bundleId, const uint64_t bundleOffset,
-    const Buffer *const blockMapPrior, const IoFilter *const compress, const IoFilter *const encrypt)
+    const uint64_t superBlockSize, const uint64_t blockSize, const unsigned int reference, const uint64_t bundleId,
+    const uint64_t bundleOffset, const Buffer *const blockMapPrior, const IoFilter *const compress, const IoFilter *const encrypt)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(SIZE, blockSize);
+        FUNCTION_LOG_PARAM(UINT64, superBlockSize);
+        FUNCTION_LOG_PARAM(UINT64, blockSize);
         FUNCTION_LOG_PARAM(UINT, reference);
         FUNCTION_LOG_PARAM(UINT64, bundleId);
         FUNCTION_LOG_PARAM(UINT64, bundleOffset);
@@ -345,6 +347,7 @@ blockIncrNew(
         *driver = (BlockIncr)
         {
             .memContext = memContextCurrent(),
+            .superBlockSize = superBlockSize,
             .blockSize = blockSize,
             .reference = reference,
             .bundleId = bundleId,
@@ -388,6 +391,7 @@ blockIncrNew(
         {
             PackWrite *const packWrite = pckWriteNewP();
 
+            pckWriteU64P(packWrite, superBlockSize);
             pckWriteU64P(packWrite, blockSize);
             pckWriteU32P(packWrite, reference);
             pckWriteU64P(packWrite, bundleId);
@@ -423,6 +427,7 @@ blockIncrNewPack(const Pack *const paramList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const paramListPack = pckReadNew(paramList);
+        const size_t superBlockSize = (size_t)pckReadU64P(paramListPack);
         const size_t blockSize = (size_t)pckReadU64P(paramListPack);
         const unsigned int reference = pckReadU32P(paramListPack);
         const uint64_t bundleId = (size_t)pckReadU64P(paramListPack);
@@ -444,7 +449,8 @@ blockIncrNewPack(const Pack *const paramList)
             encrypt = cipherBlockNewPack(encryptParam);
 
         result = ioFilterMove(
-            blockIncrNew(blockSize, reference, bundleId, bundleOffset, blockMapPrior, compress, encrypt), memContextPrior());
+            blockIncrNew(superBlockSize, blockSize, reference, bundleId, bundleOffset, blockMapPrior, compress, encrypt),
+            memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

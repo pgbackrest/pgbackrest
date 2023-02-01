@@ -1305,7 +1305,7 @@ testRun(void)
         Buffer *destination = bufNew(256);
         IoWrite *write = ioBufferWriteNew(destination);
 
-        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 0, 0, 0, NULL, NULL, NULL)), "block incr");
+        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 3, 0, 0, 0, NULL, NULL, NULL)), "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");
         TEST_RESULT_VOID(ioWriteClose(write), "close");
@@ -1320,7 +1320,7 @@ testRun(void)
         destination = bufNew(256);
         write = ioBufferWriteNew(destination);
 
-        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 0, 0, 0, NULL, NULL, NULL)), "block incr");
+        TEST_RESULT_VOID(ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(3, 3, 0, 0, 0, NULL, NULL, NULL)), "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");
         TEST_RESULT_VOID(ioWriteClose(write), "close");
@@ -1358,7 +1358,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             ioFilterGroupAdd(
-                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 2, 4, 5, NULL, NULL, NULL)))),
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 2, 4, 5, NULL, NULL, NULL)))),
             "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");
@@ -1406,7 +1406,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             ioFilterGroupAdd(
-                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 0, 0, map, NULL, NULL)))),
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 3, 0, 0, map, NULL, NULL)))),
             "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");
@@ -1459,7 +1459,7 @@ testRun(void)
             blockIncrNewPack(
                 ioFilterParamList(
                     blockIncrNew(
-                        3, 2, 4, 5, NULL, compressFilter(compressTypeGz, 1),
+                        3, 3, 2, 4, 5, NULL, compressFilter(compressTypeGz, 1),
                         cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), .raw = true)))),
             "block incr pack");
     }

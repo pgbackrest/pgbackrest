@@ -35,8 +35,8 @@ Filter type constant
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN IoFilter *blockIncrNew(
-    size_t blockSize, unsigned int reference, uint64_t bundleId, uint64_t bundleOffset, const Buffer *blockMapPrior,
-    const IoFilter *compress, const IoFilter *encrypt);
+    uint64_t superBlockSize, uint64_t blockSize, unsigned int reference, uint64_t bundleId, uint64_t bundleOffset,
+    const Buffer *blockMapPrior, const IoFilter *compress, const IoFilter *encrypt);
 FN_EXTERN IoFilter *blockIncrNewPack(const Pack *paramList);
 
 #endif

@@ -2631,7 +2631,7 @@ testRun(void)
             bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
             IoWrite *write = storageWriteIo(storageNewWriteP(storageRepoWrite(), STRDEF(TEST_REPO_PATH "base/1/bi-no-ref.pgbi")));
-            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 3, 0, 0, NULL, NULL, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 8192, 3, 0, 0, NULL, NULL, NULL));
             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
             ioWriteOpen(write);
@@ -2653,7 +2653,7 @@ testRun(void)
 
             Buffer *fileUnusedMap = bufNew(0);
             write = ioBufferWriteNew(fileUnusedMap);
-            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 0, 0, 0, NULL, NULL, NULL));
+            ioFilterGroupAdd(ioWriteFilterGroup(write), blockIncrNew(8192, 8192, 0, 0, 0, NULL, NULL, NULL));
 
             ioWriteOpen(write);
             ioWrite(write, fileUnused);
@@ -2672,7 +2672,7 @@ testRun(void)
             ioFilterGroupAdd(
                 ioWriteFilterGroup(write),
                 blockIncrNew(
-                    8192, 3, 0, 0, BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize),
+                    8192, 8192, 3, 0, 0, BUF(bufPtr(fileUnusedMap) + bufUsed(fileUnusedMap) - fileUnusedMapSize, fileUnusedMapSize),
                     NULL, NULL));
             ioFilterGroupAdd(ioWriteFilterGroup(write), ioSizeNew());
 
