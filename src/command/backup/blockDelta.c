@@ -46,7 +46,8 @@ blockDeltaNew(const BlockMap *const blockMap, const uint64_t blockSize, const Bu
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build reference list (!!! will need to be filtered for restore)
-        const unsigned int deltaMapSize = deltaMap == NULL ? 0 : (unsigned int)(bufUsed(deltaMap) / HASH_TYPE_SHA1_SIZE); // {uncovered - !!!}
+        const unsigned int deltaMapSize =
+            deltaMap == NULL ? 0 : (unsigned int)(bufUsed(deltaMap) / HASH_TYPE_SHA1_SIZE); // {uncovered - !!!}
         List *const referenceList = lstNewP(sizeof(BlockDeltaReference), .comparator = lstComparatorUInt);
 
         for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
