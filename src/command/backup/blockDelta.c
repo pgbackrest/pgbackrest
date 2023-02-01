@@ -40,7 +40,7 @@ blockDeltaNew(const BlockMap *const blockMap, const uint64_t blockSize, const Bu
         FUNCTION_TEST_PARAM(BUFFER, deltaMap);
     FUNCTION_TEST_END();
 
-    BlockDelta *const this = OBJ_NAME(lstNewP(sizeof(BlockDeltaRead)), BlockDelta::List);
+    BlockDelta *const this = (BlockDelta *)OBJ_NAME(lstNewP(sizeof(BlockDeltaRead)), BlockDelta::List);
 
     // Construct the delta
     MEM_CONTEXT_TEMP_BEGIN()
