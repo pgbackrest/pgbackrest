@@ -46,7 +46,7 @@ blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize, const Buff
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build reference list (!!! will need to be filtered for restore)
-        const unsigned int deltaMapSize = deltaMap == NULL ? 0 : (unsigned int)(bufUsed(deltaMap) / HASH_TYPE_SHA1_SIZE);
+        const unsigned int deltaMapSize = deltaMap == NULL ? 0 : (unsigned int)(bufUsed(deltaMap) / HASH_TYPE_SHA1_SIZE); // {uncovered - !!!}
         List *const referenceList = lstNewP(sizeof(BlockDeltaReference), .comparator = lstComparatorUInt);
 
         for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
@@ -55,10 +55,10 @@ blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize, const Buff
 
             // The block must be updated if it beyond the blocks that exist in the delta map or when the checksum stored in the
             // repository is different from the delta map
-            if (blockMapIdx >= deltaMapSize ||
-                !bufEq(
-                    BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
-                    BUF(bufPtrConst(deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
+            if (blockMapIdx >= deltaMapSize || // {uncovered - !!!}
+                !bufEq( // {uncovered - !!!}
+                    BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE), // {uncovered - !!!}
+                    BUF(bufPtrConst(deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE))) // {uncovered - !!!}
             {
                 const unsigned int reference = blockMapItem->reference;
                 BlockDeltaReference *const referenceData = lstFind(referenceList, &reference);
