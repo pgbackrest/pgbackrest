@@ -36,8 +36,8 @@ typedef struct BlockIncr
     unsigned int blockNo;                                           // Block number
     unsigned int blockNoLast;                                       // Last block no
     uint64_t blockOffset;                                           // Block offset
-    size_t superBlockSize;                                          // Super block
-    size_t blockSize;                                               // Block size
+    uint64_t superBlockSize;                                        // Super block
+    uint64_t blockSize;                                             // Block size
     Buffer *block;                                                  // Block buffer
 
     Buffer *blockOut;                                               // Block output buffer
