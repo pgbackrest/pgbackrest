@@ -352,7 +352,7 @@ blockIncrNew(
             .reference = reference,
             .bundleId = bundleId,
             .blockOffset = bundleOffset,
-            .block = bufNew(blockSize),
+            .block = bufNew((size_t)blockSize),
             .blockOut = bufNew(0),
             .blockMapOut = blockMapNew(),
         };
