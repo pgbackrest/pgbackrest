@@ -759,6 +759,14 @@ testRun(void)
                 storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true, NULL, NULL),
             "build manifest");
 
+        // Check super block size
+        ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/128k"));
+
+        TEST_RESULT_UINT(manifestFileBlockIncrSuperSize(manifest, &file), 1024 * 1024 * 1024, "default super block size");
+        file.blockIncrSize = (uint64_t)2 * 1024 * 1024 * 1024;
+        TEST_RESULT_UINT(
+            manifestFileBlockIncrSuperSize(manifest, &file), (uint64_t)2 * 1024 * 1024 * 1024, "default super block size");
+
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(

@@ -27,9 +27,8 @@ STRING_EXTERN(BACKUP_MANIFEST_FILE_STR,                             BACKUP_MANIF
 STRING_EXTERN(MANIFEST_TARGET_PGDATA_STR,                           MANIFEST_TARGET_PGDATA);
 STRING_EXTERN(MANIFEST_TARGET_PGTBLSPC_STR,                         MANIFEST_TARGET_PGTBLSPC);
 
-// All block (and super) incremental sizes must be divisible by these factors
-#define BLOCK_INCR_SIZE_FACTOR                                      8192    // Cannot be changed because it is used in the manifest
-#define BLOCK_INCR_SIZE_SUPER_FACTOR                                65536   // Can be changed
+// All block incremental sizes must be divisible by this factor
+#define BLOCK_INCR_SIZE_FACTOR                                      8192
 
 /***********************************************************************************************************************************
 Object type
@@ -239,10 +238,8 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     if (flag & (1 << manifestFilePackFlagBlockIncr))
     {
         ASSERT(file->blockIncrSize % BLOCK_INCR_SIZE_FACTOR == 0);
-        ASSERT(file->blockIncrSuperSize % BLOCK_INCR_SIZE_SUPER_FACTOR == 0);
 
         cvtUInt64ToVarInt128(file->blockIncrSize / BLOCK_INCR_SIZE_FACTOR, buffer, &bufferPos, sizeof(buffer));
-        cvtUInt64ToVarInt128(file->blockIncrSuperSize / BLOCK_INCR_SIZE_SUPER_FACTOR, buffer, &bufferPos, sizeof(buffer));
         cvtUInt64ToVarInt128(file->blockIncrMapSize, buffer, &bufferPos, sizeof(buffer));
     }
 
@@ -369,8 +366,6 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     if (flag & (1 << manifestFilePackFlagBlockIncr))
     {
         result.blockIncrSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX) * BLOCK_INCR_SIZE_FACTOR;
-        result.blockIncrSuperSize = cvtUInt64FromVarInt128(
-            (const uint8_t *)filePack, &bufferPos, UINT_MAX) * BLOCK_INCR_SIZE_SUPER_FACTOR;
         result.blockIncrMapSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     }
 
@@ -828,6 +823,28 @@ manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const fil
             }
         }
     }
+
+    FUNCTION_TEST_RETURN(UINT64, result);
+}
+
+FN_EXTERN uint64_t
+manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, manifest);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    ASSERT(manifest != NULL);
+    ASSERT(file != NULL);
+    ASSERT(file->blockIncrSize > 0);
+
+    // Default to 1MiB
+    uint64_t result = 1024 * 1024 * 1024;
+
+    // Super block size should be >= block size
+    if (file->blockIncrSize > result)
+        result = file->blockIncrSize;
 
     FUNCTION_TEST_RETURN(UINT64, result);
 }

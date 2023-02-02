@@ -1768,7 +1768,7 @@ backupJobCallback(void *data, unsigned int clientIdx)
                 if (blockIncr)
                 {
                     pckWriteU64P(param, file.blockIncrSize);
-                    pckWriteU64P(param, file.blockIncrSize); // !!! SHOULD BE SUPER BLOCK
+                    pckWriteU64P(param, manifestFileBlockIncrSuperSize(jobData->manifest, &file));
 
                     if (file.blockIncrMapSize != 0)
                     {

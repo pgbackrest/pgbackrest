@@ -117,7 +117,6 @@ typedef struct ManifestFile
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
     uint64_t blockIncrSize;                                         // Size of incremental blocks
-    uint64_t blockIncrSuperSize;                                    // Size of incremental super blocks
     uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
@@ -294,6 +293,9 @@ manifestFilePackGet(const Manifest *const this, const unsigned int fileIdx)
 {
     return *(ManifestFilePack **)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
+
+// Get block incremental super block size for a file
+FN_EXTERN uint64_t manifestFileBlockIncrSuperSize(const Manifest *manifest, const ManifestFile *file);
 
 // Get file name
 FN_INLINE_ALWAYS const String *
