@@ -835,6 +835,8 @@ manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFil
         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
+    (void)manifest; // !!! Pretty sure we'll need info from the manifest
+
     ASSERT(manifest != NULL);
     ASSERT(file != NULL);
     ASSERT(file->blockIncrSize > 0);
