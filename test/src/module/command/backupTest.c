@@ -262,6 +262,7 @@ testBackupValidateList(
                                 for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlockData->blockList); blockIdx++)
                                 {
                                     const BlockDeltaBlock *const blockData = lstGet(superBlockData->blockList, blockIdx);
+                                    ASSERT(blockData->offsetSuperBlock == 0);
                                     const size_t offset = blockData->offsetSuperBlock * file.blockIncrSize;
                                     const Buffer *const block = BUF(
                                         bufPtr(superBlock) + offset,
@@ -1447,6 +1448,55 @@ testRun(void)
             "00"                                        // offset delta
             "06"                                        // delta size
             "9a78211436f6d425ec38f5c4e02270801f3524f8"  // checksum
+            "00"                                        // reference end
+
+            "00",                                       // map end
+            "block map");
+
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup with larger superblock");
+
+        ioBufferSizeSet(2);
+
+        source = BUFSTRZ("ABCXYZ123");
+        destination = bufNew(256);
+        write = ioBufferWriteNew(destination);
+
+        TEST_RESULT_VOID(
+            ioFilterGroupAdd(
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(6, 3, 2, 4, 5, NULL, NULL, NULL)))),
+            "block incr");
+        TEST_RESULT_VOID(ioWriteOpen(write), "open");
+        TEST_RESULT_VOID(ioWrite(write, source), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
+        TEST_RESULT_UINT(mapSize, 69, "map size");
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
+            "020041014243"                              // super block 0 / block 0
+            "01015801595a00"                            // super block 0 / block 1
+            "02013101323300",                           // block 2
+            "block list");
+
+        map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
+
+        TEST_RESULT_STR_Z(
+            strNewEncode(encodingHex, map),
+            "01"                                        // Blocks are equal
+            "03"                                        // reference
+            "04"                                        // bundle id
+            "05"                                        // offset
+            "0d"                                        // size
+            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"  // checksum
+
+            "01"                                        // size
+            "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
+
+            "0c"                                        // size
+            "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
             "00"                                        // reference end
 
             "00",                                       // map end

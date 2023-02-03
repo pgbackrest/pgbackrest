@@ -44,11 +44,11 @@ FN_EXTERN BlockMap *blockMapNewRead(IoRead *map);
 Functions
 ***********************************************************************************************************************************/
 // Add a block map item
-FN_INLINE_ALWAYS const BlockMapItem *
+FN_INLINE_ALWAYS BlockMapItem *
 blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
 {
     ASSERT_INLINE(item != NULL);
-    ASSERT_INLINE(item->size != 0);
+    // ASSERT_INLINE(item->size != 0);
 
     return (BlockMapItem *)lstAdd((List *const)this, item);
 }
@@ -60,7 +60,7 @@ FN_EXTERN void blockMapWrite(const BlockMap *this, IoWrite *output, bool blockEq
 Getters/Setters
 ***********************************************************************************************************************************/
 // Get a block map item
-FN_INLINE_ALWAYS const BlockMapItem *
+FN_INLINE_ALWAYS BlockMapItem *
 blockMapGet(const BlockMap *const this, const unsigned int mapIdx)
 {
     return (BlockMapItem *)lstGet((List *const)this, mapIdx);

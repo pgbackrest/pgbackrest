@@ -841,12 +841,13 @@ manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFil
     ASSERT(file != NULL);
     ASSERT(file->blockIncrSize > 0);
 
-    // Default to 1MiB
-    uint64_t result = 1024 * 1024 * 1024;
+    // // Default to 1MiB
+    // uint64_t result = 1024 * 1024 * 1024;
 
-    // Super block size should be >= block size
-    if (file->blockIncrSize > result)
-        result = file->blockIncrSize;
+    // // Super block size should be >= block size
+    // if (file->blockIncrSize > result)
+    //     result = file->blockIncrSize;
+    uint64_t result = file->blockIncrSize;
 
     FUNCTION_TEST_RETURN(UINT64, result);
 }
