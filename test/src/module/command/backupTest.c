@@ -230,6 +230,9 @@ testBackupValidateList(
                         // Check blocks
                         const BlockDelta *const blockDelta = blockDeltaNew(blockMap, file.blockIncrSize, NULL);
 
+                        // TEST_LOG_FMT(
+                        //     "!!!FILE %s SIZE %" PRIu64 ":\n%s", strZ(file.name), file.size, strZ(testBlockDelta(blockDelta)));
+
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
                             const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
@@ -246,7 +249,7 @@ testBackupValidateList(
                             {
                                 const BlockDeltaSuperBlock *const superBlockData = lstGet(read->superBlockList, superBlockIdx);
 
-                                IoRead *chunkRead = ioChunkedReadNew(blockRead);
+                                IoRead *const chunkRead = ioChunkedReadNew(blockRead);
 
                                 if (cipherType != cipherTypeNone)
                                 {
@@ -4006,7 +4009,7 @@ testRun(void)
                 "bundle/1/pg_data/grow-to-block-incr {file, s=131071}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={{0,0},{0}}, s=393216}\n"
+                "pg_data/block-incr-grow.pgbi {file, m={{0,0,0}}, s=393216}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4017,7 +4020,7 @@ testRun(void)
                 ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1572800002}\n"
-                "pg_data/block-incr-grow={\"bims\":77,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
+                "pg_data/block-incr-grow={\"bims\":73,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
                 ",\"size\":393216,\"timestamp\":1572800000}\n"
                 "pg_data/block-incr-shrink={\"bims\":54,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
                 ",\"size\":131073,\"timestamp\":1572800000}\n"
@@ -4113,9 +4116,9 @@ testRun(void)
                 "bundle/1/pg_data/grow-to-block-incr {file, m={{1,1}}, s=131073}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={{0,0},{0},{1,1},{1,1},{1,1},{1,1},{1,1},{1,1},{1}},"
+                "pg_data/block-incr-grow.pgbi {file, m={{0,0,0},{1,1,1,1,1,1,1,1},{1,1,1,1,1}},"
                 " s=2097152}\n"
-                "pg_data/block-incr-larger.pgbi {file, m={{1,1},{1,1},{1,1},{1,1},{1,1},{1}}, s=2097152}\n"
+                "pg_data/block-incr-larger.pgbi {file, m={{1,1,1,1,1,1},{1,1,1,1,1}}, s=2097152}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4126,9 +4129,9 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573000002}\n"
-                "pg_data/block-incr-grow={\"bims\":372,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-grow={\"bims\":358,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
-                "pg_data/block-incr-larger={\"bims\":253,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-larger={\"bims\":245,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"checksum\":\"a8a85be0079c68c5c5a6ee743c44d853d6be12bb\",\"size\":131071"
                 ",\"timestamp\":1573000000}\n"

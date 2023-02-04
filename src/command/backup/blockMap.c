@@ -162,7 +162,7 @@ blockMapNewRead(IoRead *const map)
                     break;
 
                 blockMapItem.block = (uint64_t)(cvtInt64FromZigZag(block - 1) + (int64_t)blockLast);
-                blockLast = block;
+                blockLast = blockMapItem.block;
             }
             while (1);
         }
