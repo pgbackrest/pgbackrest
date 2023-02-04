@@ -130,8 +130,8 @@ blockDeltaNew(const BlockMap *const blockMap, const uint64_t blockSize, const Bu
                 // Add block
                 BlockDeltaBlock blockDeltaBlockNew =
                 {
-                    .offsetSuperBlock = blockMapItem->block * blockSize,
-                    .offsetOriginal = blockMapIdx * blockSize,
+                    .no = blockMapItem->block,
+                    .offset = blockMapIdx * blockSize,
                 };
 
                 memcpy(blockDeltaBlockNew.checksum, blockMapItem->checksum, SIZE_OF_STRUCT_MEMBER(BlockDeltaBlock, checksum));

@@ -316,8 +316,7 @@ restoreFile(
 
                             for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)
                             {
-                                const BlockDeltaSuperBlock *const superBlock = lstGet(read->superBlockList, superBlockIdx);
-                                ASSERT(lstSize(superBlock->blockList) == 1); // !!! TEMPORARY
+                                const BlockDeltaSuperBlock *const superBlockData = lstGet(read->superBlockList, superBlockIdx);
 
                                 // Read the super block in chunked format
                                 IoRead *const chunkedRead = ioChunkedReadNew(storageReadIo(superBlockRead));
@@ -341,30 +340,44 @@ restoreFile(
                                 // Open chunked read
                                 ioReadOpen(chunkedRead);
 
-                                // Read and discard the block no since we already know it
-                                // !!! WILL NEED TO FIX WHEN WE FIGURE OUT WHAT TO DO WITH BLOCK NOS
-                                ioReadVarIntU64(chunkedRead);
+                                Buffer *const block = bufNew(file->blockIncrSize);
+                                unsigned int blockNo = 0;
+                                unsigned int blockIdx = 0;
+                                const BlockDeltaBlock *blockData = lstGet(superBlockData->blockList, blockIdx);
 
-                                for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlock->blockList); blockIdx++)
+                                do
                                 {
-                                    const BlockDeltaBlock *const block = lstGet(superBlock->blockList, blockIdx);
-                                    ASSERT(block->offsetSuperBlock == 0); // !!! TEMPORARY
+                                    ioReadVarIntU64(chunkedRead);
+                                    ioRead(chunkedRead, block);
 
-                                    // Seek to the min block offset. It is possible we are already at the correct position but it
-                                    // is easier and safer to let lseek() figure this out.
-                                    THROW_ON_SYS_ERROR_FMT(
-                                        lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)block->offsetOriginal, SEEK_SET) == -1,
-                                        FileOpenError, STORAGE_ERROR_READ_SEEK, block->offsetOriginal,
-                                        strZ(storagePathP(storagePg(), file->name)));
+                                    if (blockNo == blockData->no) // {uncovered - !!!}
+                                    {
+                                        // Seek to the min block offset. It is possible we are already at the correct position but
+                                        // it is easier and safer to let lseek() figure this out.
+                                        THROW_ON_SYS_ERROR_FMT(
+                                            lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)blockData->offset, SEEK_SET) == -1,
+                                            FileOpenError, STORAGE_ERROR_READ_SEEK, blockData->offset,
+                                            strZ(storagePathP(storagePg(), file->name)));
 
-                                    // !!! THERE WILL NEED TO BE AN ioReadSeek() HERE
+                                        // Write block
+                                        ioWrite(storageWriteIo(pgFileWrite), block);
 
-                                    // Copy chunked block
-                                    ioCopyP(chunkedRead, storageWriteIo(pgFileWrite));
+                                        // Flush writes since we may seek to a new location for the next block
+                                        ioWriteFlush(storageWriteIo(pgFileWrite));
 
-                                    // Flush writes since we may seek to a new location for the next block
-                                    ioWriteFlush(storageWriteIo(pgFileWrite));
+                                        // Get next block
+                                        blockIdx++;
+
+                                        if (blockIdx < lstSize(superBlockData->blockList)) // {uncovered - !!!}
+                                            blockData = lstGet(superBlockData->blockList, blockIdx); // {uncovered - !!!}
+                                        else if (superBlockIdx == lstSize(read->superBlockList) - 1)
+                                            break;
+                                    }
+
+                                    bufUsedZero(block);
+                                    blockNo++;
                                 }
+                                while (bufSize(ioReadPeek(chunkedRead, 1)) != 0); // {uncovered - !!!}
                             }
                         }
 

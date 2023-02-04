@@ -30,8 +30,8 @@ typedef struct BlockDeltaSuperBlock
 
 typedef struct BlockDeltaBlock
 {
-    uint64_t offsetSuperBlock;                                      // Offset of block into super block
-    uint64_t offsetOriginal;                                        // Offset into original file
+    uint64_t no;                                                    // Block number in the super block
+    uint64_t offset;                                                // Offset into original file
     unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
 } BlockDeltaBlock;
 

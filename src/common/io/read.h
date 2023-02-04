@@ -85,6 +85,9 @@ typedef struct IoReadReadyParam
 
 FN_EXTERN bool ioReadReady(IoRead *this, IoReadReadyParam param);
 
+// Peek at data without actually reading it (i.e. it will be consumed by another ioRead*() call)
+FN_EXTERN const Buffer *ioReadPeek(IoRead *const this, size_t size);
+
 // Close the IO
 FN_EXTERN void ioReadClose(IoRead *this);
 

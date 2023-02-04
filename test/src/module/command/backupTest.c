@@ -50,9 +50,7 @@ testBlockDelta(const BlockDelta *const blockDelta)
             {
                 const BlockDeltaBlock *const block = lstGet(superBlock->blockList, blockIdx);
 
-                strCatFmt(
-                    result, "    block {offsetSuperBlock: %" PRIu64 ", offsetOriginal: %" PRIu64 "}\n",
-                    block->offsetSuperBlock, block->offsetOriginal);
+                strCatFmt(result, "    block {no: %" PRIu64 ", offset: %" PRIu64 "}\n", block->no, block->offset);
             }
         }
     }
@@ -250,41 +248,47 @@ testBackupValidateList(
                                 }
 
                                 ioReadOpen(chunkRead);
-                                ioReadVarIntU64(chunkRead);
 
-                                Buffer *const superBlock = bufNew(file.size);
-                                IoWrite *const superBlockWrite = ioBufferWriteNewOpen(superBlock);
+                                Buffer *const block = bufNew(file.blockIncrSize);
+                                unsigned int blockNo = 0;
+                                unsigned int blockIdx = 0;
+                                const BlockDeltaBlock *blockData = lstGet(superBlockData->blockList, blockIdx);
 
-                                ioCopyP(chunkRead, superBlockWrite);
-                                ioWriteClose(superBlockWrite);
-
-                                // Check block checksum
-                                for (unsigned int blockIdx = 0; blockIdx < lstSize(superBlockData->blockList); blockIdx++)
+                                do
                                 {
-                                    const BlockDeltaBlock *const blockData = lstGet(superBlockData->blockList, blockIdx);
-                                    ASSERT(blockData->offsetSuperBlock == 0);
-                                    const size_t offset = blockData->offsetSuperBlock * file.blockIncrSize;
-                                    const Buffer *const block = BUF(
-                                        bufPtr(superBlock) + offset,
-                                        bufUsed(superBlock) >= blockData->offsetSuperBlock + file.blockIncrSize ?
-                                            file.blockIncrSize : bufUsed(superBlock) - offset);
+                                    ioReadVarIntU64(chunkRead);
+                                    ioRead(chunkRead, block);
 
-                                    const String *const blockChecksum =
-                                        strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, block));
-                                    const String *const mapChecksum = strNewEncode(
-                                        encodingHex, BUF(blockData->checksum, HASH_TYPE_SHA1_SIZE));
-
-                                    if (!strEq(blockChecksum, mapChecksum))
+                                    if (blockNo == blockData->no)
                                     {
-                                        THROW_FMT(
-                                            AssertError, "'%s' block %u/%u checksum (%s) does not match block incr map (%s)",
-                                            strZ(file.name), superBlockIdx, blockIdx, strZ(blockChecksum), strZ(mapChecksum));
+                                        // Verify block checksum
+                                        const String *const blockChecksum =
+                                            strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, block));
+                                        const String *const mapChecksum = strNewEncode(
+                                            encodingHex, BUF(blockData->checksum, HASH_TYPE_SHA1_SIZE));
+
+                                        if (!strEq(blockChecksum, mapChecksum))
+                                        {
+                                            THROW_FMT(
+                                                AssertError, "'%s' block %u/%u checksum (%s) does not match block incr map (%s)",
+                                                strZ(file.name), superBlockIdx, blockIdx, strZ(blockChecksum), strZ(mapChecksum));
+                                        }
+
+                                        // Update size and checksum
+                                        size += bufUsed(block);
+                                        ioFilterProcessIn(checksumFilter, block);
+
+                                        // Get next block
+                                        blockIdx++;
+
+                                        if (blockIdx < lstSize(superBlockData->blockList))
+                                            blockData = lstGet(superBlockData->blockList, blockIdx);
                                     }
 
-                                    // Update size and checksum
-                                    size += bufUsed(block);
-                                    ioFilterProcessIn(checksumFilter, block);
+                                    bufUsedZero(block);
+                                    blockNo++;
                                 }
+                                while (bufSize(ioReadPeek(chunkRead, 1)) != 0);
                             }
                         }
 
@@ -1149,21 +1153,21 @@ testRun(void)
             testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
             "read {reference: 1024, bundleId: 1024, offset: 1024, size: 1024}\n"
             "  super block {size: 1024}\n"
-            "    block {offsetSuperBlock: 0, offsetOriginal: 16}\n"
+            "    block {no: 0, offset: 16}\n"
             "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
             "  super block {size: 3}\n"
-            "    block {offsetSuperBlock: 0, offsetOriginal: 0}\n"
+            "    block {no: 0, offset: 0}\n"
             "read {reference: 128, bundleId: 0, offset: 129, size: 9}\n"
             "  super block {size: 9}\n"
-            "    block {offsetSuperBlock: 0, offsetOriginal: 24}\n"
+            "    block {no: 0, offset: 24}\n"
             "read {reference: 0, bundleId: 56, offset: 200000000, size: 127}\n"
             "  super block {size: 127}\n"
-            "    block {offsetSuperBlock: 0, offsetOriginal: 8}\n"
+            "    block {no: 0, offset: 8}\n"
             "read {reference: 0, bundleId: 56, offset: 200000129, size: 21}\n"
             "  super block {size: 10}\n"
-            "    block {offsetSuperBlock: 0, offsetOriginal: 32}\n"
+            "    block {no: 0, offset: 32}\n"
             "  super block {size: 11}\n"
-            "    block {offsetSuperBlock: 0, offsetOriginal: 40}\n",
+            "    block {no: 0, offset: 40}\n",
             "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1284,14 +1288,14 @@ testRun(void)
             testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
             "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
             "  super block {size: 3}\n"
-            "    block {offsetSuperBlock: 0, offsetOriginal: 0}\n"
-            "    block {offsetSuperBlock: 8, offsetOriginal: 8}\n"
+            "    block {no: 0, offset: 0}\n"
+            "    block {no: 1, offset: 8}\n"
             "read {reference: 0, bundleId: 56, offset: 200000000, size: 171}\n"
             "  super block {size: 127}\n"
-            "    block {offsetSuperBlock: 40, offsetOriginal: 16}\n"
+            "    block {no: 5, offset: 16}\n"
             "  super block {size: 44}\n"
-            "    block {offsetSuperBlock: 8, offsetOriginal: 24}\n"
-            "    block {offsetSuperBlock: 40, offsetOriginal: 32}\n",
+            "    block {no: 1, offset: 24}\n"
+            "    block {no: 5, offset: 32}\n",
             "check delta");
     }
 
