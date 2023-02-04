@@ -35,6 +35,7 @@ typedef struct BlockIncr
 
     unsigned int blockNo;                                           // Block number
     unsigned int blockNoLast;                                       // Last block no
+    uint64_t superBlockNo;                                          // Block no in super block
     uint64_t blockOffset;                                           // Block offset
     uint64_t superBlockSize;                                        // Super block
     uint64_t blockSize;                                             // Block size
@@ -186,6 +187,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                         .reference = this->reference,
                         .bundleId = this->bundleId,
                         .offset = this->blockOffset,
+                        .block = this->superBlockNo,
                     };
 
                     memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
@@ -196,6 +198,9 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
                     // Increment last block no
                     this->blockNoLast = this->blockNo;
+
+                    // Increment super block no
+                    this->superBlockNo++;
                 }
                 // Else write a reference to the block in the prior backup
                 else
@@ -233,6 +238,10 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
             // Increment block offset
             this->blockOffset += blockOutSize;
+
+            // Reset block out size and super block no
+            this->blockOutSize = 0;
+            this->superBlockNo = 0;
         }
 
         // Write the block map if done processing (but not flushing) and at least one block was written
@@ -251,7 +260,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
                 // Write the map
                 ioWriteOpen(write);
-                blockMapWrite(this->blockMapOut, write, true);
+                blockMapWrite(this->blockMapOut, write, this->blockSize == this->superBlockSize);
                 ioWriteClose(write);
 
                 // Get total bytes written for the map

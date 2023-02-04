@@ -762,7 +762,7 @@ testRun(void)
         // Check super block size
         ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/128k"));
 
-        TEST_RESULT_UINT(manifestFileBlockIncrSuperSize(manifest, &file), file.blockIncrSize, "default super block size");
+        TEST_RESULT_UINT(manifestFileBlockIncrSuperSize(manifest, &file), 256 * 1024, "default super block size");
         // file.blockIncrSize = (uint64_t)2 * 1024 * 1024 * 1024;
         // TEST_RESULT_UINT(
         //     manifestFileBlockIncrSuperSize(manifest, &file), (uint64_t)2 * 1024 * 1024 * 1024, "default super block size");

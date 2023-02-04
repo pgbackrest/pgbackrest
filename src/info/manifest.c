@@ -847,7 +847,7 @@ manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFil
     // // Super block size should be >= block size
     // if (file->blockIncrSize > result)
     //     result = file->blockIncrSize;
-    uint64_t result = file->blockIncrSize;
+    uint64_t result = 256 * 1024;
 
     FUNCTION_TEST_RETURN(UINT64, result);
 }

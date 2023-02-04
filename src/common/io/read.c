@@ -232,7 +232,8 @@ ioReadPeek(IoRead *const this, const size_t size) // {uncovered - !!!}
             if (this->outputPos > 0) // {uncovered - !!!}
             {
                 memmove(// {uncovered - !!!}
-                    bufPtr(this->output), bufPtr(this->output) + this->outputPos, bufUsed(this->output) - this->outputPos);
+                    bufPtr(this->output), bufPtr(this->output) + this->outputPos, // {uncovered - !!!}
+                    bufUsed(this->output) - this->outputPos); // {uncovered - !!!}
                 this->outputPos = 0; // {uncovered - !!!}
             }
 

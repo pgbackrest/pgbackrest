@@ -204,13 +204,27 @@ testBackupValidateList(
 
                         // Build map log
                         String *const mapLog = strNew();
+                        const BlockMapItem *blockMapItemLast = NULL;
 
                         for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
                         {
+                            const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
+                            const bool superBlockChange =
+                                blockMapItemLast == NULL || blockMapItemLast->reference != blockMapItem->reference ||
+                                blockMapItemLast->offset != blockMapItem->offset;
+
+                            if (superBlockChange && blockMapIdx != 0)
+                                strCatChr(mapLog, '}');
+
                             if (!strEmpty(mapLog))
                                 strCatChr(mapLog, ',');
 
+                            if (superBlockChange)
+                                strCatChr(mapLog, '{');
+
                             strCatFmt(mapLog, "%u", blockMapGet(blockMap, blockMapIdx)->reference);
+
+                            blockMapItemLast = blockMapItem;
                         }
 
                         // Check blocks
@@ -249,7 +263,7 @@ testBackupValidateList(
 
                                 ioReadOpen(chunkRead);
 
-                                Buffer *const block = bufNew(file.blockIncrSize);
+                                Buffer *const block = bufNew((size_t)file.blockIncrSize);
                                 unsigned int blockNo = 0;
                                 unsigned int blockIdx = 0;
                                 const BlockDeltaBlock *blockData = lstGet(superBlockData->blockList, blockIdx);
@@ -288,11 +302,11 @@ testBackupValidateList(
                                     bufUsedZero(block);
                                     blockNo++;
                                 }
-                                while (bufSize(ioReadPeek(chunkRead, 1)) != 0);
+                                while (bufUsed(ioReadPeek(chunkRead, 1)) != 0);
                             }
                         }
 
-                        strCatFmt(result, ", m={%s}", strZ(mapLog));
+                        strCatFmt(result, ", m={%s}}", strZ(mapLog));
 
                         checksum = pckReadBinP(pckReadNew(ioFilterResult(checksumFilter)));
                     }
@@ -1475,7 +1489,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 69, "map size");
+        TEST_RESULT_UINT(mapSize, 73, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1488,18 +1502,22 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, map),
-            "01"                                        // Blocks are equal
+            "00"                                        // Blocks are not equal
             "03"                                        // reference
             "04"                                        // bundle id
             "05"                                        // offset
             "0d"                                        // size
+            "00"                                        // block no
             "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"  // checksum
 
-            "01"                                        // size
+            "03"                                        // block no
             "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
+            "00"                                        // super block end
 
             "0c"                                        // size
+            "00"                                        // block no
             "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
+            "00"                                        // super block end
             "00"                                        // reference end
 
             "00",                                       // map end
@@ -3969,7 +3987,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 128.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131071, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139263, 128KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/270398, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/270396, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3983,12 +4001,12 @@ testRun(void)
                 ". {link, d=20191103-165320F}\n"
                 "bundle {path}\n"
                 "bundle/1/pg_data/PG_VERSION {file, s=2}\n"
-                "bundle/1/pg_data/block-incr-shrink {file, m={0,0}, s=131073}\n"
+                "bundle/1/pg_data/block-incr-shrink {file, m={{0,0}}, s=131073}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "bundle/1/pg_data/grow-to-block-incr {file, s=131071}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={0,0,0}, s=393216}\n"
+                "pg_data/block-incr-grow.pgbi {file, m={{0,0},{0}}, s=393216}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -3999,7 +4017,7 @@ testRun(void)
                 ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1572800002}\n"
-                "pg_data/block-incr-grow={\"bims\":71,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
+                "pg_data/block-incr-grow={\"bims\":77,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
                 ",\"size\":393216,\"timestamp\":1572800000}\n"
                 "pg_data/block-incr-shrink={\"bims\":54,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
                 ",\"size\":131073,\"timestamp\":1572800000}\n"
@@ -4075,8 +4093,8 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (2MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (2MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 128KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131133, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139325, 128.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131131, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139323, 128.0KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
@@ -4092,11 +4110,12 @@ testRun(void)
                 "bundle {path}\n"
                 "bundle/1/pg_data/block-incr-shrink {file, s=131071}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
-                "bundle/1/pg_data/grow-to-block-incr {file, m={1,1}, s=131073}\n"
+                "bundle/1/pg_data/grow-to-block-incr {file, m={{1,1}}, s=131073}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1}, s=2097152}\n"
-                "pg_data/block-incr-larger.pgbi {file, m={1,1,1,1,1,1,1,1,1,1,1}, s=2097152}\n"
+                "pg_data/block-incr-grow.pgbi {file, m={{0,0},{0},{1,1},{1,1},{1,1},{1,1},{1,1},{1,1},{1}},"
+                " s=2097152}\n"
+                "pg_data/block-incr-larger.pgbi {file, m={{1,1},{1,1},{1,1},{1,1},{1,1},{1}}, s=2097152}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4107,9 +4126,9 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573000002}\n"
-                "pg_data/block-incr-grow={\"bims\":348,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-grow={\"bims\":372,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
-                "pg_data/block-incr-larger={\"bims\":241,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-larger={\"bims\":253,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"checksum\":\"a8a85be0079c68c5c5a6ee743c44d853d6be12bb\",\"size\":131071"
                 ",\"timestamp\":1573000000}\n"
@@ -4205,7 +4224,7 @@ testRun(void)
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={0}, s=131072}\n"
+                "pg_data/block-incr-grow.pgbi {file, m={{0}}, s=131072}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4283,7 +4302,7 @@ testRun(void)
                     .cipherPass = TEST_CIPHER_PASS),
                 ". {link, d=20191108-080000F_20191110-153320D}\n"
                 "bundle {path}\n"
-                "bundle/1/pg_data/block-incr-grow {file, m={0,1}, s=262144}\n"
+                "bundle/1/pg_data/block-incr-grow {file, m={{0},{1}}, s=262144}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"

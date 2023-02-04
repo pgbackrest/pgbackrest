@@ -340,7 +340,7 @@ restoreFile(
                                 // Open chunked read
                                 ioReadOpen(chunkedRead);
 
-                                Buffer *const block = bufNew(file->blockIncrSize);
+                                Buffer *const block = bufNew((size_t)file->blockIncrSize);
                                 unsigned int blockNo = 0;
                                 unsigned int blockIdx = 0;
                                 const BlockDeltaBlock *blockData = lstGet(superBlockData->blockList, blockIdx);
@@ -368,8 +368,8 @@ restoreFile(
                                         // Get next block
                                         blockIdx++;
 
-                                        if (blockIdx < lstSize(superBlockData->blockList)) // {uncovered - !!!}
-                                            blockData = lstGet(superBlockData->blockList, blockIdx); // {uncovered - !!!}
+                                        if (blockIdx < lstSize(superBlockData->blockList))
+                                            blockData = lstGet(superBlockData->blockList, blockIdx);
                                         else if (superBlockIdx == lstSize(read->superBlockList) - 1)
                                             break;
                                     }
@@ -377,7 +377,7 @@ restoreFile(
                                     bufUsedZero(block);
                                     blockNo++;
                                 }
-                                while (bufSize(ioReadPeek(chunkedRead, 1)) != 0); // {uncovered - !!!}
+                                while (bufUsed(ioReadPeek(chunkedRead, 1)) != 0);
                             }
                         }
 
