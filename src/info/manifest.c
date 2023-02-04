@@ -836,20 +836,13 @@ manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFil
     FUNCTION_TEST_END();
 
     (void)manifest; // !!! Pretty sure we'll need info from the manifest
+    (void)file; // !!! And the file
 
     ASSERT(manifest != NULL);
     ASSERT(file != NULL);
     ASSERT(file->blockIncrSize > 0);
 
-    // // Default to 1MiB
-    // uint64_t result = 1024 * 1024 * 1024;
-
-    // // Super block size should be >= block size
-    // if (file->blockIncrSize > result)
-    //     result = file->blockIncrSize;
-    uint64_t result = 256 * 1024;
-
-    FUNCTION_TEST_RETURN(UINT64, result);
+    FUNCTION_TEST_RETURN(UINT64, 1024 * 1024);
 }
 
 /**********************************************************************************************************************************/
