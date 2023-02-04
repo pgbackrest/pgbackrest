@@ -227,18 +227,20 @@ ioReadPeek(IoRead *const this, const size_t size) // {uncovered - !!!}
 
     if (bufUsed(this->output) - this->outputPos < size) // {uncovered - !!!}
     {
-        if (bufRemains(this->output) - this->outputPos < size) // {uncovered - !!!}
+        if (bufUsed(this->output) - this->outputPos + bufRemains(this->output) < size) // {uncovered - !!!}
         {
             if (this->outputPos > 0) // {uncovered - !!!}
             {
                 memmove(// {uncovered - !!!}
                     bufPtr(this->output), bufPtr(this->output) + this->outputPos, // {uncovered - !!!}
                     bufUsed(this->output) - this->outputPos); // {uncovered - !!!}
+
+                bufUsedSet(this->output, bufUsed(this->output) - this->outputPos); // {uncovered - !!!}
                 this->outputPos = 0; // {uncovered - !!!}
             }
 
-            if (bufRemains(this->output) < size) // {uncovered - !!!}
-                bufResize(this->output, bufSize(this->output) + (size - bufRemains(this->output))); // {uncovered - !!!}
+            if (bufSize(this->output) < size) // {uncovered - !!!}
+                bufResize(this->output, size); // {uncovered - !!!}
         }
 
         ioReadInternal(this, this->output, false); // {uncovered - !!!}

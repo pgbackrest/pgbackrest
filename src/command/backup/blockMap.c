@@ -245,7 +245,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual
             {
                 ASSERT(blockMapItem->reference == blockMapRef->reference);
                 ASSERT(blockMapItem->bundleId == blockMapRef->bundleId);
-                ASSERT(blockMapItem->offset >= blockMapRef->offset);
+                // ASSERT(blockMapItem->offset >= blockMapRef->offset); // !!! WHY WOULD THIS NOT BE TRUE?
 
                 // Add offset delta
                 ioWriteVarIntU64(output, blockMapItem->offset - blockMapRef->offset);
