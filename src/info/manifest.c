@@ -835,14 +835,22 @@ manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFil
         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
-    (void)manifest; // !!! Pretty sure we'll need info from the manifest
-    (void)file; // !!! And the file
-
     ASSERT(manifest != NULL);
     ASSERT(file != NULL);
     ASSERT(file->blockIncrSize > 0);
 
-    FUNCTION_TEST_RETURN(UINT64, 1024 * 1024);
+    // Default super block size to 1MiB
+    uint64_t result = 1024 * 1024;
+
+    // Increase to 4MiB for full backups to maximize compression efficiency
+    if (manifest->pub.data.backupType == backupTypeFull)
+        result = 4 * 1024 * 1024;
+
+    // If super block size is less than block size then make them equal for block map storage efficiency
+    if (result < file->blockIncrSize)
+        result = file->blockIncrSize;
+
+    FUNCTION_TEST_RETURN(UINT64, result);
 }
 
 /**********************************************************************************************************************************/
