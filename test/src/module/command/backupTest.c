@@ -1039,70 +1039,73 @@ testRun(void)
         BlockMap *blockMap = NULL;
         TEST_ASSIGN(blockMap, blockMapNew(), "new");
 
-        BlockMapItem blockMapItem1 =
+        BlockMapItem blockMapItem =
         {
             .reference = 128,
+            .bundleId = 0,
+            .offset = 0,
             .size = 3,
-            .checksum = {255, 128, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+            .checksum = {0xee, 0xee, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
         };
 
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem1)->reference, 128, "add");
+        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem)->reference, 128, "add");
         TEST_RESULT_UINT(blockMapGet(blockMap, 0)->reference, 128, "get");
 
-        BlockMapItem blockMapItem2 =
+        blockMapItem = (BlockMapItem)
+        {
+            .reference = 128,
+            .bundleId = 0,
+            .offset = 3,
+            .size = 5,
+            .checksum = {0xee, 0xee, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
+        };
+
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
+
+        blockMapItem = (BlockMapItem)
         {
             .reference = 0,
-            .bundleId = 56,
-            .offset = 200000000,
-            .size = 127,
-            .checksum = {255, 0, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+            .bundleId = 1,
+            .offset = 1,
+            .size = 5,
+            .checksum = {0xee, 0xee, 0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
         };
 
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem2)->reference, blockMapItem2.reference, "add");
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
-        BlockMapItem blockMapItem5 =
+        blockMapItem = (BlockMapItem)
         {
-            .reference = 1024,
-            .bundleId = 1024,
-            .offset = 1024,
-            .size = 1024,
-            .checksum = {255, 102, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+            .reference = 128,
+            .bundleId = 0,
+            .offset = 8,
+            .size = 99,
+            .checksum = {0xee, 0xee, 0x04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
         };
 
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem5)->reference, blockMapItem5.reference, "add");
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
-        BlockMapItem blockMapItem3 =
+        blockMapItem = (BlockMapItem)
         {
-            .reference = blockMapItem1.reference,
-            .bundleId = blockMapItem1.bundleId,
-            .offset = blockMapItem1.offset + 129,
-            .size = 9,
-            .checksum = {255, 129, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+            .reference = 0,
+            .bundleId = 1,
+            .offset = 7,
+            .size = 99,
+            .checksum = {0xee, 0xee, 0x05, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
         };
 
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem3)->reference, blockMapItem3.reference, "add");
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
-        BlockMapItem blockMapItem4 =
+        // Keep this last
+        blockMapItem = (BlockMapItem)
         {
-            .reference = blockMapItem2.reference,
-            .bundleId = blockMapItem2.bundleId,
-            .offset = blockMapItem2.offset + 129,
-            .size = 10,
-            .checksum = {255, 1, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+            .reference = 4,
+            .bundleId = 0,
+            .offset = 0,
+            .size = 8,
+            .checksum = {0xee, 0xee, 0x88, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
         };
 
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem4)->reference, blockMapItem4.reference, "add");
-
-        BlockMapItem blockMapItem6 =
-        {
-            .reference = blockMapItem4.reference,
-            .bundleId = blockMapItem4.bundleId,
-            .offset = blockMapItem4.offset + 10,
-            .size = 11,
-            .checksum = {255, 2, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
-        };
-
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMapItem6)->reference, blockMapItem6.reference, "add");
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write equal block map");
@@ -1115,42 +1118,31 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, buffer),
             "01"                                        // Blocks are equal
-            "8101"                                      // reference 128
-            "00"                                        // bundle id 0
-            "00"                                        // offset 0
-            "03"                                        // size 3
-            "ff800e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00"                                        // reference end
 
-            "01"                                        // reference 0
-            "38"                                        // bundle id 56
-            "8084af5f"                                  // offset 200000000
-            "f901"                                      // delta size 127
-            "ff000e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00"                                        // reference end
+            "8008"                                      // reference 128
+            "06"                                        // super block size 3
+            "eeee01000000000000000000000000000000ffff"  // checksum
+            "09"                                        // super block size 5
+            "eeee02000000000000000000000000000000ffff"  // checksum
 
-            "8108"                                      // reference 1024
-            "8008"                                      // bundle id 1024
-            "8008"                                      // offset 1024
-            "830e"                                      // delta size 1024
-            "ff660e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00"                                        // reference end
+            "06"                                        // reference 0
+            "01"                                        // bundle 1
+            "01"                                        // offset 0
+            "01"                                        // super block size 5
+            "eeee03000000000000000000000000000000ffff"  // checksum
 
-            "8101"                                      // reference 128
-            "7e"                                        // delta offset 126
-            "ee0f"                                      // delta size 9
-            "ff810e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00"                                        // reference end
+            "8008"                                      // reference 128
+            "f902"                                      // super block size 99
+            "eeee04000000000000000000000000000000ffff"  // checksum
 
-            "01"                                        // reference 0
-            "02"                                        // delta offset 2
-            "03"                                        // delta size 10
-            "ff010e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "03"                                        // size 11
-            "ff020e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00"                                        // reference end
+            "02"                                        // reference 0
+            "01"                                        // offset 7
+            "01"                                        // super block size 99
+            "eeee05000000000000000000000000000000ffff"  // checksum
 
-            "00",                                       // map end
+            "21"                                        // reference 0
+            "eb02"                                      // super block size 8
+            "eeee88000000000000000000000000000000ffff", // reference
             "compare");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1168,23 +1160,22 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
-            "read {reference: 1024, bundleId: 1024, offset: 1024, size: 1024}\n"
-            "  super block {size: 1024}\n"
-            "    block {no: 0, offset: 16}\n"
             "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
             "  super block {size: 3}\n"
             "    block {no: 0, offset: 0}\n"
-            "read {reference: 128, bundleId: 0, offset: 129, size: 9}\n"
-            "  super block {size: 9}\n"
-            "    block {no: 0, offset: 24}\n"
-            "read {reference: 0, bundleId: 56, offset: 200000000, size: 127}\n"
-            "  super block {size: 127}\n"
             "    block {no: 0, offset: 8}\n"
-            "read {reference: 0, bundleId: 56, offset: 200000129, size: 21}\n"
-            "  super block {size: 10}\n"
-            "    block {no: 0, offset: 32}\n"
-            "  super block {size: 11}\n"
-            "    block {no: 0, offset: 40}\n",
+            "read {reference: 128, bundleId: 0, offset: 8, size: 99}\n"
+            "  super block {size: 99}\n"
+            "    block {no: 0, offset: 24}\n"
+            "read {reference: 4, bundleId: 0, offset: 0, size: 8}\n"
+            "  super block {size: 8}\n"
+            "    block {no: 0, offset: 40}\n"
+            "read {reference: 0, bundleId: 1, offset: 1, size: 5}\n"
+            "  super block {size: 5}\n"
+            "    block {no: 0, offset: 16}\n"
+            "read {reference: 0, bundleId: 1, offset: 7, size: 99}\n"
+            "  super block {size: 99}\n"
+            "    block {no: 0, offset: 32}\n",
             "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
