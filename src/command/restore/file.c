@@ -8,6 +8,7 @@ Restore File
 #include <utime.h>
 
 #include "command/backup/blockDelta.h"
+#include "command/backup/blockIncr.h"
 #include "command/backup/blockMap.h"
 #include "command/restore/deltaMap.h"
 #include "command/restore/file.h"
@@ -344,10 +345,13 @@ restoreFile(
                                 unsigned int blockNo = 0;
                                 unsigned int blockIdx = 0;
                                 const BlockDeltaBlock *blockData = lstGet(superBlockData->blockList, blockIdx);
+                                uint64_t blockEncoded = ioReadVarIntU64(chunkedRead);
 
                                 do
                                 {
-                                    ioReadVarIntU64(chunkedRead);
+                                    if (blockEncoded & BLOCK_INCR_FLAG_SIZE) // {uncovered - !!!}
+                                        bufLimitSet(block, ioReadVarIntU64(chunkedRead)); // {uncovered - !!!}
+
                                     ioRead(chunkedRead, block);
 
                                     if (blockNo == blockData->no) // {uncovered - !!!}
@@ -374,10 +378,18 @@ restoreFile(
                                             break;
                                     }
 
+                                    if (blockEncoded & BLOCK_INCR_FLAG_SIZE) // {uncovered - !!!}
+                                        break; // {uncovered - !!!}
+
+                                    blockEncoded = ioReadVarIntU64(chunkedRead);
+
+                                    if (blockEncoded == 0)
+                                        break;
+
                                     bufUsedZero(block);
                                     blockNo++;
                                 }
-                                while (bufUsed(ioReadPeek(chunkedRead, 1)) != 0);
+                                while (true);
                             }
                         }
 

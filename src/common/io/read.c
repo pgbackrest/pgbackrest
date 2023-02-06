@@ -18,7 +18,6 @@ struct IoRead
     IoReadPub pub;                                                  // Publicly accessible variables
     Buffer *input;                                                  // Input buffer
     Buffer *output;                                                 // Internal output buffer (extra output from buffered reads)
-    BufferPub peek;                                                 // Unread data in output buffer
     size_t outputPos;                                               // Current position in the internal output buffer
 };
 
@@ -200,60 +199,6 @@ ioRead(IoRead *this, Buffer *buffer)
     ioReadInternal(this, buffer, true);
 
     FUNCTION_LOG_RETURN(SIZE, outputRemains - bufRemains(buffer));
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN const Buffer *
-ioReadPeek(IoRead *const this, const size_t size) // {uncovered - !!!}
-{
-    FUNCTION_TEST_BEGIN(); // {uncovered - !!!}
-        FUNCTION_TEST_PARAM(IO_READ, this); // {uncovered - !!!}
-        FUNCTION_TEST_PARAM(SIZE, size); // {uncovered - !!!}
-    FUNCTION_TEST_END(); // {uncovered - !!!}
-
-    ASSERT(this != NULL); // {uncovered - !!!}
-    ASSERT(size > 0); // {uncovered - !!!}
-    ASSERT(this->pub.opened && !this->pub.closed); // {uncovered - !!!}
-
-    // Allocate the internal output buffer if it has not already been allocated
-    if (this->output == NULL) // {uncovered - !!!}
-    {
-        MEM_CONTEXT_BEGIN(this->pub.memContext) // {uncovered - !!!}
-        {
-            this->output = bufNew(ioBufferSize()); // {uncovered - !!!}
-        }
-        MEM_CONTEXT_END(); // {uncovered - !!!}
-    }
-
-    if (bufUsed(this->output) - this->outputPos < size) // {uncovered - !!!}
-    {
-        if (bufUsed(this->output) - this->outputPos + bufRemains(this->output) < size) // {uncovered - !!!}
-        {
-            if (this->outputPos > 0) // {uncovered - !!!}
-            {
-                memmove(// {uncovered - !!!}
-                    bufPtr(this->output), bufPtr(this->output) + this->outputPos, // {uncovered - !!!}
-                    bufUsed(this->output) - this->outputPos); // {uncovered - !!!}
-
-                bufUsedSet(this->output, bufUsed(this->output) - this->outputPos); // {uncovered - !!!}
-                this->outputPos = 0; // {uncovered - !!!}
-            }
-
-            if (bufSize(this->output) < size) // {uncovered - !!!}
-                bufResize(this->output, size); // {uncovered - !!!}
-        }
-
-        ioReadInternal(this, this->output, false); // {uncovered - !!!}
-    }
-
-    this->peek = (BufferPub) // {uncovered - !!!}
-    {
-        .buffer = bufPtr(this->output) + this->outputPos, // {uncovered - !!!}
-        // .size = bufUsed(this->output) - this->outputPos, // {uncovered - !!!}
-        .used = bufUsed(this->output) - this->outputPos, // {uncovered - !!!}
-    };
-
-    FUNCTION_TEST_RETURN(BUFFER, (Buffer *)&this->peek); // {uncovered - !!!}
 }
 
 /**********************************************************************************************************************************/
