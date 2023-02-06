@@ -275,7 +275,7 @@ testBackupValidateList(
                                 do
                                 {
                                     if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
-                                        bufLimitSet(block, ioReadVarIntU64(chunkRead));
+                                        bufLimitSet(block, (size_t)ioReadVarIntU64(chunkRead));
 
                                     ioRead(chunkRead, block);
 

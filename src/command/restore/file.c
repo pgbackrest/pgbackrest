@@ -350,7 +350,7 @@ restoreFile(
                                 do
                                 {
                                     if (blockEncoded & BLOCK_INCR_FLAG_SIZE) // {uncovered - !!!}
-                                        bufLimitSet(block, ioReadVarIntU64(chunkedRead)); // {uncovered - !!!}
+                                        bufLimitSet(block, (size_t)ioReadVarIntU64(chunkedRead)); // {uncovered - !!!}
 
                                     ioRead(chunkedRead, block);
 
