@@ -1183,61 +1183,39 @@ testRun(void)
 
         TEST_ASSIGN(blockMap, blockMapNew(), "new");
 
-        BlockMapItem blockMap2Item1 =
+        blockMapItem = (BlockMapItem)
         {
-            .reference = 128,
-            .size = 3,
+            .reference = 0,
+            .offset = 0,
+            .size = 4,
             .block = 0,
-            .checksum = {255, 128, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+            .checksum = {0xee, 0xee, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
         };
 
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item1)->reference, 128, "add");
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
-        BlockMapItem blockMap2Item2 =
+        blockMapItem = (BlockMapItem)
         {
-            .reference = 128,
-            .size = 3,
+            .reference = 0,
+            .offset = 0,
+            .size = 4,
             .block = 1,
-            .checksum = {255, 1, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+            .checksum = {0xee, 0xee, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
         };
 
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item2)->reference, 128, "add");
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
-        BlockMapItem blockMap2Item3 =
+        blockMapItem = (BlockMapItem)
         {
             .reference = 0,
-            .bundleId = 56,
-            .offset = 200000000,
-            .size = 127,
-            .block = 5,
-            .checksum = {255, 0, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
+            .offset = 4,
+            .size = 5,
+            .block = 0,
+            .checksum = {0xee, 0xee, 0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
         };
 
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item3)->reference, 0, "add");
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
-        BlockMapItem blockMap2Item4 =
-        {
-            .reference = 0,
-            .bundleId = 56,
-            .offset = 200000127,
-            .size = 44,
-            .block = 1,
-            .checksum = {255, 7, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
-        };
-
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item4)->reference, 0, "add");
-
-        BlockMapItem blockMap2Item5 =
-        {
-            .reference = 0,
-            .bundleId = 56,
-            .offset = 200000127,
-            .size = 44,
-            .block = 5,
-            .checksum = {255, 8, 14, 13, 12, 11, 10, 9, 8, 7, 7, 8, 9, 10, 11, 12, 13, 14, 255, 255},
-        };
-
-        TEST_RESULT_UINT(blockMapAdd(blockMap, &blockMap2Item5)->reference, 0, "add");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write unequal block map");
@@ -1250,33 +1228,20 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, buffer),
             "00"                                        // Blocks are unequal
-            "8101"                                      // reference 128
-            "00"                                        // bundle id 0
-            "00"                                        // offset 0
-            "03"                                        // size 3
-            "00"                                        // block 0
-            "ff800e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "03"                                        // block delta 1
-            "ff010e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00"                                        // block end
-            "00"                                        // reference end
 
             "01"                                        // reference 0
-            "38"                                        // bundle id 56
-            "8084af5f"                                  // offset 200000000
-            "f901"                                      // delta size 127
-            "05"                                        // block 5
-            "ff000e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00"                                        // block end
-            "a601"                                      // delta size 44
-            "01"                                        // block 1
-            "ff070e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "09"                                        // block 5
-            "ff080e0d0c0b0a0908070708090a0b0c0d0effff"  // checksum
-            "00"                                        // block end
-            "00"                                        // reference end
+            "08"                                        // size 4
+            "00"                                        // block 0
+            "eeee01000000000000000000000000000000ffff"  // checksum
 
-            "00",                                       // map end
+            "03"                                        // block 1
+            "eeee02000000000000000000000000000000ffff"  // checksum
+
+            "05"                                        // reference 0
+            "01"                                        // block 0
+            "eeee03000000000000000000000000000000ffff"  // checksum
+
+            ,
             "compare");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1294,16 +1259,12 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
-            "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
-            "  super block {size: 3}\n"
+            "read {reference: 0, bundleId: 0, offset: 0, size: 9}\n"
+            "  super block {size: 4}\n"
             "    block {no: 0, offset: 0}\n"
             "    block {no: 1, offset: 8}\n"
-            "read {reference: 0, bundleId: 56, offset: 200000000, size: 171}\n"
-            "  super block {size: 127}\n"
-            "    block {no: 5, offset: 16}\n"
-            "  super block {size: 44}\n"
-            "    block {no: 1, offset: 24}\n"
-            "    block {no: 5, offset: 32}\n",
+            "  super block {size: 5}\n"
+            "    block {no: 0, offset: 16}\n",
             "check delta");
     }
 
@@ -1340,7 +1301,7 @@ testRun(void)
 
         uint64_t mapSize;
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 27, "map size");
+        TEST_RESULT_UINT(mapSize, 23, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1350,17 +1311,11 @@ testRun(void)
         const Buffer *map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, map),
-            "01"                                        // Blocks are equal
-            "01"                                        // reference
-            "00"                                        // bundle id
-            "00"                                        // offset
-            "06"                                        // size
-            "7b52009b64fd0a2a49e6d8a939753077792b0554"  // checksum
-            "00"                                        // reference end
-
-            "00",                                       // map end
-            "block map");
+            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(map)), 3, NULL)),
+            "read {reference: 0, bundleId: 0, offset: 0, size: 6}\n"
+            "  super block {size: 6}\n"
+            "    block {no: 0, offset: 0}\n",
+            "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup");
@@ -1378,7 +1333,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 69, "map size");
+        TEST_RESULT_UINT(mapSize, 67, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1390,23 +1345,15 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, map),
-            "01"                                        // Blocks are equal
-            "03"                                        // reference
-            "04"                                        // bundle id
-            "05"                                        // offset
-            "07"                                        // size
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"  // checksum
-
-            "01"                                        // size
-            "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
-
-            "01"                                        // size
-            "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
-            "00"                                        // reference end
-
-            "00",                                       // map end
-            "block map");
+            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(map)), 3, NULL)),
+            "read {reference: 2, bundleId: 4, offset: 5, size: 21}\n"
+            "  super block {size: 7}\n"
+            "    block {no: 0, offset: 0}\n"
+            "  super block {size: 7}\n"
+            "    block {no: 0, offset: 3}\n"
+            "  super block {size: 7}\n"
+            "    block {no: 0, offset: 6}\n",
+            "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("diff/incr backup");
@@ -1426,7 +1373,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 97, "map size");
+        TEST_RESULT_UINT(mapSize, 90, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1437,33 +1384,18 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, map),
-            "01"                                        // Blocks are equal
-            "04"                                        // reference
-            "00"                                        // bundle id
-            "00"                                        // offset
-            "07"                                        // size
-            "7fd8c7d6fae707035347ded997e52837daa3aae2"  // checksum
-            "00"                                        // reference end
-
-            "03"                                        // reference
-            "04"                                        // bundle id
-            "0c"                                        // offset
-            "01"                                        // size
-            "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
-
-            "01"                                        // delta size
-            "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
-            "00"                                        // reference end
-
-            "04"                                        // reference
-            "00"                                        // offset delta
-            "06"                                        // delta size
-            "9a78211436f6d425ec38f5c4e02270801f3524f8"  // checksum
-            "00"                                        // reference end
-
-            "00",                                       // map end
-            "block map");
+            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(map)), 3, NULL)),
+            "read {reference: 3, bundleId: 0, offset: 0, size: 11}\n"
+            "  super block {size: 7}\n"
+            "    block {no: 0, offset: 0}\n"
+            "  super block {size: 4}\n"
+            "    block {no: 0, offset: 9}\n"
+            "read {reference: 2, bundleId: 4, offset: 12, size: 14}\n"
+            "  super block {size: 7}\n"
+            "    block {no: 0, offset: 3}\n"
+            "  super block {size: 7}\n"
+            "    block {no: 0, offset: 6}\n",
+            "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with larger superblock");
@@ -1483,7 +1415,7 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteClose(write), "close");
 
         TEST_ASSIGN(mapSize, pckReadU64P(ioFilterGroupResultP(ioWriteFilterGroup(write), BLOCK_INCR_FILTER_TYPE)), "map size");
-        TEST_RESULT_UINT(mapSize, 73, "map size");
+        TEST_RESULT_UINT(mapSize, 69, "map size");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, BUF(bufPtr(destination), bufUsed(destination) - (size_t)mapSize)),
@@ -1495,27 +1427,14 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, map),
-            "00"                                        // Blocks are not equal
-            "03"                                        // reference
-            "04"                                        // bundle id
-            "05"                                        // offset
-            "0d"                                        // size
-            "00"                                        // block no
-            "3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"  // checksum
-
-            "03"                                        // block no
-            "717c4ecc723910edc13dd2491b0fae91442619da"  // checksum
-            "00"                                        // super block end
-
-            "0c"                                        // size
-            "00"                                        // block no
-            "40bd001563085fc35165329ea1ff5c5ecbdbbeef"  // checksum
-            "00"                                        // super block end
-            "00"                                        // reference end
-
-            "00",                                       // map end
-            "block map");
+            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(map)), 3, NULL)),
+            "read {reference: 2, bundleId: 4, offset: 5, size: 20}\n"
+            "  super block {size: 13}\n"
+            "    block {no: 0, offset: 0}\n"
+            "    block {no: 1, offset: 3}\n"
+            "  super block {size: 7}\n"
+            "    block {no: 0, offset: 6}\n",
+            "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new filter from pack");
@@ -3981,7 +3900,7 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 128.0KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131071, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139263, 128KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/270396, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/270393, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -4011,9 +3930,9 @@ testRun(void)
                 ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1572800002}\n"
-                "pg_data/block-incr-grow={\"bims\":73,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
+                "pg_data/block-incr-grow={\"bims\":68,\"bis\":16,\"checksum\":\"b0d82b7805e85aa6447b94de7c2aa07077734581\""
                 ",\"size\":393216,\"timestamp\":1572800000}\n"
-                "pg_data/block-incr-shrink={\"bims\":54,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
+                "pg_data/block-incr-shrink={\"bims\":51,\"bis\":16,\"checksum\":\"9c32e340aad633663fdc3a5b1151c46abbf927f0\""
                 ",\"size\":131073,\"timestamp\":1572800000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1572800000}\n"
                 "pg_data/grow-to-block-incr={\"checksum\":\"f24ce50110bed53703bac93d9705d1e101c7cfeb\",\"size\":131071"
@@ -4087,8 +4006,8 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (2MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (2MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 128KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131131, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139323, 128.0KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/131127, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/139319, 128.0KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
@@ -4120,14 +4039,14 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573000002}\n"
-                "pg_data/block-incr-grow={\"bims\":358,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-grow={\"bims\":349,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
-                "pg_data/block-incr-larger={\"bims\":245,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-larger={\"bims\":240,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-shrink={\"checksum\":\"a8a85be0079c68c5c5a6ee743c44d853d6be12bb\",\"size\":131071"
                 ",\"timestamp\":1573000000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573000000}\n"
-                "pg_data/grow-to-block-incr={\"bims\":52,\"bis\":16,\"checksum\":\"b616afbe703280742f9c6125b738d85c80fde971\""
+                "pg_data/grow-to-block-incr={\"bims\":48,\"bis\":16,\"checksum\":\"b616afbe703280742f9c6125b738d85c80fde971\""
                 ",\"size\":131073,\"timestamp\":1573000000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573000002}\n"

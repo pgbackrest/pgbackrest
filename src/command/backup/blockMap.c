@@ -47,6 +47,7 @@ The block map is terminated by a varint-128 encoded zero stop byte.
 #define BLOCK_MAP_FLAG_BUNDLE_ID                                    4
 #define BLOCK_MAP_REFERENCE_SHIFT                                   3
 #define BLOCK_MAP_SUPER_BLOCK_SHIFT                                 1
+#define BLOCK_MAP_BLOCK_SHIFT                                       1
 
 typedef struct BlockMapRef
 {
@@ -88,11 +89,10 @@ blockMapNewRead(IoRead *const map)
     int64_t sizeLast = 0;
 
     const bool blockEqual = ioReadVarIntU64(map);
-    (void)blockEqual; // !!!
 
     do
     {
-        uint64_t referenceEncoded = ioReadVarIntU64(map);
+        const uint64_t referenceEncoded = ioReadVarIntU64(map);
         BlockMapItem blockMapItem = {.reference = (unsigned int)(referenceEncoded >> BLOCK_MAP_REFERENCE_SHIFT)};
         BlockMapRef *referenceData = lstFind(refList, &(BlockMapRef){.reference = blockMapItem.reference});
 
@@ -123,13 +123,15 @@ blockMapNewRead(IoRead *const map)
             if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
                 blockMapItem.offset += ioReadVarIntU64(map);
 
+            // !!! NEED CONTINUATION HERE
+
             referenceData->offset = blockMapItem.offset;
             referenceData->size = 0;
         }
 
         do
         {
-            uint64_t superBlockEncoded = ioReadVarIntU64(map);
+            const uint64_t superBlockEncoded = ioReadVarIntU64(map);
 
             if (sizeLast == 0)
                 blockMapItem.size = superBlockEncoded >> BLOCK_MAP_SUPER_BLOCK_SHIFT;
@@ -139,12 +141,30 @@ blockMapNewRead(IoRead *const map)
             sizeLast = (int64_t)blockMapItem.size;
             referenceData->size += blockMapItem.size;
 
-            // Read checksum
-            bufUsedZero(checksum);
-            ioRead(map, checksum);
-            memcpy(blockMapItem.checksum, bufPtr(checksum), bufUsed(checksum));
+            uint64_t blockLast = 0;
 
-            lstAdd((List *)this, &blockMapItem);
+            do
+            {
+                uint64_t blockEncoded = BLOCK_MAP_FLAG_LAST;
+
+                if (!blockEqual)
+                {
+                    blockEncoded = ioReadVarIntU64(map);
+                    blockMapItem.block = (blockEncoded >> BLOCK_MAP_BLOCK_SHIFT) + blockLast;
+                    blockLast = blockMapItem.block;
+                }
+
+                // Read checksum
+                bufUsedZero(checksum);
+                ioRead(map, checksum);
+                memcpy(blockMapItem.checksum, bufPtr(checksum), bufUsed(checksum));
+
+                lstAdd((List *)this, &blockMapItem);
+
+                if (blockEncoded & BLOCK_MAP_FLAG_LAST)
+                    break;
+            }
+            while (true);
 
             blockMapItem.offset += blockMapItem.size;
 
@@ -261,7 +281,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual
 
             for (superBlockIdx++; superBlockIdx < referenceIdx; superBlockIdx++)
             {
-                if (superBlock->offset != blockMapGet(this, superBlockIdx)->reference)
+                if (superBlock->offset != blockMapGet(this, superBlockIdx)->offset)
                 {
                     superBlockEncoded = 0;
                     break;
@@ -287,29 +307,22 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual
             {
                 const BlockMapItem *const block = blockMapGet(this, blockIdx);
                 ASSERT(block->block >= blockLast);
-                blockIdx++;
 
                 if (!blockEqual)
                 {
-                    // Determine if this is the last block in the super block
-                    uint64_t blockEncoded = BLOCK_MAP_FLAG_LAST;
-
-                    for (; blockIdx < superBlockIdx; blockIdx++)
-                    {
-                        if (block->offset != blockMapGet(this, blockIdx)->reference)
-                        {
-                            blockEncoded = 0;
-                            break;
-                        }
-                    }
-
                     // Write block no
-                    ioWriteVarIntU64(output, blockEncoded | (block->block - blockLast) << BLOCK_MAP_SUPER_BLOCK_SHIFT);
+                    ioWriteVarIntU64(
+                        output,
+                        (blockIdx == superBlockIdx - 1 ? BLOCK_MAP_FLAG_LAST : 0) |
+                        (block->block - blockLast) << BLOCK_MAP_BLOCK_SHIFT);
+
                     blockLast = block->block;
                 }
 
                 // Write checksum
                 ioWrite(output, BUF(block->checksum, HASH_TYPE_SHA1_SIZE));
+
+                blockIdx++;
             }
         }
     }
