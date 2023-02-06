@@ -1160,11 +1160,11 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
-            "read {reference: 128, bundleId: 0, offset: 0, size: 3}\n"
+            "read {reference: 128, bundleId: 0, offset: 0, size: 107}\n"
             "  super block {size: 3}\n"
             "    block {no: 0, offset: 0}\n"
+            "  super block {size: 5}\n"
             "    block {no: 0, offset: 8}\n"
-            "read {reference: 128, bundleId: 0, offset: 8, size: 99}\n"
             "  super block {size: 99}\n"
             "    block {no: 0, offset: 24}\n"
             "read {reference: 4, bundleId: 0, offset: 0, size: 8}\n"

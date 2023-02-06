@@ -4,6 +4,8 @@ Block Incremental Map
 The block map is stored as a flag and a series of block info that are abbreviated when sequential blocks are from the same
 reference:
 
+!!! FIX THIS DESCRIPTION
+
 - Varint-128 that contains info about the map (e.g. are the super blocks and block equal size).
 
 - Each block logically contains all fields in BlockMapItem but not all fields are encoded for each block and some are encoded as
@@ -144,6 +146,8 @@ blockMapNewRead(IoRead *const map)
 
             lstAdd((List *)this, &blockMapItem);
 
+            blockMapItem.offset += blockMapItem.size;
+
             if (superBlockEncoded & BLOCK_MAP_FLAG_LAST)
                 break;
         }
@@ -277,29 +281,32 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual
             referenceData->size += superBlock->size;
 
             // Write all blocks in the current super block in packed format
+            uint64_t blockLast = superBlock->block;
+
             while (blockIdx < superBlockIdx)
             {
                 const BlockMapItem *const block = blockMapGet(this, blockIdx);
+                ASSERT(block->block >= blockLast);
+                blockIdx++;
 
                 if (!blockEqual)
                 {
                     // Determine if this is the last block in the super block
-                    uint64_t superBlockEncoded = BLOCK_MAP_FLAG_LAST;
+                    uint64_t blockEncoded = BLOCK_MAP_FLAG_LAST;
 
-                    for (blockIdx++; blockIdx < superBlockIdx; blockIdx++)
+                    for (; blockIdx < superBlockIdx; blockIdx++)
                     {
                         if (block->offset != blockMapGet(this, blockIdx)->reference)
                         {
-                            superBlockEncoded = 0;
+                            blockEncoded = 0;
                             break;
                         }
                     }
 
                     // Write block no
-                    (void)superBlockEncoded; // !!!
+                    ioWriteVarIntU64(output, blockEncoded | (block->block - blockLast) << BLOCK_MAP_SUPER_BLOCK_SHIFT);
+                    blockLast = block->block;
                 }
-                else
-                    blockIdx++;
 
                 // Write checksum
                 ioWrite(output, BUF(block->checksum, HASH_TYPE_SHA1_SIZE));
