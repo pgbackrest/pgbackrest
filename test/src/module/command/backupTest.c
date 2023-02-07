@@ -1227,6 +1227,28 @@ testRun(void)
 
         TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
+        blockMapItem = (BlockMapItem)
+        {
+            .reference = 1,
+            .offset = 0,
+            .size = 99,
+            .block = 0,
+            .checksum = {0xee, 0xee, 0x04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
+        };
+
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
+
+        blockMapItem = (BlockMapItem)
+        {
+            .reference = 0,
+            .offset = 4,
+            .size = 5,
+            .block = 3,
+            .checksum = {0xee, 0xee, 0x05, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
+        };
+
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write unequal block map");
 
@@ -1239,7 +1261,7 @@ testRun(void)
             strNewEncode(encodingHex, buffer),
             "00"                                        // Blocks are unequal
 
-            "01"                                        // reference 0
+            "00"                                        // reference 0
             "08"                                        // size 4
             "00"                                        // block 0
             "eeee01000000000000000000000000000000ffff"  // checksum
@@ -1247,10 +1269,19 @@ testRun(void)
             "03"                                        // block 1
             "eeee02000000000000000000000000000000ffff"  // checksum
 
-            "05"                                        // reference 0
+            "05"                                        // size 5
             "01"                                        // block 0
             "eeee03000000000000000000000000000000ffff"  // checksum
 
+            "08"                                        // reference 1
+            "f902"                                      // size 99
+            "01"                                        // block 0
+            "eeee04000000000000000000000000000000ffff"  // checksum
+
+            "05"                                        // reference 0
+            "01"                                        // size 5
+            "07"                                        // block 3
+            "eeee05000000000000000000000000000000ffff"  // checksum
             ,
             "compare");
 
@@ -1269,12 +1300,16 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
+            "read {reference: 1, bundleId: 0, offset: 0, size: 99}\n"
+            "  super block {size: 99}\n"
+            "    block {no: 0, offset: 24}\n"
             "read {reference: 0, bundleId: 0, offset: 0, size: 9}\n"
             "  super block {size: 4}\n"
             "    block {no: 0, offset: 0}\n"
             "    block {no: 1, offset: 8}\n"
             "  super block {size: 5}\n"
-            "    block {no: 0, offset: 16}\n",
+            "    block {no: 0, offset: 16}\n"
+            "    block {no: 3, offset: 32}\n",
             "check delta");
     }
 
