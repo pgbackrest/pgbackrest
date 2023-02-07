@@ -1138,7 +1138,7 @@ testRun(void)
 
             "06"                                        // reference 0
             "01"                                        // bundle 1
-            "01"                                        // offset 0
+            "01"                                        // offset 1
             "01"                                        // super block size 5
             "eeee03000000000000000000000000000000ffff"  // checksum
 
@@ -1146,7 +1146,7 @@ testRun(void)
             "f902"                                      // super block size 99
             "eeee04000000000000000000000000000000ffff"  // checksum
 
-            "02"                                        // reference 0
+            "04"                                        // reference 0
             "01"                                        // offset 7
             "01"                                        // super block size 99
             "eeee05000000000000000000000000000000ffff"  // checksum
@@ -1249,6 +1249,17 @@ testRun(void)
 
         TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
+        blockMapItem = (BlockMapItem)
+        {
+            .reference = 2,
+            .offset = 0,
+            .size = 1,
+            .block = 0,
+            .checksum = {0xee, 0xee, 0x06, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
+        };
+
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write unequal block map");
 
@@ -1278,10 +1289,14 @@ testRun(void)
             "01"                                        // block 0
             "eeee04000000000000000000000000000000ffff"  // checksum
 
-            "05"                                        // reference 0
-            "01"                                        // size 5
+            "06"                                        // reference 0
             "07"                                        // block 3
             "eeee05000000000000000000000000000000ffff"  // checksum
+
+            "11"                                        // reference 2
+            "0f"                                        // size 1
+            "01"                                        // block 0
+            "eeee06000000000000000000000000000000ffff"  // checksum
             ,
             "compare");
 

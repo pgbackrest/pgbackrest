@@ -45,9 +45,10 @@ The block map is terminated by a varint-128 encoded zero stop byte.
 
 /**********************************************************************************************************************************/
 #define BLOCK_MAP_FLAG_LAST                                         1
-#define BLOCK_MAP_FLAG_OFFSET                                       2
-#define BLOCK_MAP_FLAG_BUNDLE_ID                                    4
-#define BLOCK_MAP_FLAG_CONTINUE                                     4
+#define BLOCK_MAP_FLAG_OFFSET                                       4
+#define BLOCK_MAP_FLAG_BUNDLE_ID                                    2
+#define BLOCK_MAP_FLAG_CONTINUE                                     2
+#define BLOCK_MAP_FLAG_CONTINUE_LAST                                4
 #define BLOCK_MAP_REFERENCE_SHIFT                                   3
 #define BLOCK_MAP_SUPER_BLOCK_SHIFT                                 1
 #define BLOCK_MAP_BLOCK_SHIFT                                       1
@@ -104,11 +105,11 @@ blockMapNewRead(IoRead *const map)
 
         if (referenceData == NULL)
         {
-            if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
-                blockMapItem.offset = ioReadVarIntU64(map);
-
             if (referenceEncoded & BLOCK_MAP_FLAG_BUNDLE_ID)
                 blockMapItem.bundleId = ioReadVarIntU64(map);
+
+            if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
+                blockMapItem.offset = ioReadVarIntU64(map);
 
             //fprintf(stdout, "!!!  REF NEW %u OFFSET %zu\n", blockMapItem.reference, blockMapItem.offset);
 
@@ -153,10 +154,19 @@ blockMapNewRead(IoRead *const map)
 
         do
         {
-            const uint64_t superBlockEncoded = ioReadVarIntU64(map);
+            uint64_t superBlockEncoded = 0;
 
-            if (!referenceContinue)
+            if (referenceContinue)
             {
+                if (referenceEncoded & BLOCK_MAP_FLAG_CONTINUE_LAST) // {uncovered - !!!}
+                    superBlockEncoded = BLOCK_MAP_FLAG_LAST;
+
+                referenceContinue = false;
+            }
+            else
+            {
+                superBlockEncoded = ioReadVarIntU64(map);
+
                 if (sizeLast == 0)
                     blockMapItem.size = superBlockEncoded >> BLOCK_MAP_SUPER_BLOCK_SHIFT;
                 else
@@ -174,7 +184,6 @@ blockMapNewRead(IoRead *const map)
             //fprintf(stdout, "!!!    SB OFFSET %zu SIZE %zu\n", referenceData->offset, referenceData->size);
 
             superBlockFirst = false;
-            referenceContinue = false;
             sizeLast = (int64_t)blockMapItem.size;
 
             do
@@ -269,20 +278,20 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual
         {
             //fprintf(stdout, "!!!  REF NEW %u OFFSET %zu\n", reference->reference, reference->offset);
 
+            if (reference->bundleId > 0)
+                referenceEncoded |= BLOCK_MAP_FLAG_BUNDLE_ID;
+
             if (reference->offset > 0)
                 referenceEncoded |= BLOCK_MAP_FLAG_OFFSET;
-
-            if (reference->bundleId > 0)
-                referenceEncoded |= 4;
 
             ioWriteVarIntU64(output, referenceEncoded | reference->reference << BLOCK_MAP_REFERENCE_SHIFT);
 
             // Add bundle id and offset
-            if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
-                ioWriteVarIntU64(output, reference->offset);
-
             if (referenceEncoded & BLOCK_MAP_FLAG_BUNDLE_ID)
                 ioWriteVarIntU64(output, reference->bundleId);
+
+            if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
+                ioWriteVarIntU64(output, reference->offset);
 
             // Add reference to list
             const BlockMapRef referenceAdd =
@@ -307,7 +316,6 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual
                 //fprintf(stdout, "!!!    REF CONTINUE\n");
 
                 referenceEncoded |= BLOCK_MAP_FLAG_CONTINUE;
-                ioWriteVarIntU64(output, referenceEncoded | reference->reference << BLOCK_MAP_REFERENCE_SHIFT);
                 referenceContinue = true;
             }
             else
@@ -344,7 +352,10 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, bool blockEqual
 
             if (referenceContinue)
             {
-                ioWriteVarIntU64(output, superBlockEncoded);
+                if (superBlockEncoded & BLOCK_MAP_FLAG_LAST) // {uncovered - !!!}
+                    referenceEncoded |= BLOCK_MAP_FLAG_CONTINUE_LAST;
+
+                ioWriteVarIntU64(output, referenceEncoded | reference->reference << BLOCK_MAP_REFERENCE_SHIFT);
                 referenceContinue = false;
             //fprintf(stdout, "!!!    SB CONTINUE\n");
             }
