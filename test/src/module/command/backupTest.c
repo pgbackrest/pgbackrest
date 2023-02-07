@@ -1260,6 +1260,28 @@ testRun(void)
 
         TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
 
+        blockMapItem = (BlockMapItem)
+        {
+            .reference = 0,
+            .offset = 4,
+            .size = 5,
+            .block = 5,
+            .checksum = {0xee, 0xee, 0x07, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
+        };
+
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
+
+        blockMapItem = (BlockMapItem)
+        {
+            .reference = 0,
+            .offset = 9,
+            .size = 6,
+            .block = 0,
+            .checksum = {0xee, 0xee, 0x08, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff},
+        };
+
+        TEST_RESULT_VOID(blockMapAdd(blockMap, &blockMapItem), "add");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write unequal block map");
 
@@ -1293,10 +1315,17 @@ testRun(void)
             "07"                                        // block 3
             "eeee05000000000000000000000000000000ffff"  // checksum
 
-            "11"                                        // reference 2
+            "10"                                        // reference 2
             "0f"                                        // size 1
             "01"                                        // block 0
             "eeee06000000000000000000000000000000ffff"  // checksum
+
+            "03"                                        // reference 0
+            "05"                                        // size 5
+            "eeee07000000000000000000000000000000ffff"  // checksum
+            "05"                                        // size 6
+            "01"                                        // block
+            "eeee08000000000000000000000000000000ffff"  // checksum
             ,
             "compare");
 
@@ -1315,16 +1344,22 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
+            "read {reference: 2, bundleId: 0, offset: 0, size: 1}\n"
+            "  super block {size: 1}\n"
+            "    block {no: 0, offset: 40}\n"
             "read {reference: 1, bundleId: 0, offset: 0, size: 99}\n"
             "  super block {size: 99}\n"
             "    block {no: 0, offset: 24}\n"
-            "read {reference: 0, bundleId: 0, offset: 0, size: 9}\n"
+            "read {reference: 0, bundleId: 0, offset: 0, size: 15}\n"
             "  super block {size: 4}\n"
             "    block {no: 0, offset: 0}\n"
             "    block {no: 1, offset: 8}\n"
             "  super block {size: 5}\n"
             "    block {no: 0, offset: 16}\n"
-            "    block {no: 3, offset: 32}\n",
+            "    block {no: 3, offset: 32}\n"
+            "    block {no: 5, offset: 48}\n"
+            "  super block {size: 6}\n"
+            "    block {no: 0, offset: 56}\n",
             "check delta");
     }
 
