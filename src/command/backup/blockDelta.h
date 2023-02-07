@@ -29,19 +29,6 @@ typedef struct BlockDeltaWrite
     Buffer *block;                                                  // Block to write
 } BlockDeltaWrite;
 
-typedef struct BlockDeltaSuperBlock
-{
-    uint64_t size;                                                  // Size of super block
-    List *blockList;                                                // Block list
-} BlockDeltaSuperBlock;
-
-typedef struct BlockDeltaBlock
-{
-    uint64_t no;                                                    // Block number in the super block
-    uint64_t offset;                                                // Offset into original file
-    unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
-} BlockDeltaBlock;
-
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
@@ -52,7 +39,7 @@ FN_EXTERN BlockDelta *blockDeltaNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-const BlockDeltaWrite *blockDeltaWriteNext(BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo);
+const BlockDeltaWrite *blockDeltaNext(BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo);
 
 /***********************************************************************************************************************************
 Getters/Setters

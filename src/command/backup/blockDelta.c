@@ -54,6 +54,19 @@ typedef struct BlockDeltaReference
     List *blockList;
 } BlockDeltaReference;
 
+typedef struct BlockDeltaSuperBlock
+{
+    uint64_t size;                                                  // Size of super block
+    List *blockList;                                                // Block list
+} BlockDeltaSuperBlock;
+
+typedef struct BlockDeltaBlock
+{
+    uint64_t no;                                                    // Block number in the super block
+    uint64_t offset;                                                // Offset into original file
+    unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
+} BlockDeltaBlock;
+
 FN_EXTERN BlockDelta *
 blockDeltaNew(
     const BlockMap *const blockMap, const size_t blockSize, const Buffer *const deltaMap, const CipherType cipherType,
@@ -200,7 +213,7 @@ blockDeltaNew(
 }
 
 const BlockDeltaWrite *
-blockDeltaWriteNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, IoRead *const readIo)
+blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, IoRead *const readIo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_DELTA, this);

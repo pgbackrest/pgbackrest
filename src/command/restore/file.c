@@ -317,8 +317,7 @@ restoreFile(
                                 .offset = read->offset, .limit = VARUINT64(read->size));
                             ioReadOpen(storageReadIo(superBlockRead));
 
-                            const BlockDeltaWrite *deltaWrite = blockDeltaWriteNext(
-                                blockDelta, read, storageReadIo(superBlockRead));
+                            const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
 
                             while (deltaWrite != NULL)
                             {
@@ -335,7 +334,7 @@ restoreFile(
                                 // Flush writes since we may seek to a new location for the next block
                                 ioWriteFlush(storageWriteIo(pgFileWrite));
 
-                                deltaWrite = blockDeltaWriteNext(blockDelta, read, storageReadIo(superBlockRead));
+                                deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
                             }
                         }
 

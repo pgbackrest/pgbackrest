@@ -254,7 +254,7 @@ testBackupValidateList(
                                     storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
                             ioReadOpen(blockRead);
 
-                            const BlockDeltaWrite *deltaWrite = blockDeltaWriteNext(blockDelta, read, blockRead);
+                            const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
 
                             while (deltaWrite != NULL)
                             {
@@ -275,7 +275,7 @@ testBackupValidateList(
                                 size += bufUsed(deltaWrite->block);
                                 ioFilterProcessIn(checksumFilter, deltaWrite->block);
 
-                                deltaWrite = blockDeltaWriteNext(blockDelta, read, blockRead);
+                                deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
                             }
                         }
 
