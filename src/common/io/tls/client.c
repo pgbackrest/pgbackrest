@@ -3,6 +3,8 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#define _GNU_SOURCE              /* for inet_aton() */
+#include <arpa/inet.h>
 #include <strings.h>
 
 #include "common/crypto/common.h"
@@ -126,6 +128,74 @@ tlsClientHostVerifyName(const String *host, const String *name)
 }
 
 /***********************************************************************************************************************************
+Check if an IP address from the server certificate matches the hostname
+
+As provided in the cert, the IP address would be a packed string in network byte
+order.  The length of the name field determines if we check as an IPv4 or IPv6
+address.  Adapted from libpq/fe-secure-common.c.
+***********************************************************************************************************************************/
+static bool
+tlsClientHostVerifyIPAddr(const String *host, const String *name)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(STRING, name);
+    FUNCTION_LOG_END();
+
+    ASSERT(host != NULL);
+    ASSERT(name != NULL);
+
+   size_t      iplen = strSize(name);
+   bool        result = false;
+
+   if (!(host && strSize(host) > 0))
+       return false;
+
+   /*
+    * The data from the certificate is in network byte order. Convert our
+    * host string to network-ordered bytes as well, for comparison. (The host
+    * string isn't guaranteed to actually be an IP address, so if this
+    * conversion fails we need to consider it a mismatch rather than an
+    * error.)
+    */
+   else if (iplen == 4)
+   {
+       /* IPv4 */
+       struct in_addr addr;
+
+       /*
+        * The use of inet_aton() is deliberate; we accept alternative IPv4
+        * address notations that are accepted by inet_aton() but not
+        * inet_pton() as server addresses.
+        */
+       if (inet_aton(strZ(host), &addr))
+       {
+           if (memcmp(strZ(name), &addr.s_addr, iplen) == 0)
+               return true;
+       }
+   }
+   /*
+    * If they don't have inet_pton(), skip this.  Then, an IPv6 address in a
+    * certificate will cause an error.
+    */
+#ifdef HAVE_INET_PTON
+   else if (iplen == 16)
+   {
+       /* IPv6 */
+       struct in6_addr addr;
+
+       if (inet_pton(AF_INET6, host, &addr) == 1)
+       {
+           if (memcmp(ipdata, &addr.s6_addr, iplen) == 0)
+               result = true;
+       }
+   }
+#endif
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Verify that the server certificate matches the hostname we connected to
 
 The certificate's Common Name and Subject Alternative Names are considered.
@@ -162,6 +232,8 @@ tlsClientHostVerify(const String *host, X509 *certificate)
 
                 if (name->type == GEN_DNS)                                                                          // {vm_covered}
                     result = tlsClientHostVerifyName(host, tlsAsn1ToStr(name->d.dNSName));                          // {vm_covered}
+                else if (name->type == GEN_IPADD)
+                    result = tlsClientHostVerifyIPAddr(host, tlsAsn1ToStr(name->d.dNSName));                          // {vm_covered}
 
                 if (result != false)                                                                                // {vm_covered}
                     break;                                                                                          // {vm_covered}
