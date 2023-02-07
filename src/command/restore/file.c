@@ -300,7 +300,8 @@ restoreFile(
 
                         // Apply delta
                         const BlockDelta *const blockDelta = blockDeltaNew(
-                            blockMap, file->blockIncrSize, file->deltaMap, cipherType, cipherPass, repoFileCompressType);
+                            blockMap, file->blockIncrSize, file->deltaMap,
+                            cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
