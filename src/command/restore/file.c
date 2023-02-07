@@ -299,7 +299,7 @@ restoreFile(
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 
                         // Apply delta
-                        const BlockDelta *const blockDelta = blockDeltaNew(
+                        BlockDelta *const blockDelta = blockDeltaNew(
                             blockMap, file->blockIncrSize, file->deltaMap,
                             cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
 
@@ -317,81 +317,25 @@ restoreFile(
                                 .offset = read->offset, .limit = VARUINT64(read->size));
                             ioReadOpen(storageReadIo(superBlockRead));
 
-                            for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)
+                            const BlockDeltaWrite *deltaWrite = blockDeltaWriteNext(
+                                blockDelta, read, storageReadIo(superBlockRead));
+
+                            while (deltaWrite != NULL)
                             {
-                                const BlockDeltaSuperBlock *const superBlockData = lstGet(read->superBlockList, superBlockIdx);
+                                // Seek to the min block offset. It is possible we are already at the correct position but
+                                // it is easier and safer to let lseek() figure this out.
+                                THROW_ON_SYS_ERROR_FMT(
+                                    lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)deltaWrite->offset, SEEK_SET) == -1,
+                                    FileOpenError, STORAGE_ERROR_READ_SEEK, deltaWrite->offset,
+                                    strZ(storagePathP(storagePg(), file->name)));
 
-                                // Read the super block in chunked format
-                                IoRead *const chunkedRead = ioChunkedReadNew(storageReadIo(superBlockRead));
+                                // Write block
+                                ioWrite(storageWriteIo(pgFileWrite), deltaWrite->block);
 
-                                // Add decryption filter
-                                if (cipherPass != NULL)
-                                {
-                                    ioFilterGroupAdd(
-                                        ioReadFilterGroup(chunkedRead),
-                                        cipherBlockNewP(
-                                            cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
-                                }
+                                // Flush writes since we may seek to a new location for the next block
+                                ioWriteFlush(storageWriteIo(pgFileWrite));
 
-                                // Add decompression filter
-                                if (repoFileCompressType != compressTypeNone)
-                                {
-                                    ioFilterGroupAdd(
-                                        ioReadFilterGroup(chunkedRead), decompressFilter(repoFileCompressType));
-                                }
-
-                                // Open chunked read
-                                ioReadOpen(chunkedRead);
-
-                                Buffer *const block = bufNew((size_t)file->blockIncrSize);
-                                unsigned int blockNo = 0;
-                                unsigned int blockIdx = 0;
-                                const BlockDeltaBlock *blockData = lstGet(superBlockData->blockList, blockIdx);
-                                uint64_t blockEncoded = ioReadVarIntU64(chunkedRead);
-
-                                do
-                                {
-                                    if (blockEncoded & BLOCK_INCR_FLAG_SIZE) // {uncovered - !!!}
-                                        bufLimitSet(block, (size_t)ioReadVarIntU64(chunkedRead)); // {uncovered - !!!}
-
-                                    ioRead(chunkedRead, block);
-
-                                    if (blockNo == blockData->no) // {uncovered - !!!}
-                                    {
-                                        // Seek to the min block offset. It is possible we are already at the correct position but
-                                        // it is easier and safer to let lseek() figure this out.
-                                        THROW_ON_SYS_ERROR_FMT(
-                                            lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)blockData->offset, SEEK_SET) == -1,
-                                            FileOpenError, STORAGE_ERROR_READ_SEEK, blockData->offset,
-                                            strZ(storagePathP(storagePg(), file->name)));
-
-                                        // Write block
-                                        ioWrite(storageWriteIo(pgFileWrite), block);
-
-                                        // Flush writes since we may seek to a new location for the next block
-                                        ioWriteFlush(storageWriteIo(pgFileWrite));
-
-                                        // Get next block
-                                        blockIdx++;
-
-                                        if (blockIdx < lstSize(superBlockData->blockList))
-                                            blockData = lstGet(superBlockData->blockList, blockIdx);
-                                        else if (superBlockIdx == lstSize(read->superBlockList) - 1)
-                                            break;
-                                    }
-
-                                    if (blockEncoded & BLOCK_INCR_FLAG_SIZE) // {uncovered - !!!}
-                                        break; // {uncovered - !!!}
-
-                                    blockEncoded = ioReadVarIntU64(chunkedRead);
-
-                                    if (blockEncoded == 0)
-                                        break;
-
-                                    bufUsedZero(block);
-                                    blockNo++;
-                                }
-                                while (true);
+                                deltaWrite = blockDeltaWriteNext(blockDelta, read, storageReadIo(superBlockRead));
                             }
                         }
 
