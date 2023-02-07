@@ -9,6 +9,7 @@ Block Delta
 
 #include "command/backup/blockDelta.h"
 #include "command/backup/blockIncr.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/chunkedRead.h"
 #include "common/log.h"

@@ -7,6 +7,7 @@ Block Delta
 #define COMMAND_BACKUP_BLOCKDELTA_H
 
 #include "command/backup/blockMap.h"
+#include "common/compress/helper.h"
 
 /***********************************************************************************************************************************
 Object type
