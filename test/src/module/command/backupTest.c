@@ -228,13 +228,15 @@ testBackupValidateList(
                         }
 
                         // Check blocks
-                        const BlockDelta *const blockDelta = blockDeltaNew(blockMap, file.blockIncrSize, NULL);
+                        BlockDelta *const blockDelta = blockDeltaNew(blockMap, file.blockIncrSize, NULL);
 
-                        // TEST_LOG_FMT(
-                        //     "!!!FILE %s SIZE %" PRIu64 ":\n%s", strZ(file.name), file.size, strZ(testBlockDelta(blockDelta)));
+                        TEST_LOG_FMT(
+                            "!!!FILE %s SIZE %" PRIu64 ":\n%s", strZ(file.name), file.size, strZ(testBlockDelta(blockDelta)));
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
+                            TEST_LOG("!!!READ");
+
                             const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
                             const String *const blockName = backupFileRepoPathP(
                                 strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
@@ -245,78 +247,30 @@ testBackupValidateList(
                                     storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
                             ioReadOpen(blockRead);
 
-                            for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)
+                            const BlockDeltaWrite *deltaWrite = blockDeltaWriteNext(
+                                blockDelta, read, blockRead, cipherType, cipherPass, manifestData->backupOptionCompressType);
+
+                            while (deltaWrite != NULL)
                             {
-                                const BlockDeltaSuperBlock *const superBlockData = lstGet(read->superBlockList, superBlockIdx);
+                                // // Verify block checksum !!! SHOULD BE INSIDE DELTA?
+                                // const String *const blockChecksum =
+                                //     strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, deltaWrite->block));
+                                // const String *const mapChecksum = strNewEncode(
+                                //     encodingHex, BUF(blockData->checksum, HASH_TYPE_SHA1_SIZE));
 
-                                IoRead *const chunkRead = ioChunkedReadNew(blockRead);
+                                // if (!strEq(blockChecksum, mapChecksum))
+                                // {
+                                //     THROW_FMT(
+                                //         AssertError, "'%s' block %u/%u checksum (%s) does not match block incr map (%s)",
+                                //         strZ(file.name), superBlockIdx, blockIdx, strZ(blockChecksum), strZ(mapChecksum));
+                                // }
 
-                                if (cipherType != cipherTypeNone)
-                                {
-                                    ioFilterGroupAdd(
-                                        ioReadFilterGroup(chunkRead),
-                                        cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
-                                }
+                                // Update size and checksum
+                                size += bufUsed(deltaWrite->block);
+                                ioFilterProcessIn(checksumFilter, deltaWrite->block);
 
-                                if (manifestData->backupOptionCompressType != compressTypeNone)
-                                {
-                                    ioFilterGroupAdd(
-                                        ioReadFilterGroup(chunkRead), decompressFilter(manifestData->backupOptionCompressType));
-                                }
-
-                                ioReadOpen(chunkRead);
-
-                                Buffer *const block = bufNew((size_t)file.blockIncrSize);
-                                unsigned int blockNo = 0;
-                                unsigned int blockIdx = 0;
-                                const BlockDeltaBlock *blockData = lstGet(superBlockData->blockList, blockIdx);
-                                uint64_t blockEncoded = ioReadVarIntU64(chunkRead);
-
-                                do
-                                {
-                                    if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
-                                        bufLimitSet(block, (size_t)ioReadVarIntU64(chunkRead));
-
-                                    ioRead(chunkRead, block);
-
-                                    if (blockNo == blockData->no)
-                                    {
-                                        // Verify block checksum
-                                        const String *const blockChecksum =
-                                            strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, block));
-                                        const String *const mapChecksum = strNewEncode(
-                                            encodingHex, BUF(blockData->checksum, HASH_TYPE_SHA1_SIZE));
-
-                                        if (!strEq(blockChecksum, mapChecksum))
-                                        {
-                                            THROW_FMT(
-                                                AssertError, "'%s' block %u/%u checksum (%s) does not match block incr map (%s)",
-                                                strZ(file.name), superBlockIdx, blockIdx, strZ(blockChecksum), strZ(mapChecksum));
-                                        }
-
-                                        // Update size and checksum
-                                        size += bufUsed(block);
-                                        ioFilterProcessIn(checksumFilter, block);
-
-                                        // Get next block
-                                        blockIdx++;
-
-                                        if (blockIdx < lstSize(superBlockData->blockList))
-                                            blockData = lstGet(superBlockData->blockList, blockIdx);
-                                    }
-
-                                    if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
-                                        break;
-
-                                    blockEncoded = ioReadVarIntU64(chunkRead);
-
-                                    if (blockEncoded == 0)
-                                        break;
-
-                                    bufUsedZero(block);
-                                    blockNo++;
-                                }
-                                while (true);
+                                deltaWrite = blockDeltaWriteNext(
+                                    blockDelta, read, blockRead, cipherType, cipherPass, manifestData->backupOptionCompressType);
                             }
                         }
 

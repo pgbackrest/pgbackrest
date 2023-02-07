@@ -22,6 +22,12 @@ typedef struct BlockDeltaRead
     List *superBlockList;                                           // Super block list
 } BlockDeltaRead;
 
+typedef struct BlockDeltaWrite
+{
+    uint64_t offset;                                                // Offset for the write
+    Buffer *block;                                                  // Block to write
+} BlockDeltaWrite;
+
 typedef struct BlockDeltaSuperBlock
 {
     uint64_t size;                                                  // Size of super block
@@ -38,23 +44,35 @@ typedef struct BlockDeltaBlock
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN BlockDelta *blockDeltaNew(const BlockMap *blockMap, uint64_t blockSize, const Buffer *deltaMap);
+FN_EXTERN BlockDelta *blockDeltaNew(const BlockMap *blockMap, size_t blockSize, const Buffer *deltaMap);
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+const BlockDeltaWrite *blockDeltaWriteNext(
+    BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo, CipherType cipherType, const String *cipherPass,
+    const CompressType compressType);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct BlockDeltaPub
+{
+    List *readList;                                                 // Read list
+} BlockDeltaPub;
+
 // Get a read item
 FN_INLINE_ALWAYS const BlockDeltaRead *
 blockDeltaReadGet(const BlockDelta *const this, const unsigned int readIdx)
 {
-    return (BlockDeltaRead *)lstGet((List *const)this, readIdx);
+    return (BlockDeltaRead *)lstGet(THIS_PUB(BlockDelta)->readList, readIdx);
 }
 
 // Read list size
 FN_INLINE_ALWAYS unsigned int
 blockDeltaReadSize(const BlockDelta *const this)
 {
-    return lstSize((List *const)this);
+    return lstSize(THIS_PUB(BlockDelta)->readList);
 }
 
 /***********************************************************************************************************************************
