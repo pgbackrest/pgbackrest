@@ -299,7 +299,8 @@ restoreFile(
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 
                         // Apply delta
-                        const BlockDelta *const blockDelta = blockDeltaNew(blockMap, file->blockIncrSize, file->deltaMap);
+                        const BlockDelta *const blockDelta = blockDeltaNew(
+                            blockMap, file->blockIncrSize, file->deltaMap, cipherType, cipherPass, repoFileCompressType);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {

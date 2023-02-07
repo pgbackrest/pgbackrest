@@ -45,14 +45,14 @@ typedef struct BlockDeltaBlock
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN BlockDelta *blockDeltaNew(const BlockMap *blockMap, size_t blockSize, const Buffer *deltaMap);
+FN_EXTERN BlockDelta *blockDeltaNew(
+    const BlockMap *blockMap, size_t blockSize, const Buffer *deltaMap, CipherType cipherType, const String *cipherPass,
+    const CompressType compressType);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-const BlockDeltaWrite *blockDeltaWriteNext(
-    BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo, CipherType cipherType, const String *cipherPass,
-    const CompressType compressType);
+const BlockDeltaWrite *blockDeltaWriteNext(BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo);
 
 /***********************************************************************************************************************************
 Getters/Setters

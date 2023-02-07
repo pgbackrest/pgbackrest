@@ -36,6 +36,10 @@ struct BlockDelta
 {
     BlockDeltaPub pub;                                              // Publicly accessible variables
     size_t blockSize;                                               // Block size
+    CipherType cipherType;                                          // Cipher type
+    String *cipherPass;                                             // Cipher passphrase
+    CompressType compressType;                                      // Compress type
+
     unsigned int superBlockIdx;                                     // Super block index
     unsigned int blockIdx;                                          // Block index
     unsigned int blockNo;                                           // Block number
@@ -51,13 +55,22 @@ typedef struct BlockDeltaReference
 } BlockDeltaReference;
 
 FN_EXTERN BlockDelta *
-blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize, const Buffer *const deltaMap)
+blockDeltaNew(
+    const BlockMap *const blockMap, const size_t blockSize, const Buffer *const deltaMap, const CipherType cipherType,
+    const String *const cipherPass, const CompressType compressType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_MAP, blockMap);
         FUNCTION_TEST_PARAM(SIZE, blockSize);
         FUNCTION_TEST_PARAM(BUFFER, deltaMap);
+        FUNCTION_TEST_PARAM(STRING_ID, cipherType);
+        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(ENUM, compressType);
     FUNCTION_TEST_END();
+
+    ASSERT(blockMap != NULL);
+    ASSERT(blockSize > 0);
+    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
     BlockDelta *this = NULL;
 
@@ -73,6 +86,9 @@ blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize, const Buff
                 .readList = lstNewP(sizeof(BlockDeltaRead)),
             },
             .blockSize = blockSize,
+            .cipherType = cipherType,
+            .cipherPass = strDup(cipherPass),
+            .compressType = compressType,
         };
 
         // Construct the delta
@@ -184,22 +200,16 @@ blockDeltaNew(const BlockMap *const blockMap, const size_t blockSize, const Buff
 }
 
 const BlockDeltaWrite *
-blockDeltaWriteNext(
-    BlockDelta *const this, const BlockDeltaRead *const readDelta, IoRead *const readIo, const CipherType cipherType,
-    const String *const cipherPass, const CompressType compressType)
+blockDeltaWriteNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, IoRead *const readIo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_DELTA, this);
         FUNCTION_TEST_PARAM_P(VOID, readDelta);
         FUNCTION_TEST_PARAM(IO_READ, readIo);
-        FUNCTION_TEST_PARAM(STRING_ID, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
-        FUNCTION_TEST_PARAM(ENUM, compressType);
     FUNCTION_TEST_END();
 
     ASSERT(readDelta != NULL);
     ASSERT(readIo != NULL);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
     BlockDeltaWrite *result = NULL;
 
@@ -231,15 +241,15 @@ blockDeltaWriteNext(
             }
             MEM_CONTEXT_OBJ_END();
 
-            if (cipherType != cipherTypeNone)
+            if (this->cipherType != cipherTypeNone)
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(this->chunkedRead),
-                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                    cipherBlockNewP(cipherModeDecrypt, this->cipherType, BUFSTR(this->cipherPass), .raw = true));
             }
 
-            if (compressType != compressTypeNone)
-                ioFilterGroupAdd(ioReadFilterGroup(this->chunkedRead), decompressFilter(compressType));
+            if (this->compressType != compressTypeNone)
+                ioFilterGroupAdd(ioReadFilterGroup(this->chunkedRead), decompressFilter(this->compressType));
 
             ioReadOpen(this->chunkedRead);
         }

@@ -24,13 +24,18 @@ Test Backup Command
 Test block delta
 ***********************************************************************************************************************************/
 static String *
-testBlockDelta(const BlockDelta *const blockDelta)
+testBlockDelta(const BlockMap *const blockMap, const size_t blockSize)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM_P(VOID, blockDelta);
+        FUNCTION_HARNESS_PARAM(BLOCK_MAP, blockMap);
+        FUNCTION_HARNESS_PARAM(SIZE, blockSize);
     FUNCTION_HARNESS_END();
 
+    ASSERT(blockMap != NULL);
+    ASSERT(blockSize > 0);
+
     String *const result = strNew();
+    BlockDelta *const blockDelta = blockDeltaNew(blockMap, blockSize, NULL, cipherTypeNone, NULL, compressTypeNone);
 
     for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
     {
@@ -228,10 +233,12 @@ testBackupValidateList(
                         }
 
                         // Check blocks
-                        BlockDelta *const blockDelta = blockDeltaNew(blockMap, file.blockIncrSize, NULL);
+                        BlockDelta *const blockDelta = blockDeltaNew(
+                            blockMap, file.blockIncrSize, NULL, cipherType, cipherPass, manifestData->backupOptionCompressType);
 
                         TEST_LOG_FMT(
-                            "!!!FILE %s SIZE %" PRIu64 ":\n%s", strZ(file.name), file.size, strZ(testBlockDelta(blockDelta)));
+                            "!!!FILE %s SIZE %" PRIu64 ":\n%s", strZ(file.name), file.size,
+                            strZ(testBlockDelta(blockMap, file.blockIncrSize)));
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
@@ -247,8 +254,7 @@ testBackupValidateList(
                                     storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
                             ioReadOpen(blockRead);
 
-                            const BlockDeltaWrite *deltaWrite = blockDeltaWriteNext(
-                                blockDelta, read, blockRead, cipherType, cipherPass, manifestData->backupOptionCompressType);
+                            const BlockDeltaWrite *deltaWrite = blockDeltaWriteNext(blockDelta, read, blockRead);
 
                             while (deltaWrite != NULL)
                             {
@@ -269,8 +275,7 @@ testBackupValidateList(
                                 size += bufUsed(deltaWrite->block);
                                 ioFilterProcessIn(checksumFilter, deltaWrite->block);
 
-                                deltaWrite = blockDeltaWriteNext(
-                                    blockDelta, read, blockRead, cipherType, cipherPass, manifestData->backupOptionCompressType);
+                                deltaWrite = blockDeltaWriteNext(blockDelta, read, blockRead);
                             }
                         }
 
@@ -1124,7 +1129,7 @@ testRun(void)
         TEST_TITLE("equal block delta");
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
+            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8),
             "read {reference: 128, bundleId: 0, offset: 0, size: 107}\n"
             "  super block {size: 3}\n"
             "    block {no: 0, offset: 0}\n"
@@ -1296,7 +1301,7 @@ testRun(void)
         TEST_TITLE("unequal block delta");
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8, NULL)),
+            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(buffer)), 8),
             "read {reference: 2, bundleId: 0, offset: 0, size: 1}\n"
             "  super block {size: 1}\n"
             "    block {no: 0, offset: 40}\n"
@@ -1359,7 +1364,7 @@ testRun(void)
         const Buffer *map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(map)), 3, NULL)),
+            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map)), 3),
             "read {reference: 0, bundleId: 0, offset: 0, size: 7}\n"
             "  super block {size: 7}\n"
             "    block {no: 0, offset: 0}\n",
@@ -1393,7 +1398,7 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(map)), 3, NULL)),
+            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map)), 3),
             "read {reference: 2, bundleId: 4, offset: 5, size: 27}\n"
             "  super block {size: 9}\n"
             "    block {no: 0, offset: 0}\n"
@@ -1432,7 +1437,7 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(map)), 3, NULL)),
+            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map)), 3),
             "read {reference: 3, bundleId: 0, offset: 0, size: 13}\n"
             "  super block {size: 8}\n"
             "    block {no: 0, offset: 0}\n"
@@ -1475,7 +1480,7 @@ testRun(void)
         map = BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize);
 
         TEST_RESULT_STR_Z(
-            testBlockDelta(blockDeltaNew(blockMapNewRead(ioBufferReadNewOpen(map)), 3, NULL)),
+            testBlockDelta(blockMapNewRead(ioBufferReadNewOpen(map)), 3),
             "read {reference: 2, bundleId: 4, offset: 5, size: 24}\n"
             "  super block {size: 15}\n"
             "    block {no: 0, offset: 0}\n"
