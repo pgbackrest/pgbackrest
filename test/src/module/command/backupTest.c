@@ -224,9 +224,9 @@ testBackupValidateList(
                                 strCatChr(mapLog, ',');
 
                             if (superBlockChange)
-                                strCatChr(mapLog, '{');
+                                strCatFmt(mapLog, "%u:{", blockMapItem->reference);
 
-                            strCatFmt(mapLog, "%u", blockMapGet(blockMap, blockMapIdx)->reference);
+                            strCatFmt(mapLog, "%" PRIu64, blockMapItem->block);
 
                             blockMapItemLast = blockMapItem;
                         }
@@ -283,7 +283,7 @@ testBackupValidateList(
                             }
                         }
 
-                        strCatFmt(result, ", m={%s}}", strZ(mapLog));
+                        strCatFmt(result, ", m=%s}", strZ(mapLog));
 
                         checksum = cryptoHashOne(hashTypeSha1, fileBuffer);
                     }
@@ -3971,12 +3971,12 @@ testRun(void)
                 ". {link, d=20191103-165320F}\n"
                 "bundle {path}\n"
                 "bundle/1/pg_data/PG_VERSION {file, s=2}\n"
-                "bundle/1/pg_data/block-incr-shrink {file, m={{0,0}}, s=131073}\n"
+                "bundle/1/pg_data/block-incr-shrink {file, m=0:{0,1}, s=131073}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "bundle/1/pg_data/grow-to-block-incr {file, s=131071}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={{0,0,0}}, s=393216}\n"
+                "pg_data/block-incr-grow.pgbi {file, m=0:{0,1,2}, s=393216}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4084,12 +4084,11 @@ testRun(void)
                 "bundle {path}\n"
                 "bundle/1/pg_data/block-incr-shrink {file, s=131071}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
-                "bundle/1/pg_data/grow-to-block-incr {file, m={{1,1}}, s=131073}\n"
+                "bundle/1/pg_data/grow-to-block-incr {file, m=1:{0,1}, s=131073}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={{0},{1},{0},{1,1,1,1,1,1,1},{1,1,1,1,1,1}},"
-                " s=2097152}\n"
-                "pg_data/block-incr-larger.pgbi {file, m={{1,1,1,1,1,1},{1,1,1,1,1}}, s=2097152}\n"
+                "pg_data/block-incr-grow.pgbi {file, m=0:{0},1:{0},0:{2},1:{1,2,3,4,5,6,7},1:{0,1,2,3,4,5}, s=2097152}\n"
+                "pg_data/block-incr-larger.pgbi {file, m=1:{0,1,2,3,4,5},1:{0,1,2,3,4}, s=2097152}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4198,7 +4197,7 @@ testRun(void)
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={{0}}, s=131072}\n"
+                "pg_data/block-incr-grow.pgbi {file, m=0:{0}, s=131072}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4276,7 +4275,7 @@ testRun(void)
                     .cipherPass = TEST_CIPHER_PASS),
                 ". {link, d=20191108-080000F_20191110-153320D}\n"
                 "bundle {path}\n"
-                "bundle/1/pg_data/block-incr-grow {file, m={{0},{1}}, s=262144}\n"
+                "bundle/1/pg_data/block-incr-grow {file, m=0:{0},1:{0}, s=262144}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
