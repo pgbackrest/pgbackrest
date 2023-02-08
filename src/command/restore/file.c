@@ -303,6 +303,8 @@ restoreFile(
                             blockMap, file->blockIncrSize, file->deltaMap,
                             cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
 
+                        LOG_TRACE_FMT("!!!FILE %s DELTA %d", strZ(file->manifestFile), file->deltaMap != NULL);
+
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
                             const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
@@ -317,12 +319,14 @@ restoreFile(
                                 .offset = read->offset, .limit = VARUINT64(read->size));
                             ioReadOpen(storageReadIo(superBlockRead));
 
+                            LOG_TRACE_FMT("!!!  READ OFFSET %zu SIZE %zu", read->offset, read->size);
+
                             const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
 
                             while (deltaWrite != NULL)
                             {
-                                // Seek to the min block offset. It is possible we are already at the correct position but
-                                // it is easier and safer to let lseek() figure this out.
+                                // Seek to the min block offset. It is possible we are already at the correct position but it is
+                                // easier and safer to let lseek() figure this out.
                                 THROW_ON_SYS_ERROR_FMT(
                                     lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)deltaWrite->offset, SEEK_SET) == -1,
                                     FileOpenError, STORAGE_ERROR_READ_SEEK, deltaWrite->offset,

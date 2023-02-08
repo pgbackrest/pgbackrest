@@ -32,28 +32,6 @@ lstComparatorUInt(const void *const item1, const void *const item2)
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-struct BlockDelta
-{
-    BlockDeltaPub pub;                                              // Publicly accessible variables
-    size_t blockSize;                                               // Block size
-    CipherType cipherType;                                          // Cipher type
-    String *cipherPass;                                             // Cipher passphrase
-    CompressType compressType;                                      // Compress type
-
-    unsigned int superBlockIdx;                                     // Super block index
-    unsigned int blockIdx;                                          // Block index
-    unsigned int blockNo;                                           // Block number
-    IoRead *chunkedRead;                                            // Chunked read
-    BlockDeltaWrite write;                                          // !!!
-};
-
-/**********************************************************************************************************************************/
-typedef struct BlockDeltaReference
-{
-    unsigned int reference;
-    List *blockList;
-} BlockDeltaReference;
-
 typedef struct BlockDeltaSuperBlock
 {
     uint64_t size;                                                  // Size of super block
@@ -66,6 +44,30 @@ typedef struct BlockDeltaBlock
     uint64_t offset;                                                // Offset into original file
     unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
 } BlockDeltaBlock;
+
+struct BlockDelta
+{
+    BlockDeltaPub pub;                                              // Publicly accessible variables
+    size_t blockSize;                                               // Block size
+    CipherType cipherType;                                          // Cipher type
+    String *cipherPass;                                             // Cipher passphrase
+    CompressType compressType;                                      // Compress type
+
+    unsigned int superBlockIdx;                                     // Super block index
+    const BlockDeltaSuperBlock *superBlockData;                     // !!!
+    unsigned int blockIdx;                                          // Block index
+    const BlockDeltaBlock *blockData;                               // Block data
+    unsigned int blockNo;                                           // Block number
+    IoRead *chunkedRead;                                            // Chunked read
+    BlockDeltaWrite write;                                          // !!!
+};
+
+/**********************************************************************************************************************************/
+typedef struct BlockDeltaReference
+{
+    unsigned int reference;
+    List *blockList;
+} BlockDeltaReference;
 
 FN_EXTERN BlockDelta *
 blockDeltaNew(
@@ -212,7 +214,8 @@ blockDeltaNew(
     FUNCTION_TEST_RETURN(BLOCK_DELTA, this);
 }
 
-const BlockDeltaWrite *
+/**********************************************************************************************************************************/
+FN_EXTERN const BlockDeltaWrite *
 blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, IoRead *const readIo)
 {
     FUNCTION_TEST_BEGIN();
@@ -221,6 +224,9 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         FUNCTION_TEST_PARAM(IO_READ, readIo);
     FUNCTION_TEST_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
+    ASSERT(this != NULL);
     ASSERT(readDelta != NULL);
     ASSERT(readIo != NULL);
 
@@ -236,17 +242,19 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             }
             MEM_CONTEXT_OBJ_END();
         }
-        else
-            bufUsedSet(this->write.block, 0);
 
-        if (this->chunkedRead == NULL)
+        if (this->superBlockData == NULL)
         {
+            ioReadFree(this->chunkedRead);
+            this->superBlockData = lstGet(readDelta->superBlockList, this->superBlockIdx);
+            this->blockIdx = 0;
+            this->blockNo = 0;
+
+            LOG_TRACE_FMT("!!!    SUPER BLOCK %u BLOCK TOTAL %u", this->superBlockIdx, lstSize(this->superBlockData->blockList));
+
             // fprintf(
             //     stdout, "!!!SUPER BLOCK %u BLOCK TOTAL %u\n", this->superBlockIdx,
             //     lstSize(readDelta->superBlockList));fflush(stdout);
-
-            this->blockIdx = 0;
-            this->blockNo = 0;
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
@@ -265,52 +273,68 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
                 ioFilterGroupAdd(ioReadFilterGroup(this->chunkedRead), decompressFilter(this->compressType));
 
             ioReadOpen(this->chunkedRead);
+
+            this->blockData = lstGet(this->superBlockData->blockList, this->blockIdx);
         }
 
-        const BlockDeltaSuperBlock *const superBlockData = lstGet(readDelta->superBlockList, this->superBlockIdx);
         uint64_t blockEncoded = ioReadVarIntU64(this->chunkedRead);
 
-        if (this->blockNo != 0 && blockEncoded == 0)
-        {
-            ioReadFree(this->chunkedRead);
-            this->chunkedRead = NULL;
-            this->superBlockIdx++;
-            continue;
-        }
-
-        const BlockDeltaBlock *const blockData = lstGet(superBlockData->blockList, this->blockIdx);
+        LOG_TRACE_FMT("!!!      SEEKING BLOCK NO %u", this->blockNo);
 
         do
         {
+            if (this->blockNo != 0 && blockEncoded == 0)
+            {
+                this->superBlockData = NULL;
+                this->superBlockIdx++;
+                break;
+            }
+
             // fprintf(stdout, "!!!  BLOCK NO %u IDX %u\n", this->blockNo, this->blockIdx); fflush(stdout);
 
+            bufUsedSet(this->write.block, 0);
+
             if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
-                bufLimitSet(this->write.block, (size_t)ioReadVarIntU64(this->chunkedRead));
+            {
+                size_t size = (size_t)ioReadVarIntU64(this->chunkedRead);
+                bufLimitSet(this->write.block, size);
+                LOG_TRACE_FMT("!!!      BLOCK SIZE %zu", size);
+            }
+            else
+                bufLimitClear(this->write.block);
 
             ioRead(this->chunkedRead, this->write.block);
 
-            if (this->blockNo == blockData->no) // {uncovered - !!! NEEDS BLOCK FILTER}
+            if (this->blockNo == this->blockData->no) // {uncovered - !!! NEEDS BLOCK FILTER}
             {
-                this->write.offset = blockData->offset;
-                result = &this->write;
+                this->write.offset = this->blockData->offset;
 
+                LOG_TRACE_FMT("!!!      FOUND BLOCK NO %u OFFSET %zu SIZE %zu", this->blockNo, this->write.offset, bufUsed(this->write.block));
+                // if (!bufEq(BUF(this->blockData->checksum, HASH_TYPE_SHA1_SIZE), cryptoHashOne(hashTypeSha1, this->write.block)))
+                //     THROW(AssertError, "CHECKSUMS DO NOT MATCH");
+
+                result = &this->write;
                 this->blockIdx++;
+
+                if (this->blockIdx < lstSize(this->superBlockData->blockList))
+                    this->blockData = lstGet(this->superBlockData->blockList, this->blockIdx);
             }
 
             if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
             {
-                ioReadFree(this->chunkedRead);
-                this->chunkedRead = NULL;
+                this->superBlockData = NULL;
                 this->superBlockIdx++;
 
                 if (result == NULL) // {uncovered - !!! NEEDS BLOCK FILTER}
-                    continue; // {uncovered - !!! NEEDS BLOCK FILTER}
+                    break; // {uncovered - !!! NEEDS BLOCK FILTER}
             }
 
             this->blockNo++;
 
             if (result != NULL) // {uncovered - !!! NEEDS BLOCK FILTER}
                 break;
+
+            blockEncoded = ioReadVarIntU64(this->chunkedRead); // {uncovered - !!!}
         }
         while (true);
 
@@ -320,6 +344,7 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
 
     if (result == NULL)
     {
+        this->superBlockData = NULL;
         // fprintf(stdout, "!!!  READ COMPLETE\n"); fflush(stdout);
         this->superBlockIdx = 0;
     }

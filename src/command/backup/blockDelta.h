@@ -39,7 +39,7 @@ FN_EXTERN BlockDelta *blockDeltaNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-const BlockDeltaWrite *blockDeltaNext(BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo);
+FN_EXTERN const BlockDeltaWrite *blockDeltaNext(BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo);
 
 /***********************************************************************************************************************************
 Getters/Setters
