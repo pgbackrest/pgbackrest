@@ -23,9 +23,9 @@ typedef struct IoChunkedRead
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_IO_CHUNKED_READ_TYPE                                                                                           \
+#define FUNCTION_LOG_IO_CHUNKED_READ_TYPE                                                                                          \
     IoChunkedRead *
-#define FUNCTION_LOG_IO_CHUNKED_READ_FORMAT(value, buffer, bufferSize)                                                              \
+#define FUNCTION_LOG_IO_CHUNKED_READ_FORMAT(value, buffer, bufferSize)                                                             \
     objNameToLog(value, "IoChunkedRead", buffer, bufferSize)
 
 /***********************************************************************************************************************************
