@@ -303,7 +303,7 @@ restoreFile(
                             blockMap, file->blockIncrSize, file->deltaMap,
                             cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
 
-                        LOG_TRACE_FMT("!!!FILE %s DELTA %d", strZ(file->manifestFile), file->deltaMap != NULL);
+                        // LOG_TRACE_FMT("!!!FILE %s DELTA %d", strZ(file->manifestFile), file->deltaMap != NULL);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
@@ -319,7 +319,7 @@ restoreFile(
                                 .offset = read->offset, .limit = VARUINT64(read->size));
                             ioReadOpen(storageReadIo(superBlockRead));
 
-                            LOG_TRACE_FMT("!!!  READ OFFSET %zu SIZE %zu", read->offset, read->size);
+                            // LOG_TRACE_FMT("!!!  READ OFFSET %zu SIZE %zu", read->offset, read->size);
 
                             const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
 

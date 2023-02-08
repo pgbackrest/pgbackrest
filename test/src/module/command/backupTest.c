@@ -205,7 +205,6 @@ testBackupValidateList(
                         ioReadOpen(storageReadIo(read));
 
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(read));
-                        IoFilter *const checksumFilter = cryptoHashNew(hashTypeSha1);
 
                         // Build map log
                         String *const mapLog = strNew();
@@ -233,6 +232,9 @@ testBackupValidateList(
                         }
 
                         // Check blocks
+                        Buffer *fileBuffer = bufNew((size_t)file.size);
+                        bufUsedSet(fileBuffer, bufSize(fileBuffer));
+
                         BlockDelta *const blockDelta = blockDeltaNew(
                             blockMap, file.blockIncrSize, NULL, cipherType, cipherPass, manifestData->backupOptionCompressType);
 
@@ -271,9 +273,11 @@ testBackupValidateList(
                                 //         strZ(file.name), superBlockIdx, blockIdx, strZ(blockChecksum), strZ(mapChecksum));
                                 // }
 
-                                // Update size and checksum
+                                // Update size and file
                                 size += bufUsed(deltaWrite->block);
-                                ioFilterProcessIn(checksumFilter, deltaWrite->block);
+                                memcpy(
+                                    bufPtr(fileBuffer) + deltaWrite->offset, bufPtr(deltaWrite->block),
+                                    bufUsed(deltaWrite->block));
 
                                 deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
                             }
@@ -281,7 +285,7 @@ testBackupValidateList(
 
                         strCatFmt(result, ", m={%s}}", strZ(mapLog));
 
-                        checksum = pckReadBinP(pckReadNew(ioFilterResult(checksumFilter)));
+                        checksum = cryptoHashOne(hashTypeSha1, fileBuffer);
                     }
                     // Else normal file
                     else
@@ -4022,6 +4026,10 @@ testRun(void)
             // and new file rather than a delta.
             Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 2].fileSize);
             memset(bufPtr(file), 0, bufSize(file));
+
+            // Also split the first super block
+            memset(bufPtr(file) + 128 * 1024 * 1, 1, 128 * 1024); // !!! GET SIZE FOR REAL
+
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
@@ -4079,7 +4087,7 @@ testRun(void)
                 "bundle/1/pg_data/grow-to-block-incr {file, m={{1,1}}, s=131073}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m={{0,0,0},{1,1,1,1,1,1,1,1},{1,1,1,1,1}},"
+                "pg_data/block-incr-grow.pgbi {file, m={{0},{1},{0},{1,1,1,1,1,1,1},{1,1,1,1,1,1}},"
                 " s=2097152}\n"
                 "pg_data/block-incr-larger.pgbi {file, m={{1,1,1,1,1,1},{1,1,1,1,1}}, s=2097152}\n"
                 "pg_data/tablespace_map {file, s=19}\n"
@@ -4092,7 +4100,7 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573000002}\n"
-                "pg_data/block-incr-grow={\"bims\":349,\"bis\":16,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
+                "pg_data/block-incr-grow={\"bims\":351,\"bis\":16,\"checksum\":\"8ef55d77b53af9fb376adcfe2e559384a3cce4df\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"
                 "pg_data/block-incr-larger={\"bims\":240,\"bis\":24,\"checksum\":\"7d76d48d64d7ac5411d714a4bb83f37e3e5b8df6\""
                 ",\"size\":2097152,\"timestamp\":1573000000}\n"

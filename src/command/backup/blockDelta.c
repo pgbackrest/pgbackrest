@@ -250,7 +250,7 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             this->blockIdx = 0;
             this->blockNo = 0;
 
-            LOG_TRACE_FMT("!!!    SUPER BLOCK %u BLOCK TOTAL %u", this->superBlockIdx, lstSize(this->superBlockData->blockList));
+            // LOG_TRACE_FMT("!!!    SUPER BLOCK %u BLOCK TOTAL %u", this->superBlockIdx, lstSize(this->superBlockData->blockList));
 
             // fprintf(
             //     stdout, "!!!SUPER BLOCK %u BLOCK TOTAL %u\n", this->superBlockIdx,
@@ -279,7 +279,7 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
 
         uint64_t blockEncoded = ioReadVarIntU64(this->chunkedRead);
 
-        LOG_TRACE_FMT("!!!      SEEKING BLOCK NO %u", this->blockNo);
+        // LOG_TRACE_FMT("!!!      SEEKING BLOCK NO %u", this->blockNo);
 
         do
         {
@@ -309,8 +309,11 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             {
                 this->write.offset = this->blockData->offset;
 
-                LOG_TRACE_FMT("!!!      FOUND BLOCK NO %u OFFSET %zu SIZE %zu", this->blockNo, this->write.offset, bufUsed(this->write.block));
-                // if (!bufEq(BUF(this->blockData->checksum, HASH_TYPE_SHA1_SIZE), cryptoHashOne(hashTypeSha1, this->write.block)))
+                // LOG_TRACE_FMT(
+                //     "!!!      FOUND BLOCK NO %u OFFSET %zu SIZE %zu", this->blockNo, this->write.offset,
+                //     bufUsed(this->write.block));
+                // if (!bufEq(
+                //     BUF(this->blockData->checksum, HASH_TYPE_SHA1_SIZE), cryptoHashOne(hashTypeSha1, this->write.block)))
                 //     THROW(AssertError, "CHECKSUMS DO NOT MATCH");
 
                 result = &this->write;
@@ -331,14 +334,14 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
 
             this->blockNo++;
 
-            if (result != NULL) // {uncovered - !!! NEEDS BLOCK FILTER}
+            if (result != NULL)
                 break;
 
-            blockEncoded = ioReadVarIntU64(this->chunkedRead); // {uncovered - !!!}
+            blockEncoded = ioReadVarIntU64(this->chunkedRead);
         }
         while (true);
 
-        if (result != NULL) // {uncovered - !!! NEEDS BLOCK FILTER}
+        if (result != NULL)
             break;
     }
 
