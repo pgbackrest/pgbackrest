@@ -19,6 +19,7 @@
                 <release-feature-list>
                     <release-item>
                         <commit subject="Add block incremental to real/all test output."/>
+                        <commit subject="Improve IoChunkedRead end-of-file handling."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
