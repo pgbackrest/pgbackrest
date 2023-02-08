@@ -38,7 +38,7 @@ typedef struct BlockIncr
     uint64_t superBlockNo;                                          // Block no in super block
     uint64_t blockOffset;                                           // Block offset
     uint64_t superBlockSize;                                        // Super block
-    uint64_t blockSize;                                             // Block size
+    size_t blockSize;                                               // Block size
     Buffer *block;                                                  // Block buffer
 
     Buffer *blockOut;                                               // Block output buffer
@@ -62,7 +62,7 @@ Macros for function logging
 static void
 blockIncrToLog(const BlockIncr *const this, StringStatic *const debugLog)
 {
-    strStcFmt(debugLog, "{superBlockSize, %" PRIu64 ", blockSize: %" PRIu64 "}", this->superBlockSize, this->blockSize);
+    strStcFmt(debugLog, "{superBlockSize, %" PRIu64 ", blockSize: %zu}", this->superBlockSize, this->blockSize);
 }
 
 #define FUNCTION_LOG_BLOCK_INCR_TYPE                                                                                               \
@@ -379,12 +379,12 @@ blockIncrInputSame(const THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
 blockIncrNew(
-    const uint64_t superBlockSize, const uint64_t blockSize, const unsigned int reference, const uint64_t bundleId,
+    const uint64_t superBlockSize, const size_t blockSize, const unsigned int reference, const uint64_t bundleId,
     const uint64_t bundleOffset, const Buffer *const blockMapPrior, const IoFilter *const compress, const IoFilter *const encrypt)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT64, superBlockSize);
-        FUNCTION_LOG_PARAM(UINT64, blockSize);
+        FUNCTION_LOG_PARAM(SIZE, blockSize);
         FUNCTION_LOG_PARAM(UINT, reference);
         FUNCTION_LOG_PARAM(UINT64, bundleId);
         FUNCTION_LOG_PARAM(UINT64, bundleOffset);
@@ -407,7 +407,7 @@ blockIncrNew(
             .reference = reference,
             .bundleId = bundleId,
             .blockOffset = bundleOffset,
-            .block = bufNew((size_t)blockSize),
+            .block = bufNew(blockSize),
             .blockOut = bufNew(0),
             .blockMapOut = blockMapNew(),
         };
@@ -482,11 +482,11 @@ blockIncrNewPack(const Pack *const paramList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const paramListPack = pckReadNew(paramList);
-        const size_t superBlockSize = (size_t)pckReadU64P(paramListPack);
+        const size_t superBlockSize = pckReadU64P(paramListPack);
         const size_t blockSize = (size_t)pckReadU64P(paramListPack);
         const unsigned int reference = pckReadU32P(paramListPack);
-        const uint64_t bundleId = (size_t)pckReadU64P(paramListPack);
-        const uint64_t bundleOffset = (size_t)pckReadU64P(paramListPack);
+        const uint64_t bundleId = pckReadU64P(paramListPack);
+        const uint64_t bundleOffset = pckReadU64P(paramListPack);
         const Buffer *blockMapPrior = pckReadBinP(paramListPack);
 
         // Create compress filter

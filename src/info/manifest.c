@@ -365,7 +365,8 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
     // Block incremental
     if (flag & (1 << manifestFilePackFlagBlockIncr))
     {
-        result.blockIncrSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX) * BLOCK_INCR_SIZE_FACTOR;
+        result.blockIncrSize =
+            (size_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX) * BLOCK_INCR_SIZE_FACTOR;
         result.blockIncrMapSize = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     }
 
@@ -827,6 +828,7 @@ manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const fil
     FUNCTION_TEST_RETURN(UINT64, result);
 }
 
+/**********************************************************************************************************************************/
 FN_EXTERN uint64_t
 manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFile *const file)
 {
@@ -1992,7 +1994,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
             file.blockIncrMapSize = jsonReadUInt64(json);
 
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_SIZE))
-            file.blockIncrSize = jsonReadUInt64(json) * BLOCK_INCR_SIZE_FACTOR;
+            file.blockIncrSize = (size_t)jsonReadUInt64(json) * BLOCK_INCR_SIZE_FACTOR;
 
         // Bundle info
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_ID))

@@ -48,7 +48,7 @@ FN_INLINE_ALWAYS BlockMapItem *
 blockMapAdd(BlockMap *const this, const BlockMapItem *const item)
 {
     ASSERT_INLINE(item != NULL);
-    // ASSERT_INLINE(item->size != 0);
+    // ASSERT_INLINE(item->size != 0); // !!! PROBABLY NEED TO REMOVE THIS
 
     return (BlockMapItem *)lstAdd((List *const)this, item);
 }

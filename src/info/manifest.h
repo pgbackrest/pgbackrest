@@ -116,7 +116,7 @@ typedef struct ManifestFile
     const String *reference;                                        // Reference to a prior backup
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
-    uint64_t blockIncrSize;                                         // Size of incremental blocks
+    size_t blockIncrSize;                                           // Size of incremental blocks
     uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo

@@ -43,7 +43,7 @@ Constants needed to read the block number in a super block
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN IoFilter *blockIncrNew(
-    uint64_t superBlockSize, uint64_t blockSize, unsigned int reference, uint64_t bundleId, uint64_t bundleOffset,
+    uint64_t superBlockSize, size_t blockSize, unsigned int reference, uint64_t bundleId, uint64_t bundleOffset,
     const Buffer *blockMapPrior, const IoFilter *compress, const IoFilter *encrypt);
 FN_EXTERN IoFilter *blockIncrNewPack(const Pack *paramList);
 

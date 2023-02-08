@@ -149,20 +149,6 @@ deltaMapNew(const size_t blockSize)
             .list = lstNewP(HASH_TYPE_SHA1_SIZE),
         };
 
-        // Create param list
-        Pack *paramList = NULL;
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            PackWrite *const packWrite = pckWriteNewP();
-
-            pckWriteU64P(packWrite, blockSize);
-            pckWriteEndP(packWrite);
-
-            paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-        }
-        MEM_CONTEXT_TEMP_END();
-
         this = ioFilterNewP(
             DELTA_MAP_FILTER_TYPE, driver, paramList, .in = deltaMapProcess, .result = deltaMapResult);
     }
