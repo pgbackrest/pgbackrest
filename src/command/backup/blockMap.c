@@ -107,7 +107,6 @@ blockMapNewRead(IoRead *const map)
             if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
                 blockMapItem.offset = ioReadVarIntU64(map);
 
-
             BlockMapRef referenceDataAdd =
             {
                 .reference = blockMapItem.reference,
