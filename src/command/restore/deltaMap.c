@@ -149,8 +149,7 @@ deltaMapNew(const size_t blockSize)
             .list = lstNewP(HASH_TYPE_SHA1_SIZE),
         };
 
-        this = ioFilterNewP(
-            DELTA_MAP_FILTER_TYPE, driver, paramList, .in = deltaMapProcess, .result = deltaMapResult);
+        this = ioFilterNewP(DELTA_MAP_FILTER_TYPE, driver, NULL, .in = deltaMapProcess, .result = deltaMapResult);
     }
     OBJ_NEW_END();
 
