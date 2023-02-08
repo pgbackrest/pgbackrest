@@ -790,7 +790,7 @@ static struct ManifestBuildBlockIncrTimeMap
     {.fileAge = 7 * 86400, .blockMultiplier = 2},
 };
 
-static uint64_t
+static size_t
 manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
@@ -798,7 +798,7 @@ manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const fil
         FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
     FUNCTION_TEST_END();
 
-    uint64_t result = 0;
+    size_t result = 0;
 
     // Search size map for the appropriate block size
     for (unsigned int sizeIdx = 0; sizeIdx < LENGTH_OF(manifestBuildBlockIncrSizeMap); sizeIdx++)
