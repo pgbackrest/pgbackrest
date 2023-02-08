@@ -482,7 +482,7 @@ blockIncrNewPack(const Pack *const paramList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const paramListPack = pckReadNew(paramList);
-        const size_t superBlockSize = pckReadU64P(paramListPack);
+        const uint64_t superBlockSize = pckReadU64P(paramListPack);
         const size_t blockSize = (size_t)pckReadU64P(paramListPack);
         const unsigned int reference = pckReadU32P(paramListPack);
         const uint64_t bundleId = pckReadU64P(paramListPack);
