@@ -32,7 +32,7 @@ Macros for function logging
 Read next chunk size
 ***********************************************************************************************************************************/
 static bool
-ioChunkedNext(THIS_VOID)
+ioChunkedReadNext(THIS_VOID)
 {
     THIS(IoChunkedRead);
 
@@ -40,32 +40,47 @@ ioChunkedNext(THIS_VOID)
         FUNCTION_TEST_PARAM(IO_CHUNKED_READ, this);
     FUNCTION_TEST_END();
 
-    // If no data remaining in chunk then read the next chunk header
-    if (this->chunkRemains == 0)
+    const uint64_t chunkDelta = ioReadVarIntU64(this->read);
+
+    // Stop when chunk delta is zero, which indicates the end of the chunk list
+    if (chunkDelta == 0)
     {
-        const uint64_t chunkDelta = ioReadVarIntU64(this->read);
-
-        // Stop when chunk delta is zero, which indicates the end of the chunk list
-        if (chunkDelta == 0)
-        {
-            this->eof = true;
-            FUNCTION_TEST_RETURN(BOOL, false);
-        }
-
-        // Calculate next chunk size from delta
-        if (this->chunkLast == 0)
-            this->chunkRemains = (size_t)chunkDelta;
-        else
-            this->chunkRemains = (size_t)(cvtInt64FromZigZag(chunkDelta - 1) + (int64_t)this->chunkLast);
-
-        this->chunkLast = this->chunkRemains;
+        this->eof = true;
+        FUNCTION_TEST_RETURN(BOOL, false);
     }
+
+    // Calculate next chunk size from delta
+    if (this->chunkLast == 0)
+        this->chunkRemains = (size_t)chunkDelta;
+    else
+        this->chunkRemains = (size_t)(cvtInt64FromZigZag(chunkDelta - 1) + (int64_t)this->chunkLast);
+
+    this->chunkLast = this->chunkRemains;
 
     FUNCTION_TEST_RETURN(BOOL, true);
 }
 
 /***********************************************************************************************************************************
-Read data from the buffer
+Read first chunk size
+***********************************************************************************************************************************/
+static bool
+ioChunkedReadOpen(THIS_VOID)
+{
+    THIS(IoChunkedRead);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_CHUNKED_READ, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    ioChunkedReadNext(this);
+
+    FUNCTION_LOG_RETURN(BOOL, true);
+}
+
+/***********************************************************************************************************************************
+Read next chunk or partial chunk
 ***********************************************************************************************************************************/
 static size_t
 ioChunkedRead(THIS_VOID, Buffer *const buffer, const bool block)
@@ -86,9 +101,6 @@ ioChunkedRead(THIS_VOID, Buffer *const buffer, const bool block)
     // Keep reading until the output buffer is full
     while (!bufFull(buffer))
     {
-        if (!ioChunkedNext(this)) // {uncovered -- !!!}
-            break; // {uncovered -- !!!}
-
         // If the entire chunk will fit in the output buffer
         if (this->chunkRemains < bufRemains(buffer))
         {
@@ -98,8 +110,8 @@ ioChunkedRead(THIS_VOID, Buffer *const buffer, const bool block)
             actualBytes += this->chunkRemains;
             this->chunkRemains = 0;
 
-            // Proactively get the next chunk to set eof as quickly as possible
-            if (!ioChunkedNext(this))
+            // Read the next chunk header
+            if (!ioChunkedReadNext(this))
                 break;
         }
         // Else only part of the chunk will fit in the output
@@ -116,7 +128,7 @@ ioChunkedRead(THIS_VOID, Buffer *const buffer, const bool block)
 }
 
 /***********************************************************************************************************************************
-Have all bytes been read from the buffer?
+Have all chunks been read?
 ***********************************************************************************************************************************/
 static bool
 ioChunkedReadEof(THIS_VOID)
@@ -153,7 +165,7 @@ ioChunkedReadNew(IoRead *const read)
             .read = read,
         };
 
-        this = ioReadNewP(driver, .eof = ioChunkedReadEof, .read = ioChunkedRead);
+        this = ioReadNewP(driver, .eof = ioChunkedReadEof, .open = ioChunkedReadOpen, .read = ioChunkedRead);
     }
     OBJ_NEW_END();
 
