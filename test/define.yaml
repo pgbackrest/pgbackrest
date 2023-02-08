@@ -844,6 +844,7 @@ unit:
         total: 14
 
         coverage:
+          - command/backup/blockDelta
           - command/restore/deltaMap
           - command/restore/file
           - command/restore/protocol

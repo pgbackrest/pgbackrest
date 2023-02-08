@@ -5,8 +5,6 @@ Block Delta
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdio.h> // !!!
-
 #include "command/backup/blockDelta.h"
 #include "command/backup/blockIncr.h"
 #include "common/crypto/cipherBlock.h"
@@ -53,20 +51,21 @@ struct BlockDelta
     String *cipherPass;                                             // Cipher passphrase
     CompressType compressType;                                      // Compress type
 
-    unsigned int superBlockIdx;                                     // Super block index
-    const BlockDeltaSuperBlock *superBlockData;                     // !!!
-    unsigned int blockIdx;                                          // Block index
-    const BlockDeltaBlock *blockData;                               // Block data
-    unsigned int blockNo;                                           // Block number
-    IoRead *chunkedRead;                                            // Chunked read
-    BlockDeltaWrite write;                                          // !!!
+    const BlockDeltaSuperBlock *superBlockData;                     // Current super block data
+    unsigned int superBlockIdx;                                     // Current super block index
+    unsigned int blockNo;                                           // Block number in current super block
+    IoRead *chunkedRead;                                            // Chunked read for current super block
+    const BlockDeltaBlock *blockData;                               // Current block data
+    unsigned int blockIdx;                                          // Current block index
+
+    BlockDeltaWrite write;                                          // Block/offset to be returned
 };
 
 /**********************************************************************************************************************************/
 typedef struct BlockDeltaReference
 {
-    unsigned int reference;
-    List *blockList;
+    unsigned int reference;                                         // Reference
+    List *blockList;                                                // List of blocks in the block map for the reference
 } BlockDeltaReference;
 
 FN_EXTERN BlockDelta *
@@ -106,28 +105,28 @@ blockDeltaNew(
             .compressType = compressType,
         };
 
-        // Construct the delta
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Build reference list (!!! will need to be filtered for restore)
+            // Build list of references and for each reference the list of blocks for that reference
             const unsigned int deltaMapSize =
-                deltaMap == NULL ? 0 : (unsigned int)(bufUsed(deltaMap) / HASH_TYPE_SHA1_SIZE); // {uncovered - !!!}
+                deltaMap == NULL ? 0 : (unsigned int)(bufUsed(deltaMap) / HASH_TYPE_SHA1_SIZE);
             List *const referenceList = lstNewP(sizeof(BlockDeltaReference), .comparator = lstComparatorUInt);
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
             {
                 const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-                // The block must be updated if it beyond the blocks that exist in the delta map or when the checksum stored in the
-                // repository is different from the delta map
-                if (blockMapIdx >= deltaMapSize || // {uncovered - !!!}
-                    !bufEq( // {uncovered - !!!}
-                        BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE), // {uncovered - !!!}
-                        BUF(bufPtrConst(deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE))) // {uncovered - !!!}
+                // The block must be updated if it is beyond the blocks that exist in the delta map or when the checksum stored in
+                // the repository is different from the delta map
+                if (blockMapIdx >= deltaMapSize ||
+                    !bufEq(
+                        BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
+                        BUF(bufPtrConst(deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                 {
                     const unsigned int reference = blockMapItem->reference;
                     BlockDeltaReference *const referenceData = lstFind(referenceList, &reference);
 
+                    // If the reference has not been added
                     if (referenceData == NULL)
                     {
                         BlockDeltaReference *referenceData = lstAdd(
@@ -135,11 +134,13 @@ blockDeltaNew(
                             &(BlockDeltaReference){.reference = reference, .blockList = lstNewP(sizeof(unsigned int))});
                         lstAdd(referenceData->blockList, &blockMapIdx);
                     }
+                    // Else add the new block
                     else
                         lstAdd(referenceData->blockList, &blockMapIdx);
                 }
             }
 
+            // Sort the reference list descending. This is an arbitrary choice as the order does not matter.
             lstSort(referenceList, sortOrderDesc);
 
             // Build delta
@@ -250,12 +251,6 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             this->blockIdx = 0;
             this->blockNo = 0;
 
-            // LOG_TRACE_FMT("!!!    SUPER BLOCK %u BLOCK TOTAL %u", this->superBlockIdx, lstSize(this->superBlockData->blockList));
-
-            // fprintf(
-            //     stdout, "!!!SUPER BLOCK %u BLOCK TOTAL %u\n", this->superBlockIdx,
-            //     lstSize(readDelta->superBlockList));fflush(stdout);
-
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
                 this->chunkedRead = ioChunkedReadNew(readIo);
@@ -279,8 +274,6 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
 
         uint64_t blockEncoded = ioReadVarIntU64(this->chunkedRead);
 
-        // LOG_TRACE_FMT("!!!      SEEKING BLOCK NO %u", this->blockNo);
-
         do
         {
             if (this->blockNo != 0 && blockEncoded == 0)
@@ -290,29 +283,23 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
                 break;
             }
 
-            // fprintf(stdout, "!!!  BLOCK NO %u IDX %u\n", this->blockNo, this->blockIdx); fflush(stdout);
-
             bufUsedSet(this->write.block, 0);
 
             if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
             {
                 size_t size = (size_t)ioReadVarIntU64(this->chunkedRead);
                 bufLimitSet(this->write.block, size);
-                LOG_TRACE_FMT("!!!      BLOCK SIZE %zu", size);
             }
             else
                 bufLimitClear(this->write.block);
 
             ioRead(this->chunkedRead, this->write.block);
 
-            if (this->blockNo == this->blockData->no) // {uncovered - !!! NEEDS BLOCK FILTER}
+            if (this->blockNo == this->blockData->no)
             {
                 this->write.offset = this->blockData->offset;
 
-                // LOG_TRACE_FMT(
-                //     "!!!      FOUND BLOCK NO %u OFFSET %zu SIZE %zu", this->blockNo, this->write.offset,
-                //     bufUsed(this->write.block));
-                // if (!bufEq(
+                // if (!bufEq( !!!
                 //     BUF(this->blockData->checksum, HASH_TYPE_SHA1_SIZE), cryptoHashOne(hashTypeSha1, this->write.block)))
                 //     THROW(AssertError, "CHECKSUMS DO NOT MATCH");
 
@@ -328,8 +315,8 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
                 this->superBlockData = NULL;
                 this->superBlockIdx++;
 
-                if (result == NULL) // {uncovered - !!! NEEDS BLOCK FILTER}
-                    break; // {uncovered - !!! NEEDS BLOCK FILTER}
+                if (result == NULL)
+                    break;
             }
 
             this->blockNo++;
@@ -348,7 +335,6 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
     if (result == NULL)
     {
         this->superBlockData = NULL;
-        // fprintf(stdout, "!!!  READ COMPLETE\n"); fflush(stdout);
         this->superBlockIdx = 0;
     }
 

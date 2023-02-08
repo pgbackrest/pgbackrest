@@ -11,6 +11,8 @@ backup. However, the block map may reference block lists (or parts thereof) in a
 The block list consists of a series of blocks stored as chunks (see IoChunk filter) to make the format more flexible. Each block
 consists of the following, compressed and encrypted as required:
 
+!!! Update description
+
 - A varint-128 encoded block number stored as a delta of the previous block. So, if the first block is 138 it would be stored as 138
   and if the second block is 139 it would be stored as 1. Block numbers are only needed when the block list is being read
   sequentially, e.g. during verification. If blocks are accessed from the map then the block number is already known and the delta
@@ -32,10 +34,10 @@ Filter type constant
 #define BLOCK_INCR_FILTER_TYPE                                      STRID5("blk-incr", 0x90dc9dad820)
 
 /***********************************************************************************************************************************
-!!!
+Constants needed to read the block number in a super block
 ***********************************************************************************************************************************/
-#define BLOCK_INCR_FLAG_SIZE                                        1
-#define BLOCK_INCR_BLOCK_SHIFT                                      1
+#define BLOCK_INCR_FLAG_SIZE                                        1 // Does the block have a different size than the default
+#define BLOCK_INCR_BLOCK_SHIFT                                      1 // Shift required to get block number
 
 /***********************************************************************************************************************************
 Constructors

@@ -238,14 +238,8 @@ testBackupValidateList(
                         BlockDelta *const blockDelta = blockDeltaNew(
                             blockMap, file.blockIncrSize, NULL, cipherType, cipherPass, manifestData->backupOptionCompressType);
 
-                        TEST_LOG_FMT(
-                            "!!!FILE %s SIZE %" PRIu64 ":\n%s", strZ(file.name), file.size,
-                            strZ(testBlockDelta(blockMap, file.blockIncrSize)));
-
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
-                            TEST_LOG("!!!READ");
-
                             const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
                             const String *const blockName = backupFileRepoPathP(
                                 strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
@@ -4022,14 +4016,11 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // Grow file size to check block incr delta. This is also large enough that it would get a new block size if it were
-            // and new file rather than a delta.
+            // Grow file size to check block incr delta. This is large enough that it would get a new block size if it were and new
+            // file rather than a delta. Also split the first superblock.
             Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 2].fileSize);
             memset(bufPtr(file), 0, bufSize(file));
-
-            // Also split the first super block
-            memset(bufPtr(file) + 128 * 1024 * 1, 1, 128 * 1024); // !!! GET SIZE FOR REAL
-
+            memset(bufPtr(file) + 128 * 1024, 1, 128 * 1024);
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
@@ -4160,7 +4151,8 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File that uses block incr and will grow
-            Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize);
+            Buffer *file = bufNew(
+                (size_t)(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 1.5));
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
@@ -4176,7 +4168,7 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
                 "P00   INFO: check archive for segment 0000000105DC520000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (192KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/48, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -4197,7 +4189,7 @@ testRun(void)
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
-                "pg_data/block-incr-grow.pgbi {file, m=0:{0}, s=131072}\n"
+                "pg_data/block-incr-grow.pgbi {file, m=0:{0,1}, s=196608}\n"
                 "pg_data/tablespace_map.gz {file, s=19}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -4208,8 +4200,8 @@ testRun(void)
                 ",\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573200002}\n"
-                "pg_data/block-incr-grow={\"bims\":40,\"bis\":16,\"checksum\":\"67dfd19f3eb3649d6f3f6631e44d0bd36b8d8d19\""
-                ",\"size\":131072,\"timestamp\":1573200000}\n"
+                "pg_data/block-incr-grow={\"bims\":56,\"bis\":16,\"checksum\":\"aef9802fcf76c67d695bc77322bae5400d3bbe82\""
+                ",\"size\":196608,\"timestamp\":1573200000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573200000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573200002}\n"
@@ -4240,9 +4232,13 @@ testRun(void)
             hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // File that uses block incr and grows
-            Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 2);
+            // File that uses block incr and grows and overwrite last block of prior map
+            struct ManifestBuildBlockIncrSizeMap sizeMap =
+                manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1];
+
+            Buffer *file = bufNew(sizeMap.fileSize * 3);
             memset(bufPtr(file), 0, bufSize(file));
+            memset(bufPtr(file) + sizeMap.blockSize, 1, sizeMap.blockSize);
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
@@ -4259,7 +4255,7 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DC82D000000000, lsn = 5dc82d0/0\n"
                 "P00   INFO: check archive for segment 0000000105DC82D000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/112, 256KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/112, 384KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC82D000000001, lsn = 5dc82d0/300000\n"
@@ -4275,7 +4271,7 @@ testRun(void)
                     .cipherPass = TEST_CIPHER_PASS),
                 ". {link, d=20191108-080000F_20191110-153320D}\n"
                 "bundle {path}\n"
-                "bundle/1/pg_data/block-incr-grow {file, m=0:{0},1:{0}, s=262144}\n"
+                "bundle/1/pg_data/block-incr-grow {file, m=0:{0},1:{0,1}, s=393216}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
                 "pg_data/backup_label.gz {file, s=17}\n"
@@ -4289,8 +4285,8 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573400002}\n"
-                "pg_data/block-incr-grow={\"bims\":72,\"bis\":16,\"checksum\":\"2e000fa7e85759c7f4c254d4d9c33ef481e459a7\""
-                ",\"size\":262144,\"timestamp\":1573400000}\n"
+                "pg_data/block-incr-grow={\"bims\":88,\"bis\":16,\"checksum\":\"505b9001ca454b89a44290d1ffe5217ef58439ed\""
+                ",\"size\":393216,\"timestamp\":1573400000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573400000}\n"
                 "pg_data/tablespace_map={\"checksum\":\"87fe624d7976c2144e10afcb7a9a49b071f35e9c\",\"size\":19"
                 ",\"timestamp\":1573400002}\n"

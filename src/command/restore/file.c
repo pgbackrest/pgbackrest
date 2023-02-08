@@ -295,15 +295,13 @@ restoreFile(
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));
 
-                        // !!!
+                        // Open file to write
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 
-                        // Apply delta
+                        // Apply delta to file
                         BlockDelta *const blockDelta = blockDeltaNew(
                             blockMap, file->blockIncrSize, file->deltaMap,
                             cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
-
-                        // LOG_TRACE_FMT("!!!FILE %s DELTA %d", strZ(file->manifestFile), file->deltaMap != NULL);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
@@ -319,8 +317,7 @@ restoreFile(
                                 .offset = read->offset, .limit = VARUINT64(read->size));
                             ioReadOpen(storageReadIo(superBlockRead));
 
-                            // LOG_TRACE_FMT("!!!  READ OFFSET %zu SIZE %zu", read->offset, read->size);
-
+                            // Write updated blocks to the file
                             const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
 
                             while (deltaWrite != NULL)
