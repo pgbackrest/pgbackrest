@@ -1072,7 +1072,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, buffer),
-            "01"                                        // Blocks are equal
+            "02"                                        // Blocks are equal
 
             "8008"                                      // reference 128
             "06"                                        // super block size 3
