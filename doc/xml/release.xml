@@ -20,6 +20,7 @@
                     <release-item>
                         <commit subject="Add block incremental to real/all test output."/>
                         <commit subject="Improve IoChunkedRead end-of-file handling."/>
+                        <commit subject="Remove parameter list from deltaMapNew()."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
