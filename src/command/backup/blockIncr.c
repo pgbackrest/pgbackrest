@@ -425,8 +425,8 @@ blockIncrNewPack(const Pack *const paramList)
         PackRead *const paramListPack = pckReadNew(paramList);
         const size_t blockSize = (size_t)pckReadU64P(paramListPack);
         const unsigned int reference = pckReadU32P(paramListPack);
-        const uint64_t bundleId = (size_t)pckReadU64P(paramListPack);
-        const uint64_t bundleOffset = (size_t)pckReadU64P(paramListPack);
+        const uint64_t bundleId = pckReadU64P(paramListPack);
+        const uint64_t bundleOffset = pckReadU64P(paramListPack);
         const Buffer *blockMapPrior = pckReadBinP(paramListPack);
 
         // Create compress filter

@@ -124,7 +124,7 @@ restoreFile(
 
                                     // Generate delta map if block incremental
                                     if (file->blockIncrMapSize != 0)
-                                        ioFilterGroupAdd(ioReadFilterGroup(read), deltaMapNew((size_t)file->blockIncrSize));
+                                        ioFilterGroupAdd(ioReadFilterGroup(read), deltaMapNew(file->blockIncrSize));
 
                                     ioReadDrain(read);
                                 }
