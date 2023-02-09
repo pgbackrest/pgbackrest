@@ -135,6 +135,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                 if (blockMapItemIn == NULL ||
                     memcmp(blockMapItemIn->checksum, bufPtrConst(checksum), bufUsed(checksum)) != 0)
                 {
+                    // Begin the super block
                     if (this->blockOutWrite == NULL)
                     {
                         MEM_CONTEXT_OBJ_BEGIN(this)

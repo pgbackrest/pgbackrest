@@ -254,19 +254,6 @@ testBackupValidateList(
 
                             while (deltaWrite != NULL)
                             {
-                                // // Verify block checksum !!! SHOULD BE INSIDE DELTA?
-                                // const String *const blockChecksum =
-                                //     strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, deltaWrite->block));
-                                // const String *const mapChecksum = strNewEncode(
-                                //     encodingHex, BUF(blockData->checksum, HASH_TYPE_SHA1_SIZE));
-
-                                // if (!strEq(blockChecksum, mapChecksum))
-                                // {
-                                //     THROW_FMT(
-                                //         AssertError, "'%s' block %u/%u checksum (%s) does not match block incr map (%s)",
-                                //         strZ(file.name), superBlockIdx, blockIdx, strZ(blockChecksum), strZ(mapChecksum));
-                                // }
-
                                 // Update size and file
                                 size += bufUsed(deltaWrite->block);
                                 memcpy(
@@ -1449,7 +1436,7 @@ testRun(void)
             "check delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("full backup with larger superblock");
+        TEST_TITLE("full backup with larger super block");
 
         ioBufferSizeSet(2);
 
@@ -4017,7 +4004,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Grow file size to check block incr delta. This is large enough that it would get a new block size if it were and new
-            // file rather than a delta. Also split the first superblock.
+            // file rather than a delta. Also split the first super block.
             Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 2].fileSize);
             memset(bufPtr(file), 0, bufSize(file));
             memset(bufPtr(file) + 128 * 1024, 1, 128 * 1024);

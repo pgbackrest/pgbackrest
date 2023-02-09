@@ -1,7 +1,5 @@
 /***********************************************************************************************************************************
 Block Restore
-
-!!!
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -11,21 +9,6 @@ Block Restore
 #include "common/debug.h"
 #include "common/io/chunkedRead.h"
 #include "common/log.h"
-
-// !!! MOVE TO LIST MODULE
-static int
-lstComparatorUInt(const void *const item1, const void *const item2)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, item1);
-        FUNCTION_TEST_PARAM_P(VOID, item2);
-    FUNCTION_TEST_END();
-
-    ASSERT(item1 != NULL);
-    ASSERT(item2 != NULL);
-
-    FUNCTION_TEST_RETURN(INT, (int)*(unsigned int *)item1 - (int)*(unsigned int *)item2);
-}
 
 /***********************************************************************************************************************************
 Object type
@@ -45,20 +28,20 @@ typedef struct BlockRestoreBlock
 
 struct BlockRestore
 {
-    BlockRestorePub pub;                                              // Publicly accessible variables
+    BlockRestorePub pub;                                            // Publicly accessible variables
     size_t blockSize;                                               // Block size
     CipherType cipherType;                                          // Cipher type
     String *cipherPass;                                             // Cipher passphrase
     CompressType compressType;                                      // Compress type
 
-    const BlockRestoreSuperBlock *superBlockData;                     // Current super block data
+    const BlockRestoreSuperBlock *superBlockData;                   // Current super block data
     unsigned int superBlockIdx;                                     // Current super block index
     unsigned int blockNo;                                           // Block number in current super block
     IoRead *chunkedRead;                                            // Chunked read for current super block
-    const BlockRestoreBlock *blockData;                               // Current block data
+    const BlockRestoreBlock *blockData;                             // Current block data
     unsigned int blockIdx;                                          // Current block index
 
-    BlockRestoreWrite write;                                          // Block/offset to be returned
+    BlockRestoreWrite write;                                        // Block/offset to be returned
 };
 
 /**********************************************************************************************************************************/
@@ -103,6 +86,10 @@ blockRestoreNew(
             .cipherType = cipherType,
             .cipherPass = strDup(cipherPass),
             .compressType = compressType,
+            .write =
+            {
+                .block = bufNew(blockSize),
+            }
         };
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -146,7 +133,8 @@ blockRestoreNew(
             // Build delta
             for (unsigned int referenceIdx = 0; referenceIdx < lstSize(referenceList); referenceIdx++)
             {
-                const BlockRestoreReference *const referenceData = (const BlockRestoreReference *)lstGet(referenceList, referenceIdx);
+                const BlockRestoreReference *const referenceData =
+                    (const BlockRestoreReference *)lstGet(referenceList, referenceIdx);
                 BlockRestoreRead *blockRestoreRead = NULL;
                 BlockRestoreSuperBlock *blockRestoreSuperBlock = NULL;
                 const BlockMapItem *blockMapItemPrior = NULL;
@@ -200,7 +188,8 @@ blockRestoreNew(
                         .offset = blockMapIdx * blockSize,
                     };
 
-                    memcpy(blockRestoreBlockNew.checksum, blockMapItem->checksum, SIZE_OF_STRUCT_MEMBER(BlockRestoreBlock, checksum));
+                    memcpy(
+                        blockRestoreBlockNew.checksum, blockMapItem->checksum, SIZE_OF_STRUCT_MEMBER(BlockRestoreBlock, checksum));
                     lstAdd(blockRestoreSuperBlock->blockList, &blockRestoreBlockNew);
 
                     // Set prior item for comparison on the next loop
@@ -233,23 +222,15 @@ blockRestoreNext(BlockRestore *const this, const BlockRestoreRead *const readDel
 
     BlockRestoreWrite *result = NULL;
 
+    // Iterate super blocks
     while (this->superBlockIdx < lstSize(readDelta->superBlockList))
     {
-        if (this->write.block == NULL)
-        {
-            MEM_CONTEXT_OBJ_BEGIN(this)
-            {
-                this->write.block = bufNew(this->blockSize);
-            }
-            MEM_CONTEXT_OBJ_END();
-        }
-
+        // If the super block read has not begun yet
         if (this->superBlockData == NULL)
         {
+            // Free prior chunked read and create chunked read for current super block
             ioReadFree(this->chunkedRead);
             this->superBlockData = lstGet(readDelta->superBlockList, this->superBlockIdx);
-            this->blockIdx = 0;
-            this->blockNo = 0;
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
@@ -269,13 +250,20 @@ blockRestoreNext(BlockRestore *const this, const BlockRestoreRead *const readDel
 
             ioReadOpen(this->chunkedRead);
 
+            // Set block info
+            this->blockIdx = 0;
+            this->blockNo = 0;
             this->blockData = lstGet(this->superBlockData->blockList, this->blockIdx);
         }
 
+        // Read encoded info about the block
         uint64_t blockEncoded = ioReadVarIntU64(this->chunkedRead);
 
+        // Loop through blocks in the super block until a match with the map is found
         do
         {
+            // Break out if encoded block info is zero and this is not the first block. This means the super block has ended when
+            // all blocks are equal size.
             if (this->blockNo != 0 && blockEncoded == 0)
             {
                 this->superBlockData = NULL;
@@ -283,6 +271,7 @@ blockRestoreNext(BlockRestore *const this, const BlockRestoreRead *const readDel
                 break;
             }
 
+            // Apply block size limit if required and read the block
             bufUsedSet(this->write.block, 0);
 
             if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
@@ -295,43 +284,45 @@ blockRestoreNext(BlockRestore *const this, const BlockRestoreRead *const readDel
 
             ioRead(this->chunkedRead, this->write.block);
 
+            // If the block matches the block we are expecting
             if (this->blockNo == this->blockData->no)
             {
                 this->write.offset = this->blockData->offset;
-
-                // if (!bufEq( !!!
-                //     BUF(this->blockData->checksum, HASH_TYPE_SHA1_SIZE), cryptoHashOne(hashTypeSha1, this->write.block)))
-                //     THROW(AssertError, "CHECKSUMS DO NOT MATCH");
-
                 result = &this->write;
                 this->blockIdx++;
 
+                // Get the next block if there are any more to read
                 if (this->blockIdx < lstSize(this->superBlockData->blockList))
+                {
                     this->blockData = lstGet(this->superBlockData->blockList, this->blockIdx);
+                }
+                // Else stop processing if this is the last super block. This is only works for the last super block because
+                // otherwise the blocks must be read sequentially.
+                else if (this->superBlockIdx >= lstSize(readDelta->superBlockList) - 1)
+                {
+                    this->superBlockData = NULL;
+                    this->superBlockIdx++;
+                }
             }
 
-            if (blockEncoded & BLOCK_INCR_FLAG_SIZE)
-            {
-                this->superBlockData = NULL;
-                this->superBlockIdx++;
-
-                if (result == NULL)
-                    break;
-            }
-
+            // Increment the block to read in the super block
             this->blockNo++;
 
+            // Break if there is a result
             if (result != NULL)
                 break;
 
+            // Read encoded info about the block
             blockEncoded = ioReadVarIntU64(this->chunkedRead);
         }
         while (true);
 
+        // Break if there is a result
         if (result != NULL)
             break;
     }
 
+    // If no result then the super blocks have been read. Reset for the next read.
     if (result == NULL)
     {
         this->superBlockData = NULL;

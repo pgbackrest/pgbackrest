@@ -1,7 +1,8 @@
 /***********************************************************************************************************************************
-Block Delta
+Block Restore
 
-!!!
+Calculate and return the blocks required to restore a file using an optional delta map. The delta map is optional because the file
+to restore may not exist so all the blocks will need to be restored.
 ***********************************************************************************************************************************/
 #ifndef COMMAND_BACKUP_BLOCKDELTA_H
 #define COMMAND_BACKUP_BLOCKDELTA_H
@@ -39,6 +40,7 @@ FN_EXTERN BlockRestore *blockRestoreNew(
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Get the next write for the restore
 FN_EXTERN const BlockRestoreWrite *blockRestoreNext(BlockRestore *this, const BlockRestoreRead *readDelta, IoRead *readIo);
 
 /***********************************************************************************************************************************
@@ -49,7 +51,7 @@ typedef struct BlockRestorePub
     List *readList;                                                 // Read list
 } BlockRestorePub;
 
-// Get a read item
+// Get read info
 FN_INLINE_ALWAYS const BlockRestoreRead *
 blockRestoreReadGet(const BlockRestore *const this, const unsigned int readIdx)
 {
