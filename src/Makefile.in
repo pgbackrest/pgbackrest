@@ -59,7 +59,6 @@ SRCS = \
 	command/archive/push/protocol.c \
 	command/archive/push/push.c \
 	command/backup/backup.c \
-	command/backup/blockDelta.c \
 	command/backup/blockIncr.c \
 	command/backup/blockMap.c \
 	command/backup/common.c \
@@ -83,6 +82,7 @@ SRCS = \
 	command/repo/ls.c \
 	command/repo/put.c \
 	command/repo/rm.c \
+	command/restore/blockRestore.c \
 	command/restore/deltaMap.c \
 	command/restore/file.c \
 	command/restore/protocol.c \

@@ -7,9 +7,9 @@ Restore File
 #include <unistd.h>
 #include <utime.h>
 
-#include "command/backup/blockDelta.h"
 #include "command/backup/blockIncr.h"
 #include "command/backup/blockMap.h"
+#include "command/restore/blockRestore.h"
 #include "command/restore/deltaMap.h"
 #include "command/restore/file.h"
 #include "common/crypto/cipherBlock.h"
@@ -299,13 +299,13 @@ restoreFile(
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 
                         // Apply delta to file
-                        BlockDelta *const blockDelta = blockDeltaNew(
+                        BlockRestore *const blockRestore = blockRestoreNew(
                             blockMap, file->blockIncrSize, file->deltaMap,
                             cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
 
-                        for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
+                        for (unsigned int readIdx = 0; readIdx < blockRestoreReadSize(blockRestore); readIdx++)
                         {
-                            const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
+                            const BlockRestoreRead *const read = blockRestoreReadGet(blockRestore, readIdx);
 
                             // Open the super block list for read. Using one read for all super blocks is cheaper than reading from
                             // the file multiple times, which is especially noticeable on object stores.
@@ -318,7 +318,7 @@ restoreFile(
                             ioReadOpen(storageReadIo(superBlockRead));
 
                             // Write updated blocks to the file
-                            const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
+                            const BlockRestoreWrite *deltaWrite = blockRestoreNext(blockRestore, read, storageReadIo(superBlockRead));
 
                             while (deltaWrite != NULL)
                             {
@@ -335,7 +335,7 @@ restoreFile(
                                 // Flush writes since we may seek to a new location for the next block
                                 ioWriteFlush(storageWriteIo(pgFileWrite));
 
-                                deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
+                                deltaWrite = blockRestoreNext(blockRestore, read, storageReadIo(superBlockRead));
                             }
                         }
 

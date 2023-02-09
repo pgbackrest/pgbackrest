@@ -826,13 +826,13 @@ unit:
 
         coverage:
           - command/backup/backup
-          - command/backup/blockDelta
           - command/backup/blockIncr
           - command/backup/blockMap
           - command/backup/common
           - command/backup/file
           - command/backup/pageChecksum
           - command/backup/protocol
+          - command/restore/blockRestore
 
         include:
           - info/info
@@ -844,7 +844,7 @@ unit:
         total: 14
 
         coverage:
-          - command/backup/blockDelta
+          - command/restore/blockRestore
           - command/restore/deltaMap
           - command/restore/file
           - command/restore/protocol

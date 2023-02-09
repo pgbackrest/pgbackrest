@@ -12,62 +12,62 @@ Block Delta
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct BlockDelta BlockDelta;
+typedef struct BlockRestore BlockRestore;
 
-typedef struct BlockDeltaRead
+typedef struct BlockRestoreRead
 {
     unsigned int reference;                                         // Reference to read from
     uint64_t bundleId;                                              // Bundle to read from
     uint64_t offset;                                                // Offset to begin read from
     uint64_t size;                                                  // Size of the read
     List *superBlockList;                                           // Super block list
-} BlockDeltaRead;
+} BlockRestoreRead;
 
-typedef struct BlockDeltaWrite
+typedef struct BlockRestoreWrite
 {
     uint64_t offset;                                                // Offset for the write
     Buffer *block;                                                  // Block to write
-} BlockDeltaWrite;
+} BlockRestoreWrite;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN BlockDelta *blockDeltaNew(
+FN_EXTERN BlockRestore *blockRestoreNew(
     const BlockMap *blockMap, size_t blockSize, const Buffer *deltaMap, CipherType cipherType, const String *cipherPass,
     const CompressType compressType);
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-FN_EXTERN const BlockDeltaWrite *blockDeltaNext(BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo);
+FN_EXTERN const BlockRestoreWrite *blockRestoreNext(BlockRestore *this, const BlockRestoreRead *readDelta, IoRead *readIo);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct BlockDeltaPub
+typedef struct BlockRestorePub
 {
     List *readList;                                                 // Read list
-} BlockDeltaPub;
+} BlockRestorePub;
 
 // Get a read item
-FN_INLINE_ALWAYS const BlockDeltaRead *
-blockDeltaReadGet(const BlockDelta *const this, const unsigned int readIdx)
+FN_INLINE_ALWAYS const BlockRestoreRead *
+blockRestoreReadGet(const BlockRestore *const this, const unsigned int readIdx)
 {
-    return (BlockDeltaRead *)lstGet(THIS_PUB(BlockDelta)->readList, readIdx);
+    return (BlockRestoreRead *)lstGet(THIS_PUB(BlockRestore)->readList, readIdx);
 }
 
 // Read list size
 FN_INLINE_ALWAYS unsigned int
-blockDeltaReadSize(const BlockDelta *const this)
+blockRestoreReadSize(const BlockRestore *const this)
 {
-    return lstSize(THIS_PUB(BlockDelta)->readList);
+    return lstSize(THIS_PUB(BlockRestore)->readList);
 }
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void
-blockDeltaFree(BlockMap *const this)
+blockRestoreFree(BlockMap *const this)
 {
     objFree(this);
 }
@@ -76,8 +76,8 @@ blockDeltaFree(BlockMap *const this)
 Macros for function logging
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_BLOCK_DELTA_TYPE                                                                                              \
-    BlockDelta *
+    BlockRestore *
 #define FUNCTION_LOG_BLOCK_DELTA_FORMAT(value, buffer, bufferSize)                                                                 \
-    objNameToLog(value, "BlockDelta", buffer, bufferSize)
+    objNameToLog(value, "BlockRestore", buffer, bufferSize)
 
 #endif
