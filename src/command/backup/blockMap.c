@@ -1,39 +1,31 @@
 /***********************************************************************************************************************************
 Block Incremental Map
 
-The block map is stored as a flag and a series of block info that are abbreviated when sequential blocks are from the same
-reference:
+The block map is stored as a flag and a series of reference, super block, and block info:
 
-!!! FIX THIS DESCRIPTION
+- Varint-128 flag that contains the version and info about the map (e.g. are the super blocks and blocks equal size).
 
-- Varint-128 that contains info about the map (e.g. are the super blocks and block equal size).
+- List of references:
 
-- Each block logically contains all fields in BlockMapItem but not all fields are encoded for each block and some are encoded as
-  deltas:
+  - Varint-128 encoded reference (which is an index into the reference list maintained in the manifest). If this is the first time
+    the reference appears it will be followed by a bundle id and an offset if they are not 0. If the reference has appeared before
+    it might update the offset or be a continuation of a prior super block. Continuations happen when a super block is split by a
+    newer super block. The continuation allows the prior super block values for the reference to be used without encoding them
+    again.
 
-  - Varint-128 encoded reference (which is an index into the reference list maintained in the manifest). If the prior block has the
-    same reference then this is omitted.
+  - List of super blocks:
 
-  - If this is the first time the reference appears it will be followed by a bundle id (0 if no bundle). The bundle id is always the
-    same for a reference so it does not need to be encoded more than once.
+    - Varint-128 encoded super block size. The very first size in the map will be encoded plainly and subsequent sizes will be
+      encoded as the delta from the last size.
 
-  - Offset where the super block is located. For the first super block after the reference, the offset is varint-128 encoded. After
-    that it is a delta of the prior offset for the reference. The offset is not encoded if the super block is sequential to the
-    prior super block in the reference. In this case the offset can be calculated by adding the prior size to the prior offset.
+    - List of blocks:
 
-  - Super block size. For the first super block this is the varint-128 encoded size. Afterwards it is a delta of the previous super
-    block using the following formula: cvtInt64ToZigZag(blockSize - blockSizeLast) + 1. Adding one is required so the size delta is
-    never zero, which is used as the stop byte.
+      - Varint-128 encoded block number if super block size does not equal block size. If they are equal then there is one block per
+        super block so no reason to encode the block number.
 
-  - Block no within the super block.
+      - Checksum.
 
-  - SHA1 checksum of the block.
-
-  - If the next block is from a different super block then a varint-128 encoded zero stop byte is added.
-
-  - If the next super block is from a different reference then a varint-128 encoded zero stop byte is added.
-
-The block map is terminated by a varint-128 encoded zero stop byte.
+References, super blocks, and blocks are encoded with a bit that indicates when the last one has been reached.
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
@@ -100,6 +92,7 @@ blockMapNewRead(IoRead *const map)
     // Are the super block and block size equal?
     const bool blockEqual = flags & (1 << blockMapFlagEqual);
 
+    // Read all references in packed format
     BlockMap *const this = blockMapNew();
     List *const refList = lstNewP(sizeof(BlockMapRef), .comparator = lstComparatorBlockMapRef);
     Buffer *const checksum = bufNew(HASH_TYPE_SHA1_SIZE);
@@ -108,18 +101,23 @@ blockMapNewRead(IoRead *const map)
 
     do
     {
+        // Read reference
         const uint64_t referenceEncoded = ioReadVarIntU64(map);
         BlockMapItem blockMapItem = {.reference = (unsigned int)(referenceEncoded >> BLOCK_MAP_REFERENCE_SHIFT)};
         BlockMapRef *referenceData = lstFind(refList, &(BlockMapRef){.reference = blockMapItem.reference});
 
+        // If this is the first time this reference has been read
         if (referenceData == NULL)
         {
+            // Read bundle id
             if (referenceEncoded & BLOCK_MAP_FLAG_BUNDLE_ID)
                 blockMapItem.bundleId = ioReadVarIntU64(map);
 
+            // Read offset
             if (referenceEncoded & BLOCK_MAP_FLAG_OFFSET)
                 blockMapItem.offset = ioReadVarIntU64(map);
 
+            // Add reference to list
             BlockMapRef referenceDataAdd =
             {
                 .reference = blockMapItem.reference,
@@ -127,20 +125,21 @@ blockMapNewRead(IoRead *const map)
                 .offset = blockMapItem.offset,
             };
 
-            // Add reference to list
             referenceData = lstAdd(refList, &referenceDataAdd);
         }
-        // Else increment the offset
+        // Else this reference has been read before
         else
         {
             blockMapItem.bundleId = referenceData->bundleId;
 
+            // If the reference is continued use the prior offset and size values
             if (referenceEncoded & BLOCK_MAP_FLAG_CONTINUE)
             {
                 blockMapItem.offset = referenceData->offset;
                 blockMapItem.size = referenceData->size;
                 referenceContinue = true;
             }
+            // Else this is a new reference and super block with a possible offset update
             else
             {
                 blockMapItem.offset = referenceData->offset + referenceData->size;
@@ -152,12 +151,14 @@ blockMapNewRead(IoRead *const map)
             }
         }
 
+        // Read all super blocks in the current reference in packed format
         bool superBlockFirst = true;
 
         do
         {
             uint64_t superBlockEncoded = 0;
 
+            // If the reference was continued check if this is the last super block in the reference
             if (referenceContinue)
             {
                 if (referenceEncoded & BLOCK_MAP_FLAG_CONTINUE_LAST)
@@ -165,15 +166,21 @@ blockMapNewRead(IoRead *const map)
 
                 referenceContinue = false;
             }
+            // Else read the super block size for the reference
             else
             {
                 superBlockEncoded = ioReadVarIntU64(map);
 
+                // If this is the first size read then just read the size
                 if (sizeLast == 0)
+                {
                     blockMapItem.size = superBlockEncoded >> BLOCK_MAP_SUPER_BLOCK_SHIFT;
+                }
+                // Else read the difference from the prior size and apply to sizeLast
                 else
                     blockMapItem.size = (uint64_t)(cvtInt64FromZigZag(superBlockEncoded >> BLOCK_MAP_SUPER_BLOCK_SHIFT) + sizeLast);
 
+                // Set offset, size, and block for the super block
                 if (superBlockFirst)
                     referenceData->offset = blockMapItem.offset;
                 else
@@ -183,15 +190,19 @@ blockMapNewRead(IoRead *const map)
                 referenceData->block = 0;
             }
 
-            superBlockFirst = false;
+            // Update sizeLast with the current size and clear superBlockFirst
             sizeLast = (int64_t)blockMapItem.size;
+            superBlockFirst = false;
 
+            // Read all blocks in the current super block in packed format
             do
             {
+                // Block no only needs to be read when super block size does not equal block size
                 uint64_t blockEncoded = BLOCK_MAP_FLAG_LAST;
 
                 if (!blockEqual)
                 {
+                    // Read block no as the difference from the prior block
                     blockEncoded = ioReadVarIntU64(map);
                     blockMapItem.block = (blockEncoded >> BLOCK_MAP_BLOCK_SHIFT) + referenceData->block;
                     referenceData->block = blockMapItem.block;
@@ -202,20 +213,25 @@ blockMapNewRead(IoRead *const map)
                 ioRead(map, checksum);
                 memcpy(blockMapItem.checksum, bufPtr(checksum), bufUsed(checksum));
 
+                // Add to block list
                 lstAdd((List *)this, &blockMapItem);
 
+                // Break when this is the last block in the super block
                 if (blockEncoded & BLOCK_MAP_FLAG_LAST)
                     break;
             }
             while (true);
 
+            // Update offset with the super block size
             blockMapItem.offset += blockMapItem.size;
 
+            // Break when this is the last super block in the reference
             if (superBlockEncoded & BLOCK_MAP_FLAG_LAST)
                 break;
         }
         while (true);
 
+        // Break when this is the last reference
         if (referenceEncoded & BLOCK_MAP_FLAG_LAST)
             break;
     }
