@@ -15,6 +15,7 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct BlockRestore BlockRestore;
 
+// Reads that must be performed in order to extract blocks
 typedef struct BlockRestoreRead
 {
     unsigned int reference;                                         // Reference to read from
@@ -24,6 +25,7 @@ typedef struct BlockRestoreRead
     List *superBlockList;                                           // Super block list
 } BlockRestoreRead;
 
+// Writes that need to be performed to restore the file
 typedef struct BlockRestoreWrite
 {
     uint64_t offset;                                                // Offset for the write

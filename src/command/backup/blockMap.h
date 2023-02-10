@@ -3,7 +3,7 @@ Block Incremental Map
 
 The block incremental map stores the location of blocks of data that have been backed up incrementally. When a file changes, instead
 of copying the entire file, just the blocks that have been changed can be stored. This map does not store the blocks themselves,
-just the location where they can be found. It must be combined with a block list to be useful (see BlockIncr filter).
+just the location where they can be found. It must be combined with a super block list to be useful (see BlockIncr filter).
 ***********************************************************************************************************************************/
 #ifndef COMMAND_BACKUP_BLOCKMAP_H
 #define COMMAND_BACKUP_BLOCKMAP_H

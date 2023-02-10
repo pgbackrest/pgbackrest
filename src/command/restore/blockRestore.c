@@ -308,7 +308,7 @@ blockRestoreNext(BlockRestore *const this, const BlockRestoreRead *const readDel
             // If the size was set (meaning this is the last block in the super block) it must also be the last block we are looking
             // for in the read. Partial blocks cannot happen in the middle of a read and there is code above to cut out early on the
             // last super block of a read when possible.
-            ASSERT(!(blockEncoded & BLOCK_INCR_FLAG_SIZE) || this->superBlockIdx >= lstSize(readDelta->superBlockList) - 1);
+            ASSERT(blockEncoded ^ BLOCK_INCR_FLAG_SIZE || this->superBlockIdx >= lstSize(readDelta->superBlockList) - 1);
 
             // Increment the block to read in the super block
             this->blockNo++;

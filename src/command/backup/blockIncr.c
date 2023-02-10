@@ -174,7 +174,8 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                         ioWriteOpen(this->blockOutWrite);
                     }
 
-                    // Write the block no as a delta of the prior block no
+                    // Write the block no as a delta of the prior block no. If the size of the last block is smaller than block
+                    // size when write the smaller block size.
                     const uint64_t blockEncoded = bufUsed(this->block) < this->blockSize ? BLOCK_INCR_FLAG_SIZE : 0;
 
                     ioWriteVarIntU64(
@@ -203,7 +204,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                     blockMapAdd(this->blockMapOut, &blockMapItem);
                     lstAdd(this->blockOutList, &blockMapItemIdx);
 
-                    // Increment last block no
+                    // Set last block no
                     this->blockNoLast = this->blockNo;
 
                     // Increment super block no
@@ -224,14 +225,15 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         // Write the super block
         if (this->blockOutWrite != NULL && (this->done || this->blockOutSize >= this->superBlockSize))
         {
-            // Terminate the block if all block sizes are equal
+            // Explicitly terminate the block if all block sizes are equal. This is not required if that last block is smaller than
+            // the block size.
             if (this->blockOutSize % this->blockSize == 0)
                 ioWriteVarIntU64(this->blockOutWrite, 0);
 
             // Close write
             ioWriteClose(this->blockOutWrite);
 
-            // Update size for block map items
+            // Update size for items already added to the block map
             const uint64_t blockOutSize = pckReadU64P(
                 ioFilterGroupResultP(ioWriteFilterGroup(this->blockOutWrite), SIZE_FILTER_TYPE));
 
@@ -255,7 +257,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             this->superBlockNo = 0;
         }
 
-        // Write the block map if done processing (but not flushing) and at least one block was written
+        // Write the block map if done processing and at least one block was written
         if (this->done && this->blockOutOffset == 0 && this->blockNo > 0)
         {
             MEM_CONTEXT_TEMP_BEGIN()

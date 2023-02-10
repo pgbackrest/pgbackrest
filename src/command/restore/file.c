@@ -322,8 +322,8 @@ restoreFile(
 
                             while (deltaWrite != NULL)
                             {
-                                // Seek to the min block offset. It is possible we are already at the correct position but it is
-                                // easier and safer to let lseek() figure this out.
+                                // Seek to the block offset. It is possible we are already at the correct position but it is easier
+                                // and safer to let lseek() figure this out.
                                 THROW_ON_SYS_ERROR_FMT(
                                     lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)deltaWrite->offset, SEEK_SET) == -1,
                                     FileOpenError, STORAGE_ERROR_READ_SEEK, deltaWrite->offset,
