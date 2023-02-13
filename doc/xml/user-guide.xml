@@ -871,8 +871,7 @@
         <section id="v2.x">
             <title>Upgrading {[project]} from v2.x to v2.y</title>
 
-            <p>Upgrading from <proper>v2.x</proper> to another <proper>v2.y</proper> is straight-forward.  The repository format does not change, so for most installations it is simply a matter of installing the binaries of the new version.  You can even downgrade as long as you don't use a new feature. </p>
-
+            <p>Upgrading from <proper>v2.x</proper> to <proper>v2.y</proper> is straight-forward. The repository format has not changed, so for most installations it is simply a matter of installing binaries for the new version. It is also possible to downgrade if you have not used new features that are unsupported by the older version.</p>
         </section>
     </section>
 
