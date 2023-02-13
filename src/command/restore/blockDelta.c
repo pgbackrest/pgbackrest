@@ -4,7 +4,7 @@ Block Restore
 #include "build.auto.h"
 
 #include "command/backup/blockIncr.h"
-#include "command/restore/blockRestore.h"
+#include "command/restore/blockDelta.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/chunkedRead.h"
@@ -13,46 +13,46 @@ Block Restore
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct BlockRestoreSuperBlock
+typedef struct BlockDeltaSuperBlock
 {
     uint64_t size;                                                  // Size of super block
     List *blockList;                                                // Block list
-} BlockRestoreSuperBlock;
+} BlockDeltaSuperBlock;
 
-typedef struct BlockRestoreBlock
+typedef struct BlockDeltaBlock
 {
     uint64_t no;                                                    // Block number in the super block
     uint64_t offset;                                                // Offset into original file
     unsigned char checksum[HASH_TYPE_SHA1_SIZE];                    // Checksum of the block
-} BlockRestoreBlock;
+} BlockDeltaBlock;
 
-struct BlockRestore
+struct BlockDelta
 {
-    BlockRestorePub pub;                                            // Publicly accessible variables
+    BlockDeltaPub pub;                                              // Publicly accessible variables
     size_t blockSize;                                               // Block size
     CipherType cipherType;                                          // Cipher type
     String *cipherPass;                                             // Cipher passphrase
     CompressType compressType;                                      // Compress type
 
-    const BlockRestoreSuperBlock *superBlockData;                   // Current super block data
+    const BlockDeltaSuperBlock *superBlockData;                     // Current super block data
     unsigned int superBlockIdx;                                     // Current super block index
     unsigned int blockNo;                                           // Block number in current super block
     IoRead *chunkedRead;                                            // Chunked read for current super block
-    const BlockRestoreBlock *blockData;                             // Current block data
+    const BlockDeltaBlock *blockData;                               // Current block data
     unsigned int blockIdx;                                          // Current block index
 
-    BlockRestoreWrite write;                                        // Block/offset to be returned
+    BlockDeltaWrite write;                                          // Block/offset to be returned for write
 };
 
 /**********************************************************************************************************************************/
-typedef struct BlockRestoreReference
+typedef struct BlockDeltaReference
 {
     unsigned int reference;                                         // Reference
     List *blockList;                                                // List of blocks in the block map for the reference
-} BlockRestoreReference;
+} BlockDeltaReference;
 
-FN_EXTERN BlockRestore *
-blockRestoreNew(
+FN_EXTERN BlockDelta *
+blockDeltaNew(
     const BlockMap *const blockMap, const size_t blockSize, const Buffer *const blockHash, const CipherType cipherType,
     const String *const cipherPass, const CompressType compressType)
 {
@@ -69,18 +69,18 @@ blockRestoreNew(
     ASSERT(blockSize > 0);
     ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
 
-    BlockRestore *this = NULL;
+    BlockDelta *this = NULL;
 
-    OBJ_NEW_BEGIN(BlockRestore, .childQty = MEM_CONTEXT_QTY_MAX)
+    OBJ_NEW_BEGIN(BlockDelta, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         // Create object
         this = OBJ_NEW_ALLOC();
 
-        *this = (BlockRestore)
+        *this = (BlockDelta)
         {
             .pub =
             {
-                .readList = lstNewP(sizeof(BlockRestoreRead)),
+                .readList = lstNewP(sizeof(BlockDeltaRead)),
             },
             .blockSize = blockSize,
             .cipherType = cipherType,
@@ -97,7 +97,7 @@ blockRestoreNew(
             // Build list of references and for each reference the list of blocks for that reference
             const unsigned int blockHashSize =
                 blockHash == NULL ? 0 : (unsigned int)(bufUsed(blockHash) / HASH_TYPE_SHA1_SIZE);
-            List *const referenceList = lstNewP(sizeof(BlockRestoreReference), .comparator = lstComparatorUInt);
+            List *const referenceList = lstNewP(sizeof(BlockDeltaReference), .comparator = lstComparatorUInt);
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
             {
@@ -111,14 +111,14 @@ blockRestoreNew(
                         BUF(bufPtrConst(blockHash) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                 {
                     const unsigned int reference = blockMapItem->reference;
-                    BlockRestoreReference *const referenceData = lstFind(referenceList, &reference);
+                    BlockDeltaReference *const referenceData = lstFind(referenceList, &reference);
 
                     // If the reference has not been added
                     if (referenceData == NULL)
                     {
-                        BlockRestoreReference *referenceData = lstAdd(
+                        BlockDeltaReference *referenceData = lstAdd(
                             referenceList,
-                            &(BlockRestoreReference){.reference = reference, .blockList = lstNewP(sizeof(unsigned int))});
+                            &(BlockDeltaReference){.reference = reference, .blockList = lstNewP(sizeof(unsigned int))});
                         lstAdd(referenceData->blockList, &blockMapIdx);
                     }
                     // Else add the new block
@@ -133,10 +133,9 @@ blockRestoreNew(
             // Build delta
             for (unsigned int referenceIdx = 0; referenceIdx < lstSize(referenceList); referenceIdx++)
             {
-                const BlockRestoreReference *const referenceData =
-                    (const BlockRestoreReference *)lstGet(referenceList, referenceIdx);
-                BlockRestoreRead *blockRestoreRead = NULL;
-                BlockRestoreSuperBlock *blockRestoreSuperBlock = NULL;
+                const BlockDeltaReference *const referenceData = (const BlockDeltaReference *)lstGet(referenceList, referenceIdx);
+                BlockDeltaRead *blockDeltaRead = NULL;
+                BlockDeltaSuperBlock *blockDeltaSuperBlock = NULL;
                 const BlockMapItem *blockMapItemPrior = NULL;
 
                 for (unsigned int blockIdx = 0; blockIdx < lstSize(referenceData->blockList); blockIdx++)
@@ -151,15 +150,15 @@ blockRestoreNew(
                     {
                         MEM_CONTEXT_OBJ_BEGIN(this->pub.readList)
                         {
-                            BlockRestoreRead blockRestoreReadNew =
+                            BlockDeltaRead blockDeltaReadNew =
                             {
                                 .reference = blockMapItem->reference,
                                 .bundleId = blockMapItem->bundleId,
                                 .offset = blockMapItem->offset,
-                                .superBlockList = lstNewP(sizeof(BlockRestoreSuperBlock)),
+                                .superBlockList = lstNewP(sizeof(BlockDeltaSuperBlock)),
                             };
 
-                            blockRestoreRead = lstAdd(this->pub.readList, &blockRestoreReadNew);
+                            blockDeltaRead = lstAdd(this->pub.readList, &blockDeltaReadNew);
                         }
                         MEM_CONTEXT_OBJ_END();
                     }
@@ -167,30 +166,29 @@ blockRestoreNew(
                     // Add super block when it has changed
                     if (blockMapItemPrior == NULL || blockMapItemPrior->offset != blockMapItem->offset)
                     {
-                        MEM_CONTEXT_OBJ_BEGIN(blockRestoreRead->superBlockList)
+                        MEM_CONTEXT_OBJ_BEGIN(blockDeltaRead->superBlockList)
                         {
-                            BlockRestoreSuperBlock blockRestoreSuperBlockNew =
+                            BlockDeltaSuperBlock blockDeltaSuperBlockNew =
                             {
                                 .size = blockMapItem->size,
-                                .blockList = lstNewP(sizeof(BlockRestoreBlock)),
+                                .blockList = lstNewP(sizeof(BlockDeltaBlock)),
                             };
 
-                            blockRestoreSuperBlock = lstAdd(blockRestoreRead->superBlockList, &blockRestoreSuperBlockNew);
-                            blockRestoreRead->size += blockMapItem->size;
+                            blockDeltaSuperBlock = lstAdd(blockDeltaRead->superBlockList, &blockDeltaSuperBlockNew);
+                            blockDeltaRead->size += blockMapItem->size;
                         }
                         MEM_CONTEXT_OBJ_END();
                     }
 
                     // Add block
-                    BlockRestoreBlock blockRestoreBlockNew =
+                    BlockDeltaBlock blockDeltaBlockNew =
                     {
                         .no = blockMapItem->block,
                         .offset = blockMapIdx * blockSize,
                     };
 
-                    memcpy(
-                        blockRestoreBlockNew.checksum, blockMapItem->checksum, SIZE_OF_STRUCT_MEMBER(BlockRestoreBlock, checksum));
-                    lstAdd(blockRestoreSuperBlock->blockList, &blockRestoreBlockNew);
+                    memcpy(blockDeltaBlockNew.checksum, blockMapItem->checksum, SIZE_OF_STRUCT_MEMBER(BlockDeltaBlock, checksum));
+                    lstAdd(blockDeltaSuperBlock->blockList, &blockDeltaBlockNew);
 
                     // Set prior item for comparison on the next loop
                     blockMapItemPrior = blockMapItem;
@@ -205,8 +203,8 @@ blockRestoreNew(
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const BlockRestoreWrite *
-blockRestoreNext(BlockRestore *const this, const BlockRestoreRead *const readDelta, IoRead *const readIo)
+FN_EXTERN const BlockDeltaWrite *
+blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, IoRead *const readIo)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_DELTA, this);
@@ -220,7 +218,7 @@ blockRestoreNext(BlockRestore *const this, const BlockRestoreRead *const readDel
     ASSERT(readDelta != NULL);
     ASSERT(readIo != NULL);
 
-    BlockRestoreWrite *result = NULL;
+    BlockDeltaWrite *result = NULL;
 
     // Iterate super blocks
     while (this->superBlockIdx < lstSize(readDelta->superBlockList))
@@ -334,5 +332,5 @@ blockRestoreNext(BlockRestore *const this, const BlockRestoreRead *const readDel
         this->superBlockIdx = 0;
     }
 
-    FUNCTION_TEST_RETURN_TYPE_P(BlockRestoreWrite, result);
+    FUNCTION_TEST_RETURN_TYPE_P(BlockDeltaWrite, result);
 }

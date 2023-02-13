@@ -13,29 +13,29 @@ because the file to restore may not exist so all the blocks will need to be rest
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct BlockRestore BlockRestore;
+typedef struct BlockDelta BlockDelta;
 
 // Reads that must be performed in order to extract blocks
-typedef struct BlockRestoreRead
+typedef struct BlockDeltaRead
 {
     unsigned int reference;                                         // Reference to read from
     uint64_t bundleId;                                              // Bundle to read from
     uint64_t offset;                                                // Offset to begin read from
     uint64_t size;                                                  // Size of the read
     List *superBlockList;                                           // Super block list
-} BlockRestoreRead;
+} BlockDeltaRead;
 
 // Writes that need to be performed to restore the file
-typedef struct BlockRestoreWrite
+typedef struct BlockDeltaWrite
 {
     uint64_t offset;                                                // Offset for the write
     Buffer *block;                                                  // Block to write
-} BlockRestoreWrite;
+} BlockDeltaWrite;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN BlockRestore *blockRestoreNew(
+FN_EXTERN BlockDelta *blockDeltaNew(
     const BlockMap *blockMap, size_t blockSize, const Buffer *blockHash, CipherType cipherType, const String *cipherPass,
     const CompressType compressType);
 
@@ -43,35 +43,35 @@ FN_EXTERN BlockRestore *blockRestoreNew(
 Functions
 ***********************************************************************************************************************************/
 // Get the next write for the restore
-FN_EXTERN const BlockRestoreWrite *blockRestoreNext(BlockRestore *this, const BlockRestoreRead *readDelta, IoRead *readIo);
+FN_EXTERN const BlockDeltaWrite *blockDeltaNext(BlockDelta *this, const BlockDeltaRead *readDelta, IoRead *readIo);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct BlockRestorePub
+typedef struct BlockDeltaPub
 {
     List *readList;                                                 // Read list
-} BlockRestorePub;
+} BlockDeltaPub;
 
 // Get read info
-FN_INLINE_ALWAYS const BlockRestoreRead *
-blockRestoreReadGet(const BlockRestore *const this, const unsigned int readIdx)
+FN_INLINE_ALWAYS const BlockDeltaRead *
+blockDeltaReadGet(const BlockDelta *const this, const unsigned int readIdx)
 {
-    return (BlockRestoreRead *)lstGet(THIS_PUB(BlockRestore)->readList, readIdx);
+    return (BlockDeltaRead *)lstGet(THIS_PUB(BlockDelta)->readList, readIdx);
 }
 
 // Read list size
 FN_INLINE_ALWAYS unsigned int
-blockRestoreReadSize(const BlockRestore *const this)
+blockDeltaReadSize(const BlockDelta *const this)
 {
-    return lstSize(THIS_PUB(BlockRestore)->readList);
+    return lstSize(THIS_PUB(BlockDelta)->readList);
 }
 
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void
-blockRestoreFree(BlockMap *const this)
+blockDeltaFree(BlockMap *const this)
 {
     objFree(this);
 }
@@ -80,8 +80,8 @@ blockRestoreFree(BlockMap *const this)
 Macros for function logging
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_BLOCK_DELTA_TYPE                                                                                              \
-    BlockRestore *
+    BlockDelta *
 #define FUNCTION_LOG_BLOCK_DELTA_FORMAT(value, buffer, bufferSize)                                                                 \
-    objNameToLog(value, "BlockRestore", buffer, bufferSize)
+    objNameToLog(value, "BlockDelta", buffer, bufferSize)
 
 #endif

@@ -28,7 +28,7 @@ consists of the following, compressed and encrypted as required:
 The super block list is followed by the block map, which is encrypted separately when required but not compressed. The return value
 of the filter is the stored block map size. Combined with the repo size this allows the block map to be read separately.
 
-The block incremental should be read using BlockRestore since reconstructing the delta is quite involved.
+The block incremental should be read using BlockDelta since reconstructing the delta is quite involved.
 ***********************************************************************************************************************************/
 #ifndef COMMAND_BACKUP_BLOCK_INCR_H
 #define COMMAND_BACKUP_BLOCK_INCR_H
