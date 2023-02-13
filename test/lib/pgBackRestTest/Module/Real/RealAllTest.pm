@@ -84,7 +84,7 @@ sub run
         # Increment the run, log, and decide whether this unit test should be run
         next if !$self->begin(
             "bkp ${bHostBackup}, tls ${bTls}, dst ${strBackupDestination}, cmp ${strCompressType}, storage ${strStorage}" .
-                ", enc ${bRepoEncrypt}");
+                ", enc ${bRepoEncrypt}, bi ${bBlockIncr}");
 
         # Create hosts, file object, and config
         my ($oHostDbPrimary, $oHostDbStandby, $oHostBackup) = $self->setup(

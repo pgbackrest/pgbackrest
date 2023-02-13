@@ -42,7 +42,7 @@ typedef struct HrnManifestFile
     const char *reference;
     uint64_t bundleId;
     uint64_t bundleOffset;
-    uint64_t blockIncrSize;
+    size_t blockIncrSize;
     uint64_t blockIncrMapSize;
     uint64_t size;
     uint64_t sizeRepo;

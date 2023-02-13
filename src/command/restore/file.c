@@ -8,7 +8,7 @@ Restore File
 #include <utime.h>
 
 #include "command/backup/blockMap.h"
-#include "command/restore/deltaMap.h"
+#include "command/restore/blockHash.h"
 #include "command/restore/file.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -122,9 +122,9 @@ restoreFile(
                                     read = storageReadIo(storageNewReadP(storagePg(), file->name));
                                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
-                                    // Generate delta map if block incremental
+                                    // Generate block hash list if block incremental
                                     if (file->blockIncrMapSize != 0)
-                                        ioFilterGroupAdd(ioReadFilterGroup(read), deltaMapNew((size_t)file->blockIncrSize));
+                                        ioFilterGroupAdd(ioReadFilterGroup(read), blockHashNew(file->blockIncrSize));
 
                                     ioReadDrain(read);
                                 }
@@ -154,16 +154,16 @@ restoreFile(
                                     fileResult->result = restoreResultPreserve;
                                 }
 
-                                // If block incremental and not preserving the file, store the delta map for later use in
+                                // If block incremental and not preserving the file, store the block hash list for later use in
                                 // reconstructing the pg file
                                 if (file->blockIncrMapSize != 0 && fileResult->result != restoreResultPreserve)
                                 {
-                                    PackRead *const deltaMapResult = ioFilterGroupResultP(
-                                        ioReadFilterGroup(read), DELTA_MAP_FILTER_TYPE);
+                                    PackRead *const blockHashResult = ioFilterGroupResultP(
+                                        ioReadFilterGroup(read), BLOCK_HASH_FILTER_TYPE);
 
                                     MEM_CONTEXT_OBJ_BEGIN(fileList)
                                     {
-                                        file->deltaMap = pckReadBinP(deltaMapResult);
+                                        file->blockHash = pckReadBinP(blockHashResult);
                                     }
                                     MEM_CONTEXT_OBJ_END();
                                 }
@@ -277,7 +277,7 @@ restoreFile(
                     StorageWrite *pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
-                        .noTruncate = file->deltaMap != NULL);
+                        .noTruncate = file->blockHash != NULL);
 
                     // If block incremental file
                     const Buffer *checksum = NULL;
@@ -286,17 +286,17 @@ restoreFile(
                     {
                         ASSERT(referenceList != NULL);
 
-                        // Read block map. This will be compared to the delta map already created to determine which blocks need to
-                        // be fetched from the repository. If we got here there must be at least one block to fetch.
+                        // Read block map. This will be compared to the block hash list already created to determine which blocks
+                        // need to be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
 
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));
 
-                        // Size of delta map. If there is no delta map because the pg file does not exist then set to zero, which
-                        // will force all blocks to be updated.
-                        const unsigned int deltaMapSize =
-                            file->deltaMap == NULL ? 0 : (unsigned int)(bufUsed(file->deltaMap) / HASH_TYPE_SHA1_SIZE);
+                        // Size of block hash list. If there is no block hash list because the pg file does not exist then set to
+                        // zero, which will force all blocks to be updated.
+                        const unsigned int blockHashSize =
+                            file->blockHash == NULL ? 0 : (unsigned int)(bufUsed(file->blockHash) / HASH_TYPE_SHA1_SIZE);
 
                         // Find and write updated blocks
                         bool updateFound = false;                   // Is there a block list to be updated?
@@ -311,12 +311,12 @@ restoreFile(
                         {
                             const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-                            // The block must be updated if it beyond the blocks that exist in the delta map or when the checksum
-                            // stored in the repository is different from the delta map
-                            if (blockMapIdx >= deltaMapSize ||
+                            // The block must be updated if it beyond the blocks that exist in the block hash list or when the
+                            // checksum stored in the repository is different from the block hash list
+                            if (blockMapIdx >= blockHashSize ||
                                 !bufEq(
                                     BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
-                                    BUF(bufPtrConst(file->deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
+                                    BUF(bufPtrConst(file->blockHash) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                             {
                                 // If no block list is currently being built then start a new one
                                 if (!updateFound)
@@ -343,11 +343,11 @@ restoreFile(
                                     // Similar to the check above, but also make sure the reference is the same. For blocks to be
                                     // in a common list they must be contiguous and from the same reference.
                                     if (blockMapItem->reference == blockMapItemNext->reference &&
-                                        (blockMapIdx + 1 >= deltaMapSize ||
+                                        (blockMapIdx + 1 >= blockHashSize ||
                                          !bufEq(
                                              BUF(blockMapItemNext->checksum, HASH_TYPE_SHA1_SIZE),
                                              BUF(
-                                                 bufPtrConst(file->deltaMap) + (blockMapIdx + 1) * HASH_TYPE_SHA1_SIZE,
+                                                 bufPtrConst(file->blockHash) + (blockMapIdx + 1) * HASH_TYPE_SHA1_SIZE,
                                                  HASH_TYPE_SHA1_SIZE))))
                                     {
                                         continue;

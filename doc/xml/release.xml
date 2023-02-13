@@ -15,6 +15,24 @@
 
     <release-list>
         <release date="XXXX-XX-XX" version="2.45dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <commit subject="Add block incremental to real/all test output."/>
+                        <commit subject="Improve IoChunkedRead end-of-file handling."/>
+                        <commit subject="Remove parameter list from deltaMapNew()."/>
+                        <commit subject="Consistently declare block incremental size as size_t."/>
+                        <commit subject="Rename DeltaMap to BlockHash."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Block-level incremental backup.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>

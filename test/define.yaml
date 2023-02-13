@@ -843,7 +843,7 @@ unit:
         total: 14
 
         coverage:
-          - command/restore/deltaMap
+          - command/restore/blockHash
           - command/restore/file
           - command/restore/protocol
           - command/restore/restore
