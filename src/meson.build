@@ -146,7 +146,7 @@ src_pgbackrest = [
 	'command/repo/ls.c',
 	'command/repo/put.c',
 	'command/repo/rm.c',
-	'command/restore/deltaMap.c',
+	'command/restore/blockHash.c',
 	'command/restore/file.c',
 	'command/restore/protocol.c',
 	'command/restore/restore.c',

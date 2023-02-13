@@ -22,6 +22,7 @@
                         <commit subject="Improve IoChunkedRead end-of-file handling."/>
                         <commit subject="Remove parameter list from deltaMapNew()."/>
                         <commit subject="Consistently declare block incremental size as size_t."/>
+                        <commit subject="Rename DeltaMap to BlockHash."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>

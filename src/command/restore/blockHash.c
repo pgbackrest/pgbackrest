@@ -3,7 +3,7 @@ Restore Delta Map
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/restore/deltaMap.h"
+#include "command/restore/blockHash.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -13,34 +13,34 @@ Restore Delta Map
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct DeltaMap
+typedef struct BlockHash
 {
     MemContext *memContext;                                         // Mem context of filter
 
     size_t blockSize;                                               // Block size for checksums
     size_t blockCurrent;                                            // Size of current block
     IoFilter *hash;                                                 // Hash of current block
-    List *list;                                                     // List if hashes
-} DeltaMap;
+    List *list;                                                     // List of hashes
+} BlockHash;
 
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_DELTA_MAP_TYPE                                                                                                \
-    DeltaMap *
-#define FUNCTION_LOG_DELTA_MAP_FORMAT(value, buffer, bufferSize)                                                                   \
-    objNameToLog(value, "DeltaMap", buffer, bufferSize)
+#define FUNCTION_LOG_BLOCK_HASH_TYPE                                                                                               \
+    BlockHash *
+#define FUNCTION_LOG_BLOCK_HASH_FORMAT(value, buffer, bufferSize)                                                                  \
+    objNameToLog(value, "BlockHash", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Generate delta map
+Generate block hash list
 ***********************************************************************************************************************************/
 static void
-deltaMapProcess(THIS_VOID, const Buffer *const input)
+blockHashProcess(THIS_VOID, const Buffer *const input)
 {
-    THIS(DeltaMap);
+    THIS(BlockHash);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(DELTA_MAP, this);
+        FUNCTION_LOG_PARAM(BLOCK_HASH, this);
         FUNCTION_LOG_PARAM(BUFFER, input);
     FUNCTION_LOG_END();
 
@@ -95,12 +95,12 @@ deltaMapProcess(THIS_VOID, const Buffer *const input)
 Get a binary representation of the hash list
 ***********************************************************************************************************************************/
 static Pack *
-deltaMapResult(THIS_VOID)
+blockHashResult(THIS_VOID)
 {
-    THIS(DeltaMap);
+    THIS(BlockHash);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(DELTA_MAP, this);
+        FUNCTION_LOG_PARAM(BLOCK_HASH, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -127,7 +127,7 @@ deltaMapResult(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-deltaMapNew(const size_t blockSize)
+blockHashNew(const size_t blockSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
@@ -138,18 +138,18 @@ deltaMapNew(const size_t blockSize)
     // Allocate memory to hold process state
     IoFilter *this = NULL;
 
-    OBJ_NEW_BEGIN(DeltaMap, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    OBJ_NEW_BEGIN(BlockHash, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        DeltaMap *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::DeltaMap);
+        BlockHash *const driver = OBJ_NAME(OBJ_NEW_ALLOC(), IoFilter::BlockHash);
 
-        *driver = (DeltaMap)
+        *driver = (BlockHash)
         {
             .memContext = memContextCurrent(),
             .blockSize = blockSize,
             .list = lstNewP(HASH_TYPE_SHA1_SIZE),
         };
 
-        this = ioFilterNewP(DELTA_MAP_FILTER_TYPE, driver, NULL, .in = deltaMapProcess, .result = deltaMapResult);
+        this = ioFilterNewP(BLOCK_HASH_FILTER_TYPE, driver, NULL, .in = blockHashProcess, .result = blockHashResult);
     }
     OBJ_NEW_END();
 
