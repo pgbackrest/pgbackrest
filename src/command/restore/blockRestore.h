@@ -1,8 +1,8 @@
 /***********************************************************************************************************************************
 Block Restore
 
-Calculate and return the blocks required to restore a file using an optional delta map. The delta map is optional because the file
-to restore may not exist so all the blocks will need to be restored.
+Calculate and return the blocks required to restore a file using an optional block hash list. The block hash list is optional
+because the file to restore may not exist so all the blocks will need to be restored.
 ***********************************************************************************************************************************/
 #ifndef COMMAND_BACKUP_BLOCKDELTA_H
 #define COMMAND_BACKUP_BLOCKDELTA_H
@@ -36,7 +36,7 @@ typedef struct BlockRestoreWrite
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN BlockRestore *blockRestoreNew(
-    const BlockMap *blockMap, size_t blockSize, const Buffer *deltaMap, CipherType cipherType, const String *cipherPass,
+    const BlockMap *blockMap, size_t blockSize, const Buffer *blockHash, CipherType cipherType, const String *cipherPass,
     const CompressType compressType);
 
 /***********************************************************************************************************************************

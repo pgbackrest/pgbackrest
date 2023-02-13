@@ -53,13 +53,13 @@ typedef struct BlockRestoreReference
 
 FN_EXTERN BlockRestore *
 blockRestoreNew(
-    const BlockMap *const blockMap, const size_t blockSize, const Buffer *const deltaMap, const CipherType cipherType,
+    const BlockMap *const blockMap, const size_t blockSize, const Buffer *const blockHash, const CipherType cipherType,
     const String *const cipherPass, const CompressType compressType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_MAP, blockMap);
         FUNCTION_TEST_PARAM(SIZE, blockSize);
-        FUNCTION_TEST_PARAM(BUFFER, deltaMap);
+        FUNCTION_TEST_PARAM(BUFFER, blockHash);
         FUNCTION_TEST_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
         FUNCTION_TEST_PARAM(ENUM, compressType);
@@ -95,20 +95,20 @@ blockRestoreNew(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Build list of references and for each reference the list of blocks for that reference
-            const unsigned int deltaMapSize =
-                deltaMap == NULL ? 0 : (unsigned int)(bufUsed(deltaMap) / HASH_TYPE_SHA1_SIZE);
+            const unsigned int blockHashSize =
+                blockHash == NULL ? 0 : (unsigned int)(bufUsed(blockHash) / HASH_TYPE_SHA1_SIZE);
             List *const referenceList = lstNewP(sizeof(BlockRestoreReference), .comparator = lstComparatorUInt);
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < blockMapSize(blockMap); blockMapIdx++)
             {
                 const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
 
-                // The block must be updated if it is beyond the blocks that exist in the delta map or when the checksum stored in
-                // the repository is different from the delta map
-                if (blockMapIdx >= deltaMapSize ||
+                // The block must be updated if it is beyond the blocks that exist in the block hash list or when the checksum
+                // stored in the repository is different from the block hash list
+                if (blockMapIdx >= blockHashSize ||
                     !bufEq(
                         BUF(blockMapItem->checksum, HASH_TYPE_SHA1_SIZE),
-                        BUF(bufPtrConst(deltaMap) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
+                        BUF(bufPtrConst(blockHash) + blockMapIdx * HASH_TYPE_SHA1_SIZE, HASH_TYPE_SHA1_SIZE)))
                 {
                     const unsigned int reference = blockMapItem->reference;
                     BlockRestoreReference *const referenceData = lstFind(referenceList, &reference);

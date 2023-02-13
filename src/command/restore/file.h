@@ -36,7 +36,7 @@ typedef struct RestoreFile
     uint64_t blockIncrMapSize;                                      // Block incremental map size (0 if not incremental)
     size_t blockIncrSize;                                           // Block incremental size (when map size > 0)
     const String *manifestFile;                                     // Manifest file
-    const Buffer *deltaMap;                                         // Delta for block incremental restore, set in restoreFile()
+    const Buffer *blockHash;                                        // Hashes for block incremental restore, set in restoreFile()
 } RestoreFile;
 
 typedef struct RestoreFileResult

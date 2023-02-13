@@ -9,8 +9,8 @@ Restore File
 
 #include "command/backup/blockIncr.h"
 #include "command/backup/blockMap.h"
+#include "command/restore/blockHash.h"
 #include "command/restore/blockRestore.h"
-#include "command/restore/deltaMap.h"
 #include "command/restore/file.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -124,9 +124,9 @@ restoreFile(
                                     read = storageReadIo(storageNewReadP(storagePg(), file->name));
                                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
-                                    // Generate delta map if block incremental
+                                    // Generate block hash list if block incremental
                                     if (file->blockIncrMapSize != 0)
-                                        ioFilterGroupAdd(ioReadFilterGroup(read), deltaMapNew(file->blockIncrSize));
+                                        ioFilterGroupAdd(ioReadFilterGroup(read), blockHashNew(file->blockIncrSize));
 
                                     ioReadDrain(read);
                                 }
@@ -156,16 +156,16 @@ restoreFile(
                                     fileResult->result = restoreResultPreserve;
                                 }
 
-                                // If block incremental and not preserving the file, store the delta map for later use in
+                                // If block incremental and not preserving the file, store the block hash list for later use in
                                 // reconstructing the pg file
                                 if (file->blockIncrMapSize != 0 && fileResult->result != restoreResultPreserve)
                                 {
-                                    PackRead *const deltaMapResult = ioFilterGroupResultP(
-                                        ioReadFilterGroup(read), DELTA_MAP_FILTER_TYPE);
+                                    PackRead *const blockHashResult = ioFilterGroupResultP(
+                                        ioReadFilterGroup(read), BLOCK_HASH_FILTER_TYPE);
 
                                     MEM_CONTEXT_OBJ_BEGIN(fileList)
                                     {
-                                        file->deltaMap = pckReadBinP(deltaMapResult);
+                                        file->blockHash = pckReadBinP(blockHashResult);
                                     }
                                     MEM_CONTEXT_OBJ_END();
                                 }
@@ -279,7 +279,7 @@ restoreFile(
                     StorageWrite *pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
-                        .noTruncate = file->deltaMap != NULL);
+                        .noTruncate = file->blockHash != NULL);
 
                     // If block incremental file
                     const Buffer *checksum = NULL;
@@ -288,8 +288,8 @@ restoreFile(
                     {
                         ASSERT(referenceList != NULL);
 
-                        // Read block map. This will be compared to the delta map already created to determine which blocks need to
-                        // be fetched from the repository. If we got here there must be at least one block to fetch.
+                        // Read block map. This will be compared to the block hash list already created to determine which blocks
+                        // need to be fetched from the repository. If we got here there must be at least one block to fetch.
                         const BlockMap *const blockMap = blockMapNewRead(storageReadIo(repoFileRead));
 
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
@@ -300,7 +300,7 @@ restoreFile(
 
                         // Apply delta to file
                         BlockRestore *const blockRestore = blockRestoreNew(
-                            blockMap, file->blockIncrSize, file->deltaMap,
+                            blockMap, file->blockIncrSize, file->blockHash,
                             cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
 
                         for (unsigned int readIdx = 0; readIdx < blockRestoreReadSize(blockRestore); readIdx++)
