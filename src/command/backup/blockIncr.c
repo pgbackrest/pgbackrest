@@ -175,7 +175,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                     }
 
                     // Write the block no as a delta of the prior block no. If the size of the last block is smaller than block
-                    // size when write the smaller block size.
+                    // size then write the smaller block size.
                     const uint64_t blockEncoded = bufUsed(this->block) < this->blockSize ? BLOCK_INCR_FLAG_SIZE : 0;
 
                     ioWriteVarIntU64(
