@@ -126,9 +126,10 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             hrnPackToStr(pckFromBuf(pack)),
-               "1:u64:488"
-             ", 2:u64:1911246845"
-             ", 7:u64:18446744073709551615"
+            // {uncrustify_off - indentation}
+              "1:u64:488"
+            ", 2:u64:1911246845"
+            ", 7:u64:18446744073709551615"
             ", 10:u64:1"
             ", 11:u64:77"
             ", 12:u32:127"
@@ -174,10 +175,12 @@ testRun(void)
             ", 51:bin:"
             ", 52:pack:<1:u64:345, 3:str:sub>"
             ", 54:array:[1:str:a, 2:str:bcd]",
+            // {uncrustify_on}
             "check pack string");
 
         TEST_RESULT_STR_Z(
             strNewEncode(encodingHex, pack),
+            // {uncrustify_off - indentation}
             "98e803"                                                //  1,  u64, 750
             "98fd9fad8f07"                                          //  2,  u64, 1911246845
             "9c01ffffffffffffffffff01"                              //  7,  u64, 0xFFFFFFFFFFFFFFFF
@@ -223,6 +226,7 @@ testRun(void)
             "f0020998d902790373756200"                              // 52,  pack, 1:u64:345, 3:str:sub
             "11780161780362636400"                                  // 54,  strlst, 1:str:a, 2:str:bcd
             "00",                                                   // end
+            // {uncrustify_on}
             "check pack hex");
 
         // -------------------------------------------------------------------------------------------------------------------------

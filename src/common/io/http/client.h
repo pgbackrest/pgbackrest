@@ -29,15 +29,15 @@ typedef struct HttpClient HttpClient;
 Statistics constants
 ***********************************************************************************************************************************/
 #define HTTP_STAT_CLIENT                                            "http.client"       // Clients created
-    STRING_DECLARE(HTTP_STAT_CLIENT_STR);
+STRING_DECLARE(HTTP_STAT_CLIENT_STR);
 #define HTTP_STAT_CLOSE                                             "http.close"        // Closes forced by server
-    STRING_DECLARE(HTTP_STAT_CLOSE_STR);
+STRING_DECLARE(HTTP_STAT_CLOSE_STR);
 #define HTTP_STAT_REQUEST                                           "http.request"      // Requests (i.e. calls to httpRequestNew())
-    STRING_DECLARE(HTTP_STAT_REQUEST_STR);
+STRING_DECLARE(HTTP_STAT_REQUEST_STR);
 #define HTTP_STAT_RETRY                                             "http.retry"        // Request retries
-    STRING_DECLARE(HTTP_STAT_RETRY_STR);
+STRING_DECLARE(HTTP_STAT_RETRY_STR);
 #define HTTP_STAT_SESSION                                           "http.session"      // Sessions created
-    STRING_DECLARE(HTTP_STAT_SESSION_STR);
+STRING_DECLARE(HTTP_STAT_SESSION_STR);
 
 /***********************************************************************************************************************************
 Constructors

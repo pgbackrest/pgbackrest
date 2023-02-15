@@ -41,7 +41,7 @@ tlsSessionToLog(const THIS_VOID, StringStatic *const debugLog)
 
     strStcCat(debugLog, "{ioSession: ");
     ioSessionToLog(this->ioSession, debugLog);
-    strStcFmt(debugLog, ", timeout: %" PRIu64", shutdownOnClose: %s}", this->timeout, cvtBoolToConstZ(this->shutdownOnClose));
+    strStcFmt(debugLog, ", timeout: %" PRIu64 ", shutdownOnClose: %s}", this->timeout, cvtBoolToConstZ(this->shutdownOnClose));
 }
 
 #define FUNCTION_LOG_TLS_SESSION_TYPE                                                                                              \

@@ -3,7 +3,6 @@ Html and body
 *******************************************************************************/
 html
 {
-    background-color: #f8f8f8;
     font-family: Avenir, Corbel, sans-serif;
     font-size: 12pt;
     margin-top: 8px;
@@ -14,10 +13,18 @@ html
 
 body
 {
+    background: #f8f8f8;
     margin: 0px auto;
     padding: 0px;
     width: 100%;
     text-align: justify;
+    font-weight: 400;
+}
+
+a:link, a:visited, a:hover, a:active
+{
+    text-decoration: underline;
+    color: black;
 }
 
 @media (min-width: 1000px)
@@ -28,13 +35,20 @@ body
     }
 }
 
-/*******************************************************************************
-Link default styling
-*******************************************************************************/
-a:link, a:visited, a:hover, a:active
+@media (prefers-color-scheme: dark)
 {
-    text-decoration: underline;
-    color: black;
+    body
+    {
+        color: #e2e2e2;
+        background: #181818;
+        font-weight: 350;
+    }
+
+    body a:link, body a:visited, body a:hover, body a:active
+    {
+        text-decoration: underline;
+        color: #e2e2e2;
+    }
 }
 
 /*******************************************************************************
@@ -208,8 +222,8 @@ Section
 .section1-header, .page-toc-header
 {
     border-radius: 3px;
-    background-color: #396a93;
-    color: #f8f8f8;
+    background-color: #205581;
+    color: #f2f2f2;
     font-size: 22pt;
     padding-left: .5em;
     margin-bottom: .5em;
@@ -257,8 +271,8 @@ Section
 
 .section2-header
 {
-    border-bottom: 2px #396a93 solid;
-    color: #396a93;
+    border-bottom: 2px #27689d solid;
+    color: #27689d;
     font-size: 16pt;
 }
 
@@ -287,8 +301,8 @@ Section
 {
     display: inline;
     font-size: 14pt;
-    color: #396a93;
-    border-bottom: 1px #396a93 solid;
+    color: #27689d;
+    border-bottom: 1px #27689d solid;
 }
 
 .section-intro
@@ -312,7 +326,7 @@ Table Elements
     text-align: left;
     font-size: 12pt;
     font-weight: bold;
-    color: #396a93;
+    color: #27689d;
 }
 
 .table-header-row

@@ -551,12 +551,12 @@ ioFilterGroupToLog(const IoFilterGroup *const this, StringStatic *const debugLog
         debugLog,
         "{inputSame: %s, done: %s"
 #ifdef DEBUG
-            ", opened %s, flushing %s, closed %s"
+        ", opened %s, flushing %s, closed %s"
 #endif
-            "}",
+        "}",
         cvtBoolToConstZ(this->pub.inputSame), cvtBoolToConstZ(this->pub.done)
 #ifdef DEBUG
         , cvtBoolToConstZ(this->pub.opened), cvtBoolToConstZ(this->flushing), cvtBoolToConstZ(this->pub.closed)
 #endif
-    );
+        );
 }

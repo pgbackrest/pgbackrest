@@ -5,8 +5,8 @@ LZ4 Decompress
 
 #ifdef HAVE_LIBLZ4
 
-#include <stdio.h>
 #include <lz4frame.h>
+#include <stdio.h>
 
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/decompress.h"

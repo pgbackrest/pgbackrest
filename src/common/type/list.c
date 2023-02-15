@@ -218,7 +218,7 @@ lstFindDefault(const List *this, const void *item, void *itemDefault)
     ASSERT(this != NULL);
     ASSERT(item != NULL);
 
-    void *result= lstFind(this, item);
+    void *result = lstFind(this, item);
 
     FUNCTION_TEST_RETURN_P(VOID, result == NULL ? itemDefault : result);
 }
@@ -236,9 +236,9 @@ lstIdx(const List *this, const void *item)
     ASSERT(item != NULL);
 
     // Item pointers should always be aligned with the beginning of an item in the list
-    ASSERT((size_t)((unsigned char * const)item - this->list) % this->itemSize == 0);
+    ASSERT((size_t)((unsigned char *const)item - this->list) % this->itemSize == 0);
 
-    size_t result = (size_t)((unsigned char * const)item - this->list) / this->itemSize;
+    size_t result = (size_t)((unsigned char *const)item - this->list) / this->itemSize;
 
     // Item pointers should always be in range
     ASSERT(result < lstSize(this));

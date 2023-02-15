@@ -8,8 +8,8 @@ Ini Handler
 #include <string.h>
 
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/ini.h"
+#include "common/log.h"
 #include "common/type/json.h"
 #include "common/type/keyValue.h"
 

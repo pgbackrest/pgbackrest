@@ -54,9 +54,11 @@ testRun(void)
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
-                "{"
-                    "\".\":{\"type\":\"path\"}"
-                "}\n",
+            // {uncrustify_off - indentation}
+            "{"
+                "\".\":{\"type\":\"path\"}"
+            "}\n",
+            // {uncrustify_on}
             "check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -74,9 +76,11 @@ testRun(void)
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
-                "{"
-                    "\".\":{\"type\":\"path\"}"
-                "}\n",
+            // {uncrustify_off - indentation}
+            "{"
+                "\".\":{\"type\":\"path\"}"
+            "}\n",
+            // {uncrustify_on}
             "check output");
 
         output = bufNew(0);
@@ -84,9 +88,11 @@ testRun(void)
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory with filter match (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
-                "{"
-                    "\".\":{\"type\":\"path\"}"
-                "}\n",
+            // {uncrustify_off - indentation}
+            "{"
+                "\".\":{\"type\":\"path\"}"
+            "}\n",
+            // {uncrustify_on}
             "check output");
 
         output = bufNew(0);
@@ -130,13 +136,15 @@ testRun(void)
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
-                "{"
-                    "\".\":{\"type\":\"path\"},"
-                    "\"aaa\":{\"type\":\"file\",\"size\":8,\"time\":1578671569},"
-                    "\"bbb\":{\"type\":\"path\"},"
-                    "\"link\":{\"type\":\"link\",\"destination\":\"../bbb\"},"
-                    "\"pipe\":{\"type\":\"special\"}"
-                "}\n",
+            // {uncrustify_off - indentation}
+            "{"
+                "\".\":{\"type\":\"path\"},"
+                "\"aaa\":{\"type\":\"file\",\"size\":8,\"time\":1578671569},"
+                "\"bbb\":{\"type\":\"path\"},"
+                "\"link\":{\"type\":\"link\",\"destination\":\"../bbb\"},"
+                "\"pipe\":{\"type\":\"special\"}"
+            "}\n",
+            // {uncrustify_on}
             "check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -238,7 +246,7 @@ testRun(void)
         // Close the fd to make sure the error gets caught
         close(STDOUT_FILENO);
 
-        // // Not in a test wrapper to avoid writing to stdout
+        // Not in a test wrapper to avoid writing to stdout
         cmdStorageList();
 
         // Restore normal stdout
@@ -268,9 +276,11 @@ testRun(void)
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "file (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
-                "{"
-                    "\".\":{\"type\":\"file\",\"size\":8,\"time\":1578671569}"
-                "}\n",
+            // {uncrustify_off - indentation}
+            "{"
+                "\".\":{\"type\":\"file\",\"size\":8,\"time\":1578671569}"
+            "}\n",
+            // {uncrustify_on}
             "check output");
 
         output = bufNew(0);
@@ -278,9 +288,11 @@ testRun(void)
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "file (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
-                "{"
-                    "\".\":{\"type\":\"file\",\"size\":8,\"time\":1578671569}"
-                "}\n",
+            // {uncrustify_off - indentation}
+            "{"
+                "\".\":{\"type\":\"file\",\"size\":8,\"time\":1578671569}"
+            "}\n",
+            // {uncrustify_on}
             "check output");
 
         output = bufNew(0);

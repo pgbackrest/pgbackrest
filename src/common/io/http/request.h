@@ -22,48 +22,48 @@ typedef struct HttpRequest HttpRequest;
 HTTP Constants
 ***********************************************************************************************************************************/
 #define HTTP_VERSION                                                "HTTP/1.1"
-    STRING_DECLARE(HTTP_VERSION_STR);
+STRING_DECLARE(HTTP_VERSION_STR);
 #define HTTP_VERSION_10                                             "HTTP/1.0"
-    STRING_DECLARE(HTTP_VERSION_10_STR);
+STRING_DECLARE(HTTP_VERSION_10_STR);
 
 #define HTTP_VERB_DELETE                                            "DELETE"
-    STRING_DECLARE(HTTP_VERB_DELETE_STR);
+STRING_DECLARE(HTTP_VERB_DELETE_STR);
 #define HTTP_VERB_GET                                               "GET"
-    STRING_DECLARE(HTTP_VERB_GET_STR);
+STRING_DECLARE(HTTP_VERB_GET_STR);
 #define HTTP_VERB_HEAD                                              "HEAD"
-    STRING_DECLARE(HTTP_VERB_HEAD_STR);
+STRING_DECLARE(HTTP_VERB_HEAD_STR);
 #define HTTP_VERB_POST                                              "POST"
-    STRING_DECLARE(HTTP_VERB_POST_STR);
+STRING_DECLARE(HTTP_VERB_POST_STR);
 #define HTTP_VERB_PUT                                               "PUT"
-    STRING_DECLARE(HTTP_VERB_PUT_STR);
+STRING_DECLARE(HTTP_VERB_PUT_STR);
 
 #define HTTP_HEADER_AUTHORIZATION                                   "authorization"
-    STRING_DECLARE(HTTP_HEADER_AUTHORIZATION_STR);
+STRING_DECLARE(HTTP_HEADER_AUTHORIZATION_STR);
 #define HTTP_HEADER_CONTENT_LENGTH                                  "content-length"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
+STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
 #define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
+STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
 #define HTTP_HEADER_CONTENT_RANGE                                   "content-range"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_RANGE_STR);
+STRING_DECLARE(HTTP_HEADER_CONTENT_RANGE_STR);
 #define HTTP_HEADER_CONTENT_TYPE                                    "content-type"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_STR);
+STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_STR);
 #define HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL                       "application/x-www-form-urlencoded"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
+STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
 #define HTTP_HEADER_CONTENT_TYPE_JSON                               "application/json"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_JSON_STR);
+STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_JSON_STR);
 #define HTTP_HEADER_CONTENT_TYPE_XML                                "application/xml"
-    STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_XML_STR);
+STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_XML_STR);
 #define HTTP_HEADER_CONTENT_RANGE_BYTES                             "bytes"
 #define HTTP_HEADER_DATE                                            "date"
-    STRING_DECLARE(HTTP_HEADER_DATE_STR);
+STRING_DECLARE(HTTP_HEADER_DATE_STR);
 #define HTTP_HEADER_ETAG                                            "etag"
-    STRING_DECLARE(HTTP_HEADER_ETAG_STR);
+STRING_DECLARE(HTTP_HEADER_ETAG_STR);
 #define HTTP_HEADER_HOST                                            "host"
-    STRING_DECLARE(HTTP_HEADER_HOST_STR);
+STRING_DECLARE(HTTP_HEADER_HOST_STR);
 #define HTTP_HEADER_LAST_MODIFIED                                   "last-modified"
-    STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
+STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
 #define HTTP_HEADER_RANGE                                           "range"
-    STRING_DECLARE(HTTP_HEADER_RANGE_STR);
+STRING_DECLARE(HTTP_HEADER_RANGE_STR);
 #define HTTP_HEADER_RANGE_BYTES                                     "bytes"
 
 /***********************************************************************************************************************************

@@ -24,7 +24,7 @@ Posix Storage
 Define PATH_MAX if it is not defined
 ***********************************************************************************************************************************/
 #ifndef PATH_MAX
-    #define PATH_MAX                                                (4 * 1024)
+#define PATH_MAX                                                    (4 * 1024)
 #endif
 
 /***********************************************************************************************************************************
@@ -234,14 +234,14 @@ storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel lev
                         // stat() and is therefore relatively slow
                         if (level == storageInfoLevelExists)
                         {
-                            storageLstAdd(
-                                result,
-                                &(StorageInfo)
-                                {
-                                    .name = STR(dirEntry->d_name),
-                                    .level = storageInfoLevelExists,
-                                    .exists = true,
-                                });
+                            const StorageInfo storageInfo =
+                            {
+                                .name = STR(dirEntry->d_name),
+                                .level = storageInfoLevelExists,
+                                .exists = true,
+                            };
+
+                            storageLstAdd(result, &storageInfo);
                         }
                         // Else more info is required which requires a call to stat()
                         else

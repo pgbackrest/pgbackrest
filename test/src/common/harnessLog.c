@@ -4,10 +4,10 @@ Log Test Harness
 #include "build.auto.h"
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <regex.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "build/common/regExp.h"
 #include "common/log.h"
@@ -95,7 +95,8 @@ hrnLogLevelFile(void)
     return logLevelFile;
 }
 
-void hrnLogLevelFileSet(unsigned int logLevel)
+void
+hrnLogLevelFileSet(unsigned int logLevel)
 {
     logLevelFile = logLevel;
 }
@@ -106,7 +107,8 @@ hrnLogLevelStdOut(void)
     return logLevelStdOut;
 }
 
-void hrnLogLevelStdOutSet(unsigned int logLevel)
+void
+hrnLogLevelStdOutSet(unsigned int logLevel)
 {
     logLevelStdOut = logLevel;
 }
@@ -117,7 +119,8 @@ hrnLogLevelStdErr(void)
     return logLevelStdErr;
 }
 
-void hrnLogLevelStdErrSet(unsigned int logLevel)
+void
+hrnLogLevelStdErrSet(unsigned int logLevel)
 {
     logLevelStdErr = logLevel;
 }
@@ -173,7 +176,8 @@ harnessLogLevelDefaultSet(LogLevel logLevel)
 }
 
 /**********************************************************************************************************************************/
-void hrnLogProcessIdSet(unsigned int processId)
+void
+hrnLogProcessIdSet(unsigned int processId)
 {
     logProcessId = processId;
 }

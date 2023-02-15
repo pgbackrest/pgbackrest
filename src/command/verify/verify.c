@@ -426,7 +426,7 @@ verifyManifestFile(
                     result = verifyManifestInfoCopy.manifest;
                 }
                 else if (verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError) &&
-                    verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
+                         verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
                 {
                     backupResult->status = backupMissingManifest;
 
@@ -465,7 +465,7 @@ verifyManifestFile(
             {
                 LOG_INFO_FMT(
                     "'%s' may not be recoverable - PG data (id %u, version %s, system-id %" PRIu64 ") is not in the backup.info"
-                        " history, skipping",
+                    " history, skipping",
                     strZ(backupResult->backupLabel), manData->pgId, strZ(pgVersionToStr(manData->pgVersion)), manData->pgSystemId);
 
                 manifestFree(result);
@@ -978,8 +978,8 @@ verifyBackup(VerifyJobData *const jobData)
                             PackWrite *const param = protocolCommandParam(command);
 
                             const String *const filePathName = strNewFmt(
-                                    STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
-                                    strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
+                                STORAGE_REPO_BACKUP "/%s/%s%s", strZ(fileBackupLabel), strZ(fileData.name),
+                                strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
 
                             if (fileData.bundleId != 0)
                             {
@@ -1341,6 +1341,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
         for (unsigned int archiveIdx = 0; archiveIdx < lstSize(archiveIdResultList); archiveIdx++)
         {
             VerifyArchiveResult *archiveIdResult = lstGet(archiveIdResultList, archiveIdx);
+
             if (verboseText || archiveIdResult->totalWalFile - archiveIdResult->totalValidWal != 0)
             {
                 strCatFmt(
@@ -1631,8 +1632,8 @@ verifyProcess(const bool verboseText)
                                         // Add invalid file to the WAL range
                                         verifyAddInvalidWalFile(
                                             archiveIdResult->walRangeList, verifyResult, filePathName,
-                                            strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0,
-                                            WAL_SEGMENT_NAME_SIZE));
+                                            strSubN(
+                                                strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE));
                                     }
                                 }
                                 else

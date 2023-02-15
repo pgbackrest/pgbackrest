@@ -29,7 +29,7 @@ old context and then back. Below is a simplified example:
 Minimum number of extra bytes to allocate for strings that are growing or are likely to grow
 ***********************************************************************************************************************************/
 #ifndef STRING_EXTRA_MIN
-    #define STRING_EXTRA_MIN                                            64
+#define STRING_EXTRA_MIN                                            64
 #endif
 
 /***********************************************************************************************************************************
@@ -73,7 +73,7 @@ FN_EXTERN String *strNewDbl(double value);
 FN_EXTERN String *strNewEncode(EncodingType type, const Buffer *buffer);
 
 // Create a new fixed length string from a format string with parameters (i.e. sprintf)
-FN_EXTERN String *strNewFmt(const char *format, ...) __attribute__((format(printf, 1, 2)));
+FN_EXTERN FN_PRINTF(1, 2) String *strNewFmt(const char *format, ...);
 
 // Create a new fixed length string from a string
 FN_EXTERN String *strDup(const String *this);
@@ -83,8 +83,8 @@ Getters/setters
 ***********************************************************************************************************************************/
 typedef struct StringPub
 {
-    uint64_t size:32;                                               // Actual size of the string
-    uint64_t extra:32;                                              // Extra space allocated for expansion
+    uint64_t size : 32;                                             // Actual size of the string
+    uint64_t extra : 32;                                            // Extra space allocated for expansion
     char *buffer;                                                   // String buffer
 } StringPub;
 
@@ -130,7 +130,7 @@ FN_EXTERN String *strCatChr(String *this, char cat);
 FN_EXTERN String *strCatEncode(String *this, EncodingType type, const Buffer *buffer);
 
 // Append a formatted string
-FN_EXTERN String *strCatFmt(String *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FN_EXTERN FN_PRINTF(2, 3) String *strCatFmt(String *this, const char *format, ...);
 
 // Append N characters from a zero-terminated string. Note that the string does not actually need to be zero-terminated as long as
 // N is <= the end of the string being concatenated.

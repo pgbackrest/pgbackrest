@@ -40,8 +40,11 @@ jobs:
           # All integration tests
           - param: test --vm=u22 --param=build-package --param=module=mock --param=module=real
 
-          # All unit tests with coverage and alternate timezone
-          - param: test --vm=u22 --param=c-only --param=tz=America/New_York
+          # All unit tests with coverage, backtrace and alternate timezone
+          - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
+
+          # All unit tests with valgrind (disable coverage and backtrace for performance)
+          - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
 
           # All unit tests on the newest gcc available
           - param: test --vm=f36 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
@@ -123,6 +126,20 @@ jobs:
       - name: Check
         run: |
           diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
+
+  # Check that code is correctly formatted
+  code-format:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          path: pgbackrest
+
+      - name: Check
+        run: |
+          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=none --param=code-format-check
 
   codeql:
     runs-on: ubuntu-latest

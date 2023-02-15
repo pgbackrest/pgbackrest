@@ -4865,6 +4865,41 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                               // opt/repo-azure-uri-style
     ),                                                                                                   // opt/repo-azure-uri-style
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                              // opt/repo-block
+    (                                                                                                              // opt/repo-block
+        PARSE_RULE_OPTION_NAME("repo-block"),                                                                      // opt/repo-block
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                                                 // opt/repo-block
+        PARSE_RULE_OPTION_NEGATE(true),                                                                            // opt/repo-block
+        PARSE_RULE_OPTION_RESET(true),                                                                             // opt/repo-block
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/repo-block
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                               // opt/repo-block
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                                      // opt/repo-block
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                                 // opt/repo-block
+                                                                                                                   // opt/repo-block
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/repo-block
+        (                                                                                                          // opt/repo-block
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/repo-block
+        ),                                                                                                         // opt/repo-block
+                                                                                                                   // opt/repo-block
+        PARSE_RULE_OPTIONAL                                                                                        // opt/repo-block
+        (                                                                                                          // opt/repo-block
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/repo-block
+            (                                                                                                      // opt/repo-block
+                PARSE_RULE_OPTIONAL_DEPEND                                                                         // opt/repo-block
+                (                                                                                                  // opt/repo-block
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),                                 // opt/repo-block
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBundle),                                                          // opt/repo-block
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                                      // opt/repo-block
+                ),                                                                                                 // opt/repo-block
+                                                                                                                   // opt/repo-block
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/repo-block
+                (                                                                                                  // opt/repo-block
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                     // opt/repo-block
+                ),                                                                                                 // opt/repo-block
+            ),                                                                                                     // opt/repo-block
+        ),                                                                                                         // opt/repo-block
+    ),                                                                                                             // opt/repo-block
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                             // opt/repo-bundle
     (                                                                                                             // opt/repo-bundle
         PARSE_RULE_OPTION_NAME("repo-bundle"),                                                                    // opt/repo-bundle
@@ -10062,6 +10097,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoAzureKey,                                                                                         // opt-resolve-order
     cfgOptRepoAzureKeyType,                                                                                     // opt-resolve-order
     cfgOptRepoAzureUriStyle,                                                                                    // opt-resolve-order
+    cfgOptRepoBlock,                                                                                            // opt-resolve-order
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order

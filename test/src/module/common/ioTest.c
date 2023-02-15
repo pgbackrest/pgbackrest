@@ -771,5 +771,46 @@ testRun(void)
         TRY_END();
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("IoChunkedRead and ioChunkedWrite"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write chunks");
+
+        ioBufferSizeSet(3);
+        Buffer *destination = bufNew(256);
+        IoWrite *write = ioBufferWriteNew(destination);
+        ioFilterGroupAdd(ioWriteFilterGroup(write), ioChunkNew());
+        ioWriteOpen(write);
+
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("ABC")), "write");
+        TEST_RESULT_VOID(ioWrite(write, BUFSTRDEF("DEF")), "write");
+        TEST_RESULT_VOID(ioWriteClose(write), "close");
+
+        TEST_RESULT_STR_Z(strNewEncode(encodingHex, destination), "034142430144454600", "check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read chunks");
+
+        ioBufferSizeSet(2);
+        IoRead *read = ioChunkedReadNew(ioBufferReadNewOpen(destination));
+        ioReadOpen(read);
+
+        Buffer *actual = bufNew(3);
+        TEST_RESULT_UINT(ioRead(read, actual), 3, "read");
+        TEST_RESULT_STR_Z(strNewBuf(actual), "ABC", "check");
+
+        actual = bufNew(1);
+        TEST_RESULT_UINT(ioRead(read, actual), 1, "read");
+        TEST_RESULT_STR_Z(strNewBuf(actual), "D", "check");
+
+        actual = bufNew(3);
+        TEST_RESULT_UINT(ioRead(read, actual), 2, "read");
+        TEST_RESULT_STR_Z(strNewBuf(actual), "EF", "check");
+
+        actual = bufNew(2);
+        TEST_RESULT_UINT(ioRead(read, actual), 0, "eof");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

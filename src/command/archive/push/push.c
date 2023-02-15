@@ -17,8 +17,8 @@ Archive Push Command
 #include "common/memContext.h"
 #include "common/wait.h"
 #include "config/config.h"
-#include "config/load.h"
 #include "config/exec.h"
+#include "config/load.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -275,15 +275,15 @@ archivePushCheck(bool pgPathSet)
                     result.pgVersion = archiveInfo.version;
                     result.pgSystemId = archiveInfo.systemId;
 
-                    lstAdd(
-                        result.repoList,
-                        &(ArchivePushFileRepoData)
-                        {
-                            .repoIdx = repoIdx,
-                            .archiveId = strDup(archiveId),
-                            .cipherType = repoCipherType,
-                            .cipherPass = strDup(infoArchiveCipherPass(info)),
-                        });
+                    const ArchivePushFileRepoData archivePushFileRepoData =
+                    {
+                        .repoIdx = repoIdx,
+                        .archiveId = strDup(archiveId),
+                        .cipherType = repoCipherType,
+                        .cipherPass = strDup(infoArchiveCipherPass(info)),
+                    };
+
+                    lstAdd(result.repoList, &archivePushFileRepoData);
                 }
                 MEM_CONTEXT_PRIOR_END();
             }

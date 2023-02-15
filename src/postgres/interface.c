@@ -200,7 +200,7 @@ pgControlFromBuffer(const Buffer *controlFile)
         THROW_FMT(
             VersionNotSupportedError,
             "unexpected control version = %u and catalog version = %u\n"
-                "HINT: is this version of PostgreSQL supported?",
+            "HINT: is this version of PostgreSQL supported?",
             controlCommon->controlVersion, controlCommon->catalogVersion);
     }
 
@@ -297,7 +297,7 @@ pgWalFromBuffer(const Buffer *walBuffer)
         THROW_FMT(
             VersionNotSupportedError,
             "unexpected WAL magic %u\n"
-                "HINT: is this version of PostgreSQL supported?",
+            "HINT: is this version of PostgreSQL supported?",
             ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
     }
 

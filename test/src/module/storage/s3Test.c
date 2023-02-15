@@ -116,7 +116,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         strCatFmt(
             request,
             "x-amz-content-sha256:%s\r\n"
-                "x-amz-date:????????T??????Z" "\r\n",
+            "x-amz-date:????????T??????Z" "\r\n",
             param.content == NULL ?
                 HASH_TYPE_SHA256_ZERO : strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content)))));
 
@@ -195,8 +195,8 @@ testResponse(IoWrite *write, TestResponseParam param)
         strCatFmt(
             response,
             "content-length:%zu\r\n"
-                "\r\n"
-                "%s",
+            "\r\n"
+            "%s",
             strlen(param.content), param.content);
     }
     else
@@ -295,11 +295,12 @@ testRun(void)
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_Z(logBuf,
+        TEST_RESULT_Z(
+            logBuf,
             zNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.s3.amazonaws.com, port: 443"
-                    ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
-                    ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
+                ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
@@ -316,9 +317,9 @@ testRun(void)
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
-            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
-                "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
-                "Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3",
+            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request"
+            ",SignedHeaders=host;x-amz-content-sha256;x-amz-date"
+            ",Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3",
             "check authorization header");
 
         // Test again to be sure cache signing key is used
@@ -330,9 +331,9 @@ testRun(void)
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
-            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
-                "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
-                "Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3",
+            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request"
+            ",SignedHeaders=host;x-amz-content-sha256;x-amz-date"
+            ",Signature=cb03bf1d575c1f8904dabf0e573990375340ab293ef7ad18d049fc1338fd89b3",
             "check authorization header");
         TEST_RESULT_BOOL(driver->signingKey == lastSigningKey, true, "check signing key was reused");
 
@@ -345,9 +346,9 @@ testRun(void)
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
-            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20180814/us-east-1/s3/aws4_request,"
-                "SignedHeaders=host;x-amz-content-sha256;x-amz-date,"
-                "Signature=d0fa9c36426eb94cdbaf287a7872c7a3b6c913f523163d0d7debba0758e36f49",
+            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20180814/us-east-1/s3/aws4_request"
+            ",SignedHeaders=host;x-amz-content-sha256;x-amz-date"
+            ",Signature=d0fa9c36426eb94cdbaf287a7872c7a3b6c913f523163d0d7debba0758e36f49",
             "check authorization header");
         TEST_RESULT_BOOL(driver->signingKey != lastSigningKey, true, "check signing key was regenerated");
 
@@ -366,11 +367,12 @@ testRun(void)
         TEST_RESULT_STR(driver->securityToken, securityToken, "check security token");
         TEST_RESULT_VOID(
             FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_Z(logBuf,
+        TEST_RESULT_Z(
+            logBuf,
             zNewFmt(
                 "{ioClient: {type: tls, driver: {ioClient: {type: socket, driver: {host: bucket.custom.endpoint, port: 333"
-                    ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
-                    ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
+                ", timeoutConnect: 60000, timeoutSession: 60000}}, timeoutConnect: 60000, timeoutSession: 60000"
+                ", verifyPeer: %s}}, reusable: 0, timeout: 60000}",
                 cvtBoolToConstZ(TEST_IN_CONTAINER)),
             "check http client");
 
@@ -383,9 +385,9 @@ testRun(void)
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
-            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request,"
-                "SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,"
-                "Signature=85278841678ccbc0f137759265030d7b5e237868dd36eea658426b18344d1685",
+            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3/aws4_request"
+            ",SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token"
+            ",Signature=85278841678ccbc0f137759265030d7b5e237868dd36eea658426b18344d1685",
             "check authorization header");
     }
 
@@ -522,12 +524,12 @@ testRun(void)
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "HTTP request failed with 301:\n"
-                        "*** Path/Query ***:\n"
-                        "GET /latest/meta-data/iam/security-credentials\n"
-                        "*** Request Headers ***:\n"
-                        "content-length: 0\n"
-                        "host: %s\n"
-                        "x-aws-ec2-metadata-token: WtokenW",
+                    "*** Path/Query ***:\n"
+                    "GET /latest/meta-data/iam/security-credentials\n"
+                    "*** Request Headers ***:\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "x-aws-ec2-metadata-token: WtokenW",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -549,7 +551,7 @@ testRun(void)
                 TEST_ERROR(
                     storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "role to retrieve temporary credentials not found\n"
-                        "HINT: is a valid IAM role associated with this instance?");
+                    "HINT: is a valid IAM role associated with this instance?");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error when retrieving temp credentials and missing token");
@@ -576,11 +578,11 @@ testRun(void)
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "HTTP request failed with 300:\n"
-                        "*** Path/Query ***:\n"
-                        "GET /latest/meta-data/iam/security-credentials/credrole\n"
-                        "*** Request Headers ***:\n"
-                        "content-length: 0\n"
-                        "host: %s",
+                    "*** Path/Query ***:\n"
+                    "GET /latest/meta-data/iam/security-credentials/credrole\n"
+                    "*** Request Headers ***:\n"
+                    "content-length: 0\n"
+                    "host: %s",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -602,7 +604,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), ProtocolError,
                     "role '%s' not found\n"
-                        "HINT: is '%s' a valid IAM role associated with this instance?",
+                    "HINT: is '%s' a valid IAM role associated with this instance?",
                     strZ(credRole), strZ(credRole));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -643,7 +645,7 @@ testRun(void)
                     auth,
                     .content = zNewFmt(
                         "{\"Code\":\"Success\",\"AccessKeyId\":\"x\",\"SecretAccessKey\":\"y\",\"Token\":\"z\""
-                            ",\"Expiration\":\"%s\"}",
+                        ",\"Expiration\":\"%s\"}",
                         strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1)))));
 
                 hrnServerScriptClose(auth);
@@ -694,7 +696,7 @@ testRun(void)
                     auth,
                     .content = zNewFmt(
                         "{\"Code\":\"Success\",\"AccessKeyId\":\"xx\",\"SecretAccessKey\":\"yy\",\"Token\":\"zz\""
-                            ",\"Expiration\":\"%s\"}",
+                        ",\"Expiration\":\"%s\"}",
                         strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2)))));
 
                 hrnServerScriptClose(auth);
@@ -826,9 +828,9 @@ testRun(void)
                     "x-amz-security-token: <redacted>\n"
                     "*** Response Headers ***:\n"
                     "content-length: 110\n"
-                        "*** Response Content ***:\n"
+                    "*** Response Content ***:\n"
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>");
+                    "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
@@ -890,6 +892,7 @@ testRun(void)
                 #define TEST_SERVICE_URI                                                                                           \
                     "/?Action=AssumeRoleWithWebIdentity&RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole"               \
                         "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=" TEST_SERVICE_TOKEN
+                // {uncrustify_off - comment inside string}
                 #define TEST_SERVICE_RESPONSE                                                                                      \
                     "<AssumeRoleWithWebIdentityResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\">\n"                    \
                     "  <AssumeRoleWithWebIdentityResult>\n"                                                                        \
@@ -901,6 +904,7 @@ testRun(void)
                     "    </Credentials>\n"                                                                                         \
                     "  </AssumeRoleWithWebIdentityResult>\n"                                                                       \
                     "</AssumeRoleWithWebIdentityResponse>"
+                // {uncrustify_on}
 
                 HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
 
@@ -1015,7 +1019,8 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 testResponseP(service, .code = 344);
 
-                TEST_ERROR(storageListP(s3, STRDEF("/")), ProtocolError,
+                TEST_ERROR(
+                    storageListP(s3, STRDEF("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
                     "*** Path/Query ***:\n"
                     "GET /?delimiter=%2F&list-type=2\n"
@@ -1039,7 +1044,8 @@ testRun(void)
                         "<Code>SomeOtherCode</Code>"
                         "</Error>");
 
-                TEST_ERROR(storageListP(s3, STRDEF("/")), ProtocolError,
+                TEST_ERROR(
+                    storageListP(s3, STRDEF("/")), ProtocolError,
                     "HTTP request failed with 344:\n"
                     "*** Path/Query ***:\n"
                     "GET /?delimiter=%2F&list-type=2\n"
@@ -1154,7 +1160,7 @@ testRun(void)
                 testRequestP(
                     service, s3, HTTP_VERB_GET,
                     "/?continuation-token=1ueGcxLPRx1Tr%2FXYExHnhbYLgveDs2J%2Fwm36Hy4vbOwM%3D&delimiter=%2F&list-type=2"
-                        "&prefix=path%2Fto%2F");
+                    "&prefix=path%2Fto%2F");
                 testResponseP(
                     service,
                     .content =
@@ -1370,8 +1376,8 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<DeleteResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                            "<Error><Key>path/sample2.txt</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>"
-                            "</DeleteResult>");
+                        "<Error><Key>path/sample2.txt</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>"
+                        "</DeleteResult>");
 
                 testRequestP(service, s3, HTTP_VERB_DELETE, "/bucket/path/sample2.txt");
                 testResponseP(service, .code = 204);

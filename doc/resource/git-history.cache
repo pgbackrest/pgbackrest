@@ -1,5 +1,438 @@
 [
     {
+        "commit": "053468bfb156a8ecbd5d0325d35141056c89ec52",
+        "date": "2023-01-30 09:15:44 +0700",
+        "subject": "v2.44: Remove PostgreSQL 9.0/9.1/9.2 Support"
+    },
+    {
+        "commit": "a28f3d49c23d7dbd8873d07b7d513b6b7e59345a",
+        "date": "2023-01-28 18:55:53 +0700",
+        "subject": "Add --no-back-trace option to test.pl.",
+        "body": "Running valgrind and backtrace together has been causing tests to timeout in CI, mostly likely due to limited resources. This has not been a problem in normal development environments.\n\nSince it is still important to run backtraces for debugging, split the u22 test that was doing all this work to run coverage and backtrace together and valgrind-only as a separate test. As a bonus these tests run faster separately and since they run in parallel the total execution time is faster."
+    },
+    {
+        "commit": "16c625353db2569ebcc0c28e09d76a9811d2a241",
+        "date": "2023-01-28 16:22:04 +0700",
+        "subject": "Skip test modules in coverage report.",
+        "body": "Coverage of the test code is useful during development but it does not seem worth adding it to the core code coverage report."
+    },
+    {
+        "commit": "d5ef4ce747f0d743b76c5fe05c4e4a02cdd9bd09",
+        "date": "2023-01-28 11:01:29 +0700",
+        "subject": "Fix permissions on source files."
+    },
+    {
+        "commit": "3aea997df5ace85251d0579ccbe13fa938f587ee",
+        "date": "2023-01-25 10:59:13 +0700",
+        "subject": "Add warning about enabling \"hierarchical namespace\" on Azure storage.",
+        "body": "If this feature is enabled expire will fail since directories need to be deleted separately.\r\n\r\nIdeally we would add support for this feature but for now we'll just document the issue."
+    },
+    {
+        "commit": "ed818b31867c640d72ef829dd36cd0a7feff12df",
+        "date": "2023-01-25 10:35:03 +0700",
+        "subject": "Add dark mode to the website.",
+        "body": "The colors could use more tweaking but at least the website will no longer blind users running dark mode."
+    },
+    {
+        "commit": "1da2666a9ef41457ac64ddf2cabccc93b3b05aeb",
+        "date": "2023-01-21 14:03:27 +0700",
+        "subject": "Add manifest test harness.",
+        "body": "These macros make adding paths/files/etc to a manifest simpler and easier to read."
+    },
+    {
+        "commit": "912eec63bb971c10a545e582f628c982f4e00005",
+        "date": "2023-01-20 16:48:57 +0700",
+        "subject": "Block-level incremental backup.",
+        "body": "The primary goal of the block incremental backup is to save space in the repository by only storing changed parts of a file rather than the entire file. This implementation is focused on restore performance more than saving space in the repository, though there may be substantial savings depending on the workload.\r\n\r\nThe repo-block option enables the feature (when repo-bundle is already enabled). The block size is determined based on the file size and age. Very old or very small files will not use block incremental."
+    },
+    {
+        "commit": "008a18555c6474be4327bfe0830ef13166a18ece",
+        "date": "2023-01-20 15:44:01 +0700",
+        "subject": "Fix comment indentation and wrapping."
+    },
+    {
+        "commit": "bfc9a5c33e032ee7f95180cafcec07ce19e11aa9",
+        "date": "2023-01-14 18:01:48 +0700",
+        "subject": "Fix incorrect FUNCTION_TEST_END() in hrnPgWalToBuffer()."
+    },
+    {
+        "commit": "ccee5c0fb1653f00e74de13d917a24b8b3506c22",
+        "date": "2023-01-14 17:12:15 +0700",
+        "subject": "Reduce log level of pgVersionFromStr() and pgVersionToStr()."
+    },
+    {
+        "commit": "596c62c54e375fd25e7e34e9604b47ecc1ab73ff",
+        "date": "2023-01-14 15:25:25 +0700",
+        "subject": "Simply return in pgVersionToStr()."
+    },
+    {
+        "commit": "34e4835ff30e7f44cb36b3f1ed29d670e74a75ca",
+        "date": "2023-01-12 21:24:28 +0700",
+        "subject": "Refactor common/ini module to remove callbacks and duplicated code.",
+        "body": "The callbacks in iniLoad() made the downstream code more complicated than it needed to be so use an iterator model instead.\r\n\r\nCombine the two functions that were used to load the ini data to remove code duplication. In theory it would be nice to use iniValueNext() in the config/parse module rather than loading a KeyValue store but this would mean a big change to the parser, which does not seem worthwhile at this time."
+    },
+    {
+        "commit": "9ca492cecfd40516b8815080af23ee3e64efc22a",
+        "date": "2023-01-12 17:36:57 +0700",
+        "subject": "Audit mem contexts returned from functions into the calling context.",
+        "body": "It is possible for functions to accidentally leak child contexts into the calling context, which may use a lot of memory depending on the use case and where it happens.\n\nUse the function return type to determine what should be returned and error when something else is returned. Add FUNCTION_AUDIT_*() macros to handle exceptions.\n\nThis checking is only performed during unit tests on the code being covered by the specific unit test.\n\nNote that this does not work yet for memory allocations, i.e. memNew(). These are pretty rare so are not as much of an issue and they can be added in the future."
+    },
+    {
+        "commit": "de1dfb66ca022e7ab8370503eacda94629f6ae3f",
+        "date": "2023-01-12 17:14:36 +0700",
+        "subject": "Refactor logging functions to never allocate memory.",
+        "body": "Allocating memory made these functions simpler but it meant that memory was leaking into the calling context when logging was enabled. It is not clear that this was an issue but it seems that trace level logging could result it a lot of memory usage depending on the use case.\n\nThis also makes it possible to audit allocations returned to the calling context, which will be done in a followup commit.\n\nAlso rename objToLog() to objNameToLog() since it seemed logical to name the new function objToLog()."
+    },
+    {
+        "commit": "890b9d009390e472bd96ac74f6b347d7b1cc5a12",
+        "date": "2023-01-12 15:04:49 +0700",
+        "subject": "Remove mostly useless mem context in storageRemoteInfoProtocolPut().",
+        "body": "Maybe this once had a deeper purpose but now at least it is just used to avoid a few trivial allocations. If we really wanted to do that a flag would be better but it does not seem worth the trouble."
+    },
+    {
+        "commit": "6ec2241e15c4d6d6c8fe9a09c2cd562631ba8423",
+        "date": "2023-01-12 14:24:20 +0700",
+        "subject": "Fix leak in protocolServer()."
+    },
+    {
+        "commit": "9d42435ffbaa20febae5a9a5c62446a0fe5d0090",
+        "date": "2023-01-12 14:22:09 +0700",
+        "subject": "Fix leaks in db module."
+    },
+    {
+        "commit": "7f7d515441ee28e10d5f2aa63f986128638342bc",
+        "date": "2023-01-12 14:19:10 +0700",
+        "subject": "Fix leak in configOptionRemote()."
+    },
+    {
+        "commit": "123d5e77ae188dfe75a431fcb131dcca1b1913bb",
+        "date": "2023-01-12 14:17:48 +0700",
+        "subject": "Minor optimizations on config/parse module."
+    },
+    {
+        "commit": "0becb6da3147e7992b7e91f78032a961e7c352be",
+        "date": "2023-01-12 10:22:26 +0700",
+        "subject": "Enhance libbacktrace to handle incomplete stack traces.",
+        "body": "This fills in backtrace info at the bottom of the call stack when the stack trace is incomplete due to testing. This does not affect release builds, which is why it did not make the first cut, but it turns out to be useful for testing and barely changes the release code (when we do release this).\n\nThe recursion test in common/error was simplified because it would now return a very large trace."
+    },
+    {
+        "commit": "57fc4aaeb9b2aea84fce5bb813980116ad01dbe7",
+        "date": "2023-01-12 09:06:01 +0700",
+        "subject": "Update RHEL user guide to PostgreSQL 11/12.",
+        "body": "PostgreSQL 10 has expired from the PGDG yum repository."
+    },
+    {
+        "commit": "74ca9b50bbdbb33dafedcc8e1230a83cb619c3f5",
+        "date": "2023-01-11 19:43:10 +0700",
+        "subject": "Revert macro changes from 38d32045.",
+        "body": "This seemed like it would be cleaner but an important detail was missed (logAny) and it does not seem simpler when factoring that back in.\n\nKeep the removal of the extraneous semicolons and all the downstream changes required by the removal."
+    },
+    {
+        "commit": "9347313cbf1dbd5590b7ca481bd37bcb5de14b00",
+        "date": "2023-01-11 19:16:31 +0700",
+        "subject": "Fix error detail output to stderr.",
+        "body": "The error detail should be output when the error is an assert (this part was working) or the log level is at least debug. In cases where log-level-console was at least debug but log-level-stderr was not the detail was lost.\n\nImprove the range checking to output error detail to stderr when log-level-console is at least debug."
+    },
+    {
+        "commit": "c8264291238e0bd199e4babab7013060e7fcba7d",
+        "date": "2023-01-11 11:19:26 +0700",
+        "subject": "Improve libbacktrace implementation.",
+        "body": "The libbacktrace feature has not been working since the move to meson because libbacktrace detection was not added to the meson build. Add libbacktrace to meson and improve the feature so that it can be compiled into release builds.\n\nThe prior implementation fetched line numbers with each stack trace push. Not only was this slow but it missed any functions that were not being tracked on our stack.\n\nInstead just examine the backtrace when an error happens and merge it with the info we have on our stack. If the backtrace is not available then the output remains as before.\n\nAlso remove --backtrace from test.pl since the library is now auto-detected.\n\nLeave this library out of the production build for now to give it a little time to shake out in testing."
+    },
+    {
+        "commit": "0dd2997714ed31b4a005fc0061048f3697c9ea1a",
+        "date": "2023-01-10 11:45:48 +0700",
+        "subject": "Fix leak in jsonReadVarRecurse()."
+    },
+    {
+        "commit": "675b4ae251564742e23a9e6acdfb1d764b9b159d",
+        "date": "2023-01-10 11:17:08 +0700",
+        "subject": "Fix leak in archivePushDropWarning()."
+    },
+    {
+        "commit": "bf9e331ac15b0bd261f1a71e1307b51c9934aa85",
+        "date": "2023-01-10 10:14:43 +0700",
+        "subject": "Fix incorrect return type in backupFile()."
+    },
+    {
+        "commit": "b722d2b6ca31edead49b6dcc8fe0286bb508f5b2",
+        "date": "2023-01-10 09:28:57 +0700",
+        "subject": "Fix formatting of archiveGetFile()."
+    },
+    {
+        "commit": "38d320455336ab6da16c7c1b86e52d3118bcbd73",
+        "date": "2023-01-09 14:47:57 +0700",
+        "subject": "Remove duplication from FUNCTION_LOG_BEGIN_BASE() macro definitions.",
+        "body": "It is a bit simpler to define STACK_TRACE_TEST_START()/STACK_TRACE_TEST_STOP() in a separate #ifdef so FUNCTION_LOG_BEGIN_BASE() does not need to be defined twice.\n\nAlso add missing semicolons exposed by this change."
+    },
+    {
+        "commit": "6633ccd18d66f3354ce6af27c93916bce330981b",
+        "date": "2023-01-05 14:03:43 +0700",
+        "subject": "Do not output stderr on unit/integration test errors.",
+        "body": "Since stderr is being redirected to stdout this results in duplication of the error output."
+    },
+    {
+        "commit": "4429bc82f530fd87cd4e370c012054be117b76b9",
+        "date": "2023-01-05 12:59:06 +0700",
+        "subject": "Add unit tests for the unit test build code.",
+        "body": "When this code was migrated to C the unit tests were not included because there were more important priorities at the time.\n\nThis also requires some adjustments to coverage because of the new code location."
+    },
+    {
+        "commit": "a5499afabc7729efc2254010b47aeced74d0e918",
+        "date": "2023-01-05 12:44:00 +0700",
+        "subject": "Add CHECK_FMT() macros and tests for CHECK*() macros.",
+        "body": "The CHECK_FMT() macro will be used in some upcoming tests but could also be useful in the core code.\n\nThe CHECK*() macros never had tests so add them."
+    },
+    {
+        "commit": "2e3513984ef528404341e4e399f5257d6f2f1ccb",
+        "date": "2023-01-05 12:33:17 +0700",
+        "subject": "Remove extra linefeed."
+    },
+    {
+        "commit": "877bb2ac9e452ddeef6ddd4845c4fb59d83379fe",
+        "date": "2023-01-03 08:26:44 +0700",
+        "subject": "Update LICENSE.txt and PostgreSQL copyright for 2023."
+    },
+    {
+        "commit": "2b2a6edf355f50c0d399243e6d4d9fa495a1ec34",
+        "date": "2023-01-02 18:53:05 +0700",
+        "subject": "Cleanup of common/ini module in preparation for a refactor."
+    },
+    {
+        "commit": "92d5fd17b4ddb2e72e4cf5c10fd7708d5a9fad56",
+        "date": "2023-01-02 17:32:09 +0700",
+        "subject": "Fix formatting of restoreFile() definition."
+    },
+    {
+        "commit": "d51a86c6210001359f86aadc36285137fe8f2da9",
+        "date": "2023-01-02 17:30:57 +0700",
+        "subject": "Add BUFFER_EXTERN() and cleanup hash zero constants.",
+        "body": "BUFFER_EXTERN() provides a clean way to create buffer constants.\n\nConvert HASH_TYPE_SHA256_ZERO_STR to HASH_TYPE_SHA256_ZERO_BUF to be consistent with HASH_TYPE_SHA1_ZERO_BUF."
+    },
+    {
+        "commit": "66f108ea8a01ac881a47f4cbd8d5fb3ca8102e1d",
+        "date": "2023-01-02 17:26:53 +0700",
+        "subject": "Cleanup terminology in Buffer/Variant/String macros."
+    },
+    {
+        "commit": "f0189129088456cf22f7bf86fa505cf9c28a5e37",
+        "date": "2023-01-02 15:24:51 +0700",
+        "subject": "Split VR_EXTERN/FN_EXTERN macros from FV_EXTERN.",
+        "body": "This should make it a little clearer what the variable (VR) macros are doing since the declaration/definition cannot both be set to extern (but functions can).\n\nSplitting the variable macros out also allows them to be changed in the future with little churn, while changing the function macro creates a large amount of churn."
+    },
+    {
+        "commit": "9e29c01891225dd5f371b76d324366bbb3694ca4",
+        "date": "2023-01-02 15:11:37 +0700",
+        "subject": "Remove MacOS from CirrusCI.",
+        "body": "CirrusCI stopped supporting Intel but the arm builds are not working, even with the same steps that work on an arm Mac.\n\nRemove to unstick the build pipeline until this can be resolved."
+    },
+    {
+        "commit": "8993267df9864852efd59a9b5366e9a521a6c08e",
+        "date": "2022-12-31 23:33:45 +0700",
+        "subject": "Fix formatting."
+    },
+    {
+        "commit": "1793839e5a821a7177922e4cdad104eba772c3ec",
+        "date": "2022-12-31 19:12:35 +0700",
+        "subject": "Clean up storage headers and move posix internal type."
+    },
+    {
+        "commit": "4fb8a0ecdd12bdb01273cebbecf61f6beb22146d",
+        "date": "2022-12-31 17:13:41 +0700",
+        "subject": "Add meson unity build and tests.",
+        "body": "This is immediately useful because it will detect any extern'd functions or variables that are not being used. It also detects functions or variables that are declared but not defined.\n\nIf a FV/VR_EXTERN macro is missing it will be detected either because of a mismatch in the declaration/definition or because a new defined symbol will appear in the nm test.\n\nEventually the unity build will be used to create a more optimized pgbackrest binary but that will need to wait."
+    },
+    {
+        "commit": "8aa2b101bbd9fe07971794bf4bb4c8d2a61c7b07",
+        "date": "2022-12-31 16:41:01 +0700",
+        "subject": "Put logging functions unused by release builds into DEBUG blocks.",
+        "body": "Also inline some functions that are needed in non-DEBUG builds."
+    },
+    {
+        "commit": "4a64c5d80c9af2a3498943f326de7295679c63e6",
+        "date": "2022-12-31 15:49:32 +0700",
+        "subject": "Use memcpy() instead of strncpy when source size is known.",
+        "body": "In this case the destination will be large enough to hold the source so memcpy is more efficient.\n\nAlso, in highly optimized builds the compiler may warn for strncpy() when it can see that the source size won't include the terminator."
+    },
+    {
+        "commit": "2332ce8ffc16494766f1f6ee07341242e2b7b7c2",
+        "date": "2022-12-31 13:14:27 +0700",
+        "subject": "Move storageHelperFree() to storageHelper test harness.",
+        "body": "This function was only used for testing so move into a test harness."
+    },
+    {
+        "commit": "8b218158ae70136d7a2ddc5a7347f79e69fbeb13",
+        "date": "2022-12-31 12:54:33 +0700",
+        "subject": "Move regExpMatchPtr()/regExpMatchStr() to build/common/regExp module.",
+        "body": "Similar to b9be4fa5, these functions are not used by the core code so move them to the build module. The new implementation is a little less efficient but that is much less of a worry in the build/test code.\n\nAlso remove regExpMatchSize() since it was not longer needed."
+    },
+    {
+        "commit": "45ece13678f94c57777180710a7ea71a1c60971a",
+        "date": "2022-12-31 11:57:06 +0700",
+        "subject": "Use error*() getters where possible.",
+        "body": "This makes it a little easier to change the underlying representation and ensures that the functions are used."
+    },
+    {
+        "commit": "fa9d831f9f722f28567c4997551cd6bd1d7077d3",
+        "date": "2022-12-31 11:09:50 +0700",
+        "subject": "Move xmlNodeAttribute() to build/common/xml module.",
+        "body": "Similar to b9be4fa5, this function was not used by the core code so move it to the build module."
+    },
+    {
+        "commit": "c6264ad4cf55920558513127d4e221ce8e85eb28",
+        "date": "2022-12-31 10:31:15 +0700",
+        "subject": "Fix comment typo for strLower()."
+    },
+    {
+        "commit": "163a004f30675403eba2a619412bd803eba4d71a",
+        "date": "2022-12-31 10:26:11 +0700",
+        "subject": "Move strReplace() and strUpper() to build/common/string module.",
+        "body": "Neither of these functions were used by the core code. strReplace() is only used in the tests but it doesn't hurt to put it in build since the build code is not distributed."
+    },
+    {
+        "commit": "d517d4a3283c0ccc5ca5d06593d1b244dd5e68b4",
+        "date": "2022-12-31 10:10:44 +0700",
+        "subject": "Add explicit keyword for covered modules included in other modules.",
+        "body": "This was done by checking the extension but it is possible to include a module that does not have a vendor or auto extension. Instead make it explicit that the module is included in another module.\n\nAlso change the variable from \"include\" to \"included\" to make it clearer what it indicates."
+    },
+    {
+        "commit": "729d7f071dafe22f85201bfaf2bae461ec54d285",
+        "date": "2022-12-30 18:45:11 +0700",
+        "subject": "Put memContextSize() in a DEBUG block.",
+        "body": "This function is only used in unit tests so no need to include it in the release build."
+    },
+    {
+        "commit": "cebbf0d012ad7204c4770efa3308daddc267415f",
+        "date": "2022-12-30 16:26:48 +0700",
+        "subject": "Remove unused functions.",
+        "body": "These functions were either added with the intention that they would be used or they became obsolete over time."
+    },
+    {
+        "commit": "6f0c652e2c50f288fc4f541a994281032856be2b",
+        "date": "2022-12-30 14:59:16 +0700",
+        "subject": "Remove declaration for function that is no longer defined."
+    },
+    {
+        "commit": "416fadd60cc0401e5e730867d98ae59ff54f8dcd",
+        "date": "2022-12-30 14:48:31 +0700",
+        "subject": "Mark functions not used externally as static.",
+        "body": "Also cleanup a stray linefeed."
+    },
+    {
+        "commit": "b9be4fa54039e2c79fad0dc1552c7ffaf883004c",
+        "date": "2022-12-29 15:37:27 +0700",
+        "subject": "Restore errors when no backup matches the current version of PostgreSQL.",
+        "body": "It is probably not a good idea to restore the latest backup when it was not made from the current PostgreSQL version. If there is no backup after a stanza-upgrade then replicas might be built with a prior version leading to failures.\r\n\r\nAdd an error in this case if the latest backup would be used, i.e. --set or --type=time/lsn is not specified."
+    },
+    {
+        "commit": "aa1e72dfe662678919d3b01aa0e6454b677873ad",
+        "date": "2022-12-29 15:05:45 +0700",
+        "subject": "Fix improper formatting in config/parse module.",
+        "body": "The prior formatting worked but was confusing to read."
+    },
+    {
+        "commit": "36ee30d118ce6cc7720653a3d3a49a06c655c463",
+        "date": "2022-12-28 19:15:44 +0700",
+        "subject": "Updates and clarifications to index page.",
+        "body": "In particular the section about other backup solutions not supporting parallel processing was no longer accurate, so reword it.\r\n\r\nAlso update some other sections that used older nomenclature, had awkward wording, or needed clarification."
+    },
+    {
+        "commit": "84a3ff8b7ac1243c0b47c6585697f4fcf3c12065",
+        "date": "2022-12-28 10:48:44 +0700",
+        "subject": "Clarify target-action behavior on various PostgreSQL versions.",
+        "body": "The behavior of pause depends on the hot_standby parameter and the PostgreSQL version so mention both.\r\n\r\nThis behavior has been verified on PostgreSQL 9.6–15. PostgreSQL 12 is an inflection point because the behavior of an unset recovery_target_action with hot_standby=off changed in https://git.postgresql.org/gitweb/?p=postgresql.git;h=2dedf4d9a899b36d1a8ed29be5efbd1b31a8fe85."
+    },
+    {
+        "commit": "ae258f604e634f1d2a760ffdb92dd359fd1129bb",
+        "date": "2022-12-27 20:28:38 +0700",
+        "subject": "Add replacement for linefeeds in monitoring example.",
+        "body": "The copy command was converting \\n to a linefeed, which the json conversion did not like. In a healthy repository there won't be any linefeeds but certain errors can contain them.\r\n\r\nFix by loading into a text field and then replacing the linefeed when converting to jsonb."
+    },
+    {
+        "commit": "44da314adb2b63f96b1d571f822e91a0e412e984",
+        "date": "2022-12-27 20:05:08 +0700",
+        "subject": "Add compress-level range checking for each compress-type.",
+        "body": "The prior range checking was done based on the valid values for gz. While this worked it was a subset of what is available for lz4 and zst.\r\n\r\nAllow the range to be specified for each compress-type. Adding this functionality to the parse module would be a better solution but that is a bigger project than this fix deserves, at least for now."
+    },
+    {
+        "commit": "34110cfa0134d181c749cc040446f703b643bc9c",
+        "date": "2022-12-27 11:31:59 +0700",
+        "subject": "Fix typo."
+    },
+    {
+        "commit": "0b67389185558d4593be1ca56143de6a43e45f9f",
+        "date": "2022-12-27 09:18:17 +0700",
+        "subject": "Improve comment on forced WAL switch at backup start."
+    },
+    {
+        "commit": "a63e87ea2cd0efbf9e9b78adccdf7285a6876b3b",
+        "date": "2022-12-23 14:06:35 +0700",
+        "subject": "Move function prototype to a better location in the header."
+    },
+    {
+        "commit": "56b55f81e894c0b2875f92913bda8f0679009b17",
+        "date": "2022-12-22 09:26:26 +0700",
+        "subject": "Add repository checksum to make verify and resume more efficient.",
+        "body": "Calculate a checksum of the data stored in the repository when a file is transformed (e.g. compressed). This allows resume and verify to operate without needing to decompress/decrypt the data.\r\n\r\nThis can also be used to verify more complex formats such as block incremental and allow backups from the repository without needing to decompress the data to verify the checksum.\r\n\r\nAdd some basic encrypted tests to maintain coverage. These will be expanded in a future commit."
+    },
+    {
+        "commit": "2ab845e2636fcd865032075b4dce9e520d094d87",
+        "date": "2022-12-20 16:35:27 +0700",
+        "subject": "Store manifest checksums in memory more efficiently.",
+        "body": "Manifest checksums were stored as hex-encoded strings due to legacy compatibility with Perl. Storing the checksums as binary in memory uses half the space and avoids many conversions.\r\n\r\nThere is no change to the on-disk manifest format which stores the checksum as a hex-encoded string."
+    },
+    {
+        "commit": "77c721eb635c6d757d2d5ed6f2ffc083720c10a7",
+        "date": "2022-12-20 12:20:47 +0700",
+        "subject": "Remove support for PostgreSQL 9.0/9.1/9.2.",
+        "body": "Our new policy is to support ten versions of PostgreSQL, the five supported releases and the last five EOL releases. As of PostgreSQL 15, that means 9.0/9.1/9.2 are no longer supported by pgBackRest.\r\n\r\nRemove all logic associated with 9.0/9.1/9.2 and update the tests.\r\n\r\nDocument the new support policy.\r\n\r\nUpdate InfoPg to read/write control versions for the history in backup.info, since we can no longer rely on the mappings being available. In theory this could have been an issue after removing 8.3/8.4 if anybody was using a version that old."
+    },
+    {
+        "commit": "17ce738ff749c50f4ca721144cd9addce9e895f2",
+        "date": "2022-12-11 20:05:31 +0700",
+        "subject": "Use smaller type for decode tables.",
+        "body": "This saves a bit of space in the binary and should not have a noticeable impact on performance."
+    },
+    {
+        "commit": "010efffb0c3c7935f789e5c560104e5a3019a28f",
+        "date": "2022-12-11 19:46:48 +0700",
+        "subject": "Add hex encode/decoding to decode module.",
+        "body": "This replaces the bufHex() function and also allows hex to be decoded."
+    },
+    {
+        "commit": "9a9ee8e6406721c5a1825b8a25baef944802c92d",
+        "date": "2022-12-11 18:55:25 +0700",
+        "subject": "Rename EncodeType enum to EncodingType.",
+        "body": "This avoids constructs such as decodeToBin(encodeBase64, ...) which are confusing since decode and encode are used in the same function call. decodeToBin(encodingBase64, ...) makes it clearer what is happening."
+    },
+    {
+        "commit": "1345caa3f70e24ff759967692c10c07e63f44d00",
+        "date": "2022-12-07 20:30:38 +0700",
+        "subject": "Update missing flag in storage/posix test.",
+        "body": "The storageNewItrP() permissions test was running twice with the errorOnMissing flag set to false. Fix by setting to true for one test.\n\nAlso update the comments to be clearer about what the tests are doing and fix minor formatting."
+    },
+    {
+        "commit": "81d84ab495bfeaf0102adce2425ab3a528bb8845",
+        "date": "2022-12-07 10:57:29 +0100",
+        "subject": "Fix typos."
+    },
+    {
+        "commit": "4dc632d57064420134f3a198fa18dc951d5bf574",
+        "date": "2022-12-05 14:15:15 +0800",
+        "subject": "Add backup test harness.",
+        "body": "This allows test backups to be run in other test modules.\n\nIt is likely that more logic will be moved here but for now this suffices to get test backups working in the restore module."
+    },
+    {
+        "commit": "96cf479d3c46b310b87e69bd2e19a30e71e5824c",
+        "date": "2022-12-05 14:00:25 +0800",
+        "subject": "Add missing header in lock module."
+    },
+    {
+        "commit": "c972a9359beb5b75c4b0ea57bcb12a34fe5e7d84",
+        "date": "2022-11-28 17:56:59 +0800",
+        "subject": "Begin v2.44 development."
+    },
+    {
         "commit": "cc2ffd8264bb4e10e6b289ce3978452018f725e8",
         "date": "2022-11-28 17:47:48 +0800",
         "subject": "v2.43: Bug Fix"

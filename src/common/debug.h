@@ -18,45 +18,49 @@ The FUNCTION_AUDIT_*() macros can be used to annotate functions that do that fol
 is returned and that is the only value created in the calling context.
 ***********************************************************************************************************************************/
 #if defined(DEBUG_MEM) && defined(DEBUG_TEST_TRACE)
-    #include "common/macro.h"
-    #include "common/memContext.h"
 
-    // Begin the audit
-    #define FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN()                                                                                \
-        MemContextAuditState MEM_CONTEXT_AUDIT_param = {.memContext = memContextCurrent()};                                        \
-        memContextAuditBegin(&MEM_CONTEXT_AUDIT_param)
+#include "common/macro.h"
+#include "common/memContext.h"
 
-    // End the audit
-    #define FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(returnType)                                                                        \
-        memContextAuditEnd(&MEM_CONTEXT_AUDIT_param, returnType)
+// Begin the audit
+#define FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN()                                                                                    \
+    MemContextAuditState MEM_CONTEXT_AUDIT_param = {.memContext = memContextCurrent()};                                            \
+    memContextAuditBegin(&MEM_CONTEXT_AUDIT_param)
 
-    // Allow any new mem contexts or allocations in the calling context. These should be fixed and this macro eventually removed.
-    #define FUNCTION_AUDIT_IF(condition)                                                                                           \
-        do                                                                                                                         \
-        {                                                                                                                          \
-            if (!(condition))                                                                                                      \
-                MEM_CONTEXT_AUDIT_param.returnTypeAny = true;                                                                      \
-        }                                                                                                                          \
-        while (0)
+// End the audit
+#define FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(returnType)                                                                            \
+    memContextAuditEnd(&MEM_CONTEXT_AUDIT_param, returnType)
 
-    // Callbacks are difficult to audit so ignore them. Eventually they should all be removed.
-    #define FUNCTION_AUDIT_CALLBACK()                               MEM_CONTEXT_AUDIT_param.returnTypeAny = true
+// Allow any new mem contexts or allocations in the calling context. These should be fixed and this macro eventually removed.
+#define FUNCTION_AUDIT_IF(condition)                                                                                               \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        if (!(condition))                                                                                                          \
+            MEM_CONTEXT_AUDIT_param.returnTypeAny = true;                                                                          \
+    }                                                                                                                              \
+    while (0)
 
-    // Helper function that creates new mem contexts or allocations in the calling context. These functions should be static (except
-    // for interface helpers) but it is not clear that anything else needs to be done.
-    #define FUNCTION_AUDIT_HELPER()                                 MEM_CONTEXT_AUDIT_param.returnTypeAny = true
+// Callbacks are difficult to audit so ignore them. Eventually they should all be removed.
+#define FUNCTION_AUDIT_CALLBACK()                                   MEM_CONTEXT_AUDIT_param.returnTypeAny = true
 
-    // Function returns a struct that has new mem contexts or allocations in the calling context. Find a way to fix these.
-    #define FUNCTION_AUDIT_STRUCT()                                 MEM_CONTEXT_AUDIT_param.returnTypeAny = true
+// Helper function that creates new mem contexts or allocations in the calling context. These functions should be static (except
+// for interface helpers) but it is not clear that anything else needs to be done.
+#define FUNCTION_AUDIT_HELPER()                                     MEM_CONTEXT_AUDIT_param.returnTypeAny = true
+
+// Function returns a struct that has new mem contexts or allocations in the calling context. Find a way to fix these.
+#define FUNCTION_AUDIT_STRUCT()                                     MEM_CONTEXT_AUDIT_param.returnTypeAny = true
+
 #else
-    #define FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN()
-    #define FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(returnType)
 
-    #define FUNCTION_AUDIT_IF(condition)
-    #define FUNCTION_AUDIT_CALLBACK()
-    #define FUNCTION_AUDIT_HELPER()
-    #define FUNCTION_AUDIT_STRUCT()
-#endif // DEBUG_TEST_TRACE_MACRO
+#define FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN()
+#define FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(returnType)
+
+#define FUNCTION_AUDIT_IF(condition)
+#define FUNCTION_AUDIT_CALLBACK()
+#define FUNCTION_AUDIT_HELPER()
+#define FUNCTION_AUDIT_STRUCT()
+
+#endif
 
 /***********************************************************************************************************************************
 Base function debugging macros
@@ -68,30 +72,34 @@ level is set to debug or trace.
     FUNCTION_LOG_logLevel
 
 #ifdef DEBUG_TEST_TRACE
-    #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
-        LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
-        FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                   \
-                                                                                                                                   \
-        {                                                                                                                          \
-            stackTraceParamLog();                                                                                                  \
-            stackTraceTestStop()
 
-    #define FUNCTION_LOG_END_BASE()                                                                                                \
-            stackTraceTestStart();                                                                                                 \
-            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
-        }
+#define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                          \
+    LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                    \
+    FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                       \
+                                                                                                                                   \
+    {                                                                                                                              \
+        stackTraceParamLog();                                                                                                      \
+        stackTraceTestStop()
+
+#define FUNCTION_LOG_END_BASE()                                                                                                    \
+        stackTraceTestStart();                                                                                                     \
+        LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
+    }
+
 #else
-    #define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                      \
-        LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                \
-        FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                   \
-                                                                                                                                   \
-        if (logAny(FUNCTION_LOG_LEVEL()))                                                                                          \
-        {                                                                                                                          \
-            stackTraceParamLog()
 
-    #define FUNCTION_LOG_END_BASE()                                                                                                \
-            LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                           \
-        }
+#define FUNCTION_LOG_BEGIN_BASE(logLevel)                                                                                          \
+    LogLevel FUNCTION_LOG_LEVEL() = STACK_TRACE_PUSH(logLevel);                                                                    \
+    FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                       \
+                                                                                                                                   \
+    if (logAny(FUNCTION_LOG_LEVEL()))                                                                                              \
+    {                                                                                                                              \
+        stackTraceParamLog()
+
+#define FUNCTION_LOG_END_BASE()                                                                                                    \
+        LOG_FMT(FUNCTION_LOG_LEVEL(), 0, "(%s)", stackTraceParam());                                                               \
+    }
+
 #endif
 
 /***********************************************************************************************************************************
@@ -153,7 +161,7 @@ typedef void (*ObjToLogFormat)(const void *object, StringStatic *debugLog);
 
 FN_EXTERN size_t objToLog(const void *object, ObjToLogFormat formatFunc, char *buffer, size_t bufferSize);
 
-#define FUNCTION_LOG_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                  \
+#define FUNCTION_LOG_OBJECT_FORMAT(object, formatFunc, buffer, bufferSize)                                                         \
     objToLog(object, (ObjToLogFormat)formatFunc, buffer, bufferSize)
 
 // Convert object name to a zero-terminated string for logging
@@ -343,7 +351,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
 ***********************************************************************************************************************************/
 #ifdef DEBUG
 #ifdef DEBUG_TEST_TRACE
-    #define DEBUG_TEST_TRACE_MACRO
+#define DEBUG_TEST_TRACE_MACRO
 #endif // DEBUG_TEST_TRACE
 #endif // DEBUG
 
@@ -351,135 +359,136 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
 #define FUNCTION_TEST_NO_RETURN()
 
 #ifdef DEBUG_TEST_TRACE_MACRO
-    #define FUNCTION_TEST_BEGIN()                                                                                                  \
-        FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                   \
+
+#define FUNCTION_TEST_BEGIN()                                                                                                      \
+    FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                       \
                                                                                                                                    \
-        /* Ensure that FUNCTION_LOG_BEGIN() and FUNCTION_TEST_BEGIN() are not both used in a single function by declaring the */   \
-        /* same variable that FUNCTION_LOG_BEGIN() uses to track logging */                                                        \
-        LogLevel FUNCTION_LOG_LEVEL();                                                                                             \
-        (void)FUNCTION_LOG_LEVEL();                                                                                                \
+    /* Ensure that FUNCTION_LOG_BEGIN() and FUNCTION_TEST_BEGIN() are not both used in a single function by declaring the */       \
+    /* same variable that FUNCTION_LOG_BEGIN() uses to track logging */                                                            \
+    LogLevel FUNCTION_LOG_LEVEL();                                                                                                 \
+    (void)FUNCTION_LOG_LEVEL();                                                                                                    \
                                                                                                                                    \
-        /* Ensure that FUNCTION_TEST_RETURN*() is not used with FUNCTION_LOG_BEGIN*() by declaring a variable that will be */      \
-        /* referenced in FUNCTION_TEST_RETURN*() */                                                                                \
-        bool FUNCTION_TEST_BEGIN_exists;                                                                                           \
+    /* Ensure that FUNCTION_TEST_RETURN*() is not used with FUNCTION_LOG_BEGIN*() by declaring a variable that will be */          \
+    /* referenced in FUNCTION_TEST_RETURN*() */                                                                                    \
+    bool FUNCTION_TEST_BEGIN_exists;                                                                                               \
                                                                                                                                    \
-        if (stackTraceTest())                                                                                                      \
-        {                                                                                                                          \
-            STACK_TRACE_PUSH(logLevelDebug);                                                                                       \
-            stackTraceParamLog();                                                                                                  \
-            stackTraceTestStop()
+    if (stackTraceTest())                                                                                                          \
+    {                                                                                                                              \
+        STACK_TRACE_PUSH(logLevelDebug);                                                                                           \
+        stackTraceParamLog();                                                                                                      \
+        stackTraceTestStop()
 
-    #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)                                                                            \
-        FUNCTION_LOG_PARAM(typeMacroPrefix, param)
+#define FUNCTION_TEST_PARAM(typeMacroPrefix, param)                                                                                \
+    FUNCTION_LOG_PARAM(typeMacroPrefix, param)
 
-    #define FUNCTION_TEST_PARAM_P(typeName, param)                                                                                 \
-        FUNCTION_LOG_PARAM_P(typeName, param)
+#define FUNCTION_TEST_PARAM_P(typeName, param)                                                                                     \
+    FUNCTION_LOG_PARAM_P(typeName, param)
 
-    #define FUNCTION_TEST_PARAM_PP(typeName, param)                                                                                \
-        FUNCTION_LOG_PARAM_PP(typeName, param)
+#define FUNCTION_TEST_PARAM_PP(typeName, param)                                                                                    \
+    FUNCTION_LOG_PARAM_PP(typeName, param)
 
-    #define FUNCTION_TEST_END()                                                                                                    \
-            /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                                                     \
-            (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
+#define FUNCTION_TEST_END()                                                                                                        \
+        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                       \
                                                                                                                                    \
-            stackTraceTestStart();                                                                                                 \
-        }
+        stackTraceTestStart();                                                                                                     \
+    }
 
-    #define FUNCTION_TEST_VOID()                                                                                                   \
-        FUNCTION_TEST_BEGIN();                                                                                                     \
-        FUNCTION_TEST_END();
+#define FUNCTION_TEST_VOID()                                                                                                       \
+    FUNCTION_TEST_BEGIN();                                                                                                         \
+    FUNCTION_TEST_END();
 
-    #define FUNCTION_TEST_RETURN_TYPE_BASE(typePre, type, typePost, ...)                                                           \
-        do                                                                                                                         \
-        {                                                                                                                          \
-            /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                                                     \
-            (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
+#define FUNCTION_TEST_RETURN_TYPE_BASE(typePre, type, typePost, ...)                                                               \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                       \
                                                                                                                                    \
-            typePre type typePost FUNCTION_TEST_result = __VA_ARGS__;                                                              \
+        typePre type typePost FUNCTION_TEST_result = __VA_ARGS__;                                                                  \
                                                                                                                                    \
-            STACK_TRACE_POP(true);                                                                                                 \
-            FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(STRINGIFY(type));                                                                  \
+        STACK_TRACE_POP(true);                                                                                                     \
+        FUNCTION_TEST_MEM_CONTEXT_AUDIT_END(STRINGIFY(type));                                                                      \
                                                                                                                                    \
-            return FUNCTION_TEST_result;                                                                                           \
-        }                                                                                                                          \
-        while (0)
+        return FUNCTION_TEST_result;                                                                                               \
+    }                                                                                                                              \
+    while (0)
 
-    #define FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(typePre, typeMacroPrefix, typePost, ...)                                          \
-        FUNCTION_TEST_RETURN_TYPE_BASE(typePre, FUNCTION_LOG_##typeMacroPrefix##_TYPE, typePost, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(typePre, typeMacroPrefix, typePost, ...)                                              \
+    FUNCTION_TEST_RETURN_TYPE_BASE(typePre, FUNCTION_LOG_##typeMacroPrefix##_TYPE, typePost, __VA_ARGS__)
 
-    #define FUNCTION_TEST_RETURN(typeMacroPrefix, ...)                                                                             \
-        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, , __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_P(typeMacroPrefix, ...)                                                                           \
-        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, *, __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_PP(typeMacroPrefix, ...)                                                                          \
-        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, **, __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_CONST(typeMacroPrefix, ...)                                                                       \
-        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, , __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_CONST_P(typeMacroPrefix, ...)                                                                     \
-        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, *, __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_CONST_PP(typeMacroPrefix, ...)                                                                    \
-        FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, **, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN(typeMacroPrefix, ...)                                                                                 \
+    FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, , __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_P(typeMacroPrefix, ...)                                                                               \
+    FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, *, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_PP(typeMacroPrefix, ...)                                                                              \
+    FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(, typeMacroPrefix, **, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_CONST(typeMacroPrefix, ...)                                                                           \
+    FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, , __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_CONST_P(typeMacroPrefix, ...)                                                                         \
+    FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, *, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_CONST_PP(typeMacroPrefix, ...)                                                                        \
+    FUNCTION_TEST_RETURN_TYPE_MACRO_BASE(const, typeMacroPrefix, **, __VA_ARGS__)
 
-    #define FUNCTION_TEST_RETURN_TYPE(type, ...)                                                                                   \
-        FUNCTION_TEST_RETURN_TYPE_BASE(, type, , __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_TYPE_P(type, ...)                                                                                 \
-        FUNCTION_TEST_RETURN_TYPE_BASE(, type, *, __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_TYPE_PP(type, ...)                                                                                \
-        FUNCTION_TEST_RETURN_TYPE_BASE(, type, **, __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_TYPE_CONST(type, ...)                                                                             \
-        FUNCTION_TEST_RETURN_TYPE_BASE(const, type, , __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_TYPE_CONST_P(type, ...)                                                                           \
-        FUNCTION_TEST_RETURN_TYPE_BASE(const, type, *, __VA_ARGS__)
-    #define FUNCTION_TEST_RETURN_TYPE_CONST_PP(type, ...)                                                                          \
-        FUNCTION_TEST_RETURN_TYPE_BASE(const, type, **, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_TYPE(type, ...)                                                                                       \
+    FUNCTION_TEST_RETURN_TYPE_BASE(, type, , __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_TYPE_P(type, ...)                                                                                     \
+    FUNCTION_TEST_RETURN_TYPE_BASE(, type, *, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_TYPE_PP(type, ...)                                                                                    \
+    FUNCTION_TEST_RETURN_TYPE_BASE(, type, **, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_TYPE_CONST(type, ...)                                                                                 \
+    FUNCTION_TEST_RETURN_TYPE_BASE(const, type, , __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_TYPE_CONST_P(type, ...)                                                                               \
+    FUNCTION_TEST_RETURN_TYPE_BASE(const, type, *, __VA_ARGS__)
+#define FUNCTION_TEST_RETURN_TYPE_CONST_PP(type, ...)                                                                              \
+    FUNCTION_TEST_RETURN_TYPE_BASE(const, type, **, __VA_ARGS__)
 
-    #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
-        do                                                                                                                         \
-        {                                                                                                                          \
-            /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                                                     \
-            (void)FUNCTION_TEST_BEGIN_exists;                                                                                      \
+#define FUNCTION_TEST_RETURN_VOID()                                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presence of FUNCTION_TEST_BEGIN*() */                                       \
                                                                                                                                    \
-            STACK_TRACE_POP(true);                                                                                                 \
-            FUNCTION_TEST_MEM_CONTEXT_AUDIT_END("void");                                                                           \
-            return;                                                                                                                \
-        }                                                                                                                          \
-        while (0)
+        STACK_TRACE_POP(true);                                                                                                     \
+        FUNCTION_TEST_MEM_CONTEXT_AUDIT_END("void");                                                                               \
+        return;                                                                                                                    \
+    }                                                                                                                              \
+    while (0)
+
 #else
-    #define FUNCTION_TEST_BEGIN()
-    #define FUNCTION_TEST_PARAM(typeMacroPrefix, param)
-    #define FUNCTION_TEST_PARAM_P(typeMacroPrefix, param)
-    #define FUNCTION_TEST_PARAM_PP(typeMacroPrefix, param)
-    #define FUNCTION_TEST_END()
-    #define FUNCTION_TEST_VOID()
 
-    #define FUNCTION_TEST_RETURN(typeMacroPrefix, ...)                                                                             \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_P(typeMacroPrefix, ...)                                                                           \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_PP(typeMacroPrefix, ...)                                                                          \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_CONST(typeMacroPrefix, ...)                                                                       \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_CONST_P(typeMacroPrefix, ...)                                                                     \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_CONST_PP(typeMacroPrefix, ...)                                                                    \
-        return __VA_ARGS__
+#define FUNCTION_TEST_BEGIN()
+#define FUNCTION_TEST_PARAM(typeMacroPrefix, param)
+#define FUNCTION_TEST_PARAM_P(typeMacroPrefix, param)
+#define FUNCTION_TEST_PARAM_PP(typeMacroPrefix, param)
+#define FUNCTION_TEST_END()
+#define FUNCTION_TEST_VOID()
 
-    #define FUNCTION_TEST_RETURN_TYPE(type, ...)                                                                                   \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_TYPE_P(type, ...)                                                                                 \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_TYPE_PP(type, ...)                                                                                \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_TYPE_CONST(type, ...)                                                                             \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_TYPE_CONST_P(type, ...)                                                                           \
-        return __VA_ARGS__
-    #define FUNCTION_TEST_RETURN_TYPE_CONST_PP(type, ...)                                                                          \
-        return __VA_ARGS__
+#define FUNCTION_TEST_RETURN(typeMacroPrefix, ...)                                                                                 \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_P(typeMacroPrefix, ...)                                                                               \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_PP(typeMacroPrefix, ...)                                                                              \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_CONST(typeMacroPrefix, ...)                                                                           \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_CONST_P(typeMacroPrefix, ...)                                                                         \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_CONST_PP(typeMacroPrefix, ...)                                                                        \
+    return __VA_ARGS__
 
-    #define FUNCTION_TEST_RETURN_VOID()                                                                                            \
-        return
+#define FUNCTION_TEST_RETURN_TYPE(type, ...)                                                                                       \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_TYPE_P(type, ...)                                                                                     \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_TYPE_PP(type, ...)                                                                                    \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_TYPE_CONST(type, ...)                                                                                 \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_TYPE_CONST_P(type, ...)                                                                               \
+    return __VA_ARGS__
+#define FUNCTION_TEST_RETURN_TYPE_CONST_PP(type, ...)                                                                              \
+    return __VA_ARGS__
+
+#define FUNCTION_TEST_RETURN_VOID()                                                                                                \
+    return
+
 #endif // DEBUG_TEST_TRACE_MACRO
 
 #endif

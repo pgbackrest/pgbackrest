@@ -6,9 +6,9 @@ Harness for Protocol Testing
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "common/fork.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
-#include "common/fork.h"
 
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"

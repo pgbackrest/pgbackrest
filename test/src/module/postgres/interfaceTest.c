@@ -25,7 +25,7 @@ testRun(void)
         TEST_RESULT_INT(pgVersionFromStr(STRDEF("10")), PG_VERSION_10, "valid pg version 10");
         TEST_RESULT_INT(pgVersionFromStr(STRDEF("9.6")), 90600, "valid pg version 9.6");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_11), "11", "infoPgVersionToString 11");
         TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_96), "9.6", "infoPgVersionToString 9.6");
         TEST_RESULT_STR_Z(pgVersionToStr(93456), "9.34", "infoPgVersionToString 93456");
@@ -58,10 +58,10 @@ testRun(void)
     if (testBegin("pgControlFromBuffer() and pgControlFromFile()"))
     {
         // Sanity test to ensure PG_VERSION_MAX has been updated
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_UINT(pgInterface[0].version, PG_VERSION_MAX, "check max version");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // Create a bogus control file
         Buffer *result = bufNew(HRN_PG_CONTROL_SIZE);
         memset(bufPtr(result), 0, bufSize(result));
@@ -77,7 +77,7 @@ testRun(void)
             pgControlFromBuffer(result), VersionNotSupportedError,
             "unexpected control version = 501 and catalog version = 19780101\nHINT: is this version of PostgreSQL supported?");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
             .walSegmentSize = 1024 * 1024);
@@ -90,18 +90,18 @@ testRun(void)
         TEST_RESULT_UINT(info.checkpoint, 0xEEFFEEFFAABBAABB, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_93, .walSegmentSize = 1024 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest), FormatError, "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .pageSize = 32 * 1024);
 
         TEST_ERROR(pgControlFromFile(storageTest), FormatError, "page size is 32768 but must be 8192");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_93, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_93),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
@@ -141,7 +141,7 @@ testRun(void)
             pgLsnRangeToWalSegmentList(
                 2, pgLsnFromStr(STRDEF("A/800")), pgLsnFromStr(STRDEF("B/C0000000")), 1024 * 1024 * 1024),
             "000000020000000A00000000\n000000020000000A00000001\n000000020000000A00000002\n000000020000000A00000003\n"
-                "000000020000000B00000000\n000000020000000B00000001\n000000020000000B00000002\n000000020000000B00000003\n",
+            "000000020000000B00000000\n000000020000000B00000001\n000000020000000B00000002\n000000020000000B00000003\n",
             "get range >= 11/1GB");
         TEST_RESULT_STRLST_Z(
             pgLsnRangeToWalSegmentList(
@@ -185,7 +185,7 @@ testRun(void)
         const String *walFile = STRDEF(TEST_PATH "/0000000F0000000F0000000F");
 
         // Create a bogus control file, initially not in long format)
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         Buffer *result = bufNew((size_t)16 * 1024 * 1024);
         memset(bufPtr(result), 0, bufSize(result));
         bufUsedSet(result, bufSize(result));
@@ -195,15 +195,15 @@ testRun(void)
         TEST_ERROR(pgWalFromBuffer(result), FormatError, "first page header in WAL file is expected to be in long format");
 
         // Add the long flag so that the version will now error
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         ((PgWalCommon *)bufPtr(result))->flag = PG_WAL_LONG_HEADER;
 
         TEST_ERROR(
             pgWalFromBuffer(result), VersionNotSupportedError,
             "unexpected WAL magic 777\n"
-                "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         hrnPgWalToBuffer(
             (PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAF, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
@@ -215,14 +215,14 @@ testRun(void)
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT * 2, "   check size");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         hrnPgWalToBuffer(
             (PgWal){.version = PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
 
         TEST_ERROR(pgWalFromBuffer(result), FormatError, "wal segment size is 33554432 but must be 16777216 for PostgreSQL <= 10");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         hrnPgWalToBuffer((PgWal){.version = PG_VERSION_93, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
@@ -242,7 +242,7 @@ testRun(void)
         {
             .version = PG_VERSION_11,
             .systemId = 0xEFEFEFEFEF,
-            .walSegmentSize= 16 * 1024 * 1024,
+            .walSegmentSize = 16 * 1024 * 1024,
             .pageChecksum = true
         };
 

@@ -1108,6 +1108,11 @@ sub configCreate
         $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-bundle-limit'} = '64KiB';
     }
 
+    if ($oParam->{bBlockIncr})
+    {
+        $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-block'} = 'y';
+    }
+
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'log-path'} = $self->logPath();
     $oParamHash{&CFGDEF_SECTION_GLOBAL}{'lock-path'} = $self->lockPath();
 
@@ -2006,13 +2011,17 @@ sub restoreCompare
                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{size});
         }
 
-        # Remove repo-size, bno, bni from the manifest
+        # Remove repo-size, bno, bni, bims, bis from the manifest
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bni");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bni"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bno");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bims");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bims"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bis");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bis"});
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {
@@ -2152,6 +2161,10 @@ sub restoreCompare
                 MANIFEST_SECTION_BACKUP, 'backup-bundle', undef,
                 $oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-bundle'});
         }
+
+        # Delete block incr headers since old Perl manifest code will not generate them
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-block-incr'});
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_BACKUP}{'backup-block-incr-size'});
 
         $oActualManifest->set(MANIFEST_SECTION_BACKUP, MANIFEST_KEY_LSN_START, undef,
                               ${$oExpectedManifestRef}{&MANIFEST_SECTION_BACKUP}{&MANIFEST_KEY_LSN_START});

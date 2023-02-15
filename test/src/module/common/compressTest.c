@@ -1,9 +1,9 @@
 /***********************************************************************************************************************************
 Test Compression
 ***********************************************************************************************************************************/
-#include "common/io/filter/group.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/io/filter/group.h"
 #include "common/io/io.h"
 #include "storage/posix/storage.h"
 

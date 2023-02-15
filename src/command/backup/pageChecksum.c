@@ -3,9 +3,9 @@ Page Checksum Filter
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/backup/pageChecksum.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
-#include "command/backup/pageChecksum.h"
 #include "common/log.h"
 #include "common/macro.h"
 #include "common/type/json.h"
@@ -47,7 +47,7 @@ pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
     FUNCTION_LOG_OBJECT_FORMAT(value, pageChecksumToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Count bytes in the input
+Verify page checksums
 ***********************************************************************************************************************************/
 static void
 pageChecksumProcess(THIS_VOID, const Buffer *input)

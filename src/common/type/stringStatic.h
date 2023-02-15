@@ -33,7 +33,7 @@ strStcInit(char *const buffer, const size_t bufferSize)
 Functions
 ***********************************************************************************************************************************/
 // Cat formatted string to static string
-FN_EXTERN StringStatic *strStcFmt(StringStatic *debugLog, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FN_EXTERN FN_PRINTF(2, 3) StringStatic *strStcFmt(StringStatic *debugLog, const char *format, ...);
 
 // Cat zero-terminated string to static string
 FN_EXTERN void strStcCat(StringStatic *debugLog, const char *cat);

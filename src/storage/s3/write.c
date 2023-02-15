@@ -178,8 +178,10 @@ storageWriteS3(THIS_VOID, const Buffer *buffer)
     do
     {
         // Copy as many bytes as possible into the part buffer
-        size_t bytesNext = bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
-            bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+        const size_t bytesNext =
+            bufRemains(this->partBuffer) > bufUsed(buffer) - bytesTotal ?
+                bufUsed(buffer) - bytesTotal : bufRemains(this->partBuffer);
+
         bufCatSub(this->partBuffer, buffer, bytesTotal, bytesNext);
         bytesTotal += bytesNext;
 
@@ -241,7 +243,7 @@ storageWriteS3Close(THIS_VOID)
                     .content = xmlDocumentBuf(partList));
                 HttpResponse *response = storageS3ResponseP(request);
 
-                // Error if there is no etag in the result. This indicates that the request did not succeed despite the success code.
+                // Error when no etag in the result. This indicates that the request did not succeed despite the success code.
                 if (xmlNodeChild(
                         xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), S3_XML_TAG_ETAG_STR, false) == NULL)
                 {

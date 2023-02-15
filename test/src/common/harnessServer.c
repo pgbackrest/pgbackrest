@@ -46,7 +46,8 @@ Constants
 #define HRN_SERVER_HOST                                             "tls.test.pgbackrest.org"
 
 /**********************************************************************************************************************************/
-void hrnServerInit(void)
+void
+hrnServerInit(void)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -90,7 +91,8 @@ hrnServerScriptCommand(IoWrite *write, HrnServerCmd cmd, const Variant *data)
 }
 
 /**********************************************************************************************************************************/
-IoWrite *hrnServerScriptBegin(IoWrite *write)
+IoWrite *
+hrnServerScriptBegin(IoWrite *write)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_WRITE, write);
@@ -101,7 +103,8 @@ IoWrite *hrnServerScriptBegin(IoWrite *write)
     FUNCTION_HARNESS_RETURN(IO_WRITE, write);
 }
 
-void hrnServerScriptEnd(IoWrite *write)
+void
+hrnServerScriptEnd(IoWrite *write)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_WRITE, write);
@@ -227,7 +230,8 @@ hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs)
 }
 
 /**********************************************************************************************************************************/
-void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param)
+void
+hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_READ, read);
@@ -366,13 +370,15 @@ void hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam pa
 }
 
 /**********************************************************************************************************************************/
-const String *hrnServerHost(void)
+const String *
+hrnServerHost(void)
 {
     return strNewZ(testContainer() ? HRN_SERVER_HOST : "127.0.0.1");
 }
 
 /**********************************************************************************************************************************/
-unsigned int hrnServerPort(unsigned int portIdx)
+unsigned int
+hrnServerPort(unsigned int portIdx)
 {
     ASSERT(portIdx < HRN_SERVER_PORT_MAX);
 

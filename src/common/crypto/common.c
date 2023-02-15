@@ -9,10 +9,10 @@ Crypto Common
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 
+#include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/error.h"
 #include "common/log.h"
-#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Flag to indicate if OpenSSL has already been initialized

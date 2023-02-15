@@ -35,10 +35,10 @@ STRING_EXTERN(WAL_TIMELINE_HISTORY_REGEXP_STR,                      WAL_TIMELINE
 Global error file constant
 ***********************************************************************************************************************************/
 #define STATUS_FILE_GLOBAL                                          "global"
-    STRING_STATIC(STATUS_FILE_GLOBAL_STR,                           STATUS_FILE_GLOBAL);
+STRING_STATIC(STATUS_FILE_GLOBAL_STR,                               STATUS_FILE_GLOBAL);
 
 #define STATUS_FILE_GLOBAL_ERROR                                    STATUS_FILE_GLOBAL STATUS_EXT_ERROR
-    STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL_ERROR);
+STRING_STATIC(STATUS_FILE_GLOBAL_ERROR_STR,                         STATUS_FILE_GLOBAL_ERROR);
 
 /***********************************************************************************************************************************
 Get the correct spool queue based on the archive mode
@@ -119,7 +119,7 @@ archiveAsyncStatus(ArchiveMode archiveMode, const String *walSegment, bool throw
         if (okFileExists || errorFileExists)
         {
             // Get the status file content
-            const String *statusFile = okFileExists ? okFile: errorFile;
+            const String *statusFile = okFileExists ? okFile : errorFile;
 
             String *content = strNewBuf(
                 storageGetP(storageNewReadP(storageSpool(), strNewFmt("%s/%s", strZ(spoolQueue), strZ(statusFile)))));
@@ -265,7 +265,7 @@ archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec)
 
         // Execute the binary.  This statement will not return if it is successful.
         THROW_ON_SYS_ERROR_FMT(
-            execvp(strZ(strLstGet(commandExec, 0)), (char ** const)strLstPtr(commandExec)) == -1, ExecuteError,
+            execvp(strZ(strLstGet(commandExec, 0)), (char **const)strLstPtr(commandExec)) == -1, ExecuteError,
             "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
     }
 
@@ -301,7 +301,7 @@ archiveIdComparator(const void *item1, const void *item2)
     int int1 = atoi(strZ(strLstGet(archiveSort1, 1)));
     int int2 = atoi(strZ(strLstGet(archiveSort2, 1)));
 
-    return (int1 - int2);
+    return int1 - int2;
 }
 
 /**********************************************************************************************************************************/
@@ -341,8 +341,8 @@ walPath(const String *walFile, const String *pgPath, const String *command)
             THROW_FMT(
                 OptionRequiredError,
                 "option '%s' must be specified when relative wal paths are used\n"
-                    "HINT: is %%f passed to %s instead of %%p?\n"
-                    "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
+                "HINT: is %%f passed to %s instead of %%p?\n"
+                "HINT: PostgreSQL may pass relative paths even with %%p depending on the environment.",
                 cfgOptionName(cfgOptPgPath), strZ(command));
         }
 
@@ -367,7 +367,7 @@ walPath(const String *walFile, const String *pgPath, const String *command)
                 THROW_FMT(
                     OptionInvalidValueError,
                     PG_NAME " working directory '%s' is not the same as option %s '%s'\n"
-                        "HINT: is the " PG_NAME " data_directory configured the same as the %s option?",
+                    "HINT: is the " PG_NAME " data_directory configured the same as the %s option?",
                     currentWorkDir, cfgOptionName(cfgOptPgPath), strZ(pgPath), cfgOptionName(cfgOptPgPath));
             }
         }
@@ -434,7 +434,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
                 storage, strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(strSubN(walSegment, 0, 16))),
                 .expression = strNewFmt(
                     "^%s%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(strSubN(walSegment, 0, 24)),
-                        walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
+                    walIsPartial(walSegment) ? WAL_SEGMENT_PARTIAL_EXT : ""),
                 .nullOnMissing = true);
 
             // If there are results
@@ -446,7 +446,7 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
                     THROW_FMT(
                         ArchiveDuplicateError,
                         "duplicates found in archive for WAL segment %s: %s\n"
-                            "HINT: are multiple primaries archiving to this stanza?",
+                        "HINT: are multiple primaries archiving to this stanza?",
                         strZ(walSegment), strZ(strLstJoin(strLstSort(list, sortOrderAsc), ", ")));
                 }
 
@@ -467,9 +467,9 @@ walSegmentFind(const Storage *storage, const String *archiveId, const String *wa
         THROW_FMT(
             ArchiveTimeoutError,
             "WAL segment %s was not archived before the %" PRIu64 "ms timeout\n"
-                "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
-                "HINT: check the PostgreSQL server log for errors.\n"
-                "HINT: run the 'start' command if the stanza was previously stopped.",
+            "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
+            "HINT: check the PostgreSQL server log for errors.\n"
+            "HINT: run the 'start' command if the stanza was previously stopped.",
             strZ(walSegment), timeout);
     }
 

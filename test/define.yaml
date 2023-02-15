@@ -269,17 +269,19 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: io
-        total: 5
+        total: 6
         feature: IO
         harness: pack
 
         coverage:
           - common/io/bufferRead
           - common/io/bufferWrite
+          - common/io/chunkedRead
           - common/io/fd
           - common/io/fdRead
           - common/io/fdWrite
           - common/io/filter/buffer
+          - common/io/filter/chunk
           - common/io/filter/filter
           - common/io/filter/group
           - common/io/filter/sink
@@ -701,6 +703,10 @@ unit:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest
         total: 6
+        harness:
+          name: manifest
+          shim:
+            info/manifest: ~
 
         coverage:
           - info/manifest
@@ -838,11 +844,13 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup
-        total: 11
+        total: 13
         harness: backup
 
         coverage:
           - command/backup/backup
+          - command/backup/blockIncr
+          - command/backup/blockMap
           - command/backup/common
           - command/backup/file
           - command/backup/pageChecksum
@@ -855,9 +863,10 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 12
+        total: 14
 
         coverage:
+          - command/restore/blockHash
           - command/restore/file
           - command/restore/protocol
           - command/restore/restore

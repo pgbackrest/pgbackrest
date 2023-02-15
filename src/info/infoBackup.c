@@ -3,10 +3,10 @@ Backup Info Handler
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include "command/backup/common.h"
 #include "common/crypto/cipherBlock.h"
@@ -102,6 +102,8 @@ Create new object and load contents from a file
 #define INFO_BACKUP_KEY_BACKUP_ARCHIVE_STOP                         "backup-archive-stop"
 #define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE                       "backup-info-repo-size"
 #define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA                 "backup-info-repo-size-delta"
+#define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_MAP                   "backup-info-repo-size-map"
+#define INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_MAP_DELTA             "backup-info-repo-size-map-delta"
 #define INFO_BACKUP_KEY_BACKUP_INFO_SIZE                            "backup-info-size"
 #define INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA                      "backup-info-size-delta"
 #define INFO_BACKUP_KEY_BACKUP_LSN_START                            "backup-lsn-start"
@@ -148,7 +150,6 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             InfoBackupData info =
             {
                 .backupLabel = strDup(key),
-
             };
 
             // Format and version
@@ -173,6 +174,14 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             // Size info
             info.backupInfoRepoSize = jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE));
             info.backupInfoRepoSizeDelta = jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA));
+
+            if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_MAP))
+            {
+                info.backupInfoRepoSizeMap = varNewUInt64(jsonReadUInt64(json));
+                info.backupInfoRepoSizeMapDelta = varNewUInt64(
+                    jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_MAP_DELTA)));
+            }
+
             info.backupInfoSize = jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_SIZE));
             info.backupInfoSizeDelta = jsonReadUInt64(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA));
 
@@ -202,7 +211,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
             // Database id
             info.backupPgId = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_DB_ID));
 
-                // Options
+            // Options
             info.optionArchiveCheck = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_CHECK));
             info.optionArchiveCopy = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_ARCHIVE_COPY));
             info.optionBackupStandby = jsonReadBool(jsonReadKeyRequireZ(json, INFO_BACKUP_KEY_OPT_BACKUP_STANDBY));
@@ -285,6 +294,20 @@ infoBackupSaveCallback(void *const data, const String *const sectionNext, InfoSa
 
             jsonWriteUInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE), backupData.backupInfoRepoSize);
             jsonWriteUInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_DELTA), backupData.backupInfoRepoSizeDelta);
+
+            ASSERT(
+                (backupData.backupInfoRepoSizeMap != NULL && backupData.backupInfoRepoSizeMap != NULL) ||
+                (backupData.backupInfoRepoSizeMap == NULL && backupData.backupInfoRepoSizeMap == NULL));
+
+            if (backupData.backupInfoRepoSizeMap != NULL)
+            {
+                jsonWriteUInt64(
+                    jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_MAP), varUInt64(backupData.backupInfoRepoSizeMap));
+                jsonWriteUInt64(
+                    jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_REPO_SIZE_MAP_DELTA),
+                    varUInt64(backupData.backupInfoRepoSizeMapDelta));
+            }
+
             jsonWriteUInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_SIZE), backupData.backupInfoSize);
             jsonWriteUInt64(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_INFO_SIZE_DELTA), backupData.backupInfoSizeDelta);
 
@@ -395,6 +418,8 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
         uint64_t backupSizeDelta = 0;
         uint64_t backupRepoSize = 0;
         uint64_t backupRepoSizeDelta = 0;
+        uint64_t backupRepoSizeMap = 0;
+        uint64_t backupRepoSizeMapDelta = 0;
         bool backupError = false;
 
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
@@ -403,12 +428,14 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
             backupSize += file.size;
             backupRepoSize += file.sizeRepo > 0 ? file.sizeRepo : file.size;
+            backupRepoSizeMap += file.blockIncrMapSize;
 
             // If a reference to a file exists, then it is in a previous backup and the delta calculation was already done
             if (file.reference == NULL)
             {
                 backupSizeDelta += file.size;
                 backupRepoSizeDelta += file.sizeRepo > 0 ? file.sizeRepo : file.size;
+                backupRepoSizeMapDelta += file.blockIncrMapSize;
             }
 
             // Is there an error in the file?
@@ -429,7 +456,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .backupInfoSizeDelta = backupSizeDelta,
                 .backupPgId = manData->pgId,
                 .backupTimestampStart = manData->backupTimestampStart,
-                .backupTimestampStop= manData->backupTimestampStop,
+                .backupTimestampStop = manData->backupTimestampStop,
                 .backupType = manData->backupType,
                 .backupError = varNewBool(backupError),
 
@@ -442,12 +469,19 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
                 .optionArchiveCheck = manData->backupOptionArchiveCheck,
                 .optionArchiveCopy = manData->backupOptionArchiveCopy,
                 .optionBackupStandby = manData->backupOptionStandby != NULL ? varBool(manData->backupOptionStandby) : false,
-                .optionChecksumPage = manData->backupOptionChecksumPage != NULL ?
-                    varBool(manData->backupOptionChecksumPage) : false,
+                .optionChecksumPage =
+                    manData->backupOptionChecksumPage != NULL ? varBool(manData->backupOptionChecksumPage) : false,
                 .optionCompress = manData->backupOptionCompressType != compressTypeNone,
                 .optionHardlink = manData->backupOptionHardLink,
                 .optionOnline = manData->backupOptionOnline,
             };
+
+            // Add map sizes when block incr
+            if (manData->blockIncr)
+            {
+                infoBackupData.backupInfoRepoSizeMap = varNewUInt64(backupRepoSizeMap);
+                infoBackupData.backupInfoRepoSizeMapDelta = varNewUInt64(backupRepoSizeMapDelta);
+            }
 
             if (manData->backupType != backupTypeFull)
             {

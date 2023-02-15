@@ -69,8 +69,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             {
                 THROW_FMT(
                     OptionInvalidError,
-                    "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z "' but '" S3_ENV_AWS_ROLE_ARN "' and '"
-                        S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE "' are not set",
+                    "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z "' but '" S3_ENV_AWS_ROLE_ARN "' and"
+                    " '" S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE "' are not set",
                     cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
             }
 
@@ -81,14 +81,14 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageS3New(
-            cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback, cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx),
-            endPoint, (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx),
-            cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
-            cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
-            cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), role, webIdToken,
-            (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx), host, port, ioTimeoutMs(),
-            cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-            cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
+                cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
+                (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
+                keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), role,
+                webIdToken, (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx), host, port, ioTimeoutMs(),
+                cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();
     }

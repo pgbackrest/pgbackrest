@@ -4,19 +4,19 @@ TLS Server
 #include "build.auto.h"
 
 #include <netinet/in.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <openssl/err.h>
 
 #include "common/crypto/common.h"
 #include "common/debug.h"
-#include "common/log.h"
 #include "common/io/server.h"
 #include "common/io/tls/common.h"
 #include "common/io/tls/server.h"
 #include "common/io/tls/session.h"
+#include "common/log.h"
 #include "common/stat.h"
 #include "common/type/object.h"
 
@@ -83,6 +83,7 @@ https://en.wikipedia.org/wiki/Logjam_(computer_security).
 // Hardcoded DH parameters, used in ephemeral DH keying. This is the 2048-bit DH parameter from RFC 3526. The generation of the
 // prime is specified in RFC 2412 Appendix E, which also discusses the design choice of the generator. Note that when loaded with
 // OpenSSL this causes DH_check() to fail on DH_NOT_SUITABLE_GENERATOR, where leaking a bit is preferred.
+// {uncrustify_off - comment inside string}
 #define DH_2048                                                                                                                    \
     "-----BEGIN DH PARAMETERS-----\n"                                                                                              \
     "MIIBCAKCAQEA///////////JD9qiIWjCNMTGYouA3BzRKQJOCIpnzHQCC76mOxOb\n"                                                           \
@@ -92,6 +93,7 @@ https://en.wikipedia.org/wiki/Logjam_(computer_security).
     "fDKQXkYuNs474553LBgOhgObJ4Oi7Aeij7XFXfBvTFLJ3ivL9pVYFxg5lUl86pVq\n"                                                           \
     "5RXSJhiY+gUQFXKOWoqsqmj//////////wIBAg==\n"                                                                                   \
     "-----END DH PARAMETERS-----"
+// {uncrustify_on}
 
 static void
 tlsServerDh(SSL_CTX *const context)
@@ -102,14 +104,14 @@ tlsServerDh(SSL_CTX *const context)
 
     SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
 
-	BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
+    BIO *const bio = BIO_new_mem_buf(DH_2048, sizeof(DH_2048));
     cryptoError(bio == NULL, "unable create buffer for DH parameters");
 
     TRY_BEGIN()
     {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    	DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+        DH *const dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
 #pragma GCC diagnostic pop
 
         TRY_BEGIN()
@@ -309,18 +311,19 @@ tlsServerNew(
         memContextCallbackSet(objMemContext(driver), tlsServerFreeResource, driver);
 
         // Set options
-        SSL_CTX_set_options(driver->context,
+        SSL_CTX_set_options(
+            driver->context,
             // Disable SSL and TLS v1/v1.1
             SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
             // Let server set cipher order
             SSL_OP_CIPHER_SERVER_PREFERENCE |
 #ifdef SSL_OP_NO_RENEGOTIATION
-	        // Disable renegotiation, available since 1.1.0h. This affects only TLSv1.2 and older protocol versions as TLSv1.3 has
+            // Disable renegotiation, available since 1.1.0h. This affects only TLSv1.2 and older protocol versions as TLSv1.3 has
             // no support for renegotiation.
-	        SSL_OP_NO_RENEGOTIATION |
+            SSL_OP_NO_RENEGOTIATION |
 #endif
-        	// Disable session tickets
-	        SSL_OP_NO_TICKET);
+            // Disable session tickets
+            SSL_OP_NO_TICKET);
 
         // Disable session caching
         SSL_CTX_set_session_cache_mode(driver->context, SSL_SESS_CACHE_OFF);

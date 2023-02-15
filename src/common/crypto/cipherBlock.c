@@ -5,8 +5,8 @@ Block Cipher
 
 #include <string.h>
 
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
@@ -196,9 +196,8 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
 
             // Initialize cipher
             cryptoError(
-                !EVP_CipherInit_ex(
-                    this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt),
-                    "unable to initialize cipher");
+                !EVP_CipherInit_ex(this->cipherContext, this->cipher, NULL, key, initVector, this->mode == cipherModeEncrypt),
+                "unable to initialize cipher");
 
             this->saltDone = true;
         }

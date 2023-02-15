@@ -187,16 +187,6 @@ testRun(void)
             TRY_END();
         }
         TRY_END();
-
-        // *************************************************************************************************************************
-        TEST_TITLE("disable backtrace to make sure default code is called");
-
-        hrnStackTraceBackShimInstall();
-
-        char buffer[4096];
-        stackTraceToZ(buffer, sizeof(buffer), "file", "function", 1);
-
-        hrnStackTraceBackShimUninstall();
 #endif
     }
 
@@ -224,6 +214,11 @@ testRun(void)
     {
         char buffer[4096];
 
+#ifdef HAVE_LIBBACKTRACE
+        // Disable backtrace to make sure default code is called
+        hrnStackTraceBackShimInstall();
+#endif
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check size of StackTraceData");
 
@@ -250,12 +245,7 @@ testRun(void)
             stackTraceParamLog();
             assert(strcmp(stackTraceParam(), "void") == 0);
 
-#ifdef HAVE_LIBBACKTRACE
-            stackTraceToZDefault(
-#else
-            stackTraceToZ(
-#endif
-                buffer, sizeof(buffer), "file1.c", "function2", 99);
+            stackTraceToZ(buffer, sizeof(buffer), "file1.c", "function2", 99);
 
             TEST_RESULT_Z(
                 buffer,
@@ -311,12 +301,7 @@ testRun(void)
                 stackTraceParamAdd((size_t)snprintf(stackTraceParamBuffer("param1"), STACK_TRACE_PARAM_MAX, "value1"));
                 assert(strcmp(stackTraceParam(), "buffer full - parameters not available") == 0);
 
-#ifdef HAVE_LIBBACKTRACE
-            stackTraceToZDefault(
-#else
-            stackTraceToZ(
-#endif
-                buffer, sizeof(buffer), "../pgbackrest/src/file4.c", "function4", 99);
+                stackTraceToZ(buffer, sizeof(buffer), "../pgbackrest/src/file4.c", "function4", 99);
 
                 TEST_RESULT_Z(
                     buffer,
@@ -327,12 +312,7 @@ testRun(void)
                     "file1.c:function1:7777:(void)",
                     "stack trace");
 
-#ifdef HAVE_LIBBACKTRACE
-            stackTraceToZDefault(
-#else
-            stackTraceToZ(
-#endif
-                buffer, sizeof(buffer), "file5.c", "function4", 99);
+                stackTraceToZ(buffer, sizeof(buffer), "file5.c", "function4", 99);
 
                 TEST_RESULT_Z(
                     buffer,
@@ -375,6 +355,10 @@ testRun(void)
         TRY_END();
 
         assert(stackTraceLocal.stackSize == 0);
+
+#ifdef HAVE_LIBBACKTRACE
+        hrnStackTraceBackShimUninstall();
+#endif
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -545,7 +545,7 @@ testRun(void)
         // Add test hosts
         HRN_SYSTEM(
             "echo \"127.0.0.1 test.pgbackrest.org host.test2.pgbackrest.org test3.pgbackrest.org\" | sudo tee -a /etc/hosts >"
-                " /dev/null");
+            " /dev/null");
 
         HRN_FORK_BEGIN()
         {
@@ -835,7 +835,7 @@ testRun(void)
                     buffer,
                     zNewFmt(
                         "{type: tls, driver: {ioClient: {type: socket, driver: {host: %s, port: %u, timeoutConnect: 5000"
-                            ", timeoutSession: 5000}}, timeoutConnect: 0, timeoutSession: 0, verifyPeer: %s}}",
+                        ", timeoutSession: 5000}}, timeoutConnect: 0, timeoutSession: 0, verifyPeer: %s}}",
                         strZ(hrnServerHost()), hrnServerPort(0), cvtBoolToConstZ(TEST_IN_CONTAINER)),
                     "check log");
 
@@ -844,7 +844,7 @@ testRun(void)
                     buffer,
                     zNewFmt(
                         "{type: tls, role: client, driver: {ioSession: {type: socket, role: client, driver: {host: %s, port: %u"
-                            ", fd: %d, timeout: 5000}}, timeout: 0, shutdownOnClose: true}}",
+                        ", fd: %d, timeout: 5000}}, timeout: 0, shutdownOnClose: true}}",
                         strZ(hrnServerHost()), hrnServerPort(0),
                         ((SocketSession *)((TlsSession *)session->pub.driver)->ioSession->pub.driver)->fd),
                     "check log");

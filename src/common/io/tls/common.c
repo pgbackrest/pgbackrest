@@ -79,8 +79,10 @@ tlsCertCommonName(X509 *const certificate)                                      
 static int
 tlsCertPwd(char *buffer, const int size, const int rwFlag, void *const userData)
 {
+    (void)rwFlag;
+    (void)userData;
+
     CHECK(ServiceError, size > 0, "buffer has zero size");
-    (void)rwFlag; (void)userData;
 
     // No password is currently supplied
     buffer[0] = '\0';

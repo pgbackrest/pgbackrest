@@ -170,7 +170,8 @@ strNewZ(const char *const string)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *strNewDbl(double value)
+FN_EXTERN String *
+strNewDbl(double value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(DOUBLE, value);

@@ -559,8 +559,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
                 }
             }
 
-            // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient because
-            // cfgExecParam() won't have to search through as large a list looking for overrides.
+            // Remove options that have been marked for removal if they are not already null or invalid. This is more efficient
+            // because cfgExecParam() won't have to search through as large a list looking for overrides.
             if (remove)
             {
                 // Loop through option indexes

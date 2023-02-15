@@ -87,8 +87,12 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
                     OBJ_NEW_BEGIN(StorageIteratorInfo, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = 1)
                     {
                         StorageIteratorInfo *const listInfo = OBJ_NEW_ALLOC();
-                        *listInfo = (StorageIteratorInfo){
-                            .pathSub = strDup(pathSub), .list = storageLstMove(list, memContextCurrent())};
+
+                        *listInfo = (StorageIteratorInfo)
+                        {
+                            .pathSub = strDup(pathSub),
+                            .list = storageLstMove(list, memContextCurrent()),
+                        };
 
                         lstAdd(this->stack, &listInfo);
                     }
@@ -259,7 +263,8 @@ storageItrMore(StorageIterator *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN StorageInfo storageItrNext(StorageIterator *const this)
+FN_EXTERN StorageInfo
+storageItrNext(StorageIterator *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_ITERATOR, this);

@@ -5,8 +5,8 @@ Server Ping Command
 
 #include "command/server/ping.h"
 #include "common/debug.h"
-#include "common/io/tls/client.h"
 #include "common/io/socket/client.h"
+#include "common/io/tls/client.h"
 #include "config/config.h"
 #include "protocol/client.h"
 #include "protocol/helper.h"

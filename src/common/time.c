@@ -96,7 +96,7 @@ tzPartsValid(int tzHour, int tzMinute)
     // ??? This is only a sanity check for basic validity of timezone offset of 15 minute intervals until the timezone
     // database is implemented.
     if (!(((tzHour > -12 && tzHour < 14) && (tzMinute % 15 == 0)) || (tzHour == -12 && tzMinute == 0) ||
-        (tzHour == 14 && tzMinute == 0)))
+          (tzHour == 14 && tzMinute == 0)))
     {
         THROW_FMT(FormatError, "invalid timezone %02d%02d", tzHour, tzMinute);
     }

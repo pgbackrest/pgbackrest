@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.44dev',
+    version: '2.45dev',
     license: 'MIT',
     meson_version: '>=0.45',
     default_options: [
@@ -199,6 +199,12 @@ configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 
 configuration.set(
     'FN_INLINE_ALWAYS', '__attribute__((always_inline)) static inline',
     description: 'Indicate that a function should always be inlined'
+)
+
+# Set FN_PRINTF macro
+configuration.set(
+    'FN_PRINTF(fmt, args)', '__attribute__((format(printf, fmt, args)))',
+    description: 'Indicate that a function is formatted like printf (and provide format and args position)'
 )
 
 ####################################################################################################################################

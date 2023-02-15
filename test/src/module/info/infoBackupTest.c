@@ -26,8 +26,7 @@ testRun(void)
         TEST_TITLE("Load and test move function and make sure ignore-section is ignored");
 
         // File with section to ignore
-        const Buffer *contentLoad = harnessInfoChecksumZ
-        (
+        const Buffer *contentLoad = harnessInfoChecksumZ(
             "[db]\n"
             "db-catalog-version=201409291\n"
             "db-control-version=942\n"
@@ -39,9 +38,8 @@ testRun(void)
             "key1=\"value1\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n"
-        );
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.4\"}\n");
 
         InfoBackup *infoBackup = NULL;
 
@@ -109,7 +107,7 @@ testRun(void)
         TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "systemId set");
         TEST_RESULT_UINT(infoPgData.catalogVersion, 201409291, "catalogVersion set");
 
-        //--------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("object free");
 
         TEST_RESULT_VOID(infoBackupFree(infoBackup), "infoBackupFree() - free backup info");
@@ -137,7 +135,8 @@ testRun(void)
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "20161219-212741F_20161219-212918I={\"backrest-format\":5,\"backrest-version\":\"2.04\","
             "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
-            "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-size\":26897030,"
+            "\"backup-info-repo-size\":3159811,\"backup-info-repo-size-delta\":15765,\"backup-info-repo-size-map\":100,"
+            "\"backup-info-repo-size-map-delta\":12,\"backup-info-size\":26897030,"
             "\"backup-info-size-delta\":163866,\"backup-prior\":\"20161219-212741F\",\"backup-reference\":[\"20161219-212741F\","
             "\"20161219-212741F_20161219-212803D\"],"
             "\"backup-timestamp-start\":1482182877,\"backup-timestamp-stop\":1482182883,\"backup-type\":\"incr\",\"db-id\":1,"
@@ -152,8 +151,8 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.4\"}\n");
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad)), "new backup info");
 
@@ -188,7 +187,7 @@ testRun(void)
         TEST_RESULT_STR_Z(backupDataPtr->backupPrior, "20161219-212741F", "backup prior exists");
         TEST_RESULT_BOOL(
             (strLstSize(backupDataPtr->backupReference) == 1 &&
-                strLstExists(backupDataPtr->backupReference, STRDEF("20161219-212741F"))),
+             strLstExists(backupDataPtr->backupReference, STRDEF("20161219-212741F"))),
             true, "backup reference exists");
         TEST_RESULT_BOOL(infoBackupLabelExists(infoBackup, STRDEF("20161219-12345")), false, "backup label does not exist");
         TEST_RESULT_BOOL(varBool(backupDataPtr->backupError), true, "backup error");
@@ -198,10 +197,12 @@ testRun(void)
         TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "archive start NULL");
         TEST_RESULT_STR(backupData.backupArchiveStop, NULL, "archive stop NULL");
         TEST_RESULT_UINT(backupData.backupType, backupTypeIncr, "backup type incr");
+        TEST_RESULT_UINT(varUInt64(backupData.backupInfoRepoSizeMap), 100, "repo map size");
+        TEST_RESULT_UINT(varUInt64(backupData.backupInfoRepoSizeMapDelta), 12, "repo map size delta");
         TEST_RESULT_STR_Z(backupData.backupPrior, "20161219-212741F", "backup prior exists");
         TEST_RESULT_BOOL(
             (strLstSize(backupData.backupReference) == 2 && strLstExists(backupData.backupReference, STRDEF("20161219-212741F")) &&
-                strLstExists(backupData.backupReference, STRDEF("20161219-212741F_20161219-212803D"))),
+             strLstExists(backupData.backupReference, STRDEF("20161219-212741F_20161219-212803D"))),
             true, "backup reference exists");
         TEST_RESULT_PTR(backupData.backupError, NULL, "null backup error");
         TEST_RESULT_BOOL(backupData.optionArchiveCheck, true, "option archive check");
@@ -232,12 +233,12 @@ testRun(void)
             "20161219-212741F\n20161219-212741F_20161219-212803D\n20161219-212741F_20161219-212918I\n",
             "infoBackupDataLabelList with expression");
         TEST_RESULT_STRLST_Z(
-            infoBackupDataLabelList(infoBackup, backupRegExpP(.full=true)), "20161219-212741F\n", "full=true");
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), "20161219-212741F\n", "full=true");
         TEST_RESULT_STRLST_Z(
-            infoBackupDataLabelList(infoBackup, backupRegExpP(.differential=true)), "20161219-212741F_20161219-212803D\n",
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.differential = true)), "20161219-212741F_20161219-212803D\n",
             "differential=true");
         TEST_RESULT_STRLST_Z(
-            infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental=true)), "20161219-212741F_20161219-212918I\n",
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.incremental = true)), "20161219-212741F_20161219-212918I\n",
             "incremental=true");
 
         TEST_RESULT_VOID(infoBackupDataDelete(infoBackup, STRDEF("20161219-212741F_20161219-212918I")), "delete a backup");
@@ -292,8 +293,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
 
-        const Buffer *manifestContent = harnessInfoChecksumZ
-        (
+        const Buffer *manifestContent = harnessInfoChecksumZ(
             "[backup]\n"
             "backup-label=\"20190818-084502F\"\n"
             "backup-timestamp-copy-start=1565282141\n"
@@ -323,8 +323,7 @@ testRun(void)
             "\n"
             "[target:path]\n"
             "pg_data={}\n"
-            TEST_MANIFEST_PATH_DEFAULT
-        );
+            TEST_MANIFEST_PATH_DEFAULT);
 
         TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(manifestContent)), "load manifest");
         TEST_RESULT_VOID(infoBackupDataAdd(infoBackup, manifest), "add a backup");
@@ -368,6 +367,7 @@ testRun(void)
             "[backup]\n"                                                                                                           \
             "backup-archive-start=\"000000030000028500000089\"\n"                                                                  \
             "backup-archive-stop=\"000000030000028500000090\"\n"                                                                   \
+            "backup-block-incr=true\n"                                                                                             \
             "backup-label=\"20190818-084502F_20190820-084502I\"\n"                                                                 \
             "backup-lsn-start=\"285/89000028\"\n"                                                                                  \
             "backup-lsn-stop=\"285/89001F88\"\n"                                                                                   \
@@ -410,10 +410,11 @@ testRun(void)
                 ",\"timestamp\":1565282115}\n"                                                                                     \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
-            "pg_data/base/32768/33000.32767={\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\",\"checksum-page\":true"     \
-                ",\"reference\":\"20190818-084502F_20190819-084506I\",\"size\":32768,\"timestamp\":1565282114}\n"                  \
-            "pg_data/postgresql.conf={\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\",\"size\":4457"                     \
+            "pg_data/base/32768/33000.32767={\"bims\":88,\"bis\":1,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\""      \
+                ",\"checksum-page\":true,\"reference\":\"20190818-084502F_20190819-084506I\",\"size\":32768"                       \
                 ",\"timestamp\":1565282114}\n"                                                                                     \
+            "pg_data/postgresql.conf={\"bims\":12,\"bis\":1,\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\""             \
+                ",\"size\":4457,\"timestamp\":1565282114}\n"                                                                       \
             "pg_data/special={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"                             \
             "pg_data/dupref={\"mode\":\"0640\",\"reference\":\"20190818-084502F\",\"size\":0"                                      \
                 ",\"timestamp\":1565282120,\"user\":false}\n"                                                                      \
@@ -458,6 +459,8 @@ testRun(void)
         TEST_RESULT_UINT(backupData.backupInfoSizeDelta, 12653, "backup size");
         TEST_RESULT_UINT(backupData.backupInfoRepoSize, 1073783153, "repo size");
         TEST_RESULT_UINT(backupData.backupInfoRepoSizeDelta, 8557, "repo backup size");
+        TEST_RESULT_UINT(varUInt64(backupData.backupInfoRepoSizeMap), 100, "repo map size");
+        TEST_RESULT_UINT(varUInt64(backupData.backupInfoRepoSizeMapDelta), 12, "repo map size delta");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoBackupDataAnnotationSet()");
@@ -531,11 +534,11 @@ testRun(void)
             "\n"
             "[target:file]\n"
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""
-                ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1569256970}\n"
+            ",\"reference\":\"20190818-084502F_20190819-084506D\",\"size\":4,\"timestamp\":1569256970}\n"
             "pg_data/backup_label={\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"
-                ",\"checksum-page-error\":[1],\"size\":249,\"timestamp\":1569257013}\n"
+            ",\"checksum-page-error\":[1],\"size\":249,\"timestamp\":1569257013}\n"
             "pg_data/base/13050/PG_VERSION={\"checksum\":\"dd71038f3463f511ee7403dbcbc87195302d891c\",\"repo-size\":23,\"size\":3"
-                ",\"timestamp\":1569256971}\n"
+            ",\"timestamp\":1569256971}\n"
             TEST_MANIFEST_FILE_DEFAULT
             "\n"
             "[target:path]\n"
@@ -930,8 +933,8 @@ testRun(void)
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"
-                "\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.4\"}\n");
 
         InfoBackup *infoBackup;
         StringList *dependencyList;
@@ -945,7 +948,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             dependencyList,
             "20200317-181625F\n20200317-181625F_20200317-182239D\n20200317-181625F_20200317-182300D\n"
-                "20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n20200317-181625F_20200317-182340D\n",
+            "20200317-181625F_20200317-182324I\n20200317-181625F_20200317-182340I\n20200317-181625F_20200317-182340D\n",
             "all dependents");
 
         TEST_ASSIGN(dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181416F")), "full");

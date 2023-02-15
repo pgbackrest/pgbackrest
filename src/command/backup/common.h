@@ -15,6 +15,7 @@ Common Functions and Definitions for Backup and Expire Commands
 Backup constants
 ***********************************************************************************************************************************/
 #define BACKUP_PATH_HISTORY                                         "backup.history"
+#define BACKUP_BLOCK_INCR_EXT                                       ".pgbi"
 
 /***********************************************************************************************************************************
 Functions
@@ -25,6 +26,7 @@ typedef struct BackupFileRepoPathParam
     const String *manifestName;                                     // File name in manifest
     uint64_t bundleId;                                              // Is the file bundled?
     CompressType compressType;                                      // Is the file compressed?
+    bool blockIncr;                                                 // Is the file a block incremental?
 } BackupFileRepoPathParam;
 
 #define backupFileRepoPathP(backupLabel, ...)                                                                                          \

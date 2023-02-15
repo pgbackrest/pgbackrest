@@ -115,8 +115,8 @@ testRun(void)
             varInt64Force(varNewStrZ("9223372036854775808")), FormatError,
             "unable to convert base 10 string '9223372036854775808' to int64");
         TEST_ERROR(varInt64Force(varNewVarLst(varLstNew())), AssertError, "unable to force VariantList to int64");
-        TEST_ERROR(varInt64Force(VARUINT64(9223372036854775808U)), FormatError,
-            "unable to convert uint64 9223372036854775808 to int64");
+        TEST_ERROR(
+            varInt64Force(VARUINT64(9223372036854775808U)), FormatError, "unable to convert uint64 9223372036854775808 to int64");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(varInt64(varNewStrZ("string")), AssertError, "assertion 'varType(this) == varTypeInt64' failed");

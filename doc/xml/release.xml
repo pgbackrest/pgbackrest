@@ -14,7 +14,39 @@
     </intro>
 
     <release-list>
-        <release date="XXXX-XX-XX" version="2.44dev" title="UNDER DEVELOPMENT">
+        <release date="XXXX-XX-XX" version="2.45dev" title="UNDER DEVELOPMENT">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <commit subject="Add block incremental to real/all test output."/>
+                        <commit subject="Improve IoChunkedRead end-of-file handling."/>
+                        <commit subject="Remove parameter list from deltaMapNew()."/>
+                        <commit subject="Consistently declare block incremental size as size_t."/>
+                        <commit subject="Rename DeltaMap to BlockHash."/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Block-level incremental backup.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+
+            <release-doc-list>
+                <release-improvement-list>
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Remove references to <proper>SSH</proper> made obsolete when <proper>TLS</proper> was introduced.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-doc-list>
+        </release>
+
+        <release date="2023-01-30" version="2.44" title="Remove PostgreSQL 9.0/9.1/9.2 Support">
             <release-core-list>
                 <release-improvement-list>
                     <release-item>
@@ -58,6 +90,22 @@
                 </release-improvement-list>
 
                 <release-development-list>
+                    <release-item>
+                        <github-issue id="959"/>
+                        <github-issue id="1806"/>
+                        <github-issue id="1913"/>
+                        <github-pull-request id="1916"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stephen.frost"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                            <release-item-reviewer id="john.morris"/>
+                        </release-item-contributor-list>
+
+                        <p>Block-level incremental backup.</p>
+                    </release-item>
+
                     <release-item>
                         <commit subject="Rename EncodeType enum to EncodingType."/>
                         <commit subject="Add hex encode/decoding to decode module."/>
@@ -115,6 +163,21 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="1770"/>
+                        <github-pull-request id="1980"/>
+
+                        <release-item-contributor-list>
+                            <release-item-ideator id="vojtech.galda"/>
+                            <release-item-ideator id="Pluggi"/>
+                            <release-item-ideator id="asjonos"/>
+                            <release-item-contributor id="david.steele"/>
+                            <release-item-reviewer id="stefan.fercot"/>
+                        </release-item-contributor-list>
+
+                        <p>Add warning about enabling <quote>hierarchical namespace</quote> on Azure storage.</p>
+                    </release-item>
+
+                    <release-item>
                         <github-issue id="1910"/>
                         <github-pull-request id="1963"/>
 
@@ -155,6 +218,15 @@
                         </release-item-contributor-list>
 
                         <p>Updates and clarifications to index page.</p>
+                    </release-item>
+
+                    <release-item>
+                        <release-item-contributor-list>
+                            <release-item-ideator id="stephen.frost"/>
+                            <release-item-contributor id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add dark mode to the website.</p>
                     </release-item>
                 </release-improvement-list>
             </release-doc-list>
@@ -5629,6 +5701,11 @@
 
                 <release-improvement-list>
                     <release-item>
+                        <release-item-contributor-list>
+                            <release-item-contributor id="cynthia.shang"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
                         <p>The <cmd>info</cmd> command is implemented entirely in C.</p>
                     </release-item>
 
@@ -11891,6 +11968,11 @@
             <contributor-id type="github">argdenis</contributor-id>
         </contributor>
 
+        <contributor id="asjonos">
+            <contributor-name-display>asjonos</contributor-name-display>
+            <contributor-id type="github">asjonos</contributor-id>
+        </contributor>
+
         <contributor id="avinash.vallarapu">
             <contributor-name-display>Avinash Vallarapu</contributor-name-display>
             <contributor-id type="github">avinashvallarapu</contributor-id>
@@ -12566,6 +12648,11 @@
             <contributor-id type="github">PierreDucroquet</contributor-id>
         </contributor>
 
+        <contributor id="Pluggi">
+            <contributor-name-display>Pluggi</contributor-name-display>
+            <contributor-id type="github">Pluggi</contributor-id>
+        </contributor>
+
         <contributor id="pritam.barhate">
             <contributor-name-display>Pritam Barhate</contributor-name-display>
             <contributor-id type="github">pritammobisoft</contributor-id>
@@ -12747,6 +12834,11 @@
         <contributor id="virgile.crevon">
             <contributor-name-display>Virgile CREVON</contributor-name-display>
             <contributor-id type="github">collectionneurfou</contributor-id>
+        </contributor>
+
+        <contributor id="vojtech.galda">
+            <contributor-name-display>Vojtech Galda</contributor-name-display>
+            <contributor-id type="github">vojtechDB</contributor-id>
         </contributor>
 
         <contributor id="vthriller">

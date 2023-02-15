@@ -5,6 +5,7 @@ Backup File
 
 #include <string.h>
 
+#include "command/backup/blockIncr.h"
 #include "command/backup/file.h"
 #include "command/backup/pageChecksum.h"
 #include "common/crypto/cipherBlock.h"
@@ -38,11 +39,14 @@ segmentNumber(const String *pgFile)
 /**********************************************************************************************************************************/
 FN_EXTERN List *
 backupFile(
-    const String *const repoFile, const CompressType repoFileCompressType, const int repoFileCompressLevel,
-    const CipherType cipherType, const String *const cipherPass, const List *const fileList)
+    const String *const repoFile, const uint64_t bundleId, const unsigned int blockIncrReference,
+    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,
+    const String *const cipherPass, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
+        FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle id (0 if none)
+        FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
@@ -208,23 +212,64 @@ backupFile(
                                 segmentNumber(file->pgFile), PG_SEGMENT_PAGE_DEFAULT, storagePathP(storagePg(), file->pgFile)));
                     }
 
-                    // Add compression
-                    if (repoFileCompressType != compressTypeNone)
+                    // Compress filter
+                    IoFilter *const compress =
+                        repoFileCompressType != compressTypeNone ?
+                            compressFilter(repoFileCompressType, repoFileCompressLevel) : NULL;
+
+                    // Encrypt filter
+                    IoFilter *const encrypt =
+                        cipherType != cipherTypeNone ?
+                            cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = file->blockIncrSize != 0) :
+                            NULL;
+
+                    // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
+                    // compressed/encrypted separately
+                    if (file->blockIncrSize != 0)
                     {
+                        // Read prior block map
+                        const Buffer *blockMap = NULL;
+
+                        if (file->blockIncrMapPriorFile != NULL)
+                        {
+                            StorageRead *const blockMapRead = storageNewReadP(
+                                storageRepo(), file->blockIncrMapPriorFile, .offset = file->blockIncrMapPriorOffset,
+                                .limit = VARUINT64(file->blockIncrMapPriorSize));
+
+                            if (cipherType != cipherTypeNone)
+                            {
+                                ioFilterGroupAdd(
+                                    ioReadFilterGroup(storageReadIo(blockMapRead)),
+                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                            }
+
+                            blockMap = storageGetP(blockMapRead);
+                        }
+
+                        // Add block incremental filter
                         ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)), compressFilter(repoFileCompressType, repoFileCompressLevel));
+                            ioReadFilterGroup(storageReadIo(read)),
+                            blockIncrNew(
+                                file->blockIncrSize, blockIncrReference, bundleId, bundleOffset, blockMap, compress, encrypt));
 
                         repoChecksum = true;
                     }
-
-                    // If there is a cipher then add the encrypt filter
-                    if (cipherType != cipherTypeNone)
+                    // Else apply compress/encrypt filters to the entire file
+                    else
                     {
-                        ioFilterGroupAdd(
-                            ioReadFilterGroup(storageReadIo(read)),
-                            cipherBlockNewP(cipherModeEncrypt, cipherType, BUFSTR(cipherPass)));
+                        // Add compress filter
+                        if (compress != NULL)
+                        {
+                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), compress);
+                            repoChecksum = true;
+                        }
 
-                        repoChecksum = true;
+                        // Add encrypt filter
+                        if (encrypt != NULL)
+                        {
+                            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), encrypt);
+                            repoChecksum = true;
+                        }
                     }
 
                     // Capture checksum of file stored in the repo if filters that modify the output have been applied
@@ -275,6 +320,13 @@ backupFile(
                             {
                                 fileResult->pageChecksumResult = pckDup(
                                     ioFilterGroupResultPackP(ioReadFilterGroup(storageReadIo(read)), PAGE_CHECKSUM_FILTER_TYPE));
+                            }
+
+                            // Get results of block incremental
+                            if (file->blockIncrSize != 0)
+                            {
+                                fileResult->blockIncrMapSize = pckReadU64P(
+                                    ioFilterGroupResultP(ioReadFilterGroup(storageReadIo(read)), BLOCK_INCR_FILTER_TYPE));
                             }
 
                             // Get repo checksum

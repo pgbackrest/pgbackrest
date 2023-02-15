@@ -146,7 +146,8 @@ sub setup
         bArchiveAsync => $$oConfigParam{bArchiveAsync},
         strStorage => $oConfigParam->{strStorage},
         iRepoTotal => $oConfigParam->{iRepoTotal},
-        bBundle => $oConfigParam->{bBundle}});
+        bBundle => $oConfigParam->{bBundle},
+        bBlockIncr => $oConfigParam->{bBlockIncr}});
 
     # Create backup config if backup host exists
     if (defined($oHostBackup))
@@ -157,7 +158,8 @@ sub setup
             bHardlink => $$oConfigParam{bHardLink},
             strStorage => $oConfigParam->{strStorage},
             iRepoTotal => $oConfigParam->{iRepoTotal},
-            bBundle => $oConfigParam->{bBundle}});
+            bBundle => $oConfigParam->{bBundle},
+            bBlockIncr => $oConfigParam->{bBlockIncr}});
     }
     # If backup host is not defined set it to db-primary
     else
@@ -186,7 +188,8 @@ sub setup
             bArchiveAsync => $$oConfigParam{bArchiveAsync},
             strStorage => $oConfigParam->{strStorage},
             iRepoTotal => $oConfigParam->{iRepoTotal},
-            bBundle => $oConfigParam->{bBundle}});
+            bBundle => $oConfigParam->{bBundle},
+            bBlockIncr => $oConfigParam->{bBlockIncr}});
     }
 
     # Create object storage

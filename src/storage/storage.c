@@ -8,10 +8,10 @@ Storage Interface
 
 #include "common/debug.h"
 #include "common/io/io.h"
-#include "common/type/list.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
+#include "common/type/list.h"
 #include "common/wait.h"
 #include "storage/storage.h"
 
@@ -95,7 +95,7 @@ storageNew(
     CHECK(
         AssertError,
         (!storageFeature(this, storageFeatureSymLink) && !storageFeature(this, storageFeatureHardLink)) ||
-            interface.linkCreate != NULL,
+        interface.linkCreate != NULL,
         "linkCreate required");
 
     FUNCTION_LOG_RETURN(STORAGE, this);
@@ -329,7 +329,8 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void storageLinkCreate(
+FN_EXTERN void
+storageLinkCreate(
     const Storage *const this, const String *const target, const String *const linkPath, const StorageLinkCreateParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -536,8 +537,9 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
             // Make sure the base storage path is contained within the path expression
             if (!strEqZ(this->path, "/"))
             {
-                if (!param.noEnforce && (!strBeginsWith(pathExp, this->path) ||
-                    !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
+                if (!param.noEnforce &&
+                    (!strBeginsWith(pathExp, this->path) ||
+                     !(strSize(pathExp) == strSize(this->path) || *(strZ(pathExp) + strSize(this->path)) == '/')))
                 {
                     THROW_FMT(AssertError, "absolute path '%s' is not in base path '%s'", strZ(pathExp), strZ(this->path));
                 }
@@ -692,7 +694,8 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void storagePathSync(const Storage *this, const String *pathExp)
+FN_EXTERN void
+storagePathSync(const Storage *this, const String *pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);

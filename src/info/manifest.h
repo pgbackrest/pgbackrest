@@ -10,20 +10,22 @@ nothing is missing or corrupt.  It is also useful for reporting, e.g. size of ba
 #ifndef INFO_MANIFEST_H
 #define INFO_MANIFEST_H
 
+#include "common/type/string.h"
+
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
 #define BACKUP_MANIFEST_EXT                                         ".manifest"
 #define BACKUP_MANIFEST_FILE                                        "backup" BACKUP_MANIFEST_EXT
-    STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
+STRING_DECLARE(BACKUP_MANIFEST_FILE_STR);
 
 #define MANIFEST_PATH_BUNDLE                                        "bundle"
-    STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
+STRING_DECLARE(MANIFEST_PATH_BUNDLE_STR);
 
 #define MANIFEST_TARGET_PGDATA                                      "pg_data"
-    STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
+STRING_DECLARE(MANIFEST_TARGET_PGDATA_STR);
 #define MANIFEST_TARGET_PGTBLSPC                                    "pg_tblspc"
-    STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
+STRING_DECLARE(MANIFEST_TARGET_PGTBLSPC_STR);
 
 /***********************************************************************************************************************************
 Object type
@@ -34,8 +36,8 @@ typedef struct Manifest Manifest;
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/type/variant.h"
 #include "common/type/object.h"
+#include "common/type/variant.h"
 #include "info/info.h"
 #include "info/infoBackup.h"
 #include "storage/storage.h"
@@ -54,6 +56,7 @@ typedef struct ManifestData
     time_t backupTimestampStop;                                     // When did the backup stop?
     BackupType backupType;                                          // Type of backup: full, diff, incr
     bool bundle;                                                    // Does the backup bundle files?
+    bool blockIncr;                                                 // Does the backup perform block incremental?
 
     // ??? Note that these fields are redundant and verbose since storing the start/stop lsn as a uint64 would be sufficient.
     // However, we currently lack the functions to transform these values back and forth so this will do for now.
@@ -99,11 +102,11 @@ File type
 typedef struct ManifestFile
 {
     const String *name;                                             // File name (must be first member in struct)
-    bool copy:1;                                                    // Should the file be copied (backup only)?
-    bool delta:1;                                                   // Verify checksum in PGDATA before copying (backup only)?
-    bool resume:1;                                                  // Is the file being resumed (backup only)?
-    bool checksumPage:1;                                            // Does this file have page checksums?
-    bool checksumPageError:1;                                       // Is there an error in the page checksum?
+    bool copy : 1;                                                  // Should the file be copied (backup only)?
+    bool delta : 1;                                                 // Verify checksum in PGDATA before copying (backup only)?
+    bool resume : 1;                                                // Is the file being resumed (backup only)?
+    bool checksumPage : 1;                                          // Does this file have page checksums?
+    bool checksumPageError : 1;                                     // Is there an error in the page checksum?
     mode_t mode;                                                    // File mode
     const uint8_t *checksumSha1;                                    // SHA1 checksum
     const uint8_t *checksumRepoSha1;                                // SHA1 checksum as stored in repo (including compression, etc.)
@@ -113,6 +116,8 @@ typedef struct ManifestFile
     const String *reference;                                        // Reference to a prior backup
     uint64_t bundleId;                                              // Bundle id
     uint64_t bundleOffset;                                          // Bundle offset
+    size_t blockIncrSize;                                           // Size of incremental blocks
+    uint64_t blockIncrMapSize;                                      // Block incremental map size
     uint64_t size;                                                  // Original size
     uint64_t sizeRepo;                                              // Size in repo
     time_t timestamp;                                               // Original timestamp
@@ -164,8 +169,8 @@ Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
 FN_EXTERN Manifest *manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, bool online, bool checksumPage, bool bundle,
-    const StringList *excludeList, const Pack *tablespaceList);
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, time_t timestampStart, bool online,
+    bool checksumPage, bool bundle, bool blockIncr, const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
 FN_EXTERN Manifest *manifestNewLoad(IoRead *read);
@@ -227,11 +232,10 @@ FN_EXTERN void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupTy
 
 // Set remaining values before the final save
 FN_EXTERN void manifestBuildComplete(
-    Manifest *this, time_t timestampStart, const String *lsnStart, const String *archiveStart, time_t timestampStop,
-    const String *lsnStop, const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList,
-    bool optionArchiveCheck, bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel,
-    unsigned int optionCompressLevelNetwork, bool optionHardLink, unsigned int optionProcessMax, bool optionStandby,
-    const KeyValue *annotation);
+    Manifest *this, const String *lsnStart, const String *archiveStart, time_t timestampStop, const String *lsnStop,
+    const String *archiveStop, unsigned int pgId, uint64_t pgSystemId, const Pack *dbList, bool optionArchiveCheck,
+    bool optionArchiveCopy, size_t optionBufferSize, unsigned int optionCompressLevel, unsigned int optionCompressLevelNetwork,
+    bool optionHardLink, unsigned int optionProcessMax, bool optionStandby, const KeyValue *annotation);
 
 /***********************************************************************************************************************************
 Functions

@@ -12,7 +12,8 @@ Harness for Loading Test Configurations
 #include "common/harnessPack.h"
 
 /**********************************************************************************************************************************/
-String *hrnPackToStr(const Pack *const pack)
+String *
+hrnPackToStr(const Pack *const pack)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK, pack);
@@ -22,7 +23,8 @@ String *hrnPackToStr(const Pack *const pack)
 }
 
 /**********************************************************************************************************************************/
-String *hrnPackReadToStr(PackRead *read)
+String *
+hrnPackReadToStr(PackRead *read)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, read);

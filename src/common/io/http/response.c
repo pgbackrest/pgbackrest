@@ -18,14 +18,14 @@ HTTP Response
 HTTP constants
 ***********************************************************************************************************************************/
 #define HTTP_HEADER_CONNECTION                                      "connection"
-    STRING_STATIC(HTTP_HEADER_CONNECTION_STR,                       HTTP_HEADER_CONNECTION);
+STRING_STATIC(HTTP_HEADER_CONNECTION_STR,                           HTTP_HEADER_CONNECTION);
 #define HTTP_HEADER_TRANSFER_ENCODING                               "transfer-encoding"
-    STRING_STATIC(HTTP_HEADER_TRANSFER_ENCODING_STR,                HTTP_HEADER_TRANSFER_ENCODING);
+STRING_STATIC(HTTP_HEADER_TRANSFER_ENCODING_STR,                    HTTP_HEADER_TRANSFER_ENCODING);
 
 #define HTTP_VALUE_CONNECTION_CLOSE                                 "close"
-    STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                  HTTP_VALUE_CONNECTION_CLOSE);
+STRING_STATIC(HTTP_VALUE_CONNECTION_CLOSE_STR,                      HTTP_VALUE_CONNECTION_CLOSE);
 #define HTTP_VALUE_TRANSFER_ENCODING_CHUNKED                        "chunked"
-    STRING_STATIC(HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR,         HTTP_VALUE_TRANSFER_ENCODING_CHUNKED);
+STRING_STATIC(HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR,             HTTP_VALUE_TRANSFER_ENCODING_CHUNKED);
 
 /***********************************************************************************************************************************
 Object type
@@ -164,8 +164,8 @@ httpResponseRead(THIS_VOID, Buffer *buffer, bool block)
                     // If no content remaining
                     if (this->contentRemaining == 0)
                     {
-                        // If chunked then consume the blank line that follows every chunk.  There might be more chunk data so loop back
-                        // around to check.
+                        // If chunked then consume the blank line that follows every chunk. There might be more chunk data so loop
+                        // back around to check.
                         if (this->contentChunked)
                         {
                             ioReadLine(rawRead);
@@ -405,7 +405,7 @@ httpResponseToLog(const HttpResponse *const this, StringStatic *const debugLog)
     strStcFmt(
         debugLog,
         "{code: %u, reason: %s, contentChunked: %s, contentSize: %" PRIu64 ", contentRemaining: %" PRIu64 ", closeOnContentEof: %s"
-            ", contentExists: %s, contentEof: %s, contentCached: %s}",
+        ", contentExists: %s, contentEof: %s, contentCached: %s}",
         httpResponseCode(this), strZ(httpResponseReason(this)), cvtBoolToConstZ(this->contentChunked), this->contentSize,
         this->contentRemaining, cvtBoolToConstZ(this->closeOnContentEof), cvtBoolToConstZ(this->contentExists),
         cvtBoolToConstZ(this->contentEof), cvtBoolToConstZ(this->content != NULL));

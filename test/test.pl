@@ -80,6 +80,7 @@ test.pl [options]
    --min-gen            only run required code generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
    --code-count         generate code counts
+   --no-back-trace      don't run backrace on C unit tests (may be slow with valgrind)
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
    --no-coverage-report run coverage but don't generate coverage report (saves time)
@@ -89,6 +90,10 @@ test.pl [options]
    --scale              scale performance tests
    --tz                 test with the specified timezone
    --debug-test-trace   test stack trace for low-level functions (slow, esp w/valgrind, may cause timeouts)
+
+ Code Format Options:
+   --code-format        format code to project standards -- this may overwrite files!
+   --code-format-check  check that code is formatted to project standards
 
  Report Options:
    --coverage-summary   generate a coverage summary report for the documentation
@@ -132,6 +137,8 @@ my @iyModuleTestRun;
 my $iVmMax = 1;
 my $iVmId = undef;
 my $bDryRun = false;
+my $bCodeFormat = false;
+my $bCodeFormatCheck = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
 my $strTestPath;
@@ -158,6 +165,7 @@ my $bGenCheck = false;
 my $bMinGen = false;
 my $bCodeCount = false;
 my $bProfile = false;
+my $bNoBackTrace = false;
 my $bNoValgrind = false;
 my $bNoOptimize = false;
 my $bNoDebug = false;
@@ -206,7 +214,10 @@ GetOptions ('q|quiet' => \$bQuiet,
             'gen-check' => \$bGenCheck,
             'min-gen' => \$bMinGen,
             'code-count' => \$bCodeCount,
+            'code-format' => \$bCodeFormat,
+            'code-format-check' => \$bCodeFormatCheck,
             'profile' => \$bProfile,
+            'no-back-trace' => \$bNoBackTrace,
             'no-valgrind' => \$bNoValgrind,
             'no-optimize' => \$bNoOptimize,
             'no-debug', => \$bNoDebug,
@@ -266,6 +277,7 @@ eval
     ################################################################################################################################
     if ($bProfile)
     {
+        $bNoBackTrace = true;
         $bNoValgrind = true;
         $bNoCoverage = true;
     }
@@ -604,6 +616,68 @@ eval
                 # This option is not supported on MacOS. The eventual plan is to remove the need for it.
                 (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
                 " ${strBackRestBase}/ ${strRepoCachePath}");
+
+        # Format code with uncrustify and check permissions
+        #---------------------------------------------------------------------------------------------------------------------------
+        if ($bCodeFormat || $bCodeFormatCheck)
+        {
+            &log(INFO, 'code format' . ($bCodeFormatCheck ? ' check' : ''));
+
+            my $hRepoManifest = $oStorageTest->manifest($strRepoCachePath);
+            my $hManifest = $oStorageBackRest->manifest('');
+            my $strCommand =
+                "uncrustify -c ${strBackRestBase}/test/uncrustify.cfg" .
+                ($bCodeFormatCheck ? ' --check' : ' --replace --no-backup');
+
+            foreach my $strFile (sort(keys(%{$hManifest})))
+            {
+                # Skip non-C files
+                next if $hManifest->{$strFile}{type} ne 'f' || ($strFile !~ /\.c$/ && $strFile !~ /\.h$/);
+
+                # Skip files that do are not version controlled
+                next if !defined($hRepoManifest->{$strFile});
+
+                # Skip specific file
+                next if
+                    # Does not format correctly because it is a template
+                    $strFile eq 'test/src/test.c' ||
+                    # Contains code copied directly from PostgreSQL
+                    $strFile eq 'src/postgres/interface/static.vendor.h' ||
+                    $strFile eq 'src/postgres/interface/version.vendor.h';
+
+                $strCommand .= " ${strBackRestBase}/${strFile}";
+            }
+
+            executeTest($strCommand . " 2>&1");
+
+            # Check execute permissions to make sure nothing got munged
+            foreach my $strFile (sort(keys(%{$hManifest})))
+            {
+                next if ($strFile eq '.') || !defined($hRepoManifest->{$strFile});
+
+                my $strExpectedMode = sprintf('%04o', oct($hManifest->{$strFile}{mode}) & 0666);
+
+                if ($strFile eq 'doc/doc.pl' ||
+                    $strFile eq 'doc/release.pl' ||
+                    $strFile eq 'src/build/install-sh' ||
+                    $strFile eq 'src/configure' ||
+                    $strFile eq 'test/ci.pl' ||
+                    $strFile eq 'test/test.pl' ||
+                    $hManifest->{$strFile}{type} eq 'd')
+                {
+                    $strExpectedMode = sprintf('%04o', oct($hManifest->{$strFile}{mode}) & 0777);
+                }
+
+                if ($hManifest->{$strFile}{mode} ne $strExpectedMode)
+                {
+                    confess &log(
+                        ERROR,
+                        "expected mode for '${strExpectedMode}' for '${strFile}' but found '" . $hManifest->{$strFile}{mode} . "'");
+                }
+            }
+
+            exit 0;
+        }
 
         # Generate code counts
         #---------------------------------------------------------------------------------------------------------------------------
@@ -1054,8 +1128,8 @@ eval
                     my $oJob = new pgBackRestTest::Common::JobTest(
                         $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx, $iVmMax,
                         $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, !$bNoLogTimestamp,
-                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary, !$bNoOptimize,
-                        $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                        $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoBackTrace, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary,
+                        !$bNoOptimize, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
                         $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                     $iTestIdx++;
 

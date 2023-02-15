@@ -140,7 +140,7 @@ protocolClientNew(const String *name, const String *service, IoRead *read, IoWri
                     THROW_FMT(
                         ProtocolError,
                         "expected value '%s' for greeting key '%s' but got '%s'\n"
-                            "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
+                        "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
                         expected[expectedIdx].value, strZ(strIdToStr(expected[expectedIdx].key)), strZ(actualValue));
                 }
             }

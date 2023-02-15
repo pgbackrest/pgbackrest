@@ -5,13 +5,13 @@ Compression Helper
 
 #include <string.h>
 
-#include "common/compress/helper.h"
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/compress.h"
 #include "common/compress/bz2/decompress.h"
 #include "common/compress/gz/common.h"
 #include "common/compress/gz/compress.h"
 #include "common/compress/gz/decompress.h"
+#include "common/compress/helper.h"
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/compress/lz4/decompress.h"
@@ -42,9 +42,9 @@ static const struct CompressHelperLocal
     IoFilter *(*compressNew)(int);                                  // Function to create new compression filter
     StringId decompressType;                                        // Type of the decompression filter
     IoFilter *(*decompressNew)(void);                               // Function to create new decompression filter
-    int levelDefault:8;                                             // Default compression level
-    int levelMin:8;                                                 // Minimum compression level
-    int levelMax:8;                                                 // Maximum compression level
+    int levelDefault : 8;                                           // Default compression level
+    int levelMin : 8;                                               // Minimum compression level
+    int levelMax : 8;                                               // Maximum compression level
 } compressHelperLocal[] =
 {
     {

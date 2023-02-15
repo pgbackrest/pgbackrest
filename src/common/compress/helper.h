@@ -26,8 +26,8 @@ typedef enum
     compressTypeXz,                                                 // xz/lzma
 } CompressType;
 
-#include <common/type/stringId.h>
 #include <common/io/filter/group.h>
+#include <common/type/stringId.h>
 
 /***********************************************************************************************************************************
 Compression types as a regexp. In the future this regexp will be generated automatically at build time but we want to wait until the

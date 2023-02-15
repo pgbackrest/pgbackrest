@@ -51,17 +51,21 @@ same kluge.
 Adapted from PostgreSQL src/include/c.h.
 ***********************************************************************************************************************************/
 #ifdef HAVE_STATIC_ASSERT
-    #define STATIC_ASSERT_STMT(condition, message)                                                                                 \
-        do {_Static_assert(condition, message);} while (0)
 
-    #define STATIC_ASSERT_EXPR(condition, message)                                                                                 \
-        ((void)({STATIC_ASSERT_STMT(condition, message); true;}))
+#define STATIC_ASSERT_STMT(condition, message)                                                                                     \
+    do {_Static_assert(condition, message);} while (0)
+
+#define STATIC_ASSERT_EXPR(condition, message)                                                                                     \
+    ((void)({STATIC_ASSERT_STMT(condition, message); true;}))
+
 #else
-    #define STATIC_ASSERT_STMT(condition, message)                                                                                 \
-        ((void)sizeof(struct {int static_assert_failure : (condition) ? 1 : -1;}))
 
-    #define STATIC_ASSERT_EXPR(condition, message)                                                                                 \
-        STATIC_ASSERT_STMT(condition, message)
+#define STATIC_ASSERT_STMT(condition, message)                                                                                     \
+    ((void)sizeof(struct {int static_assert_failure : (condition) ? 1 : -1;}))
+
+#define STATIC_ASSERT_EXPR(condition, message)                                                                                     \
+    STATIC_ASSERT_STMT(condition, message)
+
 #endif
 
 /***********************************************************************************************************************************
@@ -78,11 +82,11 @@ Note that this only works in function scope, not for global variables (it would 
 Adapted from PostgreSQL src/include/c.h.
 ***********************************************************************************************************************************/
 #ifdef HAVE_BUILTIN_TYPES_COMPATIBLE_P
-    #define UNCONSTIFY(type, expression)                                                                                           \
-        (STATIC_ASSERT_EXPR(__builtin_types_compatible_p(__typeof(expression), const type), "invalid cast"), (type)(expression))
+#define UNCONSTIFY(type, expression)                                                                                               \
+    (STATIC_ASSERT_EXPR(__builtin_types_compatible_p(__typeof(expression), const type), "invalid cast"), (type)(expression))
 #else
-    #define UNCONSTIFY(type, expression)                                                                                           \
-        ((type)(expression))
+#define UNCONSTIFY(type, expression)                                                                                               \
+    ((type)(expression))
 #endif
 
 /***********************************************************************************************************************************

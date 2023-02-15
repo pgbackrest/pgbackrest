@@ -32,7 +32,7 @@ Restore Command
 Recovery constants
 ***********************************************************************************************************************************/
 #define RESTORE_COMMAND                                             "restore_command"
-    STRING_STATIC(RESTORE_COMMAND_STR,                              RESTORE_COMMAND);
+STRING_STATIC(RESTORE_COMMAND_STR,                                  RESTORE_COMMAND);
 
 #define RECOVERY_TARGET                                             "recovery_target"
 #define RECOVERY_TARGET_LSN                                         "recovery_target_lsn"
@@ -48,7 +48,7 @@ Recovery constants
 
 #define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
 #define STANDBY_MODE                                                "standby_mode"
-    STRING_STATIC(STANDBY_MODE_STR,                                 STANDBY_MODE);
+STRING_STATIC(STANDBY_MODE_STR,                                     STANDBY_MODE);
 
 #define ARCHIVE_MODE                                                "archive_mode"
 
@@ -68,8 +68,8 @@ restorePathValidate(void)
             THROW_FMT(
                 PgRunningError,
                 "unable to restore while PostgreSQL is running\n"
-                    "HINT: presence of '" PG_FILE_POSTMTRPID "' in '%s' indicates PostgreSQL is running.\n"
-                    "HINT: remove '" PG_FILE_POSTMTRPID "' only if PostgreSQL is not running.",
+                "HINT: presence of '" PG_FILE_POSTMTRPID "' in '%s' indicates PostgreSQL is running.\n"
+                "HINT: remove '" PG_FILE_POSTMTRPID "' only if PostgreSQL is not running.",
                 strZ(cfgOptionDisplay(cfgOptPgPath)));
         }
 
@@ -79,9 +79,9 @@ restorePathValidate(void)
         {
             LOG_WARN_FMT(
                 "--delta or --force specified but unable to find '" PG_FILE_PGVERSION "' or '" BACKUP_MANIFEST_FILE "' in '%s' to"
-                    " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
-                    " exist in the destination directories the restore will be aborted.",
-               strZ(cfgOptionDisplay(cfgOptPgPath)));
+                " confirm that this is a valid $PGDATA directory.  --delta and --force have been disabled and if any files"
+                " exist in the destination directories the restore will be aborted.",
+                strZ(cfgOptionDisplay(cfgOptPgPath)));
 
             // Disable delta and force so restore will fail if the directories are not empty
             cfgOptionSet(cfgOptDelta, cfgSourceDefault, VARBOOL(false));
@@ -163,9 +163,18 @@ getEpoch(const String *targetTime)
                 // Set tm_isdst to -1 to force mktime to consider if DST. For example, if system time is America/New_York then
                 // 2019-09-14 20:02:49 was a time in DST so the Epoch value should be 1568505769 (and not 1568509369 which would be
                 // 2019-09-14 21:02:49 - an hour too late)
-                result = mktime(
-                    &(struct tm){.tm_sec = dtSecond, .tm_min = dtMinute, .tm_hour = dtHour, .tm_mday = dtDay, .tm_mon = dtMonth - 1,
-                    .tm_year = dtYear - 1900, .tm_isdst = -1});
+                struct tm time =
+                {
+                    .tm_sec = dtSecond,
+                    .tm_min = dtMinute,
+                    .tm_hour = dtHour,
+                    .tm_mday = dtDay,
+                    .tm_mon = dtMonth - 1,
+                    .tm_year = dtYear - 1900,
+                    .tm_isdst = -1,
+                };
+
+                result = mktime(&time);
             }
         }
         else
@@ -174,7 +183,7 @@ getEpoch(const String *targetTime)
                 FormatError,
                 "automatic backup set selection cannot be performed with provided time '%s'\n"
                 "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
-                    " - if timezone is omitted, local time is assumed (for UTC use +00)",
+                " - if timezone is omitted, local time is assumed (for UTC use +00)",
                 strZ(targetTime));
         }
     }
@@ -317,7 +326,7 @@ restoreBackupSet(void)
                         {
                             LOG_WARN_FMT(
                                 "%s reached backup from prior version missing required LSN info before finding a match -- backup"
-                                    " auto-select has been disabled for this repo\n"
+                                " auto-select has been disabled for this repo\n"
                                 "HINT: you may specify a backup to restore using the --set option.",
                                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
@@ -347,11 +356,12 @@ restoreBackupSet(void)
 
                     if (latestBackup.backupPgId < backupInfoPg.id)
                     {
-                        THROW_FMT(BackupSetInvalidError,
+                        THROW_FMT(
+                            BackupSetInvalidError,
                             "the latest backup set found '%s' is from a prior version of " PG_NAME "\n"
                             "HINT: was a backup created after the stanza-upgrade?\n"
-                            "HINT: specify --" CFGOPT_SET " or --" CFGOPT_TYPE "=time/lsn to restore from a prior version of "
-                                PG_NAME ".",
+                            "HINT: specify --" CFGOPT_SET " or --" CFGOPT_TYPE "=time/lsn to restore from a prior version of"
+                            " " PG_NAME ".",
                             strZ(latestBackup.backupLabel));
                     }
 
@@ -594,12 +604,15 @@ restoreManifestMap(Manifest *manifest)
 
                     // Add the link. Copy user/group from the base data directory.
                     const ManifestPath *const pathBase = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
+                    const ManifestLink manifestLink =
+                    {
+                        .name = manifestName,
+                        .destination = linkPath,
+                        .group = pathBase->group,
+                        .user = pathBase->user,
+                    };
 
-                    manifestLinkAdd(
-                        manifest,
-                        &(ManifestLink){
-                            .name = manifestName, .destination = linkPath, .group = pathBase->group, .user = pathBase->user});
-
+                    manifestLinkAdd(manifest, &manifestLink);
                     create = true;
                 }
                 // Else update target to new path
@@ -1353,7 +1366,7 @@ restoreSelectiveExpression(Manifest *manifest)
             const String *tablespaceId = pgTablespaceId(
                 manifestData(manifest)->pgVersion, manifestData(manifest)->pgCatalogVersion);
             RegExp *tablespaceRegExp = regExpNew(
-                    strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
+                strNewFmt("^" MANIFEST_TARGET_PGTBLSPC "/[0-9]+/%s/[0-9]+/" PG_FILE_PGVERSION, strZ(tablespaceId)));
 
             // Generate a list of databases in base or in a tablespace and get all standard system databases, even in cases where
             // users have recreated them
@@ -1569,7 +1582,7 @@ restoreRecoveryOption(unsigned int pgVersion)
                 THROW_FMT(
                     OptionInvalidError,
                     "option '" CFGOPT_ARCHIVE_MODE "' is not supported on " PG_NAME " < " PG_VERSION_12_STR "\n"
-                        "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
+                    "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
             }
 
             // The only other valid option is off
@@ -1783,8 +1796,8 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                 regExpNew(
                     STRDEF(
                         "^[\t ]*(" RECOVERY_TARGET "|" RECOVERY_TARGET_ACTION "|" RECOVERY_TARGET_INCLUSIVE "|"
-                            RECOVERY_TARGET_LSN "|" RECOVERY_TARGET_NAME "|" RECOVERY_TARGET_TIME "|" RECOVERY_TARGET_TIMELINE "|"
-                            RECOVERY_TARGET_XID ")[\t ]*="));
+                        RECOVERY_TARGET_LSN "|" RECOVERY_TARGET_NAME "|" RECOVERY_TARGET_TIME "|" RECOVERY_TARGET_TIMELINE "|"
+                        RECOVERY_TARGET_XID ")[\t ]*="));
 
             // Check each line for recovery settings
             const StringList *contentList = strLstNewSplit(strNewBuf(autoConf), LF_STR);
@@ -1834,7 +1847,7 @@ restoreRecoveryWriteAutoConf(unsigned int pgVersion, const String *restoreLabel)
                             OptionInvalidError,
                             "'" STANDBY_MODE "' setting is not valid for " PG_NAME " >= %s\n"
                             "HINT: use --" CFGOPT_TYPE "=" CFGOPTVAL_TYPE_STANDBY_Z " instead of --" CFGOPT_RECOVERY_OPTION "="
-                                STANDBY_MODE "=on.",
+                            STANDBY_MODE "=on.",
                             strZ(pgVersionToStr(PG_VERSION_RECOVERY_GUC)));
                     }
                 }
@@ -1897,8 +1910,8 @@ restoreRecoveryWrite(const Manifest *manifest)
         if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
         {
             // Determine which file recovery setttings will be written to
-            const String *recoveryFile = pgVersion >= PG_VERSION_RECOVERY_GUC ?
-                PG_FILE_POSTGRESQLAUTOCONF_STR : PG_FILE_RECOVERYCONF_STR;
+            const String *const recoveryFile =
+                pgVersion >= PG_VERSION_RECOVERY_GUC ? PG_FILE_POSTGRESQLAUTOCONF_STR : PG_FILE_RECOVERYCONF_STR;
 
             if (!storageExistsP(storagePg(), recoveryFile))
             {
@@ -2193,7 +2206,6 @@ restoreJobResult(const Manifest *manifest, ProtocolParallelJob *job, RegExp *zer
                     }
                 }
 
-
                 // Add bundle info
                 strCatZ(log, " (");
 
@@ -2269,7 +2281,8 @@ restoreJobQueueNext(unsigned int clientIdx, int queueIdx, unsigned int queueTota
 }
 
 // Callback to fetch restore jobs for the parallel executor
-static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientIdx)
+static ProtocolParallelJob *
+restoreJobCallback(void *data, unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -2326,13 +2339,15 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                         backupFileRepoPathP(
                             file.reference != NULL ? file.reference : manifestData(jobData->manifest)->backupLabel,
                             .manifestName = file.name, .bundleId = file.bundleId,
-                            .compressType = manifestData(jobData->manifest)->backupOptionCompressType));
+                            .compressType = manifestData(jobData->manifest)->backupOptionCompressType,
+                            .blockIncr = file.blockIncrMapSize != 0));
                     pckWriteU32P(param, jobData->repoIdx);
                     pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                     pckWriteTimeP(param, manifestData(jobData->manifest)->backupTimestampCopyStart);
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
                     pckWriteStrP(param, jobData->cipherSubPass);
+                    pckWriteStrLstP(param, manifestReferenceList(jobData->manifest));
 
                     fileAdded = true;
                 }
@@ -2346,14 +2361,29 @@ static ProtocolParallelJob *restoreJobCallback(void *data, unsigned int clientId
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
 
-                if (file.bundleId != 0)
+                // If block incremental then modify offset and size to where the map is stored since we need to read that first.
+                if (file.blockIncrMapSize != 0)
+                {
+                    pckWriteBoolP(param, true);
+                    pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
+                    pckWriteU64P(param, file.blockIncrMapSize);
+                }
+                // Else write bundle offset/size
+                else if (file.bundleId != 0)
                 {
                     pckWriteBoolP(param, true);
                     pckWriteU64P(param, file.bundleOffset);
                     pckWriteU64P(param, file.sizeRepo);
                 }
+                // Else restore as a whole file
                 else
                     pckWriteBoolP(param, false);
+
+                // Block incremental
+                pckWriteU64P(param, file.blockIncrMapSize);
+
+                if (file.blockIncrMapSize != 0)
+                    pckWriteU64P(param, file.blockIncrSize);
 
                 pckWriteStrP(param, file.name);
 

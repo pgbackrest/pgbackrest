@@ -75,7 +75,7 @@ void
 cmdTest(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const unsigned int vmId,
     const String *moduleName, const unsigned int test, const uint64_t scale, const LogLevel logLevel, const bool logTime,
-    const String *const timeZone, const bool coverage, const bool profile, const bool optimize)
+    const String *const timeZone, const bool coverage, const bool profile, const bool optimize, const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -91,6 +91,7 @@ cmdTest(
         FUNCTION_LOG_PARAM(BOOL, coverage);
         FUNCTION_LOG_PARAM(BOOL, profile);
         FUNCTION_LOG_PARAM(BOOL, optimize);
+        FUNCTION_LOG_PARAM(BOOL, backTrace);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -118,7 +119,8 @@ cmdTest(
             {
                 // Build unit
                 TestBuild *const testBld = testBldNew(
-                    pathRepo, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone, coverage, profile, optimize);
+                    pathRepo, pathTest, vm, vmId, module, test, scale, logLevel, logTime, timeZone, coverage, profile, optimize,
+                    backTrace);
                 testBldUnit(testBld);
 
                 // Meson setup
@@ -152,8 +154,9 @@ cmdTest(
                 }
 
                 // Remove old coverage data. Note that coverage can be in different paths depending on the meson version.
-                const String *const pathCoverage = storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
-                    STRDEF("test-unit.p") : STRDEF("test-unit@exe");
+                const String *const pathCoverage =
+                    storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
+                        STRDEF("test-unit.p") : STRDEF("test-unit@exe");
 
                 StorageIterator *const storageItr = storageNewItrP(
                     storageUnitBuild, pathCoverage, .expression = STRDEF("\\.gcda$"));

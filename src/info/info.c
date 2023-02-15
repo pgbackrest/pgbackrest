@@ -7,12 +7,12 @@ Info Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/type/convert.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/io/filter/filter.h"
 #include "common/ini.h"
+#include "common/io/filter/filter.h"
 #include "common/log.h"
+#include "common/type/convert.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "info/info.h"
@@ -278,7 +278,7 @@ infoSaveSection(InfoSave *const infoSaveData, const char *const section, const S
     FUNCTION_TEST_RETURN(
         BOOL,
         (infoSaveData->sectionLast == NULL || strCmpZ(infoSaveData->sectionLast, section) < 0) &&
-            (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
+        (sectionNext == NULL || strCmpZ(sectionNext, section) > 0));
 }
 
 /**********************************************************************************************************************************/

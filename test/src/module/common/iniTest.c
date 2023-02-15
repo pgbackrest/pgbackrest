@@ -47,7 +47,7 @@ testRun(void)
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey=value\n")), .strict = true)), FormatError,
             "invalid JSON value at line 2 'key=value': invalid type at: value");
         TEST_ERROR(
-            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\n""key")), .strict = true)), FormatError,
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey")), .strict = true)), FormatError,
             "missing '=' in key/value at line 2: key");
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\n=\"value\"")), .strict = true)), FormatError,
@@ -126,8 +126,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("store and retrieve values");
 
-        const Buffer *iniBuf = BUFSTRDEF
-        (
+        const Buffer *iniBuf = BUFSTRDEF(
             "# Comment\n"
             "[global] \n"
             "compress=y \n"
@@ -135,8 +134,7 @@ testRun(void)
             "repeat=2\n"
             "\n"
             " [db]\n"
-            "pg1-path = /path/to/pg"
-        );
+            "pg1-path = /path/to/pg");
 
         Ini *ini = NULL;
         TEST_ASSIGN(ini, iniNewP(ioBufferReadNew(iniBuf), .store = true), "new ini");

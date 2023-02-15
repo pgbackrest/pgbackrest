@@ -89,9 +89,7 @@ testRun(void)
 
             // Add ints to the list
             for (int listIdx = 1; listIdx <= LIST_INITIAL_SIZE; listIdx++)
-            {
                 TEST_RESULT_VOID(lstAdd(list, &listIdx), zNewFmt("add item %d", listIdx));
-            }
 
             lstMove(list, memContextPrior());
         }
@@ -161,10 +159,14 @@ testRun(void)
         TEST_RESULT_PTR(lstSort(list, sortOrderAsc), list, "list sort asc");
         TEST_RESULT_PTR(lstFind(list, &value), NULL, "unable to find in empty list");
 
-        value = 3; lstAdd(list, &value);
-        value = 5; lstAdd(list, &value);
-        value = 3; lstAdd(list, &value);
-        value = 2; lstAdd(list, &value);
+        value = 3;
+        lstAdd(list, &value);
+        value = 5;
+        lstAdd(list, &value);
+        value = 3;
+        lstAdd(list, &value);
+        value = 2;
+        lstAdd(list, &value);
 
         TEST_RESULT_PTR(lstSort(list, sortOrderNone), list, "list sort none");
 

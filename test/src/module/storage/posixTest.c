@@ -534,9 +534,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("list - path with files");
 
-        TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageTest, STRDEF(".aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
-        TEST_RESULT_STRLST_Z(strLstSort(storageListP(storageTest, NULL), sortOrderAsc), ".aaa.txt\n"
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, STRDEF(".aaa.txt")), BUFSTRDEF("aaa")), "write aaa.text");
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageTest, NULL), sortOrderAsc),
+            ".aaa.txt\n"
 #ifdef TEST_CONTAINER_REQUIRED
             "noperm\n"
 #endif // TEST_CONTAINER_REQUIRED
@@ -1087,8 +1088,8 @@ testRun(void)
         TEST_TITLE("read offset/limited bytes");
 
         TEST_ASSIGN(
-            buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = 4,
-            .limit = VARUINT64(4))), "get");
+            buffer,
+            storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .offset = 4, .limit = VARUINT64(4))), "get");
         TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "FILE", bufSize(buffer)) == 0, true, "check content");
     }
@@ -1385,8 +1386,10 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storageTest, "no-truncate", "ABC", .modeFile = 0600);
 
         TEST_ASSIGN(
-            file, storageNewWriteP(storageTest, STRDEF("no-truncate"), .modeFile = 0660, .timeModified = 77777, .noAtomic = true,
-            .noTruncate = true), "new write file");
+            file,
+            storageNewWriteP(
+                storageTest, STRDEF("no-truncate"), .modeFile = 0660, .timeModified = 77777, .noAtomic = true, .noTruncate = true),
+            "new write file");
         TEST_RESULT_BOOL(storageWriteTruncate(file), false, "file will not be truncated");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");

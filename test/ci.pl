@@ -189,7 +189,7 @@ eval
         # Build list of packages that need to be installed
         my $strPackage =
             "make gcc ccache meson python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config" .
-                " libssh2-1-dev";
+                " uncrustify libssh2-1-dev";
 
         # Add lcov when testing coverage
         if (vmCoverageC($strVm))

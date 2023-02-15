@@ -11,8 +11,8 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct HttpSession HttpSession;
 
-#include "common/io/read.h"
 #include "common/io/http/client.h"
+#include "common/io/read.h"
 #include "common/io/session.h"
 #include "common/io/write.h"
 #include "common/type/object.h"

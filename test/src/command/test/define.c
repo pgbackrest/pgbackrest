@@ -253,14 +253,13 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             for (unsigned int harnessIdx = 0; harnessIdx < lstSize(globalHarnessList); harnessIdx++)
                             {
                                 const TestDefHarness *const globalHarness = lstGet(globalHarnessList, harnessIdx);
+                                const TestDefHarness testDefHarness =
+                                {
+                                    .name = strDup(globalHarness->name),
+                                    .includeList = strLstDup(globalHarness->includeList),
+                                };
 
-                                lstAdd(
-                                    harnessList,
-                                    &(TestDefHarness)
-                                    {
-                                        .name = strDup(globalHarness->name),
-                                        .includeList = strLstDup(globalHarness->includeList),
-                                    });
+                                lstAdd(harnessList, &testDefHarness);
                             }
                         }
                         MEM_CONTEXT_OBJ_END();
@@ -275,14 +274,13 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             for (unsigned int shimIdx = 0; shimIdx < lstSize(globalShimList); shimIdx++)
                             {
                                 const TestDefShim *const globalShim = lstGet(globalShimList, shimIdx);
+                                const TestDefShim testDefShim =
+                                {
+                                    .name = strDup(globalShim->name),
+                                    .functionList = strLstDup(globalShim->functionList),
+                                };
 
-                                lstAdd(
-                                    shimList,
-                                    &(TestDefShim)
-                                    {
-                                        .name = strDup(globalShim->name),
-                                        .functionList = strLstDup(globalShim->functionList),
-                                    });
+                                lstAdd(shimList, &testDefShim);
                             }
                         }
                         MEM_CONTEXT_OBJ_END();

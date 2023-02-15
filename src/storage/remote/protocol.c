@@ -11,8 +11,8 @@ Remote Storage Protocol Handler
 #include "common/type/pack.h"
 #include "config/config.h"
 #include "protocol/helper.h"
-#include "storage/remote/protocol.h"
 #include "storage/helper.h"
+#include "storage/remote/protocol.h"
 #include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************

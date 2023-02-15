@@ -24,16 +24,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("move infoArchive to new memory context");
 
-        const Buffer *contentLoad = harnessInfoChecksumZ
-        (
+        const Buffer *contentLoad = harnessInfoChecksumZ(
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
             "db-version=\"9.4\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-        );
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n");
 
         InfoArchive *info = NULL;
 
@@ -113,8 +111,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoArchiveIdHistoryMatch()");
 
-        contentLoad = harnessInfoChecksumZ
-        (
+        contentLoad = harnessInfoChecksumZ(
             "[db]\n"
             "db-id=2\n"
             "db-system-id=6626363367545678089\n"
@@ -122,18 +119,19 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n"
-        );
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n");
 
         TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "new archive info");
         TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089), "9.5-2", "full match found");
 
         TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702), "9.4-1", "partial match found");
 
-        TEST_ERROR(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095799), ArchiveMismatchError,
+        TEST_ERROR(
+            infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095799), ArchiveMismatchError,
             "unable to retrieve the archive id for database version '9.4' and system-id '6625592122879095799'");
 
-        TEST_ERROR(infoArchiveIdHistoryMatch(info, 2, 90400, 6626363367545678089), ArchiveMismatchError,
+        TEST_ERROR(
+            infoArchiveIdHistoryMatch(info, 2, 90400, 6626363367545678089), ArchiveMismatchError,
             "unable to retrieve the archive id for database version '9.4' and system-id '6626363367545678089'");
     }
 

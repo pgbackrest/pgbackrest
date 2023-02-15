@@ -76,7 +76,7 @@ strLstAddSub(StringList *const this, const String *const string, const size_t si
     return strLstAddSubN(this, string, 0, size);
 }
 
-FN_EXTERN String *strLstAddFmt(StringList *this, const char *format, ...) __attribute__((format(printf, 2, 3)));
+FN_EXTERN FN_PRINTF(2, 3) String *strLstAddFmt(StringList *this, const char *format, ...);
 FN_EXTERN String *strLstAddZ(StringList *this, const char *string);
 FN_EXTERN String *strLstAddZSubN(StringList *this, const char *string, size_t offset, size_t size);
 

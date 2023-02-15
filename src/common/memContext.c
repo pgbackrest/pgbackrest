@@ -18,8 +18,8 @@ header by doing some pointer arithmetic. This is much faster than searching thro
 ***********************************************************************************************************************************/
 typedef struct MemContextAlloc
 {
-    unsigned int allocIdx:32;                                       // Index in the allocation list
-    unsigned int size:32;                                           // Allocation size (4GB max)
+    unsigned int allocIdx : 32;                                     // Index in the allocation list
+    unsigned int size : 32;                                         // Allocation size (4GB max)
 } MemContextAlloc;
 
 // Get the allocation buffer pointer given the allocation header pointer
@@ -53,15 +53,15 @@ struct MemContext
 #ifdef DEBUG
     const char *name;                                               // Indicates what the context is being used for
     uint64_t sequenceNew;                                           // Sequence when this context was created (used for audit)
-    bool active:1;                                                  // Is the context currently active?
+    bool active : 1;                                                // Is the context currently active?
 #endif
-    MemQty childQty:2;                                              // How many child contexts can this context have?
-    bool childInitialized:1;                                        // Has the child context list been initialized?
-    MemQty allocQty:2;                                              // How many allocations can this context have?
-    bool allocInitialized:1;                                        // Has the allocation list been initialized?
-    MemQty callbackQty:2;                                           // How many callbacks can this context have?
-    bool callbackInitialized:1;                                     // Has the callback been initialized?
-    size_t allocExtra:16;                                           // Size of extra allocation (1kB max)
+    MemQty childQty : 2;                                            // How many child contexts can this context have?
+    bool childInitialized : 1;                                      // Has the child context list been initialized?
+    MemQty allocQty : 2;                                            // How many allocations can this context have?
+    bool allocInitialized : 1;                                      // Has the allocation list been initialized?
+    MemQty callbackQty : 2;                                         // How many callbacks can this context have?
+    bool callbackInitialized : 1;                                   // Has the callback been initialized?
+    size_t allocExtra : 16;                                         // Size of extra allocation (1kB max)
 
     unsigned int contextParentIdx;                                  // Index in the parent context list
     MemContext *contextParent;                                      // All contexts have a parent except top
@@ -103,8 +103,9 @@ typedef struct MemContextCallbackOne
 } MemContextCallbackOne;
 
 /***********************************************************************************************************************************
-Possible sizes for the manifest based on options. Formatting has been compressed to save space.
+Possible sizes for the manifest based on options
 ***********************************************************************************************************************************/
+// {uncrustify_off - formatting compressed to save space}
 static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQtyOne + 1] =
 {
     // child none
@@ -137,6 +138,7 @@ static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQ
      {/* callback none */ sizeof(MemContextChildMany) + sizeof(MemContextAllocMany),
       /* callback one */ sizeof(MemContextChildMany) + sizeof(MemContextAllocMany) + sizeof(MemContextCallbackOne)}},
 };
+// {uncrustify_on}
 
 /***********************************************************************************************************************************
 Get pointers to optional parts of the manifest
@@ -177,8 +179,9 @@ static MemContextCallbackOne *
 memContextCallbackOne(MemContext *const memContext)
 {
     return
-        (MemContextCallbackOne *)((unsigned char *)(memContext + 1) +
-            memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
+        (MemContextCallbackOne *)
+        ((unsigned char *)(memContext + 1) +
+         memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
 }
 
 /***********************************************************************************************************************************

@@ -43,24 +43,24 @@ WAL segment constants
 
 // Match on a WAL segment without checksum appended
 #define WAL_SEGMENT_REGEXP                                          WAL_SEGMENT_PREFIX_REGEXP "$"
-    STRING_DECLARE(WAL_SEGMENT_REGEXP_STR);
+STRING_DECLARE(WAL_SEGMENT_REGEXP_STR);
 
 // Match on a WAL segment with partial allowed
 #define WAL_SEGMENT_PARTIAL_REGEXP                                  WAL_SEGMENT_PREFIX_REGEXP "(\\.partial){0,1}$"
-    STRING_DECLARE(WAL_SEGMENT_PARTIAL_REGEXP_STR);
+STRING_DECLARE(WAL_SEGMENT_PARTIAL_REGEXP_STR);
 
 // Defines the size of standard WAL segment name -- hopefully this won't change
 #define WAL_SEGMENT_NAME_SIZE                                       ((unsigned int)24)
 
 // WAL segment directory/file
 #define WAL_SEGMENT_DIR_REGEXP                                      "^[0-F]{16}$"
-    STRING_DECLARE(WAL_SEGMENT_DIR_REGEXP_STR);
+STRING_DECLARE(WAL_SEGMENT_DIR_REGEXP_STR);
 #define WAL_SEGMENT_FILE_REGEXP                                     "^[0-F]{24}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$"
-    STRING_DECLARE(WAL_SEGMENT_FILE_REGEXP_STR);
+STRING_DECLARE(WAL_SEGMENT_FILE_REGEXP_STR);
 
 // Timeline history file
 #define WAL_TIMELINE_HISTORY_REGEXP                                 "^[0-F]{8}.history$"
-    STRING_DECLARE(WAL_TIMELINE_HISTORY_REGEXP_STR);
+STRING_DECLARE(WAL_TIMELINE_HISTORY_REGEXP_STR);
 
 /***********************************************************************************************************************************
 Functions
