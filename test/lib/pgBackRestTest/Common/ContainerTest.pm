@@ -49,6 +49,16 @@ use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE
     push @EXPORT, qw(CERT_FAKE_SERVER_KEY);
 
 ####################################################################################################################################
+# Ssh/Sftp file constants
+####################################################################################################################################
+use constant TEST_USER_KEY_PATH                                     => '/home/' . TEST_USER . '/.ssh';
+    push @EXPORT, qw(TEST_USER_KEY_PATH);
+use constant TEST_USER_PRIVATE_KEY                                  => TEST_USER_KEY_PATH . '/id_rsa';
+    push @EXPORT, qw(TEST_USER_PRIVATE_KEY);
+use constant TEST_USER_PUBLIC_KEY                                   => TEST_USER_KEY_PATH . '/id_rsa.pub';
+    push @EXPORT, qw(TEST_USER_PUBLIC_KEY);
+
+####################################################################################################################################
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
 use constant CONTAINER_DEBUG                                        => false;
@@ -215,6 +225,7 @@ sub sshSetup
     }
 
     $strScript .=
+        "    cp ${strUserPath}/.ssh/authorized_keys ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
         "    chown -R ${strUser}:${strGroup} ${strUserPath}/.ssh && \\\n" .
         "    chmod 700 ${strUserPath}/.ssh && \\\n" .
         "    chmod 600 ${strUserPath}/.ssh/*";

@@ -33,6 +33,7 @@ use pgBackRestTest::Env::Host::HostAzureTest;
 use pgBackRestTest::Env::Host::HostGcsTest;
 use pgBackRestTest::Env::Host::HostBaseTest;
 use pgBackRestTest::Env::Host::HostS3Test;
+use pgBackRestTest::Env::Host::HostSftpTest;
 use pgBackRestTest::Env::Manifest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -92,6 +93,8 @@ use constant POSIX                                                  => STORAGE_P
     push @EXPORT, qw(POSIX);
 use constant S3                                                     => 's3';
     push @EXPORT, qw(S3);
+use constant SFTP                                                   => 'sftp';
+    push @EXPORT, qw(SFTP);
 
 use constant CFGOPTVAL_RESTORE_TYPE_DEFAULT                         => 'default';
     push @EXPORT, qw(CFGOPTVAL_RESTORE_TYPE_DEFAULT);
@@ -1173,6 +1176,17 @@ sub configCreate
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-gcs-endpoint'} = HOST_GCS . ':' . HOST_GCS_PORT;
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-storage-verify-tls'} = 'n';
         }
+        elsif ($oParam->{strStorage} eq SFTP)
+        {
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath() . "archive";
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = SFTP;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-account'} = HOST_SFTP_ACCOUNT;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host'} = HOST_SFTP;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-hostkey-hash-type'} = HOST_SFTP_HOSTKEY_HASH_TYPE;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-keyfile'} = TEST_USER_PUBLIC_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-keyfile'} = TEST_USER_PRIVATE_KEY;
+            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'process-max'} = 8;
+        }
 
         if ($iRepoTotal == 2)
         {
@@ -1286,10 +1300,27 @@ sub configCreate
         # If the backup host is remote
         if (!$self->isHostBackup())
         {
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host'} = $oHostBackup->nameGet();
             $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-user'} = $oHostBackup->userGet();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
-            $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
+
+            if ($oHostBackup->nameGet() eq HOST_SFTP)
+            {
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-type'} = "sftp";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-account'} = TEST_USER;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-hostkey-hash-type'} = "sha1";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-host'} = HOST_SFTP;
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-private-keyfile'} = "/home/" . TEST_USER . "/.ssh/id_rsa";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-sftp-public-keyfile'} = "/home/" . TEST_USER . "/.ssh/id_rsa.pub";
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-path'} = $self->repoPath();
+
+                # At what count do we hit diminishing returns
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'process-max'} = 8;
+            }
+            else
+            {
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host'} = $oHostBackup->nameGet();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-cmd'} = $oHostBackup->backrestExe();
+                $oParamHash{&CFGDEF_SECTION_GLOBAL}{'repo1-host-config'} = $oHostBackup->backrestConfig();
+            }
 
             if ($oParam->{bTls})
             {

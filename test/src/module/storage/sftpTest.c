@@ -489,27 +489,6 @@ testRun(void)
         TEST_RESULT_BOOL(storageFeature(storageTest, storageFeaturePath), true, "check path feature");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-
-        /*jrt
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpNewcreate new storage - override pathSync, incorrect storage type to cover branches");
-
-        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
-        {
-            HRNLIBSSH2_MACRO_STARTUP(),
-            HRNLIBSSH2_MACRO_SHUTDOWN()
-        });
-
-        TEST_ASSIGN(
-            storageTest,
-            storageSftpNew(
-                STORAGE_POSIX_TYPE, STRDEF("/path/to"), STRDEF("localhost"), 22, 1000, 1000, TEST_USER_STR, KEYPUB, KEYPRIV, NULL,
-                hashTypeSha1,  0600, 0700, true, NULL, true),
-            "new storage override pathSync)");
-
-        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
-        */
-
     }
 
     // *****************************************************************************************************************************
