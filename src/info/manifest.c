@@ -756,11 +756,10 @@ manifestLinkCheck(const Manifest *this)
 
 /***********************************************************************************************************************************
 Calculate block incremental size for a file. The block size is based on the size and age of the file. Larger files get larger block
-sizes to reduce the cost of the map and individual block compression. Older files also get larger block sizes under the assumption
-that they are unlikely to be modified if they have not been modified in a while. Very old and very small files skip block
-incremental entirely.
+sizes to reduce the cost of the map. Older files also get larger block sizes under the assumption that they are unlikely to be
+modified if they have not been modified in a while. Very old and very small files skip block incremental entirely.
 
-The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
+Smaller blocks will be compressed/encrypted together in a larger super block for efficiency.
 ***********************************************************************************************************************************/
 // File size to block size map
 static struct ManifestBuildBlockIncrSizeMap
@@ -770,12 +769,16 @@ static struct ManifestBuildBlockIncrSizeMap
 } manifestBuildBlockIncrSizeMap[] =
 {
     {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
-    {.fileSize = 256 * 1024 * 1024, .blockSize = 768 * 1024},
-    {.fileSize = 64 * 1024 * 1024, .blockSize = 512 * 1024},
-    {.fileSize = 16 * 1024 * 1024, .blockSize = 384 * 1024},
-    {.fileSize = 4 * 1024 * 1024, .blockSize = 256 * 1024},
-    {.fileSize = 2 * 1024 * 1024, .blockSize = 192 * 1024},
-    {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
+    {.fileSize = 512 * 1024 * 1024, .blockSize = 768 * 1024},
+    {.fileSize = 256 * 1024 * 1024, .blockSize = 512 * 1024},
+    {.fileSize = 64 * 1024 * 1024, .blockSize = 384 * 1024},
+    {.fileSize = 16 * 1024 * 1024, .blockSize = 256 * 1024},
+    {.fileSize = 4 * 1024 * 1024, .blockSize = 192 * 1024},
+    {.fileSize = 2 * 1024 * 1024, .blockSize = 128 * 1024},
+    {.fileSize = 1024 * 1024, .blockSize = 64 * 1024},
+    {.fileSize = 512 * 1024, .blockSize = 32 * 1024},
+    {.fileSize = 128 * 1024, .blockSize = 16 * 1024},
+    {.fileSize = 16 * 1024, .blockSize = 8 * 1024},
 };
 
 // File age to block multiplier map
