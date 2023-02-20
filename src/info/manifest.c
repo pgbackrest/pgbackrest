@@ -831,7 +831,9 @@ manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const fil
     FUNCTION_TEST_RETURN(UINT64, result);
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Calculate super block size based on block size and backup type
+***********************************************************************************************************************************/
 FN_EXTERN uint64_t
 manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFile *const file)
 {
