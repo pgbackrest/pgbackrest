@@ -180,33 +180,52 @@ pgControlFromBuffer(const Buffer *controlFile)
 
     ASSERT(controlFile != NULL);
 
+    // FIXME to do: add a config option to specify which interface we want to use
+    const String *cfgPgVersionOption = STRDEF("15");
+
     // Search for the version of PostgreSQL that uses this control file
     const PgInterface *interface = NULL;
 
-    for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+    if (cfgPgVersionOption != NULL)
     {
-        if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
-        {
-            interface = &pgInterface[interfaceIdx];
-            break;
-        }
+        interface = pgInterfaceVersion(pgVersionFromStr(cfgPgVersionOption));
     }
-
-    // If the version was not found then error with the control and catalog version that were found
-    if (interface == NULL)
+    else
     {
-        const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+        {
+            if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
+            {
+                interface = &pgInterface[interfaceIdx];
+                break;
+            }
+        }
 
-        THROW_FMT(
-            VersionNotSupportedError,
-            "unexpected control version = %u and catalog version = %u\n"
-            "HINT: is this version of PostgreSQL supported?",
-            controlCommon->controlVersion, controlCommon->catalogVersion);
+        // If the version was not found then error with the control and catalog version that were found
+        if (interface == NULL)
+        {
+            const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
+
+            THROW_FMT(
+                VersionNotSupportedError,
+                "unexpected control version = %u and catalog version = %u\n"
+                "HINT: is this version of PostgreSQL supported?",
+                controlCommon->controlVersion, controlCommon->catalogVersion);
+        }
     }
 
     // Get info from the control file
     PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
+
+    // Update catalog and control version
+    if (cfgPgVersionOption != NULL)
+    {
+        const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
+        result.catalogVersion = controlCommon->catalogVersion;
+
+        // FIXME to do: save current control version somewhere
+    }
 
     // Check the segment size
     pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
