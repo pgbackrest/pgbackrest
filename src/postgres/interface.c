@@ -14,9 +14,6 @@ PostgreSQL Interface
 #include "postgres/version.h"
 #include "storage/helper.h"
 
-#include "build/common/render.h"
-#include "build/config/render.h"
-
 /***********************************************************************************************************************************
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
