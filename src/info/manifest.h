@@ -170,7 +170,8 @@ Constructors
 // Build a new manifest for a PostgreSQL data directory
 FN_EXTERN Manifest *manifestNewBuild(
     const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, time_t timestampStart, bool online,
-    bool checksumPage, bool bundle, bool blockIncr, const StringList *excludeList, const Pack *tablespaceList);
+    bool checksumPage, bool bundle, bool blockIncr, const StringList *excludeList, const Pack *tablespaceList,
+    const KeyValue *blockIncrSizeMap);
 
 // Load a manifest from IO
 FN_EXTERN Manifest *manifestNewLoad(IoRead *read);

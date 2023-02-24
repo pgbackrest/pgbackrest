@@ -522,6 +522,16 @@
                         <example>y</example>
                     </config-key>
 
+                    <config-key id="repo-block-size-map" name="Block Incremental Block Size Map">
+                        <summary>Block incremental block size map.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                       </text>
+
+                        <example>!!!</example>
+                    </config-key>
+
                     <config-key id="repo-bundle" name="Repository Bundles">
                         <summary>Bundle files in repository.</summary>
 

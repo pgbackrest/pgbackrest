@@ -762,22 +762,6 @@ incremental entirely.
 
 The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
 ***********************************************************************************************************************************/
-// File size to block size map
-static struct ManifestBuildBlockIncrSizeMap
-{
-    uint32_t fileSize;
-    uint32_t blockSize;
-} manifestBuildBlockIncrSizeMap[] =
-{
-    {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
-    {.fileSize = 256 * 1024 * 1024, .blockSize = 768 * 1024},
-    {.fileSize = 64 * 1024 * 1024, .blockSize = 512 * 1024},
-    {.fileSize = 16 * 1024 * 1024, .blockSize = 384 * 1024},
-    {.fileSize = 4 * 1024 * 1024, .blockSize = 256 * 1024},
-    {.fileSize = 2 * 1024 * 1024, .blockSize = 192 * 1024},
-    {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
-};
-
 // File age to block multiplier map
 static struct ManifestBuildBlockIncrTimeMap
 {
@@ -789,44 +773,6 @@ static struct ManifestBuildBlockIncrTimeMap
     {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
     {.fileAge = 7 * 86400, .blockMultiplier = 2},
 };
-
-static size_t
-manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const file)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TIME, timeStart);
-        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
-    FUNCTION_TEST_END();
-
-    size_t result = 0;
-
-    // Search size map for the appropriate block size
-    for (unsigned int sizeIdx = 0; sizeIdx < LENGTH_OF(manifestBuildBlockIncrSizeMap); sizeIdx++)
-    {
-        if (file->size >= manifestBuildBlockIncrSizeMap[sizeIdx].fileSize)
-        {
-            result = manifestBuildBlockIncrSizeMap[sizeIdx].blockSize;
-            break;
-        }
-    }
-
-    // If block size > 0 then search age map for a multiplier
-    if (result != 0)
-    {
-        const time_t fileAge = timeStart - file->timestamp;
-
-        for (unsigned int timeIdx = 0; timeIdx < LENGTH_OF(manifestBuildBlockIncrTimeMap); timeIdx++)
-        {
-            if (fileAge >= (time_t)manifestBuildBlockIncrTimeMap[timeIdx].fileAge)
-            {
-                result *= manifestBuildBlockIncrTimeMap[timeIdx].blockMultiplier;
-                break;
-            }
-        }
-    }
-
-    FUNCTION_TEST_RETURN(UINT64, result);
-}
 
 /**********************************************************************************************************************************/
 typedef struct ManifestBuildData
@@ -843,7 +789,64 @@ typedef struct ManifestBuildData
     ManifestLinkCheck *linkCheck;                                   // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
+    struct ManifestBuildBlockIncrSizeMap *blockIncrSizeMap;         // !!!
+    unsigned int blockIncrSizeMapSize;                              // !!!
 } ManifestBuildData;
+
+// Default file size to block size map
+static struct ManifestBuildBlockIncrSizeMap
+{
+    unsigned int fileSize;
+    unsigned int blockSize;
+} manifestBuildBlockIncrSizeMap[] =
+{
+    {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
+    {.fileSize = 256 * 1024 * 1024, .blockSize = 768 * 1024},
+    {.fileSize = 64 * 1024 * 1024, .blockSize = 512 * 1024},
+    {.fileSize = 16 * 1024 * 1024, .blockSize = 384 * 1024},
+    {.fileSize = 4 * 1024 * 1024, .blockSize = 256 * 1024},
+    {.fileSize = 2 * 1024 * 1024, .blockSize = 192 * 1024},
+    {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
+};
+
+// !!!
+static size_t
+manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, buildData);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    size_t result = 0;
+
+    // Search size map for the appropriate block size
+    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrSizeMapSize; sizeIdx++)
+    {
+        if (file->size >= buildData->blockIncrSizeMap[sizeIdx].fileSize)
+        {
+            result = buildData->blockIncrSizeMap[sizeIdx].blockSize;
+            break;
+        }
+    }
+
+    // If block size > 0 then search age map for a multiplier
+    if (result != 0)
+    {
+        const time_t fileAge = buildData->manifest->pub.data.backupTimestampStart - file->timestamp;
+
+        for (unsigned int timeIdx = 0; timeIdx < LENGTH_OF(manifestBuildBlockIncrTimeMap); timeIdx++)
+        {
+            if (fileAge >= (time_t)manifestBuildBlockIncrTimeMap[timeIdx].fileAge)
+            {
+                result *= manifestBuildBlockIncrTimeMap[timeIdx].blockMultiplier;
+                break;
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN(UINT64, result);
+}
 
 // Process files/links/paths and add them to the manifest
 static void
@@ -1066,7 +1069,7 @@ manifestBuildInfo(
 
             // Get block incremental size
             if (info->size != 0 && buildData->manifest->pub.data.blockIncr)
-                file.blockIncrSize = manifestBuildBlockIncrSize(buildData->manifest->pub.data.backupTimestampStart, &file);
+                file.blockIncrSize = manifestBuildBlockIncrSize(buildData, &file);
 
             // Determine if this file should be page checksummed
             if (dbPath && buildData->checksumPage)
@@ -1266,7 +1269,7 @@ FN_EXTERN Manifest *
 manifestNewBuild(
     const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const time_t timestampStart,
     const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const StringList *const excludeList,
-    const Pack *const tablespaceList)
+    const Pack *const tablespaceList, const KeyValue *const blockIncrSizeMap)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -1279,6 +1282,7 @@ manifestNewBuild(
         FUNCTION_LOG_PARAM(BOOL, blockIncr);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(PACK, tablespaceList);
+        FUNCTION_LOG_PARAM(KEY_VALUE, blockIncrSizeMap);
     FUNCTION_LOG_END();
 
     ASSERT(storagePg != NULL);
@@ -1315,7 +1319,35 @@ manifestNewBuild(
                 .tablespaceList = tablespaceList,
                 .linkCheck = &linkCheck,
                 .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
+                .blockIncrSizeMap = manifestBuildBlockIncrSizeMap,
+                .blockIncrSizeMapSize = LENGTH_OF(manifestBuildBlockIncrSizeMap),
             };
+
+            // Block block incremental size map
+            // ---------------------------------------------------------------------------------------------------------------------
+            if (blockIncrSizeMap != NULL) // {uncovered - !!!}
+            {
+                List *const map = lstNewP(sizeof(struct ManifestBuildBlockIncrSizeMap), .comparator = lstComparatorUInt); // {uncovered - !!!}
+                const VariantList *const mapKeyList = kvKeyList(blockIncrSizeMap); // {uncovered - !!!}
+
+                for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++) // {uncovered - !!!}
+                {
+                    const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx); // {uncovered - !!!}
+
+                    struct ManifestBuildBlockIncrSizeMap manifestBuildBlockIncrSizeMap = // {uncovered - !!!}
+                    {
+                        .fileSize = varUIntForce(mapKey), // {uncovered - !!!}
+                        .blockSize = varUIntForce(kvGet(blockIncrSizeMap, mapKey)), // {uncovered - !!!}
+                    };
+
+                    lstAdd(map, &manifestBuildBlockIncrSizeMap); // {uncovered - !!!}
+                }
+
+                lstSort(map, sortOrderDesc); // {uncovered - !!!}
+
+                buildData.blockIncrSizeMap = lstGet(map, 0); // {uncovered - !!!}
+                buildData.blockIncrSizeMapSize = lstSize(map); // {uncovered - !!!}
+            }
 
             // Build expressions to identify databases paths and temp relations
             // ---------------------------------------------------------------------------------------------------------------------
