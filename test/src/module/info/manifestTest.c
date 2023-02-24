@@ -752,7 +752,7 @@ testRun(void)
         // Create file that is large enough for block incr and old enough to not need block incr
         HRN_STORAGE_PUT(storagePgWrite, "128k-4week", buffer, .modeFile = 0600, .timeModified = 1570000000 - (28 * 86400));
 
-        // pg_wal not ignored
+        // Block incremental maps
         static const ManifestBlockIncrSizeMap manifestBuildBlockIncrSizeMap[] =
         {
             {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
@@ -765,6 +765,7 @@ testRun(void)
             .sizeMapSize = LENGTH_OF(manifestBuildBlockIncrSizeMap),
         };
 
+        // pg_wal not ignored
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(

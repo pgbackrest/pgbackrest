@@ -298,7 +298,7 @@ backupBlockIncrMapSize(ConfigOption optionId, unsigned int optionKeyIdx, const S
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    unsigned int result;
+    unsigned int result = 0;
 
     TRY_BEGIN()
     {
