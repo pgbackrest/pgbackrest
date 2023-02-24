@@ -229,7 +229,7 @@ archivePushCheck(bool pgPathSet)
         if (pgPathSet)
         {
             // Get info from pg_control
-            PgControl pgControl = pgControlFromFile(storagePg());
+            PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersion));
             result.pgVersion = pgControl.version;
             result.pgSystemId = pgControl.systemId;
         }

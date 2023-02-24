@@ -130,7 +130,7 @@ FN_EXTERN bool pgDbIsSystem(const String *name);
 FN_EXTERN bool pgDbIsSystemId(unsigned int id);
 
 // Get info from pg_control
-FN_EXTERN PgControl pgControlFromFile(const Storage *storage);
+FN_EXTERN PgControl pgControlFromFile(const Storage *storage, const String *pgVersionOption);
 
 // Get the control version for a PostgreSQL version
 FN_EXTERN uint32_t pgControlVersion(unsigned int pgVersion);

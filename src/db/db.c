@@ -323,7 +323,7 @@ dbOpen(Db *this)
         this->pub.standby = dbIsInRecovery(this);
 
         // Get control file
-        this->pub.pgControl = pgControlFromFile(this->storage);
+        this->pub.pgControl = pgControlFromFile(this->storage, cfgOptionStrNull(cfgOptPgVersion));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -441,7 +441,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 
         // Make sure the backup start checkpoint was written to pg_control. This helps ensure that we have a consistent view of the
         // storage with PostgreSQL.
-        const PgControl pgControl = pgControlFromFile(this->storage);
+        const PgControl pgControl = pgControlFromFile(this->storage, cfgOptionStrNull(cfgOptPgVersion));
         const String *const lsnStart = pckReadStrP(read);
 
         if (pgControl.checkpoint < pgLsnFromStr(lsnStart))
@@ -733,7 +733,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         }
 
         // Reload pg_control in case timeline was updated by the checkpoint
-        this->pub.pgControl = pgControlFromFile(this->storage);
+        this->pub.pgControl = pgControlFromFile(this->storage, cfgOptionStrNull(cfgOptPgVersion));
 
         // Check that the timeline matches the primary
         if (dbPgControl(this).timeline != targetTimeline)

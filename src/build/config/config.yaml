@@ -1532,7 +1532,6 @@ option:
     group: pg
     type: string
     required: false
-
     command:
       backup: {}
       check: {}
@@ -1541,6 +1540,19 @@ option:
       stanza-upgrade: {}
     depend:
       option: pg-path
+
+  pg-version:
+    section: stanza
+    type: string
+    required: false
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
 
   # Repository options
   #---------------------------------------------------------------------------------------------------------------------------------

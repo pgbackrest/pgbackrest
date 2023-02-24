@@ -1694,6 +1694,16 @@
 
                         <example>25</example>
                     </config-key>
+
+                    <config-key id="pg-version" name="PostgreSQL version">
+                        <summary><postgres/> release to use for pg_control and pg_catalog version.</summary>
+
+                        <text>
+                            <p>The <postgres/> release to use for pg_control and pg_catalog version. Mainly useful for <postgres/> forks where those values are modified.</p>
+                        </text>
+
+                        <example>15</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
         </config-section-list>

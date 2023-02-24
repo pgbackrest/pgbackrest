@@ -14,6 +14,9 @@ PostgreSQL Interface
 #include "postgres/version.h"
 #include "storage/helper.h"
 
+#include "build/common/render.h"
+#include "build/config/render.h"
+
 /***********************************************************************************************************************************
 Defines for various Postgres paths and files
 ***********************************************************************************************************************************/
@@ -172,23 +175,38 @@ pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
 
 /**********************************************************************************************************************************/
 static PgControl
-pgControlFromBuffer(const Buffer *controlFile)
+pgControlFromBuffer(const Buffer *controlFile, const String *pgVersionOption)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, controlFile);
+        FUNCTION_LOG_PARAM(STRING, pgVersionOption);
     FUNCTION_LOG_END();
 
     ASSERT(controlFile != NULL);
 
-    // FIXME to do: add a config option to specify which interface we want to use
-    const String *cfgPgVersionOption = STRDEF("15");
-
     // Search for the version of PostgreSQL that uses this control file
     const PgInterface *interface = NULL;
 
-    if (cfgPgVersionOption != NULL)
+    if (pgVersionOption != NULL)
     {
-        interface = pgInterfaceVersion(pgVersionFromStr(cfgPgVersionOption));
+        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
+        {
+            if (pgInterface[interfaceIdx].version == pgVersionFromStr(pgVersionOption))
+            {
+                interface = &pgInterface[interfaceIdx];
+                break;
+            }
+        }
+
+        // If the version was not found then error
+        if (interface == NULL)
+        {
+            THROW_FMT(
+                VersionNotSupportedError,
+                "version %s not found\n"
+                "HINT: is this version of PostgreSQL supported?",
+                strZ(pgVersionOption));
+        }
     }
     else
     {
@@ -218,15 +236,6 @@ pgControlFromBuffer(const Buffer *controlFile)
     PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
 
-    // Update catalog and control version
-    if (cfgPgVersionOption != NULL)
-    {
-        const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
-        result.catalogVersion = controlCommon->catalogVersion;
-
-        // FIXME to do: save current control version somewhere
-    }
-
     // Check the segment size
     pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
 
@@ -238,10 +247,11 @@ pgControlFromBuffer(const Buffer *controlFile)
 }
 
 FN_EXTERN PgControl
-pgControlFromFile(const Storage *storage)
+pgControlFromFile(const Storage *storage, const String *pgVersionOption)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, pgVersionOption);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -254,7 +264,7 @@ pgControlFromFile(const Storage *storage)
         Buffer *controlFile = storageGetP(
             storageNewReadP(storage, STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), .exactSize = PG_CONTROL_DATA_SIZE);
 
-        result = pgControlFromBuffer(controlFile);
+        result = pgControlFromBuffer(controlFile, pgVersionOption);
     }
     MEM_CONTEXT_TEMP_END();
 

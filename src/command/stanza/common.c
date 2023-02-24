@@ -57,7 +57,7 @@ pgValidate(void)
         }
         // If the database is not online, assume that pg1 is the primary
         else
-            result = pgControlFromFile(storagePg());
+            result = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersion));
     }
     MEM_CONTEXT_TEMP_END();
 

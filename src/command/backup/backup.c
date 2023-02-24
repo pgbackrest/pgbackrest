@@ -213,7 +213,7 @@ backupInit(const InfoBackup *infoBackup)
     }
     // Else get pg_control info directly from the file
     else
-        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary));
+        pgControl = pgControlFromFile(storagePgIdx(result->pgIdxPrimary), cfgOptionStrNull(cfgOptPgVersion));
 
     // Add primary info
     result->storagePrimary = storagePgIdx(result->pgIdxPrimary);
