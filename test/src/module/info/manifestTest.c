@@ -753,11 +753,15 @@ testRun(void)
         HRN_STORAGE_PUT(storagePgWrite, "128k-4week", buffer, .modeFile = 0600, .timeModified = 1570000000 - (28 * 86400));
 
         // pg_wal not ignored
+        KeyValue *const blockIncrSizeMap = kvNew();
+        kvPut(blockIncrSizeMap, VARSTRDEF("131072"), VARSTRDEF("131072"));
+        kvPut(blockIncrSizeMap, VARSTRDEF("8192"), VARSTRDEF("8192"));
+
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
                 storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true, NULL, NULL,
-                NULL),
+                blockIncrSizeMap),
             "build manifest");
 
         contentSave = bufNew(0);

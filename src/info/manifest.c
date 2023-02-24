@@ -1325,28 +1325,28 @@ manifestNewBuild(
 
             // Block block incremental size map
             // ---------------------------------------------------------------------------------------------------------------------
-            if (blockIncrSizeMap != NULL) // {uncovered - !!!}
+            if (blockIncrSizeMap != NULL)
             {
-                List *const map = lstNewP(sizeof(struct ManifestBuildBlockIncrSizeMap), .comparator = lstComparatorUInt); // {uncovered - !!!}
-                const VariantList *const mapKeyList = kvKeyList(blockIncrSizeMap); // {uncovered - !!!}
+                List *const map = lstNewP(sizeof(struct ManifestBuildBlockIncrSizeMap), .comparator = lstComparatorUInt);
+                const VariantList *const mapKeyList = kvKeyList(blockIncrSizeMap);
 
-                for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++) // {uncovered - !!!}
+                for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
                 {
-                    const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx); // {uncovered - !!!}
+                    const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
 
-                    struct ManifestBuildBlockIncrSizeMap manifestBuildBlockIncrSizeMap = // {uncovered - !!!}
+                    struct ManifestBuildBlockIncrSizeMap manifestBuildBlockIncrSizeMap =
                     {
-                        .fileSize = varUIntForce(mapKey), // {uncovered - !!!}
-                        .blockSize = varUIntForce(kvGet(blockIncrSizeMap, mapKey)), // {uncovered - !!!}
+                        .fileSize = varUIntForce(mapKey),
+                        .blockSize = varUIntForce(kvGet(blockIncrSizeMap, mapKey)),
                     };
 
-                    lstAdd(map, &manifestBuildBlockIncrSizeMap); // {uncovered - !!!}
+                    lstAdd(map, &manifestBuildBlockIncrSizeMap);
                 }
 
-                lstSort(map, sortOrderDesc); // {uncovered - !!!}
+                lstSort(map, sortOrderDesc);
 
-                buildData.blockIncrSizeMap = lstGet(map, 0); // {uncovered - !!!}
-                buildData.blockIncrSizeMapSize = lstSize(map); // {uncovered - !!!}
+                buildData.blockIncrSizeMap = lstGet(map, 0);
+                buildData.blockIncrSizeMapSize = lstSize(map);
             }
 
             // Build expressions to identify databases paths and temp relations
