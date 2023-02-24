@@ -1083,6 +1083,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("BlockIncr"))
     {
+        TEST_TITLE("block incremental config map");
+
+        TEST_ERROR(
+            backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("Z")), OptionInvalidValueError,
+            "'Z' is not valid for 'repo1-block-size-map' option");
+        TEST_ERROR(
+            backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("5GiB")), OptionInvalidValueError,
+            "'5GiB' is not valid for 'repo1-block-size-map' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with zero block");
 
         ioBufferSizeSet(2);
@@ -2454,7 +2464,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, false, 0, NULL, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -2547,7 +2557,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, false, 0, NULL, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -2734,7 +2744,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, false, 0, NULL, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeDiff;
@@ -3670,7 +3680,7 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "256kB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
-            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "=" STRINGIFY(BLOCK_MAX_SIZE));
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "b=" STRINGIFY(BLOCK_MAX_SIZE) "b");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -3783,7 +3793,7 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
             // File that gets a large block size
-            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 2].fileSize);
+            file = bufNew(BLOCK_MAX_FILE_SIZE);
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
@@ -3986,8 +3996,6 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "4MiB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
-            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "=" STRINGIFY(BLOCK_MAX_SIZE));
-            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
             hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
             hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
             HRN_CFG_LOAD(cfgCmdBackup, argList);

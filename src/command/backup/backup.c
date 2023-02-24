@@ -26,7 +26,9 @@ Backup Command
 #include "common/time.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
+#include "config/common.h"
 #include "config/config.h"
+#include "config/parse.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -263,6 +265,103 @@ backupInit(const InfoBackup *infoBackup)
     }
 
     FUNCTION_LOG_RETURN(BACKUP_DATA, result);
+}
+
+/**********************************************************************************************************************************
+Build block incremental maps
+***********************************************************************************************************************************/
+// Block incremental size map
+static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMapDefault[] =
+{
+    {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
+    {.fileSize = 256 * 1024 * 1024, .blockSize = 768 * 1024},
+    {.fileSize = 64 * 1024 * 1024, .blockSize = 512 * 1024},
+    {.fileSize = 16 * 1024 * 1024, .blockSize = 384 * 1024},
+    {.fileSize = 4 * 1024 * 1024, .blockSize = 256 * 1024},
+    {.fileSize = 2 * 1024 * 1024, .blockSize = 192 * 1024},
+    {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
+};
+
+// Block incremental maps
+static const ManifestBlockIncrMap manifestBlockIncrMap =
+{
+    .sizeMap = manifestBlockIncrSizeMapDefault,
+    .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMapDefault),
+};
+
+static unsigned int
+backupBlockIncrMapSize(ConfigOption optionId, unsigned int optionKeyIdx, const String *const value)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(STRING, value);
+    FUNCTION_TEST_END();
+
+    unsigned int result;
+
+    TRY_BEGIN()
+    {
+        const int64_t valueI64 = cfgParseSize(value);
+
+        if (valueI64 > UINT_MAX)
+            THROW(FormatError, "");
+
+        result = (unsigned int)valueI64;
+    }
+    CATCH_ANY()
+    {
+        THROW_FMT(
+            OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
+            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+    }
+    TRY_END();
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
+static ManifestBlockIncrMap
+backupBlockIncrMap(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ManifestBlockIncrMap result = manifestBlockIncrMap;
+
+    if (cfgOptionBool(cfgOptRepoBlock))
+    {
+        const KeyValue *const manifestBlockIncrSizeKv = cfgOptionKvNull(cfgOptRepoBlockSizeMap);
+
+        if (manifestBlockIncrSizeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrSizeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrSizeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrSizeMap manifestBuildBlockIncrSizeMap =
+                {
+                    .fileSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockSizeMap), varStr(mapKey)),
+                    .blockSize = backupBlockIncrMapSize(
+                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockSizeMap),
+                        varStr(kvGet(manifestBlockIncrSizeKv, mapKey))),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrSizeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.sizeMap = lstGet(map, 0);
+            result.sizeMapSize = lstSize(map);
+        }
+    }
+
+    FUNCTION_TEST_RETURN_TYPE(ManifestBlockIncrMap, result);
 }
 
 /**********************************************************************************************************************************
@@ -2305,11 +2404,12 @@ cmdBackup(void)
         BackupStartResult backupStartResult = backupStart(backupData);
 
         // Build the manifest
+        const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
+
         Manifest *manifest = manifestNewBuild(
             backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
-            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock),
-            strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList,
-            cfgOptionKvNull(cfgOptRepoBlockSizeMap));
+            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
+            strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
         manifestBuildValidate(

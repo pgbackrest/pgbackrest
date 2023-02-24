@@ -296,8 +296,8 @@ testRun(void)
         // Test tablespace error
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, exclusionList,
-                pckWriteResult(tablespaceList), NULL),
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL, exclusionList,
+                pckWriteResult(tablespaceList)),
             AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
             "HINT: was a tablespace created or dropped during the backup?");
@@ -321,8 +321,8 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL,
-                pckWriteResult(tablespaceList), NULL),
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL, NULL,
+                pckWriteResult(tablespaceList)),
             "build manifest");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F")), "backup label set");
 
@@ -753,15 +753,23 @@ testRun(void)
         HRN_STORAGE_PUT(storagePgWrite, "128k-4week", buffer, .modeFile = 0600, .timeModified = 1570000000 - (28 * 86400));
 
         // pg_wal not ignored
-        KeyValue *const blockIncrSizeMap = kvNew();
-        kvPut(blockIncrSizeMap, VARSTRDEF("131072"), VARSTRDEF("131072"));
-        kvPut(blockIncrSizeMap, VARSTRDEF("8192"), VARSTRDEF("8192"));
+        static const ManifestBlockIncrSizeMap manifestBuildBlockIncrSizeMap[] =
+        {
+            {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
+            {.fileSize = 8 * 1024, .blockSize = 8 * 1024},
+        };
+
+        static const ManifestBlockIncrMap manifestBuildBlockIncrMap =
+        {
+            .sizeMap = manifestBuildBlockIncrSizeMap,
+            .sizeMapSize = LENGTH_OF(manifestBuildBlockIncrSizeMap),
+        };
 
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true, NULL, NULL,
-                blockIncrSizeMap),
+                storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true,
+                &manifestBuildBlockIncrMap, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);

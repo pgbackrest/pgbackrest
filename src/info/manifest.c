@@ -754,26 +754,6 @@ manifestLinkCheck(const Manifest *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Calculate block incremental size for a file. The block size is based on the size and age of the file. Larger files get larger block
-sizes to reduce the cost of the map and individual block compression. Older files also get larger block sizes under the assumption
-that they are unlikely to be modified if they have not been modified in a while. Very old and very small files skip block
-incremental entirely.
-
-The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
-***********************************************************************************************************************************/
-// File age to block multiplier map
-static struct ManifestBuildBlockIncrTimeMap
-{
-    uint32_t fileAge;
-    uint32_t blockMultiplier;
-} manifestBuildBlockIncrTimeMap[] =
-{
-    {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
-    {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
-    {.fileAge = 7 * 86400, .blockMultiplier = 2},
-};
-
 /**********************************************************************************************************************************/
 typedef struct ManifestBuildData
 {
@@ -789,27 +769,26 @@ typedef struct ManifestBuildData
     ManifestLinkCheck *linkCheck;                                   // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
-    struct ManifestBuildBlockIncrSizeMap *blockIncrSizeMap;         // !!!
-    unsigned int blockIncrSizeMapSize;                              // !!!
+    const ManifestBlockIncrMap *blockIncrMap;                       // Block incremental maps
 } ManifestBuildData;
 
-// Default file size to block size map
-static struct ManifestBuildBlockIncrSizeMap
+// Calculate block incremental size for a file. The block size is based on the size and age of the file. Larger files get larger
+// block sizes to reduce the cost of the map and individual block compression. Older files also get larger block sizes under the
+// assumption that they are unlikely to be modified if they have not been modified in a while. Very old and very small files skip
+// block incremental entirely.
+//
+// The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
+static struct ManifestBuildBlockIncrTimeMap
 {
-    unsigned int fileSize;
-    unsigned int blockSize;
-} manifestBuildBlockIncrSizeMap[] =
+    uint32_t fileAge;
+    uint32_t blockMultiplier;
+} manifestBuildBlockIncrTimeMap[] =
 {
-    {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
-    {.fileSize = 256 * 1024 * 1024, .blockSize = 768 * 1024},
-    {.fileSize = 64 * 1024 * 1024, .blockSize = 512 * 1024},
-    {.fileSize = 16 * 1024 * 1024, .blockSize = 384 * 1024},
-    {.fileSize = 4 * 1024 * 1024, .blockSize = 256 * 1024},
-    {.fileSize = 2 * 1024 * 1024, .blockSize = 192 * 1024},
-    {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
+    {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
+    {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
+    {.fileAge = 7 * 86400, .blockMultiplier = 2},
 };
 
-// !!!
 static size_t
 manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const ManifestFile *const file)
 {
@@ -821,11 +800,11 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
     size_t result = 0;
 
     // Search size map for the appropriate block size
-    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrSizeMapSize; sizeIdx++)
+    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrMap->sizeMapSize; sizeIdx++)
     {
-        if (file->size >= buildData->blockIncrSizeMap[sizeIdx].fileSize)
+        if (file->size >= buildData->blockIncrMap->sizeMap[sizeIdx].fileSize)
         {
-            result = buildData->blockIncrSizeMap[sizeIdx].blockSize;
+            result = buildData->blockIncrMap->sizeMap[sizeIdx].blockSize;
             break;
         }
     }
@@ -1268,8 +1247,8 @@ manifestBuildInfo(
 FN_EXTERN Manifest *
 manifestNewBuild(
     const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const time_t timestampStart,
-    const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const StringList *const excludeList,
-    const Pack *const tablespaceList, const KeyValue *const blockIncrSizeMap)
+    const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const ManifestBlockIncrMap *blockIncrMap,
+    const StringList *const excludeList, const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -1280,9 +1259,9 @@ manifestNewBuild(
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(BOOL, blockIncr);
+        FUNCTION_LOG_PARAM(VOID, blockIncrMap);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(PACK, tablespaceList);
-        FUNCTION_LOG_PARAM(KEY_VALUE, blockIncrSizeMap);
     FUNCTION_LOG_END();
 
     ASSERT(storagePg != NULL);
@@ -1319,35 +1298,8 @@ manifestNewBuild(
                 .tablespaceList = tablespaceList,
                 .linkCheck = &linkCheck,
                 .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
-                .blockIncrSizeMap = manifestBuildBlockIncrSizeMap,
-                .blockIncrSizeMapSize = LENGTH_OF(manifestBuildBlockIncrSizeMap),
+                .blockIncrMap = blockIncrMap,
             };
-
-            // Block block incremental size map
-            // ---------------------------------------------------------------------------------------------------------------------
-            if (blockIncrSizeMap != NULL)
-            {
-                List *const map = lstNewP(sizeof(struct ManifestBuildBlockIncrSizeMap), .comparator = lstComparatorUInt);
-                const VariantList *const mapKeyList = kvKeyList(blockIncrSizeMap);
-
-                for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
-                {
-                    const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
-
-                    struct ManifestBuildBlockIncrSizeMap manifestBuildBlockIncrSizeMap =
-                    {
-                        .fileSize = varUIntForce(mapKey),
-                        .blockSize = varUIntForce(kvGet(blockIncrSizeMap, mapKey)),
-                    };
-
-                    lstAdd(map, &manifestBuildBlockIncrSizeMap);
-                }
-
-                lstSort(map, sortOrderDesc);
-
-                buildData.blockIncrSizeMap = lstGet(map, 0);
-                buildData.blockIncrSizeMapSize = lstSize(map);
-            }
 
             // Build expressions to identify databases paths and temp relations
             // ---------------------------------------------------------------------------------------------------------------------

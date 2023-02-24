@@ -526,10 +526,10 @@
                         <summary>Block incremental block size map.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Map file size to block size.</p>
                        </text>
 
-                        <example>!!!</example>
+                        <example>16KiB=8KiB</example>
                     </config-key>
 
                     <config-key id="repo-bundle" name="Repository Bundles">
