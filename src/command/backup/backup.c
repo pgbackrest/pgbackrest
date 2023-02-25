@@ -386,7 +386,7 @@ backupBlockIncrMap(void)
 
                 ManifestBlockIncrAgeMap manifestBuildBlockIncrAgeMap =
                 {
-                    .fileAge = varUIntForce(mapKey) * SEC_PER_DAY,
+                    .fileAge = varUIntForce(mapKey) * (unsigned int)SEC_PER_DAY,
                     .blockMultiplier = varUIntForce(kvGet(manifestBlockIncrAgeKv, mapKey)),
                 };
 
