@@ -778,17 +778,6 @@ typedef struct ManifestBuildData
 // block incremental entirely.
 //
 // The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
-static struct ManifestBuildBlockIncrTimeMap
-{
-    uint32_t fileAge;
-    uint32_t blockMultiplier;
-} manifestBuildBlockIncrTimeMap[] =
-{
-    {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
-    {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
-    {.fileAge = 7 * 86400, .blockMultiplier = 2},
-};
-
 static size_t
 manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const ManifestFile *const file)
 {
@@ -814,11 +803,11 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
     {
         const time_t fileAge = buildData->manifest->pub.data.backupTimestampStart - file->timestamp;
 
-        for (unsigned int timeIdx = 0; timeIdx < LENGTH_OF(manifestBuildBlockIncrTimeMap); timeIdx++)
+        for (unsigned int timeIdx = 0; timeIdx < buildData->blockIncrMap->ageMapSize; timeIdx++)
         {
-            if (fileAge >= (time_t)manifestBuildBlockIncrTimeMap[timeIdx].fileAge)
+            if (fileAge >= (time_t)buildData->blockIncrMap->ageMap[timeIdx].fileAge)
             {
-                result *= manifestBuildBlockIncrTimeMap[timeIdx].blockMultiplier;
+                result *= buildData->blockIncrMap->ageMap[timeIdx].blockMultiplier;
                 break;
             }
         }

@@ -4888,6 +4888,35 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                         // opt/repo-block
     ),                                                                                                             // opt/repo-block
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                      // opt/repo-block-age-map
+    (                                                                                                      // opt/repo-block-age-map
+        PARSE_RULE_OPTION_NAME("repo-block-age-map"),                                                      // opt/repo-block-age-map
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeHash),                                                            // opt/repo-block-age-map
+        PARSE_RULE_OPTION_RESET(true),                                                                     // opt/repo-block-age-map
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                 // opt/repo-block-age-map
+        PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                       // opt/repo-block-age-map
+        PARSE_RULE_OPTION_MULTI(true),                                                                     // opt/repo-block-age-map
+        PARSE_RULE_OPTION_GROUP_MEMBER(true),                                                              // opt/repo-block-age-map
+        PARSE_RULE_OPTION_GROUP_ID(cfgOptGrpRepo),                                                         // opt/repo-block-age-map
+                                                                                                           // opt/repo-block-age-map
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-block-age-map
+        (                                                                                                  // opt/repo-block-age-map
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                        // opt/repo-block-age-map
+        ),                                                                                                 // opt/repo-block-age-map
+                                                                                                           // opt/repo-block-age-map
+        PARSE_RULE_OPTIONAL                                                                                // opt/repo-block-age-map
+        (                                                                                                  // opt/repo-block-age-map
+            PARSE_RULE_OPTIONAL_GROUP                                                                      // opt/repo-block-age-map
+            (                                                                                              // opt/repo-block-age-map
+                PARSE_RULE_OPTIONAL_DEPEND                                                                 // opt/repo-block-age-map
+                (                                                                                          // opt/repo-block-age-map
+                    PARSE_RULE_VAL_OPT(cfgOptRepoBlock),                                                   // opt/repo-block-age-map
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                              // opt/repo-block-age-map
+                ),                                                                                         // opt/repo-block-age-map
+            ),                                                                                             // opt/repo-block-age-map
+        ),                                                                                                 // opt/repo-block-age-map
+    ),                                                                                                     // opt/repo-block-age-map
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                     // opt/repo-block-size-map
     (                                                                                                     // opt/repo-block-size-map
         PARSE_RULE_OPTION_NAME("repo-block-size-map"),                                                    // opt/repo-block-size-map
@@ -9492,6 +9521,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoAzureKeyType,                                                                                     // opt-resolve-order
     cfgOptRepoAzureUriStyle,                                                                                    // opt-resolve-order
     cfgOptRepoBlock,                                                                                            // opt-resolve-order
+    cfgOptRepoBlockAgeMap,                                                                                      // opt-resolve-order
     cfgOptRepoBlockSizeMap,                                                                                     // opt-resolve-order
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order

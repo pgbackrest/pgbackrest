@@ -96,10 +96,19 @@ typedef struct ManifestBlockIncrSizeMap
     unsigned int blockSize;                                         // Block size for files >= file size
 } ManifestBlockIncrSizeMap;
 
+// Map file age to block multiplier
+typedef struct ManifestBlockIncrAgeMap
+{
+    uint32_t fileAge;                                               // File age in seconds
+    uint32_t blockMultiplier;                                       // Block multiplier
+} ManifestBlockIncrAgeMap;
+
 typedef struct ManifestBlockIncrMap
 {
     const ManifestBlockIncrSizeMap *sizeMap;                        // Block size map
     unsigned int sizeMapSize;                                       // Block size map size
+    const ManifestBlockIncrAgeMap *ageMap;                          // File age map
+    unsigned int ageMapSize;                                        // File age map size
 } ManifestBlockIncrMap;
 
 /***********************************************************************************************************************************

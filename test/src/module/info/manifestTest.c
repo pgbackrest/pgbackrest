@@ -753,16 +753,25 @@ testRun(void)
         HRN_STORAGE_PUT(storagePgWrite, "128k-4week", buffer, .modeFile = 0600, .timeModified = 1570000000 - (28 * 86400));
 
         // Block incremental maps
-        static const ManifestBlockIncrSizeMap manifestBuildBlockIncrSizeMap[] =
+        static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMap[] =
         {
             {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
             {.fileSize = 8 * 1024, .blockSize = 8 * 1024},
         };
 
+        static const ManifestBlockIncrAgeMap manifestBlockIncrAgeMap[] =
+        {
+            {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
+            {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
+            {.fileAge = 7 * 86400, .blockMultiplier = 2},
+        };
+
         static const ManifestBlockIncrMap manifestBuildBlockIncrMap =
         {
-            .sizeMap = manifestBuildBlockIncrSizeMap,
-            .sizeMapSize = LENGTH_OF(manifestBuildBlockIncrSizeMap),
+            .sizeMap = manifestBlockIncrSizeMap,
+            .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMap),
+            .ageMap = manifestBlockIncrAgeMap,
+            .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMap),
         };
 
         // pg_wal not ignored

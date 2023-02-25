@@ -270,7 +270,7 @@ backupInit(const InfoBackup *infoBackup)
 /**********************************************************************************************************************************
 Build block incremental maps
 ***********************************************************************************************************************************/
-// Block incremental size map
+// Size map
 static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMapDefault[] =
 {
     {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
@@ -282,13 +282,24 @@ static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMapDefault[] =
     {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
 };
 
-// Block incremental maps
+// Age map
+static const ManifestBlockIncrAgeMap manifestBlockIncrAgeMapDefault[] =
+{
+    {.fileAge = 4 * 7 * SEC_PER_DAY, .blockMultiplier = 0},
+    {.fileAge = 2 * 7 * SEC_PER_DAY, .blockMultiplier = 4},
+    {.fileAge = 7 * SEC_PER_DAY, .blockMultiplier = 2},
+};
+
+// All maps
 static const ManifestBlockIncrMap manifestBlockIncrMap =
 {
     .sizeMap = manifestBlockIncrSizeMapDefault,
     .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMapDefault),
+    .ageMap = manifestBlockIncrAgeMapDefault,
+    .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMapDefault),
 };
 
+// Convert map size
 static unsigned int
 backupBlockIncrMapSize(ConfigOption optionId, unsigned int optionKeyIdx, const String *const value)
 {
@@ -331,6 +342,7 @@ backupBlockIncrMap(void)
 
     if (cfgOptionBool(cfgOptRepoBlock))
     {
+        // Build size map
         const KeyValue *const manifestBlockIncrSizeKv = cfgOptionKvNull(cfgOptRepoBlockSizeMap);
 
         if (manifestBlockIncrSizeKv != NULL)
@@ -358,6 +370,33 @@ backupBlockIncrMap(void)
 
             result.sizeMap = lstGet(map, 0);
             result.sizeMapSize = lstSize(map);
+        }
+
+        // Build age map
+        const KeyValue *const manifestBlockIncrAgeKv = cfgOptionKvNull(cfgOptRepoBlockAgeMap);
+
+        if (manifestBlockIncrAgeKv != NULL)
+        {
+            List *const map = lstNewP(sizeof(ManifestBlockIncrAgeMap), .comparator = lstComparatorUInt);
+            const VariantList *const mapKeyList = kvKeyList(manifestBlockIncrAgeKv);
+
+            for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
+            {
+                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+
+                ManifestBlockIncrAgeMap manifestBuildBlockIncrAgeMap =
+                {
+                    .fileAge = varUIntForce(mapKey) * SEC_PER_DAY,
+                    .blockMultiplier = varUIntForce(kvGet(manifestBlockIncrAgeKv, mapKey)),
+                };
+
+                lstAdd(map, &manifestBuildBlockIncrAgeMap);
+            }
+
+            lstSort(map, sortOrderDesc);
+
+            result.ageMap = lstGet(map, 0);
+            result.ageMapSize = lstSize(map);
         }
     }
 
