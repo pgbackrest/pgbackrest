@@ -2399,6 +2399,61 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                     pckReadFree(optionalRules.pack);
                 }
             }
+
+            // Phase 6: !!!
+            // ---------------------------------------------------------------------------------------------------------------------
+            bool groupIndexKeep[CFG_OPTION_GROUP_TOTAL][CFG_OPTION_KEY_MAX] = {false};
+
+            for (unsigned int optionIdx = 0; optionIdx < CFG_OPTION_TOTAL; optionIdx++)
+            {
+                const ConfigOptionData *const option = &config->option[optionIdx];
+
+                if (option->group)
+                {
+                    const ConfigOptionGroupData *const group = &config->optionGroup[option->groupId];
+
+                    if (group->indexTotal > 1)
+                    {
+                        for (unsigned int valueIdx = 0; valueIdx < group->indexTotal; valueIdx++)
+                        {
+                            const ConfigOptionValue *const value = &option->index[valueIdx];
+
+                            if (value->source != cfgSourceDefault)
+                                groupIndexKeep[option->groupId][valueIdx] = true;
+                        }
+                    }
+                    else
+                        groupIndexKeep[option->groupId][0] = true;
+                }
+            }
+
+            for (unsigned int groupIdx = 0; groupIdx < CFG_OPTION_GROUP_TOTAL; groupIdx++)
+            {
+                ConfigOptionGroupData *const group = &config->optionGroup[groupIdx];
+
+                for (unsigned int keyIdx = group->indexTotal - 1; keyIdx < UINT_MAX; keyIdx--)
+                {
+                    if (!groupIndexKeep[groupIdx][keyIdx])
+                    {
+                        if (keyIdx < group->indexTotal - 1)
+                        {
+                            for (unsigned int optionIdx = 0; optionIdx < CFG_OPTION_TOTAL; optionIdx++)
+                            {
+                                ConfigOptionData *const option = &config->option[optionIdx];
+
+                                if (option->group && option->groupId == groupIdx)
+                                {
+                                    memmove(
+                                        option->index + keyIdx, option->index + (keyIdx + 1),
+                                        sizeof(ConfigOptionValue) * (group->indexTotal - keyIdx - 1));
+                                }
+                            }
+                        }
+
+                        group->indexTotal--;
+                    }
+                }
+            }
         }
 
         // Initialize config

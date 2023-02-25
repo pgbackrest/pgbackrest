@@ -2019,20 +2019,6 @@ testRun(void)
         // TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 8)), "/pg8", "check pg8-path");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("repo key 1 is not required");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 5, "repo5");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 112, "/repo112");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHost, 0), "repo5", "check repo5-host");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 0), "/var/lib/pgbackrest", "check repo5-path");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 1), "/repo112", "check repo112-path");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid pg option");
 
         argList = strLstNew();
@@ -2043,6 +2029,24 @@ testRun(void)
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdBackup, argList, .role = cfgCmdRoleLocal), OptionInvalidValueError,
             "key '4' is not valid for 'pg' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove groups indexes that do not have a non-default option");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 5, "repo5");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 112, "/repo112");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 1, "x1x");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 3, "x3x");
+        hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 255, "x255x");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpRepo), 2, "check repo group total");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHost, 0), "repo5", "check repo5-host");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 0), "/var/lib/pgbackrest", "check repo5-path");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoPath, 1), "/repo112", "check repo112-path");
     }
 
     // *****************************************************************************************************************************
