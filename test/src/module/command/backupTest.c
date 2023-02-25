@@ -3653,7 +3653,7 @@ testRun(void)
 
         backupTimeStart = BACKUP_EPOCH + 2800000;
 
-        // Use min block size for testing
+        // Block sizes for testing
         #define BLOCK_MIN_SIZE                                      131072
         #define BLOCK_MIN_FILE_SIZE                                 131072
         #define BLOCK_MAX_SIZE                                      196608

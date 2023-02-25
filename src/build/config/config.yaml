@@ -1840,8 +1840,7 @@ option:
     type: hash
     required: false
     internal: true
-    command:
-      backup: {}
+    command: repo-block
     command-role:
       main: {}
     depend:
