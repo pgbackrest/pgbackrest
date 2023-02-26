@@ -2410,8 +2410,8 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
             // Phase 6: Remove any group indexes that have all default values (unless there is only one)
             //
             // It is possible that a group index was created for an option that was later found to not meet dependencies. In this
-            // case all values will be default leading to a phantom group, which can be quite confusing. Removed all group indexes
-            // that are all default (except the last one) and make sure the key for the last all default group index is 1.
+            // case all values will be default leading to a phantom group, which can be quite confusing. Remove all group indexes
+            // that are all default (except the final one) and make sure the key for the final all default group index is 1.
             // ---------------------------------------------------------------------------------------------------------------------
             for (unsigned int optionGroupIdx = 0; optionGroupIdx < CFG_OPTION_GROUP_TOTAL; optionGroupIdx++)
             {
