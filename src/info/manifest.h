@@ -87,6 +87,31 @@ typedef struct ManifestData
 } ManifestData;
 
 /***********************************************************************************************************************************
+Block incremental size maps
+***********************************************************************************************************************************/
+// Map file size to block size
+typedef struct ManifestBlockIncrSizeMap
+{
+    unsigned int fileSize;                                          // File size
+    unsigned int blockSize;                                         // Block size for files >= file size
+} ManifestBlockIncrSizeMap;
+
+// Map file age to block multiplier
+typedef struct ManifestBlockIncrAgeMap
+{
+    uint32_t fileAge;                                               // File age in seconds
+    uint32_t blockMultiplier;                                       // Block multiplier
+} ManifestBlockIncrAgeMap;
+
+typedef struct ManifestBlockIncrMap
+{
+    const ManifestBlockIncrSizeMap *sizeMap;                        // Block size map
+    unsigned int sizeMapSize;                                       // Block size map size
+    const ManifestBlockIncrAgeMap *ageMap;                          // File age map
+    unsigned int ageMapSize;                                        // File age map size
+} ManifestBlockIncrMap;
+
+/***********************************************************************************************************************************
 Db type
 ***********************************************************************************************************************************/
 typedef struct ManifestDb
@@ -170,7 +195,8 @@ Constructors
 // Build a new manifest for a PostgreSQL data directory
 FN_EXTERN Manifest *manifestNewBuild(
     const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, time_t timestampStart, bool online,
-    bool checksumPage, bool bundle, bool blockIncr, const StringList *excludeList, const Pack *tablespaceList);
+    bool checksumPage, bool bundle, bool blockIncr, const ManifestBlockIncrMap *blockIncrMap, const StringList *excludeList,
+    const Pack *tablespaceList);
 
 // Load a manifest from IO
 FN_EXTERN Manifest *manifestNewLoad(IoRead *read);

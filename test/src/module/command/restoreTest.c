@@ -3072,7 +3072,7 @@ testRun(void)
         TEST_TITLE("full backup with block incr");
 
         // Zeroed file large enough to use block incr
-        Buffer *relation = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 2);
+        Buffer *relation = bufNew(256 * 1024);
         memset(bufPtr(relation), 0, bufSize(relation));
         bufUsedSet(relation, bufSize(relation));
 

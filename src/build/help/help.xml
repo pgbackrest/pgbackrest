@@ -522,6 +522,26 @@
                         <example>y</example>
                     </config-key>
 
+                    <config-key id="repo-block-size-map" name="Block Incremental Size Map">
+                        <summary>Block incremental size map.</summary>
+
+                        <text>
+                            <p>Map file size to block size.</p>
+                       </text>
+
+                        <example>16KiB=8KiB</example>
+                    </config-key>
+
+                    <config-key id="repo-block-age-map" name="Block Incremental Age Map">
+                        <summary>Block incremental age map.</summary>
+
+                        <text>
+                            <p>Map file age to a block multiplier.</p>
+                       </text>
+
+                        <example>7=2</example>
+                    </config-key>
+
                     <config-key id="repo-bundle" name="Repository Bundles">
                         <summary>Bundle files in repository.</summary>
 

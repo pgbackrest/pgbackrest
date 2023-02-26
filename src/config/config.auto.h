@@ -130,7 +130,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            158
+#define CFG_OPTION_TOTAL                                            160
 
 /***********************************************************************************************************************************
 Option value constants
@@ -444,6 +444,8 @@ typedef enum
     cfgOptRepoAzureKeyType,
     cfgOptRepoAzureUriStyle,
     cfgOptRepoBlock,
+    cfgOptRepoBlockAgeMap,
+    cfgOptRepoBlockSizeMap,
     cfgOptRepoBundle,
     cfgOptRepoBundleLimit,
     cfgOptRepoBundleSize,
