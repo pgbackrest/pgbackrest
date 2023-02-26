@@ -522,16 +522,6 @@
                         <example>y</example>
                     </config-key>
 
-                    <config-key id="repo-block-size-map" name="Block Incremental Size Map">
-                        <summary>Block incremental size map.</summary>
-
-                        <text>
-                            <p>Map file size to block size. Block size is the minimum unit that will be stored in the block incremental. Smaller sizes allow for more granular incremental backups but larger sizes mean smaller maps.</p>
-                       </text>
-
-                        <example>16KiB=8KiB</example>
-                    </config-key>
-
                     <config-key id="repo-block-age-map" name="Block Incremental Age Map">
                         <summary>Block incremental age map.</summary>
 
@@ -540,6 +530,16 @@
                        </text>
 
                         <example>7=2</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-map" name="Block Incremental Size Map">
+                        <summary>Block incremental size map.</summary>
+
+                        <text>
+                            <p>Map file size to block size. Block size is the minimum unit that will be stored in the block incremental. Smaller sizes allow for more granular incremental backups but larger sizes mean smaller maps.</p>
+                       </text>
+
+                        <example>16KiB=8KiB</example>
                     </config-key>
 
                     <config-key id="repo-block-size-super" name="Block Incremental Super Block Size">
