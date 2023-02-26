@@ -866,6 +866,13 @@
 
             <p><postgres/> and repository options must be indexed when using the new names introduced in <proper>v2</proper>, e.g. <br-option>pg1-host</br-option>, <br-option>pg1-path</br-option>, <br-option>repo1-path</br-option>, <br-option>repo1-type</br-option>, etc.</p>
         </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="v2.x">
+            <title>Upgrading {[project]} from v2.x to v2.y</title>
+
+            <p>Upgrading from <proper>v2.x</proper> to <proper>v2.y</proper> is straight-forward. The repository format has not changed, so for most installations it is simply a matter of installing binaries for the new version. It is also possible to downgrade if you have not used new features that are unsupported by the older version.</p>
+        </section>
     </section>
 
     <!-- ======================================================================================================================= -->
