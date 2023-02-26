@@ -546,7 +546,7 @@
                         <summary>Block incremental super block size.</summary>
 
                         <text>
-                            <p>Default super block size.</p>
+                            <p>A super block contains multiple blocks to improve compression efficiency. The disadvantage is that block reads must read from the beginning of the super block.</p>
                        </text>
 
                         <example>2MiB</example>
@@ -556,7 +556,7 @@
                         <summary>Block incremental full super block size.</summary>
 
                         <text>
-                            <p>Super block size for full backups.</p>
+                            <p>Super block size for full backups. This is generally larger than <br-option>repo-block-size-super</br-option> because it is likely that many blocks will need to be restored from the full backup so the larger super block size is not a disadvantage.</p>
                        </text>
 
                         <example>8MiB</example>
