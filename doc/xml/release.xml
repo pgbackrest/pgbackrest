@@ -36,6 +36,18 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="1774"/>
+                        <github-pull-request id="1993"/>
+
+                        <release-item-contributor-list>
+                            <release-item-contributor id="christophe.courtois"/>
+                            <release-item-reviewer id="david.steele"/>
+                        </release-item-contributor-list>
+
+                        <p>Add explicit instructions for upgrading between <id>2.x</id> versions.</p>
+                    </release-item>
+
+                    <release-item>
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
                         </release-item-contributor-list>
