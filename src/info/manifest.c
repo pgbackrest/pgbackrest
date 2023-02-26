@@ -1799,8 +1799,8 @@ manifestBuildComplete(
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_START                         "backup-timestamp-start"
 #define MANIFEST_KEY_BACKUP_TIMESTAMP_STOP                          "backup-timestamp-stop"
 #define MANIFEST_KEY_BACKUP_TYPE                                    "backup-type"
-#define MANIFEST_KEY_BLOCK_INCR_SIZE                                STRID5("bis", 0x4d220)
-#define MANIFEST_KEY_BLOCK_INCR_MAP_SIZE                            STRID5("bims", 0x9b5220)
+#define MANIFEST_KEY_BLOCK_INCR                                     STRID5("bi", 0x1220)
+#define MANIFEST_KEY_BLOCK_INCR_MAP                                 STRID5("bim", 0x35220)
 #define MANIFEST_KEY_BUNDLE_ID                                      STRID5("bni", 0x25c20)
 #define MANIFEST_KEY_BUNDLE_OFFSET                                  STRID5("bno", 0x3dc20)
 #define MANIFEST_KEY_CHECKSUM                                       STRID5("checksum", 0x6d66b195030)
@@ -1936,11 +1936,13 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
         jsonReadObjectBegin(json);
 
         // Block incremental info
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP_SIZE))
-            file.blockIncrMapSize = jsonReadUInt64(json);
-
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_SIZE))
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR))
+        {
             file.blockIncrSize = (size_t)jsonReadUInt64(json) * BLOCK_INCR_SIZE_FACTOR;
+
+            if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP))
+                file.blockIncrMapSize = jsonReadUInt64(json);
+        }
 
         // Bundle info
         if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_ID))
@@ -2660,13 +2662,12 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
                 JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
                 // Block incremental info
-                if (file.blockIncrMapSize != 0)
-                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP_SIZE), file.blockIncrMapSize);
-
                 if (file.blockIncrSize != 0)
                 {
-                    jsonWriteUInt64(
-                        jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_SIZE), file.blockIncrSize / BLOCK_INCR_SIZE_FACTOR);
+                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR), file.blockIncrSize / BLOCK_INCR_SIZE_FACTOR);
+
+                    if (file.blockIncrMapSize != 0)
+                        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP), file.blockIncrMapSize);
                 }
 
                 // Bundle info
