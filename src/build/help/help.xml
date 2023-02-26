@@ -552,7 +552,7 @@
                         <example>2MiB</example>
                     </config-key>
 
-                    <config-key id="repo-block-size-super" name="Block Incremental Full Super Block Size">
+                    <config-key id="repo-block-size-super-full" name="Block Incremental Full Super Block Size">
                         <summary>Block incremental full super block size.</summary>
 
                         <text>
