@@ -24,6 +24,7 @@
                         <commit subject="Consistently declare block incremental size as size_t."/>
                         <commit subject="Rename DeltaMap to BlockHash."/>
                         <commit subject="Add repo-block-age-map and repo-block-size-map options."/>
+                        <commit subject="Rename block incremental manifest keys."/>
 
                         <release-item-contributor-list>
                             <release-item-contributor id="david.steele"/>
