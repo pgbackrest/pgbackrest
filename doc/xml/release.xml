@@ -36,6 +36,7 @@
             <release-doc-list>
                 <release-improvement-list>
                     <release-item>
+                        <github-issue id="1774"/>
                         <github-pull-request id="1993"/>
 
                         <release-item-contributor-list>
