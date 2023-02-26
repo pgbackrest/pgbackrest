@@ -526,7 +526,7 @@
                         <summary>Block incremental size map.</summary>
 
                         <text>
-                            <p>Map file size to block size.</p>
+                            <p>Map file size to block size. Block size is the minimum unit that will be stored in the block incremental. Smaller sizes allow for more granular incremental backups but larger sizes mean smaller maps.</p>
                        </text>
 
                         <example>16KiB=8KiB</example>
@@ -536,7 +536,7 @@
                         <summary>Block incremental age map.</summary>
 
                         <text>
-                            <p>Map file age to a block multiplier.</p>
+                            <p>Map file age (in days) to a block multiplier. Files that have not been modified recently are less likely to be modified in the future, so the block size is multiplied to reduce the map size. By default, if the file is old enough it will not be stored as a block incremental.</p>
                        </text>
 
                         <example>7=2</example>

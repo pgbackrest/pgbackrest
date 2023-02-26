@@ -315,18 +315,20 @@ backupBlockIncrMapSize(ConfigOption optionId, unsigned int optionKeyIdx, const S
     {
         const int64_t valueI64 = cfgParseSize(value);
 
-        if (valueI64 > UINT_MAX)
-            THROW(FormatError, "");
-
-        result = (unsigned int)valueI64;
+        if (valueI64 <= UINT_MAX)
+            result = (unsigned int)valueI64;
     }
     CATCH_ANY()
+    {
+    }
+    TRY_END();
+
+    if (result == 0)
     {
         THROW_FMT(
             OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
     }
-    TRY_END();
 
     FUNCTION_TEST_RETURN(UINT, result);
 }
