@@ -190,6 +190,16 @@ testRun(void)
         TEST_RESULT_INT(*(int *)lstGet(list, 3), 2, "sort value 3");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lstComparatorUInt()");
+
+        unsigned int uint1 = 1;
+        unsigned int uint2 = 2;
+
+        TEST_RESULT_INT(lstComparatorUInt(&uint1, &uint1), 0, "uints are equal");
+        TEST_RESULT_BOOL(lstComparatorUInt(&uint1, &uint2) < 0, true, "first uint is less");
+        TEST_RESULT_BOOL(lstComparatorUInt(&uint2, &uint1) > 0, true, "first uint is greater");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lstComparatorZ()");
 
         const char *string1 = "abc";

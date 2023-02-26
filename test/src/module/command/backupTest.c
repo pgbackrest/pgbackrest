@@ -1083,6 +1083,16 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("BlockIncr"))
     {
+        TEST_TITLE("block incremental config map");
+
+        TEST_ERROR(
+            backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("Z")), OptionInvalidValueError,
+            "'Z' is not valid for 'repo1-block-size-map' option");
+        TEST_ERROR(
+            backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("5GiB")), OptionInvalidValueError,
+            "'5GiB' is not valid for 'repo1-block-size-map' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with zero block");
 
         ioBufferSizeSet(2);
@@ -2454,7 +2464,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, false, 0, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -2547,7 +2557,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, false, 0, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeFull;
@@ -2734,7 +2744,7 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), true, false, false, false, 0, NULL, NULL);
+                storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
             ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
             manifestResumeData->backupType = backupTypeDiff;
@@ -3643,6 +3653,12 @@ testRun(void)
 
         backupTimeStart = BACKUP_EPOCH + 2800000;
 
+        // Block sizes for testing
+        #define BLOCK_MIN_SIZE                                      131072
+        #define BLOCK_MIN_FILE_SIZE                                 131072
+        #define BLOCK_MAX_SIZE                                      196608
+        #define BLOCK_MAX_FILE_SIZE                                 2097152
+
         {
             // Remove old pg data
             HRN_STORAGE_PATH_REMOVE(storageTest, "pg1", .recurse = true);
@@ -3664,24 +3680,26 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "256kB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "b=" STRINGIFY(BLOCK_MAX_SIZE) "b");
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File that uses block incr and will grow
-            Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 3);
+            Buffer *file = bufNew(BLOCK_MIN_SIZE * 3);
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
             // File that shrinks below the limit
-            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize + 1);
+            file = bufNew(BLOCK_MIN_FILE_SIZE + 1);
             memset(bufPtr(file), 55, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink", file, .timeModified = backupTimeStart);
 
             // File that grows above the limit
-            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize - 1);
+            file = bufNew(BLOCK_MIN_FILE_SIZE - 1);
             memset(bufPtr(file), 77, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
@@ -3762,32 +3780,34 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "256kB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "=" STRINGIFY(BLOCK_MAX_SIZE));
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Grow file size to check block incr delta. This is also large enough that it would get a new block size if it were
             // and new file rather than a delta.
-            Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 2].fileSize);
+            Buffer *file = bufNew(BLOCK_MAX_FILE_SIZE);
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
             // File that gets a large block size
-            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 2].fileSize);
+            file = bufNew(BLOCK_MAX_FILE_SIZE);
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-larger", file, .timeModified = backupTimeStart);
 
             // Shrink file below the limit
-            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize - 1);
+            file = bufNew(BLOCK_MIN_FILE_SIZE - 1);
             memset(bufPtr(file), 55, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink", file, .timeModified = backupTimeStart);
 
             // Grow file above the limit
-            file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize + 1);
+            file = bufNew(BLOCK_MIN_FILE_SIZE + 1);
             memset(bufPtr(file), 77, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
@@ -3892,13 +3912,15 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "8KiB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "=" STRINGIFY(BLOCK_MAX_SIZE));
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
             hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
             hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
             hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File that uses block incr and will grow
-            Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize);
+            Buffer *file = bufNew((size_t)(BLOCK_MIN_FILE_SIZE));
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
@@ -3975,15 +3997,23 @@ testRun(void)
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "4MiB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+            hrnCfgArgRawZ(argList, cfgOptRepoBlockAgeMap, "1=2");
             hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // File that uses block incr and grows
-            Buffer *file = bufNew(manifestBuildBlockIncrSizeMap[LENGTH_OF(manifestBuildBlockIncrSizeMap) - 1].fileSize * 2);
+            Buffer *file = bufNew(BLOCK_MIN_FILE_SIZE * 2);
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
+
+            // File with age multiplier
+            file = bufNew(BLOCK_MIN_FILE_SIZE * 2);
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-age-multiplier", file, .timeModified = backupTimeStart - SEC_PER_DAY);
 
             // Run backup
             testBackupPqScriptP(
@@ -3996,8 +4026,9 @@ testRun(void)
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC82D000000000, lsn = 5dc82d0/0\n"
                 "P00   INFO: check archive for segment 0000000105DC82D000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/112, 256KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/0, 256KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/355, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/467, 256KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC82D000000001, lsn = 5dc82d0/300000\n"
@@ -4005,7 +4036,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC82D000000000:0000000105DC82D000000001\n"
                 "P00   INFO: new backup label = 20191108-080000F_20191110-153320D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 5");
+                "P00   INFO: diff backup size = [SIZE], file total = 6");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
@@ -4013,6 +4044,7 @@ testRun(void)
                     .cipherPass = TEST_CIPHER_PASS),
                 ". {link, d=20191108-080000F_20191110-153320D}\n"
                 "bundle {path}\n"
+                "bundle/1/pg_data/block-age-multiplier {file, m={1}, s=262144}\n"
                 "bundle/1/pg_data/block-incr-grow {file, m={0,1}, s=262144}\n"
                 "bundle/1/pg_data/global/pg_control {file, s=8192}\n"
                 "pg_data {path}\n"
@@ -4027,6 +4059,8 @@ testRun(void)
                 ",\"size\":2,\"timestamp\":1572800000}\n"
                 "pg_data/backup_label={\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\",\"size\":17"
                 ",\"timestamp\":1573400002}\n"
+                "pg_data/block-age-multiplier={\"bims\":40,\"bis\":32,\"checksum\":\"2e000fa7e85759c7f4c254d4d9c33ef481e459a7\""
+                ",\"size\":262144,\"timestamp\":1573313600}\n"
                 "pg_data/block-incr-grow={\"bims\":72,\"bis\":16,\"checksum\":\"2e000fa7e85759c7f4c254d4d9c33ef481e459a7\""
                 ",\"size\":262144,\"timestamp\":1573400000}\n"
                 "pg_data/global/pg_control={\"size\":8192,\"timestamp\":1573400000}\n"

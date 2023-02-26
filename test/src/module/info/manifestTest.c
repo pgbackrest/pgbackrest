@@ -296,7 +296,7 @@ testRun(void)
         // Test tablespace error
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, exclusionList,
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL, exclusionList,
                 pckWriteResult(tablespaceList)),
             AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
@@ -321,7 +321,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL,
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL, NULL,
                 pckWriteResult(tablespaceList)),
             "build manifest");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F")), "backup label set");
@@ -420,7 +420,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, true, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, true, false, false, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -496,7 +496,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError,
             "link 'pg_xlog/wal' (" TEST_PATH "/wal) destination is the same directory as link 'pg_xlog' (" TEST_PATH "/wal)");
 
@@ -552,7 +552,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -647,7 +647,7 @@ testRun(void)
         // Tablespace link errors when correct verion not found
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or"
             " directory");
@@ -668,7 +668,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, true, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, true, false, false, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -752,11 +752,34 @@ testRun(void)
         // Create file that is large enough for block incr and old enough to not need block incr
         HRN_STORAGE_PUT(storagePgWrite, "128k-4week", buffer, .modeFile = 0600, .timeModified = 1570000000 - (28 * 86400));
 
+        // Block incremental maps
+        static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMap[] =
+        {
+            {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
+            {.fileSize = 8 * 1024, .blockSize = 8 * 1024},
+        };
+
+        static const ManifestBlockIncrAgeMap manifestBlockIncrAgeMap[] =
+        {
+            {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
+            {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
+            {.fileAge = 7 * 86400, .blockMultiplier = 2},
+        };
+
+        static const ManifestBlockIncrMap manifestBuildBlockIncrMap =
+        {
+            .sizeMap = manifestBlockIncrSizeMap,
+            .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMap),
+            .ageMap = manifestBlockIncrAgeMap,
+            .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMap),
+        };
+
         // pg_wal not ignored
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true, NULL, NULL),
+                storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true,
+                &manifestBuildBlockIncrMap, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -831,7 +854,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError, "link 'link' destination '" TEST_PATH "/pg/base' is in PGDATA");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link") == -1, FileRemoveError, "unable to remove symlink");
@@ -843,7 +866,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
         HRN_STORAGE_PATH_REMOVE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir");
@@ -855,7 +878,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
         TEST_STORAGE_EXISTS(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile", .remove = true);
@@ -867,7 +890,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link': [2] No such file or directory");
 
@@ -884,7 +907,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError, "link '" TEST_PATH "/pg/linktolink' cannot reference another link '" TEST_PATH "/linktest'");
 
         #undef TEST_MANIFEST_HEADER

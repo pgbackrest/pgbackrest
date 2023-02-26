@@ -754,80 +754,6 @@ manifestLinkCheck(const Manifest *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Calculate block incremental size for a file. The block size is based on the size and age of the file. Larger files get larger block
-sizes to reduce the cost of the map and individual block compression. Older files also get larger block sizes under the assumption
-that they are unlikely to be modified if they have not been modified in a while. Very old and very small files skip block
-incremental entirely.
-
-The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
-***********************************************************************************************************************************/
-// File size to block size map
-static struct ManifestBuildBlockIncrSizeMap
-{
-    uint32_t fileSize;
-    uint32_t blockSize;
-} manifestBuildBlockIncrSizeMap[] =
-{
-    {.fileSize = 1024 * 1024 * 1024, .blockSize = 1024 * 1024},
-    {.fileSize = 256 * 1024 * 1024, .blockSize = 768 * 1024},
-    {.fileSize = 64 * 1024 * 1024, .blockSize = 512 * 1024},
-    {.fileSize = 16 * 1024 * 1024, .blockSize = 384 * 1024},
-    {.fileSize = 4 * 1024 * 1024, .blockSize = 256 * 1024},
-    {.fileSize = 2 * 1024 * 1024, .blockSize = 192 * 1024},
-    {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
-};
-
-// File age to block multiplier map
-static struct ManifestBuildBlockIncrTimeMap
-{
-    uint32_t fileAge;
-    uint32_t blockMultiplier;
-} manifestBuildBlockIncrTimeMap[] =
-{
-    {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
-    {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
-    {.fileAge = 7 * 86400, .blockMultiplier = 2},
-};
-
-static size_t
-manifestBuildBlockIncrSize(const time_t timeStart, const ManifestFile *const file)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TIME, timeStart);
-        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
-    FUNCTION_TEST_END();
-
-    size_t result = 0;
-
-    // Search size map for the appropriate block size
-    for (unsigned int sizeIdx = 0; sizeIdx < LENGTH_OF(manifestBuildBlockIncrSizeMap); sizeIdx++)
-    {
-        if (file->size >= manifestBuildBlockIncrSizeMap[sizeIdx].fileSize)
-        {
-            result = manifestBuildBlockIncrSizeMap[sizeIdx].blockSize;
-            break;
-        }
-    }
-
-    // If block size > 0 then search age map for a multiplier
-    if (result != 0)
-    {
-        const time_t fileAge = timeStart - file->timestamp;
-
-        for (unsigned int timeIdx = 0; timeIdx < LENGTH_OF(manifestBuildBlockIncrTimeMap); timeIdx++)
-        {
-            if (fileAge >= (time_t)manifestBuildBlockIncrTimeMap[timeIdx].fileAge)
-            {
-                result *= manifestBuildBlockIncrTimeMap[timeIdx].blockMultiplier;
-                break;
-            }
-        }
-    }
-
-    FUNCTION_TEST_RETURN(UINT64, result);
-}
-
 /**********************************************************************************************************************************/
 typedef struct ManifestBuildData
 {
@@ -843,7 +769,52 @@ typedef struct ManifestBuildData
     ManifestLinkCheck *linkCheck;                                   // List of links found during build (used for prefix check)
     StringList *excludeContent;                                     // Exclude contents of directories
     StringList *excludeSingle;                                      // Exclude a single file/link/path
+    const ManifestBlockIncrMap *blockIncrMap;                       // Block incremental maps
 } ManifestBuildData;
+
+// Calculate block incremental size for a file. The block size is based on the size and age of the file. Larger files get larger
+// block sizes to reduce the cost of the map and individual block compression. Older files also get larger block sizes under the
+// assumption that they are unlikely to be modified if they have not been modified in a while. Very old and very small files skip
+// block incremental entirely.
+//
+// The minimum practical block size is 128k. After that, the loss of compression efficiency becomes too expensive in terms of space.
+static size_t
+manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, buildData);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    size_t result = 0;
+
+    // Search size map for the appropriate block size
+    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrMap->sizeMapSize; sizeIdx++)
+    {
+        if (file->size >= buildData->blockIncrMap->sizeMap[sizeIdx].fileSize)
+        {
+            result = buildData->blockIncrMap->sizeMap[sizeIdx].blockSize;
+            break;
+        }
+    }
+
+    // If block size > 0 then search age map for a multiplier
+    if (result != 0)
+    {
+        const time_t fileAge = buildData->manifest->pub.data.backupTimestampStart - file->timestamp;
+
+        for (unsigned int timeIdx = 0; timeIdx < buildData->blockIncrMap->ageMapSize; timeIdx++)
+        {
+            if (fileAge >= (time_t)buildData->blockIncrMap->ageMap[timeIdx].fileAge)
+            {
+                result *= buildData->blockIncrMap->ageMap[timeIdx].blockMultiplier;
+                break;
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN(UINT64, result);
+}
 
 // Process files/links/paths and add them to the manifest
 static void
@@ -1066,7 +1037,7 @@ manifestBuildInfo(
 
             // Get block incremental size
             if (info->size != 0 && buildData->manifest->pub.data.blockIncr)
-                file.blockIncrSize = manifestBuildBlockIncrSize(buildData->manifest->pub.data.backupTimestampStart, &file);
+                file.blockIncrSize = manifestBuildBlockIncrSize(buildData, &file);
 
             // Determine if this file should be page checksummed
             if (dbPath && buildData->checksumPage)
@@ -1265,8 +1236,8 @@ manifestBuildInfo(
 FN_EXTERN Manifest *
 manifestNewBuild(
     const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const time_t timestampStart,
-    const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const StringList *const excludeList,
-    const Pack *const tablespaceList)
+    const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const ManifestBlockIncrMap *blockIncrMap,
+    const StringList *const excludeList, const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
@@ -1277,6 +1248,7 @@ manifestNewBuild(
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
         FUNCTION_LOG_PARAM(BOOL, bundle);
         FUNCTION_LOG_PARAM(BOOL, blockIncr);
+        FUNCTION_LOG_PARAM(VOID, blockIncrMap);
         FUNCTION_LOG_PARAM(STRING_LIST, excludeList);
         FUNCTION_LOG_PARAM(PACK, tablespaceList);
     FUNCTION_LOG_END();
@@ -1315,6 +1287,7 @@ manifestNewBuild(
                 .tablespaceList = tablespaceList,
                 .linkCheck = &linkCheck,
                 .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
+                .blockIncrMap = blockIncrMap,
             };
 
             // Build expressions to identify databases paths and temp relations
