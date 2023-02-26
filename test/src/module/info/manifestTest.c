@@ -782,17 +782,6 @@ testRun(void)
                 &manifestBuildBlockIncrMap, NULL, NULL),
             "build manifest");
 
-        // Check super block size
-        ManifestFile file = manifestFileFind(manifest, STRDEF("pg_data/128k"));
-        TEST_RESULT_UINT(manifestFileBlockIncrSuperSize(manifest, &file), 4 * 1024 * 1024, "full super block size");
-
-        manifest->pub.data.backupType = backupTypeIncr;
-        TEST_RESULT_UINT(manifestFileBlockIncrSuperSize(manifest, &file), 1024 * 1024, "default super block size");
-
-        file.blockIncrSize = 2 * 1024 * 1024;
-        TEST_RESULT_UINT(manifestFileBlockIncrSuperSize(manifest, &file), 2 * 1024 * 1024, "increased super block size");
-        manifest->pub.data.backupType = backupTypeFull;
-
         contentSave = bufNew(0);
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(

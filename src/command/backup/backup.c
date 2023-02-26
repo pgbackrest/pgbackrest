@@ -1592,6 +1592,7 @@ typedef struct BackupJobData
     uint64_t bundleLimit;                                           // Limit on files to bundle
     uint64_t bundleId;                                              // Bundle id
     const bool blockIncr;                                           // Block incremental?
+    size_t blockIncrSizeSuper;                                      // Super block size
 
     List *queueList;                                                // List of processing queues
 } BackupJobData;
@@ -1910,7 +1911,7 @@ backupJobCallback(void *data, unsigned int clientIdx)
                 if (blockIncr)
                 {
                     pckWriteU64P(param, file.blockIncrSize);
-                    pckWriteU64P(param, manifestFileBlockIncrSuperSize(jobData->manifest, &file));
+                    pckWriteU64P(param, jobData->blockIncrSizeSuper);
 
                     if (file.blockIncrMapSize != 0)
                     {
@@ -2021,6 +2022,14 @@ backupProcess(
         {
             jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
             jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
+        }
+
+        if (jobData.blockIncr)
+        {
+            // Set super block size based on the backup type
+            jobData.blockIncrSizeSuper =
+                backupType == backupTypeFull ?
+                    (size_t)cfgOptionUInt64(cfgOptRepoBlockSizeSuperFull) : (size_t)cfgOptionUInt64(cfgOptRepoBlockSizeSuper);
         }
 
         // If this is a full backup or hard-linked and paths are supported then create all paths explicitly so that empty paths will

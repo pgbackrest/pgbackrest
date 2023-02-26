@@ -754,35 +754,6 @@ manifestLinkCheck(const Manifest *this)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Calculate super block size based on block size and backup type
-***********************************************************************************************************************************/
-FN_EXTERN uint64_t
-manifestFileBlockIncrSuperSize(const Manifest *const manifest, const ManifestFile *const file)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(MANIFEST, manifest);
-        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
-    FUNCTION_TEST_END();
-
-    ASSERT(manifest != NULL);
-    ASSERT(file != NULL);
-    ASSERT(file->blockIncrSize > 0);
-
-    // Default super block size to 1MiB
-    uint64_t result = 1024 * 1024;
-
-    // Increase to 4MiB for full backups to maximize compression efficiency
-    if (manifest->pub.data.backupType == backupTypeFull)
-        result = 4 * 1024 * 1024;
-
-    // If super block size is less than block size then make them equal for block map storage efficiency
-    if (result < file->blockIncrSize)
-        result = file->blockIncrSize;
-
-    FUNCTION_TEST_RETURN(UINT64, result);
-}
-
 /**********************************************************************************************************************************/
 typedef struct ManifestBuildData
 {

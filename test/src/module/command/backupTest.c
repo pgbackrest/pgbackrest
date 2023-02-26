@@ -1374,7 +1374,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             ioFilterGroupAdd(
-                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(3, 3, 2, 4, 5, NULL, NULL, NULL)))),
+                ioWriteFilterGroup(write), blockIncrNewPack(ioFilterParamList(blockIncrNew(5, 3, 2, 4, 5, NULL, NULL, NULL)))),
             "block incr");
         TEST_RESULT_VOID(ioWriteOpen(write), "open");
         TEST_RESULT_VOID(ioWrite(write, source), "write");

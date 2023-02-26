@@ -415,6 +415,10 @@ blockIncrNew(
             .blockMapOut = blockMapNew(),
         };
 
+        // If there will be less than two blocks per super block then set them equal to save space in the map
+        if (superBlockSize < blockSize * 2)
+            driver->superBlockSize = blockSize;
+
         // Duplicate compress filter
         if (compress != NULL)
         {
@@ -449,7 +453,7 @@ blockIncrNew(
         {
             PackWrite *const packWrite = pckWriteNewP();
 
-            pckWriteU64P(packWrite, superBlockSize);
+            pckWriteU64P(packWrite, driver->superBlockSize);
             pckWriteU64P(packWrite, blockSize);
             pckWriteU32P(packWrite, reference);
             pckWriteU64P(packWrite, bundleId);

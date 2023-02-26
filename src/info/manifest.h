@@ -320,9 +320,6 @@ manifestFilePackGet(const Manifest *const this, const unsigned int fileIdx)
     return *(ManifestFilePack **)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
 
-// Get block incremental super block size for a file
-FN_EXTERN uint64_t manifestFileBlockIncrSuperSize(const Manifest *manifest, const ManifestFile *file);
-
 // Get file name
 FN_INLINE_ALWAYS const String *
 manifestFileNameGet(const Manifest *const this, const unsigned int fileIdx)

@@ -542,6 +542,26 @@
                         <example>7=2</example>
                     </config-key>
 
+                    <config-key id="repo-block-size-super" name="Block Incremental Super Block Size">
+                        <summary>Block incremental super block size.</summary>
+
+                        <text>
+                            <p>Default super block size.</p>
+                       </text>
+
+                        <example>2MiB</example>
+                    </config-key>
+
+                    <config-key id="repo-block-size-super" name="Block Incremental Full Super Block Size">
+                        <summary>Block incremental full super block size.</summary>
+
+                        <text>
+                            <p>Super block size for full backups.</p>
+                       </text>
+
+                        <example>8MiB</example>
+                    </config-key>
+
                     <config-key id="repo-bundle" name="Repository Bundles">
                         <summary>Bundle files in repository.</summary>
 
