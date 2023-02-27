@@ -59,7 +59,9 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
         const String *dbPath = dbPgDataPath(dbObject);
 
         // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
-        if (pgVersion != dbVersion || strCmp(cfgOptionIdxStr(cfgOptPgPath, pgIdx), dbPath) != 0)
+        // Skip the db version check if the pg-option is provided since we want to force that value
+        if ((pgVersion != dbVersion && !cfgOptionTest(cfgOptPgVersion)) ||
+            strCmp(cfgOptionIdxStr(cfgOptPgPath, pgIdx), dbPath) != 0)
         {
             THROW_FMT(
                 DbMismatchError, "version '%s' and path '%s' queried from cluster do not match version '%s' and '%s' read from '%s/"
