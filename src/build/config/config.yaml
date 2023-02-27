@@ -1848,6 +1848,23 @@ option:
       list:
         - true
 
+  repo-block-size-map:
+    section: global
+    group: repo
+    type: hash
+    required: false
+    internal: true
+    command: repo-block
+    command-role:
+      main: {}
+    depend:
+      option: repo-block
+      list:
+        - true
+
+  repo-block-age-map:
+    inherit: repo-block-size-map
+
   repo-cipher-pass:
     section: global
     type: string
