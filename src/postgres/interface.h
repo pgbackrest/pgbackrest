@@ -140,8 +140,8 @@ FN_EXTERN unsigned int pgVersionFromStr(const String *version);
 FN_EXTERN String *pgVersionToStr(unsigned int version);
 
 // Get info from WAL header
-FN_EXTERN PgWal pgWalFromFile(const String *walFile, const Storage *storage);
-FN_EXTERN PgWal pgWalFromBuffer(const Buffer *walBuffer);
+FN_EXTERN PgWal pgWalFromFile(const String *walFile, const Storage *storage, const String *pgVersionOption);
+FN_EXTERN PgWal pgWalFromBuffer(const Buffer *walBuffer, const String *pgVersionOption);
 
 // Get the tablespace identifier used to distinguish versions in a tablespace directory, e.g. PG_15_202209061
 FN_EXTERN String *pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion);
