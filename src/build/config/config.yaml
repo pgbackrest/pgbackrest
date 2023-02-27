@@ -1550,9 +1550,11 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      restore: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
+      verify: {}
 
   # Repository options
   #---------------------------------------------------------------------------------------------------------------------------------

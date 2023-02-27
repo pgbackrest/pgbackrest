@@ -3992,9 +3992,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                 // opt/pg-version
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                               // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/pg-version
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/pg-version
         ),                                                                                                         // opt/pg-version
                                                                                                                    // opt/pg-version
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                            // opt/pg-version
@@ -4008,6 +4010,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                            // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/pg-version
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                               // opt/pg-version
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/pg-version
         ),                                                                                                         // opt/pg-version
                                                                                                                    // opt/pg-version
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/pg-version
@@ -4016,9 +4020,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                           // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdCheck)                                                                 // opt/pg-version
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                               // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                          // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                          // opt/pg-version
             PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                         // opt/pg-version
+            PARSE_RULE_OPTION_COMMAND(cfgCmdVerify)                                                                // opt/pg-version
         ),                                                                                                         // opt/pg-version
     ),                                                                                                             // opt/pg-version
     // -----------------------------------------------------------------------------------------------------------------------------
