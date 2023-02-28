@@ -109,7 +109,7 @@ pgInterfaceVersion(unsigned int pgVersion)
         }
     }
 
-    // If the version was not found then error
+    // If the version was not found then error !!! UPDATE ERROR IF THIS REMAINS EXTERNALLY FACING
     if (result == NULL)
         THROW_FMT(AssertError, "invalid " PG_NAME " version %u", pgVersion);
 

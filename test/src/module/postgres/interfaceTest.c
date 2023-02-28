@@ -105,6 +105,26 @@ testRun(void)
         TEST_RESULT_UINT(info.catalogVersion, 201306121, "   check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("force control version");
+
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_15, .systemId = 0xEFEFEFEFEF, .controlVersion = 1501, .catalogVersion = 202211110,
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
+            "unexpected control version = 1501 and catalog version = 202211110\n"
+            "HINT: is this version of PostgreSQL supported?");
+        TEST_ERROR(pgControlFromFile(storageTest, STRDEF("99")), AssertError, "invalid PostgreSQL version 990000");
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, STRDEF(PG_VERSION_15_STR)), "get control info v90");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_15, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202211110, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
     }
 
     // *****************************************************************************************************************************
@@ -227,6 +247,25 @@ testRun(void)
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v9.3");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_93, "   check version");
+        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("force WAL version");
+
+        memset(bufPtr(result), 0, bufSize(result));
+        hrnPgWalToBuffer(
+            (HrnPgWal){.version = PG_VERSION_15, .magic = 777, .systemId = 0xFAFAFAFA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT},
+            result);
+        storagePutP(storageNewWriteP(storageTest, walFile), result);
+
+        TEST_ERROR(
+            pgWalFromBuffer(result, NULL), VersionNotSupportedError,
+            "unexpected WAL magic 777\n"
+            "HINT: is this version of PostgreSQL supported?");
+
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, STRDEF(PG_VERSION_15_STR)), "force wal info v15");
+        TEST_RESULT_UINT(info.systemId, 0xFAFAFAFA, "check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_15, "   check version");
         TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
     }
 
