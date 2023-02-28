@@ -43,9 +43,26 @@ System id constants by version
 /***********************************************************************************************************************************
 Put a control file to storage
 ***********************************************************************************************************************************/
+typedef struct HrnPgControl
+{
+    unsigned int version;                                           // See PgControl for descriptions
+    uint64_t systemId;
+    unsigned int controlVersion;
+    unsigned int catalogVersion;
+
+    uint64_t checkpoint;
+    uint32_t timeline;
+
+    unsigned int pageSize;
+    unsigned int walSegmentSize;
+
+    bool pageChecksum;
+} HrnPgControl;
+
 #define HRN_PG_CONTROL_PUT(storageParam, versionParam, ...)                                                                        \
     HRN_STORAGE_PUT(                                                                                                               \
-        storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer((PgControl){.version = versionParam, __VA_ARGS__}))
+        storageParam, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,                                                                        \
+        hrnPgControlToBuffer((HrnPgControl){.version = versionParam, __VA_ARGS__}))
 
 /***********************************************************************************************************************************
 Update control file time
@@ -60,7 +77,7 @@ Functions
 unsigned int hrnPgCatalogVersion(unsigned int pgVersion);
 
 // Create pg_control
-Buffer *hrnPgControlToBuffer(PgControl pgControl);
+Buffer *hrnPgControlToBuffer(HrnPgControl hrnPgControl);
 
 // Get system id by version
 FN_INLINE_ALWAYS uint64_t
@@ -70,6 +87,14 @@ hrnPgSystemId(const unsigned int pgVersion)
 }
 
 // Create WAL for testing
-void hrnPgWalToBuffer(PgWal pgWal, Buffer *walBuffer);
+typedef struct HrnPgWal
+{
+    unsigned int version;                                           // See PgWal for descriptions
+    unsigned int magic;
+    unsigned int size;
+    uint64_t systemId;
+} HrnPgWal;
+
+void hrnPgWalToBuffer(HrnPgWal hrnPgWal, Buffer *walBuffer);
 
 #endif
