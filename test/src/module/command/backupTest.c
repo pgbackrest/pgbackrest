@@ -475,7 +475,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     param.timeline = param.timeline == 0 ? 1 : param.timeline;
 
     // Read pg_control to get info about the cluster
-    PgControl pgControl = pgControlFromFile(storagePg());
+    PgControl pgControl = pgControlFromFile(storagePg(), pgVersionToStr(pgVersion));
 
     // Set archive timeout really small to save time on errors
     cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewInt64(100));
@@ -497,7 +497,11 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     pgControl.timeline = param.timeline;
 
     HRN_STORAGE_PUT(
-        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
+        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(
+            (HrnPgControl){.version = pgControl.version, .systemId = pgControl.systemId,
+            .controlVersion = pgControlVersion(pgVersion), .catalogVersion = pgControl.catalogVersion,
+            .checkpoint = pgControl.checkpoint, .timeline = pgControl.timeline, .pageSize = pgControl.pageSize,
+            .walSegmentSize = pgControl.walSegmentSize, .pageChecksum = pgControl.pageChecksum}),
         .timeModified = backupTimeStart);
 
     // Update pg_control on primary with the backup time
@@ -620,7 +624,11 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         ASSERT(!param.noArchiveCheck);
 
         // Save pg_control with updated info
-        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl));
+        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(
+            (HrnPgControl){.version = pgControl.version, .systemId = pgControl.systemId,
+            .controlVersion = pgControlVersion(pgVersion), .catalogVersion = pgControl.catalogVersion,
+            .checkpoint = pgControl.checkpoint, .timeline = pgControl.timeline, .pageSize = pgControl.pageSize,
+            .walSegmentSize = pgControl.walSegmentSize, .pageChecksum = pgControl.pageChecksum}));
 
         if (param.noPriorWal)
         {
