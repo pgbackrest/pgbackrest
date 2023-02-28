@@ -185,26 +185,7 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     const PgInterface *interface = NULL;
 
     if (pgVersionForce != NULL)
-    {
-        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
-        {
-            if (pgInterface[interfaceIdx].version == pgVersionFromStr(pgVersionForce))
-            {
-                interface = &pgInterface[interfaceIdx];
-                break;
-            }
-        }
-
-        // If the version was not found then error
-        if (interface == NULL)
-        {
-            THROW_FMT(
-                VersionNotSupportedError,
-                "version %s not found\n"
-                "HINT: is this version of PostgreSQL supported?",
-                strZ(pgVersionForce));
-        }
-    }
+        interface = pgInterfaceVersion(pgVersionFromStr(pgVersionForce));
     else
     {
         for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
@@ -310,26 +291,7 @@ pgWalFromBuffer(const Buffer *walBuffer, const String *const pgVersionForce)
     const PgInterface *interface = NULL;
 
     if (pgVersionForce != NULL)
-    {
-        for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
-        {
-            if (pgInterface[interfaceIdx].version == pgVersionFromStr(pgVersionForce))
-            {
-                interface = &pgInterface[interfaceIdx];
-                break;
-            }
-        }
-
-        // If the version was not found then error
-        if (interface == NULL)
-        {
-            THROW_FMT(
-                VersionNotSupportedError,
-                "version %s not found\n"
-                "HINT: is this version of PostgreSQL supported?",
-                strZ(pgVersionForce));
-        }
-    }
+        interface = pgInterfaceVersion(pgVersionFromStr(pgVersionForce));
     else
     {
         for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
