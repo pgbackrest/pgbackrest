@@ -321,6 +321,8 @@ testRun(void)
             "Stanza Options:\n"
             "\n"
             "  --pg-path                         postgreSQL data directory\n"
+            "  --pg-version                      postgreSQL release to use for pg_control\n"
+            "                                    version\n"
             "\n"
             "Use 'pgbackrest help restore [option]' for more information.\n");
 
