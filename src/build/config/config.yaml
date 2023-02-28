@@ -1532,7 +1532,6 @@ option:
     group: pg
     type: string
     required: false
-
     command:
       backup: {}
       check: {}

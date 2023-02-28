@@ -38,7 +38,7 @@ STRING_STATIC(PG_PATH_PGXLOG_STR,                                   "pg_xlog");
 STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
 STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
 
-// Lsn name used in functions depnding on version
+// Lsn name used in functions depending on version
 STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
 STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
 
