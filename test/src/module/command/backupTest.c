@@ -497,7 +497,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     pgControl.timeline = param.timeline;
 
     HRN_STORAGE_PUT(
-        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
+        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, pgControl),
         .timeModified = backupTimeStart);
 
     // Update pg_control on primary with the backup time
@@ -518,7 +518,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         Buffer *walBuffer = bufNew((size_t)pgControl.walSegmentSize);
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        hrnPgWalToBuffer((PgWal){.version = pgControl.version, .systemId = pgControl.systemId}, walBuffer);
+        HRN_PG_WAL_TO_BUFFER(walBuffer, pgControl.version, .systemId = pgControl.systemId);
         const String *walChecksum = strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer));
 
         for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
@@ -620,7 +620,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         ASSERT(!param.noArchiveCheck);
 
         // Save pg_control with updated info
-        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl));
+        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, pgControl));
 
         if (param.noPriorWal)
         {
