@@ -724,8 +724,7 @@ verifyArchive(VerifyJobData *const jobData)
                                     jobData->walCipherPass);
 
                                 PgWal walInfo = pgWalFromBuffer(
-                                                    storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE),
-                                                    cfgOptionStrNull(cfgOptPgVersion));
+                                    storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE), cfgOptionStrNull(cfgOptPgVersion));
 
                                 archiveResult->pgWalInfo.size = walInfo.size;
                                 archiveResult->pgWalInfo.version = walInfo.version;

@@ -35,23 +35,23 @@ Create a pg_control file
 
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
-    hrnPgInterfaceControl##version(const HrnPgControl hrnPgControl, unsigned char *const buffer)                                   \
+    hrnPgInterfaceControl##version(PgControl pgControl, unsigned char *buffer)                                                     \
     {                                                                                                                              \
         ASSERT(buffer != NULL);                                                                                                    \
                                                                                                                                    \
         *(ControlFileData *)buffer = (ControlFileData)                                                                             \
         {                                                                                                                          \
-            .system_identifier = hrnPgControl.systemId,                                                                            \
-            .pg_control_version = hrnPgControl.controlVersion,                                                                     \
-            .catalog_version_no = hrnPgControl.catalogVersion,                                                                     \
-            .checkPoint = hrnPgControl.checkpoint,                                                                                 \
+            .system_identifier = pgControl.systemId,                                                                               \
+            .pg_control_version = PG_CONTROL_VERSION,                                                                              \
+            .catalog_version_no = pgControl.catalogVersion,                                                                        \
+            .checkPoint = pgControl.checkpoint,                                                                                    \
             .checkPointCopy =                                                                                                      \
             {                                                                                                                      \
-                .ThisTimeLineID = hrnPgControl.timeline,                                                                           \
+                .ThisTimeLineID = pgControl.timeline,                                                                              \
             },                                                                                                                     \
-            .blcksz = hrnPgControl.pageSize,                                                                                       \
-            .xlog_seg_size = hrnPgControl.walSegmentSize,                                                                          \
-            .data_checksum_version = hrnPgControl.pageChecksum,                                                                    \
+            .blcksz = pgControl.pageSize,                                                                                          \
+            .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
+            .data_checksum_version = pgControl.pageChecksum,                                                                       \
         };                                                                                                                         \
     }
 
@@ -66,12 +66,12 @@ Create a WAL file
 
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \
-    hrnPgInterfaceWal##version(const HrnPgWal hrnPgWal, unsigned char *const buffer)                                               \
+    hrnPgInterfaceWal##version(PgWal pgWal, unsigned char *buffer)                                                                 \
     {                                                                                                                              \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = hrnPgWal.magic == 0 ? XLOG_PAGE_MAGIC : (uint16)hrnPgWal.magic;        \
+        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = XLOG_PAGE_MAGIC;                                                       \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
-        ((XLogLongPageHeaderData *)buffer)->xlp_sysid = hrnPgWal.systemId;                                                         \
-        ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = hrnPgWal.size;                                                          \
+        ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
+        ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
     }
 
 #endif

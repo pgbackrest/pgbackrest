@@ -475,7 +475,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     param.timeline = param.timeline == 0 ? 1 : param.timeline;
 
     // Read pg_control to get info about the cluster
-    PgControl pgControl = pgControlFromFile(storagePg(), pgVersionToStr(pgVersion));
+    PgControl pgControl = pgControlFromFile(storagePg());
 
     // Set archive timeout really small to save time on errors
     cfgOptionSet(cfgOptArchiveTimeout, cfgSourceParam, varNewInt64(100));
@@ -497,11 +497,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
     pgControl.timeline = param.timeline;
 
     HRN_STORAGE_PUT(
-        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(
-            (HrnPgControl){.version = pgControl.version, .systemId = pgControl.systemId,
-            .controlVersion = pgControlVersion(pgVersion), .catalogVersion = pgControl.catalogVersion,
-            .checkpoint = pgControl.checkpoint, .timeline = pgControl.timeline, .pageSize = pgControl.pageSize,
-            .walSegmentSize = pgControl.walSegmentSize, .pageChecksum = pgControl.pageChecksum}),
+        storagePgIdxWrite(0), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl),
         .timeModified = backupTimeStart);
 
     // Update pg_control on primary with the backup time
@@ -522,7 +518,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         Buffer *walBuffer = bufNew((size_t)pgControl.walSegmentSize);
         bufUsedSet(walBuffer, bufSize(walBuffer));
         memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
-        hrnPgWalToBuffer((HrnPgWal){.version = pgControl.version, .systemId = pgControl.systemId}, walBuffer);
+        hrnPgWalToBuffer((PgWal){.version = pgControl.version, .systemId = pgControl.systemId}, walBuffer);
         const String *walChecksum = strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer));
 
         for (unsigned int walSegmentIdx = 0; walSegmentIdx < strLstSize(walSegmentList); walSegmentIdx++)
@@ -624,11 +620,7 @@ testBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, TestBackupPqS
         ASSERT(!param.noArchiveCheck);
 
         // Save pg_control with updated info
-        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(
-            (HrnPgControl){.version = pgControl.version, .systemId = pgControl.systemId,
-            .controlVersion = pgControlVersion(pgVersion), .catalogVersion = pgControl.catalogVersion,
-            .checkpoint = pgControl.checkpoint, .timeline = pgControl.timeline, .pageSize = pgControl.pageSize,
-            .walSegmentSize = pgControl.walSegmentSize, .pageChecksum = pgControl.pageChecksum}));
+        HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(pgControl));
 
         if (param.noPriorWal)
         {

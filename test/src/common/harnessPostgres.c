@@ -12,44 +12,44 @@ Harness for PostgreSQL Interface
 Interface definition
 ***********************************************************************************************************************************/
 uint32_t hrnPgInterfaceCatalogVersion093(void);
-void hrnPgInterfaceControl093(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal093(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl093(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal093(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion094(void);
-void hrnPgInterfaceControl094(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal094(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl094(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal094(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion095(void);
-void hrnPgInterfaceControl095(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal095(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl095(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal095(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion096(void);
-void hrnPgInterfaceControl096(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal096(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl096(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal096(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion100(void);
-void hrnPgInterfaceControl100(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal100(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl100(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal100(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion110(void);
-void hrnPgInterfaceControl110(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal110(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl110(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal110(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion120(void);
-void hrnPgInterfaceControl120(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal120(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl120(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal120(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion130(void);
-void hrnPgInterfaceControl130(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal130(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl130(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal130(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion140(void);
-void hrnPgInterfaceControl140(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal140(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl140(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal140(PgWal pgWal, unsigned char *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion150(void);
-void hrnPgInterfaceControl150(HrnPgControl hrnPgControl, unsigned char *buffer);
-void hrnPgInterfaceWal150(HrnPgWal hrnPgWal, unsigned char *buffer);
+void hrnPgInterfaceControl150(PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal150(PgWal pgWal, unsigned char *buffer);
 
 typedef struct HrnPgInterface
 {
@@ -60,10 +60,10 @@ typedef struct HrnPgInterface
     unsigned int (*catalogVersion)(void);
 
     // Create pg_control
-    void (*control)(HrnPgControl, unsigned char *);
+    void (*control)(PgControl, unsigned char *);
 
     // Create WAL header
-    void (*wal)(HrnPgWal, unsigned char *);
+    void (*wal)(PgWal, unsigned char *);
 } HrnPgInterface;
 
 static const HrnPgInterface hrnPgInterface[] =
@@ -181,26 +181,22 @@ hrnPgCatalogVersion(unsigned int pgVersion)
 
 /**********************************************************************************************************************************/
 Buffer *
-hrnPgControlToBuffer(HrnPgControl hrnPgControl)
+hrnPgControlToBuffer(PgControl pgControl)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(VOID, hrnPgControl);
+        FUNCTION_HARNESS_PARAM(PG_CONTROL, pgControl);
     FUNCTION_HARNESS_END();
 
-    ASSERT(hrnPgControl.version != 0);
+    ASSERT(pgControl.version != 0);
 
     // Set defaults if values are not passed
-    hrnPgControl.pageSize = hrnPgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : hrnPgControl.pageSize;
-    hrnPgControl.walSegmentSize = hrnPgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : hrnPgControl.walSegmentSize;
-    hrnPgControl.controlVersion =
-        hrnPgControl.controlVersion == 0 ? pgControlVersion(hrnPgControl.version) : hrnPgControl.controlVersion;
-    hrnPgControl.catalogVersion =
-        hrnPgControl.catalogVersion == 0 ?
-            hrnPgInterfaceVersion(hrnPgControl.version)->catalogVersion() : hrnPgControl.catalogVersion;
-    hrnPgControl.systemId =
-        hrnPgControl.systemId < 100 ? hrnPgSystemId(hrnPgControl.version) + hrnPgControl.systemId : hrnPgControl.systemId;
-    hrnPgControl.checkpoint = hrnPgControl.checkpoint == 0 ? 1 : hrnPgControl.checkpoint;
-    hrnPgControl.timeline = hrnPgControl.timeline == 0 ? 1 : hrnPgControl.timeline;
+    pgControl.pageSize = pgControl.pageSize == 0 ? PG_PAGE_SIZE_DEFAULT : pgControl.pageSize;
+    pgControl.walSegmentSize = pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize;
+    pgControl.catalogVersion =
+        pgControl.catalogVersion == 0 ? hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
+    pgControl.systemId = pgControl.systemId < 100 ? hrnPgSystemId(pgControl.version) + pgControl.systemId : pgControl.systemId;
+    pgControl.checkpoint = pgControl.checkpoint == 0 ? 1 : pgControl.checkpoint;
+    pgControl.timeline = pgControl.timeline == 0 ? 1 : pgControl.timeline;
 
     // Create the buffer and clear it
     Buffer *result = bufNew(HRN_PG_CONTROL_SIZE);
@@ -208,32 +204,32 @@ hrnPgControlToBuffer(HrnPgControl hrnPgControl)
     bufUsedSet(result, bufSize(result));
 
     // Generate pg_control
-    hrnPgInterfaceVersion(hrnPgControl.version)->control(hrnPgControl, bufPtr(result));
+    hrnPgInterfaceVersion(pgControl.version)->control(pgControl, bufPtr(result));
 
     FUNCTION_HARNESS_RETURN(BUFFER, result);
 }
 
 /**********************************************************************************************************************************/
 void
-hrnPgWalToBuffer(HrnPgWal hrnPgWal, Buffer *const walBuffer)
+hrnPgWalToBuffer(PgWal pgWal, Buffer *walBuffer)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(VOID, hrnPgWal);
+        FUNCTION_HARNESS_PARAM(PG_WAL, pgWal);
         FUNCTION_HARNESS_PARAM(BUFFER, walBuffer);
     FUNCTION_HARNESS_END();
 
     ASSERT(walBuffer != NULL);
 
     // Set default WAL segment size if not specified
-    if (hrnPgWal.size == 0)
-        hrnPgWal.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
+    if (pgWal.size == 0)
+        pgWal.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
 
     // Set default system id if not specified
-    if (hrnPgWal.systemId < 100)
-        hrnPgWal.systemId = hrnPgSystemId(hrnPgWal.version) + hrnPgWal.systemId;
+    if (pgWal.systemId < 100)
+        pgWal.systemId = hrnPgSystemId(pgWal.version) + pgWal.systemId;
 
     // Generate WAL
-    hrnPgInterfaceVersion(hrnPgWal.version)->wal(hrnPgWal, bufPtr(walBuffer));
+    hrnPgInterfaceVersion(pgWal.version)->wal(pgWal, bufPtr(walBuffer));
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

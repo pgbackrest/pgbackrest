@@ -62,12 +62,20 @@ testRun(void)
         TEST_RESULT_UINT(pgInterface[0].version, PG_VERSION_MAX, "check max version");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_15, .controlVersion = 1501, .catalogVersion = 202211110);
+        // Create a bogus control file
+        Buffer *result = bufNew(HRN_PG_CONTROL_SIZE);
+        memset(bufPtr(result), 0, bufSize(result));
+        bufUsedSet(result, bufSize(result));
+
+        *(PgControlCommon *)bufPtr(result) = (PgControlCommon)
+        {
+            .controlVersion = 501,
+            .catalogVersion = 19780101,
+        };
 
         TEST_ERROR(
-            pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
-            "unexpected control version = 1501 and catalog version = 202211110\n"
-            "HINT: is this version of PostgreSQL supported?");
+            pgControlFromBuffer(result, NULL), VersionNotSupportedError,
+            "unexpected control version = 501 and catalog version = 19780101\nHINT: is this version of PostgreSQL supported?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
@@ -197,15 +205,19 @@ testRun(void)
     {
         const String *walFile = STRDEF(TEST_PATH "/0000000F0000000F0000000F");
 
+        // Create a bogus control file, initially not in long format)
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("unsupported WAL magic");
-
         Buffer *result = bufNew((size_t)16 * 1024 * 1024);
         memset(bufPtr(result), 0, bufSize(result));
         bufUsedSet(result, bufSize(result));
 
-        hrnPgWalToBuffer((HrnPgWal){.version = PG_VERSION_15, .magic = 777}, result);
-        storagePutP(storageNewWriteP(storageTest, walFile), result);
+        *(PgWalCommon *)bufPtr(result) = (PgWalCommon){.magic = 777};
+
+        TEST_ERROR(pgWalFromBuffer(result, NULL), FormatError, "first page header in WAL file is expected to be in long format");
+
+        // Add the long flag so that the version will now error
+        // -------------------------------------------------------------------------------------------------------------------------
+        ((PgWalCommon *)bufPtr(result))->flag = PG_WAL_LONG_HEADER;
 
         TEST_ERROR(
             pgWalFromBuffer(result, NULL), VersionNotSupportedError,
@@ -213,16 +225,9 @@ testRun(void)
             "HINT: is this version of PostgreSQL supported?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("invalid wal flag");
-
-        ((PgWalCommon *)bufPtr(result))->flag = 0;
-
-        TEST_ERROR(pgWalFromBuffer(result, NULL), FormatError, "first page header in WAL file is expected to be in long format");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         hrnPgWalToBuffer(
-            (HrnPgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAF, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
+            (PgWal){.version = PG_VERSION_11, .systemId = 0xECAFECAF, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         PgWal info = {0};
@@ -234,14 +239,14 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
         hrnPgWalToBuffer(
-            (HrnPgWal){.version = PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
+            (PgWal){.version = PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2}, result);
 
         TEST_ERROR(
             pgWalFromBuffer(result, NULL), FormatError, "wal segment size is 33554432 but must be 16777216 for PostgreSQL <= 10");
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        hrnPgWalToBuffer((HrnPgWal){.version = PG_VERSION_93, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
+        hrnPgWalToBuffer((PgWal){.version = PG_VERSION_93, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT}, result);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v9.3");
