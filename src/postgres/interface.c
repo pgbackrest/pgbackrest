@@ -211,6 +211,8 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     }
 
     // Get info from the control file
+    ASSERT(pgVersionForce != NULL || interface->controlIs(bufPtrConst(controlFile)));
+
     PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
 
@@ -315,6 +317,8 @@ pgWalFromBuffer(const Buffer *walBuffer, const String *const pgVersionForce)
     }
 
     // Get info from the control file
+    ASSERT(pgVersionForce != NULL || interface->walIs(bufPtrConst(walBuffer)));
+
     PgWal result = interface->wal(bufPtrConst(walBuffer));
     result.version = interface->version;
 
