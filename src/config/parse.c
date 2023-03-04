@@ -2020,6 +2020,9 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
             // Phase 5: validate option definitions and load into configuration
             // ---------------------------------------------------------------------------------------------------------------------
+            // Determine whether a group index will be kept based on non-default values
+            bool optionGroupIndexKeep[CFG_OPTION_GROUP_TOTAL][CFG_OPTION_KEY_MAX] = {{false}};
+
             for (unsigned int optionOrderIdx = 0; optionOrderIdx < CFG_OPTION_TOTAL; optionOrderIdx++)
             {
                 // Validate options based on the option resolve order.  This allows resolving all options in a single pass.
@@ -2388,6 +2391,10 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
                                 }
                             }
                         }
+
+                        // If a non-default group option, keep the group index
+                        if (optionGroup && configOptionValue->source != cfgSourceDefault)
+                            optionGroupIndexKeep[optionGroupId][optionListIdx] = true;
                     }
                     // Else apply the default for the unresolved dependency, if it exists
                     else if (dependResult.defaultExists)
@@ -2398,6 +2405,60 @@ configParse(const Storage *storage, unsigned int argListSize, const char *argLis
 
                     pckReadFree(optionalRules.pack);
                 }
+            }
+
+            // Phase 6: Remove any group indexes that have all default values (unless there is only one)
+            //
+            // It is possible that a group index was created for an option that was later found to not meet dependencies. In this
+            // case all values will be default leading to a phantom group, which can be quite confusing. Remove all group indexes
+            // that are all default (except the final one) and make sure the key for the final all default group index is 1.
+            // ---------------------------------------------------------------------------------------------------------------------
+            for (unsigned int optionGroupIdx = 0; optionGroupIdx < CFG_OPTION_GROUP_TOTAL; optionGroupIdx++)
+            {
+                ConfigOptionGroupData *const optionGroup = &config->optionGroup[optionGroupIdx];
+
+                // Iterate group indexes
+                for (unsigned int keyIdx = optionGroup->indexTotal - 1; keyIdx < UINT_MAX; keyIdx--)
+                {
+                    // Break if there is only one index since each group must have at least one
+                    if (optionGroup->indexTotal == 1)
+                        break;
+
+                    // If the group index does not have a non-default value
+                    if (!optionGroupIndexKeep[optionGroupIdx][keyIdx])
+                    {
+                        // Remove the value if it is not last
+                        if (keyIdx < optionGroup->indexTotal - 1)
+                        {
+                            // Remove index key
+                            memmove(
+                                optionGroup->indexMap + keyIdx, optionGroup->indexMap + (keyIdx + 1),
+                                sizeof(unsigned int) * (optionGroup->indexTotal - keyIdx - 1));
+
+                            // Iterate all options
+                            for (unsigned int optionIdx = 0; optionIdx < CFG_OPTION_TOTAL; optionIdx++)
+                            {
+                                ConfigOptionData *const option = &config->option[optionIdx];
+
+                                // Remove the value if in the correct group
+                                if (option->group && option->groupId == optionGroupIdx)
+                                {
+                                    memmove(
+                                        option->index + keyIdx, option->index + (keyIdx + 1),
+                                        sizeof(ConfigOptionValue) * (optionGroup->indexTotal - keyIdx - 1));
+                                }
+                            }
+                        }
+
+                        // Decrement index total
+                        optionGroup->indexTotal--;
+                    }
+                }
+
+                // If the remaining index contains all default values and is not key 1 then make it key 1. This prevents the key
+                // from being determined by the key of an unused option.
+                if (optionGroup->indexTotal == 1 && !optionGroupIndexKeep[optionGroupIdx][0] && optionGroup->indexMap[0] != 0)
+                    optionGroup->indexMap[0] = 0;
             }
         }
 
