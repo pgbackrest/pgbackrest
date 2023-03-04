@@ -64,11 +64,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("unknown control version");
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storageTest, PG_VERSION_15, 1501, .catalogVersion = 202211110);
+        HRN_PG_CONTROL_OVERRIDE_PUT(storageTest, PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
-            "unexpected control version = 1501 and catalog version = 202211110\n"
+            "unexpected control version = 1501 and catalog version = 202211111\n"
             "HINT: is this version of PostgreSQL supported?");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -112,19 +112,19 @@ testRun(void)
         TEST_TITLE("force control version");
 
         HRN_PG_CONTROL_OVERRIDE_PUT(
-            storageTest, PG_VERSION_15, 1501, .systemId = 0xEFEFEFEFEF, .catalogVersion = 202211110,
+            storageTest, PG_VERSION_15, 1501, .systemId = 0xEFEFEFEFEF, .catalogVersion = 202211111,
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
-            "unexpected control version = 1501 and catalog version = 202211110\n"
+            "unexpected control version = 1501 and catalog version = 202211111\n"
             "HINT: is this version of PostgreSQL supported?");
         TEST_ERROR(pgControlFromFile(storageTest, STRDEF("99")), AssertError, "invalid PostgreSQL version 990000");
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, STRDEF(PG_VERSION_15_STR)), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_15, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202211110, "check catalog version");
+        TEST_RESULT_UINT(info.catalogVersion, 202211111, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
     }

@@ -523,7 +523,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgVersion, "15");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211110);
+        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - forcing another PG version");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -531,14 +531,14 @@ testRun(void)
         HRN_INFO_PUT(
             storageHrn, "test.info",
             "[db]\n"
-            "db-catalog-version=202211110\n"
+            "db-catalog-version=202211111\n"
             "db-control-version=1300\n"
             "db-id=1\n"
             "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
             "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":202211110,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            "1={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
             ",\"db-version\":\"15\"}\n",
             .comment = "put backup info to test file, control version for PG 15, catalog version forced from pg_control");
 
@@ -928,7 +928,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgVersion, "15");
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211110);
+        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_15, 1501, .catalogVersion = 202211111);
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
@@ -977,7 +977,7 @@ testRun(void)
         HRN_INFO_PUT(
             storageHrn, "test.info",
             "[db]\n"
-            "db-catalog-version=202211110\n"
+            "db-catalog-version=202211111\n"
             "db-control-version=1300\n"
             "db-id=2\n"
             "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
@@ -986,7 +986,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
             ",\"db-version\":\"9.6\"}\n"
-            "2={\"db-catalog-version\":202211110,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            "2={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
             ",\"db-version\":\"15\"}\n",
             .comment = "put backup info to test file, control version for PG 15, catalog version forced from pg_control");
 
