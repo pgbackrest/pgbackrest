@@ -2011,17 +2011,17 @@ sub restoreCompare
                 ${$oExpectedManifestRef}{&MANIFEST_SECTION_TARGET_FILE}{$strName}{size});
         }
 
-        # Remove repo-size, bno, bni, bims, bis from the manifest
+        # Remove repo-size, bn*, bi* from the manifest
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_REPO_SIZE);
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{&MANIFEST_SUBKEY_REPO_SIZE});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bni");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bni"});
         $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bno");
         delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bno"});
-        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bims");
-        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bims"});
-        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bis");
-        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bis"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bi");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bi"});
+        $oActualManifest->remove(MANIFEST_SECTION_TARGET_FILE, $strName, "bim");
+        delete($oExpectedManifestRef->{&MANIFEST_SECTION_TARGET_FILE}{$strName}{"bim"});
 
         if ($oActualManifest->get(MANIFEST_SECTION_TARGET_FILE, $strName, MANIFEST_SUBKEY_SIZE) != 0)
         {

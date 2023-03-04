@@ -94,6 +94,27 @@ lstComparatorStr(const void *item1, const void *item2)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
+lstComparatorUInt(const void *const item1, const void *const item2)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, item1);
+        FUNCTION_TEST_PARAM_P(VOID, item2);
+    FUNCTION_TEST_END();
+
+    ASSERT(item1 != NULL);
+    ASSERT(item2 != NULL);
+
+    if (*(unsigned int *)item1 < *(unsigned int *)item2)
+        FUNCTION_TEST_RETURN(INT, -1);
+
+    if (*(unsigned int *)item1 > *(unsigned int *)item2)
+        FUNCTION_TEST_RETURN(INT, 1);
+
+    FUNCTION_TEST_RETURN(INT, 0);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN int
 lstComparatorZ(const void *item1, const void *item2)
 {
     FUNCTION_TEST_BEGIN();

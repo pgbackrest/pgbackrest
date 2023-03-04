@@ -296,7 +296,7 @@ testRun(void)
         // Test tablespace error
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, exclusionList,
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL, exclusionList,
                 pckWriteResult(tablespaceList)),
             AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
@@ -321,7 +321,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL,
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL, NULL,
                 pckWriteResult(tablespaceList)),
             "build manifest");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F")), "backup label set");
@@ -420,7 +420,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, true, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, true, false, false, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -496,7 +496,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError,
             "link 'pg_xlog/wal' (" TEST_PATH "/wal) destination is the same directory as link 'pg_xlog' (" TEST_PATH "/wal)");
 
@@ -552,7 +552,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -647,7 +647,7 @@ testRun(void)
         // Tablespace link errors when correct verion not found
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or"
             " directory");
@@ -668,7 +668,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, true, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, true, false, false, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -752,11 +752,34 @@ testRun(void)
         // Create file that is large enough for block incr and old enough to not need block incr
         HRN_STORAGE_PUT(storagePgWrite, "128k-4week", buffer, .modeFile = 0600, .timeModified = 1570000000 - (28 * 86400));
 
+        // Block incremental maps
+        static const ManifestBlockIncrSizeMap manifestBlockIncrSizeMap[] =
+        {
+            {.fileSize = 128 * 1024, .blockSize = 128 * 1024},
+            {.fileSize = 8 * 1024, .blockSize = 8 * 1024},
+        };
+
+        static const ManifestBlockIncrAgeMap manifestBlockIncrAgeMap[] =
+        {
+            {.fileAge = 4 * 7 * 86400, .blockMultiplier = 0},
+            {.fileAge = 2 * 7 * 86400, .blockMultiplier = 4},
+            {.fileAge = 7 * 86400, .blockMultiplier = 2},
+        };
+
+        static const ManifestBlockIncrMap manifestBuildBlockIncrMap =
+        {
+            .sizeMap = manifestBlockIncrSizeMap,
+            .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMap),
+            .ageMap = manifestBlockIncrAgeMap,
+            .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMap),
+        };
+
         // pg_wal not ignored
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true, NULL, NULL),
+                storagePg, PG_VERSION_13, hrnPgCatalogVersion(PG_VERSION_13), 1570000000, false, false, true, true,
+                &manifestBuildBlockIncrMap, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -776,8 +799,8 @@ testRun(void)
                     "pg_data/postgresql.conf={\"file\":\"postgresql.conf\",\"path\":\"../config\",\"type\":\"link\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/128k={\"bis\":16,\"size\":131072,\"timestamp\":1570000000}\n"
-                    "pg_data/128k-1week={\"bis\":32,\"size\":131072,\"timestamp\":1569395200}\n"
+                    "pg_data/128k={\"bi\":16,\"size\":131072,\"timestamp\":1570000000}\n"
+                    "pg_data/128k-1week={\"bi\":32,\"size\":131072,\"timestamp\":1569395200}\n"
                     "pg_data/128k-4week={\"size\":131072,\"timestamp\":1567580800}\n"
                     "pg_data/PG_VERSION={\"size\":3,\"timestamp\":1565282100}\n"
                     "pg_data/base/1/555_init={\"size\":0,\"timestamp\":1565282114}\n"
@@ -831,7 +854,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError, "link 'link' destination '" TEST_PATH "/pg/base' is in PGDATA");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link") == -1, FileRemoveError, "unable to remove symlink");
@@ -843,7 +866,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
         HRN_STORAGE_PATH_REMOVE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir");
@@ -855,7 +878,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
         TEST_STORAGE_EXISTS(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile", .remove = true);
@@ -867,7 +890,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL, NULL),
             FileOpenError,
             "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link': [2] No such file or directory");
 
@@ -884,7 +907,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL),
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError, "link '" TEST_PATH "/pg/linktolink' cannot reference another link '" TEST_PATH "/linktest'");
 
         #undef TEST_MANIFEST_HEADER
@@ -1353,8 +1376,8 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/block-incr-add={\"bis\":1,\"size\":6,\"timestamp\":1482182861}\n"
-                    "pg_data/block-incr-keep-size={\"bims\":31,\"bis\":1,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
+                    "pg_data/block-incr-add={\"bi\":1,\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
                     ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
@@ -1529,13 +1552,14 @@ testRun(void)
             "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""                                        \
                 ",\"rck\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"reference\":\"20190818-084502F_20190819-084506D\""        \
                 ",\"size\":4,\"timestamp\":1565282114}\n"                                                                          \
-            "pg_data/base/16384/17000={\"bni\":1,\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\",\"checksum-page\":false"\
-                ",\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"timestamp\":1565282114}\n"                        \
+            "pg_data/base/16384/17000={\"bi\":4,\"bni\":1,\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\""               \
+                ",\"checksum-page\":false,\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192"                            \
+                ",\"timestamp\":1565282114}\n"                                                                                     \
             "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""         \
                 ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                      \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
-            "pg_data/base/32768/33000.32767={\"bims\":96,\"bis\":3,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\","     \
+            "pg_data/base/32768/33000.32767={\"bi\":3,\"bim\":96,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\","       \
                 "\"checksum-page\":true,\"reference\":\"20190818-084502F\",\"size\":32768,\"timestamp\":1565282114}\n"             \
             "pg_data/postgresql.conf={\"size\":4457,\"timestamp\":1565282114}\n"                                                   \
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"

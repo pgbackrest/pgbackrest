@@ -410,10 +410,10 @@ testRun(void)
                 ",\"timestamp\":1565282115}\n"                                                                                     \
             "pg_data/base/32768/33000={\"checksum\":\"7a16d165e4775f7c92e8cdf60c0af57313f0bf90\",\"checksum-page\":true"           \
                 ",\"reference\":\"20190818-084502F\",\"size\":1073741824,\"timestamp\":1565282116}\n"                              \
-            "pg_data/base/32768/33000.32767={\"bims\":88,\"bis\":1,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\""      \
+            "pg_data/base/32768/33000.32767={\"bi\":1,\"bim\":88,\"checksum\":\"6e99b589e550e68e934fd235ccba59fe5b592a9e\""        \
                 ",\"checksum-page\":true,\"reference\":\"20190818-084502F_20190819-084506I\",\"size\":32768"                       \
                 ",\"timestamp\":1565282114}\n"                                                                                     \
-            "pg_data/postgresql.conf={\"bims\":12,\"bis\":1,\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\""             \
+            "pg_data/postgresql.conf={\"bi\":1,\"bim\":12,\"checksum\":\"6721d92c9fcdf4248acff1f9a1377127d9064807\""               \
                 ",\"size\":4457,\"timestamp\":1565282114}\n"                                                                       \
             "pg_data/special={\"mode\":\"0640\",\"size\":0,\"timestamp\":1565282120,\"user\":false}\n"                             \
             "pg_data/dupref={\"mode\":\"0640\",\"reference\":\"20190818-084502F\",\"size\":0"                                      \
