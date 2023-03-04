@@ -35,14 +35,14 @@ Create a pg_control file
 
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
-    hrnPgInterfaceControl##version(PgControl pgControl, unsigned char *buffer)                                                     \
+    hrnPgInterfaceControl##version(const unsigned int controlVersion, const PgControl pgControl, unsigned char *const buffer)      \
     {                                                                                                                              \
         ASSERT(buffer != NULL);                                                                                                    \
                                                                                                                                    \
         *(ControlFileData *)buffer = (ControlFileData)                                                                             \
         {                                                                                                                          \
             .system_identifier = pgControl.systemId,                                                                               \
-            .pg_control_version = PG_CONTROL_VERSION,                                                                              \
+            .pg_control_version = controlVersion == 0 ? PG_CONTROL_VERSION : controlVersion,                                       \
             .catalog_version_no = pgControl.catalogVersion,                                                                        \
             .checkPoint = pgControl.checkpoint,                                                                                    \
             .checkPointCopy =                                                                                                      \
@@ -66,9 +66,9 @@ Create a WAL file
 
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \
-    hrnPgInterfaceWal##version(PgWal pgWal, unsigned char *buffer)                                                                 \
+    hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, unsigned char *const buffer)                           \
     {                                                                                                                              \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = XLOG_PAGE_MAGIC;                                                       \
+        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = magic == 0 ? XLOG_PAGE_MAGIC : (uint16)magic;                          \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
         ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
