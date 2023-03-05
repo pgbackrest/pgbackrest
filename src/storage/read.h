@@ -28,8 +28,10 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StorageReadPub
 {
-    const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
+    StorageReadInterface *interface;                                // File data (name, driver type, etc.)
     IoRead *io;                                                     // Read interface
+    uint64_t offset;                                                // Where to start reading in the file
+    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
 } StorageReadPub;
 
 // Should a missing file be ignored?
@@ -50,7 +52,7 @@ storageReadIo(const StorageRead *const this)
 FN_INLINE_ALWAYS const Variant *
 storageReadLimit(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->limit;
+    return THIS_PUB(StorageRead)->limit;
 }
 
 // File name
@@ -64,7 +66,7 @@ storageReadName(const StorageRead *const this)
 FN_INLINE_ALWAYS uint64_t
 storageReadOffset(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->offset;
+    return THIS_PUB(StorageRead)->offset;
 }
 
 // Get file type

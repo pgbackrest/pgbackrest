@@ -15,7 +15,7 @@ struct StorageRead
 {
     StorageReadPub pub;                                             // Publicly accessible variables
     void *driver;                                                   // Driver
-    IoRead *io;                                                     // Driver read interface
+    uint64_t offsetCurrent;                                         // Current offset into the file
 };
 
 /***********************************************************************************************************************************
@@ -40,14 +40,14 @@ storageReadOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(BOOL, ioReadOpen(this->io));
+    FUNCTION_LOG_RETURN(BOOL, this->pub.interface->ioInterface.open(this->driver));
 }
 
 /***********************************************************************************************************************************
 Read from a file and retry when there is a read failure
 ***********************************************************************************************************************************/
 static size_t
-storageRead(THIS_VOID, Buffer *buffer, bool block)
+storageRead(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageRead);
 
@@ -63,15 +63,32 @@ storageRead(THIS_VOID, Buffer *buffer, bool block)
 
     TRY_BEGIN()
     {
-        result = ioRead(this->io, buffer);
+        result = this->pub.interface->ioInterface.read(this->driver, buffer, block);
     }
     CATCH_ANY()
     {
+        // ioReadClose(this->io);
+
+        // this->pub.interface.offset = offsetCurrent;
+
+        // if (this->pub.interface.limit != NULL)
+        // {
+        //     varFree(this->pub.interface.limit);
+
+        //     MEM_CONTEXT_OBJ_BEGIN(this->driver)
+        //     {
+        //         this->pub.interface.limit = varNewUInt64(
+        //     }
+        //     MEM_CONTEXT_OBJ_END();
+        // }
+
         // !!! NOT SURE HOW TO HANDLE THE ERROR SINCE THE DRIVER MEM CONTEXT CANNOT BE FREED
 
         RETHROW();
     }
     TRY_END();
+
+    this->offsetCurrent += result;
 
     FUNCTION_LOG_RETURN(SIZE, result);
 }
@@ -90,7 +107,7 @@ storageReadClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    ioReadClose(this->io);
+    this->pub.interface->ioInterface.close(this->driver);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -109,7 +126,7 @@ storageReadEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, ioReadEof(this->io));
+    FUNCTION_TEST_RETURN(BOOL, this->pub.interface->ioInterface.eof(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -126,7 +143,7 @@ storageReadFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INT, ioReadFd(this->io));
+    FUNCTION_TEST_RETURN(INT, this->pub.interface->ioInterface.fd(this->driver));
 }
 
 /**********************************************************************************************************************************/
@@ -140,7 +157,7 @@ static const IoReadInterface storageIoReadInterface =
 };
 
 FN_EXTERN StorageRead *
-storageReadNew(void *driver, const StorageReadInterface *const interface)
+storageReadNew(void *driver, StorageReadInterface *const interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -164,8 +181,9 @@ storageReadNew(void *driver, const StorageReadInterface *const interface)
             {
                 .interface = interface,
                 .io = ioReadNew(this, storageIoReadInterface),
+                .offset = interface->offset,
+                .limit = varDup(interface->limit),
             },
-            .io = ioReadNew(driver, interface->ioInterface),
             .driver = objMove(driver, objMemContext(this)),
         };
     }

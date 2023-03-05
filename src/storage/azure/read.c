@@ -106,6 +106,27 @@ storageReadAzureEof(THIS_VOID)
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
+/***********************************************************************************************************************************
+Reset the file
+***********************************************************************************************************************************/
+static void
+storageReadAzureClose(THIS_VOID)
+{
+    THIS(StorageReadAzure);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_AZURE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
+
+    httpResponseFree(this->httpResponse);
+    this->httpResponse = NULL;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
 storageReadAzureNew(
@@ -146,10 +167,10 @@ storageReadAzureNew(
                     .eof = storageReadAzureEof,
                     .open = storageReadAzureOpen,
                     .read = storageReadAzure,
+                    .close = storageReadAzureClose,
                 },
             },
         };
-
     }
     OBJ_NEW_END();
 

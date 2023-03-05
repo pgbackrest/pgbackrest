@@ -109,6 +109,27 @@ storageReadS3Eof(THIS_VOID)
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
+/***********************************************************************************************************************************
+Reset the file
+***********************************************************************************************************************************/
+static void
+storageReadS3Close(THIS_VOID)
+{
+    THIS(StorageReadS3);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_S3, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
+
+    httpResponseFree(this->httpResponse);
+    this->httpResponse = NULL;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
 storageReadS3New(
@@ -149,6 +170,7 @@ storageReadS3New(
                     .eof = storageReadS3Eof,
                     .open = storageReadS3Open,
                     .read = storageReadS3,
+                    .close = storageReadS3Close,
                 },
             },
         };

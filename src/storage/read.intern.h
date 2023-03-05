@@ -17,12 +17,12 @@ typedef struct StorageReadInterface
     unsigned int compressLevel;                                     // Level to use for compression
     bool ignoreMissing;
     uint64_t offset;                                                // Where to start reading in the file
-    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
+    Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
     IoReadInterface ioInterface;
 } StorageReadInterface;
 
 #include "storage/read.h"
 
-FN_EXTERN StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
+FN_EXTERN StorageRead *storageReadNew(void *driver, StorageReadInterface *interface);
 
 #endif
