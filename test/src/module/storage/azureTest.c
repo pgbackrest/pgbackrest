@@ -117,6 +117,7 @@ typedef struct TestResponseParam
     unsigned int code;
     const char *header;
     const char *content;
+    const Variant *contentSize;
 } TestResponseParam;
 
 #define testResponseP(write, ...)                                                                                                  \
@@ -158,7 +159,7 @@ testResponse(IoWrite *write, TestResponseParam param)
             "content-length:%zu\r\n"
             "\r\n"
             "%s",
-            strlen(param.content), param.content);
+            param.contentSize != NULL ? varUInt(param.contentSize) : strlen(param.content), param.content);
     }
     else
         strCatZ(response, "\r\n");
@@ -516,6 +517,51 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
                     "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with retry");
+
+                testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "12345678911234567892", .contentSize = VARUINT(30));
+
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
+
+                testRequestP(service, HTTP_VERB_GET, "/file.txt", .range = "20-");
+                testResponseP(service, .content = "1234567893");
+
+                const size_t ioBufferSizeDefault = ioBufferSize();
+                ioBufferSizeSet(20);
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "123456789112345678921234567893",
+                    "get file");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with retry, offset, and limit");
+
+                testRequestP(service, HTTP_VERB_GET, "/file.txt", .range = "1-29");
+                testResponseP(service, .content = "23456789112345678921X", .contentSize = VARUINT(30));
+
+                hrnServerScriptAbort(service);
+                hrnServerScriptAccept(service);
+
+                testRequestP(service, HTTP_VERB_GET, "/file.txt", .range = "21-29");
+                testResponseP(service, .content = "23456789");
+
+                ioBufferSizeSet(20);
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(29)))),
+                    "2345678911234567892123456789", "get file");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
+
+                // Close to reset buffer size
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");

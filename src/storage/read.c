@@ -76,9 +76,11 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
             {
                 this->pub.interface->ioInterface.read(this->driver, buffer, block);
 
+                // Account for bytes that have been read
                 result += bufUsed(buffer) - bufUsedBegin;
                 this->bytesRead += bufUsed(buffer) - bufUsedBegin;
 
+                // Set try to 1 to exit the loop
                 try = 1;
             }
             CATCH_ANY()

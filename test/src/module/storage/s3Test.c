@@ -508,6 +508,10 @@ testRun(void)
 
                 ioBufferSizeSet(ioBufferSizeDefault);
 
+                // Close to reset buffer size
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
+
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file all retries fail");
 
